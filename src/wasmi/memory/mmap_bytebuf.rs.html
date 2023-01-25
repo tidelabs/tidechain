@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmi-0.9.1/src/memory/mmap_bytebuf.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mmap_bytebuf.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../wasmi/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../wasmi/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../wasmi/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmi-0.9.1/src/memory/mmap_bytebuf.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mmap_bytebuf.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmi/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -202,205 +197,204 @@
 <span id="197">197</span>
 <span id="198">198</span>
 <span id="199">199</span>
-</pre><pre class="rust"><code><span class="doccomment">//! An implementation of a `ByteBuf` based on virtual memory.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This implementation uses `mmap` on POSIX systems (and should use `VirtualAlloc` on windows).</span>
-<span class="doccomment">//! There are possibilities to improve the performance for the reallocating case by reserving</span>
-<span class="doccomment">//! memory up to maximum. This might be a problem for systems that don&#39;t have a lot of virtual</span>
-<span class="doccomment">//! memory (i.e. 32-bit platforms).</span>
+</pre><pre class="rust"><code><span class="doccomment">//! An implementation of a `ByteBuf` based on virtual memory.
+//!
+//! This implementation uses `mmap` on POSIX systems (and should use `VirtualAlloc` on windows).
+//! There are possibilities to improve the performance for the reallocating case by reserving
+//! memory up to maximum. This might be a problem for systems that don&#39;t have a lot of virtual
+//! memory (i.e. 32-bit platforms).
 
-<span class="kw">use</span> <span class="ident">std::ptr</span>::{<span class="self">self</span>, <span class="ident">NonNull</span>};
-<span class="kw">use</span> <span class="ident">std::slice</span>;
+</span><span class="kw">use </span>std::ptr::{<span class="self">self</span>, NonNull};
+<span class="kw">use </span>std::slice;
 
-<span class="kw">struct</span> <span class="ident">Mmap</span> {
-    <span class="doccomment">/// The pointer that points to the start of the mapping.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This value doesn&#39;t change after creation.</span>
-    <span class="ident">ptr</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The length of this mapping.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Cannot be more than `isize::max_value()`. This value doesn&#39;t change after creation.</span>
-    <span class="ident">len</span>: <span class="ident">usize</span>,
+<span class="kw">struct </span>Mmap {
+    <span class="doccomment">/// The pointer that points to the start of the mapping.
+    ///
+    /// This value doesn&#39;t change after creation.
+    </span>ptr: NonNull&lt;u8&gt;,
+    <span class="doccomment">/// The length of this mapping.
+    ///
+    /// Cannot be more than `isize::max_value()`. This value doesn&#39;t change after creation.
+    </span>len: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">Mmap</span> {
-    <span class="doccomment">/// Create a new mmap mapping</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `Err` if:</span>
-    <span class="doccomment">/// - `len` should not exceed `isize::max_value()`</span>
-    <span class="doccomment">/// - `len` should be greater than 0.</span>
-    <span class="doccomment">/// - `mmap` returns an error (almost certainly means out of memory).</span>
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span> <span class="ident">isize::max_value</span>() <span class="kw">as</span> <span class="ident">usize</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;`len` should not exceed `isize::max_value()`&quot;</span>.<span class="ident">into</span>());
+<span class="kw">impl </span>Mmap {
+    <span class="doccomment">/// Create a new mmap mapping
+    ///
+    /// Returns `Err` if:
+    /// - `len` should not exceed `isize::max_value()`
+    /// - `len` should be greater than 0.
+    /// - `mmap` returns an error (almost certainly means out of memory).
+    </span><span class="kw">fn </span>new(len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
+        <span class="kw">if </span>len &gt; isize::max_value() <span class="kw">as </span>usize {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;`len` should not exceed `isize::max_value()`&quot;</span>.into());
         }
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;`len` should be greater than 0&quot;</span>.<span class="ident">into</span>());
+        <span class="kw">if </span>len == <span class="number">0 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;`len` should be greater than 0&quot;</span>.into());
         }
 
-        <span class="kw">let</span> <span class="ident">ptr_or_err</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="comment">// Safety Proof:</span>
-            <span class="comment">// There are not specific safety proofs are required for this call, since the call</span>
-            <span class="comment">// by itself can&#39;t invoke any safety problems (however, misusing its result can).</span>
-            <span class="ident">libc::mmap</span>(
-                <span class="comment">// `addr` - let the system to choose the address at which to create the mapping.</span>
-                <span class="ident">ptr::null_mut</span>(),
-                <span class="comment">// the length of the mapping in bytes.</span>
-                <span class="ident">len</span>,
-                <span class="comment">// `prot` - protection flags: READ WRITE !EXECUTE</span>
-                <span class="ident">libc::PROT_READ</span> <span class="op">|</span> <span class="ident">libc::PROT_WRITE</span>,
-                <span class="comment">// `flags`</span>
-                <span class="comment">// `MAP_ANON` - mapping is not backed by any file and initial contents are</span>
-                <span class="comment">// initialized to zero.</span>
-                <span class="comment">// `MAP_PRIVATE` - the mapping is private to this process.</span>
-                <span class="ident">libc::MAP_ANON</span> <span class="op">|</span> <span class="ident">libc::MAP_PRIVATE</span>,
-                <span class="comment">// `fildes` - a file descriptor. Pass -1 as this is required for some platforms</span>
-                <span class="comment">// when the `MAP_ANON` is passed.</span>
-                <span class="op">-</span><span class="number">1</span>,
-                <span class="comment">// `offset` - offset from the file.</span>
-                <span class="number">0</span>,
+        <span class="kw">let </span>ptr_or_err = <span class="kw">unsafe </span>{
+            <span class="comment">// Safety Proof:
+            // There are not specific safety proofs are required for this call, since the call
+            // by itself can&#39;t invoke any safety problems (however, misusing its result can).
+            </span>libc::mmap(
+                <span class="comment">// `addr` - let the system to choose the address at which to create the mapping.
+                </span>ptr::null_mut(),
+                <span class="comment">// the length of the mapping in bytes.
+                </span>len,
+                <span class="comment">// `prot` - protection flags: READ WRITE !EXECUTE
+                </span>libc::PROT_READ | libc::PROT_WRITE,
+                <span class="comment">// `flags`
+                // `MAP_ANON` - mapping is not backed by any file and initial contents are
+                // initialized to zero.
+                // `MAP_PRIVATE` - the mapping is private to this process.
+                </span>libc::MAP_ANON | libc::MAP_PRIVATE,
+                <span class="comment">// `fildes` - a file descriptor. Pass -1 as this is required for some platforms
+                // when the `MAP_ANON` is passed.
+                </span>-<span class="number">1</span>,
+                <span class="comment">// `offset` - offset from the file.
+                </span><span class="number">0</span>,
             )
         };
 
-        <span class="kw">match</span> <span class="ident">ptr_or_err</span> {
-            <span class="comment">// With the current parameters, the error can only be returned in case of insufficient</span>
-            <span class="comment">// memory.</span>
-            <span class="comment">//</span>
-            <span class="comment">// If we have `errno` linked in augement the error message with the one that was</span>
-            <span class="comment">// provided by errno.</span>
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;errno&quot;</span>)]</span>
-            <span class="ident">libc::MAP_FAILED</span> =&gt; {
-                <span class="kw">let</span> <span class="ident">errno</span> <span class="op">=</span> <span class="ident">errno::errno</span>();
-                <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;mmap returned an error ({}): {}&quot;</span>, <span class="ident">errno</span>.<span class="number">0</span>, <span class="ident">errno</span>))
+        <span class="kw">match </span>ptr_or_err {
+            <span class="comment">// With the current parameters, the error can only be returned in case of insufficient
+            // memory.
+            //
+            // If we have `errno` linked in augement the error message with the one that was
+            // provided by errno.
+            </span><span class="attribute">#[cfg(feature = <span class="string">&quot;errno&quot;</span>)]
+            </span>libc::MAP_FAILED =&gt; {
+                <span class="kw">let </span>errno = errno::errno();
+                <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;mmap returned an error ({}): {}&quot;</span>, errno.<span class="number">0</span>, errno))
             }
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;errno&quot;</span>))]</span>
-            <span class="ident">libc::MAP_FAILED</span> =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;mmap returned an error&quot;</span>.<span class="ident">into</span>()),
-            <span class="kw">_</span> =&gt; {
-                <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">NonNull::new</span>(<span class="ident">ptr_or_err</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>)
-                    .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;mmap returned 0&quot;</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">ptr</span>, <span class="ident">len</span> })
+            <span class="attribute">#[cfg(not(feature = <span class="string">&quot;errno&quot;</span>))]
+            </span>libc::MAP_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;mmap returned an error&quot;</span>.into()),
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">let </span>ptr = NonNull::new(ptr_or_err <span class="kw">as </span><span class="kw-2">*mut </span>u8)
+                    .ok_or_else(|| <span class="string">&quot;mmap returned 0&quot;</span>.to_string())<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ ptr, len })
             }
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">as_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw">unsafe</span> {
-            <span class="comment">// Safety Proof:</span>
-            <span class="comment">// - Aliasing guarantees of `self.ptr` are not violated since `self` is the only owner.</span>
-            <span class="comment">// - This pointer was allocated for `self.len` bytes and thus is a valid slice.</span>
-            <span class="comment">// - `self.len` doesn&#39;t change throughout the lifetime of `self`.</span>
-            <span class="comment">// - The value is returned valid for the duration of lifetime of `self`.</span>
-            <span class="comment">//   `self` cannot be destroyed while the returned slice is alive.</span>
-            <span class="comment">// - `self.ptr` is of `NonNull` type and thus `.as_ptr()` can never return NULL.</span>
-            <span class="comment">// - `self.len` cannot be larger than `isize::max_value()`.</span>
-            <span class="ident">slice::from_raw_parts</span>(<span class="self">self</span>.<span class="ident">ptr</span>.<span class="ident">as_ptr</span>(), <span class="self">self</span>.<span class="ident">len</span>)
+    <span class="kw">fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw">unsafe </span>{
+            <span class="comment">// Safety Proof:
+            // - Aliasing guarantees of `self.ptr` are not violated since `self` is the only owner.
+            // - This pointer was allocated for `self.len` bytes and thus is a valid slice.
+            // - `self.len` doesn&#39;t change throughout the lifetime of `self`.
+            // - The value is returned valid for the duration of lifetime of `self`.
+            //   `self` cannot be destroyed while the returned slice is alive.
+            // - `self.ptr` is of `NonNull` type and thus `.as_ptr()` can never return NULL.
+            // - `self.len` cannot be larger than `isize::max_value()`.
+            </span>slice::from_raw_parts(<span class="self">self</span>.ptr.as_ptr(), <span class="self">self</span>.len)
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">as_slice_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>] {
-        <span class="kw">unsafe</span> {
-            <span class="comment">// Safety Proof:</span>
-            <span class="comment">// - See the proof for `Self::as_slice`</span>
-            <span class="comment">// - Additionally, it is not possible to obtain two mutable references for `self.ptr`</span>
-            <span class="ident">slice::from_raw_parts_mut</span>(<span class="self">self</span>.<span class="ident">ptr</span>.<span class="ident">as_ptr</span>(), <span class="self">self</span>.<span class="ident">len</span>)
+    <span class="kw">fn </span>as_slice_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>[u8] {
+        <span class="kw">unsafe </span>{
+            <span class="comment">// Safety Proof:
+            // - See the proof for `Self::as_slice`
+            // - Additionally, it is not possible to obtain two mutable references for `self.ptr`
+            </span>slice::from_raw_parts_mut(<span class="self">self</span>.ptr.as_ptr(), <span class="self">self</span>.len)
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Mmap</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">ret_val</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="comment">// Safety proof:</span>
-            <span class="comment">// - `self.ptr` was allocated by a call to `mmap`.</span>
-            <span class="comment">// - `self.len` was saved at the same time and it doesn&#39;t change throughout the lifetime</span>
-            <span class="comment">//   of `self`.</span>
-            <span class="ident">libc::munmap</span>(<span class="self">self</span>.<span class="ident">ptr</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">libc::c_void</span>, <span class="self">self</span>.<span class="ident">len</span>)
+<span class="kw">impl </span>Drop <span class="kw">for </span>Mmap {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">let </span>ret_val = <span class="kw">unsafe </span>{
+            <span class="comment">// Safety proof:
+            // - `self.ptr` was allocated by a call to `mmap`.
+            // - `self.len` was saved at the same time and it doesn&#39;t change throughout the lifetime
+            //   of `self`.
+            </span>libc::munmap(<span class="self">self</span>.ptr.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>libc::c_void, <span class="self">self</span>.len)
         };
 
-        <span class="comment">// There is no reason for `munmap` to fail to deallocate a private annonymous mapping</span>
-        <span class="comment">// allocated by `mmap`.</span>
-        <span class="comment">// However, for the cases when it actually fails prefer to fail, in order to not leak</span>
-        <span class="comment">// and exhaust the virtual memory.</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">ret_val</span>, <span class="number">0</span>, <span class="string">&quot;munmap failed&quot;</span>);
+        <span class="comment">// There is no reason for `munmap` to fail to deallocate a private annonymous mapping
+        // allocated by `mmap`.
+        // However, for the cases when it actually fails prefer to fail, in order to not leak
+        // and exhaust the virtual memory.
+        </span><span class="macro">assert_eq!</span>(ret_val, <span class="number">0</span>, <span class="string">&quot;munmap failed&quot;</span>);
     }
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ByteBuf</span> {
-    <span class="ident">mmap</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Mmap</span><span class="op">&gt;</span>,
+<span class="kw">pub struct </span>ByteBuf {
+    mmap: <span class="prelude-ty">Option</span>&lt;Mmap&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">ByteBuf</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">mmap</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">len</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">Mmap::new</span>(<span class="ident">len</span>)<span class="question-mark">?</span>)
+<span class="kw">impl </span>ByteBuf {
+    <span class="kw">pub fn </span>new(len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
+        <span class="kw">let </span>mmap = <span class="kw">if </span>len == <span class="number">0 </span>{
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">Some</span>(Mmap::new(len)<span class="question-mark">?</span>)
         };
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">mmap</span> })
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ mmap })
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">realloc</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">new_len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">new_mmap</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">new_len</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_mmap</span> <span class="op">=</span> <span class="ident">Mmap::new</span>(<span class="ident">new_len</span>)<span class="question-mark">?</span>;
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cur_mmap</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">take</span>() {
-                <span class="kw">let</span> <span class="ident">src</span> <span class="op">=</span> <span class="ident">cur_mmap</span>.<span class="ident">as_slice</span>();
-                <span class="kw">let</span> <span class="ident">dst</span> <span class="op">=</span> <span class="ident">new_mmap</span>.<span class="ident">as_slice_mut</span>();
-                <span class="kw">let</span> <span class="ident">amount</span> <span class="op">=</span> <span class="ident">src</span>.<span class="ident">len</span>().<span class="ident">min</span>(<span class="ident">dst</span>.<span class="ident">len</span>());
-                <span class="ident">dst</span>[..<span class="ident">amount</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">src</span>[..<span class="ident">amount</span>]);
+    <span class="kw">pub fn </span>realloc(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new_len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+        <span class="kw">let </span>new_mmap = <span class="kw">if </span>new_len == <span class="number">0 </span>{
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>new_mmap = Mmap::new(new_len)<span class="question-mark">?</span>;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(cur_mmap) = <span class="self">self</span>.mmap.take() {
+                <span class="kw">let </span>src = cur_mmap.as_slice();
+                <span class="kw">let </span>dst = new_mmap.as_slice_mut();
+                <span class="kw">let </span>amount = src.len().min(dst.len());
+                dst[..amount].copy_from_slice(<span class="kw-2">&amp;</span>src[..amount]);
             }
-            <span class="prelude-val">Some</span>(<span class="ident">new_mmap</span>)
+            <span class="prelude-val">Some</span>(new_mmap)
         };
 
-        <span class="self">self</span>.<span class="ident">mmap</span> <span class="op">=</span> <span class="ident">new_mmap</span>;
+        <span class="self">self</span>.mmap = new_mmap;
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> <span class="ident">m</span>.<span class="ident">len</span>).<span class="ident">unwrap_or</span>(<span class="number">0</span>)
+    <span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.mmap.as_ref().map(|m| m.len).unwrap_or(<span class="number">0</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> <span class="ident">m</span>.<span class="ident">as_slice</span>()).<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[])
+    <span class="kw">pub fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="self">self</span>.mmap.as_ref().map(|m| m.as_slice()).unwrap_or(<span class="kw-2">&amp;</span>[])
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_slice_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>] {
-        <span class="self">self</span>.<span class="ident">mmap</span>
-            .<span class="ident">as_mut</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> <span class="ident">m</span>.<span class="ident">as_slice_mut</span>())
-            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;mut</span> [])
+    <span class="kw">pub fn </span>as_slice_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>[u8] {
+        <span class="self">self</span>.mmap
+            .as_mut()
+            .map(|m| m.as_slice_mut())
+            .unwrap_or(<span class="kw-2">&amp;mut </span>[])
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">erase</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">len</span>();
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="comment">// The order is important.</span>
-            <span class="comment">//</span>
-            <span class="comment">// 1. First we clear, and thus drop, the current mmap if any.</span>
-            <span class="comment">// 2. And then we create a new one.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Otherwise we double the peak memory consumption.</span>
-            <span class="self">self</span>.<span class="ident">mmap</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-            <span class="self">self</span>.<span class="ident">mmap</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Mmap::new</span>(<span class="ident">len</span>)<span class="question-mark">?</span>);
+    <span class="kw">pub fn </span>erase(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+        <span class="kw">let </span>len = <span class="self">self</span>.len();
+        <span class="kw">if </span>len &gt; <span class="number">0 </span>{
+            <span class="comment">// The order is important.
+            //
+            // 1. First we clear, and thus drop, the current mmap if any.
+            // 2. And then we create a new one.
+            //
+            // Otherwise we double the peak memory consumption.
+            </span><span class="self">self</span>.mmap = <span class="prelude-val">None</span>;
+            <span class="self">self</span>.mmap = <span class="prelude-val">Some</span>(Mmap::new(len)<span class="question-mark">?</span>);
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::ByteBuf</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">super</span>::ByteBuf;
 
-    <span class="kw">const</span> <span class="ident">PAGE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4096</span>;
+    <span class="kw">const </span>PAGE_SIZE: usize = <span class="number">4096</span>;
 
-    <span class="comment">// This is not required since wasm memories can only grow but nice to have.</span>
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">byte_buf_shrink</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">byte_buf</span> <span class="op">=</span> <span class="ident">ByteBuf::new</span>(<span class="ident">PAGE_SIZE</span> <span class="op">*</span> <span class="number">3</span>).<span class="ident">unwrap</span>();
-        <span class="ident">byte_buf</span>.<span class="ident">realloc</span>(<span class="ident">PAGE_SIZE</span> <span class="op">*</span> <span class="number">2</span>).<span class="ident">unwrap</span>();
+    <span class="comment">// This is not required since wasm memories can only grow but nice to have.
+    </span><span class="attribute">#[test]
+    </span><span class="kw">fn </span>byte_buf_shrink() {
+        <span class="kw">let </span><span class="kw-2">mut </span>byte_buf = ByteBuf::new(PAGE_SIZE * <span class="number">3</span>).unwrap();
+        byte_buf.realloc(PAGE_SIZE * <span class="number">2</span>).unwrap();
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmi" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

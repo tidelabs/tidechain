@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["ChildStateApiClient","Client implementation for the `ChildStateApi` RPC API."],["ChildStateApiServer","Server trait implementation for the `ChildStateApi` RPC API."]]});
+window.SIDEBAR_ITEMS = {"trait":[["ChildStateApiClient","Client implementation for the `ChildStateApi` RPC API."],["ChildStateApiServer","Server trait implementation for the `ChildStateApi` RPC API."]]};

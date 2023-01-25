@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/process/auxv.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>auxv.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/process/auxv.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>auxv.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../../normalize.css"><link rel="stylesheet" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../../dark.css" disabled><link rel="stylesheet" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -172,175 +167,174 @@
 <span id="167">167</span>
 <span id="168">168</span>
 <span id="169">169</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Linux auxv support.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Safety</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This uses raw pointers to locate and read the kernel-provided auxv array.</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Linux auxv support.
+//!
+//! # Safety
+//!
+//! This uses raw pointers to locate and read the kernel-provided auxv array.
+</span><span class="attribute">#![allow(unsafe_code)]
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::c</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::elf::Elf_Phdr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ffi::ZStr</span>;
-<span class="kw">use</span> <span class="ident">core::mem::size_of</span>;
-<span class="kw">use</span> <span class="ident">core::slice</span>;
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general</span>::{
-    <span class="ident">AT_CLKTCK</span>, <span class="ident">AT_EXECFN</span>, <span class="ident">AT_HWCAP</span>, <span class="ident">AT_HWCAP2</span>, <span class="ident">AT_NULL</span>, <span class="ident">AT_PAGESZ</span>, <span class="ident">AT_PHDR</span>, <span class="ident">AT_PHENT</span>, <span class="ident">AT_PHNUM</span>,
-    <span class="ident">AT_SYSINFO_EHDR</span>,
+</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::c;
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::elf::Elf_Phdr;
+<span class="kw">use </span><span class="kw">crate</span>::ffi::ZStr;
+<span class="kw">use </span>core::mem::size_of;
+<span class="kw">use </span>core::slice;
+<span class="kw">use </span>linux_raw_sys::general::{
+    AT_CLKTCK, AT_EXECFN, AT_HWCAP, AT_HWCAP2, AT_NULL, AT_PAGESZ, AT_PHDR, AT_PHENT, AT_PHNUM,
+    AT_SYSINFO_EHDR,
 };
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">page_size</span>() -&gt; <span class="ident">usize</span> {
-    <span class="ident">auxv</span>().<span class="ident">page_size</span>
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>page_size() -&gt; usize {
+    auxv().page_size
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">clock_ticks_per_second</span>() -&gt; <span class="ident">u64</span> {
-    <span class="ident">auxv</span>().<span class="ident">clock_ticks_per_second</span> <span class="kw">as</span> <span class="ident">u64</span>
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>clock_ticks_per_second() -&gt; u64 {
+    auxv().clock_ticks_per_second <span class="kw">as </span>u64
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">linux_hwcap</span>() -&gt; (<span class="ident">usize</span>, <span class="ident">usize</span>) {
-    <span class="kw">let</span> <span class="ident">auxv</span> <span class="op">=</span> <span class="ident">auxv</span>();
-    (<span class="ident">auxv</span>.<span class="ident">hwcap</span>, <span class="ident">auxv</span>.<span class="ident">hwcap2</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>linux_hwcap() -&gt; (usize, usize) {
+    <span class="kw">let </span>auxv = auxv();
+    (auxv.hwcap, auxv.hwcap2)
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">linux_execfn</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">ZStr</span> {
-    <span class="kw">unsafe</span> { <span class="ident">ZStr::from_ptr</span>(<span class="ident">auxv</span>().<span class="ident">execfn</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>) }
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>linux_execfn() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>ZStr {
+    <span class="kw">unsafe </span>{ ZStr::from_ptr(auxv().execfn <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>) }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">exe_phdrs</span>() -&gt; (<span class="kw-2">*const</span> <span class="ident">c::c_void</span>, <span class="ident">usize</span>) {
-    <span class="kw">let</span> <span class="ident">auxv</span> <span class="op">=</span> <span class="ident">auxv</span>();
-    (<span class="ident">auxv</span>.<span class="ident">phdr</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">c::c_void</span>, <span class="ident">auxv</span>.<span class="ident">phnum</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>exe_phdrs() -&gt; (<span class="kw-2">*const </span>c::c_void, usize) {
+    <span class="kw">let </span>auxv = auxv();
+    (auxv.phdr <span class="kw">as </span><span class="kw-2">*const </span>c::c_void, auxv.phnum)
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">in</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span></span>) <span class="kw">fn</span> <span class="ident">exe_phdrs_slice</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [<span class="ident">Elf_Phdr</span>] {
-    <span class="kw">let</span> (<span class="ident">ptr</span>, <span class="ident">len</span>) <span class="op">=</span> <span class="ident">exe_phdrs</span>();
-    <span class="kw">unsafe</span> { <span class="ident">slice::from_raw_parts</span>(<span class="ident">ptr</span>.<span class="ident">cast</span>(), <span class="ident">len</span>) }
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">fn </span>exe_phdrs_slice() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[Elf_Phdr] {
+    <span class="kw">let </span>(ptr, len) = exe_phdrs();
+    <span class="kw">unsafe </span>{ slice::from_raw_parts(ptr.cast(), len) }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">in</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span></span>) <span class="kw">fn</span> <span class="ident">sysinfo_ehdr</span>() -&gt; <span class="ident">usize</span> {
-    <span class="ident">auxv</span>().<span class="ident">sysinfo_ehdr</span>
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">fn </span>sysinfo_ehdr() -&gt; usize {
+    auxv().sysinfo_ehdr
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">auxv</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">Auxv</span> {
-    <span class="comment">// Safety: `AUXV` is initialized from the `.init_array` so it&#39;s ready</span>
-    <span class="comment">// before any user code calls this.</span>
-    <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="ident">AUXV</span> }
+<span class="attribute">#[inline]
+</span><span class="kw">fn </span>auxv() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Auxv {
+    <span class="comment">// Safety: `AUXV` is initialized from the `.init_array` so it&#39;s ready
+    // before any user code calls this.
+    </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>AUXV }
 }
 
-<span class="doccomment">/// A struct for holding fields obtained from the kernel-provided auxv array.</span>
-<span class="kw">struct</span> <span class="ident">Auxv</span> {
-    <span class="ident">page_size</span>: <span class="ident">usize</span>,
-    <span class="ident">clock_ticks_per_second</span>: <span class="ident">usize</span>,
-    <span class="ident">hwcap</span>: <span class="ident">usize</span>,
-    <span class="ident">hwcap2</span>: <span class="ident">usize</span>,
-    <span class="ident">sysinfo_ehdr</span>: <span class="ident">usize</span>,
-    <span class="ident">phdr</span>: <span class="ident">usize</span>,
-    <span class="ident">phnum</span>: <span class="ident">usize</span>,
-    <span class="ident">execfn</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// A struct for holding fields obtained from the kernel-provided auxv array.
+</span><span class="kw">struct </span>Auxv {
+    page_size: usize,
+    clock_ticks_per_second: usize,
+    hwcap: usize,
+    hwcap2: usize,
+    sysinfo_ehdr: usize,
+    phdr: usize,
+    phnum: usize,
+    execfn: usize,
 }
 
-<span class="doccomment">/// Data obtained from the kernel-provided auxv array. This is initialized at</span>
-<span class="doccomment">/// program startup below.</span>
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">AUXV</span>: <span class="ident">Auxv</span> <span class="op">=</span> <span class="ident">Auxv</span> {
-    <span class="ident">page_size</span>: <span class="number">0</span>,
-    <span class="ident">clock_ticks_per_second</span>: <span class="number">0</span>,
-    <span class="ident">hwcap</span>: <span class="number">0</span>,
-    <span class="ident">hwcap2</span>: <span class="number">0</span>,
-    <span class="ident">sysinfo_ehdr</span>: <span class="number">0</span>,
-    <span class="ident">phdr</span>: <span class="number">0</span>,
-    <span class="ident">phnum</span>: <span class="number">0</span>,
-    <span class="ident">execfn</span>: <span class="number">0</span>,
+<span class="doccomment">/// Data obtained from the kernel-provided auxv array. This is initialized at
+/// program startup below.
+</span><span class="kw">static </span><span class="kw-2">mut </span>AUXV: Auxv = Auxv {
+    page_size: <span class="number">0</span>,
+    clock_ticks_per_second: <span class="number">0</span>,
+    hwcap: <span class="number">0</span>,
+    hwcap2: <span class="number">0</span>,
+    sysinfo_ehdr: <span class="number">0</span>,
+    phdr: <span class="number">0</span>,
+    phnum: <span class="number">0</span>,
+    execfn: <span class="number">0</span>,
 };
 
-<span class="doccomment">/// GLIBC passes argc, argv, and envp to functions in .init_array, as a</span>
-<span class="doccomment">/// non-standard extension. Use priority 99 so that we run before any</span>
-<span class="doccomment">/// normal user-defined constructor functions.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>, <span class="ident">not</span>(<span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;mustang&quot;</span>)))]</span>
-<span class="attribute">#[<span class="ident">used</span>]</span>
-<span class="attribute">#[<span class="ident">link_section</span> <span class="op">=</span> <span class="string">&quot;.init_array.00099&quot;</span>]</span>
-<span class="kw">static</span> <span class="ident">INIT_ARRAY</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">c::c_int</span>, <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>) <span class="op">=</span> {
-    <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">function</span>(<span class="ident">_argc</span>: <span class="ident">c::c_int</span>, <span class="ident">_argv</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">envp</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>) {
-        <span class="ident">init_from_envp</span>(<span class="ident">envp</span>);
+<span class="doccomment">/// GLIBC passes argc, argv, and envp to functions in .init_array, as a
+/// non-standard extension. Use priority 99 so that we run before any
+/// normal user-defined constructor functions.
+</span><span class="attribute">#[cfg(all(target_env = <span class="string">&quot;gnu&quot;</span>, not(target_vendor = <span class="string">&quot;mustang&quot;</span>)))]
+#[used]
+#[link_section = <span class="string">&quot;.init_array.00099&quot;</span>]
+</span><span class="kw">static </span>INIT_ARRAY: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(c::c_int, <span class="kw-2">*mut *mut </span>u8, <span class="kw-2">*mut *mut </span>u8) = {
+    <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>function(_argc: c::c_int, _argv: <span class="kw-2">*mut *mut </span>u8, envp: <span class="kw-2">*mut *mut </span>u8) {
+        init_from_envp(envp);
     }
-    <span class="ident">function</span>
+    function
 };
 
-<span class="doccomment">/// For musl etc., assume that `__environ` is available and points to the</span>
-<span class="doccomment">/// original environment from the kernel, so we can find the auxv array in</span>
-<span class="doccomment">/// memory after it. Use priority 99 so that we run before any normal</span>
-<span class="doccomment">/// user-defined constructor functions.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// &lt;https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---environ.html&gt;</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>, <span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;mustang&quot;</span>)))]</span>
-<span class="attribute">#[<span class="ident">used</span>]</span>
-<span class="attribute">#[<span class="ident">link_section</span> <span class="op">=</span> <span class="string">&quot;.init_array.00099&quot;</span>]</span>
-<span class="kw">static</span> <span class="ident">INIT_ARRAY</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>() <span class="op">=</span> {
-    <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">function</span>() {
-        <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> {
-            <span class="kw">static</span> <span class="ident">__environ</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>;
+<span class="doccomment">/// For musl etc., assume that `__environ` is available and points to the
+/// original environment from the kernel, so we can find the auxv array in
+/// memory after it. Use priority 99 so that we run before any normal
+/// user-defined constructor functions.
+///
+/// &lt;https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---environ.html&gt;
+</span><span class="attribute">#[cfg(not(any(target_env = <span class="string">&quot;gnu&quot;</span>, target_vendor = <span class="string">&quot;mustang&quot;</span>)))]
+#[used]
+#[link_section = <span class="string">&quot;.init_array.00099&quot;</span>]
+</span><span class="kw">static </span>INIT_ARRAY: <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>() = {
+    <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>function() {
+        <span class="kw">extern </span><span class="string">&quot;C&quot; </span>{
+            <span class="kw">static </span>__environ: <span class="kw-2">*mut *mut </span>u8;
         }
 
-        <span class="ident">init_from_envp</span>(<span class="ident">__environ</span>)
+        init_from_envp(__environ)
     }
-    <span class="ident">function</span>
+    function
 };
 
-<span class="doccomment">/// On mustang, we export a function to be called during initialization.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;mustang&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">init</span>(<span class="ident">envp</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>) {
-    <span class="ident">init_from_envp</span>(<span class="ident">envp</span>);
+<span class="doccomment">/// On mustang, we export a function to be called during initialization.
+</span><span class="attribute">#[cfg(target_vendor = <span class="string">&quot;mustang&quot;</span>)]
+#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>init(envp: <span class="kw-2">*mut *mut </span>u8) {
+    init_from_envp(envp);
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This must be passed a pointer to the environment variable buffer</span>
-<span class="doccomment">/// provided by the kernel, which is followed in memory by the auxv array.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">init_from_envp</span>(<span class="kw-2">mut</span> <span class="ident">envp</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>) {
-    <span class="kw">while</span> <span class="op">!</span>(<span class="kw-2">*</span><span class="ident">envp</span>).<span class="ident">is_null</span>() {
-        <span class="ident">envp</span> <span class="op">=</span> <span class="ident">envp</span>.<span class="ident">add</span>(<span class="number">1</span>);
+<span class="doccomment">/// # Safety
+///
+/// This must be passed a pointer to the environment variable buffer
+/// provided by the kernel, which is followed in memory by the auxv array.
+</span><span class="kw">unsafe fn </span>init_from_envp(<span class="kw-2">mut </span>envp: <span class="kw-2">*mut *mut </span>u8) {
+    <span class="kw">while </span>!(<span class="kw-2">*</span>envp).is_null() {
+        envp = envp.add(<span class="number">1</span>);
     }
-    <span class="ident">init_from_auxp</span>(<span class="ident">envp</span>.<span class="ident">add</span>(<span class="number">1</span>).<span class="ident">cast</span>())
+    init_from_auxp(envp.add(<span class="number">1</span>).cast())
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This must be passed a pointer to the auxv array provided by the kernel.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">init_from_auxp</span>(<span class="kw-2">mut</span> <span class="ident">auxp</span>: <span class="kw-2">*const</span> <span class="ident">Elf_auxv_t</span>) {
-    <span class="kw">loop</span> {
-        <span class="kw">let</span> <span class="ident">Elf_auxv_t</span> { <span class="ident">a_type</span>, <span class="ident">a_val</span> } <span class="op">=</span> <span class="kw-2">*</span><span class="ident">auxp</span>;
-        <span class="kw">match</span> <span class="ident">a_type</span> <span class="kw">as</span> <span class="kw">_</span> {
-            <span class="ident">AT_PAGESZ</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">page_size</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_CLKTCK</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">clock_ticks_per_second</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_HWCAP</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">hwcap</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_HWCAP2</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">hwcap2</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_SYSINFO_EHDR</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">sysinfo_ehdr</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_PHDR</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">phdr</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_PHNUM</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">phnum</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_PHENT</span> =&gt; <span class="macro">assert_eq!</span>(<span class="ident">a_val</span>, <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Phdr</span><span class="op">&gt;</span>()),
-            <span class="ident">AT_EXECFN</span> =&gt; <span class="ident">AUXV</span>.<span class="ident">execfn</span> <span class="op">=</span> <span class="ident">a_val</span>,
-            <span class="ident">AT_NULL</span> =&gt; <span class="kw">break</span>,
-            <span class="kw">_</span> =&gt; (),
+<span class="doccomment">/// # Safety
+///
+/// This must be passed a pointer to the auxv array provided by the kernel.
+</span><span class="kw">unsafe fn </span>init_from_auxp(<span class="kw-2">mut </span>auxp: <span class="kw-2">*const </span>Elf_auxv_t) {
+    <span class="kw">loop </span>{
+        <span class="kw">let </span>Elf_auxv_t { a_type, a_val } = <span class="kw-2">*</span>auxp;
+        <span class="kw">match </span>a_type <span class="kw">as _ </span>{
+            AT_PAGESZ =&gt; AUXV.page_size = a_val,
+            AT_CLKTCK =&gt; AUXV.clock_ticks_per_second = a_val,
+            AT_HWCAP =&gt; AUXV.hwcap = a_val,
+            AT_HWCAP2 =&gt; AUXV.hwcap2 = a_val,
+            AT_SYSINFO_EHDR =&gt; AUXV.sysinfo_ehdr = a_val,
+            AT_PHDR =&gt; AUXV.phdr = a_val,
+            AT_PHNUM =&gt; AUXV.phnum = a_val,
+            AT_PHENT =&gt; <span class="macro">assert_eq!</span>(a_val, size_of::&lt;Elf_Phdr&gt;()),
+            AT_EXECFN =&gt; AUXV.execfn = a_val,
+            AT_NULL =&gt; <span class="kw">break</span>,
+            <span class="kw">_ </span>=&gt; (),
         }
-        <span class="ident">auxp</span> <span class="op">=</span> <span class="ident">auxp</span>.<span class="ident">add</span>(<span class="number">1</span>);
+        auxp = auxp.add(<span class="number">1</span>);
     }
 }
 
-<span class="comment">// ELF ABI</span>
+<span class="comment">// ELF ABI
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">struct</span> <span class="ident">Elf_auxv_t</span> {
-    <span class="ident">a_type</span>: <span class="ident">usize</span>,
-    <span class="ident">a_val</span>: <span class="ident">usize</span>,
+</span><span class="attribute">#[repr(C)]
+#[derive(Copy, Clone)]
+</span><span class="kw">struct </span>Elf_auxv_t {
+    a_type: usize,
+    a_val: usize,
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

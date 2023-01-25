@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/memory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>memory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/memory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>memory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -673,655 +668,655 @@
 <span id="668">668</span>
 <span id="669">669</span>
 <span id="670">670</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Memory management for linear memories.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! `RuntimeLinearMemory` is to WebAssembly linear memories what `Table` is to WebAssembly tables.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Memory management for linear memories.
+//!
+//! `RuntimeLinearMemory` is to WebAssembly linear memories what `Table` is to WebAssembly tables.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mmap::Mmap</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::vmcontext::VMMemoryDefinition</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::MemoryImage</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::MemoryImageSlot</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Store</span>;
-<span class="kw">use</span> <span class="ident">anyhow::Error</span>;
-<span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">bail</span>, <span class="ident">format_err</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">more_asserts</span>::{<span class="ident">assert_ge</span>, <span class="ident">assert_le</span>};
-<span class="kw">use</span> <span class="ident">std::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_environ</span>::{<span class="ident">MemoryPlan</span>, <span class="ident">MemoryStyle</span>, <span class="ident">WASM32_MAX_PAGES</span>, <span class="ident">WASM64_MAX_PAGES</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::mmap::Mmap;
+<span class="kw">use </span><span class="kw">crate</span>::vmcontext::VMMemoryDefinition;
+<span class="kw">use </span><span class="kw">crate</span>::MemoryImage;
+<span class="kw">use </span><span class="kw">crate</span>::MemoryImageSlot;
+<span class="kw">use </span><span class="kw">crate</span>::Store;
+<span class="kw">use </span>anyhow::Error;
+<span class="kw">use </span>anyhow::{bail, format_err, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>more_asserts::{assert_ge, assert_le};
+<span class="kw">use </span>std::convert::TryFrom;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>wasmtime_environ::{MemoryPlan, MemoryStyle, WASM32_MAX_PAGES, WASM64_MAX_PAGES};
 
-<span class="kw">const</span> <span class="ident">WASM_PAGE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">wasmtime_environ::WASM_PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>;
-<span class="kw">const</span> <span class="ident">WASM_PAGE_SIZE_U64</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="ident">wasmtime_environ::WASM_PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">u64</span>;
+<span class="kw">const </span>WASM_PAGE_SIZE: usize = wasmtime_environ::WASM_PAGE_SIZE <span class="kw">as </span>usize;
+<span class="kw">const </span>WASM_PAGE_SIZE_U64: u64 = wasmtime_environ::WASM_PAGE_SIZE <span class="kw">as </span>u64;
 
-<span class="doccomment">/// A memory allocator</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">RuntimeMemoryCreator</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-    <span class="doccomment">/// Create new RuntimeLinearMemory</span>
-    <span class="kw">fn</span> <span class="ident">new_memory</span>(
+<span class="doccomment">/// A memory allocator
+</span><span class="kw">pub trait </span>RuntimeMemoryCreator: Send + Sync {
+    <span class="doccomment">/// Create new RuntimeLinearMemory
+    </span><span class="kw">fn </span>new_memory(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryPlan</span>,
-        <span class="ident">minimum</span>: <span class="ident">usize</span>,
-        <span class="ident">maximum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-        <span class="comment">// Optionally, a memory image for CoW backing.</span>
-        <span class="ident">memory_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RuntimeLinearMemory</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        plan: <span class="kw-2">&amp;</span>MemoryPlan,
+        minimum: usize,
+        maximum: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+        <span class="comment">// Optionally, a memory image for CoW backing.
+        </span>memory_image: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Arc&lt;MemoryImage&gt;&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>RuntimeLinearMemory&gt;&gt;;
 }
 
-<span class="doccomment">/// A default memory allocator used by Wasmtime</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DefaultMemoryCreator</span>;
+<span class="doccomment">/// A default memory allocator used by Wasmtime
+</span><span class="kw">pub struct </span>DefaultMemoryCreator;
 
-<span class="kw">impl</span> <span class="ident">RuntimeMemoryCreator</span> <span class="kw">for</span> <span class="ident">DefaultMemoryCreator</span> {
-    <span class="doccomment">/// Create new MmapMemory</span>
-    <span class="kw">fn</span> <span class="ident">new_memory</span>(
+<span class="kw">impl </span>RuntimeMemoryCreator <span class="kw">for </span>DefaultMemoryCreator {
+    <span class="doccomment">/// Create new MmapMemory
+    </span><span class="kw">fn </span>new_memory(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryPlan</span>,
-        <span class="ident">minimum</span>: <span class="ident">usize</span>,
-        <span class="ident">maximum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-        <span class="ident">memory_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RuntimeLinearMemory</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">MmapMemory::new</span>(
-            <span class="ident">plan</span>,
-            <span class="ident">minimum</span>,
-            <span class="ident">maximum</span>,
-            <span class="ident">memory_image</span>,
+        plan: <span class="kw-2">&amp;</span>MemoryPlan,
+        minimum: usize,
+        maximum: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+        memory_image: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Arc&lt;MemoryImage&gt;&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>RuntimeLinearMemory&gt;&gt; {
+        <span class="prelude-val">Ok</span>(Box::new(MmapMemory::new(
+            plan,
+            minimum,
+            maximum,
+            memory_image,
         )<span class="question-mark">?</span>))
     }
 }
 
-<span class="doccomment">/// A linear memory</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">RuntimeLinearMemory</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-    <span class="doccomment">/// Returns the number of allocated bytes.</span>
-    <span class="kw">fn</span> <span class="ident">byte_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span>;
+<span class="doccomment">/// A linear memory
+</span><span class="kw">pub trait </span>RuntimeLinearMemory: Send + Sync {
+    <span class="doccomment">/// Returns the number of allocated bytes.
+    </span><span class="kw">fn </span>byte_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
 
-    <span class="doccomment">/// Returns the maximum number of bytes the memory can grow to.</span>
-    <span class="doccomment">/// Returns `None` if the memory is unbounded.</span>
-    <span class="kw">fn</span> <span class="ident">maximum_byte_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Returns the maximum number of bytes the memory can grow to.
+    /// Returns `None` if the memory is unbounded.
+    </span><span class="kw">fn </span>maximum_byte_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;;
 
-    <span class="doccomment">/// Grow memory to the specified amount of bytes.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns an error if memory can&#39;t be grown by the specified amount</span>
-    <span class="doccomment">/// of bytes.</span>
-    <span class="kw">fn</span> <span class="ident">grow_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+    <span class="doccomment">/// Grow memory to the specified amount of bytes.
+    ///
+    /// Returns an error if memory can&#39;t be grown by the specified amount
+    /// of bytes.
+    </span><span class="kw">fn </span>grow_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>, size: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
 
-    <span class="doccomment">/// Return a `VMMemoryDefinition` for exposing the memory to compiled wasm</span>
-    <span class="doccomment">/// code.</span>
-    <span class="kw">fn</span> <span class="ident">vmmemory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">VMMemoryDefinition</span>;
+    <span class="doccomment">/// Return a `VMMemoryDefinition` for exposing the memory to compiled wasm
+    /// code.
+    </span><span class="kw">fn </span>vmmemory(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; VMMemoryDefinition;
 
-    <span class="doccomment">/// Does this memory need initialization? It may not if it already</span>
-    <span class="doccomment">/// has initial contents courtesy of the `MemoryImage` passed to</span>
-    <span class="doccomment">/// `RuntimeMemoryCreator::new_memory()`.</span>
-    <span class="kw">fn</span> <span class="ident">needs_init</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span>;
+    <span class="doccomment">/// Does this memory need initialization? It may not if it already
+    /// has initial contents courtesy of the `MemoryImage` passed to
+    /// `RuntimeMemoryCreator::new_memory()`.
+    </span><span class="kw">fn </span>needs_init(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
 }
 
-<span class="doccomment">/// A linear memory instance.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MmapMemory</span> {
-    <span class="comment">// The underlying allocation.</span>
-    <span class="ident">mmap</span>: <span class="ident">Mmap</span>,
+<span class="doccomment">/// A linear memory instance.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>MmapMemory {
+    <span class="comment">// The underlying allocation.
+    </span>mmap: Mmap,
 
-    <span class="comment">// The number of bytes that are accessible in `mmap` and available for</span>
-    <span class="comment">// reading and writing.</span>
-    <span class="comment">//</span>
-    <span class="comment">// This region starts at `pre_guard_size` offset from the base of `mmap`.</span>
-    <span class="ident">accessible</span>: <span class="ident">usize</span>,
+    <span class="comment">// The number of bytes that are accessible in `mmap` and available for
+    // reading and writing.
+    //
+    // This region starts at `pre_guard_size` offset from the base of `mmap`.
+    </span>accessible: usize,
 
-    <span class="comment">// The optional maximum accessible size, in bytes, for this linear memory.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Note that this maximum does not factor in guard pages, so this isn&#39;t the</span>
-    <span class="comment">// maximum size of the linear address space reservation for this memory.</span>
-    <span class="ident">maximum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+    <span class="comment">// The optional maximum accessible size, in bytes, for this linear memory.
+    //
+    // Note that this maximum does not factor in guard pages, so this isn&#39;t the
+    // maximum size of the linear address space reservation for this memory.
+    </span>maximum: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 
-    <span class="comment">// The amount of extra bytes to reserve whenever memory grows. This is</span>
-    <span class="comment">// specified so that the cost of repeated growth is amortized.</span>
-    <span class="ident">extra_to_reserve_on_growth</span>: <span class="ident">usize</span>,
+    <span class="comment">// The amount of extra bytes to reserve whenever memory grows. This is
+    // specified so that the cost of repeated growth is amortized.
+    </span>extra_to_reserve_on_growth: usize,
 
-    <span class="comment">// Size in bytes of extra guard pages before the start and after the end to</span>
-    <span class="comment">// optimize loads and stores with constant offsets.</span>
-    <span class="ident">pre_guard_size</span>: <span class="ident">usize</span>,
-    <span class="ident">offset_guard_size</span>: <span class="ident">usize</span>,
+    <span class="comment">// Size in bytes of extra guard pages before the start and after the end to
+    // optimize loads and stores with constant offsets.
+    </span>pre_guard_size: usize,
+    offset_guard_size: usize,
 
-    <span class="comment">// An optional CoW mapping that provides the initial content of this</span>
-    <span class="comment">// MmapMemory, if mapped.</span>
-    <span class="ident">memory_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MemoryImageSlot</span><span class="op">&gt;</span>,
+    <span class="comment">// An optional CoW mapping that provides the initial content of this
+    // MmapMemory, if mapped.
+    </span>memory_image: <span class="prelude-ty">Option</span>&lt;MemoryImageSlot&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">MmapMemory</span> {
-    <span class="doccomment">/// Create a new linear memory instance with specified minimum and maximum number of wasm pages.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryPlan</span>,
-        <span class="ident">minimum</span>: <span class="ident">usize</span>,
-        <span class="kw-2">mut</span> <span class="ident">maximum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-        <span class="ident">memory_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="comment">// It&#39;s a programmer error for these two configuration values to exceed</span>
-        <span class="comment">// the host available address space, so panic if such a configuration is</span>
-        <span class="comment">// found (mostly an issue for hypothetical 32-bit hosts).</span>
-        <span class="kw">let</span> <span class="ident">offset_guard_bytes</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">plan</span>.<span class="ident">offset_guard_size</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">pre_guard_bytes</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">plan</span>.<span class="ident">pre_guard_size</span>).<span class="ident">unwrap</span>();
+<span class="kw">impl </span>MmapMemory {
+    <span class="doccomment">/// Create a new linear memory instance with specified minimum and maximum number of wasm pages.
+    </span><span class="kw">pub fn </span>new(
+        plan: <span class="kw-2">&amp;</span>MemoryPlan,
+        minimum: usize,
+        <span class="kw-2">mut </span>maximum: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+        memory_image: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Arc&lt;MemoryImage&gt;&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="comment">// It&#39;s a programmer error for these two configuration values to exceed
+        // the host available address space, so panic if such a configuration is
+        // found (mostly an issue for hypothetical 32-bit hosts).
+        </span><span class="kw">let </span>offset_guard_bytes = usize::try_from(plan.offset_guard_size).unwrap();
+        <span class="kw">let </span>pre_guard_bytes = usize::try_from(plan.pre_guard_size).unwrap();
 
-        <span class="kw">let</span> (<span class="ident">alloc_bytes</span>, <span class="ident">extra_to_reserve_on_growth</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">plan</span>.<span class="ident">style</span> {
-            <span class="comment">// Dynamic memories start with the minimum size plus the `reserve`</span>
-            <span class="comment">// amount specified to grow into.</span>
-            <span class="ident">MemoryStyle::Dynamic</span> { <span class="ident">reserve</span> } =&gt; (<span class="ident">minimum</span>, <span class="ident">usize::try_from</span>(<span class="ident">reserve</span>).<span class="ident">unwrap</span>()),
+        <span class="kw">let </span>(alloc_bytes, extra_to_reserve_on_growth) = <span class="kw">match </span>plan.style {
+            <span class="comment">// Dynamic memories start with the minimum size plus the `reserve`
+            // amount specified to grow into.
+            </span>MemoryStyle::Dynamic { reserve } =&gt; (minimum, usize::try_from(reserve).unwrap()),
 
-            <span class="comment">// Static memories will never move in memory and consequently get</span>
-            <span class="comment">// their entire allocation up-front with no extra room to grow into.</span>
-            <span class="comment">// Note that the `maximum` is adjusted here to whatever the smaller</span>
-            <span class="comment">// of the two is, the `maximum` given or the `bound` specified for</span>
-            <span class="comment">// this memory.</span>
-            <span class="ident">MemoryStyle::Static</span> { <span class="ident">bound</span> } =&gt; {
-                <span class="macro">assert_ge!</span>(<span class="ident">bound</span>, <span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">minimum</span>);
-                <span class="kw">let</span> <span class="ident">bound_bytes</span> <span class="op">=</span>
-                    <span class="ident">usize::try_from</span>(<span class="ident">bound</span>.<span class="ident">checked_mul</span>(<span class="ident">WASM_PAGE_SIZE_U64</span>).<span class="ident">unwrap</span>()).<span class="ident">unwrap</span>();
-                <span class="ident">maximum</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">bound_bytes</span>.<span class="ident">min</span>(<span class="ident">maximum</span>.<span class="ident">unwrap_or</span>(<span class="ident">usize::MAX</span>)));
-                (<span class="ident">bound_bytes</span>, <span class="number">0</span>)
+            <span class="comment">// Static memories will never move in memory and consequently get
+            // their entire allocation up-front with no extra room to grow into.
+            // Note that the `maximum` is adjusted here to whatever the smaller
+            // of the two is, the `maximum` given or the `bound` specified for
+            // this memory.
+            </span>MemoryStyle::Static { bound } =&gt; {
+                <span class="macro">assert_ge!</span>(bound, plan.memory.minimum);
+                <span class="kw">let </span>bound_bytes =
+                    usize::try_from(bound.checked_mul(WASM_PAGE_SIZE_U64).unwrap()).unwrap();
+                maximum = <span class="prelude-val">Some</span>(bound_bytes.min(maximum.unwrap_or(usize::MAX)));
+                (bound_bytes, <span class="number">0</span>)
             }
         };
-        <span class="kw">let</span> <span class="ident">request_bytes</span> <span class="op">=</span> <span class="ident">pre_guard_bytes</span>
-            .<span class="ident">checked_add</span>(<span class="ident">alloc_bytes</span>)
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">checked_add</span>(<span class="ident">extra_to_reserve_on_growth</span>))
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">checked_add</span>(<span class="ident">offset_guard_bytes</span>))
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format_err!</span>(<span class="string">&quot;cannot allocate {} with guard regions&quot;</span>, <span class="ident">minimum</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>request_bytes = pre_guard_bytes
+            .checked_add(alloc_bytes)
+            .and_then(|i| i.checked_add(extra_to_reserve_on_growth))
+            .and_then(|i| i.checked_add(offset_guard_bytes))
+            .ok_or_else(|| <span class="macro">format_err!</span>(<span class="string">&quot;cannot allocate {} with guard regions&quot;</span>, minimum))<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mmap</span> <span class="op">=</span> <span class="ident">Mmap::accessible_reserved</span>(<span class="number">0</span>, <span class="ident">request_bytes</span>)<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="ident">minimum</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="ident">mmap</span>.<span class="ident">make_accessible</span>(<span class="ident">pre_guard_bytes</span>, <span class="ident">minimum</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>mmap = Mmap::accessible_reserved(<span class="number">0</span>, request_bytes)<span class="question-mark">?</span>;
+        <span class="kw">if </span>minimum &gt; <span class="number">0 </span>{
+            mmap.make_accessible(pre_guard_bytes, minimum)<span class="question-mark">?</span>;
         }
 
-        <span class="comment">// If a memory image was specified, try to create the MemoryImageSlot on</span>
-        <span class="comment">// top of our mmap.</span>
-        <span class="kw">let</span> <span class="ident">memory_image</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">memory_image</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">image</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">mmap</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">add</span>(<span class="ident">pre_guard_bytes</span>) };
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">slot</span> <span class="op">=</span> <span class="ident">MemoryImageSlot::create</span>(
-                    <span class="ident">base</span>.<span class="ident">cast</span>(),
-                    <span class="ident">minimum</span>,
-                    <span class="ident">alloc_bytes</span> <span class="op">+</span> <span class="ident">extra_to_reserve_on_growth</span>,
+        <span class="comment">// If a memory image was specified, try to create the MemoryImageSlot on
+        // top of our mmap.
+        </span><span class="kw">let </span>memory_image = <span class="kw">match </span>memory_image {
+            <span class="prelude-val">Some</span>(image) =&gt; {
+                <span class="kw">let </span>base = <span class="kw">unsafe </span>{ mmap.as_mut_ptr().add(pre_guard_bytes) };
+                <span class="kw">let </span><span class="kw-2">mut </span>slot = MemoryImageSlot::create(
+                    base.cast(),
+                    minimum,
+                    alloc_bytes + extra_to_reserve_on_growth,
                 );
-                <span class="ident">slot</span>.<span class="ident">instantiate</span>(<span class="ident">minimum</span>, <span class="prelude-val">Some</span>(<span class="ident">image</span>))<span class="question-mark">?</span>;
-                <span class="comment">// On drop, we will unmap our mmap&#39;d range that this slot was</span>
-                <span class="comment">// mapped on top of, so there is no need for the slot to wipe</span>
-                <span class="comment">// it with an anonymous mapping first.</span>
-                <span class="ident">slot</span>.<span class="ident">no_clear_on_drop</span>();
-                <span class="prelude-val">Some</span>(<span class="ident">slot</span>)
+                slot.instantiate(minimum, <span class="prelude-val">Some</span>(image))<span class="question-mark">?</span>;
+                <span class="comment">// On drop, we will unmap our mmap&#39;d range that this slot was
+                // mapped on top of, so there is no need for the slot to wipe
+                // it with an anonymous mapping first.
+                </span>slot.no_clear_on_drop();
+                <span class="prelude-val">Some</span>(slot)
             }
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         };
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">mmap</span>,
-            <span class="ident">accessible</span>: <span class="ident">minimum</span>,
-            <span class="ident">maximum</span>,
-            <span class="ident">pre_guard_size</span>: <span class="ident">pre_guard_bytes</span>,
-            <span class="ident">offset_guard_size</span>: <span class="ident">offset_guard_bytes</span>,
-            <span class="ident">extra_to_reserve_on_growth</span>,
-            <span class="ident">memory_image</span>,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            mmap,
+            accessible: minimum,
+            maximum,
+            pre_guard_size: pre_guard_bytes,
+            offset_guard_size: offset_guard_bytes,
+            extra_to_reserve_on_growth,
+            memory_image,
         })
     }
 }
 
-<span class="kw">impl</span> <span class="ident">RuntimeLinearMemory</span> <span class="kw">for</span> <span class="ident">MmapMemory</span> {
-    <span class="kw">fn</span> <span class="ident">byte_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">accessible</span>
+<span class="kw">impl </span>RuntimeLinearMemory <span class="kw">for </span>MmapMemory {
+    <span class="kw">fn </span>byte_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.accessible
     }
 
-    <span class="kw">fn</span> <span class="ident">maximum_byte_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">maximum</span>
+    <span class="kw">fn </span>maximum_byte_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="self">self</span>.maximum
     }
 
-    <span class="kw">fn</span> <span class="ident">grow_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">new_size</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">new_size</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="self">self</span>.<span class="ident">offset_guard_size</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">pre_guard_size</span> {
-            <span class="comment">// If the new size of this heap exceeds the current size of the</span>
-            <span class="comment">// allocation we have, then this must be a dynamic heap. Use</span>
-            <span class="comment">// `new_size` to calculate a new size of an allocation, allocate it,</span>
-            <span class="comment">// and then copy over the memory from before.</span>
-            <span class="kw">let</span> <span class="ident">request_bytes</span> <span class="op">=</span> <span class="self">self</span>
-                .<span class="ident">pre_guard_size</span>
-                .<span class="ident">checked_add</span>(<span class="ident">new_size</span>)
-                .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">checked_add</span>(<span class="self">self</span>.<span class="ident">extra_to_reserve_on_growth</span>))
-                .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">checked_add</span>(<span class="self">self</span>.<span class="ident">offset_guard_size</span>))
-                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format_err!</span>(<span class="string">&quot;overflow calculating size of memory allocation&quot;</span>))<span class="question-mark">?</span>;
+    <span class="kw">fn </span>grow_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new_size: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span>new_size &gt; <span class="self">self</span>.mmap.len() - <span class="self">self</span>.offset_guard_size - <span class="self">self</span>.pre_guard_size {
+            <span class="comment">// If the new size of this heap exceeds the current size of the
+            // allocation we have, then this must be a dynamic heap. Use
+            // `new_size` to calculate a new size of an allocation, allocate it,
+            // and then copy over the memory from before.
+            </span><span class="kw">let </span>request_bytes = <span class="self">self
+                </span>.pre_guard_size
+                .checked_add(new_size)
+                .and_then(|s| s.checked_add(<span class="self">self</span>.extra_to_reserve_on_growth))
+                .and_then(|s| s.checked_add(<span class="self">self</span>.offset_guard_size))
+                .ok_or_else(|| <span class="macro">format_err!</span>(<span class="string">&quot;overflow calculating size of memory allocation&quot;</span>))<span class="question-mark">?</span>;
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_mmap</span> <span class="op">=</span> <span class="ident">Mmap::accessible_reserved</span>(<span class="number">0</span>, <span class="ident">request_bytes</span>)<span class="question-mark">?</span>;
-            <span class="ident">new_mmap</span>.<span class="ident">make_accessible</span>(<span class="self">self</span>.<span class="ident">pre_guard_size</span>, <span class="ident">new_size</span>)<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>new_mmap = Mmap::accessible_reserved(<span class="number">0</span>, request_bytes)<span class="question-mark">?</span>;
+            new_mmap.make_accessible(<span class="self">self</span>.pre_guard_size, new_size)<span class="question-mark">?</span>;
 
-            <span class="ident">new_mmap</span>.<span class="ident">as_mut_slice</span>()[<span class="self">self</span>.<span class="ident">pre_guard_size</span>..][..<span class="self">self</span>.<span class="ident">accessible</span>]
-                .<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">as_slice</span>()[<span class="self">self</span>.<span class="ident">pre_guard_size</span>..][..<span class="self">self</span>.<span class="ident">accessible</span>]);
+            new_mmap.as_mut_slice()[<span class="self">self</span>.pre_guard_size..][..<span class="self">self</span>.accessible]
+                .copy_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.mmap.as_slice()[<span class="self">self</span>.pre_guard_size..][..<span class="self">self</span>.accessible]);
 
-            <span class="comment">// Now drop the MemoryImageSlot, if any. We&#39;ve lost the CoW</span>
-            <span class="comment">// advantages by explicitly copying all data, but we have</span>
-            <span class="comment">// preserved all of its content; so we no longer need the</span>
-            <span class="comment">// mapping. We need to do this before we (implicitly) drop the</span>
-            <span class="comment">// `mmap` field by overwriting it below.</span>
-            <span class="ident">drop</span>(<span class="self">self</span>.<span class="ident">memory_image</span>.<span class="ident">take</span>());
+            <span class="comment">// Now drop the MemoryImageSlot, if any. We&#39;ve lost the CoW
+            // advantages by explicitly copying all data, but we have
+            // preserved all of its content; so we no longer need the
+            // mapping. We need to do this before we (implicitly) drop the
+            // `mmap` field by overwriting it below.
+            </span>drop(<span class="self">self</span>.memory_image.take());
 
-            <span class="self">self</span>.<span class="ident">mmap</span> <span class="op">=</span> <span class="ident">new_mmap</span>;
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">image</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">memory_image</span>.<span class="ident">as_mut</span>() {
-            <span class="comment">// MemoryImageSlot has its own growth mechanisms; defer to its</span>
-            <span class="comment">// implementation.</span>
-            <span class="ident">image</span>.<span class="ident">set_heap_limit</span>(<span class="ident">new_size</span>)<span class="question-mark">?</span>;
-        } <span class="kw">else</span> {
-            <span class="comment">// If the new size of this heap fits within the existing allocation</span>
-            <span class="comment">// then all we need to do is to make the new pages accessible. This</span>
-            <span class="comment">// can happen either for &quot;static&quot; heaps which always hit this case,</span>
-            <span class="comment">// or &quot;dynamic&quot; heaps which have some space reserved after the</span>
-            <span class="comment">// initial allocation to grow into before the heap is moved in</span>
-            <span class="comment">// memory.</span>
-            <span class="macro">assert!</span>(<span class="ident">new_size</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">accessible</span>);
-            <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">make_accessible</span>(
-                <span class="self">self</span>.<span class="ident">pre_guard_size</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">accessible</span>,
-                <span class="ident">new_size</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">accessible</span>,
+            <span class="self">self</span>.mmap = new_mmap;
+        } <span class="kw">else if let </span><span class="prelude-val">Some</span>(image) = <span class="self">self</span>.memory_image.as_mut() {
+            <span class="comment">// MemoryImageSlot has its own growth mechanisms; defer to its
+            // implementation.
+            </span>image.set_heap_limit(new_size)<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            <span class="comment">// If the new size of this heap fits within the existing allocation
+            // then all we need to do is to make the new pages accessible. This
+            // can happen either for &quot;static&quot; heaps which always hit this case,
+            // or &quot;dynamic&quot; heaps which have some space reserved after the
+            // initial allocation to grow into before the heap is moved in
+            // memory.
+            </span><span class="macro">assert!</span>(new_size &gt; <span class="self">self</span>.accessible);
+            <span class="self">self</span>.mmap.make_accessible(
+                <span class="self">self</span>.pre_guard_size + <span class="self">self</span>.accessible,
+                new_size - <span class="self">self</span>.accessible,
             )<span class="question-mark">?</span>;
         }
 
-        <span class="self">self</span>.<span class="ident">accessible</span> <span class="op">=</span> <span class="ident">new_size</span>;
+        <span class="self">self</span>.accessible = new_size;
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">vmmemory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">VMMemoryDefinition</span> {
-        <span class="ident">VMMemoryDefinition</span> {
-            <span class="ident">base</span>: <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">add</span>(<span class="self">self</span>.<span class="ident">pre_guard_size</span>) },
-            <span class="ident">current_length</span>: <span class="self">self</span>.<span class="ident">accessible</span>,
+    <span class="kw">fn </span>vmmemory(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; VMMemoryDefinition {
+        VMMemoryDefinition {
+            base: <span class="kw">unsafe </span>{ <span class="self">self</span>.mmap.as_mut_ptr().add(<span class="self">self</span>.pre_guard_size) },
+            current_length: <span class="self">self</span>.accessible,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">needs_init</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="comment">// If we&#39;re using a CoW mapping, then no initialization</span>
-        <span class="comment">// is needed.</span>
-        <span class="self">self</span>.<span class="ident">memory_image</span>.<span class="ident">is_none</span>()
+    <span class="kw">fn </span>needs_init(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="comment">// If we&#39;re using a CoW mapping, then no initialization
+        // is needed.
+        </span><span class="self">self</span>.memory_image.is_none()
     }
 }
 
-<span class="doccomment">/// Representation of a runtime wasm linear memory.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Memory</span> {
-    <span class="doccomment">/// A &quot;static&quot; memory where the lifetime of the backing memory is managed</span>
-    <span class="doccomment">/// elsewhere. Currently used with the pooling allocator.</span>
-    <span class="ident">Static</span> {
-        <span class="doccomment">/// The memory in the host for this wasm memory. The length of this</span>
-        <span class="doccomment">/// slice is the maximum size of the memory that can be grown to.</span>
-        <span class="ident">base</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>],
+<span class="doccomment">/// Representation of a runtime wasm linear memory.
+</span><span class="kw">pub enum </span>Memory {
+    <span class="doccomment">/// A &quot;static&quot; memory where the lifetime of the backing memory is managed
+    /// elsewhere. Currently used with the pooling allocator.
+    </span>Static {
+        <span class="doccomment">/// The memory in the host for this wasm memory. The length of this
+        /// slice is the maximum size of the memory that can be grown to.
+        </span>base: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
 
-        <span class="doccomment">/// The current size, in bytes, of this memory.</span>
-        <span class="ident">size</span>: <span class="ident">usize</span>,
+        <span class="doccomment">/// The current size, in bytes, of this memory.
+        </span>size: usize,
 
-        <span class="doccomment">/// A callback which makes portions of `base` accessible for when memory</span>
-        <span class="doccomment">/// is grown. Otherwise it&#39;s expected that accesses to `base` will</span>
-        <span class="doccomment">/// fault.</span>
-        <span class="ident">make_accessible</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">fn</span>(<span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="doccomment">/// A callback which makes portions of `base` accessible for when memory
+        /// is grown. Otherwise it&#39;s expected that accesses to `base` will
+        /// fault.
+        </span>make_accessible: <span class="prelude-ty">Option</span>&lt;<span class="kw">fn</span>(<span class="kw-2">*mut </span>u8, usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;&gt;,
 
-        <span class="doccomment">/// The image management, if any, for this memory. Owned here and</span>
-        <span class="doccomment">/// returned to the pooling allocator when termination occurs.</span>
-        <span class="ident">memory_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MemoryImageSlot</span><span class="op">&gt;</span>,
+        <span class="doccomment">/// The image management, if any, for this memory. Owned here and
+        /// returned to the pooling allocator when termination occurs.
+        </span>memory_image: <span class="prelude-ty">Option</span>&lt;MemoryImageSlot&gt;,
 
-        <span class="doccomment">/// Stores the pages in the linear memory that have faulted as guard pages when using the `uffd` feature.</span>
-        <span class="doccomment">/// These pages need their protection level reset before the memory can grow.</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;uffd&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-        <span class="ident">guard_page_faults</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="ident">usize</span>, <span class="kw">fn</span>(<span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>)<span class="op">&gt;</span>,
+        <span class="doccomment">/// Stores the pages in the linear memory that have faulted as guard pages when using the `uffd` feature.
+        /// These pages need their protection level reset before the memory can grow.
+        </span><span class="attribute">#[cfg(all(feature = <span class="string">&quot;uffd&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+        </span>guard_page_faults: Vec&lt;(usize, usize, <span class="kw">fn</span>(<span class="kw-2">*mut </span>u8, usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;)&gt;,
     },
 
-    <span class="doccomment">/// A &quot;dynamic&quot; memory whose data is managed at runtime and lifetime is tied</span>
-    <span class="doccomment">/// to this instance.</span>
-    <span class="ident">Dynamic</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RuntimeLinearMemory</span><span class="op">&gt;</span>),
+    <span class="doccomment">/// A &quot;dynamic&quot; memory whose data is managed at runtime and lifetime is tied
+    /// to this instance.
+    </span>Dynamic(Box&lt;<span class="kw">dyn </span>RuntimeLinearMemory&gt;),
 }
 
-<span class="kw">impl</span> <span class="ident">Memory</span> {
-    <span class="doccomment">/// Create a new dynamic (movable) memory instance for the specified plan.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_dynamic</span>(
-        <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryPlan</span>,
-        <span class="ident">creator</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">RuntimeMemoryCreator</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Store</span>,
-        <span class="ident">memory_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> (<span class="ident">minimum</span>, <span class="ident">maximum</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::limit_new</span>(<span class="ident">plan</span>, <span class="ident">store</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">Memory::Dynamic</span>(<span class="ident">creator</span>.<span class="ident">new_memory</span>(
-            <span class="ident">plan</span>,
-            <span class="ident">minimum</span>,
-            <span class="ident">maximum</span>,
-            <span class="ident">memory_image</span>,
+<span class="kw">impl </span>Memory {
+    <span class="doccomment">/// Create a new dynamic (movable) memory instance for the specified plan.
+    </span><span class="kw">pub fn </span>new_dynamic(
+        plan: <span class="kw-2">&amp;</span>MemoryPlan,
+        creator: <span class="kw-2">&amp;</span><span class="kw">dyn </span>RuntimeMemoryCreator,
+        store: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Store,
+        memory_image: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Arc&lt;MemoryImage&gt;&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>(minimum, maximum) = <span class="self">Self</span>::limit_new(plan, store)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Memory::Dynamic(creator.new_memory(
+            plan,
+            minimum,
+            maximum,
+            memory_image,
         )<span class="question-mark">?</span>))
     }
 
-    <span class="doccomment">/// Create a new static (immovable) memory instance for the specified plan.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_static</span>(
-        <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryPlan</span>,
-        <span class="ident">base</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>],
-        <span class="ident">make_accessible</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">fn</span>(<span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">memory_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MemoryImageSlot</span><span class="op">&gt;</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Store</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> (<span class="ident">minimum</span>, <span class="ident">maximum</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::limit_new</span>(<span class="ident">plan</span>, <span class="ident">store</span>)<span class="question-mark">?</span>;
+    <span class="doccomment">/// Create a new static (immovable) memory instance for the specified plan.
+    </span><span class="kw">pub fn </span>new_static(
+        plan: <span class="kw-2">&amp;</span>MemoryPlan,
+        base: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">mut </span>[u8],
+        make_accessible: <span class="prelude-ty">Option</span>&lt;<span class="kw">fn</span>(<span class="kw-2">*mut </span>u8, usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;&gt;,
+        memory_image: <span class="prelude-ty">Option</span>&lt;MemoryImageSlot&gt;,
+        store: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Store,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>(minimum, maximum) = <span class="self">Self</span>::limit_new(plan, store)<span class="question-mark">?</span>;
 
-        <span class="kw">if</span> <span class="ident">base</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">minimum</span> {
+        <span class="kw">if </span>base.len() &lt; minimum {
             <span class="macro">bail!</span>(
                 <span class="string">&quot;initial memory size of {} exceeds the pooling allocator&#39;s \
                  configured maximum memory size of {} bytes&quot;</span>,
-                <span class="ident">minimum</span>,
-                <span class="ident">base</span>.<span class="ident">len</span>(),
+                minimum,
+                base.len(),
             );
         }
 
-        <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">maximum</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">max</span>) <span class="kw">if</span> <span class="ident">max</span> <span class="op">&lt;</span> <span class="ident">base</span>.<span class="ident">len</span>() =&gt; <span class="kw-2">&amp;mut</span> <span class="ident">base</span>[..<span class="ident">max</span>],
-            <span class="kw">_</span> =&gt; <span class="ident">base</span>,
+        <span class="kw">let </span>base = <span class="kw">match </span>maximum {
+            <span class="prelude-val">Some</span>(max) <span class="kw">if </span>max &lt; base.len() =&gt; <span class="kw-2">&amp;mut </span>base[..max],
+            <span class="kw">_ </span>=&gt; base,
         };
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">make_accessible</span>) <span class="op">=</span> <span class="ident">make_accessible</span> {
-            <span class="kw">if</span> <span class="ident">minimum</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                <span class="ident">make_accessible</span>(<span class="ident">base</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">minimum</span>)<span class="question-mark">?</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(make_accessible) = make_accessible {
+            <span class="kw">if </span>minimum &gt; <span class="number">0 </span>{
+                make_accessible(base.as_mut_ptr(), minimum)<span class="question-mark">?</span>;
             }
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">Memory::Static</span> {
-            <span class="ident">base</span>,
-            <span class="ident">size</span>: <span class="ident">minimum</span>,
-            <span class="ident">make_accessible</span>,
-            <span class="ident">memory_image</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;uffd&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            <span class="ident">guard_page_faults</span>: <span class="ident">Vec::new</span>(),
+        <span class="prelude-val">Ok</span>(Memory::Static {
+            base,
+            size: minimum,
+            make_accessible,
+            memory_image,
+            <span class="attribute">#[cfg(all(feature = <span class="string">&quot;uffd&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+            </span>guard_page_faults: Vec::new(),
         })
     }
 
-    <span class="doccomment">/// Calls the `store`&#39;s limiter to optionally prevent a memory from being allocated.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns the minimum size and optional maximum size of the memory, in</span>
-    <span class="doccomment">/// bytes.</span>
-    <span class="kw">fn</span> <span class="ident">limit_new</span>(<span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryPlan</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Store</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-        <span class="comment">// Sanity-check what should already be true from wasm module validation.</span>
-        <span class="kw">let</span> <span class="ident">absolute_max</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">memory64</span> {
-            <span class="ident">WASM64_MAX_PAGES</span>
-        } <span class="kw">else</span> {
-            <span class="ident">WASM32_MAX_PAGES</span>
+    <span class="doccomment">/// Calls the `store`&#39;s limiter to optionally prevent a memory from being allocated.
+    ///
+    /// Returns the minimum size and optional maximum size of the memory, in
+    /// bytes.
+    </span><span class="kw">fn </span>limit_new(plan: <span class="kw-2">&amp;</span>MemoryPlan, store: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Store) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, <span class="prelude-ty">Option</span>&lt;usize&gt;)&gt; {
+        <span class="comment">// Sanity-check what should already be true from wasm module validation.
+        </span><span class="kw">let </span>absolute_max = <span class="kw">if </span>plan.memory.memory64 {
+            WASM64_MAX_PAGES
+        } <span class="kw">else </span>{
+            WASM32_MAX_PAGES
         };
-        <span class="macro">assert_le!</span>(<span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">minimum</span>, <span class="ident">absolute_max</span>);
-        <span class="macro">assert!</span>(<span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">maximum</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">maximum</span>.<span class="ident">unwrap</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">absolute_max</span>);
+        <span class="macro">assert_le!</span>(plan.memory.minimum, absolute_max);
+        <span class="macro">assert!</span>(plan.memory.maximum.is_none() || plan.memory.maximum.unwrap() &lt;= absolute_max);
 
-        <span class="comment">// This is the absolute possible maximum that the module can try to</span>
-        <span class="comment">// allocate, which is our entire address space minus a wasm page. That</span>
-        <span class="comment">// shouldn&#39;t ever actually work in terms of an allocation because</span>
-        <span class="comment">// presumably the kernel wants *something* for itself, but this is used</span>
-        <span class="comment">// to pass to the `store`&#39;s limiter for a requested size</span>
-        <span class="comment">// to approximate the scale of the request that the wasm module is</span>
-        <span class="comment">// making. This is necessary because the limiter works on `usize` bytes</span>
-        <span class="comment">// whereas we&#39;re working with possibly-overflowing `u64` calculations</span>
-        <span class="comment">// here. To actually faithfully represent the byte requests of modules</span>
-        <span class="comment">// we&#39;d have to represent things as `u128`, but that&#39;s kinda</span>
-        <span class="comment">// overkill for this purpose.</span>
-        <span class="kw">let</span> <span class="ident">absolute_max</span> <span class="op">=</span> <span class="number">0usize</span>.<span class="ident">wrapping_sub</span>(<span class="ident">WASM_PAGE_SIZE</span>);
+        <span class="comment">// This is the absolute possible maximum that the module can try to
+        // allocate, which is our entire address space minus a wasm page. That
+        // shouldn&#39;t ever actually work in terms of an allocation because
+        // presumably the kernel wants *something* for itself, but this is used
+        // to pass to the `store`&#39;s limiter for a requested size
+        // to approximate the scale of the request that the wasm module is
+        // making. This is necessary because the limiter works on `usize` bytes
+        // whereas we&#39;re working with possibly-overflowing `u64` calculations
+        // here. To actually faithfully represent the byte requests of modules
+        // we&#39;d have to represent things as `u128`, but that&#39;s kinda
+        // overkill for this purpose.
+        </span><span class="kw">let </span>absolute_max = <span class="number">0usize</span>.wrapping_sub(WASM_PAGE_SIZE);
 
-        <span class="comment">// If the minimum memory size overflows the size of our own address</span>
-        <span class="comment">// space, then we can&#39;t satisfy this request, but defer the error to</span>
-        <span class="comment">// later so the `store` can be informed that an effective oom is</span>
-        <span class="comment">// happening.</span>
-        <span class="kw">let</span> <span class="ident">minimum</span> <span class="op">=</span> <span class="ident">plan</span>
-            .<span class="ident">memory</span>
-            .<span class="ident">minimum</span>
-            .<span class="ident">checked_mul</span>(<span class="ident">WASM_PAGE_SIZE_U64</span>)
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> <span class="ident">usize::try_from</span>(<span class="ident">m</span>).<span class="ident">ok</span>());
+        <span class="comment">// If the minimum memory size overflows the size of our own address
+        // space, then we can&#39;t satisfy this request, but defer the error to
+        // later so the `store` can be informed that an effective oom is
+        // happening.
+        </span><span class="kw">let </span>minimum = plan
+            .memory
+            .minimum
+            .checked_mul(WASM_PAGE_SIZE_U64)
+            .and_then(|m| usize::try_from(m).ok());
 
-        <span class="comment">// The plan stores the maximum size in units of wasm pages, but we</span>
-        <span class="comment">// use units of bytes. Unlike for the `minimum` size we silently clamp</span>
-        <span class="comment">// the effective maximum size to `absolute_max` above if the maximum is</span>
-        <span class="comment">// too large. This should be ok since as a wasm runtime we get to</span>
-        <span class="comment">// arbitrarily decide the actual maximum size of memory, regardless of</span>
-        <span class="comment">// what&#39;s actually listed on the memory itself.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">maximum</span> <span class="op">=</span> <span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">maximum</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">max</span><span class="op">|</span> {
-            <span class="ident">usize::try_from</span>(<span class="ident">max</span>)
-                .<span class="ident">ok</span>()
-                .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> <span class="ident">m</span>.<span class="ident">checked_mul</span>(<span class="ident">WASM_PAGE_SIZE</span>))
-                .<span class="ident">unwrap_or</span>(<span class="ident">absolute_max</span>)
+        <span class="comment">// The plan stores the maximum size in units of wasm pages, but we
+        // use units of bytes. Unlike for the `minimum` size we silently clamp
+        // the effective maximum size to `absolute_max` above if the maximum is
+        // too large. This should be ok since as a wasm runtime we get to
+        // arbitrarily decide the actual maximum size of memory, regardless of
+        // what&#39;s actually listed on the memory itself.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>maximum = plan.memory.maximum.map(|max| {
+            usize::try_from(max)
+                .ok()
+                .and_then(|m| m.checked_mul(WASM_PAGE_SIZE))
+                .unwrap_or(absolute_max)
         });
 
-        <span class="comment">// If this is a 32-bit memory and no maximum is otherwise listed then we</span>
-        <span class="comment">// need to still specify a maximum size of 4GB. If the host platform is</span>
-        <span class="comment">// 32-bit then there&#39;s no need to limit the maximum this way since no</span>
-        <span class="comment">// allocation of 4GB can succeed, but for 64-bit platforms this is</span>
-        <span class="comment">// required to limit memories to 4GB.</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">memory64</span> <span class="op">&amp;&amp;</span> <span class="ident">maximum</span>.<span class="ident">is_none</span>() {
-            <span class="ident">maximum</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="number">1u64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>).<span class="ident">ok</span>();
+        <span class="comment">// If this is a 32-bit memory and no maximum is otherwise listed then we
+        // need to still specify a maximum size of 4GB. If the host platform is
+        // 32-bit then there&#39;s no need to limit the maximum this way since no
+        // allocation of 4GB can succeed, but for 64-bit platforms this is
+        // required to limit memories to 4GB.
+        </span><span class="kw">if </span>!plan.memory.memory64 &amp;&amp; maximum.is_none() {
+            maximum = usize::try_from(<span class="number">1u64 </span>&lt;&lt; <span class="number">32</span>).ok();
         }
 
-        <span class="comment">// Inform the store&#39;s limiter what&#39;s about to happen. This will let the limiter</span>
-        <span class="comment">// reject anything if necessary, and this also guarantees that we should</span>
-        <span class="comment">// call the limiter for all requested memories, even if our `minimum`</span>
-        <span class="comment">// calculation overflowed. This means that the `minimum` we&#39;re informing</span>
-        <span class="comment">// the limiter is lossy and may not be 100% accurate, but for now the</span>
-        <span class="comment">// expected uses of limiter means that&#39;s ok.</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">store</span>.<span class="ident">memory_growing</span>(<span class="number">0</span>, <span class="ident">minimum</span>.<span class="ident">unwrap_or</span>(<span class="ident">absolute_max</span>), <span class="ident">maximum</span>)<span class="question-mark">?</span> {
+        <span class="comment">// Inform the store&#39;s limiter what&#39;s about to happen. This will let the limiter
+        // reject anything if necessary, and this also guarantees that we should
+        // call the limiter for all requested memories, even if our `minimum`
+        // calculation overflowed. This means that the `minimum` we&#39;re informing
+        // the limiter is lossy and may not be 100% accurate, but for now the
+        // expected uses of limiter means that&#39;s ok.
+        </span><span class="kw">if </span>!store.memory_growing(<span class="number">0</span>, minimum.unwrap_or(absolute_max), maximum)<span class="question-mark">? </span>{
             <span class="macro">bail!</span>(
                 <span class="string">&quot;memory minimum size of {} pages exceeds memory limits&quot;</span>,
-                <span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">minimum</span>
+                plan.memory.minimum
             );
         }
 
-        <span class="comment">// At this point we need to actually handle overflows, so bail out with</span>
-        <span class="comment">// an error if we made it this far.</span>
-        <span class="kw">let</span> <span class="ident">minimum</span> <span class="op">=</span> <span class="ident">minimum</span>.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+        <span class="comment">// At this point we need to actually handle overflows, so bail out with
+        // an error if we made it this far.
+        </span><span class="kw">let </span>minimum = minimum.ok_or_else(|| {
             <span class="macro">format_err!</span>(
                 <span class="string">&quot;memory minimum size of {} pages exceeds memory limits&quot;</span>,
-                <span class="ident">plan</span>.<span class="ident">memory</span>.<span class="ident">minimum</span>
+                plan.memory.minimum
             )
         })<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>((<span class="ident">minimum</span>, <span class="ident">maximum</span>))
+        <span class="prelude-val">Ok</span>((minimum, maximum))
     }
 
-    <span class="doccomment">/// Returns the number of allocated wasm pages.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">byte_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Memory::Static</span> { <span class="ident">size</span>, .. } =&gt; <span class="kw-2">*</span><span class="ident">size</span>,
-            <span class="ident">Memory::Dynamic</span>(<span class="ident">mem</span>) =&gt; <span class="ident">mem</span>.<span class="ident">byte_size</span>(),
+    <span class="doccomment">/// Returns the number of allocated wasm pages.
+    </span><span class="kw">pub fn </span>byte_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="kw">match </span><span class="self">self </span>{
+            Memory::Static { size, .. } =&gt; <span class="kw-2">*</span>size,
+            Memory::Dynamic(mem) =&gt; mem.byte_size(),
         }
     }
 
-    <span class="doccomment">/// Returns the maximum number of pages the memory can grow to at runtime.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if the memory is unbounded.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The runtime maximum may not be equal to the maximum from the linear memory&#39;s</span>
-    <span class="doccomment">/// Wasm type when it is being constrained by an instance allocator.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maximum_byte_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Memory::Static</span> { <span class="ident">base</span>, .. } =&gt; <span class="prelude-val">Some</span>(<span class="ident">base</span>.<span class="ident">len</span>()),
-            <span class="ident">Memory::Dynamic</span>(<span class="ident">mem</span>) =&gt; <span class="ident">mem</span>.<span class="ident">maximum_byte_size</span>(),
+    <span class="doccomment">/// Returns the maximum number of pages the memory can grow to at runtime.
+    ///
+    /// Returns `None` if the memory is unbounded.
+    ///
+    /// The runtime maximum may not be equal to the maximum from the linear memory&#39;s
+    /// Wasm type when it is being constrained by an instance allocator.
+    </span><span class="kw">pub fn </span>maximum_byte_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Memory::Static { base, .. } =&gt; <span class="prelude-val">Some</span>(base.len()),
+            Memory::Dynamic(mem) =&gt; mem.maximum_byte_size(),
         }
     }
 
-    <span class="doccomment">/// Returns whether or not the underlying storage of the memory is &quot;static&quot;.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pooling-allocator&quot;</span>)]</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_static</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Memory::Static</span> { .. } <span class="op">=</span> <span class="self">self</span> {
-            <span class="bool-val">true</span>
-        } <span class="kw">else</span> {
-            <span class="bool-val">false</span>
-        }
+    <span class="doccomment">/// Returns whether or not the underlying storage of the memory is &quot;static&quot;.
+    </span><span class="attribute">#[cfg(feature = <span class="string">&quot;pooling-allocator&quot;</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_static(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">if let </span>Memory::Static { .. } = <span class="self">self </span>{
+            <span class="bool-val">true
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
 
-    <span class="doccomment">/// Returns whether or not this memory needs initialization. It</span>
-    <span class="doccomment">/// may not if it already has initial content thanks to a CoW</span>
-    <span class="doccomment">/// mechanism.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">needs_init</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Memory::Static</span> {
-                <span class="ident">memory_image</span>: <span class="prelude-val">Some</span>(<span class="ident">slot</span>),
+    <span class="doccomment">/// Returns whether or not this memory needs initialization. It
+    /// may not if it already has initial content thanks to a CoW
+    /// mechanism.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>needs_init(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self </span>{
+            Memory::Static {
+                memory_image: <span class="prelude-val">Some</span>(slot),
                 ..
-            } =&gt; <span class="op">!</span><span class="ident">slot</span>.<span class="ident">has_image</span>(),
-            <span class="ident">Memory::Dynamic</span>(<span class="ident">mem</span>) =&gt; <span class="ident">mem</span>.<span class="ident">needs_init</span>(),
-            <span class="kw">_</span> =&gt; <span class="bool-val">true</span>,
+            } =&gt; !slot.has_image(),
+            Memory::Dynamic(mem) =&gt; mem.needs_init(),
+            <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
         }
     }
 
-    <span class="doccomment">/// Grow memory by the specified amount of wasm pages.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if memory can&#39;t be grown by the specified amount</span>
-    <span class="doccomment">/// of wasm pages. Returns `Some` with the old size of memory, in bytes, on</span>
-    <span class="doccomment">/// successful growth.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Resizing the memory can reallocate the memory buffer for dynamic memories.</span>
-    <span class="doccomment">/// An instance&#39;s `VMContext` may have pointers to the memory&#39;s base and will</span>
-    <span class="doccomment">/// need to be fixed up after growing the memory.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Generally, prefer using `InstanceHandle::memory_grow`, which encapsulates</span>
-    <span class="doccomment">/// this unsafety.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Ensure that the provided Store is not used to get access any Memory</span>
-    <span class="doccomment">/// which lives inside it.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">grow</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">delta_pages</span>: <span class="ident">u64</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Store</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">old_byte_size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">byte_size</span>();
-        <span class="comment">// Wasm spec: when growing by 0 pages, always return the current size.</span>
-        <span class="kw">if</span> <span class="ident">delta_pages</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">old_byte_size</span>));
+    <span class="doccomment">/// Grow memory by the specified amount of wasm pages.
+    ///
+    /// Returns `None` if memory can&#39;t be grown by the specified amount
+    /// of wasm pages. Returns `Some` with the old size of memory, in bytes, on
+    /// successful growth.
+    ///
+    /// # Safety
+    ///
+    /// Resizing the memory can reallocate the memory buffer for dynamic memories.
+    /// An instance&#39;s `VMContext` may have pointers to the memory&#39;s base and will
+    /// need to be fixed up after growing the memory.
+    ///
+    /// Generally, prefer using `InstanceHandle::memory_grow`, which encapsulates
+    /// this unsafety.
+    ///
+    /// Ensure that the provided Store is not used to get access any Memory
+    /// which lives inside it.
+    </span><span class="kw">pub unsafe fn </span>grow(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        delta_pages: u64,
+        store: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Store,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;usize&gt;, Error&gt; {
+        <span class="kw">let </span>old_byte_size = <span class="self">self</span>.byte_size();
+        <span class="comment">// Wasm spec: when growing by 0 pages, always return the current size.
+        </span><span class="kw">if </span>delta_pages == <span class="number">0 </span>{
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(old_byte_size));
         }
 
-        <span class="comment">// largest wasm-page-aligned region of memory it is possible to</span>
-        <span class="comment">// represent in a usize. This will be impossible for the system to</span>
-        <span class="comment">// actually allocate.</span>
-        <span class="kw">let</span> <span class="ident">absolute_max</span> <span class="op">=</span> <span class="number">0usize</span>.<span class="ident">wrapping_sub</span>(<span class="ident">WASM_PAGE_SIZE</span>);
-        <span class="comment">// calculate byte size of the new allocation. Let it overflow up to</span>
-        <span class="comment">// usize::MAX, then clamp it down to absolute_max.</span>
-        <span class="kw">let</span> <span class="ident">new_byte_size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">delta_pages</span>)
-            .<span class="ident">unwrap_or</span>(<span class="ident">usize::MAX</span>)
-            .<span class="ident">saturating_mul</span>(<span class="ident">WASM_PAGE_SIZE</span>)
-            .<span class="ident">saturating_add</span>(<span class="ident">old_byte_size</span>);
-        <span class="kw">let</span> <span class="ident">new_byte_size</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">new_byte_size</span> <span class="op">&gt;</span> <span class="ident">absolute_max</span> {
-            <span class="ident">absolute_max</span>
-        } <span class="kw">else</span> {
-            <span class="ident">new_byte_size</span>
+        <span class="comment">// largest wasm-page-aligned region of memory it is possible to
+        // represent in a usize. This will be impossible for the system to
+        // actually allocate.
+        </span><span class="kw">let </span>absolute_max = <span class="number">0usize</span>.wrapping_sub(WASM_PAGE_SIZE);
+        <span class="comment">// calculate byte size of the new allocation. Let it overflow up to
+        // usize::MAX, then clamp it down to absolute_max.
+        </span><span class="kw">let </span>new_byte_size = usize::try_from(delta_pages)
+            .unwrap_or(usize::MAX)
+            .saturating_mul(WASM_PAGE_SIZE)
+            .saturating_add(old_byte_size);
+        <span class="kw">let </span>new_byte_size = <span class="kw">if </span>new_byte_size &gt; absolute_max {
+            absolute_max
+        } <span class="kw">else </span>{
+            new_byte_size
         };
 
-        <span class="kw">let</span> <span class="ident">maximum</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">maximum_byte_size</span>();
-        <span class="comment">// Store limiter gets first chance to reject memory_growing.</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">store</span>.<span class="ident">memory_growing</span>(<span class="ident">old_byte_size</span>, <span class="ident">new_byte_size</span>, <span class="ident">maximum</span>)<span class="question-mark">?</span> {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        <span class="kw">let </span>maximum = <span class="self">self</span>.maximum_byte_size();
+        <span class="comment">// Store limiter gets first chance to reject memory_growing.
+        </span><span class="kw">if </span>!store.memory_growing(old_byte_size, new_byte_size, maximum)<span class="question-mark">? </span>{
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
-        <span class="comment">// Never exceed maximum, even if limiter permitted it.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">max</span>) <span class="op">=</span> <span class="ident">maximum</span> {
-            <span class="kw">if</span> <span class="ident">new_byte_size</span> <span class="op">&gt;</span> <span class="ident">max</span> {
-                <span class="ident">store</span>.<span class="ident">memory_grow_failed</span>(<span class="kw-2">&amp;</span><span class="macro">format_err!</span>(<span class="string">&quot;Memory maximum size exceeded&quot;</span>));
-                <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        <span class="comment">// Never exceed maximum, even if limiter permitted it.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(max) = maximum {
+            <span class="kw">if </span>new_byte_size &gt; max {
+                store.memory_grow_failed(<span class="kw-2">&amp;</span><span class="macro">format_err!</span>(<span class="string">&quot;Memory maximum size exceeded&quot;</span>));
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
             }
         }
 
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;uffd&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-        {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_static</span>() {
-                <span class="comment">// Reset any faulted guard pages before growing the memory.</span>
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">reset_guard_pages</span>() {
-                    <span class="ident">store</span>.<span class="ident">memory_grow_failed</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>);
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        <span class="attribute">#[cfg(all(feature = <span class="string">&quot;uffd&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+        </span>{
+            <span class="kw">if </span><span class="self">self</span>.is_static() {
+                <span class="comment">// Reset any faulted guard pages before growing the memory.
+                </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.reset_guard_pages() {
+                    store.memory_grow_failed(<span class="kw-2">&amp;</span>e);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
             }
         }
 
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Memory::Static</span> {
-                <span class="ident">base</span>,
-                <span class="ident">size</span>,
-                <span class="ident">memory_image</span>: <span class="prelude-val">Some</span>(<span class="ident">image</span>),
+        <span class="kw">match </span><span class="self">self </span>{
+            Memory::Static {
+                base,
+                size,
+                memory_image: <span class="prelude-val">Some</span>(image),
                 ..
             } =&gt; {
-                <span class="comment">// Never exceed static memory size</span>
-                <span class="kw">if</span> <span class="ident">new_byte_size</span> <span class="op">&gt;</span> <span class="ident">base</span>.<span class="ident">len</span>() {
-                    <span class="ident">store</span>.<span class="ident">memory_grow_failed</span>(<span class="kw-2">&amp;</span><span class="macro">format_err!</span>(<span class="string">&quot;static memory size exceeded&quot;</span>));
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+                <span class="comment">// Never exceed static memory size
+                </span><span class="kw">if </span>new_byte_size &gt; base.len() {
+                    store.memory_grow_failed(<span class="kw-2">&amp;</span><span class="macro">format_err!</span>(<span class="string">&quot;static memory size exceeded&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
 
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">image</span>.<span class="ident">set_heap_limit</span>(<span class="ident">new_byte_size</span>) {
-                    <span class="ident">store</span>.<span class="ident">memory_grow_failed</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>);
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = image.set_heap_limit(new_byte_size) {
+                    store.memory_grow_failed(<span class="kw-2">&amp;</span>e);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
-                <span class="kw-2">*</span><span class="ident">size</span> <span class="op">=</span> <span class="ident">new_byte_size</span>;
+                <span class="kw-2">*</span>size = new_byte_size;
             }
-            <span class="ident">Memory::Static</span> {
-                <span class="ident">base</span>,
-                <span class="ident">size</span>,
-                <span class="ident">make_accessible</span>,
+            Memory::Static {
+                base,
+                size,
+                make_accessible,
                 ..
             } =&gt; {
-                <span class="kw">let</span> <span class="ident">make_accessible</span> <span class="op">=</span> <span class="ident">make_accessible</span>
-                    .<span class="ident">expect</span>(<span class="string">&quot;make_accessible must be Some if this is not a CoW memory&quot;</span>);
+                <span class="kw">let </span>make_accessible = make_accessible
+                    .expect(<span class="string">&quot;make_accessible must be Some if this is not a CoW memory&quot;</span>);
 
-                <span class="comment">// Never exceed static memory size</span>
-                <span class="kw">if</span> <span class="ident">new_byte_size</span> <span class="op">&gt;</span> <span class="ident">base</span>.<span class="ident">len</span>() {
-                    <span class="ident">store</span>.<span class="ident">memory_grow_failed</span>(<span class="kw-2">&amp;</span><span class="macro">format_err!</span>(<span class="string">&quot;static memory size exceeded&quot;</span>));
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+                <span class="comment">// Never exceed static memory size
+                </span><span class="kw">if </span>new_byte_size &gt; base.len() {
+                    store.memory_grow_failed(<span class="kw-2">&amp;</span><span class="macro">format_err!</span>(<span class="string">&quot;static memory size exceeded&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
 
-                <span class="comment">// Operating system can fail to make memory accessible</span>
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">make_accessible</span>(
-                    <span class="ident">base</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">add</span>(<span class="ident">old_byte_size</span>),
-                    <span class="ident">new_byte_size</span> <span class="op">-</span> <span class="ident">old_byte_size</span>,
+                <span class="comment">// Operating system can fail to make memory accessible
+                </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = make_accessible(
+                    base.as_mut_ptr().add(old_byte_size),
+                    new_byte_size - old_byte_size,
                 ) {
-                    <span class="ident">store</span>.<span class="ident">memory_grow_failed</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>);
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+                    store.memory_grow_failed(<span class="kw-2">&amp;</span>e);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
-                <span class="kw-2">*</span><span class="ident">size</span> <span class="op">=</span> <span class="ident">new_byte_size</span>;
+                <span class="kw-2">*</span>size = new_byte_size;
             }
-            <span class="ident">Memory::Dynamic</span>(<span class="ident">mem</span>) =&gt; {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">mem</span>.<span class="ident">grow_to</span>(<span class="ident">new_byte_size</span>) {
-                    <span class="ident">store</span>.<span class="ident">memory_grow_failed</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>);
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+            Memory::Dynamic(mem) =&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = mem.grow_to(new_byte_size) {
+                    store.memory_grow_failed(<span class="kw-2">&amp;</span>e);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
             }
         }
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">old_byte_size</span>))
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(old_byte_size))
     }
 
-    <span class="doccomment">/// Return a `VMMemoryDefinition` for exposing the memory to compiled wasm code.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">vmmemory</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">VMMemoryDefinition</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Memory::Static</span> { <span class="ident">base</span>, <span class="ident">size</span>, .. } =&gt; <span class="ident">VMMemoryDefinition</span> {
-                <span class="ident">base</span>: <span class="ident">base</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>(),
-                <span class="ident">current_length</span>: <span class="kw-2">*</span><span class="ident">size</span>,
+    <span class="doccomment">/// Return a `VMMemoryDefinition` for exposing the memory to compiled wasm code.
+    </span><span class="kw">pub fn </span>vmmemory(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; VMMemoryDefinition {
+        <span class="kw">match </span><span class="self">self </span>{
+            Memory::Static { base, size, .. } =&gt; VMMemoryDefinition {
+                base: base.as_mut_ptr().cast(),
+                current_length: <span class="kw-2">*</span>size,
             },
-            <span class="ident">Memory::Dynamic</span>(<span class="ident">mem</span>) =&gt; <span class="ident">mem</span>.<span class="ident">vmmemory</span>(),
+            Memory::Dynamic(mem) =&gt; mem.vmmemory(),
         }
     }
 
-    <span class="doccomment">/// Records a faulted guard page in a static memory.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is used to track faulted guard pages that need to be reset for the uffd feature.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will panic if called on a dynamic memory.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;uffd&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">record_guard_page_fault</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">page_addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-        <span class="ident">size</span>: <span class="ident">usize</span>,
-        <span class="ident">reset</span>: <span class="kw">fn</span>(<span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
+    <span class="doccomment">/// Records a faulted guard page in a static memory.
+    ///
+    /// This is used to track faulted guard pages that need to be reset for the uffd feature.
+    ///
+    /// This function will panic if called on a dynamic memory.
+    </span><span class="attribute">#[cfg(all(feature = <span class="string">&quot;uffd&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>record_guard_page_fault(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        page_addr: <span class="kw-2">*mut </span>u8,
+        size: usize,
+        reset: <span class="kw">fn</span>(<span class="kw-2">*mut </span>u8, usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;,
     ) {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Memory::Static</span> {
-                <span class="ident">guard_page_faults</span>, ..
+        <span class="kw">match </span><span class="self">self </span>{
+            Memory::Static {
+                guard_page_faults, ..
             } =&gt; {
-                <span class="ident">guard_page_faults</span>.<span class="ident">push</span>((<span class="ident">page_addr</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">size</span>, <span class="ident">reset</span>));
+                guard_page_faults.push((page_addr <span class="kw">as </span>usize, size, reset));
             }
-            <span class="ident">Memory::Dynamic</span>(<span class="kw">_</span>) =&gt; {
+            Memory::Dynamic(<span class="kw">_</span>) =&gt; {
                 <span class="macro">unreachable!</span>(<span class="string">&quot;dynamic memories should not have guard page faults&quot;</span>)
             }
         }
     }
 
-    <span class="doccomment">/// Resets the previously faulted guard pages of a static memory.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is used to reset the protection of any guard pages that were previously faulted.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will panic if called on a dynamic memory.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;uffd&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">reset_guard_pages</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Memory::Static</span> {
-                <span class="ident">guard_page_faults</span>, ..
+    <span class="doccomment">/// Resets the previously faulted guard pages of a static memory.
+    ///
+    /// This is used to reset the protection of any guard pages that were previously faulted.
+    ///
+    /// This function will panic if called on a dynamic memory.
+    </span><span class="attribute">#[cfg(all(feature = <span class="string">&quot;uffd&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>reset_guard_pages(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Memory::Static {
+                guard_page_faults, ..
             } =&gt; {
-                <span class="kw">for</span> (<span class="ident">addr</span>, <span class="ident">len</span>, <span class="ident">reset</span>) <span class="kw">in</span> <span class="ident">guard_page_faults</span>.<span class="ident">drain</span>(..) {
-                    <span class="ident">reset</span>(<span class="ident">addr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">len</span>)<span class="question-mark">?</span>;
+                <span class="kw">for </span>(addr, len, reset) <span class="kw">in </span>guard_page_faults.drain(..) {
+                    reset(addr <span class="kw">as </span><span class="kw-2">*mut </span>u8, len)<span class="question-mark">?</span>;
                 }
             }
-            <span class="ident">Memory::Dynamic</span>(<span class="kw">_</span>) =&gt; {
+            Memory::Dynamic(<span class="kw">_</span>) =&gt; {
                 <span class="macro">unreachable!</span>(<span class="string">&quot;dynamic memories should not have guard page faults&quot;</span>)
             }
         }
@@ -1330,19 +1325,18 @@
     }
 }
 
-<span class="comment">// The default memory representation is an empty memory that cannot grow.</span>
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Memory</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident">Memory::Static</span> {
-            <span class="ident">base</span>: <span class="kw-2">&amp;mut</span> [],
-            <span class="ident">size</span>: <span class="number">0</span>,
-            <span class="ident">make_accessible</span>: <span class="prelude-val">Some</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="macro">unreachable!</span>()),
-            <span class="ident">memory_image</span>: <span class="prelude-val">None</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;uffd&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            <span class="ident">guard_page_faults</span>: <span class="ident">Vec::new</span>(),
+<span class="comment">// The default memory representation is an empty memory that cannot grow.
+</span><span class="kw">impl </span>Default <span class="kw">for </span>Memory {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        Memory::Static {
+            base: <span class="kw-2">&amp;mut </span>[],
+            size: <span class="number">0</span>,
+            make_accessible: <span class="prelude-val">Some</span>(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="macro">unreachable!</span>()),
+            memory_image: <span class="prelude-val">None</span>,
+            <span class="attribute">#[cfg(all(feature = <span class="string">&quot;uffd&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+            </span>guard_page_faults: Vec::new(),
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

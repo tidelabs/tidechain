@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["Alphabet",""]]});
+window.SIDEBAR_ITEMS = {"trait":[["Alphabet",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["ecdsa","Simple ECDSA secp256k1 API."]]});
+window.SIDEBAR_ITEMS = {"mod":[["ecdsa","Simple ECDSA secp256k1 API."]]};

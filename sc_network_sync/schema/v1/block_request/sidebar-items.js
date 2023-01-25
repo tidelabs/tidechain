@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["FromBlock","Start from this block."]]});
+window.SIDEBAR_ITEMS = {"enum":[["FromBlock","Start from this block."]]};

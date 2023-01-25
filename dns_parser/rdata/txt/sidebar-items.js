@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Record",""],["RecordIter",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["Record",""],["RecordIter",""]]};

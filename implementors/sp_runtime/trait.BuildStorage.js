@@ -1,4 +1,6 @@
-(function() {var implementors = {};
-implementors["sc_chain_spec"] = [{"text":"impl&lt;G:&nbsp;<a class=\"trait\" href=\"sc_chain_spec/trait.RuntimeGenesis.html\" title=\"trait sc_chain_spec::RuntimeGenesis\">RuntimeGenesis</a>, E&gt; <a class=\"trait\" href=\"sp_runtime/trait.BuildStorage.html\" title=\"trait sp_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"sc_chain_spec/struct.GenericChainSpec.html\" title=\"struct sc_chain_spec::GenericChainSpec\">ChainSpec</a>&lt;G, E&gt;","synthetic":false,"types":["sc_chain_spec::chain_spec::ChainSpec"]}];
-implementors["sp_runtime"] = [];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"lagoon_runtime":[["impl <a class=\"trait\" href=\"lagoon_runtime/trait.BuildStorage.html\" title=\"trait lagoon_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"lagoon_runtime/struct.GenesisConfig.html\" title=\"struct lagoon_runtime::GenesisConfig\">GenesisConfig</a>"]],
+"sc_chain_spec":[["impl&lt;G:&nbsp;<a class=\"trait\" href=\"sc_chain_spec/trait.RuntimeGenesis.html\" title=\"trait sc_chain_spec::RuntimeGenesis\">RuntimeGenesis</a>, E&gt; <a class=\"trait\" href=\"sp_runtime/trait.BuildStorage.html\" title=\"trait sp_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"sc_chain_spec/struct.GenericChainSpec.html\" title=\"struct sc_chain_spec::GenericChainSpec\">ChainSpec</a>&lt;G, E&gt;"]],
+"sp_runtime":[],
+"tidechain_runtime":[["impl <a class=\"trait\" href=\"tidechain_runtime/trait.BuildStorage.html\" title=\"trait tidechain_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"tidechain_runtime/struct.GenesisConfig.html\" title=\"struct tidechain_runtime::GenesisConfig\">GenesisConfig</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

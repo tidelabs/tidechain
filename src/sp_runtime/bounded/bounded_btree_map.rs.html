@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/runtime/src/bounded/bounded_btree_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bounded_btree_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sp_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sp_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sp_runtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/runtime/src/bounded/bounded_btree_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bounded_btree_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sp_runtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -523,526 +518,525 @@
 <span id="518">518</span>
 <span id="519">519</span>
 <span id="520">520</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! Traits, types and structs to support a bounded BTreeMap.</span>
+</span><span class="doccomment">//! Traits, types and structs to support a bounded BTreeMap.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::traits</span>::{<span class="ident">Get</span>, <span class="ident">TryCollect</span>};
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>, <span class="ident">MaxEncodedLen</span>};
-<span class="kw">use</span> <span class="ident">sp_std</span>::{<span class="ident">borrow::Borrow</span>, <span class="ident">collections::btree_map::BTreeMap</span>, <span class="ident">marker::PhantomData</span>, <span class="ident">ops::Deref</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::traits::{Get, TryCollect};
+<span class="kw">use </span>codec::{Decode, Encode, MaxEncodedLen};
+<span class="kw">use </span>sp_std::{borrow::Borrow, collections::btree_map::BTreeMap, marker::PhantomData, ops::Deref};
 
-<span class="doccomment">/// A bounded map based on a B-Tree.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// B-Trees represent a fundamental compromise between cache-efficiency and actually minimizing</span>
-<span class="doccomment">/// the amount of work performed in a search. See [`BTreeMap`] for more details.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Unlike a standard `BTreeMap`, there is an enforced upper limit to the number of items in the</span>
-<span class="doccomment">/// map. All internal operations ensure this bound is respected.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Encode</span>, <span class="ident">scale_info::TypeInfo</span>)]</span>
-<span class="attribute">#[<span class="ident">scale_info</span>(<span class="ident">skip_type_params</span>(<span class="ident">S</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>(<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>, <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>);
+<span class="doccomment">/// A bounded map based on a B-Tree.
+///
+/// B-Trees represent a fundamental compromise between cache-efficiency and actually minimizing
+/// the amount of work performed in a search. See [`BTreeMap`] for more details.
+///
+/// Unlike a standard `BTreeMap`, there is an enforced upper limit to the number of items in the
+/// map. All internal operations ensure this bound is respected.
+</span><span class="attribute">#[derive(Encode, scale_info::TypeInfo)]
+#[scale_info(skip_type_params(S))]
+</span><span class="kw">pub struct </span>BoundedBTreeMap&lt;K, V, S&gt;(BTreeMap&lt;K, V&gt;, PhantomData&lt;S&gt;);
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Decode</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Decode</span> <span class="op">+</span> <span class="ident">Ord</span>,
-	<span class="ident">V</span>: <span class="ident">Decode</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;K, V, S&gt; Decode <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>K: Decode + Ord,
+	V: Decode,
+	S: Get&lt;u32&gt;,
 {
-	<span class="kw">fn</span> <span class="ident">decode</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">codec::Input</span><span class="op">&gt;</span>(<span class="ident">input</span>: <span class="kw-2">&amp;mut</span> <span class="ident">I</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">codec::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">BTreeMap</span>::<span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="ident">::decode</span>(<span class="ident">input</span>)<span class="question-mark">?</span>;
-		<span class="kw">if</span> <span class="ident">inner</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">S::get</span>() <span class="kw">as</span> <span class="ident">usize</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;BoundedBTreeMap exceeds its limit&quot;</span>.<span class="ident">into</span>())
+	<span class="kw">fn </span>decode&lt;I: codec::Input&gt;(input: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, codec::Error&gt; {
+		<span class="kw">let </span>inner = BTreeMap::&lt;K, V&gt;::decode(input)<span class="question-mark">?</span>;
+		<span class="kw">if </span>inner.len() &gt; S::get() <span class="kw">as </span>usize {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;BoundedBTreeMap exceeds its limit&quot;</span>.into())
 		}
-		<span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">inner</span>, <span class="ident">PhantomData</span>))
+		<span class="prelude-val">Ok</span>(<span class="self">Self</span>(inner, PhantomData))
 	}
 
-	<span class="kw">fn</span> <span class="ident">skip</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">codec::Input</span><span class="op">&gt;</span>(<span class="ident">input</span>: <span class="kw-2">&amp;mut</span> <span class="ident">I</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">codec::Error</span><span class="op">&gt;</span> {
-		<span class="ident">BTreeMap</span>::<span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="ident">::skip</span>(<span class="ident">input</span>)
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-{
-	<span class="doccomment">/// Get the bound of the type in `usize`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bound</span>() -&gt; <span class="ident">usize</span> {
-		<span class="ident">S::get</span>() <span class="kw">as</span> <span class="ident">usize</span>
+	<span class="kw">fn </span>skip&lt;I: codec::Input&gt;(input: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;(), codec::Error&gt; {
+		BTreeMap::&lt;K, V&gt;::skip(input)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Ord</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;K, V, S&gt; BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>S: Get&lt;u32&gt;,
 {
-	<span class="doccomment">/// Create `Self` from `t` without any checks.</span>
-	<span class="kw">fn</span> <span class="ident">unchecked_from</span>(<span class="ident">t</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span>(<span class="ident">t</span>, <span class="ident">Default::default</span>())
+	<span class="doccomment">/// Get the bound of the type in `usize`.
+	</span><span class="kw">pub fn </span>bound() -&gt; usize {
+		S::get() <span class="kw">as </span>usize
+	}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>K: Ord,
+	S: Get&lt;u32&gt;,
+{
+	<span class="doccomment">/// Create `Self` from `t` without any checks.
+	</span><span class="kw">fn </span>unchecked_from(t: BTreeMap&lt;K, V&gt;) -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>(t, Default::default())
 	}
 
-	<span class="doccomment">/// Exactly the same semantics as `BTreeMap::retain`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The is a safe `&amp;mut self` borrow because `retain` can only ever decrease the length of the</span>
-	<span class="doccomment">/// inner map.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retain</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;mut</span> <span class="ident">V</span>) -&gt; <span class="ident">bool</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">retain</span>(<span class="ident">f</span>)
+	<span class="doccomment">/// Exactly the same semantics as `BTreeMap::retain`.
+	///
+	/// The is a safe `&amp;mut self` borrow because `retain` can only ever decrease the length of the
+	/// inner map.
+	</span><span class="kw">pub fn </span>retain&lt;F: FnMut(<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;mut </span>V) -&gt; bool&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) {
+		<span class="self">self</span>.<span class="number">0</span>.retain(f)
 	}
 
-	<span class="doccomment">/// Create a new `BoundedBTreeMap`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Does not allocate.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-		<span class="ident">BoundedBTreeMap</span>(<span class="ident">BTreeMap::new</span>(), <span class="ident">PhantomData</span>)
+	<span class="doccomment">/// Create a new `BoundedBTreeMap`.
+	///
+	/// Does not allocate.
+	</span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+		BoundedBTreeMap(BTreeMap::new(), PhantomData)
 	}
 
-	<span class="doccomment">/// Consume self, and return the inner `BTreeMap`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This is useful when a mutating API of the inner type is desired, and closure-based mutation</span>
-	<span class="doccomment">/// such as provided by [`try_mutate`][Self::try_mutate] is inconvenient.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner</span>(<span class="self">self</span>) -&gt; <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::bound</span>());
-		<span class="self">self</span>.<span class="number">0</span>
+	<span class="doccomment">/// Consume self, and return the inner `BTreeMap`.
+	///
+	/// This is useful when a mutating API of the inner type is desired, and closure-based mutation
+	/// such as provided by [`try_mutate`][Self::try_mutate] is inconvenient.
+	</span><span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; BTreeMap&lt;K, V&gt; {
+		<span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="number">0</span>.len() &lt;= <span class="self">Self</span>::bound());
+		<span class="self">self</span>.<span class="number">0
+	</span>}
+
+	<span class="doccomment">/// Consumes self and mutates self via the given `mutate` function.
+	///
+	/// If the outcome of mutation is within bounds, `Some(Self)` is returned. Else, `None` is
+	/// returned.
+	///
+	/// This is essentially a *consuming* shorthand [`Self::into_inner`] -&gt; `...` -&gt;
+	/// [`Self::try_from`].
+	</span><span class="kw">pub fn </span>try_mutate(<span class="kw-2">mut </span><span class="self">self</span>, <span class="kw-2">mut </span>mutate: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>BTreeMap&lt;K, V&gt;)) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+		mutate(<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>);
+		(<span class="self">self</span>.<span class="number">0</span>.len() &lt;= <span class="self">Self</span>::bound()).then(<span class="kw">move </span>|| <span class="self">self</span>)
 	}
 
-	<span class="doccomment">/// Consumes self and mutates self via the given `mutate` function.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If the outcome of mutation is within bounds, `Some(Self)` is returned. Else, `None` is</span>
-	<span class="doccomment">/// returned.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This is essentially a *consuming* shorthand [`Self::into_inner`] -&gt; `...` -&gt;</span>
-	<span class="doccomment">/// [`Self::try_from`].</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_mutate</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">mutate</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;mut</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>)) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-		<span class="ident">mutate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="number">0</span>);
-		(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::bound</span>()).<span class="ident">then</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>)
+	<span class="doccomment">/// Clears the map, removing all elements.
+	</span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.<span class="number">0</span>.clear()
 	}
 
-	<span class="doccomment">/// Clears the map, removing all elements.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">clear</span>()
-	}
-
-	<span class="doccomment">/// Return a mutable reference to the value corresponding to the key.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The key may be any borrowed form of the map&#39;s key type, but the ordering on the borrowed</span>
-	<span class="doccomment">/// form _must_ match the ordering on the key type.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mut</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Q</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">V</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">K</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>,
-		<span class="ident">Q</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
+	<span class="doccomment">/// Return a mutable reference to the value corresponding to the key.
+	///
+	/// The key may be any borrowed form of the map&#39;s key type, but the ordering on the borrowed
+	/// form _must_ match the ordering on the key type.
+	</span><span class="kw">pub fn </span>get_mut&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>V&gt;
+	<span class="kw">where
+		</span>K: Borrow&lt;Q&gt;,
+		Q: Ord + <span class="question-mark">?</span>Sized,
 	{
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">get_mut</span>(<span class="ident">key</span>)
+		<span class="self">self</span>.<span class="number">0</span>.get_mut(key)
 	}
 
-	<span class="doccomment">/// Exactly the same semantics as [`BTreeMap::insert`], but returns an `Err` (and is a noop) if</span>
-	<span class="doccomment">/// the new length of the map exceeds `S`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// In the `Err` case, returns the inserted pair so it can be further used without cloning.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_insert</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">K</span>, <span class="ident">value</span>: <span class="ident">V</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>, (<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident"><span class="self">Self</span>::bound</span>() <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>) {
-			<span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">insert</span>(<span class="ident">key</span>, <span class="ident">value</span>))
-		} <span class="kw">else</span> {
-			<span class="prelude-val">Err</span>((<span class="ident">key</span>, <span class="ident">value</span>))
+	<span class="doccomment">/// Exactly the same semantics as [`BTreeMap::insert`], but returns an `Err` (and is a noop) if
+	/// the new length of the map exceeds `S`.
+	///
+	/// In the `Err` case, returns the inserted pair so it can be further used without cloning.
+	</span><span class="kw">pub fn </span>try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K, value: V) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;V&gt;, (K, V)&gt; {
+		<span class="kw">if </span><span class="self">self</span>.len() &lt; <span class="self">Self</span>::bound() || <span class="self">self</span>.<span class="number">0</span>.contains_key(<span class="kw-2">&amp;</span>key) {
+			<span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="number">0</span>.insert(key, value))
+		} <span class="kw">else </span>{
+			<span class="prelude-val">Err</span>((key, value))
 		}
 	}
 
-	<span class="doccomment">/// Remove a key from the map, returning the value at the key if the key was previously in the</span>
-	<span class="doccomment">/// map.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The key may be any borrowed form of the map&#39;s key type, but the ordering on the borrowed</span>
-	<span class="doccomment">/// form _must_ match the ordering on the key type.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Q</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">K</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>,
-		<span class="ident">Q</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
+	<span class="doccomment">/// Remove a key from the map, returning the value at the key if the key was previously in the
+	/// map.
+	///
+	/// The key may be any borrowed form of the map&#39;s key type, but the ordering on the borrowed
+	/// form _must_ match the ordering on the key type.
+	</span><span class="kw">pub fn </span>remove&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt;
+	<span class="kw">where
+		</span>K: Borrow&lt;Q&gt;,
+		Q: Ord + <span class="question-mark">?</span>Sized,
 	{
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">remove</span>(<span class="ident">key</span>)
+		<span class="self">self</span>.<span class="number">0</span>.remove(key)
 	}
 
-	<span class="doccomment">/// Remove a key from the map, returning the value at the key if the key was previously in the</span>
-	<span class="doccomment">/// map.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The key may be any borrowed form of the map&#39;s key type, but the ordering on the borrowed</span>
-	<span class="doccomment">/// form _must_ match the ordering on the key type.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove_entry</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Q</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">K</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>,
-		<span class="ident">Q</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
+	<span class="doccomment">/// Remove a key from the map, returning the value at the key if the key was previously in the
+	/// map.
+	///
+	/// The key may be any borrowed form of the map&#39;s key type, but the ordering on the borrowed
+	/// form _must_ match the ordering on the key type.
+	</span><span class="kw">pub fn </span>remove_entry&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(K, V)&gt;
+	<span class="kw">where
+		</span>K: Borrow&lt;Q&gt;,
+		Q: Ord + <span class="question-mark">?</span>Sized,
 	{
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">remove_entry</span>(<span class="ident">key</span>)
+		<span class="self">self</span>.<span class="number">0</span>.remove_entry(key)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Ord</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;K, V, S&gt; Default <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>K: Ord,
+	S: Get&lt;u32&gt;,
 {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="ident"><span class="self">Self</span>::new</span>()
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>::new()
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">Clone</span>,
+<span class="kw">impl</span>&lt;K, V, S&gt; Clone <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: Clone,
 {
-	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">BoundedBTreeMap</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">clone</span>(), <span class="ident">PhantomData</span>)
+	<span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		BoundedBTreeMap(<span class="self">self</span>.<span class="number">0</span>.clone(), PhantomData)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">sp_std::fmt::Debug</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">sp_std::fmt::Debug</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;K, V, S&gt; sp_std::fmt::Debug <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: sp_std::fmt::Debug,
+	S: Get&lt;u32&gt;,
 {
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">sp_std::fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">sp_std::fmt::Result</span> {
-		<span class="ident">f</span>.<span class="ident">debug_tuple</span>(<span class="string">&quot;BoundedBTreeMap&quot;</span>).<span class="ident">field</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).<span class="ident">field</span>(<span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::bound</span>()).<span class="ident">finish</span>()
+	<span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>sp_std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; sp_std::fmt::Result {
+		f.debug_tuple(<span class="string">&quot;BoundedBTreeMap&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).field(<span class="kw-2">&amp;</span><span class="self">Self</span>::bound()).finish()
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S1</span>, <span class="ident">S2</span><span class="op">&gt;</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S1</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S2</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">PartialEq</span>,
-	<span class="ident">S1</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-	<span class="ident">S2</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;K, V, S1, S2&gt; PartialEq&lt;BoundedBTreeMap&lt;K, V, S1&gt;&gt; <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S2&gt;
+<span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: PartialEq,
+	S1: Get&lt;u32&gt;,
+	S2: Get&lt;u32&gt;,
 {
-	<span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S1</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
-		<span class="ident">S1::get</span>() <span class="op">==</span> <span class="ident">S2::get</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="number">0</span> <span class="op">==</span> <span class="ident">other</span>.<span class="number">0</span>
-	}
+	<span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>BoundedBTreeMap&lt;K, V, S1&gt;) -&gt; bool {
+		S1::get() == S2::get() &amp;&amp; <span class="self">self</span>.<span class="number">0 </span>== other.<span class="number">0
+	</span>}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">Eq</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-{
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">PartialEq</span>,
-{
-	<span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="number">0</span> <span class="op">==</span> <span class="kw-2">*</span><span class="ident">other</span>
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">PartialOrd</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-{
-	<span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">sp_std::cmp::Ordering</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">0</span>)
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">Ord</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-{
-	<span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">sp_std::cmp::Ordering</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">0</span>)
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>);
-	<span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">sp_std::collections::btree_map::IntoIter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>;
-
-	<span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">into_iter</span>()
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">V</span>);
-	<span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">sp_std::collections::btree_map::Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>;
-
-	<span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">iter</span>()
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">V</span>);
-	<span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">sp_std::collections::btree_map::IterMut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>;
-
-	<span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">iter_mut</span>()
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">MaxEncodedLen</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">MaxEncodedLen</span>,
-	<span class="ident">V</span>: <span class="ident">MaxEncodedLen</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-{
-	<span class="kw">fn</span> <span class="ident">max_encoded_len</span>() -&gt; <span class="ident">usize</span> {
-		<span class="ident"><span class="self">Self</span>::bound</span>()
-			.<span class="ident">saturating_mul</span>(<span class="ident">K::max_encoded_len</span>().<span class="ident">saturating_add</span>(<span class="ident">V::max_encoded_len</span>()))
-			.<span class="ident">saturating_add</span>(<span class="ident">codec::Compact</span>(<span class="ident">S::get</span>()).<span class="ident">encoded_size</span>())
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Ord</span>,
-{
-	<span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>;
-
-	<span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Target</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Ord</span>,
-{
-	<span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Ord</span>,
-{
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">map</span>: <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">map</span>.<span class="number">0</span>
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Ord</span>,
-	<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-{
-	<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> ();
-
-	<span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">value</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		(<span class="ident">value</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::bound</span>())
-			.<span class="ident">then</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">BoundedBTreeMap</span>(<span class="ident">value</span>, <span class="ident">PhantomData</span>))
-			.<span class="ident">ok_or</span>(())
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">codec::DecodeLength</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">len</span>(<span class="ident">self_encoded</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">codec::Error</span><span class="op">&gt;</span> {
-		<span class="comment">// `BoundedBTreeMap&lt;K, V, S&gt;` is stored just a `BTreeMap&lt;K, V&gt;`, which is stored as a</span>
-		<span class="comment">// `Compact&lt;u32&gt;` with its length followed by an iteration of its items. We can just use</span>
-		<span class="comment">// the underlying implementation.</span>
-		<span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="kw">as</span> <span class="ident">codec::DecodeLength</span><span class="op">&gt;</span><span class="ident">::len</span>(<span class="ident">self_encoded</span>)
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">codec::EncodeLike</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="kw">where</span>
-	<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>: <span class="ident">Encode</span>
+<span class="kw">impl</span>&lt;K, V, S&gt; Eq <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: Eq,
+	S: Get&lt;u32&gt;,
 {
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">Bound</span><span class="op">&gt;</span> <span class="ident">TryCollect</span><span class="op">&lt;</span><span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">Bound</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">I</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Ord</span>,
-	<span class="ident">I</span>: <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span>,
-	<span class="ident">Bound</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;K, V, S&gt; PartialEq&lt;BTreeMap&lt;K, V&gt;&gt; <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: PartialEq,
 {
-	<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
+	<span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>BTreeMap&lt;K, V&gt;) -&gt; bool {
+		<span class="self">self</span>.<span class="number">0 </span>== <span class="kw-2">*</span>other
+	}
+}
 
-	<span class="kw">fn</span> <span class="ident">try_collect</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">Bound</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">Bound::get</span>() <span class="kw">as</span> <span class="ident">usize</span> {
+<span class="kw">impl</span>&lt;K, V, S&gt; PartialOrd <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: PartialOrd,
+	S: Get&lt;u32&gt;,
+{
+	<span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;sp_std::cmp::Ordering&gt; {
+		<span class="self">self</span>.<span class="number">0</span>.partial_cmp(<span class="kw-2">&amp;</span>other.<span class="number">0</span>)
+	}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; Ord <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: Ord,
+	S: Get&lt;u32&gt;,
+{
+	<span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; sp_std::cmp::Ordering {
+		<span class="self">self</span>.<span class="number">0</span>.cmp(<span class="kw-2">&amp;</span>other.<span class="number">0</span>)
+	}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; IntoIterator <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt; {
+	<span class="kw">type </span>Item = (K, V);
+	<span class="kw">type </span>IntoIter = sp_std::collections::btree_map::IntoIter&lt;K, V&gt;;
+
+	<span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+		<span class="self">self</span>.<span class="number">0</span>.into_iter()
+	}
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>BoundedBTreeMap&lt;K, V, S&gt; {
+	<span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V);
+	<span class="kw">type </span>IntoIter = sp_std::collections::btree_map::Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
+
+	<span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+		<span class="self">self</span>.<span class="number">0</span>.iter()
+	}
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>BoundedBTreeMap&lt;K, V, S&gt; {
+	<span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V);
+	<span class="kw">type </span>IntoIter = sp_std::collections::btree_map::IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
+
+	<span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+		<span class="self">self</span>.<span class="number">0</span>.iter_mut()
+	}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; MaxEncodedLen <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>K: MaxEncodedLen,
+	V: MaxEncodedLen,
+	S: Get&lt;u32&gt;,
+{
+	<span class="kw">fn </span>max_encoded_len() -&gt; usize {
+		<span class="self">Self</span>::bound()
+			.saturating_mul(K::max_encoded_len().saturating_add(V::max_encoded_len()))
+			.saturating_add(codec::Compact(S::get()).encoded_size())
+	}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; Deref <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>K: Ord,
+{
+	<span class="kw">type </span>Target = BTreeMap&lt;K, V&gt;;
+
+	<span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+	</span>}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; AsRef&lt;BTreeMap&lt;K, V&gt;&gt; <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>K: Ord,
+{
+	<span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BTreeMap&lt;K, V&gt; {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+	</span>}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; From&lt;BoundedBTreeMap&lt;K, V, S&gt;&gt; <span class="kw">for </span>BTreeMap&lt;K, V&gt;
+<span class="kw">where
+	</span>K: Ord,
+{
+	<span class="kw">fn </span>from(map: BoundedBTreeMap&lt;K, V, S&gt;) -&gt; <span class="self">Self </span>{
+		map.<span class="number">0
+	</span>}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; TryFrom&lt;BTreeMap&lt;K, V&gt;&gt; <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt;
+<span class="kw">where
+	</span>K: Ord,
+	S: Get&lt;u32&gt;,
+{
+	<span class="kw">type </span>Error = ();
+
+	<span class="kw">fn </span>try_from(value: BTreeMap&lt;K, V&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+		(value.len() &lt;= <span class="self">Self</span>::bound())
+			.then(<span class="kw">move </span>|| BoundedBTreeMap(value, PhantomData))
+			.ok_or(())
+	}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; codec::DecodeLength <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt; {
+	<span class="kw">fn </span>len(self_encoded: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;usize, codec::Error&gt; {
+		<span class="comment">// `BoundedBTreeMap&lt;K, V, S&gt;` is stored just a `BTreeMap&lt;K, V&gt;`, which is stored as a
+		// `Compact&lt;u32&gt;` with its length followed by an iteration of its items. We can just use
+		// the underlying implementation.
+		</span>&lt;BTreeMap&lt;K, V&gt; <span class="kw">as </span>codec::DecodeLength&gt;::len(self_encoded)
+	}
+}
+
+<span class="kw">impl</span>&lt;K, V, S&gt; codec::EncodeLike&lt;BTreeMap&lt;K, V&gt;&gt; <span class="kw">for </span>BoundedBTreeMap&lt;K, V, S&gt; <span class="kw">where
+	</span>BTreeMap&lt;K, V&gt;: Encode
+{
+}
+
+<span class="kw">impl</span>&lt;I, K, V, Bound&gt; TryCollect&lt;BoundedBTreeMap&lt;K, V, Bound&gt;&gt; <span class="kw">for </span>I
+<span class="kw">where
+	</span>K: Ord,
+	I: ExactSizeIterator + Iterator&lt;Item = (K, V)&gt;,
+	Bound: Get&lt;u32&gt;,
+{
+	<span class="kw">type </span>Error = <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str;
+
+	<span class="kw">fn </span>try_collect(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;BoundedBTreeMap&lt;K, V, Bound&gt;, <span class="self">Self</span>::Error&gt; {
+		<span class="kw">if </span><span class="self">self</span>.len() &gt; Bound::get() <span class="kw">as </span>usize {
 			<span class="prelude-val">Err</span>(<span class="string">&quot;iterator length too big&quot;</span>)
-		} <span class="kw">else</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">BoundedBTreeMap</span>::<span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">Bound</span><span class="op">&gt;</span><span class="ident">::unchecked_from</span>(<span class="self">self</span>.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>()))
+		} <span class="kw">else </span>{
+			<span class="prelude-val">Ok</span>(BoundedBTreeMap::&lt;K, V, Bound&gt;::unchecked_from(<span class="self">self</span>.collect::&lt;BTreeMap&lt;K, V&gt;&gt;()))
 		}
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">test</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::traits::ConstU32</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">pub mod </span>test {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use </span><span class="kw">crate</span>::traits::ConstU32;
 
-	<span class="kw">fn</span> <span class="ident">map_from_keys</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">keys</span>: <span class="kw-2">&amp;</span>[<span class="ident">K</span>]) -&gt; <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, ()<span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">K</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Copy</span>,
+	<span class="kw">fn </span>map_from_keys&lt;K&gt;(keys: <span class="kw-2">&amp;</span>[K]) -&gt; BTreeMap&lt;K, ()&gt;
+	<span class="kw">where
+		</span>K: Ord + Copy,
 	{
-		<span class="ident">keys</span>.<span class="ident">iter</span>().<span class="ident">copied</span>().<span class="ident">zip</span>(<span class="ident">std::iter::repeat</span>(())).<span class="ident">collect</span>()
+		keys.iter().copied().zip(std::iter::repeat(())).collect()
 	}
 
-	<span class="kw">fn</span> <span class="ident">boundedmap_from_keys</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>(<span class="ident">keys</span>: <span class="kw-2">&amp;</span>[<span class="ident">K</span>]) -&gt; <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, (), <span class="ident">S</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">K</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Copy</span>,
-		<span class="ident">S</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+	<span class="kw">fn </span>boundedmap_from_keys&lt;K, S&gt;(keys: <span class="kw-2">&amp;</span>[K]) -&gt; BoundedBTreeMap&lt;K, (), S&gt;
+	<span class="kw">where
+		</span>K: Ord + Copy,
+		S: Get&lt;u32&gt;,
 	{
-		<span class="ident">map_from_keys</span>(<span class="ident">keys</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>()
+		map_from_keys(keys).try_into().unwrap()
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">try_insert_works</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bounded</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="ident">bounded</span>.<span class="ident">try_insert</span>(<span class="number">0</span>, ()).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">bounded</span>, <span class="ident">map_from_keys</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>]));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>try_insert_works() {
+		<span class="kw">let </span><span class="kw-2">mut </span>bounded = boundedmap_from_keys::&lt;u32, ConstU32&lt;<span class="number">4</span>&gt;&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		bounded.try_insert(<span class="number">0</span>, ()).unwrap();
+		<span class="macro">assert_eq!</span>(<span class="kw-2">*</span>bounded, map_from_keys(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>]));
 
-		<span class="macro">assert!</span>(<span class="ident">bounded</span>.<span class="ident">try_insert</span>(<span class="number">9</span>, ()).<span class="ident">is_err</span>());
-		<span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">bounded</span>, <span class="ident">map_from_keys</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>]));
+		<span class="macro">assert!</span>(bounded.try_insert(<span class="number">9</span>, ()).is_err());
+		<span class="macro">assert_eq!</span>(<span class="kw-2">*</span>bounded, map_from_keys(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>]));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">deref_coercion_works</span>() {
-		<span class="kw">let</span> <span class="ident">bounded</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">7</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="comment">// these methods come from deref-ed vec.</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">bounded</span>.<span class="ident">len</span>(), <span class="number">3</span>);
-		<span class="macro">assert!</span>(<span class="ident">bounded</span>.<span class="ident">iter</span>().<span class="ident">next</span>().<span class="ident">is_some</span>());
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">bounded</span>.<span class="ident">is_empty</span>());
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>deref_coercion_works() {
+		<span class="kw">let </span>bounded = boundedmap_from_keys::&lt;u32, ConstU32&lt;<span class="number">7</span>&gt;&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		<span class="comment">// these methods come from deref-ed vec.
+		</span><span class="macro">assert_eq!</span>(bounded.len(), <span class="number">3</span>);
+		<span class="macro">assert!</span>(bounded.iter().next().is_some());
+		<span class="macro">assert!</span>(!bounded.is_empty());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">try_mutate_works</span>() {
-		<span class="kw">let</span> <span class="ident">bounded</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">7</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]);
-		<span class="kw">let</span> <span class="ident">bounded</span> <span class="op">=</span> <span class="ident">bounded</span>
-			.<span class="ident">try_mutate</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> {
-				<span class="ident">v</span>.<span class="ident">insert</span>(<span class="number">7</span>, ());
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>try_mutate_works() {
+		<span class="kw">let </span>bounded = boundedmap_from_keys::&lt;u32, ConstU32&lt;<span class="number">7</span>&gt;&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]);
+		<span class="kw">let </span>bounded = bounded
+			.try_mutate(|v| {
+				v.insert(<span class="number">7</span>, ());
 			})
-			.<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">bounded</span>.<span class="ident">len</span>(), <span class="number">7</span>);
-		<span class="macro">assert!</span>(<span class="ident">bounded</span>
-			.<span class="ident">try_mutate</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> {
-				<span class="ident">v</span>.<span class="ident">insert</span>(<span class="number">8</span>, ());
+			.unwrap();
+		<span class="macro">assert_eq!</span>(bounded.len(), <span class="number">7</span>);
+		<span class="macro">assert!</span>(bounded
+			.try_mutate(|v| {
+				v.insert(<span class="number">8</span>, ());
 			})
-			.<span class="ident">is_none</span>());
+			.is_none());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">btree_map_eq_works</span>() {
-		<span class="kw">let</span> <span class="ident">bounded</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">7</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]);
-		<span class="macro">assert_eq!</span>(<span class="ident">bounded</span>, <span class="ident">map_from_keys</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>btree_map_eq_works() {
+		<span class="kw">let </span>bounded = boundedmap_from_keys::&lt;u32, ConstU32&lt;<span class="number">7</span>&gt;&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]);
+		<span class="macro">assert_eq!</span>(bounded, map_from_keys(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">too_big_fail_to_decode</span>() {
-		<span class="kw">let</span> <span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">u32</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[(<span class="number">1</span>, <span class="number">1</span>), (<span class="number">2</span>, <span class="number">2</span>), (<span class="number">3</span>, <span class="number">3</span>), (<span class="number">4</span>, <span class="number">4</span>), (<span class="number">5</span>, <span class="number">5</span>)];
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>too_big_fail_to_decode() {
+		<span class="kw">let </span>v: Vec&lt;(u32, u32)&gt; = <span class="macro">vec!</span>[(<span class="number">1</span>, <span class="number">1</span>), (<span class="number">2</span>, <span class="number">2</span>), (<span class="number">3</span>, <span class="number">3</span>), (<span class="number">4</span>, <span class="number">4</span>), (<span class="number">5</span>, <span class="number">5</span>)];
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">BoundedBTreeMap</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::decode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span><span class="ident">v</span>.<span class="ident">encode</span>()[..]),
-			<span class="prelude-val">Err</span>(<span class="string">&quot;BoundedBTreeMap exceeds its limit&quot;</span>.<span class="ident">into</span>()),
+			BoundedBTreeMap::&lt;u32, u32, ConstU32&lt;<span class="number">4</span>&gt;&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>v.encode()[..]),
+			<span class="prelude-val">Err</span>(<span class="string">&quot;BoundedBTreeMap exceeds its limit&quot;</span>.into()),
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">unequal_eq_impl_insert_works</span>() {
-		<span class="comment">// given a struct with a strange notion of equality</span>
-		<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-		<span class="kw">struct</span> <span class="ident">Unequal</span>(<span class="ident">u32</span>, <span class="ident">bool</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>unequal_eq_impl_insert_works() {
+		<span class="comment">// given a struct with a strange notion of equality
+		</span><span class="attribute">#[derive(Debug)]
+		</span><span class="kw">struct </span>Unequal(u32, bool);
 
-		<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">Unequal</span> {
-			<span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
-				<span class="self">self</span>.<span class="number">0</span> <span class="op">==</span> <span class="ident">other</span>.<span class="number">0</span>
-			}
+		<span class="kw">impl </span>PartialEq <span class="kw">for </span>Unequal {
+			<span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+				<span class="self">self</span>.<span class="number">0 </span>== other.<span class="number">0
+			</span>}
 		}
-		<span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">Unequal</span> {}
+		<span class="kw">impl </span>Eq <span class="kw">for </span>Unequal {}
 
-		<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">Unequal</span> {
-			<span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">std::cmp::Ordering</span> {
-				<span class="self">self</span>.<span class="number">0</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">0</span>)
-			}
-		}
-
-		<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">Unequal</span> {
-			<span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">std::cmp::Ordering</span><span class="op">&gt;</span> {
-				<span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cmp</span>(<span class="ident">other</span>))
+		<span class="kw">impl </span>Ord <span class="kw">for </span>Unequal {
+			<span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; std::cmp::Ordering {
+				<span class="self">self</span>.<span class="number">0</span>.cmp(<span class="kw-2">&amp;</span>other.<span class="number">0</span>)
 			}
 		}
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">BoundedBTreeMap</span>::<span class="op">&lt;</span><span class="ident">Unequal</span>, <span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::new</span>();
-
-		<span class="comment">// when the set is full</span>
-
-		<span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">4</span> {
-			<span class="ident">map</span>.<span class="ident">try_insert</span>(<span class="ident">Unequal</span>(<span class="ident">i</span>, <span class="bool-val">false</span>), <span class="ident">i</span>).<span class="ident">unwrap</span>();
+		<span class="kw">impl </span>PartialOrd <span class="kw">for </span>Unequal {
+			<span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;std::cmp::Ordering&gt; {
+				<span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other))
+			}
 		}
 
-		<span class="comment">// can&#39;t insert a new distinct member</span>
-		<span class="ident">map</span>.<span class="ident">try_insert</span>(<span class="ident">Unequal</span>(<span class="number">5</span>, <span class="bool-val">false</span>), <span class="number">5</span>).<span class="ident">unwrap_err</span>();
+		<span class="kw">let </span><span class="kw-2">mut </span>map = BoundedBTreeMap::&lt;Unequal, u32, ConstU32&lt;<span class="number">4</span>&gt;&gt;::new();
 
-		<span class="comment">// but _can_ insert a distinct member which compares equal, though per the documentation,</span>
-		<span class="comment">// neither the set length nor the actual member are changed, but the value is</span>
-		<span class="ident">map</span>.<span class="ident">try_insert</span>(<span class="ident">Unequal</span>(<span class="number">0</span>, <span class="bool-val">true</span>), <span class="number">6</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">map</span>.<span class="ident">len</span>(), <span class="number">4</span>);
-		<span class="kw">let</span> (<span class="ident">zero_key</span>, <span class="ident">zero_value</span>) <span class="op">=</span> <span class="ident">map</span>.<span class="ident">get_key_value</span>(<span class="kw-2">&amp;</span><span class="ident">Unequal</span>(<span class="number">0</span>, <span class="bool-val">true</span>)).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">zero_key</span>.<span class="number">0</span>, <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">zero_key</span>.<span class="number">1</span>, <span class="bool-val">false</span>);
-		<span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">zero_value</span>, <span class="number">6</span>);
+		<span class="comment">// when the set is full
+
+		</span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">4 </span>{
+			map.try_insert(Unequal(i, <span class="bool-val">false</span>), i).unwrap();
+		}
+
+		<span class="comment">// can&#39;t insert a new distinct member
+		</span>map.try_insert(Unequal(<span class="number">5</span>, <span class="bool-val">false</span>), <span class="number">5</span>).unwrap_err();
+
+		<span class="comment">// but _can_ insert a distinct member which compares equal, though per the documentation,
+		// neither the set length nor the actual member are changed, but the value is
+		</span>map.try_insert(Unequal(<span class="number">0</span>, <span class="bool-val">true</span>), <span class="number">6</span>).unwrap();
+		<span class="macro">assert_eq!</span>(map.len(), <span class="number">4</span>);
+		<span class="kw">let </span>(zero_key, zero_value) = map.get_key_value(<span class="kw-2">&amp;</span>Unequal(<span class="number">0</span>, <span class="bool-val">true</span>)).unwrap();
+		<span class="macro">assert_eq!</span>(zero_key.<span class="number">0</span>, <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(zero_key.<span class="number">1</span>, <span class="bool-val">false</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw-2">*</span>zero_value, <span class="number">6</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">eq_works</span>() {
-		<span class="comment">// of same type</span>
-		<span class="kw">let</span> <span class="ident">b1</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">7</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
-		<span class="kw">let</span> <span class="ident">b2</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">7</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
-		<span class="macro">assert_eq!</span>(<span class="ident">b1</span>, <span class="ident">b2</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>eq_works() {
+		<span class="comment">// of same type
+		</span><span class="kw">let </span>b1 = boundedmap_from_keys::&lt;u32, ConstU32&lt;<span class="number">7</span>&gt;&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
+		<span class="kw">let </span>b2 = boundedmap_from_keys::&lt;u32, ConstU32&lt;<span class="number">7</span>&gt;&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
+		<span class="macro">assert_eq!</span>(b1, b2);
 
-		<span class="comment">// of different type, but same value and bound.</span>
-		<span class="macro">crate::parameter_types!</span> {
-			<span class="ident">B1</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">7</span>;
-			<span class="ident">B2</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">7</span>;
+		<span class="comment">// of different type, but same value and bound.
+		</span><span class="macro">crate::parameter_types! </span>{
+			B1: u32 = <span class="number">7</span>;
+			B2: u32 = <span class="number">7</span>;
 		}
-		<span class="kw">let</span> <span class="ident">b1</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">B1</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
-		<span class="kw">let</span> <span class="ident">b2</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">B2</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
-		<span class="macro">assert_eq!</span>(<span class="ident">b1</span>, <span class="ident">b2</span>);
+		<span class="kw">let </span>b1 = boundedmap_from_keys::&lt;u32, B1&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
+		<span class="kw">let </span>b2 = boundedmap_from_keys::&lt;u32, B2&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
+		<span class="macro">assert_eq!</span>(b1, b2);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">can_be_collected</span>() {
-		<span class="kw">let</span> <span class="ident">b1</span> <span class="op">=</span> <span class="ident">boundedmap_from_keys</span>::<span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">5</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);
-		<span class="kw">let</span> <span class="ident">b2</span>: <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">u32</span>, (), <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">5</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>
-			<span class="ident">b1</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span> <span class="op">+</span> <span class="number">1</span>, <span class="kw-2">*</span><span class="ident">v</span>)).<span class="ident">try_collect</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">b2</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">k</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>can_be_collected() {
+		<span class="kw">let </span>b1 = boundedmap_from_keys::&lt;u32, ConstU32&lt;<span class="number">5</span>&gt;&gt;(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);
+		<span class="kw">let </span>b2: BoundedBTreeMap&lt;u32, (), ConstU32&lt;<span class="number">5</span>&gt;&gt; =
+			b1.iter().map(|(k, v)| (k + <span class="number">1</span>, <span class="kw-2">*</span>v)).try_collect().unwrap();
+		<span class="macro">assert_eq!</span>(b2.into_iter().map(|(k, <span class="kw">_</span>)| k).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);
 
-		<span class="comment">// can also be collected into a collection of length 4.</span>
-		<span class="kw">let</span> <span class="ident">b2</span>: <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">u32</span>, (), <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>
-			<span class="ident">b1</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span> <span class="op">+</span> <span class="number">1</span>, <span class="kw-2">*</span><span class="ident">v</span>)).<span class="ident">try_collect</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">b2</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">k</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);
+		<span class="comment">// can also be collected into a collection of length 4.
+		</span><span class="kw">let </span>b2: BoundedBTreeMap&lt;u32, (), ConstU32&lt;<span class="number">4</span>&gt;&gt; =
+			b1.iter().map(|(k, v)| (k + <span class="number">1</span>, <span class="kw-2">*</span>v)).try_collect().unwrap();
+		<span class="macro">assert_eq!</span>(b2.into_iter().map(|(k, <span class="kw">_</span>)| k).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);
 
-		<span class="comment">// can be mutated further into iterators that are `ExactSizedIterator`.</span>
-		<span class="kw">let</span> <span class="ident">b2</span>: <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">u32</span>, (), <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">5</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>
-			<span class="ident">b1</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span> <span class="op">+</span> <span class="number">1</span>, <span class="kw-2">*</span><span class="ident">v</span>)).<span class="ident">rev</span>().<span class="ident">skip</span>(<span class="number">2</span>).<span class="ident">try_collect</span>().<span class="ident">unwrap</span>();
-		<span class="comment">// note that the binary tree will re-sort this, so rev() is not really seen</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">b2</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">k</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]);
+		<span class="comment">// can be mutated further into iterators that are `ExactSizedIterator`.
+		</span><span class="kw">let </span>b2: BoundedBTreeMap&lt;u32, (), ConstU32&lt;<span class="number">5</span>&gt;&gt; =
+			b1.iter().map(|(k, v)| (k + <span class="number">1</span>, <span class="kw-2">*</span>v)).rev().skip(<span class="number">2</span>).try_collect().unwrap();
+		<span class="comment">// note that the binary tree will re-sort this, so rev() is not really seen
+		</span><span class="macro">assert_eq!</span>(b2.into_iter().map(|(k, <span class="kw">_</span>)| k).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]);
 
-		<span class="kw">let</span> <span class="ident">b2</span>: <span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">u32</span>, (), <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">5</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>
-			<span class="ident">b1</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span> <span class="op">+</span> <span class="number">1</span>, <span class="kw-2">*</span><span class="ident">v</span>)).<span class="ident">take</span>(<span class="number">2</span>).<span class="ident">try_collect</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">b2</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">k</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]);
+		<span class="kw">let </span>b2: BoundedBTreeMap&lt;u32, (), ConstU32&lt;<span class="number">5</span>&gt;&gt; =
+			b1.iter().map(|(k, v)| (k + <span class="number">1</span>, <span class="kw-2">*</span>v)).take(<span class="number">2</span>).try_collect().unwrap();
+		<span class="macro">assert_eq!</span>(b2.into_iter().map(|(k, <span class="kw">_</span>)| k).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]);
 
-		<span class="comment">// but these worn&#39;t work</span>
-		<span class="kw">let</span> <span class="ident">b2</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">u32</span>, (), <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">3</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span>
-			<span class="ident">b1</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span> <span class="op">+</span> <span class="number">1</span>, <span class="kw-2">*</span><span class="ident">v</span>)).<span class="ident">try_collect</span>();
-		<span class="macro">assert!</span>(<span class="ident">b2</span>.<span class="ident">is_err</span>());
+		<span class="comment">// but these worn&#39;t work
+		</span><span class="kw">let </span>b2: <span class="prelude-ty">Result</span>&lt;BoundedBTreeMap&lt;u32, (), ConstU32&lt;<span class="number">3</span>&gt;&gt;, <span class="kw">_</span>&gt; =
+			b1.iter().map(|(k, v)| (k + <span class="number">1</span>, <span class="kw-2">*</span>v)).try_collect();
+		<span class="macro">assert!</span>(b2.is_err());
 
-		<span class="kw">let</span> <span class="ident">b2</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BoundedBTreeMap</span><span class="op">&lt;</span><span class="ident">u32</span>, (), <span class="ident">ConstU32</span><span class="op">&lt;</span><span class="number">1</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span>
-			<span class="ident">b1</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span> <span class="op">+</span> <span class="number">1</span>, <span class="kw-2">*</span><span class="ident">v</span>)).<span class="ident">skip</span>(<span class="number">2</span>).<span class="ident">try_collect</span>();
-		<span class="macro">assert!</span>(<span class="ident">b2</span>.<span class="ident">is_err</span>());
+		<span class="kw">let </span>b2: <span class="prelude-ty">Result</span>&lt;BoundedBTreeMap&lt;u32, (), ConstU32&lt;<span class="number">1</span>&gt;&gt;, <span class="kw">_</span>&gt; =
+			b1.iter().map(|(k, v)| (k + <span class="number">1</span>, <span class="kw-2">*</span>v)).skip(<span class="number">2</span>).try_collect();
+		<span class="macro">assert!</span>(b2.is_err());
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sp_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sp_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

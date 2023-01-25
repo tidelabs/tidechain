@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["ADDRESS_HEADER_LEN",""]],"mod":[["nlas",""]],"struct":[["AddressHeader",""],["AddressMessage",""],["AddressMessageBuffer",""]]});
+window.SIDEBAR_ITEMS = {"constant":[["ADDRESS_HEADER_LEN",""]],"mod":[["nlas",""]],"struct":[["AddressHeader",""],["AddressMessage",""],["AddressMessageBuffer",""]]};

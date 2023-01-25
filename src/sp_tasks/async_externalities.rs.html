@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/tasks/src/async_externalities.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_externalities.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_tasks/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sp_tasks/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sp_tasks/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/tasks/src/async_externalities.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_externalities.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sp_tasks/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -215,218 +210,217 @@
 <span id="210">210</span>
 <span id="211">211</span>
 <span id="212">212</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Async externalities.</span>
+</span><span class="doccomment">//! Async externalities.
 
-<span class="kw">use</span> <span class="ident">sp_core</span>::{
-	<span class="ident">storage</span>::{<span class="ident">ChildInfo</span>, <span class="ident">StateVersion</span>, <span class="ident">TrackedStorageKey</span>},
-	<span class="ident">traits</span>::{<span class="ident">Externalities</span>, <span class="ident">RuntimeSpawn</span>, <span class="ident">RuntimeSpawnExt</span>, <span class="ident">SpawnNamed</span>, <span class="ident">TaskExecutorExt</span>},
+</span><span class="kw">use </span>sp_core::{
+	storage::{ChildInfo, StateVersion, TrackedStorageKey},
+	traits::{Externalities, RuntimeSpawn, RuntimeSpawnExt, SpawnNamed, TaskExecutorExt},
 };
-<span class="kw">use</span> <span class="ident">sp_externalities</span>::{<span class="ident">Extensions</span>, <span class="ident">ExternalitiesExt</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">MultiRemovalResults</span>};
-<span class="kw">use</span> <span class="ident">std::any</span>::{<span class="ident">Any</span>, <span class="ident">TypeId</span>};
+<span class="kw">use </span>sp_externalities::{Extensions, ExternalitiesExt <span class="kw">as _</span>, MultiRemovalResults};
+<span class="kw">use </span>std::any::{Any, TypeId};
 
-<span class="doccomment">/// Simple state-less externalities for use in async context.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Will panic if anything is accessing the storage.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AsyncExternalities</span> {
-	<span class="ident">extensions</span>: <span class="ident">Extensions</span>,
+<span class="doccomment">/// Simple state-less externalities for use in async context.
+///
+/// Will panic if anything is accessing the storage.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>AsyncExternalities {
+	extensions: Extensions,
 }
 
-<span class="doccomment">/// New Async externalities.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_async_externalities</span>(
-	<span class="ident">scheduler</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SpawnNamed</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AsyncExternalities</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">AsyncExternalities</span> { <span class="ident">extensions</span>: <span class="ident">Default::default</span>() };
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ext</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">res</span> <span class="kw">as</span> <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Externalities</span>;
-	<span class="ident">ext</span>.<span class="ident">register_extension</span>::<span class="op">&lt;</span><span class="ident">TaskExecutorExt</span><span class="op">&gt;</span>(<span class="ident">TaskExecutorExt</span>(<span class="ident">scheduler</span>.<span class="ident">clone</span>()))
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;Failed to register task executor extension.&quot;</span>)<span class="question-mark">?</span>;
+<span class="doccomment">/// New Async externalities.
+</span><span class="kw">pub fn </span>new_async_externalities(
+	scheduler: Box&lt;<span class="kw">dyn </span>SpawnNamed&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;AsyncExternalities, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>res = AsyncExternalities { extensions: Default::default() };
+	<span class="kw">let </span><span class="kw-2">mut </span>ext = <span class="kw-2">&amp;mut </span>res <span class="kw">as </span><span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Externalities;
+	ext.register_extension::&lt;TaskExecutorExt&gt;(TaskExecutorExt(scheduler.clone()))
+		.map_err(|<span class="kw">_</span>| <span class="string">&quot;Failed to register task executor extension.&quot;</span>)<span class="question-mark">?</span>;
 
-	<span class="prelude-val">Ok</span>(<span class="ident">res</span>)
+	<span class="prelude-val">Ok</span>(res)
 }
 
-<span class="kw">impl</span> <span class="ident">AsyncExternalities</span> {
-	<span class="doccomment">/// Extend async externalities with the ability to spawn wasm instances.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_runtime_spawn</span>(
-		<span class="kw-2">mut</span> <span class="self">self</span>,
-		<span class="ident">runtime_ext</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RuntimeSpawn</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ext</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span> <span class="kw">as</span> <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Externalities</span>;
-		<span class="ident">ext</span>.<span class="ident">register_extension</span>::<span class="op">&lt;</span><span class="ident">RuntimeSpawnExt</span><span class="op">&gt;</span>(<span class="ident">RuntimeSpawnExt</span>(<span class="ident">runtime_ext</span>))
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;Failed to register task executor extension.&quot;</span>)<span class="question-mark">?</span>;
+<span class="kw">impl </span>AsyncExternalities {
+	<span class="doccomment">/// Extend async externalities with the ability to spawn wasm instances.
+	</span><span class="kw">pub fn </span>with_runtime_spawn(
+		<span class="kw-2">mut </span><span class="self">self</span>,
+		runtime_ext: Box&lt;<span class="kw">dyn </span>RuntimeSpawn&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>ext = <span class="kw-2">&amp;mut </span><span class="self">self </span><span class="kw">as </span><span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Externalities;
+		ext.register_extension::&lt;RuntimeSpawnExt&gt;(RuntimeSpawnExt(runtime_ext))
+			.map_err(|<span class="kw">_</span>| <span class="string">&quot;Failed to register task executor extension.&quot;</span>)<span class="question-mark">?</span>;
 
 		<span class="prelude-val">Ok</span>(<span class="self">self</span>)
 	}
 }
 
-<span class="kw">type</span> <span class="ident">StorageKey</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>;
+<span class="kw">type </span>StorageKey = Vec&lt;u8&gt;;
 
-<span class="kw">type</span> <span class="ident">StorageValue</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>;
+<span class="kw">type </span>StorageValue = Vec&lt;u8&gt;;
 
-<span class="kw">impl</span> <span class="ident">Externalities</span> <span class="kw">for</span> <span class="ident">AsyncExternalities</span> {
-	<span class="kw">fn</span> <span class="ident">set_offchain_storage</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">_value</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>) {
+<span class="kw">impl </span>Externalities <span class="kw">for </span>AsyncExternalities {
+	<span class="kw">fn </span>set_offchain_storage(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _key: <span class="kw-2">&amp;</span>[u8], _value: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;) {
 		<span class="macro">panic!</span>(<span class="string">&quot;`set_offchain_storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">storage</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>storage(<span class="kw-2">&amp;</span><span class="self">self</span>, _key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;StorageValue&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">storage_hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>storage_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, _key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`storage_hash`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">child_storage</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>child_storage(<span class="kw-2">&amp;</span><span class="self">self</span>, _child_info: <span class="kw-2">&amp;</span>ChildInfo, _key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;StorageValue&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`child_storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">child_storage_hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>child_storage_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, _child_info: <span class="kw-2">&amp;</span>ChildInfo, _key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`child_storage_hash`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">next_storage_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageKey</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>next_storage_key(<span class="kw-2">&amp;</span><span class="self">self</span>, _key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;StorageKey&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`next_storage_key`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">next_child_storage_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageKey</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>next_child_storage_key(<span class="kw-2">&amp;</span><span class="self">self</span>, _child_info: <span class="kw-2">&amp;</span>ChildInfo, _key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;StorageKey&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`next_child_storage_key`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">place_storage</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_key</span>: <span class="ident">StorageKey</span>, <span class="ident">_maybe_value</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span>) {
+	<span class="kw">fn </span>place_storage(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _key: StorageKey, _maybe_value: <span class="prelude-ty">Option</span>&lt;StorageValue&gt;) {
 		<span class="macro">panic!</span>(<span class="string">&quot;`place_storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">place_child_storage</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">_key</span>: <span class="ident">StorageKey</span>,
-		<span class="ident">_value</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span>,
+	<span class="kw">fn </span>place_child_storage(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		_child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		_key: StorageKey,
+		_value: <span class="prelude-ty">Option</span>&lt;StorageValue&gt;,
 	) {
 		<span class="macro">panic!</span>(<span class="string">&quot;`place_child_storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">kill_child_storage</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">_maybe_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-		<span class="ident">_maybe_cursor</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-	) -&gt; <span class="ident">MultiRemovalResults</span> {
+	<span class="kw">fn </span>kill_child_storage(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		_child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		_maybe_limit: <span class="prelude-ty">Option</span>&lt;u32&gt;,
+		_maybe_cursor: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+	) -&gt; MultiRemovalResults {
 		<span class="macro">panic!</span>(<span class="string">&quot;`kill_child_storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">clear_prefix</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">_prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">_maybe_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-		<span class="ident">_maybe_cursor</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-	) -&gt; <span class="ident">MultiRemovalResults</span> {
+	<span class="kw">fn </span>clear_prefix(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		_prefix: <span class="kw-2">&amp;</span>[u8],
+		_maybe_limit: <span class="prelude-ty">Option</span>&lt;u32&gt;,
+		_maybe_cursor: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+	) -&gt; MultiRemovalResults {
 		<span class="macro">panic!</span>(<span class="string">&quot;`clear_prefix`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">clear_child_prefix</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">_prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">_maybe_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-		<span class="ident">_maybe_cursor</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-	) -&gt; <span class="ident">MultiRemovalResults</span> {
+	<span class="kw">fn </span>clear_child_prefix(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		_child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		_prefix: <span class="kw-2">&amp;</span>[u8],
+		_maybe_limit: <span class="prelude-ty">Option</span>&lt;u32&gt;,
+		_maybe_cursor: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+	) -&gt; MultiRemovalResults {
 		<span class="macro">panic!</span>(<span class="string">&quot;`clear_child_prefix`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">storage_append</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_key</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">_value</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) {
+	<span class="kw">fn </span>storage_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _key: Vec&lt;u8&gt;, _value: Vec&lt;u8&gt;) {
 		<span class="macro">panic!</span>(<span class="string">&quot;`storage_append`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">storage_root</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_state_version</span>: <span class="ident">StateVersion</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>storage_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _state_version: StateVersion) -&gt; Vec&lt;u8&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`storage_root`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">child_storage_root</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">_state_version</span>: <span class="ident">StateVersion</span>,
-	) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>child_storage_root(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		_child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		_state_version: StateVersion,
+	) -&gt; Vec&lt;u8&gt; {
 		<span class="macro">panic!</span>(<span class="string">&quot;`child_storage_root`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">storage_start_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
+	<span class="kw">fn </span>storage_start_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;Transactions are not supported by AsyncExternalities&quot;</span>);
 	}
 
-	<span class="kw">fn</span> <span class="ident">storage_rollback_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span> {
+	<span class="kw">fn </span>storage_rollback_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;Transactions are not supported by AsyncExternalities&quot;</span>);
 	}
 
-	<span class="kw">fn</span> <span class="ident">storage_commit_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span> {
+	<span class="kw">fn </span>storage_commit_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;Transactions are not supported by AsyncExternalities&quot;</span>);
 	}
 
-	<span class="kw">fn</span> <span class="ident">wipe</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {}
+	<span class="kw">fn </span>wipe(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {}
 
-	<span class="kw">fn</span> <span class="ident">commit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {}
+	<span class="kw">fn </span>commit(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {}
 
-	<span class="kw">fn</span> <span class="ident">read_write_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">u32</span>) {
+	<span class="kw">fn </span>read_write_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (u32, u32, u32, u32) {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;read_write_count is not supported in AsyncExternalities&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">reset_read_write_count</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
+	<span class="kw">fn </span>reset_read_write_count(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;reset_read_write_count is not supported in AsyncExternalities&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">get_whitelist</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TrackedStorageKey</span><span class="op">&gt;</span> {
+	<span class="kw">fn </span>get_whitelist(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;TrackedStorageKey&gt; {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;get_whitelist is not supported in AsyncExternalities&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">set_whitelist</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TrackedStorageKey</span><span class="op">&gt;</span>) {
+	<span class="kw">fn </span>set_whitelist(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: Vec&lt;TrackedStorageKey&gt;) {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;set_whitelist is not supported in AsyncExternalities&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">get_read_and_written_keys</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">bool</span>)<span class="op">&gt;</span> {
+	<span class="kw">fn </span>get_read_and_written_keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(Vec&lt;u8&gt;, u32, u32, bool)&gt; {
 		<span class="macro">unimplemented!</span>(<span class="string">&quot;get_read_and_written_keys is not supported in AsyncExternalities&quot;</span>)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">sp_externalities::ExtensionStore</span> <span class="kw">for</span> <span class="ident">AsyncExternalities</span> {
-	<span class="kw">fn</span> <span class="ident">extension_by_type_id</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">type_id</span>: <span class="ident">TypeId</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Any</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">extensions</span>.<span class="ident">get_mut</span>(<span class="ident">type_id</span>)
+<span class="kw">impl </span>sp_externalities::ExtensionStore <span class="kw">for </span>AsyncExternalities {
+	<span class="kw">fn </span>extension_by_type_id(<span class="kw-2">&amp;mut </span><span class="self">self</span>, type_id: TypeId) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Any&gt; {
+		<span class="self">self</span>.extensions.get_mut(type_id)
 	}
 
-	<span class="kw">fn</span> <span class="ident">register_extension_with_type_id</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">type_id</span>: <span class="ident">TypeId</span>,
-		<span class="ident">extension</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">sp_externalities::Extension</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">sp_externalities::Error</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">extensions</span>.<span class="ident">register_with_type_id</span>(<span class="ident">type_id</span>, <span class="ident">extension</span>)
+	<span class="kw">fn </span>register_extension_with_type_id(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		type_id: TypeId,
+		extension: Box&lt;<span class="kw">dyn </span>sp_externalities::Extension&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), sp_externalities::Error&gt; {
+		<span class="self">self</span>.extensions.register_with_type_id(type_id, extension)
 	}
 
-	<span class="kw">fn</span> <span class="ident">deregister_extension_by_type_id</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">type_id</span>: <span class="ident">TypeId</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">sp_externalities::Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">extensions</span>.<span class="ident">deregister</span>(<span class="ident">type_id</span>) {
+	<span class="kw">fn </span>deregister_extension_by_type_id(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		type_id: TypeId,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), sp_externalities::Error&gt; {
+		<span class="kw">if </span><span class="self">self</span>.extensions.deregister(type_id) {
 			<span class="prelude-val">Ok</span>(())
-		} <span class="kw">else</span> {
-			<span class="prelude-val">Err</span>(<span class="ident">sp_externalities::Error::ExtensionIsNotRegistered</span>(<span class="ident">type_id</span>))
+		} <span class="kw">else </span>{
+			<span class="prelude-val">Err</span>(sp_externalities::Error::ExtensionIsNotRegistered(type_id))
 		}
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_tasks" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_tasks" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

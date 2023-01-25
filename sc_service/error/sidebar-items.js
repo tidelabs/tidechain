@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Service errors."]],"type":[["Result","Service Result typedef."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","Service errors."]],"type":[["Result","Service Result typedef."]]};

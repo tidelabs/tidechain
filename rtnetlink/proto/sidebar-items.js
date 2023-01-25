@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ErrorKind",""],["NetlinkPayload",""]],"struct":[["Connection","Connection to a Netlink socket, running in the background."],["ConnectionHandle","A handle to pass requests to a `Connection`."],["Error",""],["NetlinkMessage","Represent a netlink message."]]});
+window.SIDEBAR_ITEMS = {"enum":[["ErrorKind",""],["NetlinkPayload",""]],"struct":[["Connection","Connection to a Netlink socket, running in the background."],["ConnectionHandle","A handle to pass requests to a `Connection`."],["Error",""],["NetlinkMessage","Represent a netlink message."]]};

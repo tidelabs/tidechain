@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["UdsConfig","Represents the configuration for a Unix domain sockets transport capability for libp2p."]]});
+window.SIDEBAR_ITEMS = {"struct":[["UdsConfig","Represents the configuration for a Unix domain sockets transport capability for libp2p."]]};

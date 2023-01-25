@@ -1,1 +1,1 @@
-initSidebarItems({"attr":[["rpc","Main RPC macro."]]});
+window.SIDEBAR_ITEMS = {"attr":[["rpc","Main RPC macro."]]};

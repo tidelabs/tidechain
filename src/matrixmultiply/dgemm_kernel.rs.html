@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/matrixmultiply-0.3.2/src/dgemm_kernel.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dgemm_kernel.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../matrixmultiply/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../matrixmultiply/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../matrixmultiply/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/matrixmultiply-0.3.2/src/dgemm_kernel.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dgemm_kernel.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../matrixmultiply/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -866,869 +861,868 @@
 <span id="861">861</span>
 <span id="862">862</span>
 <span id="863">863</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2016 - 2018 Ulrik Sverdrup &quot;bluss&quot;</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license</span>
-<span class="comment">// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your</span>
-<span class="comment">// option. This file may not be copied, modified, or distributed</span>
-<span class="comment">// except according to those terms.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2016 - 2018 Ulrik Sverdrup &quot;bluss&quot;
+//
+// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license
+// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel::GemmKernel</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel::GemmSelect</span>;
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel</span>::{<span class="ident">U4</span>, <span class="ident">U8</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::archparam</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::kernel::GemmKernel;
+<span class="kw">use </span><span class="kw">crate</span>::kernel::GemmSelect;
+<span class="attribute">#[allow(unused)]
+</span><span class="kw">use </span><span class="kw">crate</span>::kernel::{U4, U8};
+<span class="kw">use </span><span class="kw">crate</span>::archparam;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">core::arch::x86</span>::<span class="kw-2">*</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">core::arch::x86_64</span>::<span class="kw-2">*</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::x86</span>::{<span class="ident">FusedMulAdd</span>, <span class="ident">AvxMulAdd</span>, <span class="ident">DMultiplyAdd</span>};
+<span class="attribute">#[cfg(target_arch=<span class="string">&quot;x86&quot;</span>)]
+</span><span class="kw">use </span>core::arch::x86::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(target_arch=<span class="string">&quot;x86_64&quot;</span>)]
+</span><span class="kw">use </span>core::arch::x86_64::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">use </span><span class="kw">crate</span>::x86::{FusedMulAdd, AvxMulAdd, DMultiplyAdd};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">struct</span> <span class="ident">KernelAvx</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">struct</span> <span class="ident">KernelFma</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">struct</span> <span class="ident">KernelSse2</span>;
-<span class="kw">struct</span> <span class="ident">KernelFallback</span>;
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">struct </span>KernelAvx;
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">struct </span>KernelFma;
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">struct </span>KernelSse2;
+<span class="kw">struct </span>KernelFallback;
 
-<span class="kw">type</span> <span class="ident">T</span> <span class="op">=</span> <span class="ident">f64</span>;
+<span class="kw">type </span>T = f64;
 
-<span class="doccomment">/// Detect which implementation to use and select it using the selector&#39;s</span>
-<span class="doccomment">/// .select(Kernel) method.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function is called one or more times during a whole program&#39;s</span>
-<span class="doccomment">/// execution, it may be called for each gemm kernel invocation or fewer times.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">detect</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">selector</span>: <span class="ident">G</span>) <span class="kw">where</span> <span class="ident">G</span>: <span class="ident">GemmSelect</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="comment">// dispatch to specific compiled versions</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-    {
-        <span class="kw">if</span> <span class="macro">is_x86_feature_detected_!</span>(<span class="string">&quot;fma&quot;</span>) {
-            <span class="kw">return</span> <span class="ident">selector</span>.<span class="ident">select</span>(<span class="ident">KernelFma</span>);
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="macro">is_x86_feature_detected_!</span>(<span class="string">&quot;avx&quot;</span>) {
-            <span class="kw">return</span> <span class="ident">selector</span>.<span class="ident">select</span>(<span class="ident">KernelAvx</span>);
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="macro">is_x86_feature_detected_!</span>(<span class="string">&quot;sse2&quot;</span>) {
-            <span class="kw">return</span> <span class="ident">selector</span>.<span class="ident">select</span>(<span class="ident">KernelSse2</span>);
+<span class="doccomment">/// Detect which implementation to use and select it using the selector&#39;s
+/// .select(Kernel) method.
+///
+/// This function is called one or more times during a whole program&#39;s
+/// execution, it may be called for each gemm kernel invocation or fewer times.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>detect&lt;G&gt;(selector: G) <span class="kw">where </span>G: GemmSelect&lt;T&gt; {
+    <span class="comment">// dispatch to specific compiled versions
+    </span><span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+    </span>{
+        <span class="kw">if </span><span class="macro">is_x86_feature_detected_!</span>(<span class="string">&quot;fma&quot;</span>) {
+            <span class="kw">return </span>selector.select(KernelFma);
+        } <span class="kw">else if </span><span class="macro">is_x86_feature_detected_!</span>(<span class="string">&quot;avx&quot;</span>) {
+            <span class="kw">return </span>selector.select(KernelAvx);
+        } <span class="kw">else if </span><span class="macro">is_x86_feature_detected_!</span>(<span class="string">&quot;sse2&quot;</span>) {
+            <span class="kw">return </span>selector.select(KernelSse2);
         }
     }
-    <span class="kw">return</span> <span class="ident">selector</span>.<span class="ident">select</span>(<span class="ident">KernelFallback</span>);
+    <span class="kw">return </span>selector.select(KernelFallback);
 }
 
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="macro">macro_rules!</span> <span class="ident">loop_m</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">i</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">e</span>:<span class="ident">expr</span>) =&gt; { <span class="macro">loop8!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">i</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">e</span>) };
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="macro">macro_rules! </span>loop_m {
+    (<span class="macro-nonterminal">$i</span>:ident, <span class="macro-nonterminal">$e</span>:expr) =&gt; { <span class="macro">loop8!</span>(<span class="macro-nonterminal">$i</span>, <span class="macro-nonterminal">$e</span>) };
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">impl</span> <span class="ident">GemmKernel</span> <span class="kw">for</span> <span class="ident">KernelAvx</span> {
-    <span class="kw">type</span> <span class="ident">Elem</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">impl </span>GemmKernel <span class="kw">for </span>KernelAvx {
+    <span class="kw">type </span>Elem = T;
 
-    <span class="kw">type</span> <span class="ident">MRTy</span> <span class="op">=</span> <span class="ident">U8</span>;
-    <span class="kw">type</span> <span class="ident">NRTy</span> <span class="op">=</span> <span class="ident">U4</span>;
+    <span class="kw">type </span>MRTy = U8;
+    <span class="kw">type </span>NRTy = U4;
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">align_to</span>() -&gt; <span class="ident">usize</span> { <span class="number">32</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>align_to() -&gt; usize { <span class="number">32 </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">always_masked</span>() -&gt; <span class="ident">bool</span> { <span class="bool-val">false</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>always_masked() -&gt; bool { <span class="bool-val">false </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">nc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_NC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">kc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_KC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">mc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_MC</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>nc() -&gt; usize { archparam::D_NC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>kc() -&gt; usize { archparam::D_KC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>mc() -&gt; usize { archparam::D_MC }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel</span>(
-        <span class="ident">k</span>: <span class="ident">usize</span>,
-        <span class="ident">alpha</span>: <span class="ident">T</span>,
-        <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">beta</span>: <span class="ident">T</span>,
-        <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">rsc</span>: <span class="ident">isize</span>,
-        <span class="ident">csc</span>: <span class="ident">isize</span>)
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">unsafe fn </span>kernel(
+        k: usize,
+        alpha: T,
+        a: <span class="kw-2">*const </span>T,
+        b: <span class="kw-2">*const </span>T,
+        beta: T,
+        c: <span class="kw-2">*mut </span>T,
+        rsc: isize,
+        csc: isize)
     {
-        <span class="ident">kernel_target_avx</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+        kernel_target_avx(k, alpha, a, b, beta, c, rsc, csc)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">impl</span> <span class="ident">GemmKernel</span> <span class="kw">for</span> <span class="ident">KernelFma</span> {
-    <span class="kw">type</span> <span class="ident">Elem</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">impl </span>GemmKernel <span class="kw">for </span>KernelFma {
+    <span class="kw">type </span>Elem = T;
 
-    <span class="kw">type</span> <span class="ident">MRTy</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">KernelAvx</span> <span class="kw">as</span> <span class="ident">GemmKernel</span><span class="op">&gt;</span><span class="ident">::MRTy</span>;
-    <span class="kw">type</span> <span class="ident">NRTy</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">KernelAvx</span> <span class="kw">as</span> <span class="ident">GemmKernel</span><span class="op">&gt;</span><span class="ident">::NRTy</span>;
+    <span class="kw">type </span>MRTy = &lt;KernelAvx <span class="kw">as </span>GemmKernel&gt;::MRTy;
+    <span class="kw">type </span>NRTy = &lt;KernelAvx <span class="kw">as </span>GemmKernel&gt;::NRTy;
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">align_to</span>() -&gt; <span class="ident">usize</span> { <span class="ident">KernelAvx::align_to</span>() }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>align_to() -&gt; usize { KernelAvx::align_to() }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">always_masked</span>() -&gt; <span class="ident">bool</span> { <span class="ident">KernelAvx::always_masked</span>() }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>always_masked() -&gt; bool { KernelAvx::always_masked() }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">nc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_NC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">kc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_KC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">mc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_MC</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>nc() -&gt; usize { archparam::D_NC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>kc() -&gt; usize { archparam::D_KC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>mc() -&gt; usize { archparam::D_MC }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel</span>(
-        <span class="ident">k</span>: <span class="ident">usize</span>,
-        <span class="ident">alpha</span>: <span class="ident">T</span>,
-        <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">beta</span>: <span class="ident">T</span>,
-        <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">rsc</span>: <span class="ident">isize</span>,
-        <span class="ident">csc</span>: <span class="ident">isize</span>)
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">unsafe fn </span>kernel(
+        k: usize,
+        alpha: T,
+        a: <span class="kw-2">*const </span>T,
+        b: <span class="kw-2">*const </span>T,
+        beta: T,
+        c: <span class="kw-2">*mut </span>T,
+        rsc: isize,
+        csc: isize)
     {
-        <span class="ident">kernel_target_fma</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+        kernel_target_fma(k, alpha, a, b, beta, c, rsc, csc)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">impl</span> <span class="ident">GemmKernel</span> <span class="kw">for</span> <span class="ident">KernelSse2</span> {
-    <span class="kw">type</span> <span class="ident">Elem</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">impl </span>GemmKernel <span class="kw">for </span>KernelSse2 {
+    <span class="kw">type </span>Elem = T;
 
-    <span class="kw">type</span> <span class="ident">MRTy</span> <span class="op">=</span> <span class="ident">U4</span>;
-    <span class="kw">type</span> <span class="ident">NRTy</span> <span class="op">=</span> <span class="ident">U4</span>;
+    <span class="kw">type </span>MRTy = U4;
+    <span class="kw">type </span>NRTy = U4;
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">align_to</span>() -&gt; <span class="ident">usize</span> { <span class="number">16</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>align_to() -&gt; usize { <span class="number">16 </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">always_masked</span>() -&gt; <span class="ident">bool</span> { <span class="bool-val">true</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>always_masked() -&gt; bool { <span class="bool-val">true </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">nc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_NC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">kc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_KC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">mc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_MC</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>nc() -&gt; usize { archparam::D_NC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>kc() -&gt; usize { archparam::D_KC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>mc() -&gt; usize { archparam::D_MC }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel</span>(
-        <span class="ident">k</span>: <span class="ident">usize</span>,
-        <span class="ident">alpha</span>: <span class="ident">T</span>,
-        <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">beta</span>: <span class="ident">T</span>,
-        <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">rsc</span>: <span class="ident">isize</span>,
-        <span class="ident">csc</span>: <span class="ident">isize</span>)
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">unsafe fn </span>kernel(
+        k: usize,
+        alpha: T,
+        a: <span class="kw-2">*const </span>T,
+        b: <span class="kw-2">*const </span>T,
+        beta: T,
+        c: <span class="kw-2">*mut </span>T,
+        rsc: isize,
+        csc: isize)
     {
-        <span class="ident">kernel_target_sse2</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+        kernel_target_sse2(k, alpha, a, b, beta, c, rsc, csc)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">GemmKernel</span> <span class="kw">for</span> <span class="ident">KernelFallback</span> {
-    <span class="kw">type</span> <span class="ident">Elem</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="kw">impl </span>GemmKernel <span class="kw">for </span>KernelFallback {
+    <span class="kw">type </span>Elem = T;
 
-    <span class="kw">type</span> <span class="ident">MRTy</span> <span class="op">=</span> <span class="ident">U4</span>;
-    <span class="kw">type</span> <span class="ident">NRTy</span> <span class="op">=</span> <span class="ident">U4</span>;
+    <span class="kw">type </span>MRTy = U4;
+    <span class="kw">type </span>NRTy = U4;
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">align_to</span>() -&gt; <span class="ident">usize</span> { <span class="number">0</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>align_to() -&gt; usize { <span class="number">0 </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">always_masked</span>() -&gt; <span class="ident">bool</span> { <span class="bool-val">true</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>always_masked() -&gt; bool { <span class="bool-val">true </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">nc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_NC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">kc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_KC</span> }
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">mc</span>() -&gt; <span class="ident">usize</span> { <span class="ident">archparam::D_MC</span> }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>nc() -&gt; usize { archparam::D_NC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>kc() -&gt; usize { archparam::D_KC }
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>mc() -&gt; usize { archparam::D_MC }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel</span>(
-        <span class="ident">k</span>: <span class="ident">usize</span>,
-        <span class="ident">alpha</span>: <span class="ident">T</span>,
-        <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">beta</span>: <span class="ident">T</span>,
-        <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">rsc</span>: <span class="ident">isize</span>,
-        <span class="ident">csc</span>: <span class="ident">isize</span>)
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">unsafe fn </span>kernel(
+        k: usize,
+        alpha: T,
+        a: <span class="kw-2">*const </span>T,
+        b: <span class="kw-2">*const </span>T,
+        beta: T,
+        c: <span class="kw-2">*mut </span>T,
+        rsc: isize,
+        csc: isize)
     {
-        <span class="ident">kernel_fallback_impl</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+        kernel_fallback_impl(k, alpha, a, b, beta, c, rsc, csc)
     }
 }
 
-<span class="comment">// no inline for unmasked kernels</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">target_feature</span>(<span class="ident">enable</span><span class="op">=</span><span class="string">&quot;fma&quot;</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel_target_fma</span>(<span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">alpha</span>: <span class="ident">T</span>, <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-                            <span class="ident">beta</span>: <span class="ident">T</span>, <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="comment">// no inline for unmasked kernels
+</span><span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+#[target_feature(enable=<span class="string">&quot;fma&quot;</span>)]
+</span><span class="kw">unsafe fn </span>kernel_target_fma(k: usize, alpha: T, a: <span class="kw-2">*const </span>T, b: <span class="kw-2">*const </span>T,
+                            beta: T, c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize)
 {
-    <span class="ident">kernel_x86_avx</span>::<span class="op">&lt;</span><span class="ident">FusedMulAdd</span><span class="op">&gt;</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+    kernel_x86_avx::&lt;FusedMulAdd&gt;(k, alpha, a, b, beta, c, rsc, csc)
 }
 
-<span class="comment">// no inline for unmasked kernels</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">target_feature</span>(<span class="ident">enable</span><span class="op">=</span><span class="string">&quot;avx&quot;</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel_target_avx</span>(<span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">alpha</span>: <span class="ident">T</span>, <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-                            <span class="ident">beta</span>: <span class="ident">T</span>, <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="comment">// no inline for unmasked kernels
+</span><span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+#[target_feature(enable=<span class="string">&quot;avx&quot;</span>)]
+</span><span class="kw">unsafe fn </span>kernel_target_avx(k: usize, alpha: T, a: <span class="kw-2">*const </span>T, b: <span class="kw-2">*const </span>T,
+                            beta: T, c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize)
 {
-    <span class="ident">kernel_x86_avx</span>::<span class="op">&lt;</span><span class="ident">AvxMulAdd</span><span class="op">&gt;</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+    kernel_x86_avx::&lt;AvxMulAdd&gt;(k, alpha, a, b, beta, c, rsc, csc)
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="attribute">#[<span class="ident">target_feature</span>(<span class="ident">enable</span><span class="op">=</span><span class="string">&quot;sse2&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel_target_sse2</span>(<span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">alpha</span>: <span class="ident">T</span>, <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-                                 <span class="ident">beta</span>: <span class="ident">T</span>, <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="attribute">#[inline]
+#[target_feature(enable=<span class="string">&quot;sse2&quot;</span>)]
+#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">unsafe fn </span>kernel_target_sse2(k: usize, alpha: T, a: <span class="kw-2">*const </span>T, b: <span class="kw-2">*const </span>T,
+                                 beta: T, c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize)
 {
-    <span class="ident">kernel_fallback_impl</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+    kernel_fallback_impl(k, alpha, a, b, beta, c, rsc, csc)
 }
 
-<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel_x86_avx</span><span class="op">&lt;</span><span class="ident">MA</span><span class="op">&gt;</span>(<span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">alpha</span>: <span class="ident">T</span>, <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-                             <span class="ident">beta</span>: <span class="ident">T</span>, <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
-    <span class="kw">where</span> <span class="ident">MA</span>: <span class="ident">DMultiplyAdd</span>
+<span class="attribute">#[inline(always)]
+#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+</span><span class="kw">unsafe fn </span>kernel_x86_avx&lt;MA&gt;(k: usize, alpha: T, a: <span class="kw-2">*const </span>T, b: <span class="kw-2">*const </span>T,
+                             beta: T, c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize)
+    <span class="kw">where </span>MA: DMultiplyAdd
 {
-    <span class="kw">const</span> <span class="ident">MR</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">KernelAvx::MR</span>;
-    <span class="kw">const</span> <span class="ident">NR</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">KernelAvx::NR</span>;
+    <span class="kw">const </span>MR: usize = KernelAvx::MR;
+    <span class="kw">const </span>NR: usize = KernelAvx::NR;
 
-    <span class="macro">debug_assert_ne!</span>(<span class="ident">k</span>, <span class="number">0</span>);
+    <span class="macro">debug_assert_ne!</span>(k, <span class="number">0</span>);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ab</span> <span class="op">=</span> [<span class="ident">_mm256_setzero_pd</span>(); <span class="ident">MR</span>];
+    <span class="kw">let </span><span class="kw-2">mut </span>ab = [_mm256_setzero_pd(); MR];
 
-    <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">a</span>, <span class="kw-2">mut</span> <span class="ident">b</span>) <span class="op">=</span> (<span class="ident">a</span>, <span class="ident">b</span>);
+    <span class="kw">let </span>(<span class="kw-2">mut </span>a, <span class="kw-2">mut </span>b) = (a, b);
 
-    <span class="comment">// With MR=8, we load sets of 4 doubles from a</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a_0123</span> <span class="op">=</span> <span class="ident">_mm256_load_pd</span>(<span class="ident">a</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a_4567</span> <span class="op">=</span> <span class="ident">_mm256_load_pd</span>(<span class="ident">a</span>.<span class="ident">add</span>(<span class="number">4</span>));
+    <span class="comment">// With MR=8, we load sets of 4 doubles from a
+    </span><span class="kw">let </span><span class="kw-2">mut </span>a_0123 = _mm256_load_pd(a);
+    <span class="kw">let </span><span class="kw-2">mut </span>a_4567 = _mm256_load_pd(a.add(<span class="number">4</span>));
 
-    <span class="comment">// With NR=4, we load 4 doubles from b</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b_0123</span> <span class="op">=</span> <span class="ident">_mm256_load_pd</span>(<span class="ident">b</span>);
+    <span class="comment">// With NR=4, we load 4 doubles from b
+    </span><span class="kw">let </span><span class="kw-2">mut </span>b_0123 = _mm256_load_pd(b);
 
-    <span class="macro">unroll_by_with_last!</span>(<span class="number">4</span> =&gt; <span class="ident">k</span>, <span class="ident">is_last</span>, {
-        <span class="comment">// We need to multiply each element of b with each element of a_0</span>
-        <span class="comment">// and a_1. To do so, we need to generate all possible permutations</span>
-        <span class="comment">// for the doubles in b, but without two permutations having the</span>
-        <span class="comment">// same double at the same spot.</span>
-        <span class="comment">//</span>
-        <span class="comment">// So, if we are given the permutations (indices of the doubles</span>
-        <span class="comment">// in the packed 4-vector):</span>
-        <span class="comment">//</span>
-        <span class="comment">// 0 1 2 3</span>
-        <span class="comment">//</span>
-        <span class="comment">// Then another valid permutation has to shuffle all elements</span>
-        <span class="comment">// around without a single element remaining at the same index</span>
-        <span class="comment">// it was before.</span>
-        <span class="comment">//</span>
-        <span class="comment">// A possible set of valid combination then are:</span>
-        <span class="comment">//</span>
-        <span class="comment">// 0 1 2 3 (the original)</span>
-        <span class="comment">// 1 0 3 2 (chosen because of _mm256_shuffle_pd)</span>
-        <span class="comment">// 2 3 0 1 (chosen because of _mm256_permute2f128_pd)</span>
-        <span class="comment">// 3 0 1 2 (chosen because of _mm256_shuffle_pd applied after _mm256_permute2f128_pd)</span>
-        <span class="kw">let</span> <span class="ident">b_1032</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">b_0123</span>, <span class="ident">b_0123</span>, <span class="number">0b0101</span>);
+    <span class="macro">unroll_by_with_last!</span>(<span class="number">4 </span>=&gt; k, is_last, {
+        <span class="comment">// We need to multiply each element of b with each element of a_0
+        // and a_1. To do so, we need to generate all possible permutations
+        // for the doubles in b, but without two permutations having the
+        // same double at the same spot.
+        //
+        // So, if we are given the permutations (indices of the doubles
+        // in the packed 4-vector):
+        //
+        // 0 1 2 3
+        //
+        // Then another valid permutation has to shuffle all elements
+        // around without a single element remaining at the same index
+        // it was before.
+        //
+        // A possible set of valid combination then are:
+        //
+        // 0 1 2 3 (the original)
+        // 1 0 3 2 (chosen because of _mm256_shuffle_pd)
+        // 2 3 0 1 (chosen because of _mm256_permute2f128_pd)
+        // 3 0 1 2 (chosen because of _mm256_shuffle_pd applied after _mm256_permute2f128_pd)
+        </span><span class="kw">let </span>b_1032 = _mm256_shuffle_pd(b_0123, b_0123, <span class="number">0b0101</span>);
 
-        <span class="comment">// Both packed 4-vectors are the same, so one could also perform</span>
-        <span class="comment">// the selection 0b0000_0001 or 0b0011_0010.</span>
-        <span class="comment">// The confusing part is that of the lower 4 bits and upper 4 bits</span>
-        <span class="comment">// only 2 bits are used in each. The same choice could have been</span>
-        <span class="comment">// encoded in a nibble (4 bits) total, i.e. 0b1100, had the intrinsics</span>
-        <span class="comment">// been defined differently. The highest bit in each nibble controls</span>
-        <span class="comment">// zero-ing behaviour though.</span>
-        <span class="comment">// let b_2301 = _mm256_permute2f128_pd(b_0123, b_0123, 0b0011_0000);</span>
-        <span class="comment">// 0b0011_0000 = 0x30; makes it clearer which bits we are acting on.</span>
-        <span class="kw">let</span> <span class="ident">b_3210</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(<span class="ident">b_1032</span>, <span class="ident">b_1032</span>, <span class="number">0x03</span>);
-        <span class="kw">let</span> <span class="ident">b_2301</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">b_3210</span>, <span class="ident">b_3210</span>, <span class="number">0b0101</span>);
+        <span class="comment">// Both packed 4-vectors are the same, so one could also perform
+        // the selection 0b0000_0001 or 0b0011_0010.
+        // The confusing part is that of the lower 4 bits and upper 4 bits
+        // only 2 bits are used in each. The same choice could have been
+        // encoded in a nibble (4 bits) total, i.e. 0b1100, had the intrinsics
+        // been defined differently. The highest bit in each nibble controls
+        // zero-ing behaviour though.
+        // let b_2301 = _mm256_permute2f128_pd(b_0123, b_0123, 0b0011_0000);
+        // 0b0011_0000 = 0x30; makes it clearer which bits we are acting on.
+        </span><span class="kw">let </span>b_3210 = _mm256_permute2f128_pd(b_1032, b_1032, <span class="number">0x03</span>);
+        <span class="kw">let </span>b_2301 = _mm256_shuffle_pd(b_3210, b_3210, <span class="number">0b0101</span>);
 
-        <span class="comment">// The ideal distribution of a_i b_j pairs in the resulting panel of</span>
-        <span class="comment">// c in order to have the matching products / sums of products in the</span>
-        <span class="comment">// right places would look like this after the first iteration:</span>
-        <span class="comment">//</span>
-        <span class="comment">// ab_0 || a0 b0 | a0 b1 | a0 b2 | a0 b3</span>
-        <span class="comment">// ab_1 || a1 b0 | a1 b1 | a1 b2 | a1 b3</span>
-        <span class="comment">// ab_2 || a2 b0 | a2 b1 | a2 b2 | a2 b3</span>
-        <span class="comment">// ab_3 || a3 b0 | a3 b1 | a3 b2 | a3 b3</span>
-        <span class="comment">//      || -----------------------------</span>
-        <span class="comment">// ab_4 || a4 b0 | a4 b1 | a4 b2 | a4 b3</span>
-        <span class="comment">// ab_5 || a5 b0 | a5 b1 | a5 b2 | a5 b3</span>
-        <span class="comment">// ab_6 || a6 b0 | a6 b1 | a6 b2 | a6 b3</span>
-        <span class="comment">// ab_7 || a7 b0 | a7 b1 | a7 b2 | a7 b3</span>
-        <span class="comment">//</span>
-        <span class="comment">// As this is not possible / would require too many extra variables</span>
-        <span class="comment">// and thus operations, we get the following configuration, and thus</span>
-        <span class="comment">// have to be smart about putting the correct values into their</span>
-        <span class="comment">// respective places at the end.</span>
-        <span class="comment">//</span>
-        <span class="comment">// ab_0 || a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-        <span class="comment">// ab_1 || a0 b1 | a1 b0 | a2 b3 | a3 b2</span>
-        <span class="comment">// ab_2 || a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-        <span class="comment">// ab_3 || a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-        <span class="comment">//      || -----------------------------</span>
-        <span class="comment">// ab_4 || a4 b0 | a5 b1 | a6 b2 | a7 b3</span>
-        <span class="comment">// ab_5 || a4 b1 | a5 b0 | a6 b3 | a7 b2</span>
-        <span class="comment">// ab_6 || a4 b2 | a5 b3 | a6 b0 | a7 b1</span>
-        <span class="comment">// ab_7 || a4 b3 | a5 b2 | a6 b1 | a7 b0</span>
+        <span class="comment">// The ideal distribution of a_i b_j pairs in the resulting panel of
+        // c in order to have the matching products / sums of products in the
+        // right places would look like this after the first iteration:
+        //
+        // ab_0 || a0 b0 | a0 b1 | a0 b2 | a0 b3
+        // ab_1 || a1 b0 | a1 b1 | a1 b2 | a1 b3
+        // ab_2 || a2 b0 | a2 b1 | a2 b2 | a2 b3
+        // ab_3 || a3 b0 | a3 b1 | a3 b2 | a3 b3
+        //      || -----------------------------
+        // ab_4 || a4 b0 | a4 b1 | a4 b2 | a4 b3
+        // ab_5 || a5 b0 | a5 b1 | a5 b2 | a5 b3
+        // ab_6 || a6 b0 | a6 b1 | a6 b2 | a6 b3
+        // ab_7 || a7 b0 | a7 b1 | a7 b2 | a7 b3
+        //
+        // As this is not possible / would require too many extra variables
+        // and thus operations, we get the following configuration, and thus
+        // have to be smart about putting the correct values into their
+        // respective places at the end.
+        //
+        // ab_0 || a0 b0 | a1 b1 | a2 b2 | a3 b3
+        // ab_1 || a0 b1 | a1 b0 | a2 b3 | a3 b2
+        // ab_2 || a0 b2 | a1 b3 | a2 b0 | a3 b1
+        // ab_3 || a0 b3 | a1 b2 | a2 b1 | a3 b0
+        //      || -----------------------------
+        // ab_4 || a4 b0 | a5 b1 | a6 b2 | a7 b3
+        // ab_5 || a4 b1 | a5 b0 | a6 b3 | a7 b2
+        // ab_6 || a4 b2 | a5 b3 | a6 b0 | a7 b1
+        // ab_7 || a4 b3 | a5 b2 | a6 b1 | a7 b0
 
-        <span class="comment">// Add and multiply in one go</span>
-        <span class="ident">ab</span>[<span class="number">0</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_0123</span>, <span class="ident">b_0123</span>, <span class="ident">ab</span>[<span class="number">0</span>]);
-        <span class="ident">ab</span>[<span class="number">1</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_0123</span>, <span class="ident">b_1032</span>, <span class="ident">ab</span>[<span class="number">1</span>]);
-        <span class="ident">ab</span>[<span class="number">2</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_0123</span>, <span class="ident">b_2301</span>, <span class="ident">ab</span>[<span class="number">2</span>]);
-        <span class="ident">ab</span>[<span class="number">3</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_0123</span>, <span class="ident">b_3210</span>, <span class="ident">ab</span>[<span class="number">3</span>]);
+        // Add and multiply in one go
+        </span>ab[<span class="number">0</span>] = MA::multiply_add(a_0123, b_0123, ab[<span class="number">0</span>]);
+        ab[<span class="number">1</span>] = MA::multiply_add(a_0123, b_1032, ab[<span class="number">1</span>]);
+        ab[<span class="number">2</span>] = MA::multiply_add(a_0123, b_2301, ab[<span class="number">2</span>]);
+        ab[<span class="number">3</span>] = MA::multiply_add(a_0123, b_3210, ab[<span class="number">3</span>]);
 
-        <span class="ident">ab</span>[<span class="number">4</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_4567</span>, <span class="ident">b_0123</span>, <span class="ident">ab</span>[<span class="number">4</span>]);
-        <span class="ident">ab</span>[<span class="number">5</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_4567</span>, <span class="ident">b_1032</span>, <span class="ident">ab</span>[<span class="number">5</span>]);
-        <span class="ident">ab</span>[<span class="number">6</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_4567</span>, <span class="ident">b_2301</span>, <span class="ident">ab</span>[<span class="number">6</span>]);
-        <span class="ident">ab</span>[<span class="number">7</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">a_4567</span>, <span class="ident">b_3210</span>, <span class="ident">ab</span>[<span class="number">7</span>]);
+        ab[<span class="number">4</span>] = MA::multiply_add(a_4567, b_0123, ab[<span class="number">4</span>]);
+        ab[<span class="number">5</span>] = MA::multiply_add(a_4567, b_1032, ab[<span class="number">5</span>]);
+        ab[<span class="number">6</span>] = MA::multiply_add(a_4567, b_2301, ab[<span class="number">6</span>]);
+        ab[<span class="number">7</span>] = MA::multiply_add(a_4567, b_3210, ab[<span class="number">7</span>]);
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">is_last</span> {
-            <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">add</span>(<span class="ident">MR</span>);
-            <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">add</span>(<span class="ident">NR</span>);
+        <span class="kw">if </span>!is_last {
+            a = a.add(MR);
+            b = b.add(NR);
 
-            <span class="ident">a_0123</span> <span class="op">=</span> <span class="ident">_mm256_load_pd</span>(<span class="ident">a</span>);
-            <span class="ident">a_4567</span> <span class="op">=</span> <span class="ident">_mm256_load_pd</span>(<span class="ident">a</span>.<span class="ident">add</span>(<span class="number">4</span>));
-            <span class="ident">b_0123</span> <span class="op">=</span> <span class="ident">_mm256_load_pd</span>(<span class="ident">b</span>);
+            a_0123 = _mm256_load_pd(a);
+            a_4567 = _mm256_load_pd(a.add(<span class="number">4</span>));
+            b_0123 = _mm256_load_pd(b);
         }
     });
 
-    <span class="comment">// Our products/sums are currently stored according to the</span>
-    <span class="comment">// table below. Each row corresponds to one packed simd</span>
-    <span class="comment">// 4-vector.</span>
-    <span class="comment">//</span>
-    <span class="comment">// ab_0 || a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-    <span class="comment">// ab_1 || a0 b1 | a1 b0 | a2 b3 | a3 b2</span>
-    <span class="comment">// ab_2 || a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-    <span class="comment">// ab_3 || a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-    <span class="comment">//      || -----------------------------</span>
-    <span class="comment">// ab_4 || a4 b0 | a5 b1 | a6 b2 | a7 b3</span>
-    <span class="comment">// ab_5 || a4 b1 | a5 b0 | a6 b3 | a7 b2</span>
-    <span class="comment">// ab_6 || a4 b2 | a5 b3 | a6 b0 | a7 b1</span>
-    <span class="comment">// ab_7 || a4 b3 | a5 b2 | a6 b1 | a7 b0</span>
-    <span class="comment">//</span>
-    <span class="comment">// This is the final results, where indices are stored</span>
-    <span class="comment">// in their proper location.</span>
-    <span class="comment">//</span>
-    <span class="comment">//      || a0 b0 | a0 b1 | a0 b2 | a0 b3</span>
-    <span class="comment">//      || a1 b0 | a1 b1 | a1 b2 | a1 b3</span>
-    <span class="comment">//      || a2 b0 | a2 b1 | a2 b2 | a2 b3</span>
-    <span class="comment">//      || a3 b0 | a3 b1 | a3 b2 | a3 b3</span>
-    <span class="comment">//      || -----------------------------</span>
-    <span class="comment">//      || a4 b0 | a4 b1 | a4 b2 | a4 b3</span>
-    <span class="comment">//      || a5 b0 | a5 b1 | a5 b2 | a5 b3</span>
-    <span class="comment">//      || a6 b0 | a6 b1 | a6 b2 | a6 b3</span>
-    <span class="comment">//      || a7 b0 | a7 b1 | a7 b2 | a7 b3</span>
-    <span class="comment">//</span>
-    <span class="comment">// Given the simd intrinsics available through avx, we have two</span>
-    <span class="comment">// ways of achieving this format. By either:</span>
-    <span class="comment">//</span>
-    <span class="comment">// a) Creating packed 4-vectors of rows, or</span>
-    <span class="comment">// b) creating packed 4-vectors of columns.</span>
-    <span class="comment">//</span>
-    <span class="comment">// ** We will use option a) because it has slightly cheaper throughput</span>
-    <span class="comment">// characteristics (see below).</span>
-    <span class="comment">//</span>
-    <span class="comment">// # a) Creating packed 4-vectors of columns</span>
-    <span class="comment">//</span>
-    <span class="comment">// To create packed 4-vectors of columns, we make us of</span>
-    <span class="comment">// _mm256_blend_pd operations, followed by _mm256_permute2f128_pd.</span>
-    <span class="comment">//</span>
-    <span class="comment">// The first operation has latency 1 (all architectures), and 0.33</span>
-    <span class="comment">// throughput (Skylake, Broadwell, Haswell), or 0.5 (Ivy Bridge).</span>
-    <span class="comment">//</span>
-    <span class="comment">// The second operation has latency 3 (on Skylake, Broadwell, Haswell),</span>
-    <span class="comment">// or latency 2 (on Ivy Brdige), and throughput 1 (all architectures).</span>
-    <span class="comment">//</span>
-    <span class="comment">// We start by applying _mm256_blend_pd on adjacent rows:</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.0</span>
-    <span class="comment">// a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-    <span class="comment">// a0 b1 | a1 b0 | a2 b3 | a3 b2</span>
-    <span class="comment">// =&gt; _mm256_blend_pd with 0b1010</span>
-    <span class="comment">// a0 b0 | a1 b0 | a2 b2 | a3 b2 (only columns 0 and 2)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.1</span>
-    <span class="comment">// a0 b1 | a1 b0 | a2 b3 | a3 b2 (flipped the order)</span>
-    <span class="comment">// a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-    <span class="comment">// =&gt; _mm256_blend_pd with 0b1010</span>
-    <span class="comment">// a0 b1 | a1 b1 | a2 b3 | a3 b3 (only columns 1 and 3)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.2</span>
-    <span class="comment">// a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-    <span class="comment">// a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-    <span class="comment">// =&gt; _mm256_blend_pd with 0b1010</span>
-    <span class="comment">// a0 b2 | a1 b2 | a2 b0 | a3 b0 (only columns 0 and 2)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.3</span>
-    <span class="comment">// a0 b3 | a1 b2 | a2 b1 | a3 b0 (flipped the order)</span>
-    <span class="comment">// a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-    <span class="comment">// =&gt; _mm256_blend_pd with 0b1010</span>
-    <span class="comment">// a0 b3 | a1 b3 | a2 b1 | a3 b1 (only columns 1 and 3)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.0 (combining steps 0.0 and 0.2)</span>
-    <span class="comment">//</span>
-    <span class="comment">// a0 b0 | a1 b0 | a2 b2 | a3 b2</span>
-    <span class="comment">// a0 b2 | a1 b2 | a2 b0 | a3 b0</span>
-    <span class="comment">// =&gt; _mm256_permute2f128_pd with 0x30 = 0b0011_0000</span>
-    <span class="comment">// a0 b0 | a1 b0 | a2 b0 | a3 b0</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.1 (combining steps 0.0 and 0.2)</span>
-    <span class="comment">//</span>
-    <span class="comment">// a0 b0 | a1 b0 | a2 b2 | a3 b2</span>
-    <span class="comment">// a0 b2 | a1 b2 | a2 b0 | a3 b0</span>
-    <span class="comment">// =&gt; _mm256_permute2f128_pd with 0x12 = 0b0001_0010</span>
-    <span class="comment">// a0 b2 | a1 b2 | a2 b2 | a3 b2</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.2 (combining steps 0.1 and 0.3)</span>
-    <span class="comment">// a0 b1 | a1 b1 | a2 b3 | a3 b3</span>
-    <span class="comment">// a0 b3 | a1 b3 | a2 b1 | a3 b1</span>
-    <span class="comment">// =&gt; _mm256_permute2f128_pd with 0x30 = 0b0011_0000</span>
-    <span class="comment">// a0 b1 | a1 b1 | a2 b1 | a3 b1</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.3 (combining steps 0.1 and 0.3)</span>
-    <span class="comment">// a0 b1 | a1 b1 | a2 b3 | a3 b3</span>
-    <span class="comment">// a0 b3 | a1 b3 | a2 b1 | a3 b1</span>
-    <span class="comment">// =&gt; _mm256_permute2f128_pd with 0x12 = 0b0001_0010</span>
-    <span class="comment">// a0 b3 | a1 b3 | a2 b3 | a3 b3</span>
-    <span class="comment">//</span>
-    <span class="comment">// # b) Creating packed 4-vectors of rows</span>
-    <span class="comment">//</span>
-    <span class="comment">// To create packed 4-vectors of rows, we make use of</span>
-    <span class="comment">// _mm256_shuffle_pd operations followed by _mm256_permute2f128_pd.</span>
-    <span class="comment">//</span>
-    <span class="comment">// The first operation has a latency 1, throughput 1 (on architectures</span>
-    <span class="comment">// Skylake, Broadwell, Haswell, and Ivy Bridge).</span>
-    <span class="comment">//</span>
-    <span class="comment">// The second operation has latency 3 (on Skylake, Broadwell, Haswell),</span>
-    <span class="comment">// or latency 2 (on Ivy Brdige), and throughput 1 (all architectures).</span>
-    <span class="comment">//</span>
-    <span class="comment">// To achieve this, we can execute a _mm256_shuffle_pd on</span>
-    <span class="comment">// rows 0 and 1 stored in ab_0 and ab_1:</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.0</span>
-    <span class="comment">// a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-    <span class="comment">// a0 b1 | a1 b0 | a2 b3 | a3 b2</span>
-    <span class="comment">// =&gt; _mm256_shuffle_pd with 0000</span>
-    <span class="comment">// a0 b0 | a0 b1 | a2 b2 | a2 b3 (only rows 0 and 2)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.1</span>
-    <span class="comment">// a0 b1 | a1 b0 | a2 b3 | a3 b2 (flipped the order)</span>
-    <span class="comment">// a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-    <span class="comment">// =&gt; _mm256_shuffle_pd with 1111</span>
-    <span class="comment">// a1 b0 | a1 b1 | a3 b2 | a3 b3 (only rows 1 and 3)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Next, we perform the same operation on the other two rows:</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.2</span>
-    <span class="comment">// a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-    <span class="comment">// a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-    <span class="comment">// =&gt; _mm256_shuffle_pd with 0000</span>
-    <span class="comment">// a0 b2 | a0 b3 | a2 b0 | a2 b1 (only rows 0 and 2)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 0.3</span>
-    <span class="comment">// a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-    <span class="comment">// a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-    <span class="comment">// =&gt; _mm256_shuffle_pd with 1111</span>
-    <span class="comment">// a1 b2 | a1 b3 | a3 b0 | a3 b1 (only rows 1 and 3)</span>
-    <span class="comment">//</span>
-    <span class="comment">// Next, we can apply _mm256_permute2f128_pd to select the</span>
-    <span class="comment">// correct columns on the matching rows:</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.0 (combining Steps 0.0 and 0.2):</span>
-    <span class="comment">// a0 b0 | a0 b1 | a2 b2 | a2 b3</span>
-    <span class="comment">// a0 b2 | a0 b3 | a2 b0 | a2 b1</span>
-    <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000</span>
-    <span class="comment">// a0 b0 | a0 b1 | a0 b2 | a0 b3</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.1 (combining Steps 0.0 and 0.2):</span>
-    <span class="comment">// a0 b0 | a0 b1 | a2 b2 | a2 b3</span>
-    <span class="comment">// a0 b2 | a0 b3 | a2 b0 | a2 b1</span>
-    <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011</span>
-    <span class="comment">// a2 b0 | a2 b1 | a2 b2 | a2 b3</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.2 (combining Steps 0.1 and 0.3):</span>
-    <span class="comment">// a1 b0 | a1 b1 | a3 b2 | a3 b3</span>
-    <span class="comment">// a1 b2 | a1 b3 | a3 b0 | a3 b1</span>
-    <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000</span>
-    <span class="comment">// a1 b0 | a1 b1 | a1 b2 | a1 b3</span>
-    <span class="comment">//</span>
-    <span class="comment">// Step 1.3 (combining Steps 0.1 and 0.3):</span>
-    <span class="comment">// a1 b0 | a1 b1 | a3 b2 | a3 b3</span>
-    <span class="comment">// a1 b2 | a1 b3 | a3 b0 | a3 b1</span>
-    <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011</span>
-    <span class="comment">// a3 b0 | a3 b1 | a3 b2 | a3 b3</span>
+    <span class="comment">// Our products/sums are currently stored according to the
+    // table below. Each row corresponds to one packed simd
+    // 4-vector.
+    //
+    // ab_0 || a0 b0 | a1 b1 | a2 b2 | a3 b3
+    // ab_1 || a0 b1 | a1 b0 | a2 b3 | a3 b2
+    // ab_2 || a0 b2 | a1 b3 | a2 b0 | a3 b1
+    // ab_3 || a0 b3 | a1 b2 | a2 b1 | a3 b0
+    //      || -----------------------------
+    // ab_4 || a4 b0 | a5 b1 | a6 b2 | a7 b3
+    // ab_5 || a4 b1 | a5 b0 | a6 b3 | a7 b2
+    // ab_6 || a4 b2 | a5 b3 | a6 b0 | a7 b1
+    // ab_7 || a4 b3 | a5 b2 | a6 b1 | a7 b0
+    //
+    // This is the final results, where indices are stored
+    // in their proper location.
+    //
+    //      || a0 b0 | a0 b1 | a0 b2 | a0 b3
+    //      || a1 b0 | a1 b1 | a1 b2 | a1 b3
+    //      || a2 b0 | a2 b1 | a2 b2 | a2 b3
+    //      || a3 b0 | a3 b1 | a3 b2 | a3 b3
+    //      || -----------------------------
+    //      || a4 b0 | a4 b1 | a4 b2 | a4 b3
+    //      || a5 b0 | a5 b1 | a5 b2 | a5 b3
+    //      || a6 b0 | a6 b1 | a6 b2 | a6 b3
+    //      || a7 b0 | a7 b1 | a7 b2 | a7 b3
+    //
+    // Given the simd intrinsics available through avx, we have two
+    // ways of achieving this format. By either:
+    //
+    // a) Creating packed 4-vectors of rows, or
+    // b) creating packed 4-vectors of columns.
+    //
+    // ** We will use option a) because it has slightly cheaper throughput
+    // characteristics (see below).
+    //
+    // # a) Creating packed 4-vectors of columns
+    //
+    // To create packed 4-vectors of columns, we make us of
+    // _mm256_blend_pd operations, followed by _mm256_permute2f128_pd.
+    //
+    // The first operation has latency 1 (all architectures), and 0.33
+    // throughput (Skylake, Broadwell, Haswell), or 0.5 (Ivy Bridge).
+    //
+    // The second operation has latency 3 (on Skylake, Broadwell, Haswell),
+    // or latency 2 (on Ivy Brdige), and throughput 1 (all architectures).
+    //
+    // We start by applying _mm256_blend_pd on adjacent rows:
+    //
+    // Step 0.0
+    // a0 b0 | a1 b1 | a2 b2 | a3 b3
+    // a0 b1 | a1 b0 | a2 b3 | a3 b2
+    // =&gt; _mm256_blend_pd with 0b1010
+    // a0 b0 | a1 b0 | a2 b2 | a3 b2 (only columns 0 and 2)
+    //
+    // Step 0.1
+    // a0 b1 | a1 b0 | a2 b3 | a3 b2 (flipped the order)
+    // a0 b0 | a1 b1 | a2 b2 | a3 b3
+    // =&gt; _mm256_blend_pd with 0b1010
+    // a0 b1 | a1 b1 | a2 b3 | a3 b3 (only columns 1 and 3)
+    //
+    // Step 0.2
+    // a0 b2 | a1 b3 | a2 b0 | a3 b1
+    // a0 b3 | a1 b2 | a2 b1 | a3 b0
+    // =&gt; _mm256_blend_pd with 0b1010
+    // a0 b2 | a1 b2 | a2 b0 | a3 b0 (only columns 0 and 2)
+    //
+    // Step 0.3
+    // a0 b3 | a1 b2 | a2 b1 | a3 b0 (flipped the order)
+    // a0 b2 | a1 b3 | a2 b0 | a3 b1
+    // =&gt; _mm256_blend_pd with 0b1010
+    // a0 b3 | a1 b3 | a2 b1 | a3 b1 (only columns 1 and 3)
+    //
+    // Step 1.0 (combining steps 0.0 and 0.2)
+    //
+    // a0 b0 | a1 b0 | a2 b2 | a3 b2
+    // a0 b2 | a1 b2 | a2 b0 | a3 b0
+    // =&gt; _mm256_permute2f128_pd with 0x30 = 0b0011_0000
+    // a0 b0 | a1 b0 | a2 b0 | a3 b0
+    //
+    // Step 1.1 (combining steps 0.0 and 0.2)
+    //
+    // a0 b0 | a1 b0 | a2 b2 | a3 b2
+    // a0 b2 | a1 b2 | a2 b0 | a3 b0
+    // =&gt; _mm256_permute2f128_pd with 0x12 = 0b0001_0010
+    // a0 b2 | a1 b2 | a2 b2 | a3 b2
+    //
+    // Step 1.2 (combining steps 0.1 and 0.3)
+    // a0 b1 | a1 b1 | a2 b3 | a3 b3
+    // a0 b3 | a1 b3 | a2 b1 | a3 b1
+    // =&gt; _mm256_permute2f128_pd with 0x30 = 0b0011_0000
+    // a0 b1 | a1 b1 | a2 b1 | a3 b1
+    //
+    // Step 1.3 (combining steps 0.1 and 0.3)
+    // a0 b1 | a1 b1 | a2 b3 | a3 b3
+    // a0 b3 | a1 b3 | a2 b1 | a3 b1
+    // =&gt; _mm256_permute2f128_pd with 0x12 = 0b0001_0010
+    // a0 b3 | a1 b3 | a2 b3 | a3 b3
+    //
+    // # b) Creating packed 4-vectors of rows
+    //
+    // To create packed 4-vectors of rows, we make use of
+    // _mm256_shuffle_pd operations followed by _mm256_permute2f128_pd.
+    //
+    // The first operation has a latency 1, throughput 1 (on architectures
+    // Skylake, Broadwell, Haswell, and Ivy Bridge).
+    //
+    // The second operation has latency 3 (on Skylake, Broadwell, Haswell),
+    // or latency 2 (on Ivy Brdige), and throughput 1 (all architectures).
+    //
+    // To achieve this, we can execute a _mm256_shuffle_pd on
+    // rows 0 and 1 stored in ab_0 and ab_1:
+    //
+    // Step 0.0
+    // a0 b0 | a1 b1 | a2 b2 | a3 b3
+    // a0 b1 | a1 b0 | a2 b3 | a3 b2
+    // =&gt; _mm256_shuffle_pd with 0000
+    // a0 b0 | a0 b1 | a2 b2 | a2 b3 (only rows 0 and 2)
+    //
+    // Step 0.1
+    // a0 b1 | a1 b0 | a2 b3 | a3 b2 (flipped the order)
+    // a0 b0 | a1 b1 | a2 b2 | a3 b3
+    // =&gt; _mm256_shuffle_pd with 1111
+    // a1 b0 | a1 b1 | a3 b2 | a3 b3 (only rows 1 and 3)
+    //
+    // Next, we perform the same operation on the other two rows:
+    //
+    // Step 0.2
+    // a0 b2 | a1 b3 | a2 b0 | a3 b1
+    // a0 b3 | a1 b2 | a2 b1 | a3 b0
+    // =&gt; _mm256_shuffle_pd with 0000
+    // a0 b2 | a0 b3 | a2 b0 | a2 b1 (only rows 0 and 2)
+    //
+    // Step 0.3
+    // a0 b3 | a1 b2 | a2 b1 | a3 b0
+    // a0 b2 | a1 b3 | a2 b0 | a3 b1
+    // =&gt; _mm256_shuffle_pd with 1111
+    // a1 b2 | a1 b3 | a3 b0 | a3 b1 (only rows 1 and 3)
+    //
+    // Next, we can apply _mm256_permute2f128_pd to select the
+    // correct columns on the matching rows:
+    //
+    // Step 1.0 (combining Steps 0.0 and 0.2):
+    // a0 b0 | a0 b1 | a2 b2 | a2 b3
+    // a0 b2 | a0 b3 | a2 b0 | a2 b1
+    // =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000
+    // a0 b0 | a0 b1 | a0 b2 | a0 b3
+    //
+    // Step 1.1 (combining Steps 0.0 and 0.2):
+    // a0 b0 | a0 b1 | a2 b2 | a2 b3
+    // a0 b2 | a0 b3 | a2 b0 | a2 b1
+    // =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011
+    // a2 b0 | a2 b1 | a2 b2 | a2 b3
+    //
+    // Step 1.2 (combining Steps 0.1 and 0.3):
+    // a1 b0 | a1 b1 | a3 b2 | a3 b3
+    // a1 b2 | a1 b3 | a3 b0 | a3 b1
+    // =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000
+    // a1 b0 | a1 b1 | a1 b2 | a1 b3
+    //
+    // Step 1.3 (combining Steps 0.1 and 0.3):
+    // a1 b0 | a1 b1 | a3 b2 | a3 b3
+    // a1 b2 | a1 b3 | a3 b0 | a3 b1
+    // =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011
+    // a3 b0 | a3 b1 | a3 b2 | a3 b3
 
-    <span class="comment">// We use scheme a) as the default case, i.e. if c is column-major, rsc==1, or if</span>
-    <span class="comment">// c is of general form. Row-major c matrices, csc==1, are treated using schema b).</span>
-    <span class="kw">if</span> <span class="ident">csc</span> <span class="op">==</span> <span class="number">1</span> {
-        <span class="comment">// Scheme b), step 0.0</span>
-        <span class="comment">// a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-        <span class="comment">// a0 b1 | a1 b0 | a2 b3 | a3 b2</span>
-        <span class="kw">let</span> <span class="ident">a0b0_a0b1_a2b2_a2b3</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">0</span>], <span class="ident">ab</span>[<span class="number">1</span>], <span class="number">0b0000</span>);
+    // We use scheme a) as the default case, i.e. if c is column-major, rsc==1, or if
+    // c is of general form. Row-major c matrices, csc==1, are treated using schema b).
+    </span><span class="kw">if </span>csc == <span class="number">1 </span>{
+        <span class="comment">// Scheme b), step 0.0
+        // a0 b0 | a1 b1 | a2 b2 | a3 b3
+        // a0 b1 | a1 b0 | a2 b3 | a3 b2
+        </span><span class="kw">let </span>a0b0_a0b1_a2b2_a2b3 = _mm256_shuffle_pd(ab[<span class="number">0</span>], ab[<span class="number">1</span>], <span class="number">0b0000</span>);
 
-        <span class="comment">// Scheme b), step 0.1</span>
-        <span class="comment">// a0 b1 | a1 b0 | a2 b3 | a3 b2 (flipped the order)</span>
-        <span class="comment">// a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-        <span class="kw">let</span> <span class="ident">a1b0_a1b1_a3b2_a3b3</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">1</span>], <span class="ident">ab</span>[<span class="number">0</span>], <span class="number">0b1111</span>);
+        <span class="comment">// Scheme b), step 0.1
+        // a0 b1 | a1 b0 | a2 b3 | a3 b2 (flipped the order)
+        // a0 b0 | a1 b1 | a2 b2 | a3 b3
+        </span><span class="kw">let </span>a1b0_a1b1_a3b2_a3b3 = _mm256_shuffle_pd(ab[<span class="number">1</span>], ab[<span class="number">0</span>], <span class="number">0b1111</span>);
 
-        <span class="comment">// Scheme b), step 0.2</span>
-        <span class="comment">// a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-        <span class="comment">// a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-        <span class="kw">let</span> <span class="ident">a0b2_a0b3_a2b0_a2b1</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">2</span>], <span class="ident">ab</span>[<span class="number">3</span>], <span class="number">0b0000</span>);
+        <span class="comment">// Scheme b), step 0.2
+        // a0 b2 | a1 b3 | a2 b0 | a3 b1
+        // a0 b3 | a1 b2 | a2 b1 | a3 b0
+        </span><span class="kw">let </span>a0b2_a0b3_a2b0_a2b1 = _mm256_shuffle_pd(ab[<span class="number">2</span>], ab[<span class="number">3</span>], <span class="number">0b0000</span>);
 
-        <span class="comment">// Scheme b), step 0.3</span>
-        <span class="comment">// a0 b3 | a1 b2 | a2 b1 | a3 b0 (flipped the order)</span>
-        <span class="comment">// a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-        <span class="kw">let</span> <span class="ident">a1b2_a1b3_a3b0_a3b1</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">3</span>], <span class="ident">ab</span>[<span class="number">2</span>], <span class="number">0b1111</span>);
+        <span class="comment">// Scheme b), step 0.3
+        // a0 b3 | a1 b2 | a2 b1 | a3 b0 (flipped the order)
+        // a0 b2 | a1 b3 | a2 b0 | a3 b1
+        </span><span class="kw">let </span>a1b2_a1b3_a3b0_a3b1 = _mm256_shuffle_pd(ab[<span class="number">3</span>], ab[<span class="number">2</span>], <span class="number">0b1111</span>);
 
-        <span class="kw">let</span> <span class="ident">a4b0_a4b1_a6b2_a6b3</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">4</span>], <span class="ident">ab</span>[<span class="number">5</span>], <span class="number">0b0000</span>);
-        <span class="kw">let</span> <span class="ident">a5b0_a5b1_a7b2_a7b3</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">5</span>], <span class="ident">ab</span>[<span class="number">4</span>], <span class="number">0b1111</span>);
+        <span class="kw">let </span>a4b0_a4b1_a6b2_a6b3 = _mm256_shuffle_pd(ab[<span class="number">4</span>], ab[<span class="number">5</span>], <span class="number">0b0000</span>);
+        <span class="kw">let </span>a5b0_a5b1_a7b2_a7b3 = _mm256_shuffle_pd(ab[<span class="number">5</span>], ab[<span class="number">4</span>], <span class="number">0b1111</span>);
 
-        <span class="kw">let</span> <span class="ident">a4b2_a4b3_a6b0_a6b1</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">6</span>], <span class="ident">ab</span>[<span class="number">7</span>], <span class="number">0b0000</span>);
-        <span class="kw">let</span> <span class="ident">a5b2_a5b3_a7b0_a7b1</span> <span class="op">=</span> <span class="ident">_mm256_shuffle_pd</span>(<span class="ident">ab</span>[<span class="number">7</span>], <span class="ident">ab</span>[<span class="number">6</span>], <span class="number">0b1111</span>);
+        <span class="kw">let </span>a4b2_a4b3_a6b0_a6b1 = _mm256_shuffle_pd(ab[<span class="number">6</span>], ab[<span class="number">7</span>], <span class="number">0b0000</span>);
+        <span class="kw">let </span>a5b2_a5b3_a7b0_a7b1 = _mm256_shuffle_pd(ab[<span class="number">7</span>], ab[<span class="number">6</span>], <span class="number">0b1111</span>);
 
-        <span class="comment">// Next, we can apply _mm256_permute2f128_pd to select the</span>
-        <span class="comment">// correct columns on the matching rows:</span>
-        <span class="comment">//</span>
-        <span class="comment">// Step 1.0 (combining Steps 0.0 and 0.2):</span>
-        <span class="comment">// a0 b0 | a0 b1 | a2 b2 | a2 b3</span>
-        <span class="comment">// a0 b2 | a0 b3 | a2 b0 | a2 b1</span>
-        <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000</span>
-        <span class="comment">// a0 b0 | a0 b1 | a0 b2 | a0 b3</span>
-        <span class="comment">//</span>
-        <span class="comment">// Step 1.1 (combining Steps 0.0 and 0.2):</span>
-        <span class="comment">// a0 b0 | a0 b1 | a2 b2 | a2 b3</span>
-        <span class="comment">// a0 b2 | a0 b3 | a2 b0 | a2 b1</span>
-        <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011</span>
-        <span class="comment">// a2 b0 | a2 b1 | a2 b2 | a2 b3</span>
-        <span class="comment">//</span>
-        <span class="comment">// Step 1.2 (combining Steps 0.1 and 0.3):</span>
-        <span class="comment">// a1 b0 | a1 b1 | a3 b2 | a3 b3</span>
-        <span class="comment">// a1 b2 | a1 b3 | a3 b0 | a3 b1</span>
-        <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000</span>
-        <span class="comment">// a1 b0 | a1 b1 | a1 b2 | a1 b3</span>
-        <span class="comment">//</span>
-        <span class="comment">// Step 1.3 (combining Steps 0.1 and 0.3):</span>
-        <span class="comment">// a1 b0 | a1 b1 | a3 b2 | a3 b3</span>
-        <span class="comment">// a1 b2 | a1 b3 | a3 b0 | a3 b1</span>
-        <span class="comment">// =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011</span>
-        <span class="comment">// a3 b0 | a3 b1 | a3 b2 | a3 b3</span>
+        <span class="comment">// Next, we can apply _mm256_permute2f128_pd to select the
+        // correct columns on the matching rows:
+        //
+        // Step 1.0 (combining Steps 0.0 and 0.2):
+        // a0 b0 | a0 b1 | a2 b2 | a2 b3
+        // a0 b2 | a0 b3 | a2 b0 | a2 b1
+        // =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000
+        // a0 b0 | a0 b1 | a0 b2 | a0 b3
+        //
+        // Step 1.1 (combining Steps 0.0 and 0.2):
+        // a0 b0 | a0 b1 | a2 b2 | a2 b3
+        // a0 b2 | a0 b3 | a2 b0 | a2 b1
+        // =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011
+        // a2 b0 | a2 b1 | a2 b2 | a2 b3
+        //
+        // Step 1.2 (combining Steps 0.1 and 0.3):
+        // a1 b0 | a1 b1 | a3 b2 | a3 b3
+        // a1 b2 | a1 b3 | a3 b0 | a3 b1
+        // =&gt; _mm256_permute_2f128_pd with 0x20 = 0b0010_0000
+        // a1 b0 | a1 b1 | a1 b2 | a1 b3
+        //
+        // Step 1.3 (combining Steps 0.1 and 0.3):
+        // a1 b0 | a1 b1 | a3 b2 | a3 b3
+        // a1 b2 | a1 b3 | a3 b0 | a3 b1
+        // =&gt; _mm256_permute_2f128_pd with 0x03 = 0b0001_0011
+        // a3 b0 | a3 b1 | a3 b2 | a3 b3
 
-        <span class="comment">// Scheme b), step 1.0</span>
-        <span class="kw">let</span> <span class="ident">a0b0_a0b1_a0b2_a0b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a0b0_a0b1_a2b2_a2b3</span>,
-            <span class="ident">a0b2_a0b3_a2b0_a2b1</span>,
-            <span class="number">0x20</span>
-        );
-        <span class="comment">// Scheme b), step 1.1</span>
-        <span class="kw">let</span> <span class="ident">a2b0_a2b1_a2b2_a2b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a0b0_a0b1_a2b2_a2b3</span>,
-            <span class="ident">a0b2_a0b3_a2b0_a2b1</span>,
-            <span class="number">0x13</span>
-        );
-        <span class="comment">// Scheme b) step 1.2</span>
-        <span class="kw">let</span> <span class="ident">a1b0_a1b1_a1b2_a1b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a1b0_a1b1_a3b2_a3b3</span>,
-            <span class="ident">a1b2_a1b3_a3b0_a3b1</span>,
-            <span class="number">0x20</span>
-        );
-        <span class="comment">// Scheme b) step 1.3</span>
-        <span class="kw">let</span> <span class="ident">a3b0_a3b1_a3b2_a3b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a1b0_a1b1_a3b2_a3b3</span>,
-            <span class="ident">a1b2_a1b3_a3b0_a3b1</span>,
-            <span class="number">0x13</span>
-        );
+        // Scheme b), step 1.0
+        </span><span class="kw">let </span>a0b0_a0b1_a0b2_a0b3 = _mm256_permute2f128_pd(
+            a0b0_a0b1_a2b2_a2b3,
+            a0b2_a0b3_a2b0_a2b1,
+            <span class="number">0x20
+        </span>);
+        <span class="comment">// Scheme b), step 1.1
+        </span><span class="kw">let </span>a2b0_a2b1_a2b2_a2b3 = _mm256_permute2f128_pd(
+            a0b0_a0b1_a2b2_a2b3,
+            a0b2_a0b3_a2b0_a2b1,
+            <span class="number">0x13
+        </span>);
+        <span class="comment">// Scheme b) step 1.2
+        </span><span class="kw">let </span>a1b0_a1b1_a1b2_a1b3 = _mm256_permute2f128_pd(
+            a1b0_a1b1_a3b2_a3b3,
+            a1b2_a1b3_a3b0_a3b1,
+            <span class="number">0x20
+        </span>);
+        <span class="comment">// Scheme b) step 1.3
+        </span><span class="kw">let </span>a3b0_a3b1_a3b2_a3b3 = _mm256_permute2f128_pd(
+            a1b0_a1b1_a3b2_a3b3,
+            a1b2_a1b3_a3b0_a3b1,
+            <span class="number">0x13
+        </span>);
 
-        <span class="comment">// As above, but for ab[4..7]</span>
-        <span class="kw">let</span> <span class="ident">a4b0_a4b1_a4b2_a4b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a4b0_a4b1_a6b2_a6b3</span>,
-            <span class="ident">a4b2_a4b3_a6b0_a6b1</span>,
-            <span class="number">0x20</span>
-        );
+        <span class="comment">// As above, but for ab[4..7]
+        </span><span class="kw">let </span>a4b0_a4b1_a4b2_a4b3 = _mm256_permute2f128_pd(
+            a4b0_a4b1_a6b2_a6b3,
+            a4b2_a4b3_a6b0_a6b1,
+            <span class="number">0x20
+        </span>);
 
-        <span class="kw">let</span> <span class="ident">a6b0_a6b1_a6b2_a6b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a4b0_a4b1_a6b2_a6b3</span>,
-            <span class="ident">a4b2_a4b3_a6b0_a6b1</span>,
-            <span class="number">0x13</span>
-        );
+        <span class="kw">let </span>a6b0_a6b1_a6b2_a6b3 = _mm256_permute2f128_pd(
+            a4b0_a4b1_a6b2_a6b3,
+            a4b2_a4b3_a6b0_a6b1,
+            <span class="number">0x13
+        </span>);
 
-        <span class="kw">let</span> <span class="ident">a5b0_a5b1_a5b2_a5b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a5b0_a5b1_a7b2_a7b3</span>,
-            <span class="ident">a5b2_a5b3_a7b0_a7b1</span>,
-            <span class="number">0x20</span>
-        );
+        <span class="kw">let </span>a5b0_a5b1_a5b2_a5b3 = _mm256_permute2f128_pd(
+            a5b0_a5b1_a7b2_a7b3,
+            a5b2_a5b3_a7b0_a7b1,
+            <span class="number">0x20
+        </span>);
 
-        <span class="kw">let</span> <span class="ident">a7b0_a7b1_a7b2_a7b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a5b0_a5b1_a7b2_a7b3</span>,
-            <span class="ident">a5b2_a5b3_a7b0_a7b1</span>,
-            <span class="number">0x13</span>
-        );
+        <span class="kw">let </span>a7b0_a7b1_a7b2_a7b3 = _mm256_permute2f128_pd(
+            a5b0_a5b1_a7b2_a7b3,
+            a5b2_a5b3_a7b0_a7b1,
+            <span class="number">0x13
+        </span>);
 
-        <span class="ident">ab</span>[<span class="number">0</span>] <span class="op">=</span> <span class="ident">a0b0_a0b1_a0b2_a0b3</span>;
-        <span class="ident">ab</span>[<span class="number">1</span>] <span class="op">=</span> <span class="ident">a1b0_a1b1_a1b2_a1b3</span>;
-        <span class="ident">ab</span>[<span class="number">2</span>] <span class="op">=</span> <span class="ident">a2b0_a2b1_a2b2_a2b3</span>;
-        <span class="ident">ab</span>[<span class="number">3</span>] <span class="op">=</span> <span class="ident">a3b0_a3b1_a3b2_a3b3</span>;
+        ab[<span class="number">0</span>] = a0b0_a0b1_a0b2_a0b3;
+        ab[<span class="number">1</span>] = a1b0_a1b1_a1b2_a1b3;
+        ab[<span class="number">2</span>] = a2b0_a2b1_a2b2_a2b3;
+        ab[<span class="number">3</span>] = a3b0_a3b1_a3b2_a3b3;
 
-        <span class="ident">ab</span>[<span class="number">4</span>] <span class="op">=</span> <span class="ident">a4b0_a4b1_a4b2_a4b3</span>;
-        <span class="ident">ab</span>[<span class="number">5</span>] <span class="op">=</span> <span class="ident">a5b0_a5b1_a5b2_a5b3</span>;
-        <span class="ident">ab</span>[<span class="number">6</span>] <span class="op">=</span> <span class="ident">a6b0_a6b1_a6b2_a6b3</span>;
-        <span class="ident">ab</span>[<span class="number">7</span>] <span class="op">=</span> <span class="ident">a7b0_a7b1_a7b2_a7b3</span>;
+        ab[<span class="number">4</span>] = a4b0_a4b1_a4b2_a4b3;
+        ab[<span class="number">5</span>] = a5b0_a5b1_a5b2_a5b3;
+        ab[<span class="number">6</span>] = a6b0_a6b1_a6b2_a6b3;
+        ab[<span class="number">7</span>] = a7b0_a7b1_a7b2_a7b3;
 
-    <span class="comment">//  rsc == 1 and general matrix orders</span>
-    } <span class="kw">else</span> {
-        <span class="comment">// Scheme a), step 0.0</span>
-        <span class="comment">// ab[0] = a0 b0 | a1 b1 | a2 b2 | a3 b3</span>
-        <span class="comment">// ab[1] = a0 b1 | a1 b0 | a2 b3 | a3 b2</span>
-        <span class="kw">let</span> <span class="ident">a0b0_a1b0_a2b2_a3b2</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">0</span>], <span class="ident">ab</span>[<span class="number">1</span>], <span class="number">0b1010</span>);
-        <span class="comment">// Scheme a), step 0.1</span>
-        <span class="kw">let</span> <span class="ident">a0b1_a1b1_a2b3_a3b3</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">1</span>], <span class="ident">ab</span>[<span class="number">0</span>], <span class="number">0b1010</span>);
+    <span class="comment">//  rsc == 1 and general matrix orders
+    </span>} <span class="kw">else </span>{
+        <span class="comment">// Scheme a), step 0.0
+        // ab[0] = a0 b0 | a1 b1 | a2 b2 | a3 b3
+        // ab[1] = a0 b1 | a1 b0 | a2 b3 | a3 b2
+        </span><span class="kw">let </span>a0b0_a1b0_a2b2_a3b2 = _mm256_blend_pd(ab[<span class="number">0</span>], ab[<span class="number">1</span>], <span class="number">0b1010</span>);
+        <span class="comment">// Scheme a), step 0.1
+        </span><span class="kw">let </span>a0b1_a1b1_a2b3_a3b3 = _mm256_blend_pd(ab[<span class="number">1</span>], ab[<span class="number">0</span>], <span class="number">0b1010</span>);
 
-        <span class="comment">// Scheme a), steps 0.2</span>
-        <span class="comment">// ab[2] = a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-        <span class="comment">// ab[3] = a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-        <span class="kw">let</span> <span class="ident">a0b2_a1b2_a2b0_a3b0</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">2</span>], <span class="ident">ab</span>[<span class="number">3</span>], <span class="number">0b1010</span>);
-        <span class="comment">// Scheme a), steps 0.3</span>
-        <span class="kw">let</span> <span class="ident">a0b3_a1b3_a2b1_a3b1</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">3</span>], <span class="ident">ab</span>[<span class="number">2</span>], <span class="number">0b1010</span>);
+        <span class="comment">// Scheme a), steps 0.2
+        // ab[2] = a0 b2 | a1 b3 | a2 b0 | a3 b1
+        // ab[3] = a0 b3 | a1 b2 | a2 b1 | a3 b0
+        </span><span class="kw">let </span>a0b2_a1b2_a2b0_a3b0 = _mm256_blend_pd(ab[<span class="number">2</span>], ab[<span class="number">3</span>], <span class="number">0b1010</span>);
+        <span class="comment">// Scheme a), steps 0.3
+        </span><span class="kw">let </span>a0b3_a1b3_a2b1_a3b1 = _mm256_blend_pd(ab[<span class="number">3</span>], ab[<span class="number">2</span>], <span class="number">0b1010</span>);
 
-        <span class="comment">// ab[4] = a4 b0 | a5 b1 | a6 b2 | a7 b3</span>
-        <span class="comment">// ab[5] = a4 b1 | a5 b0 | a6 b3 | a7 b2</span>
-        <span class="kw">let</span> <span class="ident">a4b0_a5b0_a6b2_a7b2</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">4</span>], <span class="ident">ab</span>[<span class="number">5</span>], <span class="number">0b1010</span>);
-        <span class="kw">let</span> <span class="ident">a4b1_a5b1_a6b3_a7b3</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">5</span>], <span class="ident">ab</span>[<span class="number">4</span>], <span class="number">0b1010</span>);
+        <span class="comment">// ab[4] = a4 b0 | a5 b1 | a6 b2 | a7 b3
+        // ab[5] = a4 b1 | a5 b0 | a6 b3 | a7 b2
+        </span><span class="kw">let </span>a4b0_a5b0_a6b2_a7b2 = _mm256_blend_pd(ab[<span class="number">4</span>], ab[<span class="number">5</span>], <span class="number">0b1010</span>);
+        <span class="kw">let </span>a4b1_a5b1_a6b3_a7b3 = _mm256_blend_pd(ab[<span class="number">5</span>], ab[<span class="number">4</span>], <span class="number">0b1010</span>);
 
-        <span class="comment">// ab[6] = a0 b2 | a1 b3 | a2 b0 | a3 b1</span>
-        <span class="comment">// ab[7] = a0 b3 | a1 b2 | a2 b1 | a3 b0</span>
-        <span class="kw">let</span> <span class="ident">a4b2_a5b2_a6b0_a7b0</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">6</span>], <span class="ident">ab</span>[<span class="number">7</span>], <span class="number">0b1010</span>);
-        <span class="kw">let</span> <span class="ident">a4b3_a5b3_a6b1_a7b1</span> <span class="op">=</span> <span class="ident">_mm256_blend_pd</span>(<span class="ident">ab</span>[<span class="number">7</span>], <span class="ident">ab</span>[<span class="number">6</span>], <span class="number">0b1010</span>);
+        <span class="comment">// ab[6] = a0 b2 | a1 b3 | a2 b0 | a3 b1
+        // ab[7] = a0 b3 | a1 b2 | a2 b1 | a3 b0
+        </span><span class="kw">let </span>a4b2_a5b2_a6b0_a7b0 = _mm256_blend_pd(ab[<span class="number">6</span>], ab[<span class="number">7</span>], <span class="number">0b1010</span>);
+        <span class="kw">let </span>a4b3_a5b3_a6b1_a7b1 = _mm256_blend_pd(ab[<span class="number">7</span>], ab[<span class="number">6</span>], <span class="number">0b1010</span>);
 
-        <span class="comment">// Scheme a), step 1.0</span>
-        <span class="kw">let</span> <span class="ident">a0b0_a1b0_a2b0_a3b0</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a0b0_a1b0_a2b2_a3b2</span>,
-            <span class="ident">a0b2_a1b2_a2b0_a3b0</span>,
-            <span class="number">0x30</span>
-        );
-        <span class="comment">// Scheme a), step 1.1</span>
-        <span class="kw">let</span> <span class="ident">a0b2_a1b2_a2b2_a3b2</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a0b0_a1b0_a2b2_a3b2</span>,
-            <span class="ident">a0b2_a1b2_a2b0_a3b0</span>,
+        <span class="comment">// Scheme a), step 1.0
+        </span><span class="kw">let </span>a0b0_a1b0_a2b0_a3b0 = _mm256_permute2f128_pd(
+            a0b0_a1b0_a2b2_a3b2,
+            a0b2_a1b2_a2b0_a3b0,
+            <span class="number">0x30
+        </span>);
+        <span class="comment">// Scheme a), step 1.1
+        </span><span class="kw">let </span>a0b2_a1b2_a2b2_a3b2 = _mm256_permute2f128_pd(
+            a0b0_a1b0_a2b2_a3b2,
+            a0b2_a1b2_a2b0_a3b0,
             <span class="number">0x12</span>,
         );
-        <span class="comment">// Scheme a) step 1.2</span>
-        <span class="kw">let</span> <span class="ident">a0b1_a1b1_a2b1_a3b1</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a0b1_a1b1_a2b3_a3b3</span>,
-            <span class="ident">a0b3_a1b3_a2b1_a3b1</span>,
-            <span class="number">0x30</span>
-        );
-        <span class="comment">// Scheme a) step 1.3</span>
-        <span class="kw">let</span> <span class="ident">a0b3_a1b3_a2b3_a3b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a0b1_a1b1_a2b3_a3b3</span>,
-            <span class="ident">a0b3_a1b3_a2b1_a3b1</span>,
-            <span class="number">0x12</span>
-        );
+        <span class="comment">// Scheme a) step 1.2
+        </span><span class="kw">let </span>a0b1_a1b1_a2b1_a3b1 = _mm256_permute2f128_pd(
+            a0b1_a1b1_a2b3_a3b3,
+            a0b3_a1b3_a2b1_a3b1,
+            <span class="number">0x30
+        </span>);
+        <span class="comment">// Scheme a) step 1.3
+        </span><span class="kw">let </span>a0b3_a1b3_a2b3_a3b3 = _mm256_permute2f128_pd(
+            a0b1_a1b1_a2b3_a3b3,
+            a0b3_a1b3_a2b1_a3b1,
+            <span class="number">0x12
+        </span>);
 
-        <span class="comment">// As above, but for ab[4..7]</span>
-        <span class="kw">let</span> <span class="ident">a4b0_a5b0_a6b0_a7b0</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a4b0_a5b0_a6b2_a7b2</span>,
-            <span class="ident">a4b2_a5b2_a6b0_a7b0</span>,
-            <span class="number">0x30</span>
-        );
-        <span class="kw">let</span> <span class="ident">a4b2_a5b2_a6b2_a7b2</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a4b0_a5b0_a6b2_a7b2</span>,
-            <span class="ident">a4b2_a5b2_a6b0_a7b0</span>,
+        <span class="comment">// As above, but for ab[4..7]
+        </span><span class="kw">let </span>a4b0_a5b0_a6b0_a7b0 = _mm256_permute2f128_pd(
+            a4b0_a5b0_a6b2_a7b2,
+            a4b2_a5b2_a6b0_a7b0,
+            <span class="number">0x30
+        </span>);
+        <span class="kw">let </span>a4b2_a5b2_a6b2_a7b2 = _mm256_permute2f128_pd(
+            a4b0_a5b0_a6b2_a7b2,
+            a4b2_a5b2_a6b0_a7b0,
             <span class="number">0x12</span>,
         );
-        <span class="kw">let</span> <span class="ident">a4b1_a5b1_a6b1_a7b1</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a4b1_a5b1_a6b3_a7b3</span>,
-            <span class="ident">a4b3_a5b3_a6b1_a7b1</span>,
-            <span class="number">0x30</span>
-        );
-        <span class="kw">let</span> <span class="ident">a4b3_a5b3_a6b3_a7b3</span> <span class="op">=</span> <span class="ident">_mm256_permute2f128_pd</span>(
-            <span class="ident">a4b1_a5b1_a6b3_a7b3</span>,
-            <span class="ident">a4b3_a5b3_a6b1_a7b1</span>,
-            <span class="number">0x12</span>
-        );
+        <span class="kw">let </span>a4b1_a5b1_a6b1_a7b1 = _mm256_permute2f128_pd(
+            a4b1_a5b1_a6b3_a7b3,
+            a4b3_a5b3_a6b1_a7b1,
+            <span class="number">0x30
+        </span>);
+        <span class="kw">let </span>a4b3_a5b3_a6b3_a7b3 = _mm256_permute2f128_pd(
+            a4b1_a5b1_a6b3_a7b3,
+            a4b3_a5b3_a6b1_a7b1,
+            <span class="number">0x12
+        </span>);
 
-        <span class="ident">ab</span>[<span class="number">0</span>] <span class="op">=</span> <span class="ident">a0b0_a1b0_a2b0_a3b0</span>;
-        <span class="ident">ab</span>[<span class="number">1</span>] <span class="op">=</span> <span class="ident">a0b1_a1b1_a2b1_a3b1</span>;
-        <span class="ident">ab</span>[<span class="number">2</span>] <span class="op">=</span> <span class="ident">a0b2_a1b2_a2b2_a3b2</span>;
-        <span class="ident">ab</span>[<span class="number">3</span>] <span class="op">=</span> <span class="ident">a0b3_a1b3_a2b3_a3b3</span>;
+        ab[<span class="number">0</span>] = a0b0_a1b0_a2b0_a3b0;
+        ab[<span class="number">1</span>] = a0b1_a1b1_a2b1_a3b1;
+        ab[<span class="number">2</span>] = a0b2_a1b2_a2b2_a3b2;
+        ab[<span class="number">3</span>] = a0b3_a1b3_a2b3_a3b3;
 
-        <span class="ident">ab</span>[<span class="number">4</span>] <span class="op">=</span> <span class="ident">a4b0_a5b0_a6b0_a7b0</span>;
-        <span class="ident">ab</span>[<span class="number">5</span>] <span class="op">=</span> <span class="ident">a4b1_a5b1_a6b1_a7b1</span>;
-        <span class="ident">ab</span>[<span class="number">6</span>] <span class="op">=</span> <span class="ident">a4b2_a5b2_a6b2_a7b2</span>;
-        <span class="ident">ab</span>[<span class="number">7</span>] <span class="op">=</span> <span class="ident">a4b3_a5b3_a6b3_a7b3</span>;
+        ab[<span class="number">4</span>] = a4b0_a5b0_a6b0_a7b0;
+        ab[<span class="number">5</span>] = a4b1_a5b1_a6b1_a7b1;
+        ab[<span class="number">6</span>] = a4b2_a5b2_a6b2_a7b2;
+        ab[<span class="number">7</span>] = a4b3_a5b3_a6b3_a7b3;
     }
 
-    <span class="comment">// Compute α (A B)</span>
-    <span class="comment">// Compute here if we don&#39;t have fma, else pick up α further down</span>
+    <span class="comment">// Compute α (A B)
+    // Compute here if we don&#39;t have fma, else pick up α further down
 
-    <span class="kw">let</span> <span class="ident">alphav</span> <span class="op">=</span> <span class="ident">_mm256_broadcast_sd</span>(<span class="kw-2">&amp;</span><span class="ident">alpha</span>);
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">MA::IS_FUSED</span> {
-        <span class="macro">loop_m!</span>(<span class="ident">i</span>, <span class="ident">ab</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">_mm256_mul_pd</span>(<span class="ident">alphav</span>, <span class="ident">ab</span>[<span class="ident">i</span>]));
+    </span><span class="kw">let </span>alphav = _mm256_broadcast_sd(<span class="kw-2">&amp;</span>alpha);
+    <span class="kw">if </span>!MA::IS_FUSED {
+        <span class="macro">loop_m!</span>(i, ab[i] = _mm256_mul_pd(alphav, ab[i]));
     }
 
-    <span class="macro">macro_rules!</span> <span class="ident">c</span> {
-        (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">i</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">j</span>:<span class="ident">expr</span>) =&gt;
-            (<span class="ident">c</span>.<span class="ident">offset</span>(<span class="ident">rsc</span> <span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">i</span> <span class="kw">as</span> <span class="ident">isize</span> <span class="op">+</span> <span class="ident">csc</span> <span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">j</span> <span class="kw">as</span> <span class="ident">isize</span>));
+    <span class="macro">macro_rules! </span>c {
+        (<span class="macro-nonterminal">$i</span>:expr, <span class="macro-nonterminal">$j</span>:expr) =&gt;
+            (c.offset(rsc * <span class="macro-nonterminal">$i </span><span class="kw">as </span>isize + csc * <span class="macro-nonterminal">$j </span><span class="kw">as </span>isize));
     }
 
-    <span class="comment">// C ← α A B + β C</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cv</span> <span class="op">=</span> [<span class="ident">_mm256_setzero_pd</span>(); <span class="ident">MR</span>];
+    <span class="comment">// C ← α A B + β C
+    </span><span class="kw">let </span><span class="kw-2">mut </span>cv = [_mm256_setzero_pd(); MR];
 
-    <span class="kw">if</span> <span class="ident">beta</span> <span class="op">!</span><span class="op">=</span> <span class="number">0.</span> {
-        <span class="comment">// Read C</span>
-        <span class="kw">if</span> <span class="ident">rsc</span> <span class="op">==</span> <span class="number">1</span> {
-            <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">_mm256_loadu_pd</span>(<span class="macro">c!</span>[<span class="number">0</span>, <span class="ident">i</span>]));
-            <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">4</span>] <span class="op">=</span> <span class="ident">_mm256_loadu_pd</span>(<span class="macro">c!</span>[<span class="number">4</span>, <span class="ident">i</span>]));
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">csc</span> <span class="op">==</span> <span class="number">1</span> {
-            <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">_mm256_loadu_pd</span>(<span class="macro">c!</span>[<span class="ident">i</span>, <span class="number">0</span>]));
-            <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span><span class="op">+</span><span class="number">4</span>] <span class="op">=</span> <span class="ident">_mm256_loadu_pd</span>(<span class="macro">c!</span>[<span class="ident">i</span><span class="op">+</span><span class="number">4</span>, <span class="number">0</span>]));
-        } <span class="kw">else</span> {
-            <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">_mm256_setr_pd</span>(
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">0</span>, <span class="ident">i</span>],
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">1</span>, <span class="ident">i</span>],
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">2</span>, <span class="ident">i</span>],
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">3</span>, <span class="ident">i</span>]
+    <span class="kw">if </span>beta != <span class="number">0. </span>{
+        <span class="comment">// Read C
+        </span><span class="kw">if </span>rsc == <span class="number">1 </span>{
+            <span class="macro">loop4!</span>(i, cv[i] = _mm256_loadu_pd(<span class="macro">c!</span>[<span class="number">0</span>, i]));
+            <span class="macro">loop4!</span>(i, cv[i + <span class="number">4</span>] = _mm256_loadu_pd(<span class="macro">c!</span>[<span class="number">4</span>, i]));
+        } <span class="kw">else if </span>csc == <span class="number">1 </span>{
+            <span class="macro">loop4!</span>(i, cv[i] = _mm256_loadu_pd(<span class="macro">c!</span>[i, <span class="number">0</span>]));
+            <span class="macro">loop4!</span>(i, cv[i+<span class="number">4</span>] = _mm256_loadu_pd(<span class="macro">c!</span>[i+<span class="number">4</span>, <span class="number">0</span>]));
+        } <span class="kw">else </span>{
+            <span class="macro">loop4!</span>(i, cv[i] = _mm256_setr_pd(
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">0</span>, i],
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">1</span>, i],
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">2</span>, i],
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">3</span>, i]
             ));
-            <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">4</span>] <span class="op">=</span> <span class="ident">_mm256_setr_pd</span>(
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">4</span>, <span class="ident">i</span>],
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">5</span>, <span class="ident">i</span>],
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">6</span>, <span class="ident">i</span>],
-                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">7</span>, <span class="ident">i</span>]
+            <span class="macro">loop4!</span>(i, cv[i + <span class="number">4</span>] = _mm256_setr_pd(
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">4</span>, i],
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">5</span>, i],
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">6</span>, i],
+                    <span class="kw-2">*</span><span class="macro">c!</span>[<span class="number">7</span>, i]
             ));
         }
-        <span class="comment">// Compute β C</span>
-        <span class="comment">// _mm256_set1_pd and _mm256_broadcast_sd seem to achieve the same thing.</span>
-        <span class="kw">let</span> <span class="ident">beta_v</span> <span class="op">=</span> <span class="ident">_mm256_broadcast_sd</span>(<span class="kw-2">&amp;</span><span class="ident">beta</span>);
-        <span class="macro">loop_m!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">_mm256_mul_pd</span>(<span class="ident">cv</span>[<span class="ident">i</span>], <span class="ident">beta_v</span>));
+        <span class="comment">// Compute β C
+        // _mm256_set1_pd and _mm256_broadcast_sd seem to achieve the same thing.
+        </span><span class="kw">let </span>beta_v = _mm256_broadcast_sd(<span class="kw-2">&amp;</span>beta);
+        <span class="macro">loop_m!</span>(i, cv[i] = _mm256_mul_pd(cv[i], beta_v));
     }
 
-    <span class="comment">// Compute (α A B) + (β C)</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">MA::IS_FUSED</span> {
-        <span class="macro">loop_m!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">_mm256_add_pd</span>(<span class="ident">cv</span>[<span class="ident">i</span>], <span class="ident">ab</span>[<span class="ident">i</span>]));
-    } <span class="kw">else</span> {
-        <span class="macro">loop_m!</span>(<span class="ident">i</span>, <span class="ident">cv</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MA::multiply_add</span>(<span class="ident">alphav</span>, <span class="ident">ab</span>[<span class="ident">i</span>], <span class="ident">cv</span>[<span class="ident">i</span>]));
+    <span class="comment">// Compute (α A B) + (β C)
+    </span><span class="kw">if </span>!MA::IS_FUSED {
+        <span class="macro">loop_m!</span>(i, cv[i] = _mm256_add_pd(cv[i], ab[i]));
+    } <span class="kw">else </span>{
+        <span class="macro">loop_m!</span>(i, cv[i] = MA::multiply_add(alphav, ab[i], cv[i]));
     }
 
-    <span class="kw">if</span> <span class="ident">rsc</span> <span class="op">==</span> <span class="number">1</span> {
-        <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">_mm256_storeu_pd</span>(<span class="macro">c!</span>[<span class="number">0</span>, <span class="ident">i</span>], <span class="ident">cv</span>[<span class="ident">i</span>]));
-        <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">_mm256_storeu_pd</span>(<span class="macro">c!</span>[<span class="number">4</span>, <span class="ident">i</span>], <span class="ident">cv</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">4</span>]));
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">csc</span> <span class="op">==</span> <span class="number">1</span> {
-        <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">_mm256_storeu_pd</span>(<span class="macro">c!</span>[<span class="ident">i</span>, <span class="number">0</span>], <span class="ident">cv</span>[<span class="ident">i</span>]));
-        <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="ident">_mm256_storeu_pd</span>(<span class="macro">c!</span>[<span class="ident">i</span><span class="op">+</span><span class="number">4</span>, <span class="number">0</span>], <span class="ident">cv</span>[<span class="ident">i</span> <span class="op">+</span> <span class="number">4</span>]));
-    } <span class="kw">else</span> {
-        <span class="comment">// Permute to bring each element in the vector to the front and store</span>
-        <span class="macro">loop4!</span>(<span class="ident">i</span>, {
-            <span class="comment">// E.g. c_0_lo = a0b0 | a1b0</span>
-            <span class="kw">let</span> <span class="ident">c_lo</span>: <span class="ident">__m128d</span> <span class="op">=</span> <span class="ident">_mm256_extractf128_pd</span>(<span class="ident">cv</span>[<span class="ident">i</span>], <span class="number">0</span>);
-            <span class="comment">// E.g. c_0_hi = a2b0 | a3b0</span>
-            <span class="kw">let</span> <span class="ident">c_hi</span>: <span class="ident">__m128d</span> <span class="op">=</span> <span class="ident">_mm256_extractf128_pd</span>(<span class="ident">cv</span>[<span class="ident">i</span>], <span class="number">1</span>);
+    <span class="kw">if </span>rsc == <span class="number">1 </span>{
+        <span class="macro">loop4!</span>(i, _mm256_storeu_pd(<span class="macro">c!</span>[<span class="number">0</span>, i], cv[i]));
+        <span class="macro">loop4!</span>(i, _mm256_storeu_pd(<span class="macro">c!</span>[<span class="number">4</span>, i], cv[i + <span class="number">4</span>]));
+    } <span class="kw">else if </span>csc == <span class="number">1 </span>{
+        <span class="macro">loop4!</span>(i, _mm256_storeu_pd(<span class="macro">c!</span>[i, <span class="number">0</span>], cv[i]));
+        <span class="macro">loop4!</span>(i, _mm256_storeu_pd(<span class="macro">c!</span>[i+<span class="number">4</span>, <span class="number">0</span>], cv[i + <span class="number">4</span>]));
+    } <span class="kw">else </span>{
+        <span class="comment">// Permute to bring each element in the vector to the front and store
+        </span><span class="macro">loop4!</span>(i, {
+            <span class="comment">// E.g. c_0_lo = a0b0 | a1b0
+            </span><span class="kw">let </span>c_lo: __m128d = _mm256_extractf128_pd(cv[i], <span class="number">0</span>);
+            <span class="comment">// E.g. c_0_hi = a2b0 | a3b0
+            </span><span class="kw">let </span>c_hi: __m128d = _mm256_extractf128_pd(cv[i], <span class="number">1</span>);
 
-            <span class="ident">_mm_storel_pd</span>(<span class="macro">c!</span>[<span class="number">0</span>, <span class="ident">i</span>], <span class="ident">c_lo</span>);
-            <span class="ident">_mm_storeh_pd</span>(<span class="macro">c!</span>[<span class="number">1</span>, <span class="ident">i</span>], <span class="ident">c_lo</span>);
-            <span class="ident">_mm_storel_pd</span>(<span class="macro">c!</span>[<span class="number">2</span>, <span class="ident">i</span>], <span class="ident">c_hi</span>);
-            <span class="ident">_mm_storeh_pd</span>(<span class="macro">c!</span>[<span class="number">3</span>, <span class="ident">i</span>], <span class="ident">c_hi</span>);
+            _mm_storel_pd(<span class="macro">c!</span>[<span class="number">0</span>, i], c_lo);
+            _mm_storeh_pd(<span class="macro">c!</span>[<span class="number">1</span>, i], c_lo);
+            _mm_storel_pd(<span class="macro">c!</span>[<span class="number">2</span>, i], c_hi);
+            _mm_storeh_pd(<span class="macro">c!</span>[<span class="number">3</span>, i], c_hi);
 
-            <span class="comment">// E.g. c_0_lo = a0b0 | a1b0</span>
-            <span class="kw">let</span> <span class="ident">c_lo</span>: <span class="ident">__m128d</span> <span class="op">=</span> <span class="ident">_mm256_extractf128_pd</span>(<span class="ident">cv</span>[<span class="ident">i</span><span class="op">+</span><span class="number">4</span>], <span class="number">0</span>);
-            <span class="comment">// E.g. c_0_hi = a2b0 | a3b0</span>
-            <span class="kw">let</span> <span class="ident">c_hi</span>: <span class="ident">__m128d</span> <span class="op">=</span> <span class="ident">_mm256_extractf128_pd</span>(<span class="ident">cv</span>[<span class="ident">i</span><span class="op">+</span><span class="number">4</span>], <span class="number">1</span>);
+            <span class="comment">// E.g. c_0_lo = a0b0 | a1b0
+            </span><span class="kw">let </span>c_lo: __m128d = _mm256_extractf128_pd(cv[i+<span class="number">4</span>], <span class="number">0</span>);
+            <span class="comment">// E.g. c_0_hi = a2b0 | a3b0
+            </span><span class="kw">let </span>c_hi: __m128d = _mm256_extractf128_pd(cv[i+<span class="number">4</span>], <span class="number">1</span>);
 
-            <span class="ident">_mm_storel_pd</span>(<span class="macro">c!</span>[<span class="number">4</span>, <span class="ident">i</span>], <span class="ident">c_lo</span>);
-            <span class="ident">_mm_storeh_pd</span>(<span class="macro">c!</span>[<span class="number">5</span>, <span class="ident">i</span>], <span class="ident">c_lo</span>);
-            <span class="ident">_mm_storel_pd</span>(<span class="macro">c!</span>[<span class="number">6</span>, <span class="ident">i</span>], <span class="ident">c_hi</span>);
-            <span class="ident">_mm_storeh_pd</span>(<span class="macro">c!</span>[<span class="number">7</span>, <span class="ident">i</span>], <span class="ident">c_hi</span>);
+            _mm_storel_pd(<span class="macro">c!</span>[<span class="number">4</span>, i], c_lo);
+            _mm_storeh_pd(<span class="macro">c!</span>[<span class="number">5</span>, i], c_lo);
+            _mm_storel_pd(<span class="macro">c!</span>[<span class="number">6</span>, i], c_hi);
+            _mm_storeh_pd(<span class="macro">c!</span>[<span class="number">7</span>, i], c_hi);
         });
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">kernel_fallback_impl</span>(<span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">alpha</span>: <span class="ident">T</span>, <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-                                   <span class="ident">beta</span>: <span class="ident">T</span>, <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">unsafe fn </span>kernel_fallback_impl(k: usize, alpha: T, a: <span class="kw-2">*const </span>T, b: <span class="kw-2">*const </span>T,
+                                   beta: T, c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize)
 {
-    <span class="kw">const</span> <span class="ident">MR</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">KernelFallback::MR</span>;
-    <span class="kw">const</span> <span class="ident">NR</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">KernelFallback::NR</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ab</span>: [[<span class="ident">T</span>; <span class="ident">NR</span>]; <span class="ident">MR</span>] <span class="op">=</span> [[<span class="number">0.</span>; <span class="ident">NR</span>]; <span class="ident">MR</span>];
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>;
-    <span class="macro">debug_assert_eq!</span>(<span class="ident">beta</span>, <span class="number">0.</span>, <span class="string">&quot;Beta must be 0 or is not masked&quot;</span>);
+    <span class="kw">const </span>MR: usize = KernelFallback::MR;
+    <span class="kw">const </span>NR: usize = KernelFallback::NR;
+    <span class="kw">let </span><span class="kw-2">mut </span>ab: [[T; NR]; MR] = [[<span class="number">0.</span>; NR]; MR];
+    <span class="kw">let </span><span class="kw-2">mut </span>a = a;
+    <span class="kw">let </span><span class="kw-2">mut </span>b = b;
+    <span class="macro">debug_assert_eq!</span>(beta, <span class="number">0.</span>, <span class="string">&quot;Beta must be 0 or is not masked&quot;</span>);
 
-    <span class="comment">// Compute matrix multiplication into ab[i][j]</span>
-    <span class="macro">unroll_by!</span>(<span class="number">4</span> =&gt; <span class="ident">k</span>, {
-        <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="macro">loop4!</span>(<span class="ident">j</span>, <span class="ident">ab</span>[<span class="ident">i</span>][<span class="ident">j</span>] <span class="op">+</span><span class="op">=</span> <span class="ident">at</span>(<span class="ident">a</span>, <span class="ident">i</span>) <span class="op">*</span> <span class="ident">at</span>(<span class="ident">b</span>, <span class="ident">j</span>)));
+    <span class="comment">// Compute matrix multiplication into ab[i][j]
+    </span><span class="macro">unroll_by!</span>(<span class="number">4 </span>=&gt; k, {
+        <span class="macro">loop4!</span>(i, <span class="macro">loop4!</span>(j, ab[i][j] += at(a, i) * at(b, j)));
 
-        <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">offset</span>(<span class="ident">MR</span> <span class="kw">as</span> <span class="ident">isize</span>);
-        <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">offset</span>(<span class="ident">NR</span> <span class="kw">as</span> <span class="ident">isize</span>);
+        a = a.offset(MR <span class="kw">as </span>isize);
+        b = b.offset(NR <span class="kw">as </span>isize);
     });
 
-    <span class="macro">macro_rules!</span> <span class="ident">c</span> {
-        (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">i</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">j</span>:<span class="ident">expr</span>) =&gt; (<span class="ident">c</span>.<span class="ident">offset</span>(<span class="ident">rsc</span> <span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">i</span> <span class="kw">as</span> <span class="ident">isize</span> <span class="op">+</span> <span class="ident">csc</span> <span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">j</span> <span class="kw">as</span> <span class="ident">isize</span>));
+    <span class="macro">macro_rules! </span>c {
+        (<span class="macro-nonterminal">$i</span>:expr, <span class="macro-nonterminal">$j</span>:expr) =&gt; (c.offset(rsc * <span class="macro-nonterminal">$i </span><span class="kw">as </span>isize + csc * <span class="macro-nonterminal">$j </span><span class="kw">as </span>isize));
     }
 
-    <span class="comment">// set C = α A B</span>
-    <span class="macro">loop4!</span>(<span class="ident">j</span>, <span class="macro">loop4!</span>(<span class="ident">i</span>, <span class="kw-2">*</span><span class="macro">c!</span>[<span class="ident">i</span>, <span class="ident">j</span>] <span class="op">=</span> <span class="ident">alpha</span> <span class="op">*</span> <span class="ident">ab</span>[<span class="ident">i</span>][<span class="ident">j</span>]));
+    <span class="comment">// set C = α A B
+    </span><span class="macro">loop4!</span>(j, <span class="macro">loop4!</span>(i, <span class="kw-2">*</span><span class="macro">c!</span>[i, j] = alpha * ab[i][j]));
 }
 
-<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">at</span>(<span class="ident">ptr</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">i</span>: <span class="ident">usize</span>) -&gt; <span class="ident">T</span> {
-    <span class="kw-2">*</span><span class="ident">ptr</span>.<span class="ident">offset</span>(<span class="ident">i</span> <span class="kw">as</span> <span class="ident">isize</span>)
+<span class="attribute">#[inline(always)]
+</span><span class="kw">unsafe fn </span>at(ptr: <span class="kw-2">*const </span>T, i: usize) -&gt; T {
+    <span class="kw-2">*</span>ptr.offset(i <span class="kw">as </span>isize)
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel::test::test_a_kernel</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::kernel::test::test_a_kernel;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_kernel_fallback_impl</span>() {
-        <span class="ident">test_a_kernel</span>::<span class="op">&lt;</span><span class="ident">KernelFallback</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="string">&quot;kernel&quot;</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_kernel_fallback_impl() {
+        test_a_kernel::&lt;KernelFallback, <span class="kw">_</span>&gt;(<span class="string">&quot;kernel&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_loop_m_n</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">m</span> <span class="op">=</span> [[<span class="number">0</span>; <span class="number">4</span>]; <span class="ident">KernelAvx::MR</span>];
-        <span class="macro">loop_m!</span>(<span class="ident">i</span>, <span class="macro">loop4!</span>(<span class="ident">j</span>, <span class="ident">m</span>[<span class="ident">i</span>][<span class="ident">j</span>] <span class="op">+</span><span class="op">=</span> <span class="number">1</span>));
-        <span class="kw">for</span> <span class="ident">arr</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">m</span>[..] {
-            <span class="kw">for</span> <span class="ident">elt</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">arr</span>[..] {
-                <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">elt</span>, <span class="number">1</span>);
+    <span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+    #[test]
+    </span><span class="kw">fn </span>test_loop_m_n() {
+        <span class="kw">let </span><span class="kw-2">mut </span>m = [[<span class="number">0</span>; <span class="number">4</span>]; KernelAvx::MR];
+        <span class="macro">loop_m!</span>(i, <span class="macro">loop4!</span>(j, m[i][j] += <span class="number">1</span>));
+        <span class="kw">for </span>arr <span class="kw">in </span><span class="kw-2">&amp;</span>m[..] {
+            <span class="kw">for </span>elt <span class="kw">in </span><span class="kw-2">&amp;</span>arr[..] {
+                <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>elt, <span class="number">1</span>);
             }
         }
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span><span class="op">=</span><span class="string">&quot;x86_64&quot;</span>))]</span>
-    <span class="kw">mod</span> <span class="ident">test_arch_kernels</span> {
-        <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::test_a_kernel</span>;
-        <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span></span>::<span class="kw-2">*</span>;
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-        <span class="kw">use</span> <span class="ident">std::println</span>;
-        <span class="macro">macro_rules!</span> <span class="ident">test_arch_kernels_x86</span> {
-            ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">feature_name</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">kernel_ty</span>:<span class="ident">ty</span>),<span class="kw-2">*</span>) =&gt; {
+    <span class="attribute">#[cfg(any(target_arch=<span class="string">&quot;x86&quot;</span>, target_arch=<span class="string">&quot;x86_64&quot;</span>))]
+    </span><span class="kw">mod </span>test_arch_kernels {
+        <span class="kw">use </span><span class="kw">super</span>::test_a_kernel;
+        <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw-2">*</span>;
+        <span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        </span><span class="kw">use </span>std::println;
+        <span class="macro">macro_rules! </span>test_arch_kernels_x86 {
+            ($(<span class="macro-nonterminal">$feature_name</span>:tt, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$kernel_ty</span>:ty),<span class="kw-2">*</span>) =&gt; {
                 $(
-                <span class="attribute">#[<span class="ident">test</span>]</span>
-                <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>() {
-                    <span class="kw">if</span> <span class="macro">is_x86_feature_detected_!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">feature_name</span>) {
-                        <span class="ident">test_a_kernel</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">kernel_ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>));
-                    } <span class="kw">else</span> {
-                        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-                        <span class="macro">println!</span>(<span class="string">&quot;Skipping, host does not have feature: {:?}&quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">feature_name</span>);
+                <span class="attribute">#[test]
+                </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
+                    <span class="kw">if </span><span class="macro">is_x86_feature_detected_!</span>(<span class="macro-nonterminal">$feature_name</span>) {
+                        test_a_kernel::&lt;<span class="macro-nonterminal">$kernel_ty</span>, <span class="kw">_</span>&gt;(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>));
+                    } <span class="kw">else </span>{
+                        <span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+                        </span><span class="macro">println!</span>(<span class="string">&quot;Skipping, host does not have feature: {:?}&quot;</span>, <span class="macro-nonterminal">$feature_name</span>);
                     }
                 }
-                )<span class="op">*</span>
+                )*
             }
         }
 
-        <span class="macro">test_arch_kernels_x86!</span> {
-            <span class="string">&quot;fma&quot;</span>, <span class="ident">fma</span>, <span class="ident">KernelFma</span>,
-            <span class="string">&quot;avx&quot;</span>, <span class="ident">avx</span>, <span class="ident">KernelAvx</span>,
-            <span class="string">&quot;sse2&quot;</span>, <span class="ident">sse2</span>, <span class="ident">KernelSse2</span>
+        <span class="macro">test_arch_kernels_x86! </span>{
+            <span class="string">&quot;fma&quot;</span>, fma, KernelFma,
+            <span class="string">&quot;avx&quot;</span>, avx, KernelAvx,
+            <span class="string">&quot;sse2&quot;</span>, sse2, KernelSse2
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="matrixmultiply" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="matrixmultiply" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/externref.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>externref.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/externref.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>externref.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1112,970 +1107,970 @@
 <span id="1107">1107</span>
 <span id="1108">1108</span>
 <span id="1109">1109</span>
-</pre><pre class="rust"><code><span class="doccomment">//! # `VMExternRef`</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! `VMExternRef` is a reference-counted box for any kind of data that is</span>
-<span class="doccomment">//! external and opaque to running Wasm. Sometimes it might hold a Wasmtime</span>
-<span class="doccomment">//! thing, other times it might hold something from a Wasmtime embedder and is</span>
-<span class="doccomment">//! opaque even to us. It is morally equivalent to `Rc&lt;dyn Any&gt;` in Rust, but</span>
-<span class="doccomment">//! additionally always fits in a pointer-sized word. `VMExternRef` is</span>
-<span class="doccomment">//! non-nullable, but `Option&lt;VMExternRef&gt;` is a null pointer.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The one part of `VMExternRef` that can&#39;t ever be opaque to us is the</span>
-<span class="doccomment">//! reference count. Even when we don&#39;t know what&#39;s inside an `VMExternRef`, we</span>
-<span class="doccomment">//! need to be able to manipulate its reference count as we add and remove</span>
-<span class="doccomment">//! references to it. And we need to do this from compiled Wasm code, so it must</span>
-<span class="doccomment">//! be `repr(C)`!</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ## Memory Layout</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! `VMExternRef` itself is just a pointer to an `VMExternData`, which holds the</span>
-<span class="doccomment">//! opaque, boxed value, its reference count, and its vtable pointer.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The `VMExternData` struct is *preceded* by the dynamically-sized value boxed</span>
-<span class="doccomment">//! up and referenced by one or more `VMExternRef`s:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```text</span>
-<span class="doccomment">//!      ,-------------------------------------------------------.</span>
-<span class="doccomment">//!      |                                                       |</span>
-<span class="doccomment">//!      V                                                       |</span>
-<span class="doccomment">//!     +----------------------------+-----------+-----------+   |</span>
-<span class="doccomment">//!     | dynamically-sized value... | ref_count | value_ptr |---&#39;</span>
-<span class="doccomment">//!     +----------------------------+-----------+-----------+</span>
-<span class="doccomment">//!                                  | VMExternData          |</span>
-<span class="doccomment">//!                                  +-----------------------+</span>
-<span class="doccomment">//!                                   ^</span>
-<span class="doccomment">//! +-------------+                   |</span>
-<span class="doccomment">//! | VMExternRef |-------------------+</span>
-<span class="doccomment">//! +-------------+                   |</span>
-<span class="doccomment">//!                                   |</span>
-<span class="doccomment">//! +-------------+                   |</span>
-<span class="doccomment">//! | VMExternRef |-------------------+</span>
-<span class="doccomment">//! +-------------+                   |</span>
-<span class="doccomment">//!                                   |</span>
-<span class="doccomment">//!   ...                            ===</span>
-<span class="doccomment">//!                                   |</span>
-<span class="doccomment">//! +-------------+                   |</span>
-<span class="doccomment">//! | VMExternRef |-------------------&#39;</span>
-<span class="doccomment">//! +-------------+</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The `value_ptr` member always points backwards to the start of the</span>
-<span class="doccomment">//! dynamically-sized value (which is also the start of the heap allocation for</span>
-<span class="doccomment">//! this value-and-`VMExternData` pair). Because it is a `dyn` pointer, it is</span>
-<span class="doccomment">//! fat, and also points to the value&#39;s `Any` vtable.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The boxed value and the `VMExternRef` footer are held a single heap</span>
-<span class="doccomment">//! allocation. The layout described above is used to make satisfying the</span>
-<span class="doccomment">//! value&#39;s alignment easy: we just need to ensure that the heap allocation used</span>
-<span class="doccomment">//! to hold everything satisfies its alignment. It also ensures that we don&#39;t</span>
-<span class="doccomment">//! need a ton of excess padding between the `VMExternData` and the value for</span>
-<span class="doccomment">//! values with large alignment.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ## Reference Counting, Wasm Functions, and Garbage Collection</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! For host VM code, we use plain reference counting, where cloning increments</span>
-<span class="doccomment">//! the reference count, and dropping decrements it. We can avoid many of the</span>
-<span class="doccomment">//! on-stack increment/decrement operations that typically plague the</span>
-<span class="doccomment">//! performance of reference counting via Rust&#39;s ownership and borrowing system.</span>
-<span class="doccomment">//! Moving a `VMExternRef` avoids mutating its reference count, and borrowing it</span>
-<span class="doccomment">//! either avoids the reference count increment or delays it until if/when the</span>
-<span class="doccomment">//! `VMExternRef` is cloned.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! When passing a `VMExternRef` into compiled Wasm code, we don&#39;t want to do</span>
-<span class="doccomment">//! reference count mutations for every compiled `local.{get,set}`, nor for</span>
-<span class="doccomment">//! every function call. Therefore, we use a variation of **deferred reference</span>
-<span class="doccomment">//! counting**, where we only mutate reference counts when storing</span>
-<span class="doccomment">//! `VMExternRef`s somewhere that outlives the activation: into a global or</span>
-<span class="doccomment">//! table. Simultaneously, we over-approximate the set of `VMExternRef`s that</span>
-<span class="doccomment">//! are inside Wasm function activations. Periodically, we walk the stack at GC</span>
-<span class="doccomment">//! safe points, and use stack map information to precisely identify the set of</span>
-<span class="doccomment">//! `VMExternRef`s inside Wasm activations. Then we take the difference between</span>
-<span class="doccomment">//! this precise set and our over-approximation, and decrement the reference</span>
-<span class="doccomment">//! count for each of the `VMExternRef`s that are in our over-approximation but</span>
-<span class="doccomment">//! not in the precise set. Finally, the over-approximation is replaced with the</span>
-<span class="doccomment">//! precise set.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The `VMExternRefActivationsTable` implements the over-approximized set of</span>
-<span class="doccomment">//! `VMExternRef`s referenced by Wasm activations. Calling a Wasm function and</span>
-<span class="doccomment">//! passing it a `VMExternRef` moves the `VMExternRef` into the table, and the</span>
-<span class="doccomment">//! compiled Wasm function logically &quot;borrows&quot; the `VMExternRef` from the</span>
-<span class="doccomment">//! table. Similarly, `global.get` and `table.get` operations clone the gotten</span>
-<span class="doccomment">//! `VMExternRef` into the `VMExternRefActivationsTable` and then &quot;borrow&quot; the</span>
-<span class="doccomment">//! reference out of the table.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! When a `VMExternRef` is returned to host code from a Wasm function, the host</span>
-<span class="doccomment">//! increments the reference count (because the reference is logically</span>
-<span class="doccomment">//! &quot;borrowed&quot; from the `VMExternRefActivationsTable` and the reference count</span>
-<span class="doccomment">//! from the table will be dropped at the next GC).</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! For more general information on deferred reference counting, see *An</span>
-<span class="doccomment">//! Examination of Deferred Reference Counting and Cycle Detection* by Quinane:</span>
-<span class="doccomment">//! &lt;https://openresearch-repository.anu.edu.au/bitstream/1885/42030/2/hon-thesis.pdf&gt;</span>
+</pre><pre class="rust"><code><span class="doccomment">//! # `VMExternRef`
+//!
+//! `VMExternRef` is a reference-counted box for any kind of data that is
+//! external and opaque to running Wasm. Sometimes it might hold a Wasmtime
+//! thing, other times it might hold something from a Wasmtime embedder and is
+//! opaque even to us. It is morally equivalent to `Rc&lt;dyn Any&gt;` in Rust, but
+//! additionally always fits in a pointer-sized word. `VMExternRef` is
+//! non-nullable, but `Option&lt;VMExternRef&gt;` is a null pointer.
+//!
+//! The one part of `VMExternRef` that can&#39;t ever be opaque to us is the
+//! reference count. Even when we don&#39;t know what&#39;s inside an `VMExternRef`, we
+//! need to be able to manipulate its reference count as we add and remove
+//! references to it. And we need to do this from compiled Wasm code, so it must
+//! be `repr(C)`!
+//!
+//! ## Memory Layout
+//!
+//! `VMExternRef` itself is just a pointer to an `VMExternData`, which holds the
+//! opaque, boxed value, its reference count, and its vtable pointer.
+//!
+//! The `VMExternData` struct is *preceded* by the dynamically-sized value boxed
+//! up and referenced by one or more `VMExternRef`s:
+//!
+//! ```text
+//!      ,-------------------------------------------------------.
+//!      |                                                       |
+//!      V                                                       |
+//!     +----------------------------+-----------+-----------+   |
+//!     | dynamically-sized value... | ref_count | value_ptr |---&#39;
+//!     +----------------------------+-----------+-----------+
+//!                                  | VMExternData          |
+//!                                  +-----------------------+
+//!                                   ^
+//! +-------------+                   |
+//! | VMExternRef |-------------------+
+//! +-------------+                   |
+//!                                   |
+//! +-------------+                   |
+//! | VMExternRef |-------------------+
+//! +-------------+                   |
+//!                                   |
+//!   ...                            ===
+//!                                   |
+//! +-------------+                   |
+//! | VMExternRef |-------------------&#39;
+//! +-------------+
+//! ```
+//!
+//! The `value_ptr` member always points backwards to the start of the
+//! dynamically-sized value (which is also the start of the heap allocation for
+//! this value-and-`VMExternData` pair). Because it is a `dyn` pointer, it is
+//! fat, and also points to the value&#39;s `Any` vtable.
+//!
+//! The boxed value and the `VMExternRef` footer are held a single heap
+//! allocation. The layout described above is used to make satisfying the
+//! value&#39;s alignment easy: we just need to ensure that the heap allocation used
+//! to hold everything satisfies its alignment. It also ensures that we don&#39;t
+//! need a ton of excess padding between the `VMExternData` and the value for
+//! values with large alignment.
+//!
+//! ## Reference Counting, Wasm Functions, and Garbage Collection
+//!
+//! For host VM code, we use plain reference counting, where cloning increments
+//! the reference count, and dropping decrements it. We can avoid many of the
+//! on-stack increment/decrement operations that typically plague the
+//! performance of reference counting via Rust&#39;s ownership and borrowing system.
+//! Moving a `VMExternRef` avoids mutating its reference count, and borrowing it
+//! either avoids the reference count increment or delays it until if/when the
+//! `VMExternRef` is cloned.
+//!
+//! When passing a `VMExternRef` into compiled Wasm code, we don&#39;t want to do
+//! reference count mutations for every compiled `local.{get,set}`, nor for
+//! every function call. Therefore, we use a variation of **deferred reference
+//! counting**, where we only mutate reference counts when storing
+//! `VMExternRef`s somewhere that outlives the activation: into a global or
+//! table. Simultaneously, we over-approximate the set of `VMExternRef`s that
+//! are inside Wasm function activations. Periodically, we walk the stack at GC
+//! safe points, and use stack map information to precisely identify the set of
+//! `VMExternRef`s inside Wasm activations. Then we take the difference between
+//! this precise set and our over-approximation, and decrement the reference
+//! count for each of the `VMExternRef`s that are in our over-approximation but
+//! not in the precise set. Finally, the over-approximation is replaced with the
+//! precise set.
+//!
+//! The `VMExternRefActivationsTable` implements the over-approximized set of
+//! `VMExternRef`s referenced by Wasm activations. Calling a Wasm function and
+//! passing it a `VMExternRef` moves the `VMExternRef` into the table, and the
+//! compiled Wasm function logically &quot;borrows&quot; the `VMExternRef` from the
+//! table. Similarly, `global.get` and `table.get` operations clone the gotten
+//! `VMExternRef` into the `VMExternRefActivationsTable` and then &quot;borrow&quot; the
+//! reference out of the table.
+//!
+//! When a `VMExternRef` is returned to host code from a Wasm function, the host
+//! increments the reference count (because the reference is logically
+//! &quot;borrowed&quot; from the `VMExternRefActivationsTable` and the reference count
+//! from the table will be dropped at the next GC).
+//!
+//! For more general information on deferred reference counting, see *An
+//! Examination of Deferred Reference Counting and Cycle Detection* by Quinane:
+//! &lt;https://openresearch-repository.anu.edu.au/bitstream/1885/42030/2/hon-thesis.pdf&gt;
 
-<span class="kw">use</span> <span class="ident">std::any::Any</span>;
-<span class="kw">use</span> <span class="ident">std::cell::UnsafeCell</span>;
-<span class="kw">use</span> <span class="ident">std::cmp</span>;
-<span class="kw">use</span> <span class="ident">std::collections::HashSet</span>;
-<span class="kw">use</span> <span class="ident">std::hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>};
-<span class="kw">use</span> <span class="ident">std::mem</span>;
-<span class="kw">use</span> <span class="ident">std::ops::Deref</span>;
-<span class="kw">use</span> <span class="ident">std::ptr</span>::{<span class="self">self</span>, <span class="ident">NonNull</span>};
-<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">alloc::Layout</span>, <span class="ident">sync::Arc</span>};
-<span class="kw">use</span> <span class="ident">wasmtime_environ::StackMap</span>;
+</span><span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::cell::UnsafeCell;
+<span class="kw">use </span>std::cmp;
+<span class="kw">use </span>std::collections::HashSet;
+<span class="kw">use </span>std::hash::{Hash, Hasher};
+<span class="kw">use </span>std::mem;
+<span class="kw">use </span>std::ops::Deref;
+<span class="kw">use </span>std::ptr::{<span class="self">self</span>, NonNull};
+<span class="kw">use </span>std::sync::atomic::{<span class="self">self</span>, AtomicUsize, Ordering};
+<span class="kw">use </span>std::{alloc::Layout, sync::Arc};
+<span class="kw">use </span>wasmtime_environ::StackMap;
 
-<span class="doccomment">/// An external reference to some opaque data.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `VMExternRef`s dereference to their underlying opaque data as `dyn Any`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Unlike the `externref` in the Wasm spec, `VMExternRef`s are non-nullable,</span>
-<span class="doccomment">/// and always point to a valid value. You may use `Option&lt;VMExternRef&gt;` to</span>
-<span class="doccomment">/// represent nullable references, and `Option&lt;VMExternRef&gt;` is guaranteed to</span>
-<span class="doccomment">/// have the same size and alignment as a raw pointer, with `None` represented</span>
-<span class="doccomment">/// with the null pointer.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `VMExternRef`s are reference counted, so cloning is a cheap, shallow</span>
-<span class="doccomment">/// operation. It also means they are inherently shared, so you may not get a</span>
-<span class="doccomment">/// mutable, exclusive reference to their inner contents, only a shared,</span>
-<span class="doccomment">/// immutable reference. You may use interior mutability with `RefCell` or</span>
-<span class="doccomment">/// `Mutex` to work around this restriction, if necessary.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `VMExternRef`s have pointer-equality semantics, not structural-equality</span>
-<span class="doccomment">/// semantics. Given two `VMExternRef`s `a` and `b`, `a == b` only if `a` and</span>
-<span class="doccomment">/// `b` point to the same allocation. `a` and `b` are considered not equal, even</span>
-<span class="doccomment">/// if `a` and `b` are two different identical copies of the same data, if they</span>
-<span class="doccomment">/// are in two different allocations. The hashing and ordering implementations</span>
-<span class="doccomment">/// also only operate on the pointer.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Example</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// # fn foo() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {</span>
-<span class="doccomment">/// use std::cell::RefCell;</span>
-<span class="doccomment">/// use wasmtime_runtime::VMExternRef;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Open a file. Wasm doesn&#39;t know about files, but we can let Wasm instances</span>
-<span class="doccomment">/// // work with files via opaque `externref` handles.</span>
-<span class="doccomment">/// let file = std::fs::File::create(&quot;some/file/path&quot;)?;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Wrap the file up as an `VMExternRef` that can be passed to Wasm.</span>
-<span class="doccomment">/// let extern_ref_to_file = VMExternRef::new(file);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // `VMExternRef`s dereference to `dyn Any`, so you can use `Any` methods to</span>
-<span class="doccomment">/// // perform runtime type checks and downcasts.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert!(extern_ref_to_file.is::&lt;std::fs::File&gt;());</span>
-<span class="doccomment">/// assert!(!extern_ref_to_file.is::&lt;String&gt;());</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// if let Some(mut file) = extern_ref_to_file.downcast_ref::&lt;std::fs::File&gt;() {</span>
-<span class="doccomment">///     use std::io::Write;</span>
-<span class="doccomment">///     writeln!(&amp;mut file, &quot;Hello, `VMExternRef`!&quot;)?;</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// # Ok(())</span>
-<span class="doccomment">/// # }</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VMExternRef</span>(<span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">VMExternData</span><span class="op">&gt;</span>);
+<span class="doccomment">/// An external reference to some opaque data.
+///
+/// `VMExternRef`s dereference to their underlying opaque data as `dyn Any`.
+///
+/// Unlike the `externref` in the Wasm spec, `VMExternRef`s are non-nullable,
+/// and always point to a valid value. You may use `Option&lt;VMExternRef&gt;` to
+/// represent nullable references, and `Option&lt;VMExternRef&gt;` is guaranteed to
+/// have the same size and alignment as a raw pointer, with `None` represented
+/// with the null pointer.
+///
+/// `VMExternRef`s are reference counted, so cloning is a cheap, shallow
+/// operation. It also means they are inherently shared, so you may not get a
+/// mutable, exclusive reference to their inner contents, only a shared,
+/// immutable reference. You may use interior mutability with `RefCell` or
+/// `Mutex` to work around this restriction, if necessary.
+///
+/// `VMExternRef`s have pointer-equality semantics, not structural-equality
+/// semantics. Given two `VMExternRef`s `a` and `b`, `a == b` only if `a` and
+/// `b` point to the same allocation. `a` and `b` are considered not equal, even
+/// if `a` and `b` are two different identical copies of the same data, if they
+/// are in two different allocations. The hashing and ordering implementations
+/// also only operate on the pointer.
+///
+/// # Example
+///
+/// ```
+/// # fn foo() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+/// use std::cell::RefCell;
+/// use wasmtime_runtime::VMExternRef;
+///
+/// // Open a file. Wasm doesn&#39;t know about files, but we can let Wasm instances
+/// // work with files via opaque `externref` handles.
+/// let file = std::fs::File::create(&quot;some/file/path&quot;)?;
+///
+/// // Wrap the file up as an `VMExternRef` that can be passed to Wasm.
+/// let extern_ref_to_file = VMExternRef::new(file);
+///
+/// // `VMExternRef`s dereference to `dyn Any`, so you can use `Any` methods to
+/// // perform runtime type checks and downcasts.
+///
+/// assert!(extern_ref_to_file.is::&lt;std::fs::File&gt;());
+/// assert!(!extern_ref_to_file.is::&lt;String&gt;());
+///
+/// if let Some(mut file) = extern_ref_to_file.downcast_ref::&lt;std::fs::File&gt;() {
+///     use std::io::Write;
+///     writeln!(&amp;mut file, &quot;Hello, `VMExternRef`!&quot;)?;
+/// }
+/// # Ok(())
+/// # }
+/// ```
+</span><span class="attribute">#[derive(Debug)]
+#[repr(transparent)]
+</span><span class="kw">pub struct </span>VMExternRef(NonNull&lt;VMExternData&gt;);
 
-<span class="comment">// Data contained is always Send+Sync so these should be safe.</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">VMExternRef</span> {}
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">VMExternRef</span> {}
+<span class="comment">// Data contained is always Send+Sync so these should be safe.
+</span><span class="kw">unsafe impl </span>Send <span class="kw">for </span>VMExternRef {}
+<span class="kw">unsafe impl </span>Sync <span class="kw">for </span>VMExternRef {}
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">VMExternData</span> {
-    <span class="comment">// Implicit, dynamically-sized member that always preceded an</span>
-    <span class="comment">// `VMExternData`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// value: [u8],</span>
-    <span class="comment">//</span>
-    <span class="doccomment">/// The reference count for this `VMExternData` and value. When it reaches</span>
-    <span class="doccomment">/// zero, we can safely destroy the value and free this heap</span>
-    <span class="doccomment">/// allocation. This is an `UnsafeCell`, rather than plain `Cell`, because</span>
-    <span class="doccomment">/// it can be modified by compiled Wasm code.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note: this field&#39;s offset must be kept in sync with</span>
-    <span class="doccomment">/// `wasmtime_environ::VMOffsets::vm_extern_data_ref_count()` which is</span>
-    <span class="doccomment">/// currently always zero.</span>
-    <span class="ident">ref_count</span>: <span class="ident">AtomicUsize</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>VMExternData {
+    <span class="comment">// Implicit, dynamically-sized member that always preceded an
+    // `VMExternData`.
+    //
+    // value: [u8],
+    //
+    </span><span class="doccomment">/// The reference count for this `VMExternData` and value. When it reaches
+    /// zero, we can safely destroy the value and free this heap
+    /// allocation. This is an `UnsafeCell`, rather than plain `Cell`, because
+    /// it can be modified by compiled Wasm code.
+    ///
+    /// Note: this field&#39;s offset must be kept in sync with
+    /// `wasmtime_environ::VMOffsets::vm_extern_data_ref_count()` which is
+    /// currently always zero.
+    </span>ref_count: AtomicUsize,
 
-    <span class="doccomment">/// Always points to the implicit, dynamically-sized `value` member that</span>
-    <span class="doccomment">/// precedes this `VMExternData`.</span>
-    <span class="ident">value_ptr</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Always points to the implicit, dynamically-sized `value` member that
+    /// precedes this `VMExternData`.
+    </span>value_ptr: NonNull&lt;<span class="kw">dyn </span>Any + Send + Sync&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">VMExternRef</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">VMExternRef</span> {
-        <span class="self">self</span>.<span class="ident">extern_data</span>().<span class="ident">increment_ref_count</span>();
-        <span class="ident">VMExternRef</span>(<span class="self">self</span>.<span class="number">0</span>)
+<span class="kw">impl </span>Clone <span class="kw">for </span>VMExternRef {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; VMExternRef {
+        <span class="self">self</span>.extern_data().increment_ref_count();
+        VMExternRef(<span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">VMExternRef</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">extern_data</span>();
+<span class="kw">impl </span>Drop <span class="kw">for </span>VMExternRef {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">let </span>data = <span class="self">self</span>.extern_data();
 
-        <span class="comment">// Note that the memory orderings here also match the standard library</span>
-        <span class="comment">// itself. Documentation is more available in the implementation of</span>
-        <span class="comment">// `Arc`, but the general idea is that this is a special pattern allowed</span>
-        <span class="comment">// by the C standard with atomic orderings where we &quot;release&quot; for all</span>
-        <span class="comment">// the decrements and only the final decrementer performs an acquire</span>
-        <span class="comment">// fence. This properly ensures that the final thread, which actually</span>
-        <span class="comment">// destroys the data, sees all the updates from all other threads.</span>
-        <span class="kw">if</span> <span class="ident">data</span>.<span class="ident">ref_count</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering::Release</span>) <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
+        <span class="comment">// Note that the memory orderings here also match the standard library
+        // itself. Documentation is more available in the implementation of
+        // `Arc`, but the general idea is that this is a special pattern allowed
+        // by the C standard with atomic orderings where we &quot;release&quot; for all
+        // the decrements and only the final decrementer performs an acquire
+        // fence. This properly ensures that the final thread, which actually
+        // destroys the data, sees all the updates from all other threads.
+        </span><span class="kw">if </span>data.ref_count.fetch_sub(<span class="number">1</span>, Ordering::Release) != <span class="number">1 </span>{
             <span class="kw">return</span>;
         }
-        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::Acquire</span>);
+        atomic::fence(Ordering::Acquire);
 
-        <span class="comment">// Drop our live reference to `data` before we drop it itself.</span>
-        <span class="ident">drop</span>(<span class="ident">data</span>);
-        <span class="kw">unsafe</span> {
-            <span class="ident">VMExternData::drop_and_dealloc</span>(<span class="self">self</span>.<span class="number">0</span>);
+        <span class="comment">// Drop our live reference to `data` before we drop it itself.
+        </span>drop(data);
+        <span class="kw">unsafe </span>{
+            VMExternData::drop_and_dealloc(<span class="self">self</span>.<span class="number">0</span>);
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">VMExternData</span> {
-    <span class="doccomment">/// Get the `Layout` for a value with the given size and alignment, and the</span>
-    <span class="doccomment">/// offset within that layout where the `VMExternData` footer resides.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This doesn&#39;t take a `value: &amp;T` because `VMExternRef::new_with` hasn&#39;t</span>
-    <span class="doccomment">/// constructed a `T` value yet, and it isn&#39;t generic over `T` because</span>
-    <span class="doccomment">/// `VMExternData::drop_and_dealloc` doesn&#39;t know what `T` to use, and has</span>
-    <span class="doccomment">/// to use `std::mem::{size,align}_of_val` instead.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">layout_for</span>(<span class="ident">value_size</span>: <span class="ident">usize</span>, <span class="ident">value_align</span>: <span class="ident">usize</span>) -&gt; (<span class="ident">Layout</span>, <span class="ident">usize</span>) {
-        <span class="kw">let</span> <span class="ident">extern_data_size</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">VMExternData</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">extern_data_align</span> <span class="op">=</span> <span class="ident">mem::align_of</span>::<span class="op">&lt;</span><span class="ident">VMExternData</span><span class="op">&gt;</span>();
+<span class="kw">impl </span>VMExternData {
+    <span class="doccomment">/// Get the `Layout` for a value with the given size and alignment, and the
+    /// offset within that layout where the `VMExternData` footer resides.
+    ///
+    /// This doesn&#39;t take a `value: &amp;T` because `VMExternRef::new_with` hasn&#39;t
+    /// constructed a `T` value yet, and it isn&#39;t generic over `T` because
+    /// `VMExternData::drop_and_dealloc` doesn&#39;t know what `T` to use, and has
+    /// to use `std::mem::{size,align}_of_val` instead.
+    </span><span class="kw">unsafe fn </span>layout_for(value_size: usize, value_align: usize) -&gt; (Layout, usize) {
+        <span class="kw">let </span>extern_data_size = mem::size_of::&lt;VMExternData&gt;();
+        <span class="kw">let </span>extern_data_align = mem::align_of::&lt;VMExternData&gt;();
 
-        <span class="kw">let</span> <span class="ident">value_and_padding_size</span> <span class="op">=</span> <span class="ident">round_up_to_align</span>(<span class="ident">value_size</span>, <span class="ident">extern_data_align</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let </span>value_and_padding_size = round_up_to_align(value_size, extern_data_align).unwrap();
 
-        <span class="kw">let</span> <span class="ident">alloc_align</span> <span class="op">=</span> <span class="ident">std::cmp::max</span>(<span class="ident">value_align</span>, <span class="ident">extern_data_align</span>);
-        <span class="kw">let</span> <span class="ident">alloc_size</span> <span class="op">=</span> <span class="ident">value_and_padding_size</span> <span class="op">+</span> <span class="ident">extern_data_size</span>;
+        <span class="kw">let </span>alloc_align = std::cmp::max(value_align, extern_data_align);
+        <span class="kw">let </span>alloc_size = value_and_padding_size + extern_data_size;
 
-        <span class="macro">debug_assert!</span>(<span class="ident">Layout::from_size_align</span>(<span class="ident">alloc_size</span>, <span class="ident">alloc_align</span>).<span class="ident">is_ok</span>());
+        <span class="macro">debug_assert!</span>(Layout::from_size_align(alloc_size, alloc_align).is_ok());
         (
-            <span class="ident">Layout::from_size_align_unchecked</span>(<span class="ident">alloc_size</span>, <span class="ident">alloc_align</span>),
-            <span class="ident">value_and_padding_size</span>,
+            Layout::from_size_align_unchecked(alloc_size, alloc_align),
+            value_and_padding_size,
         )
     }
 
-    <span class="doccomment">/// Drop the inner value and then free this `VMExternData` heap allocation.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">drop_and_dealloc</span>(<span class="kw-2">mut</span> <span class="ident">data</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">VMExternData</span><span class="op">&gt;</span>) {
-        <span class="comment">// Note: we introduce a block scope so that we drop the live</span>
-        <span class="comment">// reference to the data before we free the heap allocation it</span>
-        <span class="comment">// resides within after this block.</span>
-        <span class="kw">let</span> (<span class="ident">alloc_ptr</span>, <span class="ident">layout</span>) <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">as_mut</span>();
-            <span class="macro">debug_assert_eq!</span>(<span class="ident">data</span>.<span class="ident">ref_count</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>), <span class="number">0</span>);
+    <span class="doccomment">/// Drop the inner value and then free this `VMExternData` heap allocation.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>drop_and_dealloc(<span class="kw-2">mut </span>data: NonNull&lt;VMExternData&gt;) {
+        <span class="comment">// Note: we introduce a block scope so that we drop the live
+        // reference to the data before we free the heap allocation it
+        // resides within after this block.
+        </span><span class="kw">let </span>(alloc_ptr, layout) = {
+            <span class="kw">let </span>data = data.as_mut();
+            <span class="macro">debug_assert_eq!</span>(data.ref_count.load(Ordering::SeqCst), <span class="number">0</span>);
 
-            <span class="comment">// Same thing, but for the dropping the reference to `value` before</span>
-            <span class="comment">// we drop it itself.</span>
-            <span class="kw">let</span> (<span class="ident">layout</span>, <span class="kw">_</span>) <span class="op">=</span> {
-                <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">value_ptr</span>.<span class="ident">as_ref</span>();
-                <span class="ident"><span class="self">Self</span>::layout_for</span>(<span class="ident">mem::size_of_val</span>(<span class="ident">value</span>), <span class="ident">mem::align_of_val</span>(<span class="ident">value</span>))
+            <span class="comment">// Same thing, but for the dropping the reference to `value` before
+            // we drop it itself.
+            </span><span class="kw">let </span>(layout, <span class="kw">_</span>) = {
+                <span class="kw">let </span>value = data.value_ptr.as_ref();
+                <span class="self">Self</span>::layout_for(mem::size_of_val(value), mem::align_of_val(value))
             };
 
-            <span class="ident">ptr::drop_in_place</span>(<span class="ident">data</span>.<span class="ident">value_ptr</span>.<span class="ident">as_ptr</span>());
-            <span class="kw">let</span> <span class="ident">alloc_ptr</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">value_ptr</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>();
+            ptr::drop_in_place(data.value_ptr.as_ptr());
+            <span class="kw">let </span>alloc_ptr = data.value_ptr.cast::&lt;u8&gt;();
 
-            (<span class="ident">alloc_ptr</span>, <span class="ident">layout</span>)
+            (alloc_ptr, layout)
         };
 
-        <span class="ident">ptr::drop_in_place</span>(<span class="ident">data</span>.<span class="ident">as_ptr</span>());
-        <span class="ident">std::alloc::dealloc</span>(<span class="ident">alloc_ptr</span>.<span class="ident">as_ptr</span>(), <span class="ident">layout</span>);
+        ptr::drop_in_place(data.as_ptr());
+        std::alloc::dealloc(alloc_ptr.as_ptr(), layout);
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">increment_ref_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="comment">// This is only using during cloning operations, and like the standard</span>
-        <span class="comment">// library we use `Relaxed` here. The rationale is better documented in</span>
-        <span class="comment">// libstd&#39;s implementation of `Arc`, but the general gist is that we&#39;re</span>
-        <span class="comment">// creating a new pointer for our own thread, so there&#39;s no need to have</span>
-        <span class="comment">// any synchronization with orderings. The synchronization with other</span>
-        <span class="comment">// threads with respect to orderings happens when the pointer is sent to</span>
-        <span class="comment">// another thread.</span>
-        <span class="self">self</span>.<span class="ident">ref_count</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>increment_ref_count(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="comment">// This is only using during cloning operations, and like the standard
+        // library we use `Relaxed` here. The rationale is better documented in
+        // libstd&#39;s implementation of `Arc`, but the general gist is that we&#39;re
+        // creating a new pointer for our own thread, so there&#39;s no need to have
+        // any synchronization with orderings. The synchronization with other
+        // threads with respect to orderings happens when the pointer is sent to
+        // another thread.
+        </span><span class="self">self</span>.ref_count.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">round_up_to_align</span>(<span class="ident">n</span>: <span class="ident">usize</span>, <span class="ident">align</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="macro">debug_assert!</span>(<span class="ident">align</span>.<span class="ident">is_power_of_two</span>());
-    <span class="kw">let</span> <span class="ident">align_minus_one</span> <span class="op">=</span> <span class="ident">align</span> <span class="op">-</span> <span class="number">1</span>;
-    <span class="prelude-val">Some</span>(<span class="ident">n</span>.<span class="ident">checked_add</span>(<span class="ident">align_minus_one</span>)<span class="question-mark">?</span> <span class="op">&amp;</span> <span class="op">!</span><span class="ident">align_minus_one</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">fn </span>round_up_to_align(n: usize, align: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+    <span class="macro">debug_assert!</span>(align.is_power_of_two());
+    <span class="kw">let </span>align_minus_one = align - <span class="number">1</span>;
+    <span class="prelude-val">Some</span>(n.checked_add(align_minus_one)<span class="question-mark">? </span>&amp; !align_minus_one)
 }
 
-<span class="kw">impl</span> <span class="ident">VMExternRef</span> {
-    <span class="doccomment">/// Wrap the given value inside an `VMExternRef`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">T</span>) -&gt; <span class="ident">VMExternRef</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="kw">impl </span>VMExternRef {
+    <span class="doccomment">/// Wrap the given value inside an `VMExternRef`.
+    </span><span class="kw">pub fn </span>new&lt;T&gt;(value: T) -&gt; VMExternRef
+    <span class="kw">where
+        </span>T: <span class="lifetime">&#39;static </span>+ Any + Send + Sync,
     {
-        <span class="ident">VMExternRef::new_with</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">value</span>)
+        VMExternRef::new_with(|| value)
     }
 
-    <span class="doccomment">/// Construct a new `VMExternRef` in place by invoking `make_value`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_with</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">make_value</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="ident">T</span>) -&gt; <span class="ident">VMExternRef</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+    <span class="doccomment">/// Construct a new `VMExternRef` in place by invoking `make_value`.
+    </span><span class="kw">pub fn </span>new_with&lt;T&gt;(make_value: <span class="kw">impl </span>FnOnce() -&gt; T) -&gt; VMExternRef
+    <span class="kw">where
+        </span>T: <span class="lifetime">&#39;static </span>+ Any + Send + Sync,
     {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> (<span class="ident">layout</span>, <span class="ident">footer_offset</span>) <span class="op">=</span>
-                <span class="ident">VMExternData::layout_for</span>(<span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(), <span class="ident">mem::align_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>());
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>(layout, footer_offset) =
+                VMExternData::layout_for(mem::size_of::&lt;T&gt;(), mem::align_of::&lt;T&gt;());
 
-            <span class="kw">let</span> <span class="ident">alloc_ptr</span> <span class="op">=</span> <span class="ident">std::alloc::alloc</span>(<span class="ident">layout</span>);
-            <span class="kw">let</span> <span class="ident">alloc_ptr</span> <span class="op">=</span> <span class="ident">NonNull::new</span>(<span class="ident">alloc_ptr</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                <span class="ident">std::alloc::handle_alloc_error</span>(<span class="ident">layout</span>);
+            <span class="kw">let </span>alloc_ptr = std::alloc::alloc(layout);
+            <span class="kw">let </span>alloc_ptr = NonNull::new(alloc_ptr).unwrap_or_else(|| {
+                std::alloc::handle_alloc_error(layout);
             });
 
-            <span class="kw">let</span> <span class="ident">value_ptr</span> <span class="op">=</span> <span class="ident">alloc_ptr</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
-            <span class="ident">ptr::write</span>(<span class="ident">value_ptr</span>.<span class="ident">as_ptr</span>(), <span class="ident">make_value</span>());
+            <span class="kw">let </span>value_ptr = alloc_ptr.cast::&lt;T&gt;();
+            ptr::write(value_ptr.as_ptr(), make_value());
 
-            <span class="kw">let</span> <span class="ident">extern_data_ptr</span> <span class="op">=</span>
-                <span class="ident">alloc_ptr</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>().<span class="ident">as_ptr</span>().<span class="ident">add</span>(<span class="ident">footer_offset</span>) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">VMExternData</span>;
-            <span class="ident">ptr::write</span>(
-                <span class="ident">extern_data_ptr</span>,
-                <span class="ident">VMExternData</span> {
-                    <span class="ident">ref_count</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">1</span>),
-                    <span class="comment">// Cast from `*mut T` to `*mut dyn Any` here.</span>
-                    <span class="ident">value_ptr</span>: <span class="ident">NonNull::new_unchecked</span>(<span class="ident">value_ptr</span>.<span class="ident">as_ptr</span>()),
+            <span class="kw">let </span>extern_data_ptr =
+                alloc_ptr.cast::&lt;u8&gt;().as_ptr().add(footer_offset) <span class="kw">as </span><span class="kw-2">*mut </span>VMExternData;
+            ptr::write(
+                extern_data_ptr,
+                VMExternData {
+                    ref_count: AtomicUsize::new(<span class="number">1</span>),
+                    <span class="comment">// Cast from `*mut T` to `*mut dyn Any` here.
+                    </span>value_ptr: NonNull::new_unchecked(value_ptr.as_ptr()),
                 },
             );
 
-            <span class="ident">VMExternRef</span>(<span class="ident">NonNull::new_unchecked</span>(<span class="ident">extern_data_ptr</span>))
+            VMExternRef(NonNull::new_unchecked(extern_data_ptr))
         }
     }
 
-    <span class="doccomment">/// Turn this `VMExternRef` into a raw, untyped pointer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Unlike `into_raw`, this does not consume and forget `self`. It is *not*</span>
-    <span class="doccomment">/// safe to use `from_raw` on pointers returned from this method; only use</span>
-    <span class="doccomment">/// `clone_from_raw`!</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">///  Nor does this method increment the reference count. You must ensure</span>
-    <span class="doccomment">///  that `self` (or some other clone of `self`) stays alive until</span>
-    <span class="doccomment">///  `clone_from_raw` is called.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-        <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>().<span class="ident">as_ptr</span>();
-        <span class="ident">ptr</span>
+    <span class="doccomment">/// Turn this `VMExternRef` into a raw, untyped pointer.
+    ///
+    /// Unlike `into_raw`, this does not consume and forget `self`. It is *not*
+    /// safe to use `from_raw` on pointers returned from this method; only use
+    /// `clone_from_raw`!
+    ///
+    ///  Nor does this method increment the reference count. You must ensure
+    ///  that `self` (or some other clone of `self`) stays alive until
+    ///  `clone_from_raw` is called.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>as_raw(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>u8 {
+        <span class="kw">let </span>ptr = <span class="self">self</span>.<span class="number">0</span>.cast::&lt;u8&gt;().as_ptr();
+        ptr
     }
 
-    <span class="doccomment">/// Consume this `VMExternRef` into a raw, untyped pointer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method forgets self, so it is possible to create a leak of the</span>
-    <span class="doccomment">/// underlying reference counted data if not used carefully.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Use `from_raw` to recreate the `VMExternRef`.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">into_raw</span>(<span class="self">self</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-        <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>().<span class="ident">as_ptr</span>();
-        <span class="ident">std::mem::forget</span>(<span class="self">self</span>);
-        <span class="ident">ptr</span>
+    <span class="doccomment">/// Consume this `VMExternRef` into a raw, untyped pointer.
+    ///
+    /// # Safety
+    ///
+    /// This method forgets self, so it is possible to create a leak of the
+    /// underlying reference counted data if not used carefully.
+    ///
+    /// Use `from_raw` to recreate the `VMExternRef`.
+    </span><span class="kw">pub unsafe fn </span>into_raw(<span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>u8 {
+        <span class="kw">let </span>ptr = <span class="self">self</span>.<span class="number">0</span>.cast::&lt;u8&gt;().as_ptr();
+        std::mem::forget(<span class="self">self</span>);
+        ptr
     }
 
-    <span class="doccomment">/// Recreate a `VMExternRef` from a pointer returned from a previous call to</span>
-    <span class="doccomment">/// `as_raw`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Unlike `clone_from_raw`, this does not increment the reference count of the</span>
-    <span class="doccomment">/// underlying data.  It is not safe to continue to use the pointer passed to this</span>
-    <span class="doccomment">/// function.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>) -&gt; <span class="self">Self</span> {
-        <span class="macro">debug_assert!</span>(<span class="op">!</span><span class="ident">ptr</span>.<span class="ident">is_null</span>());
-        <span class="ident">VMExternRef</span>(<span class="ident">NonNull::new_unchecked</span>(<span class="ident">ptr</span>).<span class="ident">cast</span>())
+    <span class="doccomment">/// Recreate a `VMExternRef` from a pointer returned from a previous call to
+    /// `as_raw`.
+    ///
+    /// # Safety
+    ///
+    /// Unlike `clone_from_raw`, this does not increment the reference count of the
+    /// underlying data.  It is not safe to continue to use the pointer passed to this
+    /// function.
+    </span><span class="kw">pub unsafe fn </span>from_raw(ptr: <span class="kw-2">*mut </span>u8) -&gt; <span class="self">Self </span>{
+        <span class="macro">debug_assert!</span>(!ptr.is_null());
+        VMExternRef(NonNull::new_unchecked(ptr).cast())
     }
 
-    <span class="doccomment">/// Recreate a `VMExternRef` from a pointer returned from a previous call to</span>
-    <span class="doccomment">/// `as_raw`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Wildly unsafe to use with anything other than the result of a previous</span>
-    <span class="doccomment">/// `as_raw` call!</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Additionally, it is your responsibility to ensure that this raw</span>
-    <span class="doccomment">/// `VMExternRef`&#39;s reference count has not dropped to zero. Failure to do</span>
-    <span class="doccomment">/// so will result in use after free!</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">clone_from_raw</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>) -&gt; <span class="self">Self</span> {
-        <span class="macro">debug_assert!</span>(<span class="op">!</span><span class="ident">ptr</span>.<span class="ident">is_null</span>());
-        <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">VMExternRef</span>(<span class="ident">NonNull::new_unchecked</span>(<span class="ident">ptr</span>).<span class="ident">cast</span>());
-        <span class="ident">x</span>.<span class="ident">extern_data</span>().<span class="ident">increment_ref_count</span>();
-        <span class="ident">x</span>
+    <span class="doccomment">/// Recreate a `VMExternRef` from a pointer returned from a previous call to
+    /// `as_raw`.
+    ///
+    /// # Safety
+    ///
+    /// Wildly unsafe to use with anything other than the result of a previous
+    /// `as_raw` call!
+    ///
+    /// Additionally, it is your responsibility to ensure that this raw
+    /// `VMExternRef`&#39;s reference count has not dropped to zero. Failure to do
+    /// so will result in use after free!
+    </span><span class="kw">pub unsafe fn </span>clone_from_raw(ptr: <span class="kw-2">*mut </span>u8) -&gt; <span class="self">Self </span>{
+        <span class="macro">debug_assert!</span>(!ptr.is_null());
+        <span class="kw">let </span>x = VMExternRef(NonNull::new_unchecked(ptr).cast());
+        x.extern_data().increment_ref_count();
+        x
     }
 
-    <span class="doccomment">/// Get the strong reference count for this `VMExternRef`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this loads with a `SeqCst` ordering to synchronize with other</span>
-    <span class="doccomment">/// threads.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">strong_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">extern_data</span>().<span class="ident">ref_count</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>)
+    <span class="doccomment">/// Get the strong reference count for this `VMExternRef`.
+    ///
+    /// Note that this loads with a `SeqCst` ordering to synchronize with other
+    /// threads.
+    </span><span class="kw">pub fn </span>strong_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.extern_data().ref_count.load(Ordering::SeqCst)
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">extern_data</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">VMExternData</span> {
-        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ref</span>() }
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>extern_data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>VMExternData {
+        <span class="kw">unsafe </span>{ <span class="self">self</span>.<span class="number">0</span>.as_ref() }
     }
 }
 
-<span class="doccomment">/// Methods that would normally be trait implementations, but aren&#39;t to avoid</span>
-<span class="doccomment">/// potential footguns around `VMExternRef`&#39;s pointer-equality semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that none of these methods are on `&amp;self`, they all require a</span>
-<span class="doccomment">/// fully-qualified `VMExternRef::foo(my_ref)` invocation.</span>
-<span class="kw">impl</span> <span class="ident">VMExternRef</span> {
-    <span class="doccomment">/// Check whether two `VMExternRef`s point to the same inner allocation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this uses pointer-equality semantics, not structural-equality</span>
-    <span class="doccomment">/// semantics, and so only pointers are compared, and doesn&#39;t use any `Eq`</span>
-    <span class="doccomment">/// or `PartialEq` implementation of the pointed-to values.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">eq</span>(<span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="ident">ptr::eq</span>(<span class="ident">a</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>(), <span class="ident">b</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>())
+<span class="doccomment">/// Methods that would normally be trait implementations, but aren&#39;t to avoid
+/// potential footguns around `VMExternRef`&#39;s pointer-equality semantics.
+///
+/// Note that none of these methods are on `&amp;self`, they all require a
+/// fully-qualified `VMExternRef::foo(my_ref)` invocation.
+</span><span class="kw">impl </span>VMExternRef {
+    <span class="doccomment">/// Check whether two `VMExternRef`s point to the same inner allocation.
+    ///
+    /// Note that this uses pointer-equality semantics, not structural-equality
+    /// semantics, and so only pointers are compared, and doesn&#39;t use any `Eq`
+    /// or `PartialEq` implementation of the pointed-to values.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>eq(a: <span class="kw-2">&amp;</span><span class="self">Self</span>, b: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        ptr::eq(a.<span class="number">0</span>.as_ptr(), b.<span class="number">0</span>.as_ptr())
     }
 
-    <span class="doccomment">/// Hash a given `VMExternRef`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this just hashes the pointer to the inner value, it does *not*</span>
-    <span class="doccomment">/// use the inner value&#39;s `Hash` implementation (if any).</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">externref</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">hasher</span>: <span class="kw-2">&amp;mut</span> <span class="ident">H</span>)
-    <span class="kw">where</span>
-        <span class="ident">H</span>: <span class="ident">Hasher</span>,
+    <span class="doccomment">/// Hash a given `VMExternRef`.
+    ///
+    /// Note that this just hashes the pointer to the inner value, it does *not*
+    /// use the inner value&#39;s `Hash` implementation (if any).
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>hash&lt;H&gt;(externref: <span class="kw-2">&amp;</span><span class="self">Self</span>, hasher: <span class="kw-2">&amp;mut </span>H)
+    <span class="kw">where
+        </span>H: Hasher,
     {
-        <span class="ident">ptr::hash</span>(<span class="ident">externref</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>(), <span class="ident">hasher</span>);
+        ptr::hash(externref.<span class="number">0</span>.as_ptr(), hasher);
     }
 
-    <span class="doccomment">/// Compare two `VMExternRef`s.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this uses pointer-equality semantics, not structural-equality</span>
-    <span class="doccomment">/// semantics, and so only pointers are compared, and doesn&#39;t use any `Cmp`</span>
-    <span class="doccomment">/// or `PartialCmp` implementation of the pointed-to values.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">cmp::Ordering</span> {
-        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="ident">a</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">b</span>)
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">VMExternRef</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="kw">dyn</span> <span class="ident">Any</span>;
-
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Any</span> {
-        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">extern_data</span>().<span class="ident">value_ptr</span>.<span class="ident">as_ref</span>() }
+    <span class="doccomment">/// Compare two `VMExternRef`s.
+    ///
+    /// Note that this uses pointer-equality semantics, not structural-equality
+    /// semantics, and so only pointers are compared, and doesn&#39;t use any `Cmp`
+    /// or `PartialCmp` implementation of the pointed-to values.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>cmp(a: <span class="kw-2">&amp;</span><span class="self">Self</span>, b: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; cmp::Ordering {
+        <span class="kw">let </span>a = a.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize;
+        <span class="kw">let </span>b = b.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize;
+        a.cmp(<span class="kw-2">&amp;</span>b)
     }
 }
 
-<span class="doccomment">/// A wrapper around a `VMExternRef` that implements `Eq` and `Hash` with</span>
-<span class="doccomment">/// pointer semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// We use this so that we can morally put `VMExternRef`s inside of `HashSet`s</span>
-<span class="doccomment">/// even though they don&#39;t implement `Eq` and `Hash` to avoid foot guns.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">struct</span> <span class="ident">VMExternRefWithTraits</span>(<span class="ident">VMExternRef</span>);
+<span class="kw">impl </span>Deref <span class="kw">for </span>VMExternRef {
+    <span class="kw">type </span>Target = <span class="kw">dyn </span>Any;
 
-<span class="kw">impl</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">VMExternRefWithTraits</span> {
-    <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hasher</span>: <span class="kw-2">&amp;mut</span> <span class="ident">H</span>)
-    <span class="kw">where</span>
-        <span class="ident">H</span>: <span class="ident">Hasher</span>,
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
+        <span class="kw">unsafe </span>{ <span class="self">self</span>.extern_data().value_ptr.as_ref() }
+    }
+}
+
+<span class="doccomment">/// A wrapper around a `VMExternRef` that implements `Eq` and `Hash` with
+/// pointer semantics.
+///
+/// We use this so that we can morally put `VMExternRef`s inside of `HashSet`s
+/// even though they don&#39;t implement `Eq` and `Hash` to avoid foot guns.
+</span><span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">struct </span>VMExternRefWithTraits(VMExternRef);
+
+<span class="kw">impl </span>Hash <span class="kw">for </span>VMExternRefWithTraits {
+    <span class="kw">fn </span>hash&lt;H&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: <span class="kw-2">&amp;mut </span>H)
+    <span class="kw">where
+        </span>H: Hasher,
     {
-        <span class="ident">VMExternRef::hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="ident">hasher</span>)
+        VMExternRef::hash(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, hasher)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">VMExternRefWithTraits</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="ident">VMExternRef::eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">0</span>)
+<span class="kw">impl </span>PartialEq <span class="kw">for </span>VMExternRefWithTraits {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        VMExternRef::eq(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span>other.<span class="number">0</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">VMExternRefWithTraits</span> {}
+<span class="kw">impl </span>Eq <span class="kw">for </span>VMExternRefWithTraits {}
 
-<span class="kw">type</span> <span class="ident">TableElem</span> <span class="op">=</span> <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VMExternRef</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="kw">type </span>TableElem = UnsafeCell&lt;<span class="prelude-ty">Option</span>&lt;VMExternRef&gt;&gt;;
 
-<span class="doccomment">/// A table that over-approximizes the set of `VMExternRef`s that any Wasm</span>
-<span class="doccomment">/// activation on this thread is currently using.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Under the covers, this is a simple bump allocator that allows duplicate</span>
-<span class="doccomment">/// entries. Deduplication happens at GC time.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span> <span class="comment">// `alloc` must be the first member, it&#39;s accessed from JIT code.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VMExternRefActivationsTable</span> {
-    <span class="doccomment">/// Structures used to perform fast bump allocation of storage of externref</span>
-    <span class="doccomment">/// values.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is the only member of this structure accessed from JIT code.</span>
-    <span class="ident">alloc</span>: <span class="ident">VMExternRefTableAlloc</span>,
+<span class="doccomment">/// A table that over-approximizes the set of `VMExternRef`s that any Wasm
+/// activation on this thread is currently using.
+///
+/// Under the covers, this is a simple bump allocator that allows duplicate
+/// entries. Deduplication happens at GC time.
+</span><span class="attribute">#[repr(C)] </span><span class="comment">// `alloc` must be the first member, it&#39;s accessed from JIT code.
+</span><span class="kw">pub struct </span>VMExternRefActivationsTable {
+    <span class="doccomment">/// Structures used to perform fast bump allocation of storage of externref
+    /// values.
+    ///
+    /// This is the only member of this structure accessed from JIT code.
+    </span>alloc: VMExternRefTableAlloc,
 
-    <span class="doccomment">/// When unioned with `chunk`, this is an over-approximation of the GC roots</span>
-    <span class="doccomment">/// on the stack, inside Wasm frames.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is used by slow-path insertion, and when a GC cycle finishes, is</span>
-    <span class="doccomment">/// re-initialized to the just-discovered precise set of stack roots (which</span>
-    <span class="doccomment">/// immediately becomes an over-approximation again as soon as Wasm runs and</span>
-    <span class="doccomment">/// potentially drops references).</span>
-    <span class="ident">over_approximated_stack_roots</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">VMExternRefWithTraits</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// When unioned with `chunk`, this is an over-approximation of the GC roots
+    /// on the stack, inside Wasm frames.
+    ///
+    /// This is used by slow-path insertion, and when a GC cycle finishes, is
+    /// re-initialized to the just-discovered precise set of stack roots (which
+    /// immediately becomes an over-approximation again as soon as Wasm runs and
+    /// potentially drops references).
+    </span>over_approximated_stack_roots: HashSet&lt;VMExternRefWithTraits&gt;,
 
-    <span class="doccomment">/// The precise set of on-stack, inside-Wasm GC roots that we discover via</span>
-    <span class="doccomment">/// walking the stack and interpreting stack maps.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is *only* used inside the `gc` function, and is empty otherwise. It</span>
-    <span class="doccomment">/// is just part of this struct so that we can reuse the allocation, rather</span>
-    <span class="doccomment">/// than create a new hash set every GC.</span>
-    <span class="ident">precise_stack_roots</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">VMExternRefWithTraits</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The precise set of on-stack, inside-Wasm GC roots that we discover via
+    /// walking the stack and interpreting stack maps.
+    ///
+    /// This is *only* used inside the `gc` function, and is empty otherwise. It
+    /// is just part of this struct so that we can reuse the allocation, rather
+    /// than create a new hash set every GC.
+    </span>precise_stack_roots: HashSet&lt;VMExternRefWithTraits&gt;,
 
-    <span class="doccomment">/// A pointer to the youngest host stack frame before we called</span>
-    <span class="doccomment">/// into Wasm for the first time. When walking the stack in garbage</span>
-    <span class="doccomment">/// collection, if we don&#39;t find this frame, then we failed to walk every</span>
-    <span class="doccomment">/// Wasm stack frame, which means we failed to find all on-stack,</span>
-    <span class="doccomment">/// inside-a-Wasm-frame roots, and doing a GC could lead to freeing one of</span>
-    <span class="doccomment">/// those missed roots, and use after free.</span>
-    <span class="ident">stack_canary</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// A pointer to the youngest host stack frame before we called
+    /// into Wasm for the first time. When walking the stack in garbage
+    /// collection, if we don&#39;t find this frame, then we failed to walk every
+    /// Wasm stack frame, which means we failed to find all on-stack,
+    /// inside-a-Wasm-frame roots, and doing a GC could lead to freeing one of
+    /// those missed roots, and use after free.
+    </span>stack_canary: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 
-    <span class="doccomment">/// A debug-only field for asserting that we are in a region of code where</span>
-    <span class="doccomment">/// GC is okay to preform.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">debug_assertions</span>)]</span>
-    <span class="ident">gc_okay</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// A debug-only field for asserting that we are in a region of code where
+    /// GC is okay to preform.
+    </span><span class="attribute">#[cfg(debug_assertions)]
+    </span>gc_okay: bool,
 }
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span> <span class="comment">// This is accessed from JIT code.</span>
-<span class="kw">struct</span> <span class="ident">VMExternRefTableAlloc</span> {
-    <span class="doccomment">/// Bump-allocation finger within the `chunk`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// NB: this is an `UnsafeCell` because it is written to by compiled Wasm</span>
-    <span class="doccomment">/// code.</span>
-    <span class="ident">next</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">TableElem</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="attribute">#[repr(C)] </span><span class="comment">// This is accessed from JIT code.
+</span><span class="kw">struct </span>VMExternRefTableAlloc {
+    <span class="doccomment">/// Bump-allocation finger within the `chunk`.
+    ///
+    /// NB: this is an `UnsafeCell` because it is written to by compiled Wasm
+    /// code.
+    </span>next: UnsafeCell&lt;NonNull&lt;TableElem&gt;&gt;,
 
-    <span class="doccomment">/// Pointer to just after the `chunk`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is *not* within the current chunk and therefore is not a valid</span>
-    <span class="doccomment">/// place to insert a reference!</span>
-    <span class="ident">end</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">TableElem</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Pointer to just after the `chunk`.
+    ///
+    /// This is *not* within the current chunk and therefore is not a valid
+    /// place to insert a reference!
+    </span>end: NonNull&lt;TableElem&gt;,
 
-    <span class="doccomment">/// Bump allocation chunk that stores fast-path insertions.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is not accessed from JIT code.</span>
-    <span class="ident">chunk</span>: <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">TableElem</span>]<span class="op">&gt;</span>,
+    <span class="doccomment">/// Bump allocation chunk that stores fast-path insertions.
+    ///
+    /// This is not accessed from JIT code.
+    </span>chunk: Box&lt;[TableElem]&gt;,
 }
 
-<span class="comment">// This gets around the usage of `UnsafeCell` throughout the internals of this</span>
-<span class="comment">// allocator, but the storage should all be Send/Sync and synchronization isn&#39;t</span>
-<span class="comment">// necessary since operations require `&amp;mut self`.</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">VMExternRefTableAlloc</span> {}
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">VMExternRefTableAlloc</span> {}
+<span class="comment">// This gets around the usage of `UnsafeCell` throughout the internals of this
+// allocator, but the storage should all be Send/Sync and synchronization isn&#39;t
+// necessary since operations require `&amp;mut self`.
+</span><span class="kw">unsafe impl </span>Send <span class="kw">for </span>VMExternRefTableAlloc {}
+<span class="kw">unsafe impl </span>Sync <span class="kw">for </span>VMExternRefTableAlloc {}
 
-<span class="kw">fn</span> <span class="ident">_assert_send_sync</span>() {
-    <span class="kw">fn</span> <span class="ident">_assert</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>() {}
-    <span class="ident">_assert</span>::<span class="op">&lt;</span><span class="ident">VMExternRefActivationsTable</span><span class="op">&gt;</span>();
-    <span class="ident">_assert</span>::<span class="op">&lt;</span><span class="ident">VMExternRef</span><span class="op">&gt;</span>();
+<span class="kw">fn </span>_assert_send_sync() {
+    <span class="kw">fn </span>_assert&lt;T: Send + Sync&gt;() {}
+    _assert::&lt;VMExternRefActivationsTable&gt;();
+    _assert::&lt;VMExternRef&gt;();
 }
 
-<span class="kw">impl</span> <span class="ident">VMExternRefActivationsTable</span> {
-    <span class="kw">const</span> <span class="ident">CHUNK_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4096</span> <span class="op">/</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>();
+<span class="kw">impl </span>VMExternRefActivationsTable {
+    <span class="kw">const </span>CHUNK_SIZE: usize = <span class="number">4096 </span>/ mem::size_of::&lt;usize&gt;();
 
-    <span class="doccomment">/// Create a new `VMExternRefActivationsTable`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="comment">// Start with an empty chunk in case this activations table isn&#39;t used.</span>
-        <span class="comment">// This means that there&#39;s no space in the bump-allocation area which</span>
-        <span class="comment">// will force any path trying to use this to the slow gc path. The first</span>
-        <span class="comment">// time this happens, though, the slow gc path will allocate a new chunk</span>
-        <span class="comment">// for actual fast-bumping.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chunk</span>: <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">TableElem</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Box::new</span>([]);
-        <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="ident">chunk</span>.<span class="ident">as_mut_ptr</span>();
-        <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">next</span>.<span class="ident">add</span>(<span class="ident">chunk</span>.<span class="ident">len</span>()) };
+    <span class="doccomment">/// Create a new `VMExternRefActivationsTable`.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="comment">// Start with an empty chunk in case this activations table isn&#39;t used.
+        // This means that there&#39;s no space in the bump-allocation area which
+        // will force any path trying to use this to the slow gc path. The first
+        // time this happens, though, the slow gc path will allocate a new chunk
+        // for actual fast-bumping.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>chunk: Box&lt;[TableElem]&gt; = Box::new([]);
+        <span class="kw">let </span>next = chunk.as_mut_ptr();
+        <span class="kw">let </span>end = <span class="kw">unsafe </span>{ next.add(chunk.len()) };
 
-        <span class="ident">VMExternRefActivationsTable</span> {
-            <span class="ident">alloc</span>: <span class="ident">VMExternRefTableAlloc</span> {
-                <span class="ident">next</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">NonNull::new</span>(<span class="ident">next</span>).<span class="ident">unwrap</span>()),
-                <span class="ident">end</span>: <span class="ident">NonNull::new</span>(<span class="ident">end</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">chunk</span>,
+        VMExternRefActivationsTable {
+            alloc: VMExternRefTableAlloc {
+                next: UnsafeCell::new(NonNull::new(next).unwrap()),
+                end: NonNull::new(end).unwrap(),
+                chunk,
             },
-            <span class="ident">over_approximated_stack_roots</span>: <span class="ident">HashSet::new</span>(),
-            <span class="ident">precise_stack_roots</span>: <span class="ident">HashSet::new</span>(),
-            <span class="ident">stack_canary</span>: <span class="prelude-val">None</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">debug_assertions</span>)]</span>
-            <span class="ident">gc_okay</span>: <span class="bool-val">true</span>,
+            over_approximated_stack_roots: HashSet::new(),
+            precise_stack_roots: HashSet::new(),
+            stack_canary: <span class="prelude-val">None</span>,
+            <span class="attribute">#[cfg(debug_assertions)]
+            </span>gc_okay: <span class="bool-val">true</span>,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">new_chunk</span>(<span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VMExternRef</span><span class="op">&gt;</span><span class="op">&gt;</span>]<span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="ident">size</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::CHUNK_SIZE</span>);
-        (<span class="number">0</span>..<span class="ident">size</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">UnsafeCell::new</span>(<span class="prelude-val">None</span>)).<span class="ident">collect</span>()
+    <span class="kw">fn </span>new_chunk(size: usize) -&gt; Box&lt;[UnsafeCell&lt;<span class="prelude-ty">Option</span>&lt;VMExternRef&gt;&gt;]&gt; {
+        <span class="macro">assert!</span>(size &gt;= <span class="self">Self</span>::CHUNK_SIZE);
+        (<span class="number">0</span>..size).map(|<span class="kw">_</span>| UnsafeCell::new(<span class="prelude-val">None</span>)).collect()
     }
 
-    <span class="doccomment">/// Get the available capacity in the bump allocation chunk.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bump_capacity_remaining</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">end</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">next</span>.<span class="ident">get</span>() };
-        <span class="ident">end</span> <span class="op">-</span> <span class="ident">next</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>
+    <span class="doccomment">/// Get the available capacity in the bump allocation chunk.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>bump_capacity_remaining(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="kw">let </span>end = <span class="self">self</span>.alloc.end.as_ptr() <span class="kw">as </span>usize;
+        <span class="kw">let </span>next = <span class="kw">unsafe </span>{ <span class="kw-2">*</span><span class="self">self</span>.alloc.next.get() };
+        end - next.as_ptr() <span class="kw">as </span>usize
     }
 
-    <span class="doccomment">/// Try and insert a `VMExternRef` into this table.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is a fast path that only succeeds when the bump chunk has the</span>
-    <span class="doccomment">/// capacity for the requested insertion.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the insertion fails, then the `VMExternRef` is given back. Callers</span>
-    <span class="doccomment">/// may attempt a GC to free up space and try again, or may call</span>
-    <span class="doccomment">/// `insert_slow_path` to infallibly insert the reference (potentially</span>
-    <span class="doccomment">/// allocating additional space in the table to hold it).</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_insert</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">externref</span>: <span class="ident">VMExternRef</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">VMExternRef</span><span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">next</span>.<span class="ident">get</span>();
-            <span class="kw">if</span> <span class="ident">next</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">end</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">externref</span>);
+    <span class="doccomment">/// Try and insert a `VMExternRef` into this table.
+    ///
+    /// This is a fast path that only succeeds when the bump chunk has the
+    /// capacity for the requested insertion.
+    ///
+    /// If the insertion fails, then the `VMExternRef` is given back. Callers
+    /// may attempt a GC to free up space and try again, or may call
+    /// `insert_slow_path` to infallibly insert the reference (potentially
+    /// allocating additional space in the table to hold it).
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, externref: VMExternRef) -&gt; <span class="prelude-ty">Result</span>&lt;(), VMExternRef&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>next = <span class="kw-2">*</span><span class="self">self</span>.alloc.next.get();
+            <span class="kw">if </span>next == <span class="self">self</span>.alloc.end {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(externref);
             }
 
             <span class="macro">debug_assert!</span>(
-                (<span class="kw-2">*</span><span class="ident">next</span>.<span class="ident">as_ref</span>().<span class="ident">get</span>()).<span class="ident">is_none</span>(),
-                <span class="string">&quot;slots &gt;= the `next` bump finger are always `None`&quot;</span>
-            );
-            <span class="ident">ptr::write</span>(<span class="ident">next</span>.<span class="ident">as_ptr</span>(), <span class="ident">UnsafeCell::new</span>(<span class="prelude-val">Some</span>(<span class="ident">externref</span>)));
+                (<span class="kw-2">*</span>next.as_ref().get()).is_none(),
+                <span class="string">&quot;slots &gt;= the `next` bump finger are always `None`&quot;
+            </span>);
+            ptr::write(next.as_ptr(), UnsafeCell::new(<span class="prelude-val">Some</span>(externref)));
 
-            <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="ident">NonNull::new_unchecked</span>(<span class="ident">next</span>.<span class="ident">as_ptr</span>().<span class="ident">add</span>(<span class="number">1</span>));
-            <span class="macro">debug_assert!</span>(<span class="ident">next</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">end</span>);
-            <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">next</span>.<span class="ident">get</span>() <span class="op">=</span> <span class="ident">next</span>;
+            <span class="kw">let </span>next = NonNull::new_unchecked(next.as_ptr().add(<span class="number">1</span>));
+            <span class="macro">debug_assert!</span>(next &lt;= <span class="self">self</span>.alloc.end);
+            <span class="kw-2">*</span><span class="self">self</span>.alloc.next.get() = next;
 
             <span class="prelude-val">Ok</span>(())
         }
     }
 
-    <span class="doccomment">/// Insert a reference into the table, falling back on a GC to clear up</span>
-    <span class="doccomment">/// space if the table is already full.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Unsafety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The same as `gc`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">insert_with_gc</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">externref</span>: <span class="ident">VMExternRef</span>,
-        <span class="ident">module_info_lookup</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ModuleInfoLookup</span>,
+    <span class="doccomment">/// Insert a reference into the table, falling back on a GC to clear up
+    /// space if the table is already full.
+    ///
+    /// # Unsafety
+    ///
+    /// The same as `gc`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub unsafe fn </span>insert_with_gc(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        externref: VMExternRef,
+        module_info_lookup: <span class="kw-2">&amp;</span><span class="kw">dyn </span>ModuleInfoLookup,
     ) {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">debug_assertions</span>)]</span>
-        <span class="macro">assert!</span>(<span class="self">self</span>.<span class="ident">gc_okay</span>);
+        <span class="attribute">#[cfg(debug_assertions)]
+        </span><span class="macro">assert!</span>(<span class="self">self</span>.gc_okay);
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">externref</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">try_insert</span>(<span class="ident">externref</span>) {
-            <span class="self">self</span>.<span class="ident">gc_and_insert_slow</span>(<span class="ident">externref</span>, <span class="ident">module_info_lookup</span>);
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(externref) = <span class="self">self</span>.try_insert(externref) {
+            <span class="self">self</span>.gc_and_insert_slow(externref, module_info_lookup);
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">gc_and_insert_slow</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">externref</span>: <span class="ident">VMExternRef</span>,
-        <span class="ident">module_info_lookup</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ModuleInfoLookup</span>,
+    <span class="attribute">#[inline(never)]
+    </span><span class="kw">unsafe fn </span>gc_and_insert_slow(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        externref: VMExternRef,
+        module_info_lookup: <span class="kw-2">&amp;</span><span class="kw">dyn </span>ModuleInfoLookup,
     ) {
-        <span class="ident">gc</span>(<span class="ident">module_info_lookup</span>, <span class="self">self</span>);
+        gc(module_info_lookup, <span class="self">self</span>);
 
-        <span class="comment">// Might as well insert right into the hash set, rather than the bump</span>
-        <span class="comment">// chunk, since we are already on a slow path and we get de-duplication</span>
-        <span class="comment">// this way.</span>
-        <span class="self">self</span>.<span class="ident">over_approximated_stack_roots</span>
-            .<span class="ident">insert</span>(<span class="ident">VMExternRefWithTraits</span>(<span class="ident">externref</span>));
+        <span class="comment">// Might as well insert right into the hash set, rather than the bump
+        // chunk, since we are already on a slow path and we get de-duplication
+        // this way.
+        </span><span class="self">self</span>.over_approximated_stack_roots
+            .insert(VMExternRefWithTraits(externref));
     }
 
-    <span class="doccomment">/// Insert a reference into the table, without ever performing GC.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert_without_gc</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">externref</span>: <span class="ident">VMExternRef</span>) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">externref</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">try_insert</span>(<span class="ident">externref</span>) {
-            <span class="self">self</span>.<span class="ident">insert_slow_without_gc</span>(<span class="ident">externref</span>);
+    <span class="doccomment">/// Insert a reference into the table, without ever performing GC.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>insert_without_gc(<span class="kw-2">&amp;mut </span><span class="self">self</span>, externref: VMExternRef) {
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(externref) = <span class="self">self</span>.try_insert(externref) {
+            <span class="self">self</span>.insert_slow_without_gc(externref);
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">insert_slow_without_gc</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">externref</span>: <span class="ident">VMExternRef</span>) {
-        <span class="self">self</span>.<span class="ident">over_approximated_stack_roots</span>
-            .<span class="ident">insert</span>(<span class="ident">VMExternRefWithTraits</span>(<span class="ident">externref</span>));
+    <span class="attribute">#[inline(never)]
+    </span><span class="kw">fn </span>insert_slow_without_gc(<span class="kw-2">&amp;mut </span><span class="self">self</span>, externref: VMExternRef) {
+        <span class="self">self</span>.over_approximated_stack_roots
+            .insert(VMExternRefWithTraits(externref));
     }
 
-    <span class="kw">fn</span> <span class="ident">num_filled_in_bump_chunk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">next</span>.<span class="ident">get</span>() };
-        <span class="kw">let</span> <span class="ident">bytes_unused</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">end</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">-</span> (<span class="ident">next</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="kw">let</span> <span class="ident">slots_unused</span> <span class="op">=</span> <span class="ident">bytes_unused</span> <span class="op">/</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">TableElem</span><span class="op">&gt;</span>();
-        <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span>.<span class="ident">len</span>().<span class="ident">saturating_sub</span>(<span class="ident">slots_unused</span>)
+    <span class="kw">fn </span>num_filled_in_bump_chunk(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="kw">let </span>next = <span class="kw">unsafe </span>{ <span class="kw-2">*</span><span class="self">self</span>.alloc.next.get() };
+        <span class="kw">let </span>bytes_unused = (<span class="self">self</span>.alloc.end.as_ptr() <span class="kw">as </span>usize) - (next.as_ptr() <span class="kw">as </span>usize);
+        <span class="kw">let </span>slots_unused = bytes_unused / mem::size_of::&lt;TableElem&gt;();
+        <span class="self">self</span>.alloc.chunk.len().saturating_sub(slots_unused)
     }
 
-    <span class="kw">fn</span> <span class="ident">elements</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">VMExternRef</span>)) {
-        <span class="kw">for</span> <span class="ident">elem</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">over_approximated_stack_roots</span>.<span class="ident">iter</span>() {
-            <span class="ident">f</span>(<span class="kw-2">&amp;</span><span class="ident">elem</span>.<span class="number">0</span>);
+    <span class="kw">fn </span>elements(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>VMExternRef)) {
+        <span class="kw">for </span>elem <span class="kw">in </span><span class="self">self</span>.over_approximated_stack_roots.iter() {
+            f(<span class="kw-2">&amp;</span>elem.<span class="number">0</span>);
         }
 
-        <span class="comment">// The bump chunk is not all the way full, so we only iterate over its</span>
-        <span class="comment">// filled-in slots.</span>
-        <span class="kw">let</span> <span class="ident">num_filled</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_filled_in_bump_chunk</span>();
-        <span class="kw">for</span> <span class="ident">slot</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="ident">num_filled</span>) {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">elem</span>) <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">slot</span>.<span class="ident">get</span>() } {
-                <span class="ident">f</span>(<span class="ident">elem</span>);
+        <span class="comment">// The bump chunk is not all the way full, so we only iterate over its
+        // filled-in slots.
+        </span><span class="kw">let </span>num_filled = <span class="self">self</span>.num_filled_in_bump_chunk();
+        <span class="kw">for </span>slot <span class="kw">in </span><span class="self">self</span>.alloc.chunk.iter().take(num_filled) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(elem) = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>slot.get() } {
+                f(elem);
             }
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">insert_precise_stack_root</span>(
-        <span class="ident">precise_stack_roots</span>: <span class="kw-2">&amp;mut</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">VMExternRefWithTraits</span><span class="op">&gt;</span>,
-        <span class="ident">root</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">VMExternData</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>insert_precise_stack_root(
+        precise_stack_roots: <span class="kw-2">&amp;mut </span>HashSet&lt;VMExternRefWithTraits&gt;,
+        root: NonNull&lt;VMExternData&gt;,
     ) {
-        <span class="kw">let</span> <span class="ident">root</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">VMExternRef::clone_from_raw</span>(<span class="ident">root</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>()) };
-        <span class="ident">precise_stack_roots</span>.<span class="ident">insert</span>(<span class="ident">VMExternRefWithTraits</span>(<span class="ident">root</span>));
+        <span class="kw">let </span>root = <span class="kw">unsafe </span>{ VMExternRef::clone_from_raw(root.as_ptr().cast()) };
+        precise_stack_roots.insert(VMExternRefWithTraits(root));
     }
 
-    <span class="doccomment">/// Sweep the bump allocation table after we&#39;ve discovered our precise stack</span>
-    <span class="doccomment">/// roots.</span>
-    <span class="kw">fn</span> <span class="ident">sweep</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// Sweep our bump chunk.</span>
-        <span class="kw">let</span> <span class="ident">num_filled</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_filled_in_bump_chunk</span>();
-        <span class="kw">unsafe</span> {
-            <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">next</span>.<span class="ident">get</span>() <span class="op">=</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">end</span>;
+    <span class="doccomment">/// Sweep the bump allocation table after we&#39;ve discovered our precise stack
+    /// roots.
+    </span><span class="kw">fn </span>sweep(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// Sweep our bump chunk.
+        </span><span class="kw">let </span>num_filled = <span class="self">self</span>.num_filled_in_bump_chunk();
+        <span class="kw">unsafe </span>{
+            <span class="kw-2">*</span><span class="self">self</span>.alloc.next.get() = <span class="self">self</span>.alloc.end;
         }
-        <span class="kw">for</span> <span class="ident">slot</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="ident">num_filled</span>) {
-            <span class="kw">unsafe</span> {
-                <span class="kw-2">*</span><span class="ident">slot</span>.<span class="ident">get</span>() <span class="op">=</span> <span class="prelude-val">None</span>;
+        <span class="kw">for </span>slot <span class="kw">in </span><span class="self">self</span>.alloc.chunk.iter().take(num_filled) {
+            <span class="kw">unsafe </span>{
+                <span class="kw-2">*</span>slot.get() = <span class="prelude-val">None</span>;
             }
         }
         <span class="macro">debug_assert!</span>(
-            <span class="self">self</span>.<span class="ident">alloc</span>
-                .<span class="ident">chunk</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">all</span>(<span class="op">|</span><span class="ident">slot</span><span class="op">|</span> <span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="ident">slot</span>.<span class="ident">get</span>()).<span class="ident">as_ref</span>().<span class="ident">is_none</span>() }),
-            <span class="string">&quot;after sweeping the bump chunk, all slots should be `None`&quot;</span>
+            <span class="self">self</span>.alloc
+                .chunk
+                .iter()
+                .all(|slot| <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>slot.get()).as_ref().is_none() }),
+            <span class="string">&quot;after sweeping the bump chunk, all slots should be `None`&quot;
+        </span>);
+
+        <span class="comment">// If this is the first instance of gc then the initial chunk is empty,
+        // so we lazily allocate space for fast bump-allocation in the future.
+        </span><span class="kw">if </span><span class="self">self</span>.alloc.chunk.is_empty() {
+            <span class="self">self</span>.alloc.chunk = <span class="self">Self</span>::new_chunk(<span class="self">Self</span>::CHUNK_SIZE);
+            <span class="self">self</span>.alloc.end =
+                NonNull::new(<span class="kw">unsafe </span>{ <span class="self">self</span>.alloc.chunk.as_mut_ptr().add(<span class="self">self</span>.alloc.chunk.len()) })
+                    .unwrap();
+        }
+
+        <span class="comment">// Reset our `next` finger to the start of the bump allocation chunk.
+        </span><span class="kw">unsafe </span>{
+            <span class="kw">let </span>next = <span class="self">self</span>.alloc.chunk.as_mut_ptr();
+            <span class="macro">debug_assert!</span>(!next.is_null());
+            <span class="kw-2">*</span><span class="self">self</span>.alloc.next.get() = NonNull::new_unchecked(next);
+        }
+
+        <span class="comment">// The current `precise_stack_roots` becomes our new over-appoximated
+        // set for the next GC cycle.
+        </span>mem::swap(
+            <span class="kw-2">&amp;mut </span><span class="self">self</span>.precise_stack_roots,
+            <span class="kw-2">&amp;mut </span><span class="self">self</span>.over_approximated_stack_roots,
         );
 
-        <span class="comment">// If this is the first instance of gc then the initial chunk is empty,</span>
-        <span class="comment">// so we lazily allocate space for fast bump-allocation in the future.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span>.<span class="ident">is_empty</span>() {
-            <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new_chunk</span>(<span class="ident"><span class="self">Self</span>::CHUNK_SIZE</span>);
-            <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">end</span> <span class="op">=</span>
-                <span class="ident">NonNull::new</span>(<span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">add</span>(<span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span>.<span class="ident">len</span>()) })
-                    .<span class="ident">unwrap</span>();
-        }
-
-        <span class="comment">// Reset our `next` finger to the start of the bump allocation chunk.</span>
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">chunk</span>.<span class="ident">as_mut_ptr</span>();
-            <span class="macro">debug_assert!</span>(<span class="op">!</span><span class="ident">next</span>.<span class="ident">is_null</span>());
-            <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">next</span>.<span class="ident">get</span>() <span class="op">=</span> <span class="ident">NonNull::new_unchecked</span>(<span class="ident">next</span>);
-        }
-
-        <span class="comment">// The current `precise_stack_roots` becomes our new over-appoximated</span>
-        <span class="comment">// set for the next GC cycle.</span>
-        <span class="ident">mem::swap</span>(
-            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">precise_stack_roots</span>,
-            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">over_approximated_stack_roots</span>,
-        );
-
-        <span class="comment">// And finally, the new `precise_stack_roots` should be cleared and</span>
-        <span class="comment">// remain empty until the next GC cycle.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Note that this may run arbitrary code as we run externref</span>
-        <span class="comment">// destructors. Because of our `&amp;mut` borrow above on this table,</span>
-        <span class="comment">// though, we&#39;re guaranteed that nothing will touch this table.</span>
-        <span class="self">self</span>.<span class="ident">precise_stack_roots</span>.<span class="ident">clear</span>();
+        <span class="comment">// And finally, the new `precise_stack_roots` should be cleared and
+        // remain empty until the next GC cycle.
+        //
+        // Note that this may run arbitrary code as we run externref
+        // destructors. Because of our `&amp;mut` borrow above on this table,
+        // though, we&#39;re guaranteed that nothing will touch this table.
+        </span><span class="self">self</span>.precise_stack_roots.clear();
     }
 
-    <span class="doccomment">/// Fetches the current value of this table&#39;s stack canary.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This should only be used in conjunction with setting the stack canary</span>
-    <span class="doccomment">/// below if the return value is `None` typically. This is called from RAII</span>
-    <span class="doccomment">/// guards in `wasmtime::func::invoke_wasm_and_catch_traps`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more information on canaries see the gc functions below.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stack_canary</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">stack_canary</span>
+    <span class="doccomment">/// Fetches the current value of this table&#39;s stack canary.
+    ///
+    /// This should only be used in conjunction with setting the stack canary
+    /// below if the return value is `None` typically. This is called from RAII
+    /// guards in `wasmtime::func::invoke_wasm_and_catch_traps`.
+    ///
+    /// For more information on canaries see the gc functions below.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>stack_canary(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="self">self</span>.stack_canary
     }
 
-    <span class="doccomment">/// Sets the current value of the stack canary.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is called from RAII guards in</span>
-    <span class="doccomment">/// `wasmtime::func::invoke_wasm_and_catch_traps`. This is used to update</span>
-    <span class="doccomment">/// the stack canary to a concrete value and then reset it back to `None`</span>
-    <span class="doccomment">/// when wasm is finished.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more information on canaries see the gc functions below.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_stack_canary</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">canary</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
-        <span class="self">self</span>.<span class="ident">stack_canary</span> <span class="op">=</span> <span class="ident">canary</span>;
+    <span class="doccomment">/// Sets the current value of the stack canary.
+    ///
+    /// This is called from RAII guards in
+    /// `wasmtime::func::invoke_wasm_and_catch_traps`. This is used to update
+    /// the stack canary to a concrete value and then reset it back to `None`
+    /// when wasm is finished.
+    ///
+    /// For more information on canaries see the gc functions below.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>set_stack_canary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, canary: <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+        <span class="self">self</span>.stack_canary = canary;
     }
 
-    <span class="doccomment">/// Set whether it is okay to GC or not right now.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is provided as a helper for enabling various debug-only assertions</span>
-    <span class="doccomment">/// and checking places where the `wasmtime-runtime` user expects there not</span>
-    <span class="doccomment">/// to be any GCs.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_gc_okay</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">okay</span>: <span class="ident">bool</span>) -&gt; <span class="ident">bool</span> {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">debug_assertions</span>)]</span>
-        {
-            <span class="kw">return</span> <span class="ident">std::mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">gc_okay</span>, <span class="ident">okay</span>);
+    <span class="doccomment">/// Set whether it is okay to GC or not right now.
+    ///
+    /// This is provided as a helper for enabling various debug-only assertions
+    /// and checking places where the `wasmtime-runtime` user expects there not
+    /// to be any GCs.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>set_gc_okay(<span class="kw-2">&amp;mut </span><span class="self">self</span>, okay: bool) -&gt; bool {
+        <span class="attribute">#[cfg(debug_assertions)]
+        </span>{
+            <span class="kw">return </span>std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.gc_okay, okay);
         }
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">debug_assertions</span>))]</span>
-        {
-            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">okay</span>;
-            <span class="kw">return</span> <span class="bool-val">true</span>;
+        <span class="attribute">#[cfg(not(debug_assertions))]
+        </span>{
+            <span class="kw">let _ </span>= okay;
+            <span class="kw">return </span><span class="bool-val">true</span>;
         }
     }
 }
 
-<span class="doccomment">/// Used by the runtime to lookup information about a module given a</span>
-<span class="doccomment">/// program counter value.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ModuleInfoLookup</span> {
-    <span class="doccomment">/// Lookup the module information from a program counter value.</span>
-    <span class="kw">fn</span> <span class="ident">lookup</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pc</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ModuleInfo</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Used by the runtime to lookup information about a module given a
+/// program counter value.
+</span><span class="kw">pub trait </span>ModuleInfoLookup {
+    <span class="doccomment">/// Lookup the module information from a program counter value.
+    </span><span class="kw">fn </span>lookup(<span class="kw-2">&amp;</span><span class="self">self</span>, pc: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ModuleInfo&gt;&gt;;
 }
 
-<span class="doccomment">/// Used by the runtime to query module information.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ModuleInfo</span> {
-    <span class="doccomment">/// Lookup the stack map at a program counter value.</span>
-    <span class="kw">fn</span> <span class="ident">lookup_stack_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pc</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">StackMap</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Used by the runtime to query module information.
+</span><span class="kw">pub trait </span>ModuleInfo {
+    <span class="doccomment">/// Lookup the stack map at a program counter value.
+    </span><span class="kw">fn </span>lookup_stack_map(<span class="kw-2">&amp;</span><span class="self">self</span>, pc: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>StackMap&gt;;
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">struct</span> <span class="ident">DebugOnly</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">inner</span>: <span class="ident">T</span>,
+<span class="attribute">#[derive(Debug, Default)]
+</span><span class="kw">struct </span>DebugOnly&lt;T&gt; {
+    inner: T,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">std::ops::Deref</span> <span class="kw">for</span> <span class="ident">DebugOnly</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="kw">impl</span>&lt;T&gt; std::ops::Deref <span class="kw">for </span>DebugOnly&lt;T&gt; {
+    <span class="kw">type </span>Target = T;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">T</span> {
-        <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">debug_assertions</span>) {
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>
-        } <span class="kw">else</span> {
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
+        <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
+            <span class="kw-2">&amp;</span><span class="self">self</span>.inner
+        } <span class="kw">else </span>{
             <span class="macro">panic!</span>(
                 <span class="string">&quot;only deref `DebugOnly` when `cfg(debug_assertions)` or \
-                 inside a `debug_assert!(..)`&quot;</span>
-            )
+                 inside a `debug_assert!(..)`&quot;
+            </span>)
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">std::ops::DerefMut</span> <span class="kw">for</span> <span class="ident">DebugOnly</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">deref_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">T</span> {
-        <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">debug_assertions</span>) {
-            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">inner</span>
-        } <span class="kw">else</span> {
+<span class="kw">impl</span>&lt;T&gt; std::ops::DerefMut <span class="kw">for </span>DebugOnly&lt;T&gt; {
+    <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>T {
+        <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
+            <span class="kw-2">&amp;mut </span><span class="self">self</span>.inner
+        } <span class="kw">else </span>{
             <span class="macro">panic!</span>(
                 <span class="string">&quot;only deref `DebugOnly` when `cfg(debug_assertions)` or \
-                 inside a `debug_assert!(..)`&quot;</span>
-            )
+                 inside a `debug_assert!(..)`&quot;
+            </span>)
         }
     }
 }
 
-<span class="doccomment">/// Perform garbage collection of `VMExternRef`s.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Unsafety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// You must have called `VMExternRefActivationsTable::set_stack_canary` for at</span>
-<span class="doccomment">/// least the oldest host--&gt;Wasm stack frame transition on this thread&#39;s stack</span>
-<span class="doccomment">/// (it is idempotent to call it more than once) and keep its return value alive</span>
-<span class="doccomment">/// across the duration of that host--&gt;Wasm call.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Additionally, you must have registered the stack maps for every Wasm module</span>
-<span class="doccomment">/// that has frames on the stack with the given `stack_maps_registry`.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">gc</span>(
-    <span class="ident">module_info_lookup</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ModuleInfoLookup</span>,
-    <span class="ident">externref_activations_table</span>: <span class="kw-2">&amp;mut</span> <span class="ident">VMExternRefActivationsTable</span>,
+<span class="doccomment">/// Perform garbage collection of `VMExternRef`s.
+///
+/// # Unsafety
+///
+/// You must have called `VMExternRefActivationsTable::set_stack_canary` for at
+/// least the oldest host--&gt;Wasm stack frame transition on this thread&#39;s stack
+/// (it is idempotent to call it more than once) and keep its return value alive
+/// across the duration of that host--&gt;Wasm call.
+///
+/// Additionally, you must have registered the stack maps for every Wasm module
+/// that has frames on the stack with the given `stack_maps_registry`.
+</span><span class="kw">pub unsafe fn </span>gc(
+    module_info_lookup: <span class="kw-2">&amp;</span><span class="kw">dyn </span>ModuleInfoLookup,
+    externref_activations_table: <span class="kw-2">&amp;mut </span>VMExternRefActivationsTable,
 ) {
     <span class="macro">log::debug!</span>(<span class="string">&quot;start GC&quot;</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">debug_assertions</span>)]</span>
-    <span class="macro">assert!</span>(<span class="ident">externref_activations_table</span>.<span class="ident">gc_okay</span>);
+    <span class="attribute">#[cfg(debug_assertions)]
+    </span><span class="macro">assert!</span>(externref_activations_table.gc_okay);
 
     <span class="macro">debug_assert!</span>({
-        <span class="comment">// This set is only non-empty within this function. It is built up when</span>
-        <span class="comment">// walking the stack and interpreting stack maps, and then drained back</span>
-        <span class="comment">// into the activations table&#39;s bump-allocated space at the</span>
-        <span class="comment">// end. Therefore, it should always be empty upon entering this</span>
-        <span class="comment">// function.</span>
-        <span class="ident">externref_activations_table</span>.<span class="ident">precise_stack_roots</span>.<span class="ident">is_empty</span>()
+        <span class="comment">// This set is only non-empty within this function. It is built up when
+        // walking the stack and interpreting stack maps, and then drained back
+        // into the activations table&#39;s bump-allocated space at the
+        // end. Therefore, it should always be empty upon entering this
+        // function.
+        </span>externref_activations_table.precise_stack_roots.is_empty()
     });
 
-    <span class="comment">// Whenever we call into Wasm from host code for the first time, we set a</span>
-    <span class="comment">// stack canary. When we return to that host code, we unset the stack</span>
-    <span class="comment">// canary. If there is *not* a stack canary, then there must be zero Wasm</span>
-    <span class="comment">// frames on the stack. Therefore, we can simply reset the table without</span>
-    <span class="comment">// walking the stack.</span>
-    <span class="kw">let</span> <span class="ident">stack_canary</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">externref_activations_table</span>.<span class="ident">stack_canary</span> {
-        <span class="prelude-val">None</span> =&gt; {
-            <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">debug_assertions</span>) {
-                <span class="comment">// Assert that there aren&#39;t any Wasm frames on the stack.</span>
-                <span class="ident">backtrace::trace</span>(<span class="op">|</span><span class="ident">frame</span><span class="op">|</span> {
-                    <span class="macro">assert!</span>(<span class="ident">module_info_lookup</span>.<span class="ident">lookup</span>(<span class="ident">frame</span>.<span class="ident">ip</span>() <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">is_none</span>());
-                    <span class="bool-val">true</span>
-                });
+    <span class="comment">// Whenever we call into Wasm from host code for the first time, we set a
+    // stack canary. When we return to that host code, we unset the stack
+    // canary. If there is *not* a stack canary, then there must be zero Wasm
+    // frames on the stack. Therefore, we can simply reset the table without
+    // walking the stack.
+    </span><span class="kw">let </span>stack_canary = <span class="kw">match </span>externref_activations_table.stack_canary {
+        <span class="prelude-val">None </span>=&gt; {
+            <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
+                <span class="comment">// Assert that there aren&#39;t any Wasm frames on the stack.
+                </span>backtrace::trace(|frame| {
+                    <span class="macro">assert!</span>(module_info_lookup.lookup(frame.ip() <span class="kw">as </span>usize).is_none());
+                    <span class="bool-val">true
+                </span>});
             }
-            <span class="ident">externref_activations_table</span>.<span class="ident">sweep</span>();
+            externref_activations_table.sweep();
             <span class="macro">log::debug!</span>(<span class="string">&quot;end GC&quot;</span>);
             <span class="kw">return</span>;
         }
-        <span class="prelude-val">Some</span>(<span class="ident">canary</span>) =&gt; <span class="ident">canary</span>,
+        <span class="prelude-val">Some</span>(canary) =&gt; canary,
     };
 
-    <span class="comment">// There is a stack canary, so there must be Wasm frames on the stack. The</span>
-    <span class="comment">// rest of this function consists of:</span>
-    <span class="comment">//</span>
-    <span class="comment">// * walking the stack,</span>
-    <span class="comment">//</span>
-    <span class="comment">// * finding the precise set of roots inside Wasm frames via our stack maps,</span>
-    <span class="comment">//   and</span>
-    <span class="comment">//</span>
-    <span class="comment">// * resetting our bump-allocated table&#39;s over-approximation to the</span>
-    <span class="comment">//   newly-discovered precise set.</span>
+    <span class="comment">// There is a stack canary, so there must be Wasm frames on the stack. The
+    // rest of this function consists of:
+    //
+    // * walking the stack,
+    //
+    // * finding the precise set of roots inside Wasm frames via our stack maps,
+    //   and
+    //
+    // * resetting our bump-allocated table&#39;s over-approximation to the
+    //   newly-discovered precise set.
 
-    <span class="comment">// The SP of the previous (younger) frame we processed.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">last_sp</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+    // The SP of the previous (younger) frame we processed.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>last_sp = <span class="prelude-val">None</span>;
 
-    <span class="comment">// Whether we have found our stack canary or not yet.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">found_canary</span> <span class="op">=</span> <span class="bool-val">false</span>;
+    <span class="comment">// Whether we have found our stack canary or not yet.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>found_canary = <span class="bool-val">false</span>;
 
-    <span class="comment">// The `activations_table_set` is used for `debug_assert!`s checking that</span>
-    <span class="comment">// every reference we read out from the stack via stack maps is actually in</span>
-    <span class="comment">// the table. If that weren&#39;t true, than either we forgot to insert a</span>
-    <span class="comment">// reference in the table when passing it into Wasm (a bug) or we are</span>
-    <span class="comment">// reading invalid references from the stack (another bug).</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">activations_table_set</span>: <span class="ident">DebugOnly</span><span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Default::default</span>();
-    <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">debug_assertions</span>) {
-        <span class="ident">externref_activations_table</span>.<span class="ident">elements</span>(<span class="op">|</span><span class="ident">elem</span><span class="op">|</span> {
-            <span class="ident">activations_table_set</span>.<span class="ident">insert</span>(<span class="ident">elem</span>.<span class="ident">as_raw</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">VMExternData</span>);
+    <span class="comment">// The `activations_table_set` is used for `debug_assert!`s checking that
+    // every reference we read out from the stack via stack maps is actually in
+    // the table. If that weren&#39;t true, than either we forgot to insert a
+    // reference in the table when passing it into Wasm (a bug) or we are
+    // reading invalid references from the stack (another bug).
+    </span><span class="kw">let </span><span class="kw-2">mut </span>activations_table_set: DebugOnly&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt; = Default::default();
+    <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
+        externref_activations_table.elements(|elem| {
+            activations_table_set.insert(elem.as_raw() <span class="kw">as </span><span class="kw-2">*mut </span>VMExternData);
         });
     }
 
-    <span class="ident">backtrace::trace</span>(<span class="op">|</span><span class="ident">frame</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">pc</span> <span class="op">=</span> <span class="ident">frame</span>.<span class="ident">ip</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">sp</span> <span class="op">=</span> <span class="ident">frame</span>.<span class="ident">sp</span>() <span class="kw">as</span> <span class="ident">usize</span>;
+    backtrace::trace(|frame| {
+        <span class="kw">let </span>pc = frame.ip() <span class="kw">as </span>usize;
+        <span class="kw">let </span>sp = frame.sp() <span class="kw">as </span>usize;
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">module_info</span>) <span class="op">=</span> <span class="ident">module_info_lookup</span>.<span class="ident">lookup</span>(<span class="ident">pc</span>) {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">stack_map</span>) <span class="op">=</span> <span class="ident">module_info</span>.<span class="ident">lookup_stack_map</span>(<span class="ident">pc</span>) {
-                <span class="macro">debug_assert!</span>(<span class="ident">sp</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="string">&quot;we should always get a valid SP for Wasm frames&quot;</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(module_info) = module_info_lookup.lookup(pc) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(stack_map) = module_info.lookup_stack_map(pc) {
+                <span class="macro">debug_assert!</span>(sp != <span class="number">0</span>, <span class="string">&quot;we should always get a valid SP for Wasm frames&quot;</span>);
 
-                <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..(<span class="ident">stack_map</span>.<span class="ident">mapped_words</span>() <span class="kw">as</span> <span class="ident">usize</span>) {
-                    <span class="kw">if</span> <span class="ident">stack_map</span>.<span class="ident">get_bit</span>(<span class="ident">i</span>) {
-                        <span class="comment">// Stack maps have one bit per word in the frame, and the</span>
-                        <span class="comment">// zero^th bit is the *lowest* addressed word in the frame,</span>
-                        <span class="comment">// i.e. the closest to the SP. So to get the `i`^th word in</span>
-                        <span class="comment">// this frame, we add `i * sizeof(word)` to the SP.</span>
-                        <span class="kw">let</span> <span class="ident">ptr_to_ref</span> <span class="op">=</span> <span class="ident">sp</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>();
+                <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(stack_map.mapped_words() <span class="kw">as </span>usize) {
+                    <span class="kw">if </span>stack_map.get_bit(i) {
+                        <span class="comment">// Stack maps have one bit per word in the frame, and the
+                        // zero^th bit is the *lowest* addressed word in the frame,
+                        // i.e. the closest to the SP. So to get the `i`^th word in
+                        // this frame, we add `i * sizeof(word)` to the SP.
+                        </span><span class="kw">let </span>ptr_to_ref = sp + i * mem::size_of::&lt;usize&gt;();
 
-                        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">std::ptr::read</span>(<span class="ident">ptr_to_ref</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw-2">*mut</span> <span class="ident">VMExternData</span>);
+                        <span class="kw">let </span>r = std::ptr::read(ptr_to_ref <span class="kw">as </span><span class="kw-2">*const *mut </span>VMExternData);
                         <span class="macro">debug_assert!</span>(
-                            <span class="ident">r</span>.<span class="ident">is_null</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">activations_table_set</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">r</span>),
+                            r.is_null() || activations_table_set.contains(<span class="kw-2">&amp;</span>r),
                             <span class="string">&quot;every on-stack externref inside a Wasm frame should \
                             have an entry in the VMExternRefActivationsTable; \
                             {:?} is not in the table&quot;</span>,
-                            <span class="ident">r</span>
+                            r
                         );
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">r</span>) <span class="op">=</span> <span class="ident">NonNull::new</span>(<span class="ident">r</span>) {
-                            <span class="ident">VMExternRefActivationsTable::insert_precise_stack_root</span>(
-                                <span class="kw-2">&amp;mut</span> <span class="ident">externref_activations_table</span>.<span class="ident">precise_stack_roots</span>,
-                                <span class="ident">r</span>,
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(r) = NonNull::new(r) {
+                            VMExternRefActivationsTable::insert_precise_stack_root(
+                                <span class="kw-2">&amp;mut </span>externref_activations_table.precise_stack_roots,
+                                r,
                             );
                         }
                     }
@@ -2083,144 +2078,143 @@
             }
         }
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">last_sp</span>) <span class="op">=</span> <span class="ident">last_sp</span> {
-            <span class="comment">// We&#39;ve found the stack canary when we walk over the frame that it</span>
-            <span class="comment">// is contained within.</span>
-            <span class="ident">found_canary</span> <span class="op">|</span><span class="op">=</span> <span class="ident">last_sp</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">stack_canary</span> <span class="op">&amp;&amp;</span> <span class="ident">stack_canary</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">sp</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(last_sp) = last_sp {
+            <span class="comment">// We&#39;ve found the stack canary when we walk over the frame that it
+            // is contained within.
+            </span>found_canary |= last_sp &lt;= stack_canary &amp;&amp; stack_canary &lt;= sp;
         }
-        <span class="ident">last_sp</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">sp</span>);
+        last_sp = <span class="prelude-val">Some</span>(sp);
 
-        <span class="comment">// Keep walking the stack until we&#39;ve found the canary, which is the</span>
-        <span class="comment">// oldest frame before we ever called into Wasm. We can stop once we&#39;ve</span>
-        <span class="comment">// found it because there won&#39;t be any more Wasm frames, and therefore</span>
-        <span class="comment">// there won&#39;t be anymore on-stack, inside-a-Wasm-frame roots.</span>
-        <span class="op">!</span><span class="ident">found_canary</span>
+        <span class="comment">// Keep walking the stack until we&#39;ve found the canary, which is the
+        // oldest frame before we ever called into Wasm. We can stop once we&#39;ve
+        // found it because there won&#39;t be any more Wasm frames, and therefore
+        // there won&#39;t be anymore on-stack, inside-a-Wasm-frame roots.
+        </span>!found_canary
     });
 
-    <span class="comment">// Only sweep and reset the table if we found the stack canary, and</span>
-    <span class="comment">// therefore know that we discovered all the on-stack, inside-a-Wasm-frame</span>
-    <span class="comment">// roots. If we did *not* find the stack canary, then `libunwind` failed to</span>
-    <span class="comment">// walk the whole stack, and we might be missing roots. Reseting the table</span>
-    <span class="comment">// would free those missing roots while they are still in use, leading to</span>
-    <span class="comment">// use-after-free.</span>
-    <span class="kw">if</span> <span class="ident">found_canary</span> {
-        <span class="ident">externref_activations_table</span>.<span class="ident">sweep</span>();
-    } <span class="kw">else</span> {
+    <span class="comment">// Only sweep and reset the table if we found the stack canary, and
+    // therefore know that we discovered all the on-stack, inside-a-Wasm-frame
+    // roots. If we did *not* find the stack canary, then `libunwind` failed to
+    // walk the whole stack, and we might be missing roots. Reseting the table
+    // would free those missing roots while they are still in use, leading to
+    // use-after-free.
+    </span><span class="kw">if </span>found_canary {
+        externref_activations_table.sweep();
+    } <span class="kw">else </span>{
         <span class="macro">log::warn!</span>(<span class="string">&quot;did not find stack canary; skipping GC sweep&quot;</span>);
-        <span class="ident">externref_activations_table</span>.<span class="ident">precise_stack_roots</span>.<span class="ident">clear</span>();
+        externref_activations_table.precise_stack_roots.clear();
     }
 
     <span class="macro">log::debug!</span>(<span class="string">&quot;end GC&quot;</span>);
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>std::convert::TryInto;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">extern_ref_is_pointer_sized_and_aligned</span>() {
-        <span class="macro">assert_eq!</span>(<span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">VMExternRef</span><span class="op">&gt;</span>(), <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="kw-2">*mut</span> ()<span class="op">&gt;</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">mem::align_of</span>::<span class="op">&lt;</span><span class="ident">VMExternRef</span><span class="op">&gt;</span>(), <span class="ident">mem::align_of</span>::<span class="op">&lt;</span><span class="kw-2">*mut</span> ()<span class="op">&gt;</span>());
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>extern_ref_is_pointer_sized_and_aligned() {
+        <span class="macro">assert_eq!</span>(mem::size_of::&lt;VMExternRef&gt;(), mem::size_of::&lt;<span class="kw-2">*mut </span>()&gt;());
+        <span class="macro">assert_eq!</span>(mem::align_of::&lt;VMExternRef&gt;(), mem::align_of::&lt;<span class="kw-2">*mut </span>()&gt;());
         <span class="macro">assert_eq!</span>(
-            <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VMExternRef</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
-            <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="kw-2">*mut</span> ()<span class="op">&gt;</span>()
+            mem::size_of::&lt;<span class="prelude-ty">Option</span>&lt;VMExternRef&gt;&gt;(),
+            mem::size_of::&lt;<span class="kw-2">*mut </span>()&gt;()
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">mem::align_of</span>::<span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VMExternRef</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
-            <span class="ident">mem::align_of</span>::<span class="op">&lt;</span><span class="kw-2">*mut</span> ()<span class="op">&gt;</span>()
+            mem::align_of::&lt;<span class="prelude-ty">Option</span>&lt;VMExternRef&gt;&gt;(),
+            mem::align_of::&lt;<span class="kw-2">*mut </span>()&gt;()
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">ref_count_is_at_correct_offset</span>() {
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="string">&quot;hi&quot;</span>;
-        <span class="kw">let</span> <span class="ident">s</span>: <span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">s</span> <span class="kw">as</span> <span class="kw">_</span>;
-        <span class="kw">let</span> <span class="ident">s</span>: <span class="kw-2">*const</span> (<span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>) <span class="op">=</span> <span class="ident">s</span> <span class="kw">as</span> <span class="kw">_</span>;
-        <span class="kw">let</span> <span class="ident">s</span>: <span class="kw-2">*mut</span> (<span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>) <span class="op">=</span> <span class="ident">s</span> <span class="kw">as</span> <span class="kw">_</span>;
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>ref_count_is_at_correct_offset() {
+        <span class="kw">let </span>s = <span class="string">&quot;hi&quot;</span>;
+        <span class="kw">let </span>s: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Any + Send + Sync) = <span class="kw-2">&amp;</span>s <span class="kw">as _</span>;
+        <span class="kw">let </span>s: <span class="kw-2">*const </span>(<span class="kw">dyn </span>Any + Send + Sync) = s <span class="kw">as _</span>;
+        <span class="kw">let </span>s: <span class="kw-2">*mut </span>(<span class="kw">dyn </span>Any + Send + Sync) = s <span class="kw">as _</span>;
 
-        <span class="kw">let</span> <span class="ident">extern_data</span> <span class="op">=</span> <span class="ident">VMExternData</span> {
-            <span class="ident">ref_count</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">0</span>),
-            <span class="ident">value_ptr</span>: <span class="ident">NonNull::new</span>(<span class="ident">s</span>).<span class="ident">unwrap</span>(),
+        <span class="kw">let </span>extern_data = VMExternData {
+            ref_count: AtomicUsize::new(<span class="number">0</span>),
+            value_ptr: NonNull::new(s).unwrap(),
         };
 
-        <span class="kw">let</span> <span class="ident">extern_data_ptr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">extern_data</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>;
-        <span class="kw">let</span> <span class="ident">ref_count_ptr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">extern_data</span>.<span class="ident">ref_count</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>;
+        <span class="kw">let </span>extern_data_ptr = <span class="kw-2">&amp;</span>extern_data <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
+        <span class="kw">let </span>ref_count_ptr = <span class="kw-2">&amp;</span>extern_data.ref_count <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
 
-        <span class="kw">let</span> <span class="ident">actual_offset</span> <span class="op">=</span> (<span class="ident">ref_count_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">-</span> (<span class="ident">extern_data_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="kw">let </span>actual_offset = (ref_count_ptr <span class="kw">as </span>usize) - (extern_data_ptr <span class="kw">as </span>usize);
 
-        <span class="kw">let</span> <span class="ident">offsets</span> <span class="op">=</span> <span class="ident">wasmtime_environ::VMOffsets::from</span>(<span class="ident">wasmtime_environ::VMOffsetsFields</span> {
-            <span class="ident">ptr</span>: <span class="number">8</span>,
-            <span class="ident">num_imported_functions</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_tables</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_memories</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_globals</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_functions</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_tables</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_memories</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_globals</span>: <span class="number">0</span>,
-            <span class="ident">num_escaped_funcs</span>: <span class="number">0</span>,
+        <span class="kw">let </span>offsets = wasmtime_environ::VMOffsets::from(wasmtime_environ::VMOffsetsFields {
+            ptr: <span class="number">8</span>,
+            num_imported_functions: <span class="number">0</span>,
+            num_imported_tables: <span class="number">0</span>,
+            num_imported_memories: <span class="number">0</span>,
+            num_imported_globals: <span class="number">0</span>,
+            num_defined_functions: <span class="number">0</span>,
+            num_defined_tables: <span class="number">0</span>,
+            num_defined_memories: <span class="number">0</span>,
+            num_defined_globals: <span class="number">0</span>,
+            num_escaped_funcs: <span class="number">0</span>,
         });
         <span class="macro">assert_eq!</span>(
-            <span class="ident">offsets</span>.<span class="ident">vm_extern_data_ref_count</span>(),
-            <span class="ident">actual_offset</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+            offsets.vm_extern_data_ref_count(),
+            actual_offset.try_into().unwrap(),
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">table_next_is_at_correct_offset</span>() {
-        <span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="ident">VMExternRefActivationsTable::new</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>table_next_is_at_correct_offset() {
+        <span class="kw">let </span>table = VMExternRefActivationsTable::new();
 
-        <span class="kw">let</span> <span class="ident">table_ptr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">table</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>;
-        <span class="kw">let</span> <span class="ident">next_ptr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">table</span>.<span class="ident">alloc</span>.<span class="ident">next</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>;
+        <span class="kw">let </span>table_ptr = <span class="kw-2">&amp;</span>table <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
+        <span class="kw">let </span>next_ptr = <span class="kw-2">&amp;</span>table.alloc.next <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
 
-        <span class="kw">let</span> <span class="ident">actual_offset</span> <span class="op">=</span> (<span class="ident">next_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">-</span> (<span class="ident">table_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="kw">let </span>actual_offset = (next_ptr <span class="kw">as </span>usize) - (table_ptr <span class="kw">as </span>usize);
 
-        <span class="kw">let</span> <span class="ident">offsets</span> <span class="op">=</span> <span class="ident">wasmtime_environ::VMOffsets::from</span>(<span class="ident">wasmtime_environ::VMOffsetsFields</span> {
-            <span class="ident">ptr</span>: <span class="number">8</span>,
-            <span class="ident">num_imported_functions</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_tables</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_memories</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_globals</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_functions</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_tables</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_memories</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_globals</span>: <span class="number">0</span>,
-            <span class="ident">num_escaped_funcs</span>: <span class="number">0</span>,
+        <span class="kw">let </span>offsets = wasmtime_environ::VMOffsets::from(wasmtime_environ::VMOffsetsFields {
+            ptr: <span class="number">8</span>,
+            num_imported_functions: <span class="number">0</span>,
+            num_imported_tables: <span class="number">0</span>,
+            num_imported_memories: <span class="number">0</span>,
+            num_imported_globals: <span class="number">0</span>,
+            num_defined_functions: <span class="number">0</span>,
+            num_defined_tables: <span class="number">0</span>,
+            num_defined_memories: <span class="number">0</span>,
+            num_defined_globals: <span class="number">0</span>,
+            num_escaped_funcs: <span class="number">0</span>,
         });
         <span class="macro">assert_eq!</span>(
-            <span class="ident">offsets</span>.<span class="ident">vm_extern_ref_activation_table_next</span>() <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="ident">actual_offset</span>
+            offsets.vm_extern_ref_activation_table_next() <span class="kw">as </span>usize,
+            actual_offset
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">table_end_is_at_correct_offset</span>() {
-        <span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="ident">VMExternRefActivationsTable::new</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>table_end_is_at_correct_offset() {
+        <span class="kw">let </span>table = VMExternRefActivationsTable::new();
 
-        <span class="kw">let</span> <span class="ident">table_ptr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">table</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>;
-        <span class="kw">let</span> <span class="ident">end_ptr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">table</span>.<span class="ident">alloc</span>.<span class="ident">end</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>;
+        <span class="kw">let </span>table_ptr = <span class="kw-2">&amp;</span>table <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
+        <span class="kw">let </span>end_ptr = <span class="kw-2">&amp;</span>table.alloc.end <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>;
 
-        <span class="kw">let</span> <span class="ident">actual_offset</span> <span class="op">=</span> (<span class="ident">end_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">-</span> (<span class="ident">table_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="kw">let </span>actual_offset = (end_ptr <span class="kw">as </span>usize) - (table_ptr <span class="kw">as </span>usize);
 
-        <span class="kw">let</span> <span class="ident">offsets</span> <span class="op">=</span> <span class="ident">wasmtime_environ::VMOffsets::from</span>(<span class="ident">wasmtime_environ::VMOffsetsFields</span> {
-            <span class="ident">ptr</span>: <span class="number">8</span>,
-            <span class="ident">num_imported_functions</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_tables</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_memories</span>: <span class="number">0</span>,
-            <span class="ident">num_imported_globals</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_functions</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_tables</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_memories</span>: <span class="number">0</span>,
-            <span class="ident">num_defined_globals</span>: <span class="number">0</span>,
-            <span class="ident">num_escaped_funcs</span>: <span class="number">0</span>,
+        <span class="kw">let </span>offsets = wasmtime_environ::VMOffsets::from(wasmtime_environ::VMOffsetsFields {
+            ptr: <span class="number">8</span>,
+            num_imported_functions: <span class="number">0</span>,
+            num_imported_tables: <span class="number">0</span>,
+            num_imported_memories: <span class="number">0</span>,
+            num_imported_globals: <span class="number">0</span>,
+            num_defined_functions: <span class="number">0</span>,
+            num_defined_tables: <span class="number">0</span>,
+            num_defined_memories: <span class="number">0</span>,
+            num_defined_globals: <span class="number">0</span>,
+            num_escaped_funcs: <span class="number">0</span>,
         });
         <span class="macro">assert_eq!</span>(
-            <span class="ident">offsets</span>.<span class="ident">vm_extern_ref_activation_table_end</span>() <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="ident">actual_offset</span>
+            offsets.vm_extern_ref_activation_table_end() <span class="kw">as </span>usize,
+            actual_offset
         );
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

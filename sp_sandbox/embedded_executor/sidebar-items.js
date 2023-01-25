@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["EnvironmentDefinitionBuilder","A builder for the environment of the sandboxed WASM module."],["Instance","Sandboxed instance of a WASM module."],["Memory","The linear memory used by the sandbox."]]});
+window.SIDEBAR_ITEMS = {"struct":[["EnvironmentDefinitionBuilder","A builder for the environment of the sandboxed WASM module."],["Instance","Sandboxed instance of a WASM module."],["Memory","The linear memory used by the sandbox."]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/jsonrpsee-core-0.14.0/src/server/resource_limiting.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>resource_limiting.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../jsonrpsee_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../jsonrpsee_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../jsonrpsee_core/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/jsonrpsee-core-0.14.0/src/server/resource_limiting.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>resource_limiting.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../jsonrpsee_core/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -179,182 +174,181 @@
 <span id="174">174</span>
 <span id="175">175</span>
 <span id="176">176</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2019-2021 Parity Technologies (UK) Ltd.</span>
-<span class="comment">//</span>
-<span class="comment">// Permission is hereby granted, free of charge, to any</span>
-<span class="comment">// person obtaining a copy of this software and associated</span>
-<span class="comment">// documentation files (the &quot;Software&quot;), to deal in the</span>
-<span class="comment">// Software without restriction, including without</span>
-<span class="comment">// limitation the rights to use, copy, modify, merge,</span>
-<span class="comment">// publish, distribute, sublicense, and/or sell copies of</span>
-<span class="comment">// the Software, and to permit persons to whom the Software</span>
-<span class="comment">// is furnished to do so, subject to the following</span>
-<span class="comment">// conditions:</span>
-<span class="comment">//</span>
-<span class="comment">// The above copyright notice and this permission notice</span>
-<span class="comment">// shall be included in all copies or substantial portions</span>
-<span class="comment">// of the Software.</span>
-<span class="comment">//</span>
-<span class="comment">// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF</span>
-<span class="comment">// ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED</span>
-<span class="comment">// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A</span>
-<span class="comment">// PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT</span>
-<span class="comment">// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY</span>
-<span class="comment">// CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION</span>
-<span class="comment">// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR</span>
-<span class="comment">// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER</span>
-<span class="comment">// DEALINGS IN THE SOFTWARE.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2019-2021 Parity Technologies (UK) Ltd.
+//
+// Permission is hereby granted, free of charge, to any
+// person obtaining a copy of this software and associated
+// documentation files (the &quot;Software&quot;), to deal in the
+// Software without restriction, including without
+// limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice
+// shall be included in all copies or substantial portions
+// of the Software.
+//
+// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF
+// ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+// CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
-<span class="doccomment">//! # Resource Limiting</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This module handles limiting the capacity of the server to respond to requests.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! `jsonrpsee` is agnostic about the types of resources available on the server, and the units used are arbitrary.</span>
-<span class="doccomment">//! The units are used to model the availability of a resource, be it something mundane like CPU or Memory,</span>
-<span class="doccomment">//! or more exotic things like remote API access to a 3rd party service, or use of some external hardware</span>
-<span class="doccomment">//! that&#39;s under the control of the server.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! To get the most out of this feature, we suggest benchmarking individual methods to see how many resources they</span>
-<span class="doccomment">//! consume, in particular anything critical that is expected to result in a lot of stress on the server,</span>
-<span class="doccomment">//! and then defining your units such that the limits (`capacity`) can be adjusted for different hardware configurations.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Up to 8 resources can be defined using the [`WsServerBuilder::register_resource`](../../../jsonrpsee_ws_server/struct.WsServerBuilder.html#method.register_resource)</span>
-<span class="doccomment">//! or [`HttpServerBuilder::register_resource`](../../../jsonrpsee_http_server/struct.HttpServerBuilder.html#method.register_resource) method</span>
-<span class="doccomment">//! for the WebSocket and HTTP server respectively.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Each method will claim the specified number of units (or the default) for the duration of its execution.</span>
-<span class="doccomment">//! Any method execution that would cause the total sum of claimed resource units to exceed</span>
-<span class="doccomment">//! the `capacity` of that resource will be denied execution, immediately returning JSON-RPC error object with code `-32604`.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Setting the execution cost to `0` equates to the method effectively not being limited by a given resource. Likewise setting the</span>
-<span class="doccomment">//! `capacity` to `0` disables any limiting for a given resource.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! To specify a different than default number of units a method should use, use the `resources` argument in the</span>
-<span class="doccomment">//! `#[method]` attribute:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//! # use jsonrpsee::{core::RpcResult, proc_macros::rpc};</span>
-<span class="doccomment">//! #</span>
-<span class="doccomment">//! #[rpc(server)]</span>
-<span class="doccomment">//! pub trait Rpc {</span>
-<span class="doccomment">//!     #[method(name = &quot;my_expensive_method&quot;, resources(&quot;cpu&quot; = 5, &quot;mem&quot; = 2))]</span>
-<span class="doccomment">//!     async fn my_expensive_method(&amp;self) -&gt; RpcResult&lt;&amp;&#39;static str&gt; {</span>
-<span class="doccomment">//!         // Do work</span>
-<span class="doccomment">//!         Ok(&quot;hello&quot;)</span>
-<span class="doccomment">//!     }</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Alternatively, you can use the `resource` method when creating a module manually without the help of the macro:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//! # use jsonrpsee::{RpcModule, core::RpcResult};</span>
-<span class="doccomment">//! #</span>
-<span class="doccomment">//! # fn main() -&gt; RpcResult&lt;()&gt; {</span>
-<span class="doccomment">//! #</span>
-<span class="doccomment">//! let mut module = RpcModule::new(());</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! module</span>
-<span class="doccomment">//!     .register_async_method(&quot;my_expensive_method&quot;, |_, _| async move {</span>
-<span class="doccomment">//!         // Do work</span>
-<span class="doccomment">//!         Ok(&quot;hello&quot;)</span>
-<span class="doccomment">//!     })?</span>
-<span class="doccomment">//!     .resource(&quot;cpu&quot;, 5)?</span>
-<span class="doccomment">//!     .resource(&quot;mem&quot;, 2)?;</span>
-<span class="doccomment">//! # Ok(())</span>
-<span class="doccomment">//! # }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Each resource needs to have a unique name, such as `&quot;cpu&quot;` or `&quot;memory&quot;`, which can then be used across all</span>
-<span class="doccomment">//! [`RpcModule`s](crate::server::rpc_module::RpcModule). In case a module definition uses a resource label not</span>
-<span class="doccomment">//! defined on the server, starting the server with such a module will result in a runtime error containing the</span>
-<span class="doccomment">//! information about the offending method.</span>
+</span><span class="doccomment">//! # Resource Limiting
+//!
+//! This module handles limiting the capacity of the server to respond to requests.
+//!
+//! `jsonrpsee` is agnostic about the types of resources available on the server, and the units used are arbitrary.
+//! The units are used to model the availability of a resource, be it something mundane like CPU or Memory,
+//! or more exotic things like remote API access to a 3rd party service, or use of some external hardware
+//! that&#39;s under the control of the server.
+//!
+//! To get the most out of this feature, we suggest benchmarking individual methods to see how many resources they
+//! consume, in particular anything critical that is expected to result in a lot of stress on the server,
+//! and then defining your units such that the limits (`capacity`) can be adjusted for different hardware configurations.
+//!
+//! Up to 8 resources can be defined using the [`WsServerBuilder::register_resource`](../../../jsonrpsee_ws_server/struct.WsServerBuilder.html#method.register_resource)
+//! or [`HttpServerBuilder::register_resource`](../../../jsonrpsee_http_server/struct.HttpServerBuilder.html#method.register_resource) method
+//! for the WebSocket and HTTP server respectively.
+//!
+//! Each method will claim the specified number of units (or the default) for the duration of its execution.
+//! Any method execution that would cause the total sum of claimed resource units to exceed
+//! the `capacity` of that resource will be denied execution, immediately returning JSON-RPC error object with code `-32604`.
+//!
+//! Setting the execution cost to `0` equates to the method effectively not being limited by a given resource. Likewise setting the
+//! `capacity` to `0` disables any limiting for a given resource.
+//!
+//! To specify a different than default number of units a method should use, use the `resources` argument in the
+//! `#[method]` attribute:
+//!
+//! ```
+//! # use jsonrpsee::{core::RpcResult, proc_macros::rpc};
+//! #
+//! #[rpc(server)]
+//! pub trait Rpc {
+//!     #[method(name = &quot;my_expensive_method&quot;, resources(&quot;cpu&quot; = 5, &quot;mem&quot; = 2))]
+//!     async fn my_expensive_method(&amp;self) -&gt; RpcResult&lt;&amp;&#39;static str&gt; {
+//!         // Do work
+//!         Ok(&quot;hello&quot;)
+//!     }
+//! }
+//! ```
+//!
+//! Alternatively, you can use the `resource` method when creating a module manually without the help of the macro:
+//!
+//! ```
+//! # use jsonrpsee::{RpcModule, core::RpcResult};
+//! #
+//! # fn main() -&gt; RpcResult&lt;()&gt; {
+//! #
+//! let mut module = RpcModule::new(());
+//!
+//! module
+//!     .register_async_method(&quot;my_expensive_method&quot;, |_, _| async move {
+//!         // Do work
+//!         Ok(&quot;hello&quot;)
+//!     })?
+//!     .resource(&quot;cpu&quot;, 5)?
+//!     .resource(&quot;mem&quot;, 2)?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Each resource needs to have a unique name, such as `&quot;cpu&quot;` or `&quot;memory&quot;`, which can then be used across all
+//! [`RpcModule`s](crate::server::rpc_module::RpcModule). In case a module definition uses a resource label not
+//! defined on the server, starting the server with such a module will result in a runtime error containing the
+//! information about the offending method.
 
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+</span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Error</span>;
-<span class="kw">use</span> <span class="ident">arrayvec::ArrayVec</span>;
-<span class="kw">use</span> <span class="ident">parking_lot::Mutex</span>;
+<span class="kw">use </span><span class="kw">crate</span>::Error;
+<span class="kw">use </span>arrayvec::ArrayVec;
+<span class="kw">use </span>parking_lot::Mutex;
 
-<span class="comment">// The number of kinds of resources that can be used for limiting.</span>
-<span class="kw">const</span> <span class="ident">RESOURCE_COUNT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span>;
+<span class="comment">// The number of kinds of resources that can be used for limiting.
+</span><span class="kw">const </span>RESOURCE_COUNT: usize = <span class="number">8</span>;
 
-<span class="doccomment">/// Fixed size table, mapping a resource to a (unitless) value indicating the amount of the resource that is available to RPC calls.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ResourceTable</span> <span class="op">=</span> [<span class="ident">u16</span>; <span class="ident">RESOURCE_COUNT</span>];
-<span class="doccomment">/// Variable size table, mapping a resource to a (unitless) value indicating the amount of the resource that is available to RPC calls.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ResourceVec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ArrayVec</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RESOURCE_COUNT</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Fixed size table, mapping a resource to a (unitless) value indicating the amount of the resource that is available to RPC calls.
+</span><span class="kw">pub type </span>ResourceTable = [u16; RESOURCE_COUNT];
+<span class="doccomment">/// Variable size table, mapping a resource to a (unitless) value indicating the amount of the resource that is available to RPC calls.
+</span><span class="kw">pub type </span>ResourceVec&lt;T&gt; = ArrayVec&lt;T, RESOURCE_COUNT&gt;;
 
-<span class="doccomment">/// User defined resources available to be used by calls on the JSON-RPC server.</span>
-<span class="doccomment">/// Each of the 8 possible resource kinds, for instance &quot;cpu&quot;, &quot;io&quot;, &quot;nanobots&quot;,</span>
-<span class="doccomment">/// store a maximum `capacity` and a default. A value of `0` means no limits for the given resource.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Resources</span> {
-	<span class="doccomment">/// Resources currently in use by executing calls. 0 for unused resource kinds.</span>
-	<span class="ident">totals</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">ResourceTable</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Max capacity for all resource kinds</span>
-	<span class="kw">pub</span> <span class="ident">capacities</span>: <span class="ident">ResourceTable</span>,
-	<span class="doccomment">/// Default value for all resource kinds; unless a method has a resource limit defined, this is the cost of a call (0 means no default limit)</span>
-	<span class="kw">pub</span> <span class="ident">defaults</span>: <span class="ident">ResourceTable</span>,
-	<span class="doccomment">/// Labels for every registered resource</span>
-	<span class="kw">pub</span> <span class="ident">labels</span>: <span class="ident">ResourceVec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span>,
+<span class="doccomment">/// User defined resources available to be used by calls on the JSON-RPC server.
+/// Each of the 8 possible resource kinds, for instance &quot;cpu&quot;, &quot;io&quot;, &quot;nanobots&quot;,
+/// store a maximum `capacity` and a default. A value of `0` means no limits for the given resource.
+</span><span class="attribute">#[derive(Debug, Default, Clone)]
+</span><span class="kw">pub struct </span>Resources {
+	<span class="doccomment">/// Resources currently in use by executing calls. 0 for unused resource kinds.
+	</span>totals: Arc&lt;Mutex&lt;ResourceTable&gt;&gt;,
+	<span class="doccomment">/// Max capacity for all resource kinds
+	</span><span class="kw">pub </span>capacities: ResourceTable,
+	<span class="doccomment">/// Default value for all resource kinds; unless a method has a resource limit defined, this is the cost of a call (0 means no default limit)
+	</span><span class="kw">pub </span>defaults: ResourceTable,
+	<span class="doccomment">/// Labels for every registered resource
+	</span><span class="kw">pub </span>labels: ResourceVec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Resources</span> {
-	<span class="doccomment">/// Register a new resource kind. Errors if `label` is already registered, or if the total number of</span>
-	<span class="doccomment">/// registered resources would exceed 8.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">label</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">capacity</span>: <span class="ident">u16</span>, <span class="ident">default</span>: <span class="ident">u16</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">labels</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span> <span class="op">==</span> <span class="ident">label</span>) {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::ResourceNameAlreadyTaken</span>(<span class="ident">label</span>));
+<span class="kw">impl </span>Resources {
+	<span class="doccomment">/// Register a new resource kind. Errors if `label` is already registered, or if the total number of
+	/// registered resources would exceed 8.
+	</span><span class="kw">pub fn </span>register(<span class="kw-2">&amp;mut </span><span class="self">self</span>, label: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, capacity: u16, default: u16) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="kw">if </span><span class="self">self</span>.labels.iter().any(|<span class="kw-2">&amp;</span>l| l == label) {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(Error::ResourceNameAlreadyTaken(label));
 		}
 
-		<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">labels</span>.<span class="ident">len</span>();
+		<span class="kw">let </span>idx = <span class="self">self</span>.labels.len();
 
-		<span class="self">self</span>.<span class="ident">labels</span>.<span class="ident">try_push</span>(<span class="ident">label</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::MaxResourcesReached</span>)<span class="question-mark">?</span>;
+		<span class="self">self</span>.labels.try_push(label).map_err(|<span class="kw">_</span>| Error::MaxResourcesReached)<span class="question-mark">?</span>;
 
-		<span class="self">self</span>.<span class="ident">capacities</span>[<span class="ident">idx</span>] <span class="op">=</span> <span class="ident">capacity</span>;
-		<span class="self">self</span>.<span class="ident">defaults</span>[<span class="ident">idx</span>] <span class="op">=</span> <span class="ident">default</span>;
+		<span class="self">self</span>.capacities[idx] = capacity;
+		<span class="self">self</span>.defaults[idx] = default;
 
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Attempt to claim `units` units for each resource, incrementing current totals.</span>
-	<span class="doccomment">/// If successful, returns a [`ResourceGuard`] which decrements the totals by the same</span>
-	<span class="doccomment">/// amounts once dropped.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">claim</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">units</span>: <span class="ident">ResourceTable</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ResourceGuard</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">totals</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">totals</span>.<span class="ident">lock</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sum</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">totals</span>;
+	<span class="doccomment">/// Attempt to claim `units` units for each resource, incrementing current totals.
+	/// If successful, returns a [`ResourceGuard`] which decrements the totals by the same
+	/// amounts once dropped.
+	</span><span class="kw">pub fn </span>claim(<span class="kw-2">&amp;</span><span class="self">self</span>, units: ResourceTable) -&gt; <span class="prelude-ty">Result</span>&lt;ResourceGuard, Error&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>totals = <span class="self">self</span>.totals.lock();
+		<span class="kw">let </span><span class="kw-2">mut </span>sum = <span class="kw-2">*</span>totals;
 
-		<span class="kw">for</span> (<span class="ident">idx</span>, <span class="ident">sum</span>) <span class="kw">in</span> <span class="ident">sum</span>.<span class="ident">iter_mut</span>().<span class="ident">enumerate</span>() {
-			<span class="kw">match</span> <span class="ident">sum</span>.<span class="ident">checked_add</span>(<span class="ident">units</span>[<span class="ident">idx</span>]) {
-				<span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="kw">if</span> <span class="ident">s</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">capacities</span>[<span class="ident">idx</span>] =&gt; <span class="kw-2">*</span><span class="ident">sum</span> <span class="op">=</span> <span class="ident">s</span>,
-				<span class="kw">_</span> =&gt; {
-					<span class="kw">let</span> <span class="ident">label</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">labels</span>.<span class="ident">get</span>(<span class="ident">idx</span>).<span class="ident">copied</span>().<span class="ident">unwrap_or</span>(<span class="string">&quot;&lt;UNKNOWN&gt;&quot;</span>);
+		<span class="kw">for </span>(idx, sum) <span class="kw">in </span>sum.iter_mut().enumerate() {
+			<span class="kw">match </span>sum.checked_add(units[idx]) {
+				<span class="prelude-val">Some</span>(s) <span class="kw">if </span>s &lt;= <span class="self">self</span>.capacities[idx] =&gt; <span class="kw-2">*</span>sum = s,
+				<span class="kw">_ </span>=&gt; {
+					<span class="kw">let </span>label = <span class="self">self</span>.labels.get(idx).copied().unwrap_or(<span class="string">&quot;&lt;UNKNOWN&gt;&quot;</span>);
 
-					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::ResourceAtCapacity</span>(<span class="ident">label</span>));
+					<span class="kw">return </span><span class="prelude-val">Err</span>(Error::ResourceAtCapacity(label));
 				}
 			}
 		}
 
-		<span class="kw-2">*</span><span class="ident">totals</span> <span class="op">=</span> <span class="ident">sum</span>;
+		<span class="kw-2">*</span>totals = sum;
 
-		<span class="prelude-val">Ok</span>(<span class="ident">ResourceGuard</span> { <span class="ident">totals</span>: <span class="self">self</span>.<span class="ident">totals</span>.<span class="ident">clone</span>(), <span class="ident">units</span> })
+		<span class="prelude-val">Ok</span>(ResourceGuard { totals: <span class="self">self</span>.totals.clone(), units })
 	}
 }
 
-<span class="doccomment">/// RAII style &quot;lock&quot; for claimed resources, will automatically release them once dropped.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ResourceGuard</span> {
-	<span class="ident">totals</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">ResourceTable</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">units</span>: <span class="ident">ResourceTable</span>,
+<span class="doccomment">/// RAII style &quot;lock&quot; for claimed resources, will automatically release them once dropped.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>ResourceGuard {
+	totals: Arc&lt;Mutex&lt;ResourceTable&gt;&gt;,
+	units: ResourceTable,
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">ResourceGuard</span> {
-	<span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="kw">for</span> (<span class="ident">sum</span>, <span class="ident">claimed</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">totals</span>.<span class="ident">lock</span>().<span class="ident">iter_mut</span>().<span class="ident">zip</span>(<span class="self">self</span>.<span class="ident">units</span>) {
-			<span class="kw-2">*</span><span class="ident">sum</span> <span class="op">-</span><span class="op">=</span> <span class="ident">claimed</span>;
+<span class="kw">impl </span>Drop <span class="kw">for </span>ResourceGuard {
+	<span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="kw">for </span>(sum, claimed) <span class="kw">in </span><span class="self">self</span>.totals.lock().iter_mut().zip(<span class="self">self</span>.units) {
+			<span class="kw-2">*</span>sum -= claimed;
 		}
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="jsonrpsee_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="jsonrpsee_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

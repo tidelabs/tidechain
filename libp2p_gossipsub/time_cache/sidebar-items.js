@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Entry",""]],"struct":[["DuplicateCache",""],["OccupiedEntry",""],["TimeCache",""],["VacantEntry",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["Entry",""]],"struct":[["DuplicateCache",""],["OccupiedEntry",""],["TimeCache",""],["VacantEntry",""]]};

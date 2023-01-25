@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SubstrateWeight","Weights for `pallet_tidefi` using the Substrate node and recommended hardware."]],"trait":[["WeightInfo",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["SubstrateWeight","Weights for `pallet_tidefi` using the Substrate node and recommended hardware."]],"trait":[["WeightInfo",""]]};

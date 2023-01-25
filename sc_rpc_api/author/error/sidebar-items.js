@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Author RPC errors."]],"type":[["Result","Author RPC Result type."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","Author RPC errors."]],"type":[["Result","Author RPC Result type."]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/backup.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>backup.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/backup.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>backup.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -323,326 +318,325 @@
 <span id="318">318</span>
 <span id="319">319</span>
 <span id="320">320</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2016 Alex Regueiro</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
-<span class="comment">//</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2016 Alex Regueiro
+//
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">ffi</span>, <span class="ident">Error</span>, <span class="ident">DB</span>};
+</span><span class="kw">use crate</span>::{ffi, Error, DB};
 
-<span class="kw">use</span> <span class="ident">libc</span>::{<span class="ident">c_int</span>, <span class="ident">c_uchar</span>};
-<span class="kw">use</span> <span class="ident">std::ffi::CString</span>;
-<span class="kw">use</span> <span class="ident">std::path::Path</span>;
+<span class="kw">use </span>libc::{c_int, c_uchar};
+<span class="kw">use </span>std::ffi::CString;
+<span class="kw">use </span>std::path::Path;
 
-<span class="doccomment">/// Represents information of a backup including timestamp of the backup</span>
-<span class="doccomment">/// and the size (please note that sum of all backups&#39; sizes is bigger than the actual</span>
-<span class="doccomment">/// size of the backup directory because some data is shared by multiple backups).</span>
-<span class="doccomment">/// Backups are identified by their always-increasing IDs.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BackupEngineInfo</span> {
-    <span class="doccomment">/// Timestamp of the backup</span>
-    <span class="kw">pub</span> <span class="ident">timestamp</span>: <span class="ident">i64</span>,
-    <span class="doccomment">/// ID of the backup</span>
-    <span class="kw">pub</span> <span class="ident">backup_id</span>: <span class="ident">u32</span>,
-    <span class="doccomment">/// Size of the backup</span>
-    <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Number of files related to the backup</span>
-    <span class="kw">pub</span> <span class="ident">num_files</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Represents information of a backup including timestamp of the backup
+/// and the size (please note that sum of all backups&#39; sizes is bigger than the actual
+/// size of the backup directory because some data is shared by multiple backups).
+/// Backups are identified by their always-increasing IDs.
+</span><span class="kw">pub struct </span>BackupEngineInfo {
+    <span class="doccomment">/// Timestamp of the backup
+    </span><span class="kw">pub </span>timestamp: i64,
+    <span class="doccomment">/// ID of the backup
+    </span><span class="kw">pub </span>backup_id: u32,
+    <span class="doccomment">/// Size of the backup
+    </span><span class="kw">pub </span>size: u64,
+    <span class="doccomment">/// Number of files related to the backup
+    </span><span class="kw">pub </span>num_files: u32,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BackupEngine</span> {
-    <span class="ident">inner</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_backup_engine_t</span>,
+<span class="kw">pub struct </span>BackupEngine {
+    inner: <span class="kw-2">*mut </span>ffi::rocksdb_backup_engine_t,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BackupEngineOptions</span> {
-    <span class="ident">inner</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_options_t</span>,
+<span class="kw">pub struct </span>BackupEngineOptions {
+    inner: <span class="kw-2">*mut </span>ffi::rocksdb_options_t,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RestoreOptions</span> {
-    <span class="ident">inner</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_restore_options_t</span>,
+<span class="kw">pub struct </span>RestoreOptions {
+    inner: <span class="kw-2">*mut </span>ffi::rocksdb_restore_options_t,
 }
 
-<span class="kw">impl</span> <span class="ident">BackupEngine</span> {
-    <span class="doccomment">/// Open a backup engine with the specified options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">BackupEngineOptions</span>, <span class="ident">path</span>: <span class="ident">P</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">cpath</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">CString::new</span>(<span class="ident">path</span>.<span class="ident">to_string_lossy</span>().<span class="ident">as_bytes</span>()) {
-            <span class="ident">e</span>
-        } <span class="kw">else</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(
+<span class="kw">impl </span>BackupEngine {
+    <span class="doccomment">/// Open a backup engine with the specified options.
+    </span><span class="kw">pub fn </span>open&lt;P: AsRef&lt;Path&gt;&gt;(opts: <span class="kw-2">&amp;</span>BackupEngineOptions, path: P) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">let </span>path = path.as_ref();
+        <span class="kw">let </span>cpath = <span class="kw">if let </span><span class="prelude-val">Ok</span>(e) = CString::new(path.to_string_lossy().as_bytes()) {
+            e
+        } <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
                 <span class="string">&quot;Failed to convert path to CString \
-                     when opening backup engine&quot;</span>
-                    .<span class="ident">to_owned</span>(),
+                     when opening backup engine&quot;
+                    </span>.to_owned(),
             ));
         };
 
-        <span class="kw">let</span> <span class="ident">be</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_backup_engine_t</span>;
-        <span class="kw">unsafe</span> {
-            <span class="ident">be</span> <span class="op">=</span> <span class="macro">ffi_try!</span>(<span class="ident">ffi::rocksdb_backup_engine_open</span>(<span class="ident">opts</span>.<span class="ident">inner</span>, <span class="ident">cpath</span>.<span class="ident">as_ptr</span>()));
+        <span class="kw">let </span>be: <span class="kw-2">*mut </span>ffi::rocksdb_backup_engine_t;
+        <span class="kw">unsafe </span>{
+            be = <span class="macro">ffi_try!</span>(ffi::rocksdb_backup_engine_open(opts.inner, cpath.as_ptr()));
         }
 
-        <span class="kw">if</span> <span class="ident">be</span>.<span class="ident">is_null</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(<span class="string">&quot;Could not initialize backup engine.&quot;</span>.<span class="ident">to_owned</span>()));
+        <span class="kw">if </span>be.is_null() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(<span class="string">&quot;Could not initialize backup engine.&quot;</span>.to_owned()));
         }
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">inner</span>: <span class="ident">be</span> })
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ inner: be })
     }
 
-    <span class="doccomment">/// Captures the state of the database in the latest backup.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note: no flush before backup is performed. User might want to</span>
-    <span class="doccomment">/// use `create_new_backup_flush` instead.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_new_backup</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">db</span>: <span class="kw-2">&amp;</span><span class="ident">DB</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">create_new_backup_flush</span>(<span class="ident">db</span>, <span class="bool-val">false</span>)
+    <span class="doccomment">/// Captures the state of the database in the latest backup.
+    ///
+    /// Note: no flush before backup is performed. User might want to
+    /// use `create_new_backup_flush` instead.
+    </span><span class="kw">pub fn </span>create_new_backup(<span class="kw-2">&amp;mut </span><span class="self">self</span>, db: <span class="kw-2">&amp;</span>DB) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="self">self</span>.create_new_backup_flush(db, <span class="bool-val">false</span>)
     }
 
-    <span class="doccomment">/// Captures the state of the database in the latest backup.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Set flush_before_backup=true to avoid losing unflushed key/value</span>
-    <span class="doccomment">/// pairs from the memtable.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_new_backup_flush</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">db</span>: <span class="kw-2">&amp;</span><span class="ident">DB</span>,
-        <span class="ident">flush_before_backup</span>: <span class="ident">bool</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="macro">ffi_try!</span>(<span class="ident">ffi::rocksdb_backup_engine_create_new_backup_flush</span>(
-                <span class="self">self</span>.<span class="ident">inner</span>,
-                <span class="ident">db</span>.<span class="ident">inner</span>,
-                <span class="ident">flush_before_backup</span> <span class="kw">as</span> <span class="ident">c_uchar</span>,
+    <span class="doccomment">/// Captures the state of the database in the latest backup.
+    ///
+    /// Set flush_before_backup=true to avoid losing unflushed key/value
+    /// pairs from the memtable.
+    </span><span class="kw">pub fn </span>create_new_backup_flush(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        db: <span class="kw-2">&amp;</span>DB,
+        flush_before_backup: bool,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="macro">ffi_try!</span>(ffi::rocksdb_backup_engine_create_new_backup_flush(
+                <span class="self">self</span>.inner,
+                db.inner,
+                flush_before_backup <span class="kw">as </span>c_uchar,
             ));
             <span class="prelude-val">Ok</span>(())
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">purge_old_backups</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">num_backups_to_keep</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="macro">ffi_try!</span>(<span class="ident">ffi::rocksdb_backup_engine_purge_old_backups</span>(
-                <span class="self">self</span>.<span class="ident">inner</span>,
-                <span class="ident">num_backups_to_keep</span> <span class="kw">as</span> <span class="ident">u32</span>,
+    <span class="kw">pub fn </span>purge_old_backups(<span class="kw-2">&amp;mut </span><span class="self">self</span>, num_backups_to_keep: usize) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="macro">ffi_try!</span>(ffi::rocksdb_backup_engine_purge_old_backups(
+                <span class="self">self</span>.inner,
+                num_backups_to_keep <span class="kw">as </span>u32,
             ));
             <span class="prelude-val">Ok</span>(())
         }
     }
 
-    <span class="doccomment">/// Restore from the latest backup</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Arguments</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * `db_dir` - A path to the database directory</span>
-    <span class="doccomment">/// * `wal_dir` - A path to the wal directory</span>
-    <span class="doccomment">/// * `opts` - Restore options</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```ignore</span>
-    <span class="doccomment">/// use rocksdb::backup::{BackupEngine, BackupEngineOptions};</span>
-    <span class="doccomment">/// let backup_opts = BackupEngineOptions::default();</span>
-    <span class="doccomment">/// let mut backup_engine = BackupEngine::open(&amp;backup_opts, &amp;backup_path).unwrap();</span>
-    <span class="doccomment">/// let mut restore_option = rocksdb::backup::RestoreOptions::default();</span>
-    <span class="doccomment">/// restore_option.set_keep_log_files(true); /// true to keep log files</span>
-    <span class="doccomment">/// if let Err(e) = backup_engine.restore_from_latest_backup(&amp;db_path, &amp;wal_dir, &amp;restore_option) {</span>
-    <span class="doccomment">///     error!(&quot;Failed to restore from the backup. Error:{:?}&quot;, e);</span>
-    <span class="doccomment">///     return Err(e.to_string());</span>
-    <span class="doccomment">///  }</span>
-    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// Restore from the latest backup
+    ///
+    /// # Arguments
+    ///
+    /// * `db_dir` - A path to the database directory
+    /// * `wal_dir` - A path to the wal directory
+    /// * `opts` - Restore options
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use rocksdb::backup::{BackupEngine, BackupEngineOptions};
+    /// let backup_opts = BackupEngineOptions::default();
+    /// let mut backup_engine = BackupEngine::open(&amp;backup_opts, &amp;backup_path).unwrap();
+    /// let mut restore_option = rocksdb::backup::RestoreOptions::default();
+    /// restore_option.set_keep_log_files(true); /// true to keep log files
+    /// if let Err(e) = backup_engine.restore_from_latest_backup(&amp;db_path, &amp;wal_dir, &amp;restore_option) {
+    ///     error!(&quot;Failed to restore from the backup. Error:{:?}&quot;, e);
+    ///     return Err(e.to_string());
+    ///  }
+    /// ```
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">restore_from_latest_backup</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>, <span class="ident">W</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">db_dir</span>: <span class="ident">D</span>,
-        <span class="ident">wal_dir</span>: <span class="ident">W</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">RestoreOptions</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">db_dir</span> <span class="op">=</span> <span class="ident">db_dir</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">c_db_dir</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">CString::new</span>(<span class="ident">db_dir</span>.<span class="ident">to_string_lossy</span>().<span class="ident">as_bytes</span>()) {
-            <span class="ident">c</span>
-        } <span class="kw">else</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(
+    </span><span class="kw">pub fn </span>restore_from_latest_backup&lt;D: AsRef&lt;Path&gt;, W: AsRef&lt;Path&gt;&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        db_dir: D,
+        wal_dir: W,
+        opts: <span class="kw-2">&amp;</span>RestoreOptions,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">let </span>db_dir = db_dir.as_ref();
+        <span class="kw">let </span>c_db_dir = <span class="kw">if let </span><span class="prelude-val">Ok</span>(c) = CString::new(db_dir.to_string_lossy().as_bytes()) {
+            c
+        } <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
                 <span class="string">&quot;Failed to convert db_dir to CString \
-                     when restoring from latest backup&quot;</span>
-                    .<span class="ident">to_owned</span>(),
+                     when restoring from latest backup&quot;
+                    </span>.to_owned(),
             ));
         };
 
-        <span class="kw">let</span> <span class="ident">wal_dir</span> <span class="op">=</span> <span class="ident">wal_dir</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">c_wal_dir</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">CString::new</span>(<span class="ident">wal_dir</span>.<span class="ident">to_string_lossy</span>().<span class="ident">as_bytes</span>()) {
-            <span class="ident">c</span>
-        } <span class="kw">else</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(
+        <span class="kw">let </span>wal_dir = wal_dir.as_ref();
+        <span class="kw">let </span>c_wal_dir = <span class="kw">if let </span><span class="prelude-val">Ok</span>(c) = CString::new(wal_dir.to_string_lossy().as_bytes()) {
+            c
+        } <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
                 <span class="string">&quot;Failed to convert wal_dir to CString \
-                     when restoring from latest backup&quot;</span>
-                    .<span class="ident">to_owned</span>(),
+                     when restoring from latest backup&quot;
+                    </span>.to_owned(),
             ));
         };
 
-        <span class="kw">unsafe</span> {
-            <span class="macro">ffi_try!</span>(<span class="ident">ffi::rocksdb_backup_engine_restore_db_from_latest_backup</span>(
-                <span class="self">self</span>.<span class="ident">inner</span>,
-                <span class="ident">c_db_dir</span>.<span class="ident">as_ptr</span>(),
-                <span class="ident">c_wal_dir</span>.<span class="ident">as_ptr</span>(),
-                <span class="ident">opts</span>.<span class="ident">inner</span>,
+        <span class="kw">unsafe </span>{
+            <span class="macro">ffi_try!</span>(ffi::rocksdb_backup_engine_restore_db_from_latest_backup(
+                <span class="self">self</span>.inner,
+                c_db_dir.as_ptr(),
+                c_wal_dir.as_ptr(),
+                opts.inner,
             ));
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Restore from a specified backup</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The specified backup id should be passed in as an additional parameter.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">restore_from_backup</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>, <span class="ident">W</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">db_dir</span>: <span class="ident">D</span>,
-        <span class="ident">wal_dir</span>: <span class="ident">W</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">RestoreOptions</span>,
-        <span class="ident">backup_id</span>: <span class="ident">u32</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">db_dir</span> <span class="op">=</span> <span class="ident">db_dir</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">c_db_dir</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">CString::new</span>(<span class="ident">db_dir</span>.<span class="ident">to_string_lossy</span>().<span class="ident">as_bytes</span>()) {
-            <span class="ident">c</span>
-        } <span class="kw">else</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(
+    <span class="doccomment">/// Restore from a specified backup
+    ///
+    /// The specified backup id should be passed in as an additional parameter.
+    </span><span class="kw">pub fn </span>restore_from_backup&lt;D: AsRef&lt;Path&gt;, W: AsRef&lt;Path&gt;&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        db_dir: D,
+        wal_dir: W,
+        opts: <span class="kw-2">&amp;</span>RestoreOptions,
+        backup_id: u32,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">let </span>db_dir = db_dir.as_ref();
+        <span class="kw">let </span>c_db_dir = <span class="kw">if let </span><span class="prelude-val">Ok</span>(c) = CString::new(db_dir.to_string_lossy().as_bytes()) {
+            c
+        } <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
                 <span class="string">&quot;Failed to convert db_dir to CString \
-                     when restoring from latest backup&quot;</span>
-                    .<span class="ident">to_owned</span>(),
+                     when restoring from latest backup&quot;
+                    </span>.to_owned(),
             ));
         };
 
-        <span class="kw">let</span> <span class="ident">wal_dir</span> <span class="op">=</span> <span class="ident">wal_dir</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">c_wal_dir</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">CString::new</span>(<span class="ident">wal_dir</span>.<span class="ident">to_string_lossy</span>().<span class="ident">as_bytes</span>()) {
-            <span class="ident">c</span>
-        } <span class="kw">else</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(
+        <span class="kw">let </span>wal_dir = wal_dir.as_ref();
+        <span class="kw">let </span>c_wal_dir = <span class="kw">if let </span><span class="prelude-val">Ok</span>(c) = CString::new(wal_dir.to_string_lossy().as_bytes()) {
+            c
+        } <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
                 <span class="string">&quot;Failed to convert wal_dir to CString \
-                     when restoring from latest backup&quot;</span>
-                    .<span class="ident">to_owned</span>(),
+                     when restoring from latest backup&quot;
+                    </span>.to_owned(),
             ));
         };
 
-        <span class="kw">unsafe</span> {
-            <span class="macro">ffi_try!</span>(<span class="ident">ffi::rocksdb_backup_engine_restore_db_from_backup</span>(
-                <span class="self">self</span>.<span class="ident">inner</span>,
-                <span class="ident">c_db_dir</span>.<span class="ident">as_ptr</span>(),
-                <span class="ident">c_wal_dir</span>.<span class="ident">as_ptr</span>(),
-                <span class="ident">opts</span>.<span class="ident">inner</span>,
-                <span class="ident">backup_id</span>,
+        <span class="kw">unsafe </span>{
+            <span class="macro">ffi_try!</span>(ffi::rocksdb_backup_engine_restore_db_from_backup(
+                <span class="self">self</span>.inner,
+                c_db_dir.as_ptr(),
+                c_wal_dir.as_ptr(),
+                opts.inner,
+                backup_id,
             ));
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Checks that each file exists and that the size of the file matches our</span>
-    <span class="doccomment">/// expectations. it does not check file checksum.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If this BackupEngine created the backup, it compares the files&#39; current</span>
-    <span class="doccomment">/// sizes against the number of bytes written to them during creation.</span>
-    <span class="doccomment">/// Otherwise, it compares the files&#39; current sizes against their sizes when</span>
-    <span class="doccomment">/// the BackupEngine was opened.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_backup</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">backup_id</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="macro">ffi_try!</span>(<span class="ident">ffi::rocksdb_backup_engine_verify_backup</span>(
-                <span class="self">self</span>.<span class="ident">inner</span>, <span class="ident">backup_id</span>,
+    <span class="doccomment">/// Checks that each file exists and that the size of the file matches our
+    /// expectations. it does not check file checksum.
+    ///
+    /// If this BackupEngine created the backup, it compares the files&#39; current
+    /// sizes against the number of bytes written to them during creation.
+    /// Otherwise, it compares the files&#39; current sizes against their sizes when
+    /// the BackupEngine was opened.
+    </span><span class="kw">pub fn </span>verify_backup(<span class="kw-2">&amp;</span><span class="self">self</span>, backup_id: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="macro">ffi_try!</span>(ffi::rocksdb_backup_engine_verify_backup(
+                <span class="self">self</span>.inner, backup_id,
             ));
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Get a list of all backups together with information on timestamp of the backup</span>
-    <span class="doccomment">/// and the size (please note that sum of all backups&#39; sizes is bigger than the actual</span>
-    <span class="doccomment">/// size of the backup directory because some data is shared by multiple backups).</span>
-    <span class="doccomment">/// Backups are identified by their always-increasing IDs.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// You can perform this function safely, even with other BackupEngine performing</span>
-    <span class="doccomment">/// backups on the same directory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_backup_info</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">BackupEngineInfo</span><span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">ffi::rocksdb_backup_engine_get_backup_info</span>(<span class="self">self</span>.<span class="ident">inner</span>);
+    <span class="doccomment">/// Get a list of all backups together with information on timestamp of the backup
+    /// and the size (please note that sum of all backups&#39; sizes is bigger than the actual
+    /// size of the backup directory because some data is shared by multiple backups).
+    /// Backups are identified by their always-increasing IDs.
+    ///
+    /// You can perform this function safely, even with other BackupEngine performing
+    /// backups on the same directory
+    </span><span class="kw">pub fn </span>get_backup_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;BackupEngineInfo&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>i = ffi::rocksdb_backup_engine_get_backup_info(<span class="self">self</span>.inner);
 
-            <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">ffi::rocksdb_backup_engine_info_count</span>(<span class="ident">i</span>);
+            <span class="kw">let </span>n = ffi::rocksdb_backup_engine_info_count(i);
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">info</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">n</span> <span class="kw">as</span> <span class="ident">usize</span>);
-            <span class="kw">for</span> <span class="ident">index</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">n</span> {
-                <span class="ident">info</span>.<span class="ident">push</span>(<span class="ident">BackupEngineInfo</span> {
-                    <span class="ident">timestamp</span>: <span class="ident">ffi::rocksdb_backup_engine_info_timestamp</span>(<span class="ident">i</span>, <span class="ident">index</span>),
-                    <span class="ident">backup_id</span>: <span class="ident">ffi::rocksdb_backup_engine_info_backup_id</span>(<span class="ident">i</span>, <span class="ident">index</span>),
-                    <span class="ident">size</span>: <span class="ident">ffi::rocksdb_backup_engine_info_size</span>(<span class="ident">i</span>, <span class="ident">index</span>),
-                    <span class="ident">num_files</span>: <span class="ident">ffi::rocksdb_backup_engine_info_number_files</span>(<span class="ident">i</span>, <span class="ident">index</span>),
+            <span class="kw">let </span><span class="kw-2">mut </span>info = Vec::with_capacity(n <span class="kw">as </span>usize);
+            <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..n {
+                info.push(BackupEngineInfo {
+                    timestamp: ffi::rocksdb_backup_engine_info_timestamp(i, index),
+                    backup_id: ffi::rocksdb_backup_engine_info_backup_id(i, index),
+                    size: ffi::rocksdb_backup_engine_info_size(i, index),
+                    num_files: ffi::rocksdb_backup_engine_info_number_files(i, index),
                 });
             }
 
-            <span class="comment">// destroy backup info object</span>
-            <span class="ident">ffi::rocksdb_backup_engine_info_destroy</span>(<span class="ident">i</span>);
+            <span class="comment">// destroy backup info object
+            </span>ffi::rocksdb_backup_engine_info_destroy(i);
 
-            <span class="ident">info</span>
+            info
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">BackupEngineOptions</span> {
-    <span class="comment">//</span>
-}
+<span class="kw">impl </span>BackupEngineOptions {
+    <span class="comment">//
+</span>}
 
-<span class="kw">impl</span> <span class="ident">RestoreOptions</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_keep_log_files</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">keep_log_files</span>: <span class="ident">bool</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_restore_options_set_keep_log_files</span>(<span class="self">self</span>.<span class="ident">inner</span>, <span class="ident">keep_log_files</span> <span class="kw">as</span> <span class="ident">c_int</span>);
+<span class="kw">impl </span>RestoreOptions {
+    <span class="kw">pub fn </span>set_keep_log_files(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keep_log_files: bool) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_restore_options_set_keep_log_files(<span class="self">self</span>.inner, keep_log_files <span class="kw">as </span>c_int);
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">BackupEngineOptions</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">ffi::rocksdb_options_create</span>();
-            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">opts</span>.<span class="ident">is_null</span>(), <span class="string">&quot;Could not create RocksDB backup options&quot;</span>);
+<span class="kw">impl </span>Default <span class="kw">for </span>BackupEngineOptions {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>opts = ffi::rocksdb_options_create();
+            <span class="macro">assert!</span>(!opts.is_null(), <span class="string">&quot;Could not create RocksDB backup options&quot;</span>);
 
-            <span class="self">Self</span> { <span class="ident">inner</span>: <span class="ident">opts</span> }
+            <span class="self">Self </span>{ inner: opts }
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">RestoreOptions</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">ffi::rocksdb_restore_options_create</span>();
-            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">opts</span>.<span class="ident">is_null</span>(), <span class="string">&quot;Could not create RocksDB restore options&quot;</span>);
+<span class="kw">impl </span>Default <span class="kw">for </span>RestoreOptions {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>opts = ffi::rocksdb_restore_options_create();
+            <span class="macro">assert!</span>(!opts.is_null(), <span class="string">&quot;Could not create RocksDB restore options&quot;</span>);
 
-            <span class="self">Self</span> { <span class="ident">inner</span>: <span class="ident">opts</span> }
+            <span class="self">Self </span>{ inner: opts }
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">BackupEngine</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_backup_engine_close</span>(<span class="self">self</span>.<span class="ident">inner</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>BackupEngine {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_backup_engine_close(<span class="self">self</span>.inner);
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">BackupEngineOptions</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_options_destroy</span>(<span class="self">self</span>.<span class="ident">inner</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>BackupEngineOptions {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_options_destroy(<span class="self">self</span>.inner);
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">RestoreOptions</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_restore_options_destroy</span>(<span class="self">self</span>.<span class="ident">inner</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>RestoreOptions {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_restore_options_destroy(<span class="self">self</span>.inner);
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

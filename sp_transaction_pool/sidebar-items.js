@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["runtime_api","Tagged Transaction Queue Runtime API."]]});
+window.SIDEBAR_ITEMS = {"mod":[["runtime_api","Tagged Transaction Queue Runtime API."]]};

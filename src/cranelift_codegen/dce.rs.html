@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/dce.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dce.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/dce.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dce.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -39,42 +34,41 @@
 <span id="34">34</span>
 <span id="35">35</span>
 <span id="36">36</span>
-</pre><pre class="rust"><code><span class="doccomment">//! A Dead-Code Elimination (DCE) pass.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Dead code here means instructions that have no side effects and have no</span>
-<span class="doccomment">//! result values used by other instructions.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! A Dead-Code Elimination (DCE) pass.
+//!
+//! Dead code here means instructions that have no side effects and have no
+//! result values used by other instructions.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cursor</span>::{<span class="ident">Cursor</span>, <span class="ident">FuncCursor</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dominator_tree::DominatorTree</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entity::EntityRef</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::inst_predicates</span>::{<span class="ident">any_inst_results_used</span>, <span class="ident">has_side_effect</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::Function</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timing</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::cursor::{Cursor, FuncCursor};
+<span class="kw">use </span><span class="kw">crate</span>::dominator_tree::DominatorTree;
+<span class="kw">use </span><span class="kw">crate</span>::entity::EntityRef;
+<span class="kw">use </span><span class="kw">crate</span>::inst_predicates::{any_inst_results_used, has_side_effect};
+<span class="kw">use </span><span class="kw">crate</span>::ir::Function;
+<span class="kw">use </span><span class="kw">crate</span>::timing;
 
-<span class="doccomment">/// Perform DCE on `func`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">do_dce</span>(<span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Function</span>, <span class="ident">domtree</span>: <span class="kw-2">&amp;mut</span> <span class="ident">DominatorTree</span>) {
-    <span class="kw">let</span> <span class="ident">_tt</span> <span class="op">=</span> <span class="ident">timing::dce</span>();
-    <span class="macro">debug_assert!</span>(<span class="ident">domtree</span>.<span class="ident">is_valid</span>());
+<span class="doccomment">/// Perform DCE on `func`.
+</span><span class="kw">pub fn </span>do_dce(func: <span class="kw-2">&amp;mut </span>Function, domtree: <span class="kw-2">&amp;mut </span>DominatorTree) {
+    <span class="kw">let </span>_tt = timing::dce();
+    <span class="macro">debug_assert!</span>(domtree.is_valid());
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">live</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="bool-val">false</span>; <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">num_values</span>()];
-    <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">block</span> <span class="kw">in</span> <span class="ident">domtree</span>.<span class="ident">cfg_postorder</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_bottom</span>(<span class="ident">block</span>);
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">inst</span>) <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">prev_inst</span>() {
+    <span class="kw">let </span><span class="kw-2">mut </span>live = <span class="macro">vec!</span>[<span class="bool-val">false</span>; func.dfg.num_values()];
+    <span class="kw">for </span><span class="kw-2">&amp;</span>block <span class="kw">in </span>domtree.cfg_postorder() {
+        <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_bottom(block);
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(inst) = pos.prev_inst() {
             {
-                <span class="kw">if</span> <span class="ident">has_side_effect</span>(<span class="ident">pos</span>.<span class="ident">func</span>, <span class="ident">inst</span>)
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">any_inst_results_used</span>(<span class="ident">inst</span>, <span class="kw-2">&amp;</span><span class="ident">live</span>, <span class="kw-2">&amp;</span><span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>)
+                <span class="kw">if </span>has_side_effect(pos.func, inst)
+                    || any_inst_results_used(inst, <span class="kw-2">&amp;</span>live, <span class="kw-2">&amp;</span>pos.func.dfg)
                 {
-                    <span class="kw">for</span> <span class="ident">arg</span> <span class="kw">in</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">inst_args</span>(<span class="ident">inst</span>) {
-                        <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">resolve_aliases</span>(<span class="kw-2">*</span><span class="ident">arg</span>);
-                        <span class="ident">live</span>[<span class="ident">v</span>.<span class="ident">index</span>()] <span class="op">=</span> <span class="bool-val">true</span>;
+                    <span class="kw">for </span>arg <span class="kw">in </span>pos.func.dfg.inst_args(inst) {
+                        <span class="kw">let </span>v = pos.func.dfg.resolve_aliases(<span class="kw-2">*</span>arg);
+                        live[v.index()] = <span class="bool-val">true</span>;
                     }
                     <span class="kw">continue</span>;
                 }
             }
-            <span class="ident">pos</span>.<span class="ident">remove_inst</span>();
+            pos.remove_inst();
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

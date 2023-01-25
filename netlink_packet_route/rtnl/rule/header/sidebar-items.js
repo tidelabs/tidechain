@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["RuleFlags",""],["RuleHeader",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["RuleFlags",""],["RuleHeader",""]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-jit-0.35.3/src/instantiate.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instantiate.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime_jit/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime_jit/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime_jit/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-jit-0.35.3/src/instantiate.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instantiate.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime_jit/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -762,765 +757,764 @@
 <span id="757">757</span>
 <span id="758">758</span>
 <span id="759">759</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Define the `instantiate` function, which takes a byte array containing an</span>
-<span class="doccomment">//! encoded wasm module and returns a live wasm instance. Also, define</span>
-<span class="doccomment">//! `CompiledModule` to allow compiling and instantiating to be done as separate</span>
-<span class="doccomment">//! steps.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Define the `instantiate` function, which takes a byte array containing an
+//! encoded wasm module and returns a live wasm instance. Also, define
+//! `CompiledModule` to allow compiling and instantiating to be done as separate
+//! steps.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::code_memory::CodeMemory</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::debug::create_gdbjit_image</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ProfilingAgent</span>;
-<span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">anyhow</span>, <span class="ident">bail</span>, <span class="ident">Context</span>, <span class="ident">Error</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">object::write</span>::{<span class="ident">Object</span>, <span class="ident">StandardSegment</span>, <span class="ident">WritableBuffer</span>};
-<span class="kw">use</span> <span class="ident">object</span>::{<span class="ident">File</span>, <span class="ident">Object</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">ObjectSection</span>, <span class="ident">SectionKind</span>};
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">std::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">std::ops::Range</span>;
-<span class="kw">use</span> <span class="ident">std::str</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_environ</span>::{
-    <span class="ident">CompileError</span>, <span class="ident">DefinedFuncIndex</span>, <span class="ident">FuncIndex</span>, <span class="ident">FunctionInfo</span>, <span class="ident">InstanceSignature</span>, <span class="ident">InstanceTypeIndex</span>,
-    <span class="ident">Module</span>, <span class="ident">ModuleSignature</span>, <span class="ident">ModuleTranslation</span>, <span class="ident">ModuleTypeIndex</span>, <span class="ident">PrimaryMap</span>, <span class="ident">SignatureIndex</span>,
-    <span class="ident">StackMapInformation</span>, <span class="ident">Trampoline</span>, <span class="ident">Tunables</span>, <span class="ident">WasmFuncType</span>, <span class="ident">ELF_WASMTIME_ADDRMAP</span>,
-    <span class="ident">ELF_WASMTIME_TRAPS</span>,
+</span><span class="kw">use </span><span class="kw">crate</span>::code_memory::CodeMemory;
+<span class="kw">use </span><span class="kw">crate</span>::debug::create_gdbjit_image;
+<span class="kw">use </span><span class="kw">crate</span>::ProfilingAgent;
+<span class="kw">use </span>anyhow::{anyhow, bail, Context, Error, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>object::write::{Object, StandardSegment, WritableBuffer};
+<span class="kw">use </span>object::{File, Object <span class="kw">as _</span>, ObjectSection, SectionKind};
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>std::convert::TryFrom;
+<span class="kw">use </span>std::ops::Range;
+<span class="kw">use </span>std::str;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>thiserror::Error;
+<span class="kw">use </span>wasmtime_environ::{
+    CompileError, DefinedFuncIndex, FuncIndex, FunctionInfo, InstanceSignature, InstanceTypeIndex,
+    Module, ModuleSignature, ModuleTranslation, ModuleTypeIndex, PrimaryMap, SignatureIndex,
+    StackMapInformation, Trampoline, Tunables, WasmFuncType, ELF_WASMTIME_ADDRMAP,
+    ELF_WASMTIME_TRAPS,
 };
-<span class="kw">use</span> <span class="ident">wasmtime_runtime</span>::{
-    <span class="ident">CompiledModuleId</span>, <span class="ident">CompiledModuleIdAllocator</span>, <span class="ident">GdbJitImageRegistration</span>, <span class="ident">InstantiationError</span>,
-    <span class="ident">MmapVec</span>, <span class="ident">VMFunctionBody</span>, <span class="ident">VMTrampoline</span>,
+<span class="kw">use </span>wasmtime_runtime::{
+    CompiledModuleId, CompiledModuleIdAllocator, GdbJitImageRegistration, InstantiationError,
+    MmapVec, VMFunctionBody, VMTrampoline,
 };
 
-<span class="doccomment">/// This is the name of the section in the final ELF image which contains</span>
-<span class="doccomment">/// concatenated data segments from the original wasm module.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This section is simply a list of bytes and ranges into this section are</span>
-<span class="doccomment">/// stored within a `Module` for each data segment. Memory initialization and</span>
-<span class="doccomment">/// passive segment management all index data directly located in this section.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that this implementation does not afford any method of leveraging the</span>
-<span class="doccomment">/// `data.drop` instruction to actually release the data back to the OS. The</span>
-<span class="doccomment">/// data section is simply always present in the ELF image. If we wanted to</span>
-<span class="doccomment">/// release the data it&#39;s probably best to figure out what the best</span>
-<span class="doccomment">/// implementation is for it at the time given a particular set of constraints.</span>
-<span class="kw">const</span> <span class="ident">ELF_WASM_DATA</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;.rodata.wasm&quot;</span>;
+<span class="doccomment">/// This is the name of the section in the final ELF image which contains
+/// concatenated data segments from the original wasm module.
+///
+/// This section is simply a list of bytes and ranges into this section are
+/// stored within a `Module` for each data segment. Memory initialization and
+/// passive segment management all index data directly located in this section.
+///
+/// Note that this implementation does not afford any method of leveraging the
+/// `data.drop` instruction to actually release the data back to the OS. The
+/// data section is simply always present in the ELF image. If we wanted to
+/// release the data it&#39;s probably best to figure out what the best
+/// implementation is for it at the time given a particular set of constraints.
+</span><span class="kw">const </span>ELF_WASM_DATA: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;.rodata.wasm&quot;</span>;
 
-<span class="doccomment">/// This is the name of the section in the final ELF image which contains a</span>
-<span class="doccomment">/// `bincode`-encoded `CompiledModuleInfo`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This section is optionally decoded in `CompiledModule::from_artifacts`</span>
-<span class="doccomment">/// depending on whether or not a `CompiledModuleInfo` is already available. In</span>
-<span class="doccomment">/// cases like `Module::new` where compilation directly leads into consumption,</span>
-<span class="doccomment">/// it&#39;s available. In cases like `Module::deserialize` this section must be</span>
-<span class="doccomment">/// decoded to get all the relevant information.</span>
-<span class="kw">const</span> <span class="ident">ELF_WASMTIME_INFO</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;.wasmtime.info&quot;</span>;
+<span class="doccomment">/// This is the name of the section in the final ELF image which contains a
+/// `bincode`-encoded `CompiledModuleInfo`.
+///
+/// This section is optionally decoded in `CompiledModule::from_artifacts`
+/// depending on whether or not a `CompiledModuleInfo` is already available. In
+/// cases like `Module::new` where compilation directly leads into consumption,
+/// it&#39;s available. In cases like `Module::deserialize` this section must be
+/// decoded to get all the relevant information.
+</span><span class="kw">const </span>ELF_WASMTIME_INFO: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;.wasmtime.info&quot;</span>;
 
-<span class="doccomment">/// This is the name of the section in the final ELF image which contains a</span>
-<span class="doccomment">/// concatenated list of all function names.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This section is optionally included in the final artifact depending on</span>
-<span class="doccomment">/// whether the wasm module has any name data at all (or in the future if we add</span>
-<span class="doccomment">/// an option to not preserve name data). This section is a concatenated list of</span>
-<span class="doccomment">/// strings where `CompiledModuleInfo::func_names` stores offsets/lengths into</span>
-<span class="doccomment">/// this section.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that the goal of this section is to avoid having to decode names at</span>
-<span class="doccomment">/// module-load time if we can. Names are typically only used for debugging or</span>
-<span class="doccomment">/// things like backtraces so there&#39;s no need to eagerly load all of them. By</span>
-<span class="doccomment">/// storing the data in a separate section the hope is that the data, which is</span>
-<span class="doccomment">/// sometimes quite large (3MB seen for spidermonkey-compiled-to-wasm), can be</span>
-<span class="doccomment">/// paged in lazily from an mmap and is never paged in if we never reference it.</span>
-<span class="kw">const</span> <span class="ident">ELF_NAME_DATA</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;.name.wasm&quot;</span>;
+<span class="doccomment">/// This is the name of the section in the final ELF image which contains a
+/// concatenated list of all function names.
+///
+/// This section is optionally included in the final artifact depending on
+/// whether the wasm module has any name data at all (or in the future if we add
+/// an option to not preserve name data). This section is a concatenated list of
+/// strings where `CompiledModuleInfo::func_names` stores offsets/lengths into
+/// this section.
+///
+/// Note that the goal of this section is to avoid having to decode names at
+/// module-load time if we can. Names are typically only used for debugging or
+/// things like backtraces so there&#39;s no need to eagerly load all of them. By
+/// storing the data in a separate section the hope is that the data, which is
+/// sometimes quite large (3MB seen for spidermonkey-compiled-to-wasm), can be
+/// paged in lazily from an mmap and is never paged in if we never reference it.
+</span><span class="kw">const </span>ELF_NAME_DATA: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;.name.wasm&quot;</span>;
 
-<span class="doccomment">/// An error condition while setting up a wasm instance, be it validation,</span>
-<span class="doccomment">/// compilation, or instantiation.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SetupError</span> {
-    <span class="doccomment">/// The module did not pass validation.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Validation error: {0}&quot;</span>)]</span>
-    <span class="ident">Validate</span>(<span class="ident">String</span>),
+<span class="doccomment">/// An error condition while setting up a wasm instance, be it validation,
+/// compilation, or instantiation.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>SetupError {
+    <span class="doccomment">/// The module did not pass validation.
+    </span><span class="attribute">#[error(<span class="string">&quot;Validation error: {0}&quot;</span>)]
+    </span>Validate(String),
 
-    <span class="doccomment">/// A wasm translation error occurred.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;WebAssembly failed to compile&quot;</span>)]</span>
-    <span class="ident">Compile</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">CompileError</span>),
+    <span class="doccomment">/// A wasm translation error occurred.
+    </span><span class="attribute">#[error(<span class="string">&quot;WebAssembly failed to compile&quot;</span>)]
+    </span>Compile(<span class="attribute">#[from] </span>CompileError),
 
-    <span class="doccomment">/// Some runtime resource was unavailable or insufficient, or the start function</span>
-    <span class="doccomment">/// trapped.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Instantiation failed during setup&quot;</span>)]</span>
-    <span class="ident">Instantiate</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">InstantiationError</span>),
+    <span class="doccomment">/// Some runtime resource was unavailable or insufficient, or the start function
+    /// trapped.
+    </span><span class="attribute">#[error(<span class="string">&quot;Instantiation failed during setup&quot;</span>)]
+    </span>Instantiate(<span class="attribute">#[from] </span>InstantiationError),
 
-    <span class="doccomment">/// Debug information generation error occurred.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Debug information error&quot;</span>)]</span>
-    <span class="ident">DebugInfo</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">anyhow::Error</span>),
+    <span class="doccomment">/// Debug information generation error occurred.
+    </span><span class="attribute">#[error(<span class="string">&quot;Debug information error&quot;</span>)]
+    </span>DebugInfo(<span class="attribute">#[from] </span>anyhow::Error),
 }
 
-<span class="doccomment">/// Secondary in-memory results of compilation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This opaque structure can be optionally passed back to</span>
-<span class="doccomment">/// `CompiledModule::from_artifacts` to avoid decoding extra information there.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CompiledModuleInfo</span> {
-    <span class="doccomment">/// Type information about the compiled WebAssembly module.</span>
-    <span class="ident">module</span>: <span class="ident">Module</span>,
+<span class="doccomment">/// Secondary in-memory results of compilation.
+///
+/// This opaque structure can be optionally passed back to
+/// `CompiledModule::from_artifacts` to avoid decoding extra information there.
+</span><span class="attribute">#[derive(Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>CompiledModuleInfo {
+    <span class="doccomment">/// Type information about the compiled WebAssembly module.
+    </span>module: Module,
 
-    <span class="doccomment">/// Metadata about each compiled function.</span>
-    <span class="ident">funcs</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedFuncIndex</span>, <span class="ident">FunctionInfo</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Metadata about each compiled function.
+    </span>funcs: PrimaryMap&lt;DefinedFuncIndex, FunctionInfo&gt;,
 
-    <span class="doccomment">/// Sorted list, by function index, of names we have for this module.</span>
-    <span class="ident">func_names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FunctionName</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Sorted list, by function index, of names we have for this module.
+    </span>func_names: Vec&lt;FunctionName&gt;,
 
-    <span class="doccomment">/// The trampolines compiled into the text section and their start/length</span>
-    <span class="doccomment">/// relative to the start of the text section.</span>
-    <span class="ident">trampolines</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Trampoline</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The trampolines compiled into the text section and their start/length
+    /// relative to the start of the text section.
+    </span>trampolines: Vec&lt;Trampoline&gt;,
 
-    <span class="doccomment">/// General compilation metadata.</span>
-    <span class="ident">meta</span>: <span class="ident">Metadata</span>,
+    <span class="doccomment">/// General compilation metadata.
+    </span>meta: Metadata,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">struct</span> <span class="ident">FunctionName</span> {
-    <span class="ident">idx</span>: <span class="ident">FuncIndex</span>,
-    <span class="ident">offset</span>: <span class="ident">u32</span>,
-    <span class="ident">len</span>: <span class="ident">u32</span>,
+<span class="attribute">#[derive(Serialize, Deserialize)]
+</span><span class="kw">struct </span>FunctionName {
+    idx: FuncIndex,
+    offset: u32,
+    len: u32,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">struct</span> <span class="ident">Metadata</span> {
-    <span class="doccomment">/// Whether or not native debug information is available in `obj`</span>
-    <span class="ident">native_debug_info_present</span>: <span class="ident">bool</span>,
+<span class="attribute">#[derive(Serialize, Deserialize)]
+</span><span class="kw">struct </span>Metadata {
+    <span class="doccomment">/// Whether or not native debug information is available in `obj`
+    </span>native_debug_info_present: bool,
 
-    <span class="doccomment">/// Whether or not the original wasm module contained debug information that</span>
-    <span class="doccomment">/// we skipped and did not parse.</span>
-    <span class="ident">has_unparsed_debuginfo</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// Whether or not the original wasm module contained debug information that
+    /// we skipped and did not parse.
+    </span>has_unparsed_debuginfo: bool,
 
-    <span class="doccomment">/// Offset in the original wasm file to the code section.</span>
-    <span class="ident">code_section_offset</span>: <span class="ident">u64</span>,
+    <span class="doccomment">/// Offset in the original wasm file to the code section.
+    </span>code_section_offset: u64,
 
-    <span class="doccomment">/// Whether or not custom wasm-specific dwarf sections were inserted into</span>
-    <span class="doccomment">/// the ELF image.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that even if this flag is `true` sections may be missing if they</span>
-    <span class="doccomment">/// weren&#39;t found in the original wasm module itself.</span>
-    <span class="ident">has_wasm_debuginfo</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// Whether or not custom wasm-specific dwarf sections were inserted into
+    /// the ELF image.
+    ///
+    /// Note that even if this flag is `true` sections may be missing if they
+    /// weren&#39;t found in the original wasm module itself.
+    </span>has_wasm_debuginfo: bool,
 }
 
-<span class="doccomment">/// Finishes compilation of the `translation` specified, producing the final</span>
-<span class="doccomment">/// compilation artifact and auxiliary information.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function will consume the final results of compiling a wasm module</span>
-<span class="doccomment">/// and finish the ELF image in-progress as part of `obj` by appending any</span>
-<span class="doccomment">/// compiler-agnostic sections.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The auxiliary `CompiledModuleInfo` structure returned here has also been</span>
-<span class="doccomment">/// serialized into the object returned, but if the caller will quickly</span>
-<span class="doccomment">/// turn-around and invoke `CompiledModule::from_artifacts` after this then the</span>
-<span class="doccomment">/// information can be passed to that method to avoid extra deserialization.</span>
-<span class="doccomment">/// This is done to avoid a serialize-then-deserialize for API calls like</span>
-<span class="doccomment">/// `Module::new` where the compiled module is immediately going to be used.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The `MmapVec` returned here contains the compiled image and resides in</span>
-<span class="doccomment">/// mmap&#39;d memory for easily switching permissions to executable afterwards.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finish_compile</span>(
-    <span class="ident">translation</span>: <span class="ident">ModuleTranslation</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="kw-2">mut</span> <span class="ident">obj</span>: <span class="ident">Object</span>,
-    <span class="ident">funcs</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedFuncIndex</span>, <span class="ident">FunctionInfo</span><span class="op">&gt;</span>,
-    <span class="ident">trampolines</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Trampoline</span><span class="op">&gt;</span>,
-    <span class="ident">tunables</span>: <span class="kw-2">&amp;</span><span class="ident">Tunables</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">MmapVec</span>, <span class="ident">CompiledModuleInfo</span>)<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">ModuleTranslation</span> {
-        <span class="kw-2">mut</span> <span class="ident">module</span>,
-        <span class="ident">debuginfo</span>,
-        <span class="ident">has_unparsed_debuginfo</span>,
-        <span class="ident">data</span>,
-        <span class="ident">data_align</span>,
-        <span class="ident">passive_data</span>,
+<span class="doccomment">/// Finishes compilation of the `translation` specified, producing the final
+/// compilation artifact and auxiliary information.
+///
+/// This function will consume the final results of compiling a wasm module
+/// and finish the ELF image in-progress as part of `obj` by appending any
+/// compiler-agnostic sections.
+///
+/// The auxiliary `CompiledModuleInfo` structure returned here has also been
+/// serialized into the object returned, but if the caller will quickly
+/// turn-around and invoke `CompiledModule::from_artifacts` after this then the
+/// information can be passed to that method to avoid extra deserialization.
+/// This is done to avoid a serialize-then-deserialize for API calls like
+/// `Module::new` where the compiled module is immediately going to be used.
+///
+/// The `MmapVec` returned here contains the compiled image and resides in
+/// mmap&#39;d memory for easily switching permissions to executable afterwards.
+</span><span class="kw">pub fn </span>finish_compile(
+    translation: ModuleTranslation&lt;<span class="lifetime">&#39;_</span>&gt;,
+    <span class="kw-2">mut </span>obj: Object,
+    funcs: PrimaryMap&lt;DefinedFuncIndex, FunctionInfo&gt;,
+    trampolines: Vec&lt;Trampoline&gt;,
+    tunables: <span class="kw-2">&amp;</span>Tunables,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(MmapVec, CompiledModuleInfo)&gt; {
+    <span class="kw">let </span>ModuleTranslation {
+        <span class="kw-2">mut </span>module,
+        debuginfo,
+        has_unparsed_debuginfo,
+        data,
+        data_align,
+        passive_data,
         ..
-    } <span class="op">=</span> <span class="ident">translation</span>;
+    } = translation;
 
-    <span class="comment">// Place all data from the wasm module into a section which will the</span>
-    <span class="comment">// source of the data later at runtime.</span>
-    <span class="kw">let</span> <span class="ident">data_id</span> <span class="op">=</span> <span class="ident">obj</span>.<span class="ident">add_section</span>(
-        <span class="ident">obj</span>.<span class="ident">segment_name</span>(<span class="ident">StandardSegment::Data</span>).<span class="ident">to_vec</span>(),
-        <span class="ident">ELF_WASM_DATA</span>.<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
-        <span class="ident">SectionKind::ReadOnlyData</span>,
+    <span class="comment">// Place all data from the wasm module into a section which will the
+    // source of the data later at runtime.
+    </span><span class="kw">let </span>data_id = obj.add_section(
+        obj.segment_name(StandardSegment::Data).to_vec(),
+        ELF_WASM_DATA.as_bytes().to_vec(),
+        SectionKind::ReadOnlyData,
     );
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_data_len</span> <span class="op">=</span> <span class="number">0</span>;
-    <span class="kw">for</span> <span class="ident">data</span> <span class="kw">in</span> <span class="ident">data</span> {
-        <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">data_id</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>, <span class="ident">data_align</span>.<span class="ident">unwrap_or</span>(<span class="number">1</span>));
-        <span class="comment">// All data segments are expected to be adjacent to one another, and</span>
-        <span class="comment">// with a higher alignment each data segment needs to be individually</span>
-        <span class="comment">// aligned to make this so, so assert that the offset this was placed at</span>
-        <span class="comment">// is always against the previous segment.</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">total_data_len</span>);
-        <span class="ident">total_data_len</span> <span class="op">+</span><span class="op">=</span> <span class="ident">data</span>.<span class="ident">len</span>();
+    <span class="kw">let </span><span class="kw-2">mut </span>total_data_len = <span class="number">0</span>;
+    <span class="kw">for </span>data <span class="kw">in </span>data {
+        <span class="kw">let </span>offset = obj.append_section_data(data_id, <span class="kw-2">&amp;</span>data, data_align.unwrap_or(<span class="number">1</span>));
+        <span class="comment">// All data segments are expected to be adjacent to one another, and
+        // with a higher alignment each data segment needs to be individually
+        // aligned to make this so, so assert that the offset this was placed at
+        // is always against the previous segment.
+        </span><span class="macro">assert_eq!</span>(offset <span class="kw">as </span>usize, total_data_len);
+        total_data_len += data.len();
     }
-    <span class="kw">for</span> <span class="ident">data</span> <span class="kw">in</span> <span class="ident">passive_data</span>.<span class="ident">iter</span>() {
-        <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">data_id</span>, <span class="ident">data</span>, <span class="number">1</span>);
+    <span class="kw">for </span>data <span class="kw">in </span>passive_data.iter() {
+        obj.append_section_data(data_id, data, <span class="number">1</span>);
     }
 
-    <span class="comment">// If any names are present in the module then the `ELF_NAME_DATA` section</span>
-    <span class="comment">// is create and appended.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func_names</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-    <span class="kw">if</span> <span class="ident">debuginfo</span>.<span class="ident">name_section</span>.<span class="ident">func_names</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
-        <span class="kw">let</span> <span class="ident">name_id</span> <span class="op">=</span> <span class="ident">obj</span>.<span class="ident">add_section</span>(
-            <span class="ident">obj</span>.<span class="ident">segment_name</span>(<span class="ident">StandardSegment::Data</span>).<span class="ident">to_vec</span>(),
-            <span class="ident">ELF_NAME_DATA</span>.<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
-            <span class="ident">SectionKind::ReadOnlyData</span>,
+    <span class="comment">// If any names are present in the module then the `ELF_NAME_DATA` section
+    // is create and appended.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>func_names = Vec::new();
+    <span class="kw">if </span>debuginfo.name_section.func_names.len() &gt; <span class="number">0 </span>{
+        <span class="kw">let </span>name_id = obj.add_section(
+            obj.segment_name(StandardSegment::Data).to_vec(),
+            ELF_NAME_DATA.as_bytes().to_vec(),
+            SectionKind::ReadOnlyData,
         );
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sorted_names</span> <span class="op">=</span> <span class="ident">debuginfo</span>.<span class="ident">name_section</span>.<span class="ident">func_names</span>.<span class="ident">iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="ident">sorted_names</span>.<span class="ident">sort_by_key</span>(<span class="op">|</span>(<span class="ident">idx</span>, <span class="ident">_name</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">idx</span>);
-        <span class="kw">for</span> (<span class="ident">idx</span>, <span class="ident">name</span>) <span class="kw">in</span> <span class="ident">sorted_names</span> {
-            <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">name_id</span>, <span class="ident">name</span>.<span class="ident">as_bytes</span>(), <span class="number">1</span>);
-            <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">u32::try_from</span>(<span class="ident">offset</span>) {
-                <span class="prelude-val">Ok</span>(<span class="ident">offset</span>) =&gt; <span class="ident">offset</span>,
+        <span class="kw">let </span><span class="kw-2">mut </span>sorted_names = debuginfo.name_section.func_names.iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        sorted_names.sort_by_key(|(idx, _name)| <span class="kw-2">*</span>idx);
+        <span class="kw">for </span>(idx, name) <span class="kw">in </span>sorted_names {
+            <span class="kw">let </span>offset = obj.append_section_data(name_id, name.as_bytes(), <span class="number">1</span>);
+            <span class="kw">let </span>offset = <span class="kw">match </span>u32::try_from(offset) {
+                <span class="prelude-val">Ok</span>(offset) =&gt; offset,
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">bail!</span>(<span class="string">&quot;name section too large (&gt; 4gb)&quot;</span>),
             };
-            <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">u32::try_from</span>(<span class="ident">name</span>.<span class="ident">len</span>()).<span class="ident">unwrap</span>();
-            <span class="ident">func_names</span>.<span class="ident">push</span>(<span class="ident">FunctionName</span> {
-                <span class="ident">idx</span>: <span class="kw-2">*</span><span class="ident">idx</span>,
-                <span class="ident">offset</span>,
-                <span class="ident">len</span>,
+            <span class="kw">let </span>len = u32::try_from(name.len()).unwrap();
+            func_names.push(FunctionName {
+                idx: <span class="kw-2">*</span>idx,
+                offset,
+                len,
             });
         }
     }
 
-    <span class="comment">// Update passive data offsets since they&#39;re all located after the other</span>
-    <span class="comment">// data in the module.</span>
-    <span class="kw">for</span> (<span class="kw">_</span>, <span class="ident">range</span>) <span class="kw">in</span> <span class="ident">module</span>.<span class="ident">passive_data_map</span>.<span class="ident">iter_mut</span>() {
-        <span class="ident">range</span>.<span class="ident">start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span>.<span class="ident">checked_add</span>(<span class="ident">total_data_len</span> <span class="kw">as</span> <span class="ident">u32</span>).<span class="ident">unwrap</span>();
-        <span class="ident">range</span>.<span class="ident">end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span>.<span class="ident">checked_add</span>(<span class="ident">total_data_len</span> <span class="kw">as</span> <span class="ident">u32</span>).<span class="ident">unwrap</span>();
+    <span class="comment">// Update passive data offsets since they&#39;re all located after the other
+    // data in the module.
+    </span><span class="kw">for </span>(<span class="kw">_</span>, range) <span class="kw">in </span>module.passive_data_map.iter_mut() {
+        range.start = range.start.checked_add(total_data_len <span class="kw">as </span>u32).unwrap();
+        range.end = range.end.checked_add(total_data_len <span class="kw">as </span>u32).unwrap();
     }
 
-    <span class="comment">// Insert the wasm raw wasm-based debuginfo into the output, if</span>
-    <span class="comment">// requested. Note that this is distinct from the native debuginfo</span>
-    <span class="comment">// possibly generated by the native compiler, hence these sections</span>
-    <span class="comment">// getting wasm-specific names.</span>
-    <span class="kw">if</span> <span class="ident">tunables</span>.<span class="ident">parse_wasm_debuginfo</span> {
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_abbrev</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_addr</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_aranges</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_info</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_line</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_line_str</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_str</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">dwarf</span>.<span class="ident">debug_str_offsets</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">debug_ranges</span>);
-        <span class="ident">push_debug</span>(<span class="kw-2">&amp;mut</span> <span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">debuginfo</span>.<span class="ident">debug_rnglists</span>);
+    <span class="comment">// Insert the wasm raw wasm-based debuginfo into the output, if
+    // requested. Note that this is distinct from the native debuginfo
+    // possibly generated by the native compiler, hence these sections
+    // getting wasm-specific names.
+    </span><span class="kw">if </span>tunables.parse_wasm_debuginfo {
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_abbrev);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_addr);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_aranges);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_info);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_line);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_line_str);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_str);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.dwarf.debug_str_offsets);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.debug_ranges);
+        push_debug(<span class="kw-2">&amp;mut </span>obj, <span class="kw-2">&amp;</span>debuginfo.debug_rnglists);
     }
 
-    <span class="comment">// Encode a `CompiledModuleInfo` structure into the `ELF_WASMTIME_INFO`</span>
-    <span class="comment">// section of this image. This is not necessary when the returned module</span>
-    <span class="comment">// is never serialized to disk, which is also why we return a copy of</span>
-    <span class="comment">// the `CompiledModuleInfo` structure to the caller in case they don&#39;t</span>
-    <span class="comment">// want to deserialize this value immediately afterwards from the</span>
-    <span class="comment">// section. Otherwise, though, this is necessary to reify a `Module` on</span>
-    <span class="comment">// the other side from disk-serialized artifacts in</span>
-    <span class="comment">// `Module::deserialize` (a Wasmtime API).</span>
-    <span class="kw">let</span> <span class="ident">info_id</span> <span class="op">=</span> <span class="ident">obj</span>.<span class="ident">add_section</span>(
-        <span class="ident">obj</span>.<span class="ident">segment_name</span>(<span class="ident">StandardSegment::Data</span>).<span class="ident">to_vec</span>(),
-        <span class="ident">ELF_WASMTIME_INFO</span>.<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
-        <span class="ident">SectionKind::ReadOnlyData</span>,
+    <span class="comment">// Encode a `CompiledModuleInfo` structure into the `ELF_WASMTIME_INFO`
+    // section of this image. This is not necessary when the returned module
+    // is never serialized to disk, which is also why we return a copy of
+    // the `CompiledModuleInfo` structure to the caller in case they don&#39;t
+    // want to deserialize this value immediately afterwards from the
+    // section. Otherwise, though, this is necessary to reify a `Module` on
+    // the other side from disk-serialized artifacts in
+    // `Module::deserialize` (a Wasmtime API).
+    </span><span class="kw">let </span>info_id = obj.add_section(
+        obj.segment_name(StandardSegment::Data).to_vec(),
+        ELF_WASMTIME_INFO.as_bytes().to_vec(),
+        SectionKind::ReadOnlyData,
     );
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-    <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="ident">CompiledModuleInfo</span> {
-        <span class="ident">module</span>,
-        <span class="ident">funcs</span>,
-        <span class="ident">trampolines</span>,
-        <span class="ident">func_names</span>,
-        <span class="ident">meta</span>: <span class="ident">Metadata</span> {
-            <span class="ident">native_debug_info_present</span>: <span class="ident">tunables</span>.<span class="ident">generate_native_debuginfo</span>,
-            <span class="ident">has_unparsed_debuginfo</span>,
-            <span class="ident">code_section_offset</span>: <span class="ident">debuginfo</span>.<span class="ident">wasm_file</span>.<span class="ident">code_section_offset</span>,
-            <span class="ident">has_wasm_debuginfo</span>: <span class="ident">tunables</span>.<span class="ident">parse_wasm_debuginfo</span>,
+    <span class="kw">let </span><span class="kw-2">mut </span>bytes = Vec::new();
+    <span class="kw">let </span>info = CompiledModuleInfo {
+        module,
+        funcs,
+        trampolines,
+        func_names,
+        meta: Metadata {
+            native_debug_info_present: tunables.generate_native_debuginfo,
+            has_unparsed_debuginfo,
+            code_section_offset: debuginfo.wasm_file.code_section_offset,
+            has_wasm_debuginfo: tunables.parse_wasm_debuginfo,
         },
     };
-    <span class="ident">bincode::serialize_into</span>(<span class="kw-2">&amp;mut</span> <span class="ident">bytes</span>, <span class="kw-2">&amp;</span><span class="ident">info</span>)<span class="question-mark">?</span>;
-    <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">info_id</span>, <span class="kw-2">&amp;</span><span class="ident">bytes</span>, <span class="number">1</span>);
+    bincode::serialize_into(<span class="kw-2">&amp;mut </span>bytes, <span class="kw-2">&amp;</span>info)<span class="question-mark">?</span>;
+    obj.append_section_data(info_id, <span class="kw-2">&amp;</span>bytes, <span class="number">1</span>);
 
-    <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="ident">mmap_vec_from_obj</span>(<span class="ident">obj</span>)<span class="question-mark">?</span>, <span class="ident">info</span>));
+    <span class="kw">return </span><span class="prelude-val">Ok</span>((mmap_vec_from_obj(obj)<span class="question-mark">?</span>, info));
 
-    <span class="kw">fn</span> <span class="ident">push_debug</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">obj</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Object</span>, <span class="ident">section</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>)
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">gimli::Section</span><span class="op">&lt;</span><span class="ident">gimli::EndianSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">gimli::LittleEndian</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>push_debug&lt;<span class="lifetime">&#39;a</span>, T&gt;(obj: <span class="kw-2">&amp;mut </span>Object, section: <span class="kw-2">&amp;</span>T)
+    <span class="kw">where
+        </span>T: gimli::Section&lt;gimli::EndianSlice&lt;<span class="lifetime">&#39;a</span>, gimli::LittleEndian&gt;&gt;,
     {
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">section</span>.<span class="ident">reader</span>().<span class="ident">slice</span>();
-        <span class="kw">if</span> <span class="ident">data</span>.<span class="ident">is_empty</span>() {
+        <span class="kw">let </span>data = section.reader().slice();
+        <span class="kw">if </span>data.is_empty() {
             <span class="kw">return</span>;
         }
-        <span class="kw">let</span> <span class="ident">section_id</span> <span class="op">=</span> <span class="ident">obj</span>.<span class="ident">add_section</span>(
-            <span class="ident">obj</span>.<span class="ident">segment_name</span>(<span class="ident">StandardSegment::Debug</span>).<span class="ident">to_vec</span>(),
-            <span class="ident">wasm_section_name</span>(<span class="ident">T::id</span>()).<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
-            <span class="ident">SectionKind::Debug</span>,
+        <span class="kw">let </span>section_id = obj.add_section(
+            obj.segment_name(StandardSegment::Debug).to_vec(),
+            wasm_section_name(T::id()).as_bytes().to_vec(),
+            SectionKind::Debug,
         );
-        <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">section_id</span>, <span class="ident">data</span>, <span class="number">1</span>);
+        obj.append_section_data(section_id, data, <span class="number">1</span>);
     }
 }
 
-<span class="doccomment">/// Creates a new `MmapVec` from serializing the specified `obj`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The returned `MmapVec` will contain the serialized version of `obj` and</span>
-<span class="doccomment">/// is sized appropriately to the exact size of the object serialized.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mmap_vec_from_obj</span>(<span class="ident">obj</span>: <span class="ident">Object</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MmapVec</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ObjectMmap::default</span>();
-    <span class="kw">return</span> <span class="kw">match</span> <span class="ident">obj</span>.<span class="ident">emit</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>) {
+<span class="doccomment">/// Creates a new `MmapVec` from serializing the specified `obj`.
+///
+/// The returned `MmapVec` will contain the serialized version of `obj` and
+/// is sized appropriately to the exact size of the object serialized.
+</span><span class="kw">pub fn </span>mmap_vec_from_obj(obj: Object) -&gt; <span class="prelude-ty">Result</span>&lt;MmapVec&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = ObjectMmap::default();
+    <span class="kw">return match </span>obj.emit(<span class="kw-2">&amp;mut </span>result) {
         <span class="prelude-val">Ok</span>(()) =&gt; {
-            <span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">mmap</span>.<span class="ident">is_some</span>(), <span class="string">&quot;no reserve&quot;</span>);
-            <span class="kw">let</span> <span class="ident">mmap</span> <span class="op">=</span> <span class="ident">result</span>.<span class="ident">mmap</span>.<span class="ident">expect</span>(<span class="string">&quot;reserve not called&quot;</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">mmap</span>.<span class="ident">len</span>(), <span class="ident">result</span>.<span class="ident">len</span>);
-            <span class="prelude-val">Ok</span>(<span class="ident">mmap</span>)
+            <span class="macro">assert!</span>(result.mmap.is_some(), <span class="string">&quot;no reserve&quot;</span>);
+            <span class="kw">let </span>mmap = result.mmap.expect(<span class="string">&quot;reserve not called&quot;</span>);
+            <span class="macro">assert_eq!</span>(mmap.len(), result.len);
+            <span class="prelude-val">Ok</span>(mmap)
         }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">match</span> <span class="ident">result</span>.<span class="ident">err</span>.<span class="ident">take</span>() {
-            <span class="prelude-val">Some</span>(<span class="ident">original</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">original</span>.<span class="ident">context</span>(<span class="ident">e</span>)),
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">e</span>.<span class="ident">into</span>()),
+        <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">match </span>result.err.take() {
+            <span class="prelude-val">Some</span>(original) =&gt; <span class="prelude-val">Err</span>(original.context(e)),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(e.into()),
         },
     };
 
-    <span class="doccomment">/// Helper struct to implement the `WritableBuffer` trait from the `object`</span>
-    <span class="doccomment">/// crate.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This enables writing an object directly into an mmap&#39;d memory so it&#39;s</span>
-    <span class="doccomment">/// immediately usable for execution after compilation. This implementation</span>
-    <span class="doccomment">/// relies on a call to `reserve` happening once up front with all the needed</span>
-    <span class="doccomment">/// data, and the mmap internally does not attempt to grow afterwards.</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">ObjectMmap</span> {
-        <span class="ident">mmap</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MmapVec</span><span class="op">&gt;</span>,
-        <span class="ident">len</span>: <span class="ident">usize</span>,
-        <span class="ident">err</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Helper struct to implement the `WritableBuffer` trait from the `object`
+    /// crate.
+    ///
+    /// This enables writing an object directly into an mmap&#39;d memory so it&#39;s
+    /// immediately usable for execution after compilation. This implementation
+    /// relies on a call to `reserve` happening once up front with all the needed
+    /// data, and the mmap internally does not attempt to grow afterwards.
+    </span><span class="attribute">#[derive(Default)]
+    </span><span class="kw">struct </span>ObjectMmap {
+        mmap: <span class="prelude-ty">Option</span>&lt;MmapVec&gt;,
+        len: usize,
+        err: <span class="prelude-ty">Option</span>&lt;Error&gt;,
     }
 
-    <span class="kw">impl</span> <span class="ident">WritableBuffer</span> <span class="kw">for</span> <span class="ident">ObjectMmap</span> {
-        <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-            <span class="self">self</span>.<span class="ident">len</span>
+    <span class="kw">impl </span>WritableBuffer <span class="kw">for </span>ObjectMmap {
+        <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+            <span class="self">self</span>.len
         }
 
-        <span class="kw">fn</span> <span class="ident">reserve</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">additional</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span> {
-            <span class="macro">assert!</span>(<span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">is_none</span>(), <span class="string">&quot;cannot reserve twice&quot;</span>);
-            <span class="self">self</span>.<span class="ident">mmap</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">MmapVec::with_capacity</span>(<span class="ident">additional</span>) {
-                <span class="prelude-val">Ok</span>(<span class="ident">mmap</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">mmap</span>),
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-                    <span class="self">self</span>.<span class="ident">err</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">e</span>);
-                    <span class="kw">return</span> <span class="prelude-val">Err</span>(());
+        <span class="kw">fn </span>reserve(<span class="kw-2">&amp;mut </span><span class="self">self</span>, additional: usize) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
+            <span class="macro">assert!</span>(<span class="self">self</span>.mmap.is_none(), <span class="string">&quot;cannot reserve twice&quot;</span>);
+            <span class="self">self</span>.mmap = <span class="kw">match </span>MmapVec::with_capacity(additional) {
+                <span class="prelude-val">Ok</span>(mmap) =&gt; <span class="prelude-val">Some</span>(mmap),
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="self">self</span>.err = <span class="prelude-val">Some</span>(e);
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(());
                 }
             };
             <span class="prelude-val">Ok</span>(())
         }
 
-        <span class="kw">fn</span> <span class="ident">resize</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">new_len</span>: <span class="ident">usize</span>) {
-            <span class="comment">// Resizing always appends 0 bytes and since new mmaps start out as 0</span>
-            <span class="comment">// bytes we don&#39;t actually need to do anything as part of this other</span>
-            <span class="comment">// than update our own length.</span>
-            <span class="kw">if</span> <span class="ident">new_len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">len</span> {
+        <span class="kw">fn </span>resize(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new_len: usize) {
+            <span class="comment">// Resizing always appends 0 bytes and since new mmaps start out as 0
+            // bytes we don&#39;t actually need to do anything as part of this other
+            // than update our own length.
+            </span><span class="kw">if </span>new_len &lt;= <span class="self">self</span>.len {
                 <span class="kw">return</span>;
             }
-            <span class="self">self</span>.<span class="ident">len</span> <span class="op">=</span> <span class="ident">new_len</span>;
+            <span class="self">self</span>.len = new_len;
         }
 
-        <span class="kw">fn</span> <span class="ident">write_bytes</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) {
-            <span class="kw">let</span> <span class="ident">mmap</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">as_mut</span>().<span class="ident">expect</span>(<span class="string">&quot;write before reserve&quot;</span>);
-            <span class="ident">mmap</span>[<span class="self">self</span>.<span class="ident">len</span>..][..<span class="ident">val</span>.<span class="ident">len</span>()].<span class="ident">copy_from_slice</span>(<span class="ident">val</span>);
-            <span class="self">self</span>.<span class="ident">len</span> <span class="op">+</span><span class="op">=</span> <span class="ident">val</span>.<span class="ident">len</span>();
+        <span class="kw">fn </span>write_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="kw-2">&amp;</span>[u8]) {
+            <span class="kw">let </span>mmap = <span class="self">self</span>.mmap.as_mut().expect(<span class="string">&quot;write before reserve&quot;</span>);
+            mmap[<span class="self">self</span>.len..][..val.len()].copy_from_slice(val);
+            <span class="self">self</span>.len += val.len();
         }
     }
 }
 
-<span class="doccomment">/// This is intended to mirror the type tables in `wasmtime_environ`, except that</span>
-<span class="doccomment">/// it doesn&#39;t store the native signatures which are no longer needed past compilation.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">missing_docs</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TypeTables</span> {
-    <span class="kw">pub</span> <span class="ident">wasm_signatures</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">SignatureIndex</span>, <span class="ident">WasmFuncType</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">module_signatures</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">ModuleTypeIndex</span>, <span class="ident">ModuleSignature</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">instance_signatures</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">InstanceTypeIndex</span>, <span class="ident">InstanceSignature</span><span class="op">&gt;</span>,
+<span class="doccomment">/// This is intended to mirror the type tables in `wasmtime_environ`, except that
+/// it doesn&#39;t store the native signatures which are no longer needed past compilation.
+</span><span class="attribute">#[derive(Serialize, Deserialize)]
+#[allow(missing_docs)]
+</span><span class="kw">pub struct </span>TypeTables {
+    <span class="kw">pub </span>wasm_signatures: PrimaryMap&lt;SignatureIndex, WasmFuncType&gt;,
+    <span class="kw">pub </span>module_signatures: PrimaryMap&lt;ModuleTypeIndex, ModuleSignature&gt;,
+    <span class="kw">pub </span>instance_signatures: PrimaryMap&lt;InstanceTypeIndex, InstanceSignature&gt;,
 }
 
-<span class="doccomment">/// A compiled wasm module, ready to be instantiated.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CompiledModule</span> {
-    <span class="ident">wasm_data</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-    <span class="ident">address_map_data</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-    <span class="ident">trap_data</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-    <span class="ident">module</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Module</span><span class="op">&gt;</span>,
-    <span class="ident">funcs</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedFuncIndex</span>, <span class="ident">FunctionInfo</span><span class="op">&gt;</span>,
-    <span class="ident">trampolines</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Trampoline</span><span class="op">&gt;</span>,
-    <span class="ident">meta</span>: <span class="ident">Metadata</span>,
-    <span class="ident">code</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-    <span class="ident">code_memory</span>: <span class="ident">CodeMemory</span>,
-    <span class="ident">dbg_jit_registration</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">GdbJitImageRegistration</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// A unique ID used to register this module with the engine.</span>
-    <span class="ident">unique_id</span>: <span class="ident">CompiledModuleId</span>,
-    <span class="ident">func_names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FunctionName</span><span class="op">&gt;</span>,
-    <span class="ident">func_name_data</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A compiled wasm module, ready to be instantiated.
+</span><span class="kw">pub struct </span>CompiledModule {
+    wasm_data: Range&lt;usize&gt;,
+    address_map_data: Range&lt;usize&gt;,
+    trap_data: Range&lt;usize&gt;,
+    module: Arc&lt;Module&gt;,
+    funcs: PrimaryMap&lt;DefinedFuncIndex, FunctionInfo&gt;,
+    trampolines: Vec&lt;Trampoline&gt;,
+    meta: Metadata,
+    code: Range&lt;usize&gt;,
+    code_memory: CodeMemory,
+    dbg_jit_registration: <span class="prelude-ty">Option</span>&lt;GdbJitImageRegistration&gt;,
+    <span class="doccomment">/// A unique ID used to register this module with the engine.
+    </span>unique_id: CompiledModuleId,
+    func_names: Vec&lt;FunctionName&gt;,
+    func_name_data: Range&lt;usize&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">CompiledModule</span> {
-    <span class="doccomment">/// Creates `CompiledModule` directly from a precompiled artifact.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The `mmap` argument is expecte to be the result of a previous call to</span>
-    <span class="doccomment">/// `finish_compile` above. This is an ELF image, at this time, which</span>
-    <span class="doccomment">/// contains all necessary information to create a `CompiledModule` from a</span>
-    <span class="doccomment">/// compilation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method also takes `info`, an optionally-provided deserialization of</span>
-    <span class="doccomment">/// the artifacts&#39; compilation metadata section. If this information is not</span>
-    <span class="doccomment">/// provided (e.g. it&#39;s set to `None`) then the information will be</span>
-    <span class="doccomment">/// deserialized from the image of the compilation artifacts. Otherwise it</span>
-    <span class="doccomment">/// will be assumed to be what would otherwise happen if the section were to</span>
-    <span class="doccomment">/// be deserialized.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The `profiler` argument here is used to inform JIT profiling runtimes</span>
-    <span class="doccomment">/// about new code that is loaded.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_artifacts</span>(
-        <span class="ident">mmap</span>: <span class="ident">MmapVec</span>,
-        <span class="ident">info</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CompiledModuleInfo</span><span class="op">&gt;</span>,
-        <span class="ident">profiler</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ProfilingAgent</span>,
-        <span class="ident">id_allocator</span>: <span class="kw-2">&amp;</span><span class="ident">CompiledModuleIdAllocator</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// Transfer ownership of `obj` to a `CodeMemory` object which will</span>
-        <span class="comment">// manage permissions, such as the executable bit. Once it&#39;s located</span>
-        <span class="comment">// there we also publish it for being able to execute. Note that this</span>
-        <span class="comment">// step will also resolve pending relocations in the compiled image.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">code_memory</span> <span class="op">=</span> <span class="ident">CodeMemory::new</span>(<span class="ident">mmap</span>);
-        <span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">code_memory</span>
-            .<span class="ident">publish</span>()
-            .<span class="ident">context</span>(<span class="string">&quot;failed to publish code memory&quot;</span>)<span class="question-mark">?</span>;
+<span class="kw">impl </span>CompiledModule {
+    <span class="doccomment">/// Creates `CompiledModule` directly from a precompiled artifact.
+    ///
+    /// The `mmap` argument is expecte to be the result of a previous call to
+    /// `finish_compile` above. This is an ELF image, at this time, which
+    /// contains all necessary information to create a `CompiledModule` from a
+    /// compilation.
+    ///
+    /// This method also takes `info`, an optionally-provided deserialization of
+    /// the artifacts&#39; compilation metadata section. If this information is not
+    /// provided (e.g. it&#39;s set to `None`) then the information will be
+    /// deserialized from the image of the compilation artifacts. Otherwise it
+    /// will be assumed to be what would otherwise happen if the section were to
+    /// be deserialized.
+    ///
+    /// The `profiler` argument here is used to inform JIT profiling runtimes
+    /// about new code that is loaded.
+    </span><span class="kw">pub fn </span>from_artifacts(
+        mmap: MmapVec,
+        info: <span class="prelude-ty">Option</span>&lt;CompiledModuleInfo&gt;,
+        profiler: <span class="kw-2">&amp;</span><span class="kw">dyn </span>ProfilingAgent,
+        id_allocator: <span class="kw-2">&amp;</span>CompiledModuleIdAllocator,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
+        <span class="comment">// Transfer ownership of `obj` to a `CodeMemory` object which will
+        // manage permissions, such as the executable bit. Once it&#39;s located
+        // there we also publish it for being able to execute. Note that this
+        // step will also resolve pending relocations in the compiled image.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>code_memory = CodeMemory::new(mmap);
+        <span class="kw">let </span>code = code_memory
+            .publish()
+            .context(<span class="string">&quot;failed to publish code memory&quot;</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">section</span> <span class="op">=</span> <span class="op">|</span><span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">|</span> {
-            <span class="ident">code</span>.<span class="ident">obj</span>
-                .<span class="ident">section_by_name</span>(<span class="ident">name</span>)
-                .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">data</span>().<span class="ident">ok</span>())
-                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">anyhow!</span>(<span class="string">&quot;missing section `{}` in compilation artifacts&quot;</span>, <span class="ident">name</span>))
+        <span class="kw">let </span>section = |name: <span class="kw-2">&amp;</span>str| {
+            code.obj
+                .section_by_name(name)
+                .and_then(|s| s.data().ok())
+                .ok_or_else(|| <span class="macro">anyhow!</span>(<span class="string">&quot;missing section `{}` in compilation artifacts&quot;</span>, name))
         };
 
-        <span class="comment">// Acquire the `CompiledModuleInfo`, either because it was passed in or</span>
-        <span class="comment">// by deserializing it from the compiliation image.</span>
-        <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">info</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">info</span>) =&gt; <span class="ident">info</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="ident">bincode::deserialize</span>(<span class="ident">section</span>(<span class="ident">ELF_WASMTIME_INFO</span>)<span class="question-mark">?</span>)
-                .<span class="ident">context</span>(<span class="string">&quot;failed to deserialize wasmtime module info&quot;</span>)<span class="question-mark">?</span>,
+        <span class="comment">// Acquire the `CompiledModuleInfo`, either because it was passed in or
+        // by deserializing it from the compiliation image.
+        </span><span class="kw">let </span>info = <span class="kw">match </span>info {
+            <span class="prelude-val">Some</span>(info) =&gt; info,
+            <span class="prelude-val">None </span>=&gt; bincode::deserialize(section(ELF_WASMTIME_INFO)<span class="question-mark">?</span>)
+                .context(<span class="string">&quot;failed to deserialize wasmtime module info&quot;</span>)<span class="question-mark">?</span>,
         };
 
-        <span class="kw">let</span> <span class="ident">func_name_data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">code</span>
-            .<span class="ident">obj</span>
-            .<span class="ident">section_by_name</span>(<span class="ident">ELF_NAME_DATA</span>)
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">data</span>().<span class="ident">ok</span>())
+        <span class="kw">let </span>func_name_data = <span class="kw">match </span>code
+            .obj
+            .section_by_name(ELF_NAME_DATA)
+            .and_then(|s| s.data().ok())
         {
-            <span class="prelude-val">Some</span>(<span class="ident">data</span>) =&gt; <span class="ident">subslice_range</span>(<span class="ident">data</span>, <span class="ident">code</span>.<span class="ident">mmap</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="number">0</span>..<span class="number">0</span>,
+            <span class="prelude-val">Some</span>(data) =&gt; subslice_range(data, code.mmap),
+            <span class="prelude-val">None </span>=&gt; <span class="number">0</span>..<span class="number">0</span>,
         };
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="self">Self</span> {
-            <span class="ident">module</span>: <span class="ident">Arc::new</span>(<span class="ident">info</span>.<span class="ident">module</span>),
-            <span class="ident">funcs</span>: <span class="ident">info</span>.<span class="ident">funcs</span>,
-            <span class="ident">trampolines</span>: <span class="ident">info</span>.<span class="ident">trampolines</span>,
-            <span class="ident">wasm_data</span>: <span class="ident">subslice_range</span>(<span class="ident">section</span>(<span class="ident">ELF_WASM_DATA</span>)<span class="question-mark">?</span>, <span class="ident">code</span>.<span class="ident">mmap</span>),
-            <span class="ident">address_map_data</span>: <span class="ident">code</span>
-                .<span class="ident">obj</span>
-                .<span class="ident">section_by_name</span>(<span class="ident">ELF_WASMTIME_ADDRMAP</span>)
-                .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">data</span>().<span class="ident">ok</span>())
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">slice</span><span class="op">|</span> <span class="ident">subslice_range</span>(<span class="ident">slice</span>, <span class="ident">code</span>.<span class="ident">mmap</span>))
-                .<span class="ident">unwrap_or</span>(<span class="number">0</span>..<span class="number">0</span>),
-            <span class="ident">trap_data</span>: <span class="ident">subslice_range</span>(<span class="ident">section</span>(<span class="ident">ELF_WASMTIME_TRAPS</span>)<span class="question-mark">?</span>, <span class="ident">code</span>.<span class="ident">mmap</span>),
-            <span class="ident">code</span>: <span class="ident">subslice_range</span>(<span class="ident">code</span>.<span class="ident">text</span>, <span class="ident">code</span>.<span class="ident">mmap</span>),
-            <span class="ident">dbg_jit_registration</span>: <span class="prelude-val">None</span>,
-            <span class="ident">code_memory</span>,
-            <span class="ident">meta</span>: <span class="ident">info</span>.<span class="ident">meta</span>,
-            <span class="ident">unique_id</span>: <span class="ident">id_allocator</span>.<span class="ident">alloc</span>(),
-            <span class="ident">func_names</span>: <span class="ident">info</span>.<span class="ident">func_names</span>,
-            <span class="ident">func_name_data</span>,
+        <span class="kw">let </span><span class="kw-2">mut </span>ret = <span class="self">Self </span>{
+            module: Arc::new(info.module),
+            funcs: info.funcs,
+            trampolines: info.trampolines,
+            wasm_data: subslice_range(section(ELF_WASM_DATA)<span class="question-mark">?</span>, code.mmap),
+            address_map_data: code
+                .obj
+                .section_by_name(ELF_WASMTIME_ADDRMAP)
+                .and_then(|s| s.data().ok())
+                .map(|slice| subslice_range(slice, code.mmap))
+                .unwrap_or(<span class="number">0</span>..<span class="number">0</span>),
+            trap_data: subslice_range(section(ELF_WASMTIME_TRAPS)<span class="question-mark">?</span>, code.mmap),
+            code: subslice_range(code.text, code.mmap),
+            dbg_jit_registration: <span class="prelude-val">None</span>,
+            code_memory,
+            meta: info.meta,
+            unique_id: id_allocator.alloc(),
+            func_names: info.func_names,
+            func_name_data,
         };
-        <span class="ident">ret</span>.<span class="ident">register_debug_and_profiling</span>(<span class="ident">profiler</span>)<span class="question-mark">?</span>;
+        ret.register_debug_and_profiling(profiler)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">ret</span>))
+        <span class="prelude-val">Ok</span>(Arc::new(ret))
     }
 
-    <span class="kw">fn</span> <span class="ident">register_debug_and_profiling</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">profiler</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ProfilingAgent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="comment">// Register GDB JIT images; initialize profiler and load the wasm module.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">meta</span>.<span class="ident">native_debug_info_present</span> {
-            <span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">code</span>();
-            <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">create_gdbjit_image</span>(<span class="self">self</span>.<span class="ident">mmap</span>().<span class="ident">to_vec</span>(), (<span class="ident">code</span>.<span class="ident">as_ptr</span>(), <span class="ident">code</span>.<span class="ident">len</span>()))
-                .<span class="ident">map_err</span>(<span class="ident">SetupError::DebugInfo</span>)<span class="question-mark">?</span>;
-            <span class="ident">profiler</span>.<span class="ident">module_load</span>(<span class="self">self</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>));
-            <span class="kw">let</span> <span class="ident">reg</span> <span class="op">=</span> <span class="ident">GdbJitImageRegistration::register</span>(<span class="ident">bytes</span>);
-            <span class="self">self</span>.<span class="ident">dbg_jit_registration</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">reg</span>);
-        } <span class="kw">else</span> {
-            <span class="ident">profiler</span>.<span class="ident">module_load</span>(<span class="self">self</span>, <span class="prelude-val">None</span>);
+    <span class="kw">fn </span>register_debug_and_profiling(<span class="kw-2">&amp;mut </span><span class="self">self</span>, profiler: <span class="kw-2">&amp;</span><span class="kw">dyn </span>ProfilingAgent) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="comment">// Register GDB JIT images; initialize profiler and load the wasm module.
+        </span><span class="kw">if </span><span class="self">self</span>.meta.native_debug_info_present {
+            <span class="kw">let </span>code = <span class="self">self</span>.code();
+            <span class="kw">let </span>bytes = create_gdbjit_image(<span class="self">self</span>.mmap().to_vec(), (code.as_ptr(), code.len()))
+                .map_err(SetupError::DebugInfo)<span class="question-mark">?</span>;
+            profiler.module_load(<span class="self">self</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>bytes));
+            <span class="kw">let </span>reg = GdbJitImageRegistration::register(bytes);
+            <span class="self">self</span>.dbg_jit_registration = <span class="prelude-val">Some</span>(reg);
+        } <span class="kw">else </span>{
+            profiler.module_load(<span class="self">self</span>, <span class="prelude-val">None</span>);
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Get this module&#39;s unique ID. It is unique with respect to a</span>
-    <span class="doccomment">/// single allocator (which is ordinarily held on a Wasm engine).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unique_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">CompiledModuleId</span> {
-        <span class="self">self</span>.<span class="ident">unique_id</span>
+    <span class="doccomment">/// Get this module&#39;s unique ID. It is unique with respect to a
+    /// single allocator (which is ordinarily held on a Wasm engine).
+    </span><span class="kw">pub fn </span>unique_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CompiledModuleId {
+        <span class="self">self</span>.unique_id
     }
 
-    <span class="doccomment">/// Returns the underlying memory which contains the compiled module&#39;s</span>
-    <span class="doccomment">/// image.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mmap</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">MmapVec</span> {
-        <span class="self">self</span>.<span class="ident">code_memory</span>.<span class="ident">mmap</span>()
+    <span class="doccomment">/// Returns the underlying memory which contains the compiled module&#39;s
+    /// image.
+    </span><span class="kw">pub fn </span>mmap(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MmapVec {
+        <span class="self">self</span>.code_memory.mmap()
     }
 
-    <span class="doccomment">/// Returns the concatenated list of all data associated with this wasm</span>
-    <span class="doccomment">/// module.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is used for initialization of memories and all data ranges stored</span>
-    <span class="doccomment">/// in a `Module` are relative to the slice returned here.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wasm_data</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>()[<span class="self">self</span>.<span class="ident">wasm_data</span>.<span class="ident">clone</span>()]
+    <span class="doccomment">/// Returns the concatenated list of all data associated with this wasm
+    /// module.
+    ///
+    /// This is used for initialization of memories and all data ranges stored
+    /// in a `Module` are relative to the slice returned here.
+    </span><span class="kw">pub fn </span>wasm_data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.mmap()[<span class="self">self</span>.wasm_data.clone()]
     }
 
-    <span class="doccomment">/// Returns the encoded address map section used to pass to</span>
-    <span class="doccomment">/// `wasmtime_environ::lookup_file_pos`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">address_map_data</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>()[<span class="self">self</span>.<span class="ident">address_map_data</span>.<span class="ident">clone</span>()]
+    <span class="doccomment">/// Returns the encoded address map section used to pass to
+    /// `wasmtime_environ::lookup_file_pos`.
+    </span><span class="kw">pub fn </span>address_map_data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.mmap()[<span class="self">self</span>.address_map_data.clone()]
     }
 
-    <span class="doccomment">/// Returns the encoded trap information for this compiled image.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more information see `wasmtime_environ::trap_encoding`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">trap_data</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>()[<span class="self">self</span>.<span class="ident">trap_data</span>.<span class="ident">clone</span>()]
+    <span class="doccomment">/// Returns the encoded trap information for this compiled image.
+    ///
+    /// For more information see `wasmtime_environ::trap_encoding`.
+    </span><span class="kw">pub fn </span>trap_data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.mmap()[<span class="self">self</span>.trap_data.clone()]
     }
 
-    <span class="doccomment">/// Returns the text section of the ELF image for this compiled module.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This memory should have the read/execute permissions.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">code</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>()[<span class="self">self</span>.<span class="ident">code</span>.<span class="ident">clone</span>()]
+    <span class="doccomment">/// Returns the text section of the ELF image for this compiled module.
+    ///
+    /// This memory should have the read/execute permissions.
+    </span><span class="kw">pub fn </span>code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.mmap()[<span class="self">self</span>.code.clone()]
     }
 
-    <span class="doccomment">/// Return a reference-counting pointer to a module.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">module</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Module</span><span class="op">&gt;</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">module</span>
+    <span class="doccomment">/// Return a reference-counting pointer to a module.
+    </span><span class="kw">pub fn </span>module(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;Module&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.module
     }
 
-    <span class="doccomment">/// Returns the `FunctionInfo` map for all defined functions.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">functions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedFuncIndex</span>, <span class="ident">FunctionInfo</span><span class="op">&gt;</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">funcs</span>
+    <span class="doccomment">/// Returns the `FunctionInfo` map for all defined functions.
+    </span><span class="kw">pub fn </span>functions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>PrimaryMap&lt;DefinedFuncIndex, FunctionInfo&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.funcs
     }
 
-    <span class="doccomment">/// Looks up the `name` section name for the function index `idx`, if one</span>
-    <span class="doccomment">/// was specified in the original wasm module.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">func_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">idx</span>: <span class="ident">FuncIndex</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
-        <span class="comment">// Find entry for `idx`, if present.</span>
-        <span class="kw">let</span> <span class="ident">i</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">func_names</span>.<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">idx</span>, <span class="op">|</span><span class="ident">n</span><span class="op">|</span> <span class="ident">n</span>.<span class="ident">idx</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">func_names</span>[<span class="ident">i</span>];
+    <span class="doccomment">/// Looks up the `name` section name for the function index `idx`, if one
+    /// was specified in the original wasm module.
+    </span><span class="kw">pub fn </span>func_name(<span class="kw-2">&amp;</span><span class="self">self</span>, idx: FuncIndex) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt; {
+        <span class="comment">// Find entry for `idx`, if present.
+        </span><span class="kw">let </span>i = <span class="self">self</span>.func_names.binary_search_by_key(<span class="kw-2">&amp;</span>idx, |n| n.idx).ok()<span class="question-mark">?</span>;
+        <span class="kw">let </span>name = <span class="kw-2">&amp;</span><span class="self">self</span>.func_names[i];
 
-        <span class="comment">// Here we `unwrap` the `from_utf8` but this can theoretically be a</span>
-        <span class="comment">// `from_utf8_unchecked` if we really wanted since this section is</span>
-        <span class="comment">// guaranteed to only have valid utf-8 data. Until it&#39;s a problem it&#39;s</span>
-        <span class="comment">// probably best to double-check this though.</span>
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>()[<span class="self">self</span>.<span class="ident">func_name_data</span>.<span class="ident">clone</span>()];
-        <span class="prelude-val">Some</span>(<span class="ident">str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>[<span class="ident">name</span>.<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">usize</span>..][..<span class="ident">name</span>.<span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span>]).<span class="ident">unwrap</span>())
+        <span class="comment">// Here we `unwrap` the `from_utf8` but this can theoretically be a
+        // `from_utf8_unchecked` if we really wanted since this section is
+        // guaranteed to only have valid utf-8 data. Until it&#39;s a problem it&#39;s
+        // probably best to double-check this though.
+        </span><span class="kw">let </span>data = <span class="kw-2">&amp;</span><span class="self">self</span>.mmap()[<span class="self">self</span>.func_name_data.clone()];
+        <span class="prelude-val">Some</span>(str::from_utf8(<span class="kw-2">&amp;</span>data[name.offset <span class="kw">as </span>usize..][..name.len <span class="kw">as </span>usize]).unwrap())
     }
 
-    <span class="doccomment">/// Return a reference to a mutable module (if possible).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">module_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">Module</span><span class="op">&gt;</span> {
-        <span class="ident">Arc::get_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">module</span>)
+    <span class="doccomment">/// Return a reference to a mutable module (if possible).
+    </span><span class="kw">pub fn </span>module_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>Module&gt; {
+        Arc::get_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>.module)
     }
 
-    <span class="doccomment">/// Returns the map of all finished JIT functions compiled for this module</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finished_functions</span>(
+    <span class="doccomment">/// Returns the map of all finished JIT functions compiled for this module
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>finished_functions(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="kw">impl</span> <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">DefinedFuncIndex</span>, <span class="kw-2">*const</span> [<span class="ident">VMFunctionBody</span>])<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;_</span> {
-        <span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">code</span>();
-        <span class="self">self</span>.<span class="ident">funcs</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">i</span>, <span class="ident">info</span>)<span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">code</span>[<span class="ident">info</span>.<span class="ident">start</span> <span class="kw">as</span> <span class="ident">usize</span>..][..<span class="ident">info</span>.<span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>];
+    ) -&gt; <span class="kw">impl </span>ExactSizeIterator&lt;Item = (DefinedFuncIndex, <span class="kw-2">*const </span>[VMFunctionBody])&gt; + <span class="lifetime">&#39;_ </span>{
+        <span class="kw">let </span>code = <span class="self">self</span>.code();
+        <span class="self">self</span>.funcs.iter().map(<span class="kw">move </span>|(i, info)| {
+            <span class="kw">let </span>func = <span class="kw-2">&amp;</span>code[info.start <span class="kw">as </span>usize..][..info.length <span class="kw">as </span>usize];
             (
-                <span class="ident">i</span>,
-                <span class="ident">std::ptr::slice_from_raw_parts</span>(<span class="ident">func</span>.<span class="ident">as_ptr</span>().<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">VMFunctionBody</span><span class="op">&gt;</span>(), <span class="ident">func</span>.<span class="ident">len</span>()),
+                i,
+                std::ptr::slice_from_raw_parts(func.as_ptr().cast::&lt;VMFunctionBody&gt;(), func.len()),
             )
         })
     }
 
-    <span class="doccomment">/// Returns the per-signature trampolines for this module.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">trampolines</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">SignatureIndex</span>, <span class="ident">VMTrampoline</span>, <span class="ident">usize</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;_</span> {
-        <span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">code</span>();
-        <span class="self">self</span>.<span class="ident">trampolines</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">info</span><span class="op">|</span> {
+    <span class="doccomment">/// Returns the per-signature trampolines for this module.
+    </span><span class="kw">pub fn </span>trampolines(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (SignatureIndex, VMTrampoline, usize)&gt; + <span class="lifetime">&#39;_ </span>{
+        <span class="kw">let </span>code = <span class="self">self</span>.code();
+        <span class="self">self</span>.trampolines.iter().map(<span class="kw">move </span>|info| {
             (
-                <span class="ident">info</span>.<span class="ident">signature</span>,
-                <span class="kw">unsafe</span> {
-                    <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">code</span>[<span class="ident">info</span>.<span class="ident">start</span> <span class="kw">as</span> <span class="ident">usize</span>];
-                    <span class="ident">std::mem::transmute</span>::<span class="op">&lt;</span><span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">VMTrampoline</span><span class="op">&gt;</span>(<span class="ident">ptr</span>)
+                info.signature,
+                <span class="kw">unsafe </span>{
+                    <span class="kw">let </span>ptr = <span class="kw-2">&amp;</span>code[info.start <span class="kw">as </span>usize];
+                    std::mem::transmute::&lt;<span class="kw-2">*const </span>u8, VMTrampoline&gt;(ptr)
                 },
-                <span class="ident">info</span>.<span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>,
+                info.length <span class="kw">as </span>usize,
             )
         })
     }
 
-    <span class="doccomment">/// Returns the stack map information for all functions defined in this</span>
-    <span class="doccomment">/// module.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The iterator returned iterates over the span of the compiled function in</span>
-    <span class="doccomment">/// memory with the stack maps associated with those bytes.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stack_maps</span>(
+    <span class="doccomment">/// Returns the stack map information for all functions defined in this
+    /// module.
+    ///
+    /// The iterator returned iterates over the span of the compiled function in
+    /// memory with the stack maps associated with those bytes.
+    </span><span class="kw">pub fn </span>stack_maps(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">*const</span> [<span class="ident">VMFunctionBody</span>], <span class="kw-2">&amp;</span>[<span class="ident">StackMapInformation</span>])<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">finished_functions</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">f</span>)<span class="op">|</span> <span class="ident">f</span>)
-            .<span class="ident">zip</span>(<span class="self">self</span>.<span class="ident">funcs</span>.<span class="ident">values</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">stack_maps</span>.<span class="ident">as_slice</span>()))
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">*const </span>[VMFunctionBody], <span class="kw-2">&amp;</span>[StackMapInformation])&gt; {
+        <span class="self">self</span>.finished_functions()
+            .map(|(<span class="kw">_</span>, f)| f)
+            .zip(<span class="self">self</span>.funcs.values().map(|f| f.stack_maps.as_slice()))
     }
 
-    <span class="doccomment">/// Lookups a defined function by a program counter value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns the defined function index and the relative address of</span>
-    <span class="doccomment">/// `text_offset` within the function itself.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">func_by_text_offset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">text_offset</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">DefinedFuncIndex</span>, <span class="ident">u32</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">text_offset</span> <span class="op">=</span> <span class="ident">text_offset</span> <span class="kw">as</span> <span class="ident">u64</span>;
+    <span class="doccomment">/// Lookups a defined function by a program counter value.
+    ///
+    /// Returns the defined function index and the relative address of
+    /// `text_offset` within the function itself.
+    </span><span class="kw">pub fn </span>func_by_text_offset(<span class="kw-2">&amp;</span><span class="self">self</span>, text_offset: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(DefinedFuncIndex, u32)&gt; {
+        <span class="kw">let </span>text_offset = text_offset <span class="kw">as </span>u64;
 
-        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>
-            .<span class="ident">funcs</span>
-            .<span class="ident">binary_search_values_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">text_offset</span>, <span class="op">|</span><span class="ident">info</span><span class="op">|</span> {
-                <span class="macro">debug_assert!</span>(<span class="ident">info</span>.<span class="ident">length</span> <span class="op">&gt;</span> <span class="number">0</span>);
-                <span class="comment">// Return the inclusive &quot;end&quot; of the function</span>
-                <span class="ident">info</span>.<span class="ident">start</span> <span class="op">+</span> <span class="ident">u64::from</span>(<span class="ident">info</span>.<span class="ident">length</span>) <span class="op">-</span> <span class="number">1</span>
-            }) {
-            <span class="prelude-val">Ok</span>(<span class="ident">k</span>) =&gt; {
-                <span class="comment">// Exact match, pc is at the end of this function</span>
-                <span class="ident">k</span>
+        <span class="kw">let </span>index = <span class="kw">match </span><span class="self">self
+            </span>.funcs
+            .binary_search_values_by_key(<span class="kw-2">&amp;</span>text_offset, |info| {
+                <span class="macro">debug_assert!</span>(info.length &gt; <span class="number">0</span>);
+                <span class="comment">// Return the inclusive &quot;end&quot; of the function
+                </span>info.start + u64::from(info.length) - <span class="number">1
+            </span>}) {
+            <span class="prelude-val">Ok</span>(k) =&gt; {
+                <span class="comment">// Exact match, pc is at the end of this function
+                </span>k
             }
-            <span class="prelude-val">Err</span>(<span class="ident">k</span>) =&gt; {
-                <span class="comment">// Not an exact match, k is where `pc` would be &quot;inserted&quot;</span>
-                <span class="comment">// Since we key based on the end, function `k` might contain `pc`,</span>
-                <span class="comment">// so we&#39;ll validate on the range check below</span>
-                <span class="ident">k</span>
+            <span class="prelude-val">Err</span>(k) =&gt; {
+                <span class="comment">// Not an exact match, k is where `pc` would be &quot;inserted&quot;
+                // Since we key based on the end, function `k` might contain `pc`,
+                // so we&#39;ll validate on the range check below
+                </span>k
             }
         };
 
-        <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">funcs</span>.<span class="ident">get</span>(<span class="ident">index</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">start</span>;
-        <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">start</span> <span class="op">+</span> <span class="ident">u64::from</span>(<span class="ident">body</span>.<span class="ident">length</span>);
+        <span class="kw">let </span>body = <span class="self">self</span>.funcs.get(index)<span class="question-mark">?</span>;
+        <span class="kw">let </span>start = body.start;
+        <span class="kw">let </span>end = body.start + u64::from(body.length);
 
-        <span class="kw">if</span> <span class="ident">text_offset</span> <span class="op">&lt;</span> <span class="ident">start</span> <span class="op">|</span><span class="op">|</span> <span class="ident">end</span> <span class="op">&lt;</span> <span class="ident">text_offset</span> {
-            <span class="kw">return</span> <span class="prelude-val">None</span>;
+        <span class="kw">if </span>text_offset &lt; start || end &lt; text_offset {
+            <span class="kw">return </span><span class="prelude-val">None</span>;
         }
 
-        <span class="prelude-val">Some</span>((<span class="ident">index</span>, (<span class="ident">text_offset</span> <span class="op">-</span> <span class="ident">body</span>.<span class="ident">start</span>) <span class="kw">as</span> <span class="ident">u32</span>))
+        <span class="prelude-val">Some</span>((index, (text_offset - body.start) <span class="kw">as </span>u32))
     }
 
-    <span class="doccomment">/// Gets the function information for a given function index.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">func_info</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">DefinedFuncIndex</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">FunctionInfo</span> {
-        <span class="self">self</span>.<span class="ident">funcs</span>
-            .<span class="ident">get</span>(<span class="ident">index</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;defined function should be present&quot;</span>)
+    <span class="doccomment">/// Gets the function information for a given function index.
+    </span><span class="kw">pub fn </span>func_info(<span class="kw-2">&amp;</span><span class="self">self</span>, index: DefinedFuncIndex) -&gt; <span class="kw-2">&amp;</span>FunctionInfo {
+        <span class="self">self</span>.funcs
+            .get(index)
+            .expect(<span class="string">&quot;defined function should be present&quot;</span>)
     }
 
-    <span class="doccomment">/// Creates a new symbolication context which can be used to further</span>
-    <span class="doccomment">/// symbolicate stack traces.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Basically this makes a thing which parses debuginfo and can tell you</span>
-    <span class="doccomment">/// what filename and line number a wasm pc comes from.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symbolize_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SymbolizeContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident">gimli::EndianSlice</span>;
-        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">meta</span>.<span class="ident">has_wasm_debuginfo</span> {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+    <span class="doccomment">/// Creates a new symbolication context which can be used to further
+    /// symbolicate stack traces.
+    ///
+    /// Basically this makes a thing which parses debuginfo and can tell you
+    /// what filename and line number a wasm pc comes from.
+    </span><span class="kw">pub fn </span>symbolize_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SymbolizeContext&lt;<span class="lifetime">&#39;_</span>&gt;&gt;&gt; {
+        <span class="kw">use </span>gimli::EndianSlice;
+        <span class="kw">if </span>!<span class="self">self</span>.meta.has_wasm_debuginfo {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
-        <span class="kw">let</span> <span class="ident">obj</span> <span class="op">=</span> <span class="ident">File::parse</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>()[..])
-            .<span class="ident">context</span>(<span class="string">&quot;failed to parse internal ELF file representation&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">dwarf</span> <span class="op">=</span> <span class="ident">gimli::Dwarf::load</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">obj</span>
-                .<span class="ident">section_by_name</span>(<span class="ident">wasm_section_name</span>(<span class="ident">id</span>))
-                .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">data</span>().<span class="ident">ok</span>())
-                .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[]);
-            <span class="prelude-val">Ok</span>(<span class="ident">EndianSlice::new</span>(<span class="ident">data</span>, <span class="ident">gimli::LittleEndian</span>))
+        <span class="kw">let </span>obj = File::parse(<span class="kw-2">&amp;</span><span class="self">self</span>.mmap()[..])
+            .context(<span class="string">&quot;failed to parse internal ELF file representation&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>dwarf = gimli::Dwarf::load(|id| -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>&gt; {
+            <span class="kw">let </span>data = obj
+                .section_by_name(wasm_section_name(id))
+                .and_then(|s| s.data().ok())
+                .unwrap_or(<span class="kw-2">&amp;</span>[]);
+            <span class="prelude-val">Ok</span>(EndianSlice::new(data, gimli::LittleEndian))
         })<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">addr2line::Context::from_dwarf</span>(<span class="ident">dwarf</span>)
-            .<span class="ident">context</span>(<span class="string">&quot;failed to create addr2line dwarf mapping context&quot;</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">SymbolizeContext</span> {
-            <span class="ident">inner</span>: <span class="ident">cx</span>,
-            <span class="ident">code_section_offset</span>: <span class="self">self</span>.<span class="ident">meta</span>.<span class="ident">code_section_offset</span>,
+        <span class="kw">let </span>cx = addr2line::Context::from_dwarf(dwarf)
+            .context(<span class="string">&quot;failed to create addr2line dwarf mapping context&quot;</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(SymbolizeContext {
+            inner: cx,
+            code_section_offset: <span class="self">self</span>.meta.code_section_offset,
         }))
     }
 
-    <span class="doccomment">/// Returns whether the original wasm module had unparsed debug information</span>
-    <span class="doccomment">/// based on the tunables configuration.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_unparsed_debuginfo</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">meta</span>.<span class="ident">has_unparsed_debuginfo</span>
+    <span class="doccomment">/// Returns whether the original wasm module had unparsed debug information
+    /// based on the tunables configuration.
+    </span><span class="kw">pub fn </span>has_unparsed_debuginfo(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.meta.has_unparsed_debuginfo
     }
 
-    <span class="doccomment">/// Indicates whether this module came with n address map such that lookups</span>
-    <span class="doccomment">/// via `wasmtime_environ::lookup_file_pos` will succeed.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If this function returns `false` then `lookup_file_pos` will always</span>
-    <span class="doccomment">/// return `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_address_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="op">!</span><span class="self">self</span>.<span class="ident">address_map_data</span>().<span class="ident">is_empty</span>()
-    }
-}
-
-<span class="kw">type</span> <span class="ident">Addr2LineContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">addr2line::Context</span><span class="op">&lt;</span><span class="ident">gimli::EndianSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">gimli::LittleEndian</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-
-<span class="doccomment">/// A context which contains dwarf debug information to translate program</span>
-<span class="doccomment">/// counters back to filenames and line numbers.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SymbolizeContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">inner</span>: <span class="ident">Addr2LineContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">code_section_offset</span>: <span class="ident">u64</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">SymbolizeContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Returns access to the [`addr2line::Context`] which can be used to query</span>
-    <span class="doccomment">/// frame information with.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">addr2line</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Addr2LineContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>
-    }
-
-    <span class="doccomment">/// Returns the offset of the code section in the original wasm file, used</span>
-    <span class="doccomment">/// to calculate lookup values into the DWARF.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">code_section_offset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="self">self</span>.<span class="ident">code_section_offset</span>
+    <span class="doccomment">/// Indicates whether this module came with n address map such that lookups
+    /// via `wasmtime_environ::lookup_file_pos` will succeed.
+    ///
+    /// If this function returns `false` then `lookup_file_pos` will always
+    /// return `None`.
+    </span><span class="kw">pub fn </span>has_address_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        !<span class="self">self</span>.address_map_data().is_empty()
     }
 }
 
-<span class="doccomment">/// Returns the range of `inner` within `outer`, such that `outer[range]` is the</span>
-<span class="doccomment">/// same as `inner`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This method requires that `inner` is a sub-slice of `outer`, and if that</span>
-<span class="doccomment">/// isn&#39;t true then this method will panic.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">subslice_range</span>(<span class="ident">inner</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">outer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">inner</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> {
-        <span class="kw">return</span> <span class="number">0</span>..<span class="number">0</span>;
-    }
+<span class="kw">type </span>Addr2LineContext&lt;<span class="lifetime">&#39;a</span>&gt; = addr2line::Context&lt;gimli::EndianSlice&lt;<span class="lifetime">&#39;a</span>, gimli::LittleEndian&gt;&gt;;
 
-    <span class="macro">assert!</span>(<span class="ident">outer</span>.<span class="ident">as_ptr</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">inner</span>.<span class="ident">as_ptr</span>());
-    <span class="macro">assert!</span>((<span class="kw-2">&amp;</span><span class="ident">inner</span>[<span class="ident">inner</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>] <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>) <span class="op">&lt;</span><span class="op">=</span> (<span class="kw-2">&amp;</span><span class="ident">outer</span>[<span class="ident">outer</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>] <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw">_</span>));
-
-    <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">inner</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="ident">outer</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-    <span class="ident">start</span>..<span class="ident">start</span> <span class="op">+</span> <span class="ident">inner</span>.<span class="ident">len</span>()
+<span class="doccomment">/// A context which contains dwarf debug information to translate program
+/// counters back to filenames and line numbers.
+</span><span class="kw">pub struct </span>SymbolizeContext&lt;<span class="lifetime">&#39;a</span>&gt; {
+    inner: Addr2LineContext&lt;<span class="lifetime">&#39;a</span>&gt;,
+    code_section_offset: u64,
 }
 
-<span class="doccomment">/// Returns the Wasmtime-specific section name for dwarf debugging sections.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// These sections, if configured in Wasmtime, will contain the original raw</span>
-<span class="doccomment">/// dwarf debugging information found in the wasm file, unmodified. These tables</span>
-<span class="doccomment">/// are then consulted later to convert wasm program counters to original wasm</span>
-<span class="doccomment">/// source filenames/line numbers with `addr2line`.</span>
-<span class="kw">fn</span> <span class="ident">wasm_section_name</span>(<span class="ident">id</span>: <span class="ident">gimli::SectionId</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-    <span class="kw">use</span> <span class="ident">gimli::SectionId</span>::<span class="kw-2">*</span>;
-    <span class="kw">match</span> <span class="ident">id</span> {
-        <span class="ident">DebugAbbrev</span> =&gt; <span class="string">&quot;.debug_abbrev.wasm&quot;</span>,
-        <span class="ident">DebugAddr</span> =&gt; <span class="string">&quot;.debug_addr.wasm&quot;</span>,
-        <span class="ident">DebugAranges</span> =&gt; <span class="string">&quot;.debug_aranges.wasm&quot;</span>,
-        <span class="ident">DebugFrame</span> =&gt; <span class="string">&quot;.debug_frame.wasm&quot;</span>,
-        <span class="ident">EhFrame</span> =&gt; <span class="string">&quot;.eh_frame.wasm&quot;</span>,
-        <span class="ident">EhFrameHdr</span> =&gt; <span class="string">&quot;.eh_frame_hdr.wasm&quot;</span>,
-        <span class="ident">DebugInfo</span> =&gt; <span class="string">&quot;.debug_info.wasm&quot;</span>,
-        <span class="ident">DebugLine</span> =&gt; <span class="string">&quot;.debug_line.wasm&quot;</span>,
-        <span class="ident">DebugLineStr</span> =&gt; <span class="string">&quot;.debug_line_str.wasm&quot;</span>,
-        <span class="ident">DebugLoc</span> =&gt; <span class="string">&quot;.debug_loc.wasm&quot;</span>,
-        <span class="ident">DebugLocLists</span> =&gt; <span class="string">&quot;.debug_loc_lists.wasm&quot;</span>,
-        <span class="ident">DebugMacinfo</span> =&gt; <span class="string">&quot;.debug_macinfo.wasm&quot;</span>,
-        <span class="ident">DebugMacro</span> =&gt; <span class="string">&quot;.debug_macro.wasm&quot;</span>,
-        <span class="ident">DebugPubNames</span> =&gt; <span class="string">&quot;.debug_pub_names.wasm&quot;</span>,
-        <span class="ident">DebugPubTypes</span> =&gt; <span class="string">&quot;.debug_pub_types.wasm&quot;</span>,
-        <span class="ident">DebugRanges</span> =&gt; <span class="string">&quot;.debug_ranges.wasm&quot;</span>,
-        <span class="ident">DebugRngLists</span> =&gt; <span class="string">&quot;.debug_rng_lists.wasm&quot;</span>,
-        <span class="ident">DebugStr</span> =&gt; <span class="string">&quot;.debug_str.wasm&quot;</span>,
-        <span class="ident">DebugStrOffsets</span> =&gt; <span class="string">&quot;.debug_str_offsets.wasm&quot;</span>,
-        <span class="ident">DebugTypes</span> =&gt; <span class="string">&quot;.debug_types.wasm&quot;</span>,
-        <span class="ident">DebugCuIndex</span> =&gt; <span class="string">&quot;.debug_cu_index.wasm&quot;</span>,
-        <span class="ident">DebugTuIndex</span> =&gt; <span class="string">&quot;.debug_tu_index.wasm&quot;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; SymbolizeContext&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Returns access to the [`addr2line::Context`] which can be used to query
+    /// frame information with.
+    </span><span class="kw">pub fn </span>addr2line(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Addr2LineContext&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.inner
+    }
+
+    <span class="doccomment">/// Returns the offset of the code section in the original wasm file, used
+    /// to calculate lookup values into the DWARF.
+    </span><span class="kw">pub fn </span>code_section_offset(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="self">self</span>.code_section_offset
+    }
+}
+
+<span class="doccomment">/// Returns the range of `inner` within `outer`, such that `outer[range]` is the
+/// same as `inner`.
+///
+/// This method requires that `inner` is a sub-slice of `outer`, and if that
+/// isn&#39;t true then this method will panic.
+</span><span class="kw">pub fn </span>subslice_range(inner: <span class="kw-2">&amp;</span>[u8], outer: <span class="kw-2">&amp;</span>[u8]) -&gt; Range&lt;usize&gt; {
+    <span class="kw">if </span>inner.len() == <span class="number">0 </span>{
+        <span class="kw">return </span><span class="number">0</span>..<span class="number">0</span>;
+    }
+
+    <span class="macro">assert!</span>(outer.as_ptr() &lt;= inner.as_ptr());
+    <span class="macro">assert!</span>((<span class="kw-2">&amp;</span>inner[inner.len() - <span class="number">1</span>] <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>) &lt;= (<span class="kw-2">&amp;</span>outer[outer.len() - <span class="number">1</span>] <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
+
+    <span class="kw">let </span>start = inner.as_ptr() <span class="kw">as </span>usize - outer.as_ptr() <span class="kw">as </span>usize;
+    start..start + inner.len()
+}
+
+<span class="doccomment">/// Returns the Wasmtime-specific section name for dwarf debugging sections.
+///
+/// These sections, if configured in Wasmtime, will contain the original raw
+/// dwarf debugging information found in the wasm file, unmodified. These tables
+/// are then consulted later to convert wasm program counters to original wasm
+/// source filenames/line numbers with `addr2line`.
+</span><span class="kw">fn </span>wasm_section_name(id: gimli::SectionId) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    <span class="kw">use </span>gimli::SectionId::<span class="kw-2">*</span>;
+    <span class="kw">match </span>id {
+        DebugAbbrev =&gt; <span class="string">&quot;.debug_abbrev.wasm&quot;</span>,
+        DebugAddr =&gt; <span class="string">&quot;.debug_addr.wasm&quot;</span>,
+        DebugAranges =&gt; <span class="string">&quot;.debug_aranges.wasm&quot;</span>,
+        DebugFrame =&gt; <span class="string">&quot;.debug_frame.wasm&quot;</span>,
+        EhFrame =&gt; <span class="string">&quot;.eh_frame.wasm&quot;</span>,
+        EhFrameHdr =&gt; <span class="string">&quot;.eh_frame_hdr.wasm&quot;</span>,
+        DebugInfo =&gt; <span class="string">&quot;.debug_info.wasm&quot;</span>,
+        DebugLine =&gt; <span class="string">&quot;.debug_line.wasm&quot;</span>,
+        DebugLineStr =&gt; <span class="string">&quot;.debug_line_str.wasm&quot;</span>,
+        DebugLoc =&gt; <span class="string">&quot;.debug_loc.wasm&quot;</span>,
+        DebugLocLists =&gt; <span class="string">&quot;.debug_loc_lists.wasm&quot;</span>,
+        DebugMacinfo =&gt; <span class="string">&quot;.debug_macinfo.wasm&quot;</span>,
+        DebugMacro =&gt; <span class="string">&quot;.debug_macro.wasm&quot;</span>,
+        DebugPubNames =&gt; <span class="string">&quot;.debug_pub_names.wasm&quot;</span>,
+        DebugPubTypes =&gt; <span class="string">&quot;.debug_pub_types.wasm&quot;</span>,
+        DebugRanges =&gt; <span class="string">&quot;.debug_ranges.wasm&quot;</span>,
+        DebugRngLists =&gt; <span class="string">&quot;.debug_rng_lists.wasm&quot;</span>,
+        DebugStr =&gt; <span class="string">&quot;.debug_str.wasm&quot;</span>,
+        DebugStrOffsets =&gt; <span class="string">&quot;.debug_str_offsets.wasm&quot;</span>,
+        DebugTypes =&gt; <span class="string">&quot;.debug_types.wasm&quot;</span>,
+        DebugCuIndex =&gt; <span class="string">&quot;.debug_cu_index.wasm&quot;</span>,
+        DebugTuIndex =&gt; <span class="string">&quot;.debug_tu_index.wasm&quot;</span>,
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_jit" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_jit" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

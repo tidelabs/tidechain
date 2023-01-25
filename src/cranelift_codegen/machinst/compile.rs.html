@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/machinst/compile.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compile.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/machinst/compile.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compile.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -117,120 +112,119 @@
 <span id="112">112</span>
 <span id="113">113</span>
 <span id="114">114</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Compilation backend pipeline: optimized IR to VCode / binemit.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Compilation backend pipeline: optimized IR to VCode / binemit.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::Function</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::isa::TargetIsa</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::log::DeferredDisplay</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::machinst</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::settings</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timing</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::ir::Function;
+<span class="kw">use </span><span class="kw">crate</span>::isa::TargetIsa;
+<span class="kw">use </span><span class="kw">crate</span>::log::DeferredDisplay;
+<span class="kw">use </span><span class="kw">crate</span>::machinst::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::settings;
+<span class="kw">use </span><span class="kw">crate</span>::timing;
 
-<span class="kw">use</span> <span class="ident">regalloc</span>::{<span class="ident">allocate_registers_with_opts</span>, <span class="ident">Algorithm</span>, <span class="ident">Options</span>, <span class="ident">PrettyPrint</span>};
+<span class="kw">use </span>regalloc::{allocate_registers_with_opts, Algorithm, Options, PrettyPrint};
 
-<span class="doccomment">/// Compile the given function down to VCode with allocated registers, ready</span>
-<span class="doccomment">/// for binary emission.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compile</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">LowerBackend</span> <span class="op">+</span> <span class="ident">TargetIsa</span><span class="op">&gt;</span>(
-    <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>,
-    <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="ident">B</span>,
-    <span class="ident">abi</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ABICallee</span><span class="op">&lt;</span><span class="ident">I</span> <span class="op">=</span> <span class="ident">B::MInst</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">reg_universe</span>: <span class="kw-2">&amp;</span><span class="ident">RealRegUniverse</span>,
-    <span class="ident">emit_info</span>: <span class="op">&lt;</span><span class="ident">B::MInst</span> <span class="kw">as</span> <span class="ident">MachInstEmit</span><span class="op">&gt;</span><span class="ident">::Info</span>,
-) -&gt; <span class="ident">CodegenResult</span><span class="op">&lt;</span><span class="ident">VCode</span><span class="op">&lt;</span><span class="ident">B::MInst</span><span class="op">&gt;</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">B::MInst</span>: <span class="ident">PrettyPrint</span>,
+<span class="doccomment">/// Compile the given function down to VCode with allocated registers, ready
+/// for binary emission.
+</span><span class="kw">pub fn </span>compile&lt;B: LowerBackend + TargetIsa&gt;(
+    f: <span class="kw-2">&amp;</span>Function,
+    b: <span class="kw-2">&amp;</span>B,
+    abi: Box&lt;<span class="kw">dyn </span>ABICallee&lt;I = B::MInst&gt;&gt;,
+    reg_universe: <span class="kw-2">&amp;</span>RealRegUniverse,
+    emit_info: &lt;B::MInst <span class="kw">as </span>MachInstEmit&gt;::Info,
+) -&gt; CodegenResult&lt;VCode&lt;B::MInst&gt;&gt;
+<span class="kw">where
+    </span>B::MInst: PrettyPrint,
 {
-    <span class="comment">// Compute lowered block order.</span>
-    <span class="kw">let</span> <span class="ident">block_order</span> <span class="op">=</span> <span class="ident">BlockLoweringOrder::new</span>(<span class="ident">f</span>);
-    <span class="comment">// Build the lowering context.</span>
-    <span class="kw">let</span> <span class="ident">lower</span> <span class="op">=</span> <span class="ident">Lower::new</span>(<span class="ident">f</span>, <span class="ident">abi</span>, <span class="ident">emit_info</span>, <span class="ident">block_order</span>)<span class="question-mark">?</span>;
-    <span class="comment">// Lower the IR.</span>
-    <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">vcode</span>, <span class="ident">stack_map_request_info</span>) <span class="op">=</span> {
-        <span class="kw">let</span> <span class="ident">_tt</span> <span class="op">=</span> <span class="ident">timing::vcode_lower</span>();
-        <span class="ident">lower</span>.<span class="ident">lower</span>(<span class="ident">b</span>)<span class="question-mark">?</span>
-    };
+    <span class="comment">// Compute lowered block order.
+    </span><span class="kw">let </span>block_order = BlockLoweringOrder::new(f);
+    <span class="comment">// Build the lowering context.
+    </span><span class="kw">let </span>lower = Lower::new(f, abi, emit_info, block_order)<span class="question-mark">?</span>;
+    <span class="comment">// Lower the IR.
+    </span><span class="kw">let </span>(<span class="kw-2">mut </span>vcode, stack_map_request_info) = {
+        <span class="kw">let </span>_tt = timing::vcode_lower();
+        lower.lower(b)<span class="question-mark">?
+    </span>};
 
-    <span class="comment">// Creating the vcode string representation may be costly for large functions, so defer its</span>
-    <span class="comment">// rendering.</span>
-    <span class="macro">log::trace!</span>(
+    <span class="comment">// Creating the vcode string representation may be costly for large functions, so defer its
+    // rendering.
+    </span><span class="macro">log::trace!</span>(
         <span class="string">&quot;vcode from lowering: \n{}&quot;</span>,
-        <span class="ident">DeferredDisplay::new</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">vcode</span>.<span class="ident">show_rru</span>(<span class="prelude-val">Some</span>(<span class="ident">reg_universe</span>)))
+        DeferredDisplay::new(|| vcode.show_rru(<span class="prelude-val">Some</span>(reg_universe)))
     );
 
-    <span class="comment">// Perform register allocation.</span>
-    <span class="kw">let</span> (<span class="ident">run_checker</span>, <span class="ident">algorithm</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">vcode</span>.<span class="ident">flags</span>().<span class="ident">regalloc</span>() {
-        <span class="ident">settings::Regalloc::Backtracking</span> =&gt; (<span class="bool-val">false</span>, <span class="ident">Algorithm::Backtracking</span>(<span class="ident">Default::default</span>())),
-        <span class="ident">settings::Regalloc::BacktrackingChecked</span> =&gt; {
-            (<span class="bool-val">true</span>, <span class="ident">Algorithm::Backtracking</span>(<span class="ident">Default::default</span>()))
+    <span class="comment">// Perform register allocation.
+    </span><span class="kw">let </span>(run_checker, algorithm) = <span class="kw">match </span>vcode.flags().regalloc() {
+        settings::Regalloc::Backtracking =&gt; (<span class="bool-val">false</span>, Algorithm::Backtracking(Default::default())),
+        settings::Regalloc::BacktrackingChecked =&gt; {
+            (<span class="bool-val">true</span>, Algorithm::Backtracking(Default::default()))
         }
-        <span class="ident">settings::Regalloc::ExperimentalLinearScan</span> =&gt; {
-            (<span class="bool-val">false</span>, <span class="ident">Algorithm::LinearScan</span>(<span class="ident">Default::default</span>()))
+        settings::Regalloc::ExperimentalLinearScan =&gt; {
+            (<span class="bool-val">false</span>, Algorithm::LinearScan(Default::default()))
         }
-        <span class="ident">settings::Regalloc::ExperimentalLinearScanChecked</span> =&gt; {
-            (<span class="bool-val">true</span>, <span class="ident">Algorithm::LinearScan</span>(<span class="ident">Default::default</span>()))
+        settings::Regalloc::ExperimentalLinearScanChecked =&gt; {
+            (<span class="bool-val">true</span>, Algorithm::LinearScan(Default::default()))
         }
     };
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;regalloc-snapshot&quot;</span>)]</span>
-    {
-        <span class="kw">use</span> <span class="ident">std::fs</span>;
-        <span class="kw">use</span> <span class="ident">std::path::Path</span>;
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">path</span>) <span class="op">=</span> <span class="ident">std::env::var</span>(<span class="string">&quot;SERIALIZE_REGALLOC&quot;</span>).<span class="ident">ok</span>() {
-            <span class="kw">let</span> <span class="ident">snapshot</span> <span class="op">=</span> <span class="ident">regalloc::IRSnapshot::from_function</span>(<span class="kw-2">&amp;</span><span class="ident">vcode</span>, <span class="ident">reg_universe</span>);
-            <span class="kw">let</span> <span class="ident">serialized</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">snapshot</span>).<span class="ident">expect</span>(<span class="string">&quot;couldn&#39;t serialize snapshot&quot;</span>);
+    <span class="attribute">#[cfg(feature = <span class="string">&quot;regalloc-snapshot&quot;</span>)]
+    </span>{
+        <span class="kw">use </span>std::fs;
+        <span class="kw">use </span>std::path::Path;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = std::env::var(<span class="string">&quot;SERIALIZE_REGALLOC&quot;</span>).ok() {
+            <span class="kw">let </span>snapshot = regalloc::IRSnapshot::from_function(<span class="kw-2">&amp;</span>vcode, reg_universe);
+            <span class="kw">let </span>serialized = bincode::serialize(<span class="kw-2">&amp;</span>snapshot).expect(<span class="string">&quot;couldn&#39;t serialize snapshot&quot;</span>);
 
-            <span class="kw">let</span> <span class="ident">file_path</span> <span class="op">=</span> <span class="ident">Path::new</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>).<span class="ident">join</span>(<span class="ident">Path::new</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;ir{}.bin&quot;</span>, <span class="ident">f</span>.<span class="ident">name</span>)));
-            <span class="ident">fs::write</span>(<span class="ident">file_path</span>, <span class="kw-2">&amp;</span><span class="ident">serialized</span>).<span class="ident">expect</span>(<span class="string">&quot;couldn&#39;t write IR snapshot file&quot;</span>);
+            <span class="kw">let </span>file_path = Path::new(<span class="kw-2">&amp;</span>path).join(Path::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;ir{}.bin&quot;</span>, f.name)));
+            fs::write(file_path, <span class="kw-2">&amp;</span>serialized).expect(<span class="string">&quot;couldn&#39;t write IR snapshot file&quot;</span>);
         }
     }
 
-    <span class="comment">// If either there are no reference-typed values, or else there are</span>
-    <span class="comment">// but there are no safepoints at which we need to know about them,</span>
-    <span class="comment">// then we don&#39;t need stack maps.</span>
-    <span class="kw">let</span> <span class="ident">sri</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">stack_map_request_info</span>.<span class="ident">reftyped_vregs</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span>
-        <span class="op">&amp;&amp;</span> <span class="ident">stack_map_request_info</span>.<span class="ident">safepoint_insns</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span>
-    {
-        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">stack_map_request_info</span>)
-    } <span class="kw">else</span> {
-        <span class="prelude-val">None</span>
-    };
+    <span class="comment">// If either there are no reference-typed values, or else there are
+    // but there are no safepoints at which we need to know about them,
+    // then we don&#39;t need stack maps.
+    </span><span class="kw">let </span>sri = <span class="kw">if </span>stack_map_request_info.reftyped_vregs.len() &gt; <span class="number">0
+        </span>&amp;&amp; stack_map_request_info.safepoint_insns.len() &gt; <span class="number">0
+    </span>{
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>stack_map_request_info)
+    } <span class="kw">else </span>{
+        <span class="prelude-val">None
+    </span>};
 
-    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> {
-        <span class="kw">let</span> <span class="ident">_tt</span> <span class="op">=</span> <span class="ident">timing::regalloc</span>();
-        <span class="ident">allocate_registers_with_opts</span>(
-            <span class="kw-2">&amp;mut</span> <span class="ident">vcode</span>,
-            <span class="ident">reg_universe</span>,
-            <span class="ident">sri</span>,
-            <span class="ident">Options</span> {
-                <span class="ident">run_checker</span>,
-                <span class="ident">algorithm</span>,
+    <span class="kw">let </span>result = {
+        <span class="kw">let </span>_tt = timing::regalloc();
+        allocate_registers_with_opts(
+            <span class="kw-2">&amp;mut </span>vcode,
+            reg_universe,
+            sri,
+            Options {
+                run_checker,
+                algorithm,
             },
         )
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
+        .map_err(|err| {
             <span class="macro">log::error!</span>(
                 <span class="string">&quot;Register allocation error for vcode\n{}\nError: {:?}&quot;</span>,
-                <span class="ident">vcode</span>.<span class="ident">show_rru</span>(<span class="prelude-val">Some</span>(<span class="ident">reg_universe</span>)),
-                <span class="ident">err</span>
+                vcode.show_rru(<span class="prelude-val">Some</span>(reg_universe)),
+                err
             );
-            <span class="ident">err</span>
+            err
         })
-        .<span class="ident">expect</span>(<span class="string">&quot;register allocation&quot;</span>)
+        .expect(<span class="string">&quot;register allocation&quot;</span>)
     };
 
-    <span class="comment">// Reorder vcode into final order and copy out final instruction sequence</span>
-    <span class="comment">// all at once. This also inserts prologues/epilogues.</span>
-    {
-        <span class="kw">let</span> <span class="ident">_tt</span> <span class="op">=</span> <span class="ident">timing::vcode_post_ra</span>();
-        <span class="ident">vcode</span>.<span class="ident">replace_insns_from_regalloc</span>(<span class="ident">result</span>);
+    <span class="comment">// Reorder vcode into final order and copy out final instruction sequence
+    // all at once. This also inserts prologues/epilogues.
+    </span>{
+        <span class="kw">let </span>_tt = timing::vcode_post_ra();
+        vcode.replace_insns_from_regalloc(result);
     }
 
     <span class="macro">log::trace!</span>(
         <span class="string">&quot;vcode after regalloc: final version:\n{}&quot;</span>,
-        <span class="ident">DeferredDisplay::new</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">vcode</span>.<span class="ident">show_rru</span>(<span class="prelude-val">Some</span>(<span class="ident">reg_universe</span>)))
+        DeferredDisplay::new(|| vcode.show_rru(<span class="prelude-val">Some</span>(reg_universe)))
     );
 
-    <span class="prelude-val">Ok</span>(<span class="ident">vcode</span>)
+    <span class="prelude-val">Ok</span>(vcode)
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

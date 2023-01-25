@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/common/src/import_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>import_queue.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_consensus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_consensus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_consensus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/common/src/import_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>import_queue.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_consensus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -326,329 +321,328 @@
 <span id="321">321</span>
 <span id="322">322</span>
 <span id="323">323</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Import Queue primitive: something which can verify and import blocks.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This serves as an intermediate and abstracted step between synchronization</span>
-<span class="doccomment">//! and import. Each mode of consensus will have its own requirements for block</span>
-<span class="doccomment">//! verification. Some algorithms can verify in parallel, while others only</span>
-<span class="doccomment">//! sequentially.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The `ImportQueue` trait allows such verification strategies to be</span>
-<span class="doccomment">//! instantiated. The `BasicQueue` and `BasicVerifier` traits allow serial</span>
-<span class="doccomment">//! queues to be instantiated simply.</span>
+</span><span class="doccomment">//! Import Queue primitive: something which can verify and import blocks.
+//!
+//! This serves as an intermediate and abstracted step between synchronization
+//! and import. Each mode of consensus will have its own requirements for block
+//! verification. Some algorithms can verify in parallel, while others only
+//! sequentially.
+//!
+//! The `ImportQueue` trait allows such verification strategies to be
+//! instantiated. The `BasicQueue` and `BasicVerifier` traits allow serial
+//! queues to be instantiated simply.
 
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">iter::FromIterator</span>};
+</span><span class="kw">use </span>std::{collections::HashMap, iter::FromIterator};
 
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>};
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">traits</span>::{<span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>, <span class="ident">Header</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">NumberFor</span>},
-	<span class="ident">Justifications</span>,
+<span class="kw">use </span>log::{debug, trace};
+<span class="kw">use </span>sp_runtime::{
+	traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as _</span>, NumberFor},
+	Justifications,
 };
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">block_import</span>::{
-		<span class="ident">BlockCheckParams</span>, <span class="ident">BlockImport</span>, <span class="ident">BlockImportParams</span>, <span class="ident">ImportResult</span>, <span class="ident">ImportedAux</span>, <span class="ident">ImportedState</span>,
-		<span class="ident">JustificationImport</span>, <span class="ident">StateAction</span>,
+<span class="kw">use crate</span>::{
+	block_import::{
+		BlockCheckParams, BlockImport, BlockImportParams, ImportResult, ImportedAux, ImportedState,
+		JustificationImport, StateAction,
 	},
-	<span class="ident">metrics::Metrics</span>,
+	metrics::Metrics,
 };
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">basic_queue::BasicQueue</span>;
-<span class="kw">use</span> <span class="ident">sp_consensus</span>::{<span class="ident">error::Error</span> <span class="kw">as</span> <span class="ident">ConsensusError</span>, <span class="ident">BlockOrigin</span>, <span class="ident">CacheKeyId</span>};
+<span class="kw">pub use </span>basic_queue::BasicQueue;
+<span class="kw">use </span>sp_consensus::{error::Error <span class="kw">as </span>ConsensusError, BlockOrigin, CacheKeyId};
 
-<span class="doccomment">/// A commonly-used Import Queue type.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This defines the transaction type of the `BasicQueue` to be the transaction type for a client.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">DefaultImportQueue</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">Client</span><span class="op">&gt;</span> <span class="op">=</span>
-	<span class="ident">BasicQueue</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">sp_api::TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">/// A commonly-used Import Queue type.
+///
+/// This defines the transaction type of the `BasicQueue` to be the transaction type for a client.
+</span><span class="kw">pub type </span>DefaultImportQueue&lt;Block, Client&gt; =
+	BasicQueue&lt;Block, sp_api::TransactionFor&lt;Client, Block&gt;&gt;;
 
-<span class="kw">mod</span> <span class="ident">basic_queue</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">buffered_link</span>;
+<span class="kw">mod </span>basic_queue;
+<span class="kw">pub mod </span>buffered_link;
 
-<span class="doccomment">/// Shared block import struct used by the queue.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">BoxBlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span> <span class="op">=</span>
-	<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">BlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span>, <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">Transaction</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Shared block import struct used by the queue.
+</span><span class="kw">pub type </span>BoxBlockImport&lt;B, Transaction&gt; =
+	Box&lt;<span class="kw">dyn </span>BlockImport&lt;B, Error = ConsensusError, Transaction = Transaction&gt; + Send + Sync&gt;;
 
-<span class="doccomment">/// Shared justification import struct used by the queue.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">BoxJustificationImport</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> <span class="op">=</span>
-	<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">JustificationImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Shared justification import struct used by the queue.
+</span><span class="kw">pub type </span>BoxJustificationImport&lt;B&gt; =
+	Box&lt;<span class="kw">dyn </span>JustificationImport&lt;B, Error = ConsensusError&gt; + Send + Sync&gt;;
 
-<span class="doccomment">/// Maps to the Origin used by the network.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Origin</span> <span class="op">=</span> <span class="ident">libp2p::PeerId</span>;
+<span class="doccomment">/// Maps to the Origin used by the network.
+</span><span class="kw">pub type </span>Origin = libp2p::PeerId;
 
-<span class="doccomment">/// Block data used by the queue.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IncomingBlock</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Block header hash.</span>
-	<span class="kw">pub</span> <span class="ident">hash</span>: <span class="op">&lt;</span><span class="ident">B</span> <span class="kw">as</span> <span class="ident">BlockT</span><span class="op">&gt;</span><span class="ident">::Hash</span>,
-	<span class="doccomment">/// Block header if requested.</span>
-	<span class="kw">pub</span> <span class="ident">header</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">B</span> <span class="kw">as</span> <span class="ident">BlockT</span><span class="op">&gt;</span><span class="ident">::Header</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Block body if requested.</span>
-	<span class="kw">pub</span> <span class="ident">body</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">B</span> <span class="kw">as</span> <span class="ident">BlockT</span><span class="op">&gt;</span><span class="ident">::Extrinsic</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Indexed block body if requested.</span>
-	<span class="kw">pub</span> <span class="ident">indexed_body</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Justification(s) if requested.</span>
-	<span class="kw">pub</span> <span class="ident">justifications</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Justifications</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// The peer, we received this from</span>
-	<span class="kw">pub</span> <span class="ident">origin</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Origin</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Allow importing the block skipping state verification if parent state is missing.</span>
-	<span class="kw">pub</span> <span class="ident">allow_missing_state</span>: <span class="ident">bool</span>,
-	<span class="doccomment">/// Skip block execution and state verification.</span>
-	<span class="kw">pub</span> <span class="ident">skip_execution</span>: <span class="ident">bool</span>,
-	<span class="doccomment">/// Re-validate existing block.</span>
-	<span class="kw">pub</span> <span class="ident">import_existing</span>: <span class="ident">bool</span>,
-	<span class="doccomment">/// Do not compute new state, but rather set it to the given set.</span>
-	<span class="kw">pub</span> <span class="ident">state</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ImportedState</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Block data used by the queue.
+</span><span class="attribute">#[derive(Debug, PartialEq, Eq, Clone)]
+</span><span class="kw">pub struct </span>IncomingBlock&lt;B: BlockT&gt; {
+	<span class="doccomment">/// Block header hash.
+	</span><span class="kw">pub </span>hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+	<span class="doccomment">/// Block header if requested.
+	</span><span class="kw">pub </span>header: <span class="prelude-ty">Option</span>&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Header&gt;,
+	<span class="doccomment">/// Block body if requested.
+	</span><span class="kw">pub </span>body: <span class="prelude-ty">Option</span>&lt;Vec&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;&gt;,
+	<span class="doccomment">/// Indexed block body if requested.
+	</span><span class="kw">pub </span>indexed_body: <span class="prelude-ty">Option</span>&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;,
+	<span class="doccomment">/// Justification(s) if requested.
+	</span><span class="kw">pub </span>justifications: <span class="prelude-ty">Option</span>&lt;Justifications&gt;,
+	<span class="doccomment">/// The peer, we received this from
+	</span><span class="kw">pub </span>origin: <span class="prelude-ty">Option</span>&lt;Origin&gt;,
+	<span class="doccomment">/// Allow importing the block skipping state verification if parent state is missing.
+	</span><span class="kw">pub </span>allow_missing_state: bool,
+	<span class="doccomment">/// Skip block execution and state verification.
+	</span><span class="kw">pub </span>skip_execution: bool,
+	<span class="doccomment">/// Re-validate existing block.
+	</span><span class="kw">pub </span>import_existing: bool,
+	<span class="doccomment">/// Do not compute new state, but rather set it to the given set.
+	</span><span class="kw">pub </span>state: <span class="prelude-ty">Option</span>&lt;ImportedState&lt;B&gt;&gt;,
 }
 
-<span class="doccomment">/// Verify a justification of a block</span>
-<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-	<span class="doccomment">/// Verify the given data and return the BlockImportParams and an optional</span>
-	<span class="doccomment">/// new set of validators to import. If not, err with an Error-Message</span>
-	<span class="doccomment">/// presented to the User in the logs.</span>
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">block</span>: <span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">B</span>, ()<span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">B</span>, ()<span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">CacheKeyId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span>), <span class="ident">String</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Verify a justification of a block
+</span><span class="attribute">#[async_trait::async_trait]
+</span><span class="kw">pub trait </span>Verifier&lt;B: BlockT&gt;: Send + Sync {
+	<span class="doccomment">/// Verify the given data and return the BlockImportParams and an optional
+	/// new set of validators to import. If not, err with an Error-Message
+	/// presented to the User in the logs.
+	</span><span class="kw">async fn </span>verify(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		block: BlockImportParams&lt;B, ()&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(BlockImportParams&lt;B, ()&gt;, <span class="prelude-ty">Option</span>&lt;Vec&lt;(CacheKeyId, Vec&lt;u8&gt;)&gt;&gt;), String&gt;;
 }
 
-<span class="doccomment">/// Blocks import queue API.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The `import_*` methods can be called in order to send elements for the import queue to verify.</span>
-<span class="doccomment">/// Afterwards, call `poll_actions` to determine how to respond to these elements.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ImportQueue</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>: <span class="ident">Send</span> {
-	<span class="doccomment">/// Import bunch of blocks.</span>
-	<span class="kw">fn</span> <span class="ident">import_blocks</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">origin</span>: <span class="ident">BlockOrigin</span>, <span class="ident">blocks</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IncomingBlock</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>);
-	<span class="doccomment">/// Import block justifications.</span>
-	<span class="kw">fn</span> <span class="ident">import_justifications</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">who</span>: <span class="ident">Origin</span>,
-		<span class="ident">hash</span>: <span class="ident">B::Hash</span>,
-		<span class="ident">number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">justifications</span>: <span class="ident">Justifications</span>,
+<span class="doccomment">/// Blocks import queue API.
+///
+/// The `import_*` methods can be called in order to send elements for the import queue to verify.
+/// Afterwards, call `poll_actions` to determine how to respond to these elements.
+</span><span class="kw">pub trait </span>ImportQueue&lt;B: BlockT&gt;: Send {
+	<span class="doccomment">/// Import bunch of blocks.
+	</span><span class="kw">fn </span>import_blocks(<span class="kw-2">&amp;mut </span><span class="self">self</span>, origin: BlockOrigin, blocks: Vec&lt;IncomingBlock&lt;B&gt;&gt;);
+	<span class="doccomment">/// Import block justifications.
+	</span><span class="kw">fn </span>import_justifications(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		who: Origin,
+		hash: B::Hash,
+		number: NumberFor&lt;B&gt;,
+		justifications: Justifications,
 	);
-	<span class="doccomment">/// Polls for actions to perform on the network.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This method should behave in a way similar to `Future::poll`. It can register the current</span>
-	<span class="doccomment">/// task and notify later when more actions are ready to be polled. To continue the comparison,</span>
-	<span class="doccomment">/// it is as if this method always returned `Poll::Pending`.</span>
-	<span class="kw">fn</span> <span class="ident">poll_actions</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">futures::task::Context</span>, <span class="ident">link</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>);
+	<span class="doccomment">/// Polls for actions to perform on the network.
+	///
+	/// This method should behave in a way similar to `Future::poll`. It can register the current
+	/// task and notify later when more actions are ready to be polled. To continue the comparison,
+	/// it is as if this method always returned `Poll::Pending`.
+	</span><span class="kw">fn </span>poll_actions(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>futures::task::Context, link: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Link&lt;B&gt;);
 }
 
-<span class="doccomment">/// Hooks that the verification queue can use to influence the synchronization</span>
-<span class="doccomment">/// algorithm.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>: <span class="ident">Send</span> {
-	<span class="doccomment">/// Batch of blocks imported, with or without error.</span>
-	<span class="kw">fn</span> <span class="ident">blocks_processed</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">_imported</span>: <span class="ident">usize</span>,
-		<span class="ident">_count</span>: <span class="ident">usize</span>,
-		<span class="ident">_results</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">BlockImportResult</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B::Hash</span>)<span class="op">&gt;</span>,
+<span class="doccomment">/// Hooks that the verification queue can use to influence the synchronization
+/// algorithm.
+</span><span class="kw">pub trait </span>Link&lt;B: BlockT&gt;: Send {
+	<span class="doccomment">/// Batch of blocks imported, with or without error.
+	</span><span class="kw">fn </span>blocks_processed(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		_imported: usize,
+		_count: usize,
+		_results: Vec&lt;(BlockImportResult&lt;B&gt;, B::Hash)&gt;,
 	) {
 	}
 
-	<span class="doccomment">/// Justification import result.</span>
-	<span class="kw">fn</span> <span class="ident">justification_imported</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">_who</span>: <span class="ident">Origin</span>,
-		<span class="ident">_hash</span>: <span class="kw-2">&amp;</span><span class="ident">B::Hash</span>,
-		<span class="ident">_number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">_success</span>: <span class="ident">bool</span>,
+	<span class="doccomment">/// Justification import result.
+	</span><span class="kw">fn </span>justification_imported(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		_who: Origin,
+		_hash: <span class="kw-2">&amp;</span>B::Hash,
+		_number: NumberFor&lt;B&gt;,
+		_success: bool,
 	) {
 	}
 
-	<span class="doccomment">/// Request a justification for the given block.</span>
-	<span class="kw">fn</span> <span class="ident">request_justification</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_hash</span>: <span class="kw-2">&amp;</span><span class="ident">B::Hash</span>, <span class="ident">_number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) {}
+	<span class="doccomment">/// Request a justification for the given block.
+	</span><span class="kw">fn </span>request_justification(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _hash: <span class="kw-2">&amp;</span>B::Hash, _number: NumberFor&lt;B&gt;) {}
 }
 
-<span class="doccomment">/// Block import successful result.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">BlockImportStatus</span><span class="op">&lt;</span><span class="ident">N</span>: <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Imported known block.</span>
-	<span class="ident">ImportedKnown</span>(<span class="ident">N</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Origin</span><span class="op">&gt;</span>),
-	<span class="doccomment">/// Imported unknown block.</span>
-	<span class="ident">ImportedUnknown</span>(<span class="ident">N</span>, <span class="ident">ImportedAux</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Origin</span><span class="op">&gt;</span>),
+<span class="doccomment">/// Block import successful result.
+</span><span class="attribute">#[derive(Debug, PartialEq)]
+</span><span class="kw">pub enum </span>BlockImportStatus&lt;N: std::fmt::Debug + PartialEq&gt; {
+	<span class="doccomment">/// Imported known block.
+	</span>ImportedKnown(N, <span class="prelude-ty">Option</span>&lt;Origin&gt;),
+	<span class="doccomment">/// Imported unknown block.
+	</span>ImportedUnknown(N, ImportedAux, <span class="prelude-ty">Option</span>&lt;Origin&gt;),
 }
 
-<span class="doccomment">/// Block import error.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">thiserror::Error</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">BlockImportError</span> {
-	<span class="doccomment">/// Block missed header, can&#39;t be imported</span>
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;block is missing a header (origin = {0:?})&quot;</span>)]</span>
-	<span class="ident">IncompleteHeader</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Origin</span><span class="op">&gt;</span>),
+<span class="doccomment">/// Block import error.
+</span><span class="attribute">#[derive(Debug, thiserror::Error)]
+</span><span class="kw">pub enum </span>BlockImportError {
+	<span class="doccomment">/// Block missed header, can&#39;t be imported
+	</span><span class="attribute">#[error(<span class="string">&quot;block is missing a header (origin = {0:?})&quot;</span>)]
+	</span>IncompleteHeader(<span class="prelude-ty">Option</span>&lt;Origin&gt;),
 
-	<span class="doccomment">/// Block verification failed, can&#39;t be imported</span>
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;block verification failed (origin = {0:?}): {1}&quot;</span>)]</span>
-	<span class="ident">VerificationFailed</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Origin</span><span class="op">&gt;</span>, <span class="ident">String</span>),
+	<span class="doccomment">/// Block verification failed, can&#39;t be imported
+	</span><span class="attribute">#[error(<span class="string">&quot;block verification failed (origin = {0:?}): {1}&quot;</span>)]
+	</span>VerificationFailed(<span class="prelude-ty">Option</span>&lt;Origin&gt;, String),
 
-	<span class="doccomment">/// Block is known to be Bad</span>
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;bad block (origin = {0:?})&quot;</span>)]</span>
-	<span class="ident">BadBlock</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Origin</span><span class="op">&gt;</span>),
+	<span class="doccomment">/// Block is known to be Bad
+	</span><span class="attribute">#[error(<span class="string">&quot;bad block (origin = {0:?})&quot;</span>)]
+	</span>BadBlock(<span class="prelude-ty">Option</span>&lt;Origin&gt;),
 
-	<span class="doccomment">/// Parent state is missing.</span>
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;block is missing parent state&quot;</span>)]</span>
-	<span class="ident">MissingState</span>,
+	<span class="doccomment">/// Parent state is missing.
+	</span><span class="attribute">#[error(<span class="string">&quot;block is missing parent state&quot;</span>)]
+	</span>MissingState,
 
-	<span class="doccomment">/// Block has an unknown parent</span>
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;block has an unknown parent&quot;</span>)]</span>
-	<span class="ident">UnknownParent</span>,
+	<span class="doccomment">/// Block has an unknown parent
+	</span><span class="attribute">#[error(<span class="string">&quot;block has an unknown parent&quot;</span>)]
+	</span>UnknownParent,
 
-	<span class="doccomment">/// Block import has been cancelled. This can happen if the parent block fails to be imported.</span>
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;import has been cancelled&quot;</span>)]</span>
-	<span class="ident">Cancelled</span>,
+	<span class="doccomment">/// Block import has been cancelled. This can happen if the parent block fails to be imported.
+	</span><span class="attribute">#[error(<span class="string">&quot;import has been cancelled&quot;</span>)]
+	</span>Cancelled,
 
-	<span class="doccomment">/// Other error.</span>
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;consensus error: {0}&quot;</span>)]</span>
-	<span class="ident">Other</span>(<span class="ident">ConsensusError</span>),
+	<span class="doccomment">/// Other error.
+	</span><span class="attribute">#[error(<span class="string">&quot;consensus error: {0}&quot;</span>)]
+	</span>Other(ConsensusError),
 }
 
-<span class="kw">type</span> <span class="ident">BlockImportResult</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BlockImportStatus</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">BlockImportError</span><span class="op">&gt;</span>;
+<span class="kw">type </span>BlockImportResult&lt;B&gt; = <span class="prelude-ty">Result</span>&lt;BlockImportStatus&lt;NumberFor&lt;B&gt;&gt;, BlockImportError&gt;;
 
-<span class="doccomment">/// Single block import function.</span>
-<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_single_block</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">V</span>: <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">Transaction</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>(
-	<span class="ident">import_handle</span>: <span class="kw-2">&amp;mut</span> <span class="kw">impl</span> <span class="ident">BlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">Transaction</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span><span class="op">&gt;</span>,
-	<span class="ident">block_origin</span>: <span class="ident">BlockOrigin</span>,
-	<span class="ident">block</span>: <span class="ident">IncomingBlock</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">verifier</span>: <span class="kw-2">&amp;mut</span> <span class="ident">V</span>,
-) -&gt; <span class="ident">BlockImportResult</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="ident">import_single_block_metered</span>(<span class="ident">import_handle</span>, <span class="ident">block_origin</span>, <span class="ident">block</span>, <span class="ident">verifier</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>
-}
+<span class="doccomment">/// Single block import function.
+</span><span class="kw">pub async fn </span>import_single_block&lt;B: BlockT, V: Verifier&lt;B&gt;, Transaction: Send + <span class="lifetime">&#39;static</span>&gt;(
+	import_handle: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>BlockImport&lt;B, Transaction = Transaction, Error = ConsensusError&gt;,
+	block_origin: BlockOrigin,
+	block: IncomingBlock&lt;B&gt;,
+	verifier: <span class="kw-2">&amp;mut </span>V,
+) -&gt; BlockImportResult&lt;B&gt; {
+	import_single_block_metered(import_handle, block_origin, block, verifier, <span class="prelude-val">None</span>).<span class="kw">await
+</span>}
 
-<span class="doccomment">/// Single block import function with metering.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_single_block_metered</span><span class="op">&lt;</span>
-	<span class="ident">B</span>: <span class="ident">BlockT</span>,
-	<span class="ident">V</span>: <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">Transaction</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-<span class="op">&gt;</span>(
-	<span class="ident">import_handle</span>: <span class="kw-2">&amp;mut</span> <span class="kw">impl</span> <span class="ident">BlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">Transaction</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span><span class="op">&gt;</span>,
-	<span class="ident">block_origin</span>: <span class="ident">BlockOrigin</span>,
-	<span class="ident">block</span>: <span class="ident">IncomingBlock</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">verifier</span>: <span class="kw-2">&amp;mut</span> <span class="ident">V</span>,
-	<span class="ident">metrics</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Metrics</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">BlockImportResult</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">peer</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">origin</span>;
+<span class="doccomment">/// Single block import function with metering.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>import_single_block_metered&lt;
+	B: BlockT,
+	V: Verifier&lt;B&gt;,
+	Transaction: Send + <span class="lifetime">&#39;static</span>,
+&gt;(
+	import_handle: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>BlockImport&lt;B, Transaction = Transaction, Error = ConsensusError&gt;,
+	block_origin: BlockOrigin,
+	block: IncomingBlock&lt;B&gt;,
+	verifier: <span class="kw-2">&amp;mut </span>V,
+	metrics: <span class="prelude-ty">Option</span>&lt;Metrics&gt;,
+) -&gt; BlockImportResult&lt;B&gt; {
+	<span class="kw">let </span>peer = block.origin;
 
-	<span class="kw">let</span> (<span class="ident">header</span>, <span class="ident">justifications</span>) <span class="op">=</span> <span class="kw">match</span> (<span class="ident">block</span>.<span class="ident">header</span>, <span class="ident">block</span>.<span class="ident">justifications</span>) {
-		(<span class="prelude-val">Some</span>(<span class="ident">header</span>), <span class="ident">justifications</span>) =&gt; (<span class="ident">header</span>, <span class="ident">justifications</span>),
+	<span class="kw">let </span>(header, justifications) = <span class="kw">match </span>(block.header, block.justifications) {
+		(<span class="prelude-val">Some</span>(header), justifications) =&gt; (header, justifications),
 		(<span class="prelude-val">None</span>, <span class="kw">_</span>) =&gt; {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">peer</span>) <span class="op">=</span> <span class="ident">peer</span> {
-				<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Header {} was not provided by {} &quot;</span>, <span class="ident">block</span>.<span class="ident">hash</span>, <span class="ident">peer</span>);
-			} <span class="kw">else</span> {
-				<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Header {} was not provided &quot;</span>, <span class="ident">block</span>.<span class="ident">hash</span>);
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>peer) = peer {
+				<span class="macro">debug!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Header {} was not provided by {} &quot;</span>, block.hash, peer);
+			} <span class="kw">else </span>{
+				<span class="macro">debug!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Header {} was not provided &quot;</span>, block.hash);
 			}
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">BlockImportError::IncompleteHeader</span>(<span class="ident">peer</span>))
+			<span class="kw">return </span><span class="prelude-val">Err</span>(BlockImportError::IncompleteHeader(peer))
 		},
 	};
 
-	<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Header {} has {:?} logs&quot;</span>, <span class="ident">block</span>.<span class="ident">hash</span>, <span class="ident">header</span>.<span class="ident">digest</span>().<span class="ident">logs</span>().<span class="ident">len</span>());
+	<span class="macro">trace!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Header {} has {:?} logs&quot;</span>, block.hash, header.digest().logs().len());
 
-	<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">number</span>();
-	<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">hash</span>;
-	<span class="kw">let</span> <span class="ident">parent_hash</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">parent_hash</span>();
+	<span class="kw">let </span>number = <span class="kw-2">*</span>header.number();
+	<span class="kw">let </span>hash = block.hash;
+	<span class="kw">let </span>parent_hash = <span class="kw-2">*</span>header.parent_hash();
 
-	<span class="kw">let</span> <span class="ident">import_handler</span> <span class="op">=</span> <span class="op">|</span><span class="ident">import</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">import</span> {
-		<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::AlreadyInChain</span>) =&gt; {
-			<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Block already in chain {}: {:?}&quot;</span>, <span class="ident">number</span>, <span class="ident">hash</span>);
-			<span class="prelude-val">Ok</span>(<span class="ident">BlockImportStatus::ImportedKnown</span>(<span class="ident">number</span>, <span class="ident">peer</span>))
+	<span class="kw">let </span>import_handler = |import| <span class="kw">match </span>import {
+		<span class="prelude-val">Ok</span>(ImportResult::AlreadyInChain) =&gt; {
+			<span class="macro">trace!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Block already in chain {}: {:?}&quot;</span>, number, hash);
+			<span class="prelude-val">Ok</span>(BlockImportStatus::ImportedKnown(number, peer))
 		},
-		<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::Imported</span>(<span class="ident">aux</span>)) =&gt;
-			<span class="prelude-val">Ok</span>(<span class="ident">BlockImportStatus::ImportedUnknown</span>(<span class="ident">number</span>, <span class="ident">aux</span>, <span class="ident">peer</span>)),
-		<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::MissingState</span>) =&gt; {
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Parent state is missing for {}: {:?}, parent: {:?}&quot;</span>,
-					<span class="ident">number</span>, <span class="ident">hash</span>, <span class="ident">parent_hash</span>);
-			<span class="prelude-val">Err</span>(<span class="ident">BlockImportError::MissingState</span>)
+		<span class="prelude-val">Ok</span>(ImportResult::Imported(aux)) =&gt;
+			<span class="prelude-val">Ok</span>(BlockImportStatus::ImportedUnknown(number, aux, peer)),
+		<span class="prelude-val">Ok</span>(ImportResult::MissingState) =&gt; {
+			<span class="macro">debug!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Parent state is missing for {}: {:?}, parent: {:?}&quot;</span>,
+					number, hash, parent_hash);
+			<span class="prelude-val">Err</span>(BlockImportError::MissingState)
 		},
-		<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::UnknownParent</span>) =&gt; {
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Block with unknown parent {}: {:?}, parent: {:?}&quot;</span>,
-					<span class="ident">number</span>, <span class="ident">hash</span>, <span class="ident">parent_hash</span>);
-			<span class="prelude-val">Err</span>(<span class="ident">BlockImportError::UnknownParent</span>)
+		<span class="prelude-val">Ok</span>(ImportResult::UnknownParent) =&gt; {
+			<span class="macro">debug!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Block with unknown parent {}: {:?}, parent: {:?}&quot;</span>,
+					number, hash, parent_hash);
+			<span class="prelude-val">Err</span>(BlockImportError::UnknownParent)
 		},
-		<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::KnownBad</span>) =&gt; {
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Peer gave us a bad block {}: {:?}&quot;</span>, <span class="ident">number</span>, <span class="ident">hash</span>);
-			<span class="prelude-val">Err</span>(<span class="ident">BlockImportError::BadBlock</span>(<span class="ident">peer</span>))
+		<span class="prelude-val">Ok</span>(ImportResult::KnownBad) =&gt; {
+			<span class="macro">debug!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Peer gave us a bad block {}: {:?}&quot;</span>, number, hash);
+			<span class="prelude-val">Err</span>(BlockImportError::BadBlock(peer))
 		},
-		<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Error importing block {}: {:?}: {}&quot;</span>, <span class="ident">number</span>, <span class="ident">hash</span>, <span class="ident">e</span>);
-			<span class="prelude-val">Err</span>(<span class="ident">BlockImportError::Other</span>(<span class="ident">e</span>))
+		<span class="prelude-val">Err</span>(e) =&gt; {
+			<span class="macro">debug!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Error importing block {}: {:?}: {}&quot;</span>, number, hash, e);
+			<span class="prelude-val">Err</span>(BlockImportError::Other(e))
 		},
 	};
 
-	<span class="kw">match</span> <span class="ident">import_handler</span>(
-		<span class="ident">import_handle</span>
-			.<span class="ident">check_block</span>(<span class="ident">BlockCheckParams</span> {
-				<span class="ident">hash</span>,
-				<span class="ident">number</span>,
-				<span class="ident">parent_hash</span>,
-				<span class="ident">allow_missing_state</span>: <span class="ident">block</span>.<span class="ident">allow_missing_state</span>,
-				<span class="ident">import_existing</span>: <span class="ident">block</span>.<span class="ident">import_existing</span>,
-				<span class="ident">allow_missing_parent</span>: <span class="ident">block</span>.<span class="ident">state</span>.<span class="ident">is_some</span>(),
+	<span class="kw">match </span>import_handler(
+		import_handle
+			.check_block(BlockCheckParams {
+				hash,
+				number,
+				parent_hash,
+				allow_missing_state: block.allow_missing_state,
+				import_existing: block.import_existing,
+				allow_missing_parent: block.state.is_some(),
 			})
 			.<span class="kw">await</span>,
-	)<span class="question-mark">?</span> {
-		<span class="ident">BlockImportStatus::ImportedUnknown</span> { .. } =&gt; (),
-		<span class="ident">r</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">r</span>), <span class="comment">// Any other successful result means that the block is already imported.</span>
+	)<span class="question-mark">? </span>{
+		BlockImportStatus::ImportedUnknown { .. } =&gt; (),
+		r =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(r), <span class="comment">// Any other successful result means that the block is already imported.
+	</span>}
+
+	<span class="kw">let </span>started = std::time::Instant::now();
+
+	<span class="kw">let </span><span class="kw-2">mut </span>import_block = BlockImportParams::new(block_origin, header);
+	import_block.body = block.body;
+	import_block.justifications = justifications;
+	import_block.post_hash = <span class="prelude-val">Some</span>(hash);
+	import_block.import_existing = block.import_existing;
+	import_block.indexed_body = block.indexed_body;
+
+	<span class="kw">if let </span><span class="prelude-val">Some</span>(state) = block.state {
+		<span class="kw">let </span>changes = <span class="kw">crate</span>::block_import::StorageChanges::Import(state);
+		import_block.state_action = StateAction::ApplyChanges(changes);
+	} <span class="kw">else if </span>block.skip_execution {
+		import_block.state_action = StateAction::Skip;
+	} <span class="kw">else if </span>block.allow_missing_state {
+		import_block.state_action = StateAction::ExecuteIfPossible;
 	}
 
-	<span class="kw">let</span> <span class="ident">started</span> <span class="op">=</span> <span class="ident">std::time::Instant::now</span>();
-
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">import_block</span> <span class="op">=</span> <span class="ident">BlockImportParams::new</span>(<span class="ident">block_origin</span>, <span class="ident">header</span>);
-	<span class="ident">import_block</span>.<span class="ident">body</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">body</span>;
-	<span class="ident">import_block</span>.<span class="ident">justifications</span> <span class="op">=</span> <span class="ident">justifications</span>;
-	<span class="ident">import_block</span>.<span class="ident">post_hash</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">hash</span>);
-	<span class="ident">import_block</span>.<span class="ident">import_existing</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">import_existing</span>;
-	<span class="ident">import_block</span>.<span class="ident">indexed_body</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">indexed_body</span>;
-
-	<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=</span> <span class="ident">block</span>.<span class="ident">state</span> {
-		<span class="kw">let</span> <span class="ident">changes</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::block_import::StorageChanges::Import</span>(<span class="ident">state</span>);
-		<span class="ident">import_block</span>.<span class="ident">state_action</span> <span class="op">=</span> <span class="ident">StateAction::ApplyChanges</span>(<span class="ident">changes</span>);
-	} <span class="kw">else</span> <span class="kw">if</span> <span class="ident">block</span>.<span class="ident">skip_execution</span> {
-		<span class="ident">import_block</span>.<span class="ident">state_action</span> <span class="op">=</span> <span class="ident">StateAction::Skip</span>;
-	} <span class="kw">else</span> <span class="kw">if</span> <span class="ident">block</span>.<span class="ident">allow_missing_state</span> {
-		<span class="ident">import_block</span>.<span class="ident">state_action</span> <span class="op">=</span> <span class="ident">StateAction::ExecuteIfPossible</span>;
-	}
-
-	<span class="kw">let</span> (<span class="ident">import_block</span>, <span class="ident">maybe_keys</span>) <span class="op">=</span> <span class="ident">verifier</span>.<span class="ident">verify</span>(<span class="ident">import_block</span>).<span class="kw">await</span>.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">msg</span><span class="op">|</span> {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">peer</span>) <span class="op">=</span> <span class="ident">peer</span> {
-			<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Verifying {}({}) from {} failed: {}&quot;</span>, <span class="ident">number</span>, <span class="ident">hash</span>, <span class="ident">peer</span>, <span class="ident">msg</span>);
-		} <span class="kw">else</span> {
-			<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Verifying {}({}) failed: {}&quot;</span>, <span class="ident">number</span>, <span class="ident">hash</span>, <span class="ident">msg</span>);
+	<span class="kw">let </span>(import_block, maybe_keys) = verifier.verify(import_block).<span class="kw">await</span>.map_err(|msg| {
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>peer) = peer {
+			<span class="macro">trace!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Verifying {}({}) from {} failed: {}&quot;</span>, number, hash, peer, msg);
+		} <span class="kw">else </span>{
+			<span class="macro">trace!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Verifying {}({}) failed: {}&quot;</span>, number, hash, msg);
 		}
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="ident">metrics</span>.<span class="ident">as_ref</span>() {
-			<span class="ident">metrics</span>.<span class="ident">report_verification</span>(<span class="bool-val">false</span>, <span class="ident">started</span>.<span class="ident">elapsed</span>());
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = metrics.as_ref() {
+			metrics.report_verification(<span class="bool-val">false</span>, started.elapsed());
 		}
-		<span class="ident">BlockImportError::VerificationFailed</span>(<span class="ident">peer</span>, <span class="ident">msg</span>)
+		BlockImportError::VerificationFailed(peer, msg)
 	})<span class="question-mark">?</span>;
 
-	<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="ident">metrics</span>.<span class="ident">as_ref</span>() {
-		<span class="ident">metrics</span>.<span class="ident">report_verification</span>(<span class="bool-val">true</span>, <span class="ident">started</span>.<span class="ident">elapsed</span>());
+	<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = metrics.as_ref() {
+		metrics.report_verification(<span class="bool-val">true</span>, started.elapsed());
 	}
 
-	<span class="kw">let</span> <span class="ident">cache</span> <span class="op">=</span> <span class="ident">HashMap::from_iter</span>(<span class="ident">maybe_keys</span>.<span class="ident">unwrap_or_default</span>());
-	<span class="kw">let</span> <span class="ident">import_block</span> <span class="op">=</span> <span class="ident">import_block</span>.<span class="ident">clear_storage_changes_and_mutate</span>();
-	<span class="kw">let</span> <span class="ident">imported</span> <span class="op">=</span> <span class="ident">import_handle</span>.<span class="ident">import_block</span>(<span class="ident">import_block</span>, <span class="ident">cache</span>).<span class="kw">await</span>;
-	<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="ident">metrics</span>.<span class="ident">as_ref</span>() {
-		<span class="ident">metrics</span>.<span class="ident">report_verification_and_import</span>(<span class="ident">started</span>.<span class="ident">elapsed</span>());
+	<span class="kw">let </span>cache = HashMap::from_iter(maybe_keys.unwrap_or_default());
+	<span class="kw">let </span>import_block = import_block.clear_storage_changes_and_mutate();
+	<span class="kw">let </span>imported = import_handle.import_block(import_block, cache).<span class="kw">await</span>;
+	<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = metrics.as_ref() {
+		metrics.report_verification_and_import(started.elapsed());
 	}
-	<span class="ident">import_handler</span>(<span class="ident">imported</span>)
+	import_handler(imported)
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_consensus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_consensus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

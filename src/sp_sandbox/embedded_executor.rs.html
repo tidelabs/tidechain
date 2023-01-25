@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/sandbox/src/embedded_executor.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>embedded_executor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_sandbox/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sp_sandbox/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sp_sandbox/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/sandbox/src/embedded_executor.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>embedded_executor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sp_sandbox/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -481,364 +476,364 @@
 <span id="476">476</span>
 <span id="477">477</span>
 <span id="478">478</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! An embedded WASM executor utilizing `wasmi`.</span>
+</span><span class="doccomment">//! An embedded WASM executor utilizing `wasmi`.
 
-<span class="kw">use</span> <span class="ident">alloc::string::String</span>;
+</span><span class="kw">use </span>alloc::string::String;
 
-<span class="kw">use</span> <span class="ident">wasmi</span>::{
-	<span class="ident">memory_units::Pages</span>, <span class="ident">Externals</span>, <span class="ident">FuncInstance</span>, <span class="ident">FuncRef</span>, <span class="ident">GlobalDescriptor</span>, <span class="ident">GlobalRef</span>,
-	<span class="ident">ImportResolver</span>, <span class="ident">MemoryDescriptor</span>, <span class="ident">MemoryInstance</span>, <span class="ident">MemoryRef</span>, <span class="ident">Module</span>, <span class="ident">ModuleInstance</span>, <span class="ident">ModuleRef</span>,
-	<span class="ident">RuntimeArgs</span>, <span class="ident">RuntimeValue</span>, <span class="ident">Signature</span>, <span class="ident">TableDescriptor</span>, <span class="ident">TableRef</span>, <span class="ident">Trap</span>, <span class="ident">TrapKind</span>,
+<span class="kw">use </span>wasmi::{
+	memory_units::Pages, Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalRef,
+	ImportResolver, MemoryDescriptor, MemoryInstance, MemoryRef, Module, ModuleInstance, ModuleRef,
+	RuntimeArgs, RuntimeValue, Signature, TableDescriptor, TableRef, Trap, TrapKind,
 };
 
-<span class="kw">use</span> <span class="ident">sp_std</span>::{
-	<span class="ident">borrow::ToOwned</span>, <span class="ident">collections::btree_map::BTreeMap</span>, <span class="ident">fmt</span>, <span class="ident">marker::PhantomData</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>,
+<span class="kw">use </span>sp_std::{
+	borrow::ToOwned, collections::btree_map::BTreeMap, fmt, marker::PhantomData, prelude::<span class="kw-2">*</span>,
 };
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">HostError</span>, <span class="ident">HostFuncType</span>, <span class="ident">ReturnValue</span>, <span class="ident">Value</span>, <span class="ident">TARGET</span>};
+<span class="kw">use crate</span>::{Error, HostError, HostFuncType, ReturnValue, Value, TARGET};
 
-<span class="doccomment">/// The linear memory used by the sandbox.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Memory</span> {
-	<span class="ident">memref</span>: <span class="ident">MemoryRef</span>,
+<span class="doccomment">/// The linear memory used by the sandbox.
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>Memory {
+	memref: MemoryRef,
 }
 
-<span class="kw">impl</span> <span class="ident"><span class="kw">super</span>::SandboxMemory</span> <span class="kw">for</span> <span class="ident">Memory</span> {
-	<span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">initial</span>: <span class="ident">u32</span>, <span class="ident">maximum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Memory</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="prelude-val">Ok</span>(<span class="ident">Memory</span> {
-			<span class="ident">memref</span>: <span class="ident">MemoryInstance::alloc</span>(
-				<span class="ident">Pages</span>(<span class="ident">initial</span> <span class="kw">as</span> <span class="ident">usize</span>),
-				<span class="ident">maximum</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> <span class="ident">Pages</span>(<span class="ident">m</span> <span class="kw">as</span> <span class="ident">usize</span>)),
+<span class="kw">impl </span><span class="kw">super</span>::SandboxMemory <span class="kw">for </span>Memory {
+	<span class="kw">fn </span>new(initial: u32, maximum: <span class="prelude-ty">Option</span>&lt;u32&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Memory, Error&gt; {
+		<span class="prelude-val">Ok</span>(Memory {
+			memref: MemoryInstance::alloc(
+				Pages(initial <span class="kw">as </span>usize),
+				maximum.map(|m| Pages(m <span class="kw">as </span>usize)),
 			)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Module</span>)<span class="question-mark">?</span>,
+			.map_err(|<span class="kw">_</span>| Error::Module)<span class="question-mark">?</span>,
 		})
 	}
 
-	<span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="ident">u32</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">memref</span>.<span class="ident">get_into</span>(<span class="ident">ptr</span>, <span class="ident">buf</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::OutOfBounds</span>)<span class="question-mark">?</span>;
+	<span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: u32, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="self">self</span>.memref.get_into(ptr, buf).map_err(|<span class="kw">_</span>| Error::OutOfBounds)<span class="question-mark">?</span>;
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="ident">u32</span>, <span class="ident">value</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">memref</span>.<span class="ident">set</span>(<span class="ident">ptr</span>, <span class="ident">value</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::OutOfBounds</span>)<span class="question-mark">?</span>;
+	<span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: u32, value: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="self">self</span>.memref.set(ptr, value).map_err(|<span class="kw">_</span>| Error::OutOfBounds)<span class="question-mark">?</span>;
 		<span class="prelude-val">Ok</span>(())
 	}
 }
 
-<span class="kw">struct</span> <span class="ident">HostFuncIndex</span>(<span class="ident">usize</span>);
+<span class="kw">struct </span>HostFuncIndex(usize);
 
-<span class="kw">struct</span> <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="ident">funcs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">HostFuncType</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>DefinedHostFunctions&lt;T&gt; {
+	funcs: Vec&lt;HostFuncType&lt;T&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-		<span class="ident">DefinedHostFunctions</span> { <span class="ident">funcs</span>: <span class="self">self</span>.<span class="ident">funcs</span>.<span class="ident">clone</span>() }
+<span class="kw">impl</span>&lt;T&gt; Clone <span class="kw">for </span>DefinedHostFunctions&lt;T&gt; {
+	<span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DefinedHostFunctions&lt;T&gt; {
+		DefinedHostFunctions { funcs: <span class="self">self</span>.funcs.clone() }
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-		<span class="ident">DefinedHostFunctions</span> { <span class="ident">funcs</span>: <span class="ident">Vec::new</span>() }
+<span class="kw">impl</span>&lt;T&gt; DefinedHostFunctions&lt;T&gt; {
+	<span class="kw">fn </span>new() -&gt; DefinedHostFunctions&lt;T&gt; {
+		DefinedHostFunctions { funcs: Vec::new() }
 	}
 
-	<span class="kw">fn</span> <span class="ident">define</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">HostFuncType</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="ident">HostFuncIndex</span> {
-		<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">funcs</span>.<span class="ident">len</span>();
-		<span class="self">self</span>.<span class="ident">funcs</span>.<span class="ident">push</span>(<span class="ident">f</span>);
-		<span class="ident">HostFuncIndex</span>(<span class="ident">idx</span>)
-	}
-}
-
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">struct</span> <span class="ident">DummyHostError</span>;
-
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">DummyHostError</span> {
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-		<span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;DummyHostError&quot;</span>)
+	<span class="kw">fn </span>define(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: HostFuncType&lt;T&gt;) -&gt; HostFuncIndex {
+		<span class="kw">let </span>idx = <span class="self">self</span>.funcs.len();
+		<span class="self">self</span>.funcs.push(f);
+		HostFuncIndex(idx)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">wasmi::HostError</span> <span class="kw">for</span> <span class="ident">DummyHostError</span> {}
+<span class="attribute">#[derive(Debug)]
+</span><span class="kw">struct </span>DummyHostError;
 
-<span class="kw">struct</span> <span class="ident">GuestExternals</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span>,
-	<span class="ident">defined_host_functions</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>DummyHostError {
+	<span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+		<span class="macro">write!</span>(f, <span class="string">&quot;DummyHostError&quot;</span>)
+	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Externals</span> <span class="kw">for</span> <span class="ident">GuestExternals</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">invoke_index</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">index</span>: <span class="ident">usize</span>,
-		<span class="ident">args</span>: <span class="ident">RuntimeArgs</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RuntimeValue</span><span class="op">&gt;</span>, <span class="ident">Trap</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">args</span>.<span class="ident">as_ref</span>().<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">to_interface</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+<span class="kw">impl </span>wasmi::HostError <span class="kw">for </span>DummyHostError {}
 
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">defined_host_functions</span>.<span class="ident">funcs</span>[<span class="ident">index</span>])(<span class="self">self</span>.<span class="ident">state</span>, <span class="kw-2">&amp;</span><span class="ident">args</span>);
-		<span class="kw">match</span> <span class="ident">result</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">value</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">value</span> {
-				<span class="ident">ReturnValue::Value</span>(<span class="ident">v</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">to_wasmi</span>(<span class="ident">v</span>)),
-				<span class="ident">ReturnValue::Unit</span> =&gt; <span class="prelude-val">None</span>,
+<span class="kw">struct </span>GuestExternals&lt;<span class="lifetime">&#39;a</span>, T: <span class="lifetime">&#39;a</span>&gt; {
+	state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T,
+	defined_host_functions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>DefinedHostFunctions&lt;T&gt;,
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Externals <span class="kw">for </span>GuestExternals&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+	<span class="kw">fn </span>invoke_index(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		index: usize,
+		args: RuntimeArgs,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;RuntimeValue&gt;, Trap&gt; {
+		<span class="kw">let </span>args = args.as_ref().iter().cloned().map(to_interface).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+
+		<span class="kw">let </span>result = (<span class="self">self</span>.defined_host_functions.funcs[index])(<span class="self">self</span>.state, <span class="kw-2">&amp;</span>args);
+		<span class="kw">match </span>result {
+			<span class="prelude-val">Ok</span>(value) =&gt; <span class="prelude-val">Ok</span>(<span class="kw">match </span>value {
+				ReturnValue::Value(v) =&gt; <span class="prelude-val">Some</span>(to_wasmi(v)),
+				ReturnValue::Unit =&gt; <span class="prelude-val">None</span>,
 			}),
-			<span class="prelude-val">Err</span>(<span class="ident">HostError</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">TrapKind::Host</span>(<span class="ident">Box::new</span>(<span class="ident">DummyHostError</span>)).<span class="ident">into</span>()),
+			<span class="prelude-val">Err</span>(HostError) =&gt; <span class="prelude-val">Err</span>(TrapKind::Host(Box::new(DummyHostError)).into()),
 		}
 	}
 }
 
-<span class="kw">enum</span> <span class="ident">ExternVal</span> {
-	<span class="ident">HostFunc</span>(<span class="ident">HostFuncIndex</span>),
-	<span class="ident">Memory</span>(<span class="ident">Memory</span>),
+<span class="kw">enum </span>ExternVal {
+	HostFunc(HostFuncIndex),
+	Memory(Memory),
 }
 
-<span class="doccomment">/// A builder for the environment of the sandboxed WASM module.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EnvironmentDefinitionBuilder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="ident">map</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>), <span class="ident">ExternVal</span><span class="op">&gt;</span>,
-	<span class="ident">defined_host_functions</span>: <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A builder for the environment of the sandboxed WASM module.
+</span><span class="kw">pub struct </span>EnvironmentDefinitionBuilder&lt;T&gt; {
+	map: BTreeMap&lt;(Vec&lt;u8&gt;, Vec&lt;u8&gt;), ExternVal&gt;,
+	defined_host_functions: DefinedHostFunctions&lt;T&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident"><span class="kw">super</span>::SandboxEnvironmentBuilder</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Memory</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EnvironmentDefinitionBuilder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">EnvironmentDefinitionBuilder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-		<span class="ident">EnvironmentDefinitionBuilder</span> {
-			<span class="ident">map</span>: <span class="ident">BTreeMap::new</span>(),
-			<span class="ident">defined_host_functions</span>: <span class="ident">DefinedHostFunctions::new</span>(),
+<span class="kw">impl</span>&lt;T&gt; <span class="kw">super</span>::SandboxEnvironmentBuilder&lt;T, Memory&gt; <span class="kw">for </span>EnvironmentDefinitionBuilder&lt;T&gt; {
+	<span class="kw">fn </span>new() -&gt; EnvironmentDefinitionBuilder&lt;T&gt; {
+		EnvironmentDefinitionBuilder {
+			map: BTreeMap::new(),
+			defined_host_functions: DefinedHostFunctions::new(),
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">add_host_func</span><span class="op">&lt;</span><span class="ident">N1</span>, <span class="ident">N2</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">module</span>: <span class="ident">N1</span>, <span class="ident">field</span>: <span class="ident">N2</span>, <span class="ident">f</span>: <span class="ident">HostFuncType</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>)
-	<span class="kw">where</span>
-		<span class="ident">N1</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">N2</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+	<span class="kw">fn </span>add_host_func&lt;N1, N2&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, module: N1, field: N2, f: HostFuncType&lt;T&gt;)
+	<span class="kw">where
+		</span>N1: Into&lt;Vec&lt;u8&gt;&gt;,
+		N2: Into&lt;Vec&lt;u8&gt;&gt;,
 	{
-		<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">defined_host_functions</span>.<span class="ident">define</span>(<span class="ident">f</span>);
-		<span class="self">self</span>.<span class="ident">map</span>.<span class="ident">insert</span>((<span class="ident">module</span>.<span class="ident">into</span>(), <span class="ident">field</span>.<span class="ident">into</span>()), <span class="ident">ExternVal::HostFunc</span>(<span class="ident">idx</span>));
+		<span class="kw">let </span>idx = <span class="self">self</span>.defined_host_functions.define(f);
+		<span class="self">self</span>.map.insert((module.into(), field.into()), ExternVal::HostFunc(idx));
 	}
 
-	<span class="kw">fn</span> <span class="ident">add_memory</span><span class="op">&lt;</span><span class="ident">N1</span>, <span class="ident">N2</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">module</span>: <span class="ident">N1</span>, <span class="ident">field</span>: <span class="ident">N2</span>, <span class="ident">mem</span>: <span class="ident">Memory</span>)
-	<span class="kw">where</span>
-		<span class="ident">N1</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">N2</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+	<span class="kw">fn </span>add_memory&lt;N1, N2&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, module: N1, field: N2, mem: Memory)
+	<span class="kw">where
+		</span>N1: Into&lt;Vec&lt;u8&gt;&gt;,
+		N2: Into&lt;Vec&lt;u8&gt;&gt;,
 	{
-		<span class="self">self</span>.<span class="ident">map</span>.<span class="ident">insert</span>((<span class="ident">module</span>.<span class="ident">into</span>(), <span class="ident">field</span>.<span class="ident">into</span>()), <span class="ident">ExternVal::Memory</span>(<span class="ident">mem</span>));
+		<span class="self">self</span>.map.insert((module.into(), field.into()), ExternVal::Memory(mem));
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">ImportResolver</span> <span class="kw">for</span> <span class="ident">EnvironmentDefinitionBuilder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">resolve_func</span>(
+<span class="kw">impl</span>&lt;T&gt; ImportResolver <span class="kw">for </span>EnvironmentDefinitionBuilder&lt;T&gt; {
+	<span class="kw">fn </span>resolve_func(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">signature</span>: <span class="kw-2">&amp;</span><span class="ident">Signature</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">FuncRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> (<span class="ident">module_name</span>.<span class="ident">as_bytes</span>().<span class="ident">to_owned</span>(), <span class="ident">field_name</span>.<span class="ident">as_bytes</span>().<span class="ident">to_owned</span>());
-		<span class="kw">let</span> <span class="ident">externval</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="ident">TARGET</span>, <span class="string">&quot;Export {}:{} not found&quot;</span>, <span class="ident">module_name</span>, <span class="ident">field_name</span>);
-			<span class="ident">wasmi::Error::Instantiation</span>(<span class="ident">String::new</span>())
+		module_name: <span class="kw-2">&amp;</span>str,
+		field_name: <span class="kw-2">&amp;</span>str,
+		signature: <span class="kw-2">&amp;</span>Signature,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;FuncRef, wasmi::Error&gt; {
+		<span class="kw">let </span>key = (module_name.as_bytes().to_owned(), field_name.as_bytes().to_owned());
+		<span class="kw">let </span>externval = <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>key).ok_or_else(|| {
+			<span class="macro">log::debug!</span>(target: TARGET, <span class="string">&quot;Export {}:{} not found&quot;</span>, module_name, field_name);
+			wasmi::Error::Instantiation(String::new())
 		})<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">host_func_idx</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">externval</span> {
-			<span class="ident">ExternVal::HostFunc</span>(<span class="kw-2">ref</span> <span class="ident">idx</span>) =&gt; <span class="ident">idx</span>,
-			<span class="kw">_</span> =&gt; {
+		<span class="kw">let </span>host_func_idx = <span class="kw">match </span><span class="kw-2">*</span>externval {
+			ExternVal::HostFunc(<span class="kw-2">ref </span>idx) =&gt; idx,
+			<span class="kw">_ </span>=&gt; {
 				<span class="macro">log::debug!</span>(
-					<span class="ident">target</span>: <span class="ident">TARGET</span>,
+					target: TARGET,
 					<span class="string">&quot;Export {}:{} is not a host func&quot;</span>,
-					<span class="ident">module_name</span>,
-					<span class="ident">field_name</span>,
+					module_name,
+					field_name,
 				);
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">wasmi::Error::Instantiation</span>(<span class="ident">String::new</span>()))
+				<span class="kw">return </span><span class="prelude-val">Err</span>(wasmi::Error::Instantiation(String::new()))
 			},
 		};
-		<span class="prelude-val">Ok</span>(<span class="ident">FuncInstance::alloc_host</span>(<span class="ident">signature</span>.<span class="ident">clone</span>(), <span class="ident">host_func_idx</span>.<span class="number">0</span>))
+		<span class="prelude-val">Ok</span>(FuncInstance::alloc_host(signature.clone(), host_func_idx.<span class="number">0</span>))
 	}
 
-	<span class="kw">fn</span> <span class="ident">resolve_global</span>(
+	<span class="kw">fn </span>resolve_global(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">_module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_global_type</span>: <span class="kw-2">&amp;</span><span class="ident">GlobalDescriptor</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">GlobalRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
-		<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="ident">TARGET</span>, <span class="string">&quot;Importing globals is not supported yet&quot;</span>);
-		<span class="prelude-val">Err</span>(<span class="ident">wasmi::Error::Instantiation</span>(<span class="ident">String::new</span>()))
+		_module_name: <span class="kw-2">&amp;</span>str,
+		_field_name: <span class="kw-2">&amp;</span>str,
+		_global_type: <span class="kw-2">&amp;</span>GlobalDescriptor,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;GlobalRef, wasmi::Error&gt; {
+		<span class="macro">log::debug!</span>(target: TARGET, <span class="string">&quot;Importing globals is not supported yet&quot;</span>);
+		<span class="prelude-val">Err</span>(wasmi::Error::Instantiation(String::new()))
 	}
 
-	<span class="kw">fn</span> <span class="ident">resolve_memory</span>(
+	<span class="kw">fn </span>resolve_memory(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_memory_type</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryDescriptor</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MemoryRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> (<span class="ident">module_name</span>.<span class="ident">as_bytes</span>().<span class="ident">to_owned</span>(), <span class="ident">field_name</span>.<span class="ident">as_bytes</span>().<span class="ident">to_owned</span>());
-		<span class="kw">let</span> <span class="ident">externval</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="ident">TARGET</span>, <span class="string">&quot;Export {}:{} not found&quot;</span>, <span class="ident">module_name</span>, <span class="ident">field_name</span>);
-			<span class="ident">wasmi::Error::Instantiation</span>(<span class="ident">String::new</span>())
+		module_name: <span class="kw-2">&amp;</span>str,
+		field_name: <span class="kw-2">&amp;</span>str,
+		_memory_type: <span class="kw-2">&amp;</span>MemoryDescriptor,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;MemoryRef, wasmi::Error&gt; {
+		<span class="kw">let </span>key = (module_name.as_bytes().to_owned(), field_name.as_bytes().to_owned());
+		<span class="kw">let </span>externval = <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>key).ok_or_else(|| {
+			<span class="macro">log::debug!</span>(target: TARGET, <span class="string">&quot;Export {}:{} not found&quot;</span>, module_name, field_name);
+			wasmi::Error::Instantiation(String::new())
 		})<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">externval</span> {
-			<span class="ident">ExternVal::Memory</span>(<span class="kw-2">ref</span> <span class="ident">m</span>) =&gt; <span class="ident">m</span>,
-			<span class="kw">_</span> =&gt; {
+		<span class="kw">let </span>memory = <span class="kw">match </span><span class="kw-2">*</span>externval {
+			ExternVal::Memory(<span class="kw-2">ref </span>m) =&gt; m,
+			<span class="kw">_ </span>=&gt; {
 				<span class="macro">log::debug!</span>(
-					<span class="ident">target</span>: <span class="ident">TARGET</span>,
+					target: TARGET,
 					<span class="string">&quot;Export {}:{} is not a memory&quot;</span>,
-					<span class="ident">module_name</span>,
-					<span class="ident">field_name</span>,
+					module_name,
+					field_name,
 				);
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">wasmi::Error::Instantiation</span>(<span class="ident">String::new</span>()))
+				<span class="kw">return </span><span class="prelude-val">Err</span>(wasmi::Error::Instantiation(String::new()))
 			},
 		};
-		<span class="prelude-val">Ok</span>(<span class="ident">memory</span>.<span class="ident">memref</span>.<span class="ident">clone</span>())
+		<span class="prelude-val">Ok</span>(memory.memref.clone())
 	}
 
-	<span class="kw">fn</span> <span class="ident">resolve_table</span>(
+	<span class="kw">fn </span>resolve_table(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">_module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_table_type</span>: <span class="kw-2">&amp;</span><span class="ident">TableDescriptor</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TableRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
+		_module_name: <span class="kw-2">&amp;</span>str,
+		_field_name: <span class="kw-2">&amp;</span>str,
+		_table_type: <span class="kw-2">&amp;</span>TableDescriptor,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;TableRef, wasmi::Error&gt; {
 		<span class="macro">log::debug!</span>(<span class="string">&quot;Importing tables is not supported yet&quot;</span>);
-		<span class="prelude-val">Err</span>(<span class="ident">wasmi::Error::Instantiation</span>(<span class="ident">String::new</span>()))
+		<span class="prelude-val">Err</span>(wasmi::Error::Instantiation(String::new()))
 	}
 }
 
-<span class="doccomment">/// Sandboxed instance of a WASM module.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="ident">instance</span>: <span class="ident">ModuleRef</span>,
-	<span class="ident">defined_host_functions</span>: <span class="ident">DefinedHostFunctions</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-	<span class="ident">_marker</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Sandboxed instance of a WASM module.
+</span><span class="kw">pub struct </span>Instance&lt;T&gt; {
+	instance: ModuleRef,
+	defined_host_functions: DefinedHostFunctions&lt;T&gt;,
+	_marker: PhantomData&lt;T&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident"><span class="kw">super</span>::SandboxInstance</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Memory</span> <span class="op">=</span> <span class="ident">Memory</span>;
-	<span class="kw">type</span> <span class="ident">EnvironmentBuilder</span> <span class="op">=</span> <span class="ident">EnvironmentDefinitionBuilder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;T&gt; <span class="kw">super</span>::SandboxInstance&lt;T&gt; <span class="kw">for </span>Instance&lt;T&gt; {
+	<span class="kw">type </span>Memory = Memory;
+	<span class="kw">type </span>EnvironmentBuilder = EnvironmentDefinitionBuilder&lt;T&gt;;
 
-	<span class="kw">fn</span> <span class="ident">new</span>(
-		<span class="ident">code</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">env_def_builder</span>: <span class="kw-2">&amp;</span><span class="ident">EnvironmentDefinitionBuilder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-		<span class="ident">state</span>: <span class="kw-2">&amp;mut</span> <span class="ident">T</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instance</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">Module::from_buffer</span>(<span class="ident">code</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Module</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">not_started_instance</span> <span class="op">=</span>
-			<span class="ident">ModuleInstance::new</span>(<span class="kw-2">&amp;</span><span class="ident">module</span>, <span class="ident">env_def_builder</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Module</span>)<span class="question-mark">?</span>;
+	<span class="kw">fn </span>new(
+		code: <span class="kw-2">&amp;</span>[u8],
+		env_def_builder: <span class="kw-2">&amp;</span>EnvironmentDefinitionBuilder&lt;T&gt;,
+		state: <span class="kw-2">&amp;mut </span>T,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&lt;T&gt;, Error&gt; {
+		<span class="kw">let </span>module = Module::from_buffer(code).map_err(|<span class="kw">_</span>| Error::Module)<span class="question-mark">?</span>;
+		<span class="kw">let </span>not_started_instance =
+			ModuleInstance::new(<span class="kw-2">&amp;</span>module, env_def_builder).map_err(|<span class="kw">_</span>| Error::Module)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">defined_host_functions</span> <span class="op">=</span> <span class="ident">env_def_builder</span>.<span class="ident">defined_host_functions</span>.<span class="ident">clone</span>();
-		<span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">externals</span> <span class="op">=</span>
-				<span class="ident">GuestExternals</span> { <span class="ident">state</span>, <span class="ident">defined_host_functions</span>: <span class="kw-2">&amp;</span><span class="ident">defined_host_functions</span> };
-			<span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span>
-				<span class="ident">not_started_instance</span>.<span class="ident">run_start</span>(<span class="kw-2">&amp;mut</span> <span class="ident">externals</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Execution</span>)<span class="question-mark">?</span>;
-			<span class="ident">instance</span>
+		<span class="kw">let </span>defined_host_functions = env_def_builder.defined_host_functions.clone();
+		<span class="kw">let </span>instance = {
+			<span class="kw">let </span><span class="kw-2">mut </span>externals =
+				GuestExternals { state, defined_host_functions: <span class="kw-2">&amp;</span>defined_host_functions };
+			<span class="kw">let </span>instance =
+				not_started_instance.run_start(<span class="kw-2">&amp;mut </span>externals).map_err(|<span class="kw">_</span>| Error::Execution)<span class="question-mark">?</span>;
+			instance
 		};
 
-		<span class="prelude-val">Ok</span>(<span class="ident">Instance</span> { <span class="ident">instance</span>, <span class="ident">defined_host_functions</span>, <span class="ident">_marker</span>: <span class="ident">PhantomData</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> })
+		<span class="prelude-val">Ok</span>(Instance { instance, defined_host_functions, _marker: PhantomData::&lt;T&gt; })
 	}
 
-	<span class="kw">fn</span> <span class="ident">invoke</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">Value</span>], <span class="ident">state</span>: <span class="kw-2">&amp;mut</span> <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ReturnValue</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">args</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">to_wasmi</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+	<span class="kw">fn </span>invoke(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, args: <span class="kw-2">&amp;</span>[Value], state: <span class="kw-2">&amp;mut </span>T) -&gt; <span class="prelude-ty">Result</span>&lt;ReturnValue, Error&gt; {
+		<span class="kw">let </span>args = args.iter().cloned().map(to_wasmi).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">externals</span> <span class="op">=</span>
-			<span class="ident">GuestExternals</span> { <span class="ident">state</span>, <span class="ident">defined_host_functions</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">defined_host_functions</span> };
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">instance</span>.<span class="ident">invoke_export</span>(<span class="ident">name</span>, <span class="kw-2">&amp;</span><span class="ident">args</span>, <span class="kw-2">&amp;mut</span> <span class="ident">externals</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>externals =
+			GuestExternals { state, defined_host_functions: <span class="kw-2">&amp;</span><span class="self">self</span>.defined_host_functions };
+		<span class="kw">let </span>result = <span class="self">self</span>.instance.invoke_export(name, <span class="kw-2">&amp;</span>args, <span class="kw-2">&amp;mut </span>externals);
 
-		<span class="kw">match</span> <span class="ident">result</span> {
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">ReturnValue::Unit</span>),
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">val</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">ReturnValue::Value</span>(<span class="ident">to_interface</span>(<span class="ident">val</span>))),
-			<span class="prelude-val">Err</span>(<span class="ident">_err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::Execution</span>),
+		<span class="kw">match </span>result {
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(ReturnValue::Unit),
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(val)) =&gt; <span class="prelude-val">Ok</span>(ReturnValue::Value(to_interface(val))),
+			<span class="prelude-val">Err</span>(_err) =&gt; <span class="prelude-val">Err</span>(Error::Execution),
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">get_global_val</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">global</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">instance</span>.<span class="ident">export_by_name</span>(<span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">as_global</span>()<span class="question-mark">?</span>.<span class="ident">get</span>();
+	<span class="kw">fn </span>get_global_val(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Value&gt; {
+		<span class="kw">let </span>global = <span class="self">self</span>.instance.export_by_name(name)<span class="question-mark">?</span>.as_global()<span class="question-mark">?</span>.get();
 
-		<span class="prelude-val">Some</span>(<span class="ident">to_interface</span>(<span class="ident">global</span>))
+		<span class="prelude-val">Some</span>(to_interface(global))
 	}
 }
 
-<span class="doccomment">/// Convert the substrate value type to the wasmi value type.</span>
-<span class="kw">fn</span> <span class="ident">to_wasmi</span>(<span class="ident">value</span>: <span class="ident">Value</span>) -&gt; <span class="ident">RuntimeValue</span> {
-	<span class="kw">match</span> <span class="ident">value</span> {
-		<span class="ident">Value::I32</span>(<span class="ident">val</span>) =&gt; <span class="ident">RuntimeValue::I32</span>(<span class="ident">val</span>),
-		<span class="ident">Value::I64</span>(<span class="ident">val</span>) =&gt; <span class="ident">RuntimeValue::I64</span>(<span class="ident">val</span>),
-		<span class="ident">Value::F32</span>(<span class="ident">val</span>) =&gt; <span class="ident">RuntimeValue::F32</span>(<span class="ident">val</span>.<span class="ident">into</span>()),
-		<span class="ident">Value::F64</span>(<span class="ident">val</span>) =&gt; <span class="ident">RuntimeValue::F64</span>(<span class="ident">val</span>.<span class="ident">into</span>()),
+<span class="doccomment">/// Convert the substrate value type to the wasmi value type.
+</span><span class="kw">fn </span>to_wasmi(value: Value) -&gt; RuntimeValue {
+	<span class="kw">match </span>value {
+		Value::I32(val) =&gt; RuntimeValue::I32(val),
+		Value::I64(val) =&gt; RuntimeValue::I64(val),
+		Value::F32(val) =&gt; RuntimeValue::F32(val.into()),
+		Value::F64(val) =&gt; RuntimeValue::F64(val.into()),
 	}
 }
 
-<span class="doccomment">/// Convert the wasmi value type to the substrate value type.</span>
-<span class="kw">fn</span> <span class="ident">to_interface</span>(<span class="ident">value</span>: <span class="ident">RuntimeValue</span>) -&gt; <span class="ident">Value</span> {
-	<span class="kw">match</span> <span class="ident">value</span> {
-		<span class="ident">RuntimeValue::I32</span>(<span class="ident">val</span>) =&gt; <span class="ident">Value::I32</span>(<span class="ident">val</span>),
-		<span class="ident">RuntimeValue::I64</span>(<span class="ident">val</span>) =&gt; <span class="ident">Value::I64</span>(<span class="ident">val</span>),
-		<span class="ident">RuntimeValue::F32</span>(<span class="ident">val</span>) =&gt; <span class="ident">Value::F32</span>(<span class="ident">val</span>.<span class="ident">into</span>()),
-		<span class="ident">RuntimeValue::F64</span>(<span class="ident">val</span>) =&gt; <span class="ident">Value::F64</span>(<span class="ident">val</span>.<span class="ident">into</span>()),
+<span class="doccomment">/// Convert the wasmi value type to the substrate value type.
+</span><span class="kw">fn </span>to_interface(value: RuntimeValue) -&gt; Value {
+	<span class="kw">match </span>value {
+		RuntimeValue::I32(val) =&gt; Value::I32(val),
+		RuntimeValue::I64(val) =&gt; Value::I64(val),
+		RuntimeValue::F32(val) =&gt; Value::F32(val.into()),
+		RuntimeValue::F64(val) =&gt; Value::F64(val.into()),
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">EnvironmentDefinitionBuilder</span>, <span class="ident">Instance</span>};
-	<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">HostError</span>, <span class="ident">ReturnValue</span>, <span class="ident">SandboxEnvironmentBuilder</span>, <span class="ident">SandboxInstance</span>, <span class="ident">Value</span>};
-	<span class="kw">use</span> <span class="ident">assert_matches::assert_matches</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::{EnvironmentDefinitionBuilder, Instance};
+	<span class="kw">use crate</span>::{Error, HostError, ReturnValue, SandboxEnvironmentBuilder, SandboxInstance, Value};
+	<span class="kw">use </span>assert_matches::assert_matches;
 
-	<span class="kw">fn</span> <span class="ident">execute_sandboxed</span>(<span class="ident">code</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">Value</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ReturnValue</span>, <span class="ident">HostError</span><span class="op">&gt;</span> {
-		<span class="kw">struct</span> <span class="ident">State</span> {
-			<span class="ident">counter</span>: <span class="ident">u32</span>,
+	<span class="kw">fn </span>execute_sandboxed(code: <span class="kw-2">&amp;</span>[u8], args: <span class="kw-2">&amp;</span>[Value]) -&gt; <span class="prelude-ty">Result</span>&lt;ReturnValue, HostError&gt; {
+		<span class="kw">struct </span>State {
+			counter: u32,
 		}
 
-		<span class="kw">fn</span> <span class="ident">env_assert</span>(<span class="ident">_e</span>: <span class="kw-2">&amp;mut</span> <span class="ident">State</span>, <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">Value</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ReturnValue</span>, <span class="ident">HostError</span><span class="op">&gt;</span> {
-			<span class="kw">if</span> <span class="ident">args</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">HostError</span>)
+		<span class="kw">fn </span>env_assert(_e: <span class="kw-2">&amp;mut </span>State, args: <span class="kw-2">&amp;</span>[Value]) -&gt; <span class="prelude-ty">Result</span>&lt;ReturnValue, HostError&gt; {
+			<span class="kw">if </span>args.len() != <span class="number">1 </span>{
+				<span class="kw">return </span><span class="prelude-val">Err</span>(HostError)
 			}
-			<span class="kw">let</span> <span class="ident">condition</span> <span class="op">=</span> <span class="ident">args</span>[<span class="number">0</span>].<span class="ident">as_i32</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">HostError</span>)<span class="question-mark">?</span>;
-			<span class="kw">if</span> <span class="ident">condition</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-				<span class="prelude-val">Ok</span>(<span class="ident">ReturnValue::Unit</span>)
-			} <span class="kw">else</span> {
-				<span class="prelude-val">Err</span>(<span class="ident">HostError</span>)
+			<span class="kw">let </span>condition = args[<span class="number">0</span>].as_i32().ok_or_else(|| HostError)<span class="question-mark">?</span>;
+			<span class="kw">if </span>condition != <span class="number">0 </span>{
+				<span class="prelude-val">Ok</span>(ReturnValue::Unit)
+			} <span class="kw">else </span>{
+				<span class="prelude-val">Err</span>(HostError)
 			}
 		}
-		<span class="kw">fn</span> <span class="ident">env_inc_counter</span>(<span class="ident">e</span>: <span class="kw-2">&amp;mut</span> <span class="ident">State</span>, <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">Value</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ReturnValue</span>, <span class="ident">HostError</span><span class="op">&gt;</span> {
-			<span class="kw">if</span> <span class="ident">args</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">HostError</span>)
+		<span class="kw">fn </span>env_inc_counter(e: <span class="kw-2">&amp;mut </span>State, args: <span class="kw-2">&amp;</span>[Value]) -&gt; <span class="prelude-ty">Result</span>&lt;ReturnValue, HostError&gt; {
+			<span class="kw">if </span>args.len() != <span class="number">1 </span>{
+				<span class="kw">return </span><span class="prelude-val">Err</span>(HostError)
 			}
-			<span class="kw">let</span> <span class="ident">inc_by</span> <span class="op">=</span> <span class="ident">args</span>[<span class="number">0</span>].<span class="ident">as_i32</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">HostError</span>)<span class="question-mark">?</span>;
-			<span class="ident">e</span>.<span class="ident">counter</span> <span class="op">+</span><span class="op">=</span> <span class="ident">inc_by</span> <span class="kw">as</span> <span class="ident">u32</span>;
-			<span class="prelude-val">Ok</span>(<span class="ident">ReturnValue::Value</span>(<span class="ident">Value::I32</span>(<span class="ident">e</span>.<span class="ident">counter</span> <span class="kw">as</span> <span class="ident">i32</span>)))
+			<span class="kw">let </span>inc_by = args[<span class="number">0</span>].as_i32().ok_or_else(|| HostError)<span class="question-mark">?</span>;
+			e.counter += inc_by <span class="kw">as </span>u32;
+			<span class="prelude-val">Ok</span>(ReturnValue::Value(Value::I32(e.counter <span class="kw">as </span>i32)))
 		}
-		<span class="doccomment">/// Function that takes one argument of any type and returns that value.</span>
-		<span class="kw">fn</span> <span class="ident">env_polymorphic_id</span>(<span class="ident">_e</span>: <span class="kw-2">&amp;mut</span> <span class="ident">State</span>, <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">Value</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ReturnValue</span>, <span class="ident">HostError</span><span class="op">&gt;</span> {
-			<span class="kw">if</span> <span class="ident">args</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">HostError</span>)
+		<span class="doccomment">/// Function that takes one argument of any type and returns that value.
+		</span><span class="kw">fn </span>env_polymorphic_id(_e: <span class="kw-2">&amp;mut </span>State, args: <span class="kw-2">&amp;</span>[Value]) -&gt; <span class="prelude-ty">Result</span>&lt;ReturnValue, HostError&gt; {
+			<span class="kw">if </span>args.len() != <span class="number">1 </span>{
+				<span class="kw">return </span><span class="prelude-val">Err</span>(HostError)
 			}
-			<span class="prelude-val">Ok</span>(<span class="ident">ReturnValue::Value</span>(<span class="ident">args</span>[<span class="number">0</span>]))
+			<span class="prelude-val">Ok</span>(ReturnValue::Value(args[<span class="number">0</span>]))
 		}
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">State</span> { <span class="ident">counter</span>: <span class="number">0</span> };
+		<span class="kw">let </span><span class="kw-2">mut </span>state = State { counter: <span class="number">0 </span>};
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">env_builder</span> <span class="op">=</span> <span class="ident">EnvironmentDefinitionBuilder::new</span>();
-		<span class="ident">env_builder</span>.<span class="ident">add_host_func</span>(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;assert&quot;</span>, <span class="ident">env_assert</span>);
-		<span class="ident">env_builder</span>.<span class="ident">add_host_func</span>(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;inc_counter&quot;</span>, <span class="ident">env_inc_counter</span>);
-		<span class="ident">env_builder</span>.<span class="ident">add_host_func</span>(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;polymorphic_id&quot;</span>, <span class="ident">env_polymorphic_id</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>env_builder = EnvironmentDefinitionBuilder::new();
+		env_builder.add_host_func(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;assert&quot;</span>, env_assert);
+		env_builder.add_host_func(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;inc_counter&quot;</span>, env_inc_counter);
+		env_builder.add_host_func(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;polymorphic_id&quot;</span>, env_polymorphic_id);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">Instance::new</span>(<span class="ident">code</span>, <span class="kw-2">&amp;</span><span class="ident">env_builder</span>, <span class="kw-2">&amp;mut</span> <span class="ident">state</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">invoke</span>(<span class="string">&quot;call&quot;</span>, <span class="ident">args</span>, <span class="kw-2">&amp;mut</span> <span class="ident">state</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>instance = Instance::new(code, <span class="kw-2">&amp;</span>env_builder, <span class="kw-2">&amp;mut </span>state)<span class="question-mark">?</span>;
+		<span class="kw">let </span>result = instance.invoke(<span class="string">&quot;call&quot;</span>, args, <span class="kw-2">&amp;mut </span>state);
 
-		<span class="ident">result</span>.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">HostError</span>)
+		result.map_err(|<span class="kw">_</span>| HostError)
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">invoke_args</span>() {
-		<span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">wat::parse_str</span>(
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>invoke_args() {
+		<span class="kw">let </span>code = wat::parse_str(
 			<span class="string">r#&quot;
 		(module
 			(import &quot;env&quot; &quot;assert&quot; (func $assert (param i32)))
@@ -862,16 +857,16 @@
 		)
 		&quot;#</span>,
 		)
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span>
-			<span class="ident">execute_sandboxed</span>(<span class="kw-2">&amp;</span><span class="ident">code</span>, <span class="kw-2">&amp;</span>[<span class="ident">Value::I32</span>(<span class="number">0x12345678</span>), <span class="ident">Value::I64</span>(<span class="number">0x1234567887654321</span>)]);
-		<span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">is_ok</span>());
+		<span class="kw">let </span>result =
+			execute_sandboxed(<span class="kw-2">&amp;</span>code, <span class="kw-2">&amp;</span>[Value::I32(<span class="number">0x12345678</span>), Value::I64(<span class="number">0x1234567887654321</span>)]);
+		<span class="macro">assert!</span>(result.is_ok());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">return_value</span>() {
-		<span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">wat::parse_str</span>(
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>return_value() {
+		<span class="kw">let </span>code = wat::parse_str(
 			<span class="string">r#&quot;
 		(module
 			(func (export &quot;call&quot;) (param $x i32) (result i32)
@@ -883,15 +878,15 @@
 		)
 		&quot;#</span>,
 		)
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="kw">let</span> <span class="ident">return_val</span> <span class="op">=</span> <span class="ident">execute_sandboxed</span>(<span class="kw-2">&amp;</span><span class="ident">code</span>, <span class="kw-2">&amp;</span>[<span class="ident">Value::I32</span>(<span class="number">0x1336</span>)]).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">return_val</span>, <span class="ident">ReturnValue::Value</span>(<span class="ident">Value::I32</span>(<span class="number">0x1337</span>)));
+		<span class="kw">let </span>return_val = execute_sandboxed(<span class="kw-2">&amp;</span>code, <span class="kw-2">&amp;</span>[Value::I32(<span class="number">0x1336</span>)]).unwrap();
+		<span class="macro">assert_eq!</span>(return_val, ReturnValue::Value(Value::I32(<span class="number">0x1337</span>)));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">signatures_dont_matter</span>() {
-		<span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">wat::parse_str</span>(
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>signatures_dont_matter() {
+		<span class="kw">let </span>code = wat::parse_str(
 			<span class="string">r#&quot;
 		(module
 			(import &quot;env&quot; &quot;polymorphic_id&quot; (func $id_i32 (param i32) (result i32)))
@@ -921,22 +916,22 @@
 		)
 		&quot;#</span>,
 		)
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="kw">let</span> <span class="ident">return_val</span> <span class="op">=</span> <span class="ident">execute_sandboxed</span>(<span class="kw-2">&amp;</span><span class="ident">code</span>, <span class="kw-2">&amp;</span>[]).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">return_val</span>, <span class="ident">ReturnValue::Unit</span>);
+		<span class="kw">let </span>return_val = execute_sandboxed(<span class="kw-2">&amp;</span>code, <span class="kw-2">&amp;</span>[]).unwrap();
+		<span class="macro">assert_eq!</span>(return_val, ReturnValue::Unit);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">cant_return_unmatching_type</span>() {
-		<span class="kw">fn</span> <span class="ident">env_returns_i32</span>(<span class="ident">_e</span>: <span class="kw-2">&amp;mut</span> (), <span class="ident">_args</span>: <span class="kw-2">&amp;</span>[<span class="ident">Value</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ReturnValue</span>, <span class="ident">HostError</span><span class="op">&gt;</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">ReturnValue::Value</span>(<span class="ident">Value::I32</span>(<span class="number">42</span>)))
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>cant_return_unmatching_type() {
+		<span class="kw">fn </span>env_returns_i32(_e: <span class="kw-2">&amp;mut </span>(), _args: <span class="kw-2">&amp;</span>[Value]) -&gt; <span class="prelude-ty">Result</span>&lt;ReturnValue, HostError&gt; {
+			<span class="prelude-val">Ok</span>(ReturnValue::Value(Value::I32(<span class="number">42</span>)))
 		}
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">env_builder</span> <span class="op">=</span> <span class="ident">EnvironmentDefinitionBuilder::new</span>();
-		<span class="ident">env_builder</span>.<span class="ident">add_host_func</span>(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;returns_i32&quot;</span>, <span class="ident">env_returns_i32</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>env_builder = EnvironmentDefinitionBuilder::new();
+		env_builder.add_host_func(<span class="string">&quot;env&quot;</span>, <span class="string">&quot;returns_i32&quot;</span>, env_returns_i32);
 
-		<span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">wat::parse_str</span>(
+		<span class="kw">let </span>code = wat::parse_str(
 			<span class="string">r#&quot;
 		(module
 			;; It&#39;s actually returns i32, but imported as if it returned i64
@@ -950,15 +945,14 @@
 		)
 		&quot;#</span>,
 		)
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// It succeeds since we are able to import functions with types we want.</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">Instance::new</span>(<span class="kw-2">&amp;</span><span class="ident">code</span>, <span class="kw-2">&amp;</span><span class="ident">env_builder</span>, <span class="kw-2">&amp;mut</span> ()).<span class="ident">unwrap</span>();
+		<span class="comment">// It succeeds since we are able to import functions with types we want.
+		</span><span class="kw">let </span><span class="kw-2">mut </span>instance = Instance::new(<span class="kw-2">&amp;</span>code, <span class="kw-2">&amp;</span>env_builder, <span class="kw-2">&amp;mut </span>()).unwrap();
 
-		<span class="comment">// But this fails since we imported a function that returns i32 as if it returned i64.</span>
-		<span class="macro">assert_matches!</span>(<span class="ident">instance</span>.<span class="ident">invoke</span>(<span class="string">&quot;call&quot;</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;mut</span> ()), <span class="prelude-val">Err</span>(<span class="ident">Error::Execution</span>));
+		<span class="comment">// But this fails since we imported a function that returns i32 as if it returned i64.
+		</span><span class="macro">assert_matches!</span>(instance.invoke(<span class="string">&quot;call&quot;</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;mut </span>()), <span class="prelude-val">Err</span>(Error::Execution));
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_sandbox" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_sandbox" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

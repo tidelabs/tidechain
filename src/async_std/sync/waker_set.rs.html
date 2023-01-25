@@ -1,11 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/async-std-1.12.0/src/sync/waker_set.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>waker_set.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../async_std/index.html"><div class="logo-container"><img src="https://async.rs/images/logo--hero.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../async_std/index.html"><div class="logo-container">
-                    <img src="https://async.rs/images/logo--hero.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../async_std/index.html">
-                        <img src="https://async.rs/images/logo--hero.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/async-std-1.12.0/src/sync/waker_set.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>waker_set.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../async_std/index.html">
+                        <img src="https://async.rs/images/logo--hero.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -240,241 +234,240 @@
 <span id="233">233</span>
 <span id="234">234</span>
 <span id="235">235</span>
-</pre><pre class="rust"><code><span class="doccomment">//! A common utility for building synchronization primitives.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! When an async operation is blocked, it needs to register itself somewhere so that it can be</span>
-<span class="doccomment">//! notified later on. The `WakerSet` type helps with keeping track of such async operations and</span>
-<span class="doccomment">//! notifying them when they may make progress.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! A common utility for building synchronization primitives.
+//!
+//! When an async operation is blocked, it needs to register itself somewhere so that it can be
+//! notified later on. The `WakerSet` type helps with keeping track of such async operations and
+//! notifying them when they may make progress.
 
-<span class="kw">use</span> <span class="ident">std::cell::UnsafeCell</span>;
-<span class="kw">use</span> <span class="ident">std::ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
-<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std::task</span>::{<span class="ident">Context</span>, <span class="ident">Waker</span>};
+</span><span class="kw">use </span>std::cell::UnsafeCell;
+<span class="kw">use </span>std::ops::{Deref, DerefMut};
+<span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
+<span class="kw">use </span>std::task::{Context, Waker};
 
-<span class="kw">use</span> <span class="ident">crossbeam_utils::Backoff</span>;
-<span class="kw">use</span> <span class="ident">slab::Slab</span>;
+<span class="kw">use </span>crossbeam_utils::Backoff;
+<span class="kw">use </span>slab::Slab;
 
-<span class="doccomment">/// Set when the entry list is locked.</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::identity_op</span>)]</span>
-<span class="kw">const</span> <span class="ident">LOCKED</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">0</span>;
+<span class="doccomment">/// Set when the entry list is locked.
+</span><span class="attribute">#[allow(clippy::identity_op)]
+</span><span class="kw">const </span>LOCKED: usize = <span class="number">1 </span>&lt;&lt; <span class="number">0</span>;
 
-<span class="doccomment">/// Set when there is at least one entry that has already been notified.</span>
-<span class="kw">const</span> <span class="ident">NOTIFIED</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+<span class="doccomment">/// Set when there is at least one entry that has already been notified.
+</span><span class="kw">const </span>NOTIFIED: usize = <span class="number">1 </span>&lt;&lt; <span class="number">1</span>;
 
-<span class="doccomment">/// Set when there is at least one notifiable entry.</span>
-<span class="kw">const</span> <span class="ident">NOTIFIABLE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>;
+<span class="doccomment">/// Set when there is at least one notifiable entry.
+</span><span class="kw">const </span>NOTIFIABLE: usize = <span class="number">1 </span>&lt;&lt; <span class="number">2</span>;
 
-<span class="doccomment">/// Inner representation of `WakerSet`.</span>
-<span class="kw">struct</span> <span class="ident">Inner</span> {
-    <span class="doccomment">/// A list of entries in the set.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Each entry has an optional waker associated with the task that is executing the operation.</span>
-    <span class="doccomment">/// If the waker is set to `None`, that means the task has been woken up but hasn&#39;t removed</span>
-    <span class="doccomment">/// itself from the `WakerSet` yet.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The key of each entry is its index in the `Slab`.</span>
-    <span class="ident">entries</span>: <span class="ident">Slab</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Waker</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Inner representation of `WakerSet`.
+</span><span class="kw">struct </span>Inner {
+    <span class="doccomment">/// A list of entries in the set.
+    ///
+    /// Each entry has an optional waker associated with the task that is executing the operation.
+    /// If the waker is set to `None`, that means the task has been woken up but hasn&#39;t removed
+    /// itself from the `WakerSet` yet.
+    ///
+    /// The key of each entry is its index in the `Slab`.
+    </span>entries: Slab&lt;<span class="prelude-ty">Option</span>&lt;Waker&gt;&gt;,
 
-    <span class="doccomment">/// The number of notifiable entries.</span>
-    <span class="ident">notifiable</span>: <span class="ident">usize</span>,
+    <span class="doccomment">/// The number of notifiable entries.
+    </span>notifiable: usize,
 }
 
-<span class="doccomment">/// A set holding wakers.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">WakerSet</span> {
-    <span class="doccomment">/// Holds three bits: `LOCKED`, `NOTIFY_ONE`, and `NOTIFY_ALL`.</span>
-    <span class="ident">flag</span>: <span class="ident">AtomicUsize</span>,
+<span class="doccomment">/// A set holding wakers.
+</span><span class="kw">pub struct </span>WakerSet {
+    <span class="doccomment">/// Holds three bits: `LOCKED`, `NOTIFY_ONE`, and `NOTIFY_ALL`.
+    </span>flag: AtomicUsize,
 
-    <span class="doccomment">/// A set holding wakers.</span>
-    <span class="ident">inner</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">Inner</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// A set holding wakers.
+    </span>inner: UnsafeCell&lt;Inner&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">WakerSet</span> {
-    <span class="doccomment">/// Creates a new `WakerSet`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">WakerSet</span> {
-        <span class="ident">WakerSet</span> {
-            <span class="ident">flag</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">0</span>),
-            <span class="ident">inner</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">Inner</span> {
-                <span class="ident">entries</span>: <span class="ident">Slab::new</span>(),
-                <span class="ident">notifiable</span>: <span class="number">0</span>,
+<span class="kw">impl </span>WakerSet {
+    <span class="doccomment">/// Creates a new `WakerSet`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new() -&gt; WakerSet {
+        WakerSet {
+            flag: AtomicUsize::new(<span class="number">0</span>),
+            inner: UnsafeCell::new(Inner {
+                entries: Slab::new(),
+                notifiable: <span class="number">0</span>,
             }),
         }
     }
 
-    <span class="doccomment">/// Inserts a waker for a blocked operation and returns a key associated with it.</span>
-    <span class="attribute">#[<span class="ident">cold</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">usize</span> {
-        <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>();
+    <span class="doccomment">/// Inserts a waker for a blocked operation and returns a key associated with it.
+    </span><span class="attribute">#[cold]
+    </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; usize {
+        <span class="kw">let </span>w = cx.waker().clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.lock();
 
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">inner</span>.<span class="ident">entries</span>.<span class="ident">insert</span>(<span class="prelude-val">Some</span>(<span class="ident">w</span>));
-        <span class="ident">inner</span>.<span class="ident">notifiable</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-        <span class="ident">key</span>
+        <span class="kw">let </span>key = inner.entries.insert(<span class="prelude-val">Some</span>(w));
+        inner.notifiable += <span class="number">1</span>;
+        key
     }
 
-    <span class="doccomment">/// If the waker for this key is still waiting for a notification, then update</span>
-    <span class="doccomment">/// the waker for the entry, and return false. If the waker has been notified,</span>
-    <span class="doccomment">/// treat the entry as completed and return true.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unstable&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove_if_notified</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="ident">usize</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>();
+    <span class="doccomment">/// If the waker for this key is still waiting for a notification, then update
+    /// the waker for the entry, and return false. If the waker has been notified,
+    /// treat the entry as completed and return true.
+    </span><span class="attribute">#[cfg(feature = <span class="string">&quot;unstable&quot;</span>)]
+    </span><span class="kw">pub fn </span>remove_if_notified(<span class="kw-2">&amp;</span><span class="self">self</span>, key: usize, cx: <span class="kw-2">&amp;</span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.lock();
 
-        <span class="kw">match</span> <span class="kw-2">&amp;mut</span> <span class="ident">inner</span>.<span class="ident">entries</span>[<span class="ident">key</span>] {
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="ident">inner</span>.<span class="ident">entries</span>.<span class="ident">remove</span>(<span class="ident">key</span>);
-                <span class="bool-val">true</span>
-            }
-            <span class="prelude-val">Some</span>(<span class="ident">w</span>) =&gt; {
-                <span class="comment">// We were never woken, so update instead</span>
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">w</span>.<span class="ident">will_wake</span>(<span class="ident">cx</span>.<span class="ident">waker</span>()) {
-                    <span class="kw-2">*</span><span class="ident">w</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">clone</span>();
+        <span class="kw">match </span><span class="kw-2">&amp;mut </span>inner.entries[key] {
+            <span class="prelude-val">None </span>=&gt; {
+                inner.entries.remove(key);
+                <span class="bool-val">true
+            </span>}
+            <span class="prelude-val">Some</span>(w) =&gt; {
+                <span class="comment">// We were never woken, so update instead
+                </span><span class="kw">if </span>!w.will_wake(cx.waker()) {
+                    <span class="kw-2">*</span>w = cx.waker().clone();
                 }
-                <span class="bool-val">false</span>
-            }
+                <span class="bool-val">false
+            </span>}
         }
     }
 
-    <span class="doccomment">/// Removes the waker of a cancelled operation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `true` if another blocked operation from the set was notified.</span>
-    <span class="attribute">#[<span class="ident">cold</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cancel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>();
+    <span class="doccomment">/// Removes the waker of a cancelled operation.
+    ///
+    /// Returns `true` if another blocked operation from the set was notified.
+    </span><span class="attribute">#[cold]
+    </span><span class="kw">pub fn </span>cancel(<span class="kw-2">&amp;</span><span class="self">self</span>, key: usize) -&gt; bool {
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.lock();
 
-        <span class="kw">match</span> <span class="ident">inner</span>.<span class="ident">entries</span>.<span class="ident">remove</span>(<span class="ident">key</span>) {
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="ident">inner</span>.<span class="ident">notifiable</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>,
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="comment">// The operation was cancelled and notified so notify another operation instead.</span>
-                <span class="kw">for</span> (<span class="kw">_</span>, <span class="ident">opt_waker</span>) <span class="kw">in</span> <span class="ident">inner</span>.<span class="ident">entries</span>.<span class="ident">iter_mut</span>() {
-                    <span class="comment">// If there is no waker in this entry, that means it was already woken.</span>
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">w</span>) <span class="op">=</span> <span class="ident">opt_waker</span>.<span class="ident">take</span>() {
-                        <span class="ident">w</span>.<span class="ident">wake</span>();
-                        <span class="ident">inner</span>.<span class="ident">notifiable</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
-                        <span class="kw">return</span> <span class="bool-val">true</span>;
+        <span class="kw">match </span>inner.entries.remove(key) {
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; inner.notifiable -= <span class="number">1</span>,
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="comment">// The operation was cancelled and notified so notify another operation instead.
+                </span><span class="kw">for </span>(<span class="kw">_</span>, opt_waker) <span class="kw">in </span>inner.entries.iter_mut() {
+                    <span class="comment">// If there is no waker in this entry, that means it was already woken.
+                    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(w) = opt_waker.take() {
+                        w.wake();
+                        inner.notifiable -= <span class="number">1</span>;
+                        <span class="kw">return </span><span class="bool-val">true</span>;
                     }
                 }
             }
         }
 
-        <span class="bool-val">false</span>
+        <span class="bool-val">false
+    </span>}
+
+    <span class="doccomment">/// Notifies one additional blocked operation.
+    ///
+    /// Returns `true` if an operation was notified.
+    </span><span class="attribute">#[inline]
+    #[cfg(feature = <span class="string">&quot;unstable&quot;</span>)]
+    </span><span class="kw">pub fn </span>notify_one(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="comment">// Use `SeqCst` ordering to synchronize with `Lock::drop()`.
+        </span><span class="kw">if </span><span class="self">self</span>.flag.load(Ordering::SeqCst) &amp; NOTIFIABLE != <span class="number">0 </span>{
+            <span class="self">self</span>.notify(Notify::One)
+        } <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
 
-    <span class="doccomment">/// Notifies one additional blocked operation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `true` if an operation was notified.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unstable&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="comment">// Use `SeqCst` ordering to synchronize with `Lock::drop()`.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">flag</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) <span class="op">&amp;</span> <span class="ident">NOTIFIABLE</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="self">self</span>.<span class="ident">notify</span>(<span class="ident">Notify::One</span>)
-        } <span class="kw">else</span> {
-            <span class="bool-val">false</span>
-        }
+    <span class="doccomment">/// Notifies all blocked operations.
+    ///
+    /// Returns `true` if at least one operation was notified.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>notify_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="comment">// Use `SeqCst` ordering to synchronize with `Lock::drop()`.
+        </span><span class="kw">if </span><span class="self">self</span>.flag.load(Ordering::SeqCst) &amp; NOTIFIABLE != <span class="number">0 </span>{
+            <span class="self">self</span>.notify(Notify::All)
+        } <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
 
-    <span class="doccomment">/// Notifies all blocked operations.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `true` if at least one operation was notified.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="comment">// Use `SeqCst` ordering to synchronize with `Lock::drop()`.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">flag</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) <span class="op">&amp;</span> <span class="ident">NOTIFIABLE</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="self">self</span>.<span class="ident">notify</span>(<span class="ident">Notify::All</span>)
-        } <span class="kw">else</span> {
-            <span class="bool-val">false</span>
-        }
-    }
+    <span class="doccomment">/// Notifies blocked operations, either one or all of them.
+    ///
+    /// Returns `true` if at least one operation was notified.
+    </span><span class="attribute">#[cold]
+    </span><span class="kw">fn </span>notify(<span class="kw-2">&amp;</span><span class="self">self</span>, n: Notify) -&gt; bool {
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="kw-2">&amp;mut *</span><span class="self">self</span>.lock();
+        <span class="kw">let </span><span class="kw-2">mut </span>notified = <span class="bool-val">false</span>;
 
-    <span class="doccomment">/// Notifies blocked operations, either one or all of them.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `true` if at least one operation was notified.</span>
-    <span class="attribute">#[<span class="ident">cold</span>]</span>
-    <span class="kw">fn</span> <span class="ident">notify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">n</span>: <span class="ident">Notify</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inner</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">lock</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">notified</span> <span class="op">=</span> <span class="bool-val">false</span>;
+        <span class="kw">for </span>(<span class="kw">_</span>, opt_waker) <span class="kw">in </span>inner.entries.iter_mut() {
+            <span class="comment">// If there is no waker in this entry, that means it was already woken.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(w) = opt_waker.take() {
+                w.wake();
+                inner.notifiable -= <span class="number">1</span>;
+                notified = <span class="bool-val">true</span>;
 
-        <span class="kw">for</span> (<span class="kw">_</span>, <span class="ident">opt_waker</span>) <span class="kw">in</span> <span class="ident">inner</span>.<span class="ident">entries</span>.<span class="ident">iter_mut</span>() {
-            <span class="comment">// If there is no waker in this entry, that means it was already woken.</span>
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">w</span>) <span class="op">=</span> <span class="ident">opt_waker</span>.<span class="ident">take</span>() {
-                <span class="ident">w</span>.<span class="ident">wake</span>();
-                <span class="ident">inner</span>.<span class="ident">notifiable</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
-                <span class="ident">notified</span> <span class="op">=</span> <span class="bool-val">true</span>;
-
-                <span class="kw">if</span> <span class="ident">n</span> <span class="op">==</span> <span class="ident">Notify::One</span> {
+                <span class="kw">if </span>n == Notify::One {
                     <span class="kw">break</span>;
                 }
             }
 
-            <span class="kw">if</span> <span class="ident">n</span> <span class="op">==</span> <span class="ident">Notify::Any</span> {
+            <span class="kw">if </span>n == Notify::Any {
                 <span class="kw">break</span>;
             }
         }
 
-        <span class="ident">notified</span>
+        notified
     }
 
-    <span class="doccomment">/// Locks the list of entries.</span>
-    <span class="kw">fn</span> <span class="ident">lock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Lock</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff::new</span>();
-        <span class="kw">while</span> <span class="self">self</span>.<span class="ident">flag</span>.<span class="ident">fetch_or</span>(<span class="ident">LOCKED</span>, <span class="ident">Ordering::Acquire</span>) <span class="op">&amp;</span> <span class="ident">LOCKED</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="ident">backoff</span>.<span class="ident">snooze</span>();
+    <span class="doccomment">/// Locks the list of entries.
+    </span><span class="kw">fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Lock&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="kw">let </span>backoff = Backoff::new();
+        <span class="kw">while </span><span class="self">self</span>.flag.fetch_or(LOCKED, Ordering::Acquire) &amp; LOCKED != <span class="number">0 </span>{
+            backoff.snooze();
         }
-        <span class="ident">Lock</span> { <span class="ident">waker_set</span>: <span class="self">self</span> }
+        Lock { waker_set: <span class="self">self </span>}
     }
 }
 
-<span class="doccomment">/// A guard holding a `WakerSet` locked.</span>
-<span class="kw">struct</span> <span class="ident">Lock</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">waker_set</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">WakerSet</span>,
+<span class="doccomment">/// A guard holding a `WakerSet` locked.
+</span><span class="kw">struct </span>Lock&lt;<span class="lifetime">&#39;a</span>&gt; {
+    waker_set: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>WakerSet,
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Lock</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flag</span> <span class="op">=</span> <span class="number">0</span>;
+<span class="kw">impl </span>Drop <span class="kw">for </span>Lock&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>flag = <span class="number">0</span>;
 
-        <span class="comment">// Set the `NOTIFIED` flag if there is at least one notified entry.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="self">self</span>.<span class="ident">notifiable</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="ident">flag</span> <span class="op">|</span><span class="op">=</span> <span class="ident">NOTIFIED</span>;
-        }
-
-        <span class="comment">// Set the `NOTIFIABLE` flag if there is at least one notifiable entry.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">notifiable</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="ident">flag</span> <span class="op">|</span><span class="op">=</span> <span class="ident">NOTIFIABLE</span>;
+        <span class="comment">// Set the `NOTIFIED` flag if there is at least one notified entry.
+        </span><span class="kw">if </span><span class="self">self</span>.entries.len() - <span class="self">self</span>.notifiable &gt; <span class="number">0 </span>{
+            flag |= NOTIFIED;
         }
 
-        <span class="comment">// Use `SeqCst` ordering to synchronize with `WakerSet::lock_to_notify()`.</span>
-        <span class="self">self</span>.<span class="ident">waker_set</span>.<span class="ident">flag</span>.<span class="ident">store</span>(<span class="ident">flag</span>, <span class="ident">Ordering::SeqCst</span>);
+        <span class="comment">// Set the `NOTIFIABLE` flag if there is at least one notifiable entry.
+        </span><span class="kw">if </span><span class="self">self</span>.notifiable &gt; <span class="number">0 </span>{
+            flag |= NOTIFIABLE;
+        }
+
+        <span class="comment">// Use `SeqCst` ordering to synchronize with `WakerSet::lock_to_notify()`.
+        </span><span class="self">self</span>.waker_set.flag.store(flag, Ordering::SeqCst);
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">Lock</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">Inner</span>;
+<span class="kw">impl </span>Deref <span class="kw">for </span>Lock&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">type </span>Target = Inner;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Inner</span> {
-        <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">waker_set</span>.<span class="ident">inner</span>.<span class="ident">get</span>() }
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Inner {
+        <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span><span class="self">self</span>.waker_set.inner.get() }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">DerefMut</span> <span class="kw">for</span> <span class="ident">Lock</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">deref_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">Inner</span> {
-        <span class="kw">unsafe</span> { <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">waker_set</span>.<span class="ident">inner</span>.<span class="ident">get</span>() }
+<span class="kw">impl </span>DerefMut <span class="kw">for </span>Lock&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Inner {
+        <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.waker_set.inner.get() }
     }
 }
 
-<span class="doccomment">/// Notification strategy.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">enum</span> <span class="ident">Notify</span> {
-    <span class="doccomment">/// Make sure at least one entry is notified.</span>
-    <span class="ident">Any</span>,
-    <span class="doccomment">/// Notify one additional entry.</span>
-    <span class="ident">One</span>,
-    <span class="doccomment">/// Notify all entries.</span>
-    <span class="ident">All</span>,
+<span class="doccomment">/// Notification strategy.
+</span><span class="attribute">#[derive(Clone, Copy, Eq, PartialEq)]
+</span><span class="kw">enum </span>Notify {
+    <span class="doccomment">/// Make sure at least one entry is notified.
+    </span>Any,
+    <span class="doccomment">/// Notify one additional entry.
+    </span>One,
+    <span class="doccomment">/// Notify all entries.
+    </span>All,
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="async_std" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="async_std" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

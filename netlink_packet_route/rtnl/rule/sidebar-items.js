@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["buffer",""],["header",""],["message",""],["nlas",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["buffer",""],["header",""],["message",""],["nlas",""]]};

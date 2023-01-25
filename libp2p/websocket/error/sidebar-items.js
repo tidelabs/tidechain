@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Error in WebSockets."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","Error in WebSockets."]]};

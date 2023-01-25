@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/store/context.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>context.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../wasmtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/store/context.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>context.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -239,242 +234,241 @@
 <span id="234">234</span>
 <span id="235">235</span>
 <span id="236">236</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::store</span>::{<span class="ident">Store</span>, <span class="ident">StoreInner</span>};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::store::{Store, StoreInner};
 
-<span class="doccomment">/// A temporary handle to a [`&amp;Store&lt;T&gt;`][`Store`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type is sutable for [`AsContext`] trait bounds on methods if desired.</span>
-<span class="doccomment">/// For more information, see [`Store`].</span>
-<span class="comment">// NB the repr(transparent) here is for the C API and it&#39;s important that the</span>
-<span class="comment">// representation of this `struct` is a pointer for now. If the representation</span>
-<span class="comment">// changes then the C API will need to be updated</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">StoreInner</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>);
+<span class="doccomment">/// A temporary handle to a [`&amp;Store&lt;T&gt;`][`Store`].
+///
+/// This type is sutable for [`AsContext`] trait bounds on methods if desired.
+/// For more information, see [`Store`].
+</span><span class="comment">// NB the repr(transparent) here is for the C API and it&#39;s important that the
+// representation of this `struct` is a pointer for now. If the representation
+// changes then the C API will need to be updated
+</span><span class="attribute">#[repr(transparent)]
+</span><span class="kw">pub struct </span>StoreContext&lt;<span class="lifetime">&#39;a</span>, T&gt;(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>StoreInner&lt;T&gt;);
 
-<span class="doccomment">/// A temporary handle to a [`&amp;mut Store&lt;T&gt;`][`Store`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type is sutable for [`AsContextMut`] or [`AsContext`] trait bounds on</span>
-<span class="doccomment">/// methods if desired.  For more information, see [`Store`].</span>
-<span class="comment">// NB the repr(transparent) here is for the same reason as above.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">StoreInner</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>);
+<span class="doccomment">/// A temporary handle to a [`&amp;mut Store&lt;T&gt;`][`Store`].
+///
+/// This type is sutable for [`AsContextMut`] or [`AsContext`] trait bounds on
+/// methods if desired.  For more information, see [`Store`].
+</span><span class="comment">// NB the repr(transparent) here is for the same reason as above.
+</span><span class="attribute">#[repr(transparent)]
+</span><span class="kw">pub struct </span>StoreContextMut&lt;<span class="lifetime">&#39;a</span>, T&gt;(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>StoreInner&lt;T&gt;);
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// One of the unsafe lynchpins of Wasmtime.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method is called from one location, `Caller::with`, and is where we</span>
-    <span class="doccomment">/// load the raw unsafe trait object pointer from a `*mut VMContext` and</span>
-    <span class="doccomment">/// then cast it back to a `StoreContextMut`. This is naturally unsafe due</span>
-    <span class="doccomment">/// to the raw pointer usage, but it&#39;s also unsafe because `T` here needs to</span>
-    <span class="doccomment">/// line up with the `T` used to define the trait object itself.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This should generally be achieved with various trait bounds throughout</span>
-    <span class="doccomment">/// Wasmtime that might give access to the `Caller&lt;&#39;_, T&gt;` type.</span>
-    <span class="doccomment">/// Unfortunately there&#39;s not a ton of debug asserts we can add here, so we</span>
-    <span class="doccomment">/// rely on testing to largely help show that this is correctly used.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw</span>(
-        <span class="ident">store</span>: <span class="kw-2">*mut</span> <span class="kw">dyn</span> <span class="ident">wasmtime_runtime::Store</span>,
-    ) -&gt; <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContextMut</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="ident">store</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">StoreInner</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>))
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; StoreContextMut&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="doccomment">/// One of the unsafe lynchpins of Wasmtime.
+    ///
+    /// This method is called from one location, `Caller::with`, and is where we
+    /// load the raw unsafe trait object pointer from a `*mut VMContext` and
+    /// then cast it back to a `StoreContextMut`. This is naturally unsafe due
+    /// to the raw pointer usage, but it&#39;s also unsafe because `T` here needs to
+    /// line up with the `T` used to define the trait object itself.
+    ///
+    /// This should generally be achieved with various trait bounds throughout
+    /// Wasmtime that might give access to the `Caller&lt;&#39;_, T&gt;` type.
+    /// Unfortunately there&#39;s not a ton of debug asserts we can add here, so we
+    /// rely on testing to largely help show that this is correctly used.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>from_raw(
+        store: <span class="kw-2">*mut </span><span class="kw">dyn </span>wasmtime_runtime::Store,
+    ) -&gt; StoreContextMut&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+        StoreContextMut(<span class="kw-2">&amp;mut *</span>(store <span class="kw">as </span><span class="kw-2">*mut </span>StoreInner&lt;T&gt;))
     }
 }
 
-<span class="doccomment">/// A trait used to get shared access to a [`Store`] in Wasmtime.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This trait is used as a bound on the first argument of many methods within</span>
-<span class="doccomment">/// Wasmtime. This trait is implemented for types like [`Store`],</span>
-<span class="doccomment">/// [`Caller`](crate::Caller), and [`StoreContext`] itself. Implementors of this</span>
-<span class="doccomment">/// trait provide access to a [`StoreContext`] via some means, allowing the</span>
-<span class="doccomment">/// method in question to get access to the store&#39;s internal information.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that this is only used in contexts where the store&#39;s information is</span>
-<span class="doccomment">/// read, but not written. For example methods that return type information will</span>
-<span class="doccomment">/// use this trait as a bound. More commonly, though, mutation is required and</span>
-<span class="doccomment">/// [`AsContextMut`] is needed.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AsContext</span> {
-    <span class="doccomment">/// The host information associated with the [`Store`], aka the `T` in</span>
-    <span class="doccomment">/// [`Store&lt;T&gt;`].</span>
-    <span class="kw">type</span> <span class="ident">Data</span>;
+<span class="doccomment">/// A trait used to get shared access to a [`Store`] in Wasmtime.
+///
+/// This trait is used as a bound on the first argument of many methods within
+/// Wasmtime. This trait is implemented for types like [`Store`],
+/// [`Caller`](crate::Caller), and [`StoreContext`] itself. Implementors of this
+/// trait provide access to a [`StoreContext`] via some means, allowing the
+/// method in question to get access to the store&#39;s internal information.
+///
+/// Note that this is only used in contexts where the store&#39;s information is
+/// read, but not written. For example methods that return type information will
+/// use this trait as a bound. More commonly, though, mutation is required and
+/// [`AsContextMut`] is needed.
+</span><span class="kw">pub trait </span>AsContext {
+    <span class="doccomment">/// The host information associated with the [`Store`], aka the `T` in
+    /// [`Store&lt;T&gt;`].
+    </span><span class="kw">type </span>Data;
 
-    <span class="doccomment">/// Returns the store context that this type provides access to.</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Data</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Returns the store context that this type provides access to.
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Data&gt;;
 }
 
-<span class="doccomment">/// A trait used to get exclusive mutable access to a [`Store`] in Wasmtime.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This trait is used as a bound on the first argument of many methods within</span>
-<span class="doccomment">/// Wasmtime. This trait is implemented for types like [`Store`],</span>
-<span class="doccomment">/// [`Caller`](crate::Caller), and [`StoreContextMut`] itself. Implementors of</span>
-<span class="doccomment">/// this trait provide access to a [`StoreContextMut`] via some means, allowing</span>
-<span class="doccomment">/// the method in question to get access to the store&#39;s internal information.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is notably used for methods that may require some mutation of the</span>
-<span class="doccomment">/// [`Store`] itself. For example calling a wasm function can mutate linear</span>
-<span class="doccomment">/// memory or globals. Creation of a [`Func`](crate::Func) will update internal</span>
-<span class="doccomment">/// data structures. This ends up being quite a common bound in Wasmtime, but</span>
-<span class="doccomment">/// typically you can simply pass `&amp;mut store` or `&amp;mut caller` to satisfy it.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Calling multiple methods that take `&amp;mut impl AsContextMut`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// As of Rust 1.53.0, [generic methods that take a generic `&amp;mut T` do not get</span>
-<span class="doccomment">/// &quot;automatic reborrowing&quot;][reborrowing] and therefore you cannot call multiple</span>
-<span class="doccomment">/// generic methods with the same `&amp;mut T` without manually inserting</span>
-<span class="doccomment">/// reborrows. This affects the many `wasmtime` API methods that take `&amp;mut impl</span>
-<span class="doccomment">/// AsContextMut`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For example, this fails to compile because the context is moved into the</span>
-<span class="doccomment">/// first call:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```compile_fail</span>
-<span class="doccomment">/// use wasmtime::{AsContextMut, Instance};</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// fn foo(cx: &amp;mut impl AsContextMut, instance: Instance) {</span>
-<span class="doccomment">///     // `cx` is not reborrowed, but moved into this call.</span>
-<span class="doccomment">///     let my_export = instance.get_export(cx, &quot;my_export&quot;);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///     // Therefore, this use of `cx` is a use-after-move and prohibited by the</span>
-<span class="doccomment">///     // borrow checker.</span>
-<span class="doccomment">///     let other_export = instance.get_export(cx, &quot;other_export&quot;);</span>
-<span class="doccomment">/// #   drop((my_export, other_export));</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// To fix this, manually insert reborrows like `&amp;mut *cx` that would otherwise</span>
-<span class="doccomment">/// normally be inserted automatically by the Rust compiler for non-generic</span>
-<span class="doccomment">/// methods:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use wasmtime::{AsContextMut, Instance};</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// fn foo(cx: &amp;mut impl AsContextMut, instance: Instance) {</span>
-<span class="doccomment">///     let my_export = instance.get_export(&amp;mut *cx, &quot;my_export&quot;);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///     // This works now, since `cx` was reborrowed above, rather than moved!</span>
-<span class="doccomment">///     let other_export = instance.get_export(&amp;mut *cx, &quot;other_export&quot;);</span>
-<span class="doccomment">/// #   drop((my_export, other_export));</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [reborrowing]: https://github.com/rust-lang/rust/issues/85161</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AsContextMut</span>: <span class="ident">AsContext</span> {
-    <span class="doccomment">/// Returns the store context that this type provides access to.</span>
-    <span class="kw">fn</span> <span class="ident">as_context_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Data</span><span class="op">&gt;</span>;
+<span class="doccomment">/// A trait used to get exclusive mutable access to a [`Store`] in Wasmtime.
+///
+/// This trait is used as a bound on the first argument of many methods within
+/// Wasmtime. This trait is implemented for types like [`Store`],
+/// [`Caller`](crate::Caller), and [`StoreContextMut`] itself. Implementors of
+/// this trait provide access to a [`StoreContextMut`] via some means, allowing
+/// the method in question to get access to the store&#39;s internal information.
+///
+/// This is notably used for methods that may require some mutation of the
+/// [`Store`] itself. For example calling a wasm function can mutate linear
+/// memory or globals. Creation of a [`Func`](crate::Func) will update internal
+/// data structures. This ends up being quite a common bound in Wasmtime, but
+/// typically you can simply pass `&amp;mut store` or `&amp;mut caller` to satisfy it.
+///
+/// # Calling multiple methods that take `&amp;mut impl AsContextMut`
+///
+/// As of Rust 1.53.0, [generic methods that take a generic `&amp;mut T` do not get
+/// &quot;automatic reborrowing&quot;][reborrowing] and therefore you cannot call multiple
+/// generic methods with the same `&amp;mut T` without manually inserting
+/// reborrows. This affects the many `wasmtime` API methods that take `&amp;mut impl
+/// AsContextMut`.
+///
+/// For example, this fails to compile because the context is moved into the
+/// first call:
+///
+/// ```compile_fail
+/// use wasmtime::{AsContextMut, Instance};
+///
+/// fn foo(cx: &amp;mut impl AsContextMut, instance: Instance) {
+///     // `cx` is not reborrowed, but moved into this call.
+///     let my_export = instance.get_export(cx, &quot;my_export&quot;);
+///
+///     // Therefore, this use of `cx` is a use-after-move and prohibited by the
+///     // borrow checker.
+///     let other_export = instance.get_export(cx, &quot;other_export&quot;);
+/// #   drop((my_export, other_export));
+/// }
+/// ```
+///
+/// To fix this, manually insert reborrows like `&amp;mut *cx` that would otherwise
+/// normally be inserted automatically by the Rust compiler for non-generic
+/// methods:
+///
+/// ```
+/// use wasmtime::{AsContextMut, Instance};
+///
+/// fn foo(cx: &amp;mut impl AsContextMut, instance: Instance) {
+///     let my_export = instance.get_export(&amp;mut *cx, &quot;my_export&quot;);
+///
+///     // This works now, since `cx` was reborrowed above, rather than moved!
+///     let other_export = instance.get_export(&amp;mut *cx, &quot;other_export&quot;);
+/// #   drop((my_export, other_export));
+/// }
+/// ```
+///
+/// [reborrowing]: https://github.com/rust-lang/rust/issues/85161
+</span><span class="kw">pub trait </span>AsContextMut: AsContext {
+    <span class="doccomment">/// Returns the store context that this type provides access to.
+    </span><span class="kw">fn </span>as_context_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; StoreContextMut&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Data&gt;;
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContext</span> <span class="kw">for</span> <span class="ident">Store</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="kw">impl</span>&lt;T&gt; AsContext <span class="kw">for </span>Store&lt;T&gt; {
+    <span class="kw">type </span>Data = T;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContext</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContext(<span class="kw-2">&amp;</span><span class="self">self</span>.inner)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContextMut</span> <span class="kw">for</span> <span class="ident">Store</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContextMut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">inner</span>)
+<span class="kw">impl</span>&lt;T&gt; AsContextMut <span class="kw">for </span>Store&lt;T&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContextMut(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContext</span> <span class="kw">for</span> <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="kw">impl</span>&lt;T&gt; AsContext <span class="kw">for </span>StoreContext&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    <span class="kw">type </span>Data = T;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContext</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="number">0</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContext(<span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContext</span> <span class="kw">for</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="kw">impl</span>&lt;T&gt; AsContext <span class="kw">for </span>StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    <span class="kw">type </span>Data = T;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContext</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="number">0</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContext(<span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContextMut</span> <span class="kw">for</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContextMut</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="number">0</span>)
+<span class="kw">impl</span>&lt;T&gt; AsContextMut <span class="kw">for </span>StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContextMut(<span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="comment">// Implementations for internal consumers, but these aren&#39;t public types so</span>
-<span class="comment">// they&#39;re not publicly accessible for crate consumers.</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContext</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="ident">StoreInner</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="comment">// Implementations for internal consumers, but these aren&#39;t public types so
+// they&#39;re not publicly accessible for crate consumers.
+</span><span class="kw">impl</span>&lt;T&gt; AsContext <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>StoreInner&lt;T&gt; {
+    <span class="kw">type </span>Data = T;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContext</span>(<span class="self">self</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContext(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContext</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="kw-2">mut</span> <span class="ident">StoreInner</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="kw">impl</span>&lt;T&gt; AsContext <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>StoreInner&lt;T&gt; {
+    <span class="kw">type </span>Data = T;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContext</span>(<span class="self">self</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContext(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsContextMut</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="kw-2">mut</span> <span class="ident">StoreInner</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">StoreContextMut</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>)
+<span class="kw">impl</span>&lt;T&gt; AsContextMut <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>StoreInner&lt;T&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        StoreContextMut(<span class="kw-2">&amp;mut **</span><span class="self">self</span>)
     }
 }
 
-<span class="comment">// forward AsContext for &amp;T</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsContext</span><span class="op">&gt;</span> <span class="ident">AsContext</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="ident">T</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T::Data</span>;
+<span class="comment">// forward AsContext for &amp;T
+</span><span class="kw">impl</span>&lt;T: AsContext&gt; AsContext <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>T {
+    <span class="kw">type </span>Data = T::Data;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-        <span class="ident">T::as_context</span>(<span class="kw-2">*</span><span class="self">self</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, T::Data&gt; {
+        T::as_context(<span class="kw-2">*</span><span class="self">self</span>)
     }
 }
 
-<span class="comment">// forward AsContext for &amp;mut T</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsContext</span><span class="op">&gt;</span> <span class="ident">AsContext</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="kw-2">mut</span> <span class="ident">T</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T::Data</span>;
+<span class="comment">// forward AsContext for &amp;mut T
+</span><span class="kw">impl</span>&lt;T: AsContext&gt; AsContext <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>T {
+    <span class="kw">type </span>Data = T::Data;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-        <span class="ident">T::as_context</span>(<span class="kw-2">*</span><span class="self">self</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StoreContext&lt;<span class="lifetime">&#39;_</span>, T::Data&gt; {
+        T::as_context(<span class="kw-2">*</span><span class="self">self</span>)
     }
 }
 
-<span class="comment">// forward AsContextMut for &amp;mut T</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsContextMut</span><span class="op">&gt;</span> <span class="ident">AsContextMut</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="kw-2">mut</span> <span class="ident">T</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_context_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-        <span class="ident">T::as_context_mut</span>(<span class="kw-2">*</span><span class="self">self</span>)
+<span class="comment">// forward AsContextMut for &amp;mut T
+</span><span class="kw">impl</span>&lt;T: AsContextMut&gt; AsContextMut <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>T {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_context_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T::Data&gt; {
+        T::as_context_mut(<span class="kw-2">*</span><span class="self">self</span>)
     }
 }
 
-<span class="comment">//</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">AsContext</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">t</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-        <span class="ident">t</span>.<span class="ident">as_context</span>()
+<span class="comment">//
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: AsContext&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T&gt; <span class="kw">for </span>StoreContext&lt;<span class="lifetime">&#39;a</span>, T::Data&gt; {
+    <span class="kw">fn </span>from(t: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T) -&gt; StoreContext&lt;<span class="lifetime">&#39;a</span>, T::Data&gt; {
+        t.as_context()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">AsContext</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">t</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span>) -&gt; <span class="ident">StoreContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-        <span class="ident">T::as_context</span>(<span class="ident">t</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: AsContext&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T&gt; <span class="kw">for </span>StoreContext&lt;<span class="lifetime">&#39;a</span>, T::Data&gt; {
+    <span class="kw">fn </span>from(t: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T) -&gt; StoreContext&lt;<span class="lifetime">&#39;a</span>, T::Data&gt; {
+        T::as_context(t)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">AsContextMut</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">t</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span>) -&gt; <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T::Data</span><span class="op">&gt;</span> {
-        <span class="ident">t</span>.<span class="ident">as_context_mut</span>()
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: AsContextMut&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T&gt; <span class="kw">for </span>StoreContextMut&lt;<span class="lifetime">&#39;a</span>, T::Data&gt; {
+    <span class="kw">fn </span>from(t: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T) -&gt; StoreContextMut&lt;<span class="lifetime">&#39;a</span>, T::Data&gt; {
+        t.as_context_mut()
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/revalidation.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>revalidation.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/revalidation.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>revalidation.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -381,267 +376,267 @@
 <span id="376">376</span>
 <span id="377">377</span>
 <span id="378">378</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Pool periodic revalidation.</span>
+</span><span class="doccomment">//! Pool periodic revalidation.
 
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>},
-	<span class="ident">pin::Pin</span>,
-	<span class="ident">sync::Arc</span>,
+</span><span class="kw">use </span>std::{
+	collections::{BTreeMap, HashMap, HashSet},
+	pin::Pin,
+	sync::Arc,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::graph</span>::{<span class="ident">ChainApi</span>, <span class="ident">ExtrinsicHash</span>, <span class="ident">NumberFor</span>, <span class="ident">Pool</span>, <span class="ident">ValidatedTransaction</span>};
-<span class="kw">use</span> <span class="ident">sc_utils::mpsc</span>::{<span class="ident">tracing_unbounded</span>, <span class="ident">TracingUnboundedReceiver</span>, <span class="ident">TracingUnboundedSender</span>};
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">generic::BlockId</span>,
-	<span class="ident">traits</span>::{<span class="ident">SaturatedConversion</span>, <span class="ident">Zero</span>},
-	<span class="ident">transaction_validity::TransactionValidityError</span>,
+<span class="kw">use </span><span class="kw">crate</span>::graph::{ChainApi, ExtrinsicHash, NumberFor, Pool, ValidatedTransaction};
+<span class="kw">use </span>sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
+<span class="kw">use </span>sp_runtime::{
+	generic::BlockId,
+	traits::{SaturatedConversion, Zero},
+	transaction_validity::TransactionValidityError,
 };
 
-<span class="kw">use</span> <span class="ident">futures::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::time::Duration</span>;
+<span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::time::Duration;
 
-<span class="kw">const</span> <span class="ident">BACKGROUND_REVALIDATION_INTERVAL</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">200</span>);
+<span class="kw">const </span>BACKGROUND_REVALIDATION_INTERVAL: Duration = Duration::from_millis(<span class="number">200</span>);
 
-<span class="kw">const</span> <span class="ident">MIN_BACKGROUND_REVALIDATION_BATCH_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
+<span class="kw">const </span>MIN_BACKGROUND_REVALIDATION_BATCH_SIZE: usize = <span class="number">20</span>;
 
-<span class="doccomment">/// Payload from queue to worker.</span>
-<span class="kw">struct</span> <span class="ident">WorkerPayload</span><span class="op">&lt;</span><span class="ident">Api</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> {
-	<span class="ident">at</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-	<span class="ident">transactions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Payload from queue to worker.
+</span><span class="kw">struct </span>WorkerPayload&lt;Api: ChainApi&gt; {
+	at: NumberFor&lt;Api&gt;,
+	transactions: Vec&lt;ExtrinsicHash&lt;Api&gt;&gt;,
 }
 
-<span class="doccomment">/// Async revalidation worker.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Implements future and can be spawned in place or in background.</span>
-<span class="kw">struct</span> <span class="ident">RevalidationWorker</span><span class="op">&lt;</span><span class="ident">Api</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> {
-	<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-	<span class="ident">pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">best_block</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-	<span class="ident">block_ordered</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">members</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Async revalidation worker.
+///
+/// Implements future and can be spawned in place or in background.
+</span><span class="kw">struct </span>RevalidationWorker&lt;Api: ChainApi&gt; {
+	api: Arc&lt;Api&gt;,
+	pool: Arc&lt;Pool&lt;Api&gt;&gt;,
+	best_block: NumberFor&lt;Api&gt;,
+	block_ordered: BTreeMap&lt;NumberFor&lt;Api&gt;, HashSet&lt;ExtrinsicHash&lt;Api&gt;&gt;&gt;,
+	members: HashMap&lt;ExtrinsicHash&lt;Api&gt;, NumberFor&lt;Api&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Api</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">Unpin</span> <span class="kw">for</span> <span class="ident">RevalidationWorker</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span> {}
+<span class="kw">impl</span>&lt;Api: ChainApi&gt; Unpin <span class="kw">for </span>RevalidationWorker&lt;Api&gt; {}
 
-<span class="doccomment">/// Revalidate batch of transaction.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Each transaction is validated  against chain, and invalid are</span>
-<span class="doccomment">/// removed from the `pool`, while valid are resubmitted.</span>
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">batch_revalidate</span><span class="op">&lt;</span><span class="ident">Api</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span>(
-	<span class="ident">pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-	<span class="ident">at</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-	<span class="ident">batch</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Revalidate batch of transaction.
+///
+/// Each transaction is validated  against chain, and invalid are
+/// removed from the `pool`, while valid are resubmitted.
+</span><span class="kw">async fn </span>batch_revalidate&lt;Api: ChainApi&gt;(
+	pool: Arc&lt;Pool&lt;Api&gt;&gt;,
+	api: Arc&lt;Api&gt;,
+	at: NumberFor&lt;Api&gt;,
+	batch: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicHash&lt;Api&gt;&gt;,
 ) {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">invalid_hashes</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">revalidated</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
+	<span class="kw">let </span><span class="kw-2">mut </span>invalid_hashes = Vec::new();
+	<span class="kw">let </span><span class="kw-2">mut </span>revalidated = HashMap::new();
 
-	<span class="kw">let</span> <span class="ident">validation_results</span> <span class="op">=</span> <span class="ident">futures::future::join_all</span>(<span class="ident">batch</span>.<span class="ident">into_iter</span>().<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">ext_hash</span><span class="op">|</span> {
-		<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">ready_by_hash</span>(<span class="kw-2">&amp;</span><span class="ident">ext_hash</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">ext</span><span class="op">|</span> {
-			<span class="ident">api</span>.<span class="ident">validate_transaction</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="ident">at</span>), <span class="ident">ext</span>.<span class="ident">source</span>, <span class="ident">ext</span>.<span class="ident">data</span>.<span class="ident">clone</span>())
-				.<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">validation_result</span><span class="op">|</span> (<span class="ident">validation_result</span>, <span class="ident">ext_hash</span>, <span class="ident">ext</span>))
+	<span class="kw">let </span>validation_results = futures::future::join_all(batch.into_iter().filter_map(|ext_hash| {
+		pool.validated_pool().ready_by_hash(<span class="kw-2">&amp;</span>ext_hash).map(|ext| {
+			api.validate_transaction(<span class="kw-2">&amp;</span>BlockId::Number(at), ext.source, ext.data.clone())
+				.map(<span class="kw">move </span>|validation_result| (validation_result, ext_hash, ext))
 		})
 	}))
 	.<span class="kw">await</span>;
 
-	<span class="kw">for</span> (<span class="ident">validation_result</span>, <span class="ident">ext_hash</span>, <span class="ident">ext</span>) <span class="kw">in</span> <span class="ident">validation_results</span> {
-		<span class="kw">match</span> <span class="ident">validation_result</span> {
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="ident">TransactionValidityError::Invalid</span>(<span class="ident">err</span>))) =&gt; {
-				<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}]: Revalidation: invalid {:?}&quot;</span>, <span class="ident">ext_hash</span>, <span class="ident">err</span>);
-				<span class="ident">invalid_hashes</span>.<span class="ident">push</span>(<span class="ident">ext_hash</span>);
+	<span class="kw">for </span>(validation_result, ext_hash, ext) <span class="kw">in </span>validation_results {
+		<span class="kw">match </span>validation_result {
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(TransactionValidityError::Invalid(err))) =&gt; {
+				<span class="macro">log::debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}]: Revalidation: invalid {:?}&quot;</span>, ext_hash, err);
+				invalid_hashes.push(ext_hash);
 			},
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="ident">TransactionValidityError::Unknown</span>(<span class="ident">err</span>))) =&gt; {
-				<span class="comment">// skipping unknown, they might be pushed by valid or invalid transaction</span>
-				<span class="comment">// when latter resubmitted.</span>
-				<span class="macro">log::trace!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}]: Unknown during revalidation: {:?}&quot;</span>, <span class="ident">ext_hash</span>, <span class="ident">err</span>);
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(TransactionValidityError::Unknown(err))) =&gt; {
+				<span class="comment">// skipping unknown, they might be pushed by valid or invalid transaction
+				// when latter resubmitted.
+				</span><span class="macro">log::trace!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}]: Unknown during revalidation: {:?}&quot;</span>, ext_hash, err);
 			},
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(<span class="ident">validity</span>)) =&gt; {
-				<span class="ident">revalidated</span>.<span class="ident">insert</span>(
-					<span class="ident">ext_hash</span>,
-					<span class="ident">ValidatedTransaction::valid_at</span>(
-						<span class="ident">at</span>.<span class="ident">saturated_into</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>(),
-						<span class="ident">ext_hash</span>,
-						<span class="ident">ext</span>.<span class="ident">source</span>,
-						<span class="ident">ext</span>.<span class="ident">data</span>.<span class="ident">clone</span>(),
-						<span class="ident">api</span>.<span class="ident">hash_and_length</span>(<span class="kw-2">&amp;</span><span class="ident">ext</span>.<span class="ident">data</span>).<span class="number">1</span>,
-						<span class="ident">validity</span>,
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(validity)) =&gt; {
+				revalidated.insert(
+					ext_hash,
+					ValidatedTransaction::valid_at(
+						at.saturated_into::&lt;u64&gt;(),
+						ext_hash,
+						ext.source,
+						ext.data.clone(),
+						api.hash_and_length(<span class="kw-2">&amp;</span>ext.data).<span class="number">1</span>,
+						validity,
 					),
 				);
 			},
-			<span class="prelude-val">Err</span>(<span class="ident">validation_err</span>) =&gt; {
+			<span class="prelude-val">Err</span>(validation_err) =&gt; {
 				<span class="macro">log::debug!</span>(
-					<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+					target: <span class="string">&quot;txpool&quot;</span>,
 					<span class="string">&quot;[{:?}]: Removing due to error during revalidation: {}&quot;</span>,
-					<span class="ident">ext_hash</span>,
-					<span class="ident">validation_err</span>
+					ext_hash,
+					validation_err
 				);
-				<span class="ident">invalid_hashes</span>.<span class="ident">push</span>(<span class="ident">ext_hash</span>);
+				invalid_hashes.push(ext_hash);
 			},
 		}
 	}
 
-	<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">remove_invalid</span>(<span class="kw-2">&amp;</span><span class="ident">invalid_hashes</span>);
-	<span class="kw">if</span> <span class="ident">revalidated</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
-		<span class="ident">pool</span>.<span class="ident">resubmit</span>(<span class="ident">revalidated</span>);
+	pool.validated_pool().remove_invalid(<span class="kw-2">&amp;</span>invalid_hashes);
+	<span class="kw">if </span>revalidated.len() &gt; <span class="number">0 </span>{
+		pool.resubmit(revalidated);
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Api</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">RevalidationWorker</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>, <span class="ident">pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">api</span>,
-			<span class="ident">pool</span>,
-			<span class="ident">block_ordered</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">members</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">best_block</span>: <span class="ident">Zero::zero</span>(),
+<span class="kw">impl</span>&lt;Api: ChainApi&gt; RevalidationWorker&lt;Api&gt; {
+	<span class="kw">fn </span>new(api: Arc&lt;Api&gt;, pool: Arc&lt;Pool&lt;Api&gt;&gt;) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			api,
+			pool,
+			block_ordered: Default::default(),
+			members: Default::default(),
+			best_block: Zero::zero(),
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">prepare_batch</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">queued_exts</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">left</span> <span class="op">=</span>
-			<span class="ident">std::cmp::max</span>(<span class="ident">MIN_BACKGROUND_REVALIDATION_BATCH_SIZE</span>, <span class="self">self</span>.<span class="ident">members</span>.<span class="ident">len</span>() <span class="op">/</span> <span class="number">4</span>);
+	<span class="kw">fn </span>prepare_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;ExtrinsicHash&lt;Api&gt;&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>queued_exts = Vec::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>left =
+			std::cmp::max(MIN_BACKGROUND_REVALIDATION_BATCH_SIZE, <span class="self">self</span>.members.len() / <span class="number">4</span>);
 
-		<span class="comment">// Take maximum of count transaction by order</span>
-		<span class="comment">// which they got into the pool</span>
-		<span class="kw">while</span> <span class="ident">left</span> <span class="op">&gt;</span> <span class="number">0</span> {
-			<span class="kw">let</span> <span class="ident">first_block</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">block_ordered</span>.<span class="ident">keys</span>().<span class="ident">next</span>().<span class="ident">cloned</span>() {
-				<span class="prelude-val">Some</span>(<span class="ident">bn</span>) =&gt; <span class="ident">bn</span>,
-				<span class="prelude-val">None</span> =&gt; <span class="kw">break</span>,
+		<span class="comment">// Take maximum of count transaction by order
+		// which they got into the pool
+		</span><span class="kw">while </span>left &gt; <span class="number">0 </span>{
+			<span class="kw">let </span>first_block = <span class="kw">match </span><span class="self">self</span>.block_ordered.keys().next().cloned() {
+				<span class="prelude-val">Some</span>(bn) =&gt; bn,
+				<span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 			};
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block_drained</span> <span class="op">=</span> <span class="bool-val">false</span>;
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">extrinsics</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">block_ordered</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">first_block</span>) {
-				<span class="kw">let</span> <span class="ident">to_queue</span> <span class="op">=</span> <span class="ident">extrinsics</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="ident">left</span>).<span class="ident">cloned</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-				<span class="kw">if</span> <span class="ident">to_queue</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">extrinsics</span>.<span class="ident">len</span>() {
-					<span class="ident">block_drained</span> <span class="op">=</span> <span class="bool-val">true</span>;
-				} <span class="kw">else</span> {
-					<span class="kw">for</span> <span class="ident">xt</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">to_queue</span> {
-						<span class="ident">extrinsics</span>.<span class="ident">remove</span>(<span class="ident">xt</span>);
+			<span class="kw">let </span><span class="kw-2">mut </span>block_drained = <span class="bool-val">false</span>;
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(extrinsics) = <span class="self">self</span>.block_ordered.get_mut(<span class="kw-2">&amp;</span>first_block) {
+				<span class="kw">let </span>to_queue = extrinsics.iter().take(left).cloned().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+				<span class="kw">if </span>to_queue.len() == extrinsics.len() {
+					block_drained = <span class="bool-val">true</span>;
+				} <span class="kw">else </span>{
+					<span class="kw">for </span>xt <span class="kw">in </span><span class="kw-2">&amp;</span>to_queue {
+						extrinsics.remove(xt);
 					}
 				}
-				<span class="ident">left</span> <span class="op">-</span><span class="op">=</span> <span class="ident">to_queue</span>.<span class="ident">len</span>();
-				<span class="ident">queued_exts</span>.<span class="ident">extend</span>(<span class="ident">to_queue</span>);
+				left -= to_queue.len();
+				queued_exts.extend(to_queue);
 			}
 
-			<span class="kw">if</span> <span class="ident">block_drained</span> {
-				<span class="self">self</span>.<span class="ident">block_ordered</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">first_block</span>);
+			<span class="kw">if </span>block_drained {
+				<span class="self">self</span>.block_ordered.remove(<span class="kw-2">&amp;</span>first_block);
 			}
 		}
 
-		<span class="kw">for</span> <span class="ident">hash</span> <span class="kw">in</span> <span class="ident">queued_exts</span>.<span class="ident">iter</span>() {
-			<span class="self">self</span>.<span class="ident">members</span>.<span class="ident">remove</span>(<span class="ident">hash</span>);
+		<span class="kw">for </span>hash <span class="kw">in </span>queued_exts.iter() {
+			<span class="self">self</span>.members.remove(hash);
 		}
 
-		<span class="ident">queued_exts</span>
+		queued_exts
 	}
 
-	<span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-		<span class="self">self</span>.<span class="ident">block_ordered</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="ident">b</span>.<span class="number">1</span>.<span class="ident">len</span>()).<span class="ident">sum</span>()
+	<span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+		<span class="self">self</span>.block_ordered.iter().map(|b| b.<span class="number">1</span>.len()).sum()
 	}
 
-	<span class="kw">fn</span> <span class="ident">push</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">worker_payload</span>: <span class="ident">WorkerPayload</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>) {
-		<span class="comment">// we don&#39;t add something that already scheduled for revalidation</span>
-		<span class="kw">let</span> <span class="ident">transactions</span> <span class="op">=</span> <span class="ident">worker_payload</span>.<span class="ident">transactions</span>;
-		<span class="kw">let</span> <span class="ident">block_number</span> <span class="op">=</span> <span class="ident">worker_payload</span>.<span class="ident">at</span>;
+	<span class="kw">fn </span>push(<span class="kw-2">&amp;mut </span><span class="self">self</span>, worker_payload: WorkerPayload&lt;Api&gt;) {
+		<span class="comment">// we don&#39;t add something that already scheduled for revalidation
+		</span><span class="kw">let </span>transactions = worker_payload.transactions;
+		<span class="kw">let </span>block_number = worker_payload.at;
 
-		<span class="kw">for</span> <span class="ident">ext_hash</span> <span class="kw">in</span> <span class="ident">transactions</span> {
-			<span class="comment">// we don&#39;t add something that already scheduled for revalidation</span>
-			<span class="kw">if</span> <span class="self">self</span>.<span class="ident">members</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">ext_hash</span>) {
+		<span class="kw">for </span>ext_hash <span class="kw">in </span>transactions {
+			<span class="comment">// we don&#39;t add something that already scheduled for revalidation
+			</span><span class="kw">if </span><span class="self">self</span>.members.contains_key(<span class="kw-2">&amp;</span>ext_hash) {
 				<span class="macro">log::trace!</span>(
-					<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+					target: <span class="string">&quot;txpool&quot;</span>,
 					<span class="string">&quot;[{:?}] Skipped adding for revalidation: Already there.&quot;</span>,
-					<span class="ident">ext_hash</span>,
+					ext_hash,
 				);
 
-				<span class="kw">continue</span>
-			}
+				<span class="kw">continue
+			</span>}
 
-			<span class="self">self</span>.<span class="ident">block_ordered</span>
-				.<span class="ident">entry</span>(<span class="ident">block_number</span>)
-				.<span class="ident">and_modify</span>(<span class="op">|</span><span class="ident">value</span><span class="op">|</span> {
-					<span class="ident">value</span>.<span class="ident">insert</span>(<span class="ident">ext_hash</span>);
+			<span class="self">self</span>.block_ordered
+				.entry(block_number)
+				.and_modify(|value| {
+					value.insert(ext_hash);
 				})
-				.<span class="ident">or_insert_with</span>(<span class="op">|</span><span class="op">|</span> {
-					<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bt</span> <span class="op">=</span> <span class="ident">HashSet::new</span>();
-					<span class="ident">bt</span>.<span class="ident">insert</span>(<span class="ident">ext_hash</span>);
-					<span class="ident">bt</span>
+				.or_insert_with(|| {
+					<span class="kw">let </span><span class="kw-2">mut </span>bt = HashSet::new();
+					bt.insert(ext_hash);
+					bt
 				});
-			<span class="self">self</span>.<span class="ident">members</span>.<span class="ident">insert</span>(<span class="ident">ext_hash</span>, <span class="ident">block_number</span>);
+			<span class="self">self</span>.members.insert(ext_hash, block_number);
 		}
 	}
 
-	<span class="doccomment">/// Background worker main loop.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// It does two things: periodically tries to process some transactions</span>
-	<span class="doccomment">/// from the queue and also accepts messages to enqueue some more</span>
-	<span class="doccomment">/// transactions from the pool.</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(
-		<span class="kw-2">mut</span> <span class="self">self</span>,
-		<span class="ident">from_queue</span>: <span class="ident">TracingUnboundedReceiver</span><span class="op">&lt;</span><span class="ident">WorkerPayload</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">interval</span>: <span class="ident">Duration</span>,
+	<span class="doccomment">/// Background worker main loop.
+	///
+	/// It does two things: periodically tries to process some transactions
+	/// from the queue and also accepts messages to enqueue some more
+	/// transactions from the pool.
+	</span><span class="kw">pub async fn </span>run(
+		<span class="kw-2">mut </span><span class="self">self</span>,
+		from_queue: TracingUnboundedReceiver&lt;WorkerPayload&lt;Api&gt;&gt;,
+		interval: Duration,
 	) {
-		<span class="kw">let</span> <span class="ident">interval_fut</span> <span class="op">=</span> <span class="ident">futures_timer::Delay::new</span>(<span class="ident">interval</span>);
-		<span class="kw">let</span> <span class="ident">from_queue</span> <span class="op">=</span> <span class="ident">from_queue</span>.<span class="ident">fuse</span>();
-		<span class="macro">futures::pin_mut!</span>(<span class="ident">interval_fut</span>, <span class="ident">from_queue</span>);
-		<span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>;
+		<span class="kw">let </span>interval_fut = futures_timer::Delay::new(interval);
+		<span class="kw">let </span>from_queue = from_queue.fuse();
+		<span class="macro">futures::pin_mut!</span>(interval_fut, from_queue);
+		<span class="kw">let </span>this = <span class="kw-2">&amp;mut </span><span class="self">self</span>;
 
-		<span class="kw">loop</span> {
-			<span class="macro">futures::select!</span> {
-				<span class="comment">// Using `fuse()` in here is okay, because we reset the interval when it has fired.</span>
-				<span class="kw">_</span> <span class="op">=</span> (<span class="kw-2">&amp;mut</span> <span class="ident">interval_fut</span>).<span class="ident">fuse</span>() =&gt; {
-					<span class="kw">let</span> <span class="ident">next_batch</span> <span class="op">=</span> <span class="ident">this</span>.<span class="ident">prepare_batch</span>();
-					<span class="kw">let</span> <span class="ident">batch_len</span> <span class="op">=</span> <span class="ident">next_batch</span>.<span class="ident">len</span>();
+		<span class="kw">loop </span>{
+			<span class="macro">futures::select! </span>{
+				<span class="comment">// Using `fuse()` in here is okay, because we reset the interval when it has fired.
+				</span><span class="kw">_ </span>= (<span class="kw-2">&amp;mut </span>interval_fut).fuse() =&gt; {
+					<span class="kw">let </span>next_batch = this.prepare_batch();
+					<span class="kw">let </span>batch_len = next_batch.len();
 
-					<span class="ident">batch_revalidate</span>(<span class="ident">this</span>.<span class="ident">pool</span>.<span class="ident">clone</span>(), <span class="ident">this</span>.<span class="ident">api</span>.<span class="ident">clone</span>(), <span class="ident">this</span>.<span class="ident">best_block</span>, <span class="ident">next_batch</span>).<span class="kw">await</span>;
+					batch_revalidate(this.pool.clone(), this.api.clone(), this.best_block, next_batch).<span class="kw">await</span>;
 
-					<span class="kw">if</span> <span class="ident">batch_len</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">this</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
+					<span class="kw">if </span>batch_len &gt; <span class="number">0 </span>|| this.len() &gt; <span class="number">0 </span>{
 						<span class="macro">log::debug!</span>(
-							<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+							target: <span class="string">&quot;txpool&quot;</span>,
 							<span class="string">&quot;Revalidated {} transactions. Left in the queue for revalidation: {}.&quot;</span>,
-							<span class="ident">batch_len</span>,
-							<span class="ident">this</span>.<span class="ident">len</span>(),
+							batch_len,
+							this.len(),
 						);
 					}
 
-					<span class="ident">interval_fut</span>.<span class="ident">reset</span>(<span class="ident">interval</span>);
+					interval_fut.reset(interval);
 				},
-				<span class="ident">workload</span> <span class="op">=</span> <span class="ident">from_queue</span>.<span class="ident">next</span>() =&gt; {
-					<span class="kw">match</span> <span class="ident">workload</span> {
-						<span class="prelude-val">Some</span>(<span class="ident">worker_payload</span>) =&gt; {
-							<span class="ident">this</span>.<span class="ident">best_block</span> <span class="op">=</span> <span class="ident">worker_payload</span>.<span class="ident">at</span>;
-							<span class="ident">this</span>.<span class="ident">push</span>(<span class="ident">worker_payload</span>);
+				workload = from_queue.next() =&gt; {
+					<span class="kw">match </span>workload {
+						<span class="prelude-val">Some</span>(worker_payload) =&gt; {
+							this.best_block = worker_payload.at;
+							this.push(worker_payload);
 
-							<span class="kw">if</span> <span class="ident">this</span>.<span class="ident">members</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
+							<span class="kw">if </span>this.members.len() &gt; <span class="number">0 </span>{
 								<span class="macro">log::debug!</span>(
-									<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+									target: <span class="string">&quot;txpool&quot;</span>,
 									<span class="string">&quot;Updated revalidation queue at {:?}. Transactions: {:?}&quot;</span>,
-									<span class="ident">this</span>.<span class="ident">best_block</span>,
-									<span class="ident">this</span>.<span class="ident">members</span>,
+									this.best_block,
+									this.members,
 								);
 							}
 
 							<span class="kw">continue</span>;
 						},
-						<span class="comment">// R.I.P. worker!</span>
-						<span class="prelude-val">None</span> =&gt; <span class="kw">break</span>,
+						<span class="comment">// R.I.P. worker!
+						</span><span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 					}
 				}
 			}
@@ -649,116 +644,115 @@
 	}
 }
 
-<span class="doccomment">/// Revalidation queue.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Can be configured background (`new_background`)</span>
-<span class="doccomment">/// or immediate (just `new`).</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RevalidationQueue</span><span class="op">&lt;</span><span class="ident">Api</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> {
-	<span class="ident">pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-	<span class="ident">background</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">WorkerPayload</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Revalidation queue.
+///
+/// Can be configured background (`new_background`)
+/// or immediate (just `new`).
+</span><span class="kw">pub struct </span>RevalidationQueue&lt;Api: ChainApi&gt; {
+	pool: Arc&lt;Pool&lt;Api&gt;&gt;,
+	api: Arc&lt;Api&gt;,
+	background: <span class="prelude-ty">Option</span>&lt;TracingUnboundedSender&lt;WorkerPayload&lt;Api&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Api</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">RevalidationQueue</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">Api</span>: <span class="lifetime">&#39;static</span>,
+<span class="kw">impl</span>&lt;Api: ChainApi&gt; RevalidationQueue&lt;Api&gt;
+<span class="kw">where
+	</span>Api: <span class="lifetime">&#39;static</span>,
 {
-	<span class="doccomment">/// New revalidation queue without background worker.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>, <span class="ident">pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">api</span>, <span class="ident">pool</span>, <span class="ident">background</span>: <span class="prelude-val">None</span> }
+	<span class="doccomment">/// New revalidation queue without background worker.
+	</span><span class="kw">pub fn </span>new(api: Arc&lt;Api&gt;, pool: Arc&lt;Pool&lt;Api&gt;&gt;) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ api, pool, background: <span class="prelude-val">None </span>}
 	}
 
-	<span class="doccomment">/// New revalidation queue with background worker.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_with_interval</span>(
-		<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-		<span class="ident">pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">interval</span>: <span class="ident">Duration</span>,
-	) -&gt; (<span class="self">Self</span>, <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> ()<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> (<span class="ident">to_worker</span>, <span class="ident">from_queue</span>) <span class="op">=</span> <span class="ident">tracing_unbounded</span>(<span class="string">&quot;mpsc_revalidation_queue&quot;</span>);
+	<span class="doccomment">/// New revalidation queue with background worker.
+	</span><span class="kw">pub fn </span>new_with_interval(
+		api: Arc&lt;Api&gt;,
+		pool: Arc&lt;Pool&lt;Api&gt;&gt;,
+		interval: Duration,
+	) -&gt; (<span class="self">Self</span>, Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;) {
+		<span class="kw">let </span>(to_worker, from_queue) = tracing_unbounded(<span class="string">&quot;mpsc_revalidation_queue&quot;</span>);
 
-		<span class="kw">let</span> <span class="ident">worker</span> <span class="op">=</span> <span class="ident">RevalidationWorker::new</span>(<span class="ident">api</span>.<span class="ident">clone</span>(), <span class="ident">pool</span>.<span class="ident">clone</span>());
+		<span class="kw">let </span>worker = RevalidationWorker::new(api.clone(), pool.clone());
 
-		<span class="kw">let</span> <span class="ident">queue</span> <span class="op">=</span> <span class="self">Self</span> { <span class="ident">api</span>, <span class="ident">pool</span>, <span class="ident">background</span>: <span class="prelude-val">Some</span>(<span class="ident">to_worker</span>) };
+		<span class="kw">let </span>queue = <span class="self">Self </span>{ api, pool, background: <span class="prelude-val">Some</span>(to_worker) };
 
-		(<span class="ident">queue</span>, <span class="ident">worker</span>.<span class="ident">run</span>(<span class="ident">from_queue</span>, <span class="ident">interval</span>).<span class="ident">boxed</span>())
+		(queue, worker.run(from_queue, interval).boxed())
 	}
 
-	<span class="doccomment">/// New revalidation queue with background worker.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_background</span>(
-		<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-		<span class="ident">pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; (<span class="self">Self</span>, <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> ()<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-		<span class="ident"><span class="self">Self</span>::new_with_interval</span>(<span class="ident">api</span>, <span class="ident">pool</span>, <span class="ident">BACKGROUND_REVALIDATION_INTERVAL</span>)
+	<span class="doccomment">/// New revalidation queue with background worker.
+	</span><span class="kw">pub fn </span>new_background(
+		api: Arc&lt;Api&gt;,
+		pool: Arc&lt;Pool&lt;Api&gt;&gt;,
+	) -&gt; (<span class="self">Self</span>, Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;) {
+		<span class="self">Self</span>::new_with_interval(api, pool, BACKGROUND_REVALIDATION_INTERVAL)
 	}
 
-	<span class="doccomment">/// Queue some transaction for later revalidation.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If queue configured with background worker, this will return immediately.</span>
-	<span class="doccomment">/// If queue configured without background worker, this will resolve after</span>
-	<span class="doccomment">/// revalidation is actually done.</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">revalidate_later</span>(
+	<span class="doccomment">/// Queue some transaction for later revalidation.
+	///
+	/// If queue configured with background worker, this will return immediately.
+	/// If queue configured without background worker, this will resolve after
+	/// revalidation is actually done.
+	</span><span class="kw">pub async fn </span>revalidate_later(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span>,
-		<span class="ident">transactions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+		at: NumberFor&lt;Api&gt;,
+		transactions: Vec&lt;ExtrinsicHash&lt;Api&gt;&gt;,
 	) {
-		<span class="kw">if</span> <span class="ident">transactions</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
+		<span class="kw">if </span>transactions.len() &gt; <span class="number">0 </span>{
 			<span class="macro">log::debug!</span>(
-				<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Sent {} transactions to revalidation queue&quot;</span>,
-				<span class="ident">transactions</span>.<span class="ident">len</span>(),
+				target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Sent {} transactions to revalidation queue&quot;</span>,
+				transactions.len(),
 			);
 		}
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">to_worker</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">background</span> {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">to_worker</span>.<span class="ident">unbounded_send</span>(<span class="ident">WorkerPayload</span> { <span class="ident">at</span>, <span class="ident">transactions</span> }) {
-				<span class="macro">log::warn!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Failed to update background worker: {:?}&quot;</span>, <span class="ident">e</span>);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>to_worker) = <span class="self">self</span>.background {
+			<span class="kw">if let </span><span class="prelude-val">Err</span>(e) = to_worker.unbounded_send(WorkerPayload { at, transactions }) {
+				<span class="macro">log::warn!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Failed to update background worker: {:?}&quot;</span>, e);
 			}
-		} <span class="kw">else</span> {
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">clone</span>();
-			<span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">api</span>.<span class="ident">clone</span>();
-			<span class="ident">batch_revalidate</span>(<span class="ident">pool</span>, <span class="ident">api</span>, <span class="ident">at</span>, <span class="ident">transactions</span>).<span class="kw">await</span>
-		}
+		} <span class="kw">else </span>{
+			<span class="kw">let </span>pool = <span class="self">self</span>.pool.clone();
+			<span class="kw">let </span>api = <span class="self">self</span>.api.clone();
+			batch_revalidate(pool, api, at, transactions).<span class="kw">await
+		</span>}
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="kw">crate</span>::{
-		<span class="ident">graph::Pool</span>,
-		<span class="ident">tests</span>::{<span class="ident">uxt</span>, <span class="ident">TestApi</span>},
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use crate</span>::{
+		graph::Pool,
+		tests::{uxt, TestApi},
 	};
-	<span class="kw">use</span> <span class="ident">futures::executor::block_on</span>;
-	<span class="kw">use</span> <span class="ident">sc_transaction_pool_api::TransactionSource</span>;
-	<span class="kw">use</span> <span class="ident">sp_runtime::generic::BlockId</span>;
-	<span class="kw">use</span> <span class="ident">substrate_test_runtime</span>::{<span class="ident">AccountId</span>, <span class="ident">Transfer</span>, <span class="ident">H256</span>};
+	<span class="kw">use </span>futures::executor::block_on;
+	<span class="kw">use </span>sc_transaction_pool_api::TransactionSource;
+	<span class="kw">use </span>sp_runtime::generic::BlockId;
+	<span class="kw">use </span>substrate_test_runtime::{AccountId, Transfer, H256};
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">revalidation_queue_works</span>() {
-		<span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">TestApi::default</span>());
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">Pool::new</span>(<span class="ident">Default::default</span>(), <span class="bool-val">true</span>.<span class="ident">into</span>(), <span class="ident">api</span>.<span class="ident">clone</span>()));
-		<span class="kw">let</span> <span class="ident">queue</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RevalidationQueue::new</span>(<span class="ident">api</span>.<span class="ident">clone</span>(), <span class="ident">pool</span>.<span class="ident">clone</span>()));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>revalidation_queue_works() {
+		<span class="kw">let </span>api = Arc::new(TestApi::default());
+		<span class="kw">let </span>pool = Arc::new(Pool::new(Default::default(), <span class="bool-val">true</span>.into(), api.clone()));
+		<span class="kw">let </span>queue = Arc::new(RevalidationQueue::new(api.clone(), pool.clone()));
 
-		<span class="kw">let</span> <span class="ident">uxt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-			<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-			<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-			<span class="ident">amount</span>: <span class="number">5</span>,
-			<span class="ident">nonce</span>: <span class="number">0</span>,
+		<span class="kw">let </span>uxt = uxt(Transfer {
+			from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+			to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+			amount: <span class="number">5</span>,
+			nonce: <span class="number">0</span>,
 		});
-		<span class="kw">let</span> <span class="ident">uxt_hash</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::number</span>(<span class="number">0</span>),
-			<span class="ident">TransactionSource::External</span>,
-			<span class="ident">uxt</span>.<span class="ident">clone</span>(),
+		<span class="kw">let </span>uxt_hash = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::number(<span class="number">0</span>),
+			TransactionSource::External,
+			uxt.clone(),
 		))
-		.<span class="ident">expect</span>(<span class="string">&quot;Should be valid&quot;</span>);
+		.expect(<span class="string">&quot;Should be valid&quot;</span>);
 
-		<span class="ident">block_on</span>(<span class="ident">queue</span>.<span class="ident">revalidate_later</span>(<span class="number">0</span>, <span class="macro">vec!</span>[<span class="ident">uxt_hash</span>]));
+		block_on(queue.revalidate_later(<span class="number">0</span>, <span class="macro">vec!</span>[uxt_hash]));
 
-		<span class="comment">// revalidated in sync offload 2nd time</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">api</span>.<span class="ident">validation_requests</span>().<span class="ident">len</span>(), <span class="number">2</span>);
-		<span class="comment">// number of ready</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+		<span class="comment">// revalidated in sync offload 2nd time
+		</span><span class="macro">assert_eq!</span>(api.validation_requests().len(), <span class="number">2</span>);
+		<span class="comment">// number of ready
+		</span><span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

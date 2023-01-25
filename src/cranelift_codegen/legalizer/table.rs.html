@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/legalizer/table.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>table.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/legalizer/table.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>table.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -90,93 +85,92 @@
 <span id="85">85</span>
 <span id="86">86</span>
 <span id="87">87</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Legalization of tables.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This module exports the `expand_table_addr` function which transforms a `table_addr`</span>
-<span class="doccomment">//! instruction into code that depends on the kind of table referenced.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Legalization of tables.
+//!
+//! This module exports the `expand_table_addr` function which transforms a `table_addr`
+//! instruction into code that depends on the kind of table referenced.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cursor</span>::{<span class="ident">Cursor</span>, <span class="ident">FuncCursor</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::condcodes::IntCC</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::immediates::Offset32</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="self">self</span>, <span class="ident">InstBuilder</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::cursor::{Cursor, FuncCursor};
+<span class="kw">use </span><span class="kw">crate</span>::ir::condcodes::IntCC;
+<span class="kw">use </span><span class="kw">crate</span>::ir::immediates::Offset32;
+<span class="kw">use </span><span class="kw">crate</span>::ir::{<span class="self">self</span>, InstBuilder};
 
-<span class="doccomment">/// Expand a `table_addr` instruction according to the definition of the table.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">expand_table_addr</span>(
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="ident">table</span>: <span class="ident">ir::Table</span>,
-    <span class="ident">index</span>: <span class="ident">ir::Value</span>,
-    <span class="ident">element_offset</span>: <span class="ident">Offset32</span>,
+<span class="doccomment">/// Expand a `table_addr` instruction according to the definition of the table.
+</span><span class="kw">pub fn </span>expand_table_addr(
+    inst: ir::Inst,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    table: ir::Table,
+    index: ir::Value,
+    element_offset: Offset32,
 ) {
-    <span class="kw">let</span> <span class="ident">bound_gv</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">tables</span>[<span class="ident">table</span>].<span class="ident">bound_gv</span>;
-    <span class="kw">let</span> <span class="ident">index_ty</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">index</span>);
-    <span class="kw">let</span> <span class="ident">addr_ty</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">first_result</span>(<span class="ident">inst</span>));
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_inst</span>(<span class="ident">inst</span>);
-    <span class="ident">pos</span>.<span class="ident">use_srcloc</span>(<span class="ident">inst</span>);
+    <span class="kw">let </span>bound_gv = func.tables[table].bound_gv;
+    <span class="kw">let </span>index_ty = func.dfg.value_type(index);
+    <span class="kw">let </span>addr_ty = func.dfg.value_type(func.dfg.first_result(inst));
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_inst(inst);
+    pos.use_srcloc(inst);
 
-    <span class="comment">// Start with the bounds check. Trap if `index + 1 &gt; bound`.</span>
-    <span class="kw">let</span> <span class="ident">bound</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">global_value</span>(<span class="ident">index_ty</span>, <span class="ident">bound_gv</span>);
+    <span class="comment">// Start with the bounds check. Trap if `index + 1 &gt; bound`.
+    </span><span class="kw">let </span>bound = pos.ins().global_value(index_ty, bound_gv);
 
-    <span class="comment">// `index &gt; bound - 1` is the same as `index &gt;= bound`.</span>
-    <span class="kw">let</span> <span class="ident">oob</span> <span class="op">=</span> <span class="ident">pos</span>
-        .<span class="ident">ins</span>()
-        .<span class="ident">icmp</span>(<span class="ident">IntCC::UnsignedGreaterThanOrEqual</span>, <span class="ident">index</span>, <span class="ident">bound</span>);
-    <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">trapnz</span>(<span class="ident">oob</span>, <span class="ident">ir::TrapCode::TableOutOfBounds</span>);
+    <span class="comment">// `index &gt; bound - 1` is the same as `index &gt;= bound`.
+    </span><span class="kw">let </span>oob = pos
+        .ins()
+        .icmp(IntCC::UnsignedGreaterThanOrEqual, index, bound);
+    pos.ins().trapnz(oob, ir::TrapCode::TableOutOfBounds);
 
-    <span class="ident">compute_addr</span>(
-        <span class="ident">inst</span>,
-        <span class="ident">table</span>,
-        <span class="ident">addr_ty</span>,
-        <span class="ident">index</span>,
-        <span class="ident">index_ty</span>,
-        <span class="ident">element_offset</span>,
-        <span class="ident">pos</span>.<span class="ident">func</span>,
+    compute_addr(
+        inst,
+        table,
+        addr_ty,
+        index,
+        index_ty,
+        element_offset,
+        pos.func,
     );
 }
 
-<span class="doccomment">/// Emit code for the base address computation of a `table_addr` instruction.</span>
-<span class="kw">fn</span> <span class="ident">compute_addr</span>(
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">table</span>: <span class="ident">ir::Table</span>,
-    <span class="ident">addr_ty</span>: <span class="ident">ir::Type</span>,
-    <span class="kw-2">mut</span> <span class="ident">index</span>: <span class="ident">ir::Value</span>,
-    <span class="ident">index_ty</span>: <span class="ident">ir::Type</span>,
-    <span class="ident">element_offset</span>: <span class="ident">Offset32</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
+<span class="doccomment">/// Emit code for the base address computation of a `table_addr` instruction.
+</span><span class="kw">fn </span>compute_addr(
+    inst: ir::Inst,
+    table: ir::Table,
+    addr_ty: ir::Type,
+    <span class="kw-2">mut </span>index: ir::Value,
+    index_ty: ir::Type,
+    element_offset: Offset32,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
 ) {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_inst</span>(<span class="ident">inst</span>);
-    <span class="ident">pos</span>.<span class="ident">use_srcloc</span>(<span class="ident">inst</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_inst(inst);
+    pos.use_srcloc(inst);
 
-    <span class="comment">// Convert `index` to `addr_ty`.</span>
-    <span class="kw">if</span> <span class="ident">index_ty</span> <span class="op">!</span><span class="op">=</span> <span class="ident">addr_ty</span> {
-        <span class="ident">index</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">uextend</span>(<span class="ident">addr_ty</span>, <span class="ident">index</span>);
+    <span class="comment">// Convert `index` to `addr_ty`.
+    </span><span class="kw">if </span>index_ty != addr_ty {
+        index = pos.ins().uextend(addr_ty, index);
     }
 
-    <span class="comment">// Add the table base address base</span>
-    <span class="kw">let</span> <span class="ident">base_gv</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">tables</span>[<span class="ident">table</span>].<span class="ident">base_gv</span>;
-    <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">global_value</span>(<span class="ident">addr_ty</span>, <span class="ident">base_gv</span>);
+    <span class="comment">// Add the table base address base
+    </span><span class="kw">let </span>base_gv = pos.func.tables[table].base_gv;
+    <span class="kw">let </span>base = pos.ins().global_value(addr_ty, base_gv);
 
-    <span class="kw">let</span> <span class="ident">element_size</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">tables</span>[<span class="ident">table</span>].<span class="ident">element_size</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span>;
-    <span class="kw">let</span> <span class="ident">element_size</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="ident">element_size</span>.<span class="ident">into</span>();
-    <span class="kw">if</span> <span class="ident">element_size</span> <span class="op">==</span> <span class="number">1</span> {
-        <span class="ident">offset</span> <span class="op">=</span> <span class="ident">index</span>;
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">element_size</span>.<span class="ident">is_power_of_two</span>() {
-        <span class="ident">offset</span> <span class="op">=</span> <span class="ident">pos</span>
-            .<span class="ident">ins</span>()
-            .<span class="ident">ishl_imm</span>(<span class="ident">index</span>, <span class="ident">i64::from</span>(<span class="ident">element_size</span>.<span class="ident">trailing_zeros</span>()));
-    } <span class="kw">else</span> {
-        <span class="ident">offset</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">imul_imm</span>(<span class="ident">index</span>, <span class="ident">element_size</span> <span class="kw">as</span> <span class="ident">i64</span>);
+    <span class="kw">let </span>element_size = pos.func.tables[table].element_size;
+    <span class="kw">let </span><span class="kw-2">mut </span>offset;
+    <span class="kw">let </span>element_size: u64 = element_size.into();
+    <span class="kw">if </span>element_size == <span class="number">1 </span>{
+        offset = index;
+    } <span class="kw">else if </span>element_size.is_power_of_two() {
+        offset = pos
+            .ins()
+            .ishl_imm(index, i64::from(element_size.trailing_zeros()));
+    } <span class="kw">else </span>{
+        offset = pos.ins().imul_imm(index, element_size <span class="kw">as </span>i64);
     }
 
-    <span class="kw">if</span> <span class="ident">element_offset</span> <span class="op">==</span> <span class="ident">Offset32::new</span>(<span class="number">0</span>) {
-        <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace</span>(<span class="ident">inst</span>).<span class="ident">iadd</span>(<span class="ident">base</span>, <span class="ident">offset</span>);
-    } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">imm</span>: <span class="ident">i64</span> <span class="op">=</span> <span class="ident">element_offset</span>.<span class="ident">into</span>();
-        <span class="ident">offset</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iadd</span>(<span class="ident">base</span>, <span class="ident">offset</span>);
-        <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace</span>(<span class="ident">inst</span>).<span class="ident">iadd_imm</span>(<span class="ident">offset</span>, <span class="ident">imm</span>);
+    <span class="kw">if </span>element_offset == Offset32::new(<span class="number">0</span>) {
+        pos.func.dfg.replace(inst).iadd(base, offset);
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>imm: i64 = element_offset.into();
+        offset = pos.ins().iadd(base, offset);
+        pos.func.dfg.replace(inst).iadd_imm(offset, imm);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

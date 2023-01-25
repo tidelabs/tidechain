@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/finality-grandpa/src/import.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>import.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_finality_grandpa/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_finality_grandpa/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_finality_grandpa/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/finality-grandpa/src/import.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>import.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_finality_grandpa/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -839,836 +834,836 @@
 <span id="834">834</span>
 <span id="835">835</span>
 <span id="836">836</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">marker::PhantomData</span>, <span class="ident">sync::Arc</span>};
+</span><span class="kw">use </span>std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
-<span class="kw">use</span> <span class="ident">log::debug</span>;
-<span class="kw">use</span> <span class="ident">parity_scale_codec::Decode</span>;
+<span class="kw">use </span>log::debug;
+<span class="kw">use </span>parity_scale_codec::Decode;
 
-<span class="kw">use</span> <span class="ident">sc_client_api</span>::{<span class="ident">backend::Backend</span>, <span class="ident">utils::is_descendent_of</span>};
-<span class="kw">use</span> <span class="ident">sc_consensus</span>::{
-	<span class="ident">shared_data</span>::{<span class="ident">SharedDataLocked</span>, <span class="ident">SharedDataLockedUpgradable</span>},
-	<span class="ident">BlockCheckParams</span>, <span class="ident">BlockImport</span>, <span class="ident">BlockImportParams</span>, <span class="ident">ImportResult</span>, <span class="ident">JustificationImport</span>,
+<span class="kw">use </span>sc_client_api::{backend::Backend, utils::is_descendent_of};
+<span class="kw">use </span>sc_consensus::{
+	shared_data::{SharedDataLocked, SharedDataLockedUpgradable},
+	BlockCheckParams, BlockImport, BlockImportParams, ImportResult, JustificationImport,
 };
-<span class="kw">use</span> <span class="ident">sc_telemetry::TelemetryHandle</span>;
-<span class="kw">use</span> <span class="ident">sc_utils::mpsc::TracingUnboundedSender</span>;
-<span class="kw">use</span> <span class="ident">sp_api</span>::{<span class="ident">Core</span>, <span class="ident">RuntimeApiInfo</span>, <span class="ident">TransactionFor</span>};
-<span class="kw">use</span> <span class="ident">sp_blockchain</span>::{<span class="ident">well_known_cache_keys</span>, <span class="ident">BlockStatus</span>};
-<span class="kw">use</span> <span class="ident">sp_consensus</span>::{<span class="ident">BlockOrigin</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">ConsensusError</span>, <span class="ident">SelectChain</span>};
-<span class="kw">use</span> <span class="ident">sp_core::hashing::twox_128</span>;
-<span class="kw">use</span> <span class="ident">sp_finality_grandpa</span>::{<span class="ident">ConsensusLog</span>, <span class="ident">GrandpaApi</span>, <span class="ident">ScheduledChange</span>, <span class="ident">SetId</span>, <span class="ident">GRANDPA_ENGINE_ID</span>};
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">generic</span>::{<span class="ident">BlockId</span>, <span class="ident">OpaqueDigestItemId</span>},
-	<span class="ident">traits</span>::{<span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>, <span class="ident">Header</span> <span class="kw">as</span> <span class="ident">HeaderT</span>, <span class="ident">NumberFor</span>, <span class="ident">Zero</span>},
-	<span class="ident">Justification</span>,
-};
-
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">authorities</span>::{<span class="ident">AuthoritySet</span>, <span class="ident">DelayKind</span>, <span class="ident">PendingChange</span>, <span class="ident">SharedAuthoritySet</span>},
-	<span class="ident">environment::finalize_block</span>,
-	<span class="ident">justification::GrandpaJustification</span>,
-	<span class="ident">notification::GrandpaJustificationSender</span>,
-	<span class="ident">AuthoritySetChanges</span>, <span class="ident">ClientForGrandpa</span>, <span class="ident">CommandOrError</span>, <span class="ident">Error</span>, <span class="ident">NewAuthoritySet</span>, <span class="ident">VoterCommand</span>,
+<span class="kw">use </span>sc_telemetry::TelemetryHandle;
+<span class="kw">use </span>sc_utils::mpsc::TracingUnboundedSender;
+<span class="kw">use </span>sp_api::{Core, RuntimeApiInfo, TransactionFor};
+<span class="kw">use </span>sp_blockchain::{well_known_cache_keys, BlockStatus};
+<span class="kw">use </span>sp_consensus::{BlockOrigin, Error <span class="kw">as </span>ConsensusError, SelectChain};
+<span class="kw">use </span>sp_core::hashing::twox_128;
+<span class="kw">use </span>sp_finality_grandpa::{ConsensusLog, GrandpaApi, ScheduledChange, SetId, GRANDPA_ENGINE_ID};
+<span class="kw">use </span>sp_runtime::{
+	generic::{BlockId, OpaqueDigestItemId},
+	traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT, NumberFor, Zero},
+	Justification,
 };
 
-<span class="doccomment">/// A block-import handler for GRANDPA.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This scans each imported block for signals of changing authority set.</span>
-<span class="doccomment">/// If the block being imported enacts an authority set change then:</span>
-<span class="doccomment">/// - If the current authority set is still live: we import the block</span>
-<span class="doccomment">/// - Otherwise, the block must include a valid justification.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// When using GRANDPA, the block import worker should be using this block import</span>
-<span class="doccomment">/// object.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">Backend</span>, <span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> {
-	<span class="ident">inner</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span>,
-	<span class="ident">select_chain</span>: <span class="ident">SC</span>,
-	<span class="ident">authority_set</span>: <span class="ident">SharedAuthoritySet</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">send_voter_commands</span>: <span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">VoterCommand</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">authority_set_hard_forks</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">PendingChange</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">justification_sender</span>: <span class="ident">GrandpaJustificationSender</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">telemetry</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TelemetryHandle</span><span class="op">&gt;</span>,
-	<span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">Backend</span><span class="op">&gt;</span>,
+<span class="kw">use crate</span>::{
+	authorities::{AuthoritySet, DelayKind, PendingChange, SharedAuthoritySet},
+	environment::finalize_block,
+	justification::GrandpaJustification,
+	notification::GrandpaJustificationSender,
+	AuthoritySetChanges, ClientForGrandpa, CommandOrError, Error, NewAuthoritySet, VoterCommand,
+};
+
+<span class="doccomment">/// A block-import handler for GRANDPA.
+///
+/// This scans each imported block for signals of changing authority set.
+/// If the block being imported enacts an authority set change then:
+/// - If the current authority set is still live: we import the block
+/// - Otherwise, the block must include a valid justification.
+///
+/// When using GRANDPA, the block import worker should be using this block import
+/// object.
+</span><span class="kw">pub struct </span>GrandpaBlockImport&lt;Backend, Block: BlockT, Client, SC&gt; {
+	inner: Arc&lt;Client&gt;,
+	select_chain: SC,
+	authority_set: SharedAuthoritySet&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;,
+	send_voter_commands: TracingUnboundedSender&lt;VoterCommand&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;&gt;,
+	authority_set_hard_forks: HashMap&lt;Block::Hash, PendingChange&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;&gt;,
+	justification_sender: GrandpaJustificationSender&lt;Block&gt;,
+	telemetry: <span class="prelude-ty">Option</span>&lt;TelemetryHandle&gt;,
+	_phantom: PhantomData&lt;Backend&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Backend</span>, <span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span>, <span class="ident">SC</span>: <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">Clone</span>
-	<span class="kw">for</span> <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">Backend</span>, <span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span>
+<span class="kw">impl</span>&lt;Backend, Block: BlockT, Client, SC: Clone&gt; Clone
+	<span class="kw">for </span>GrandpaBlockImport&lt;Backend, Block, Client, SC&gt;
 {
-	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">GrandpaBlockImport</span> {
-			<span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>(),
-			<span class="ident">select_chain</span>: <span class="self">self</span>.<span class="ident">select_chain</span>.<span class="ident">clone</span>(),
-			<span class="ident">authority_set</span>: <span class="self">self</span>.<span class="ident">authority_set</span>.<span class="ident">clone</span>(),
-			<span class="ident">send_voter_commands</span>: <span class="self">self</span>.<span class="ident">send_voter_commands</span>.<span class="ident">clone</span>(),
-			<span class="ident">authority_set_hard_forks</span>: <span class="self">self</span>.<span class="ident">authority_set_hard_forks</span>.<span class="ident">clone</span>(),
-			<span class="ident">justification_sender</span>: <span class="self">self</span>.<span class="ident">justification_sender</span>.<span class="ident">clone</span>(),
-			<span class="ident">telemetry</span>: <span class="self">self</span>.<span class="ident">telemetry</span>.<span class="ident">clone</span>(),
-			<span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+	<span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		GrandpaBlockImport {
+			inner: <span class="self">self</span>.inner.clone(),
+			select_chain: <span class="self">self</span>.select_chain.clone(),
+			authority_set: <span class="self">self</span>.authority_set.clone(),
+			send_voter_commands: <span class="self">self</span>.send_voter_commands.clone(),
+			authority_set_hard_forks: <span class="self">self</span>.authority_set_hard_forks.clone(),
+			justification_sender: <span class="self">self</span>.justification_sender.clone(),
+			telemetry: <span class="self">self</span>.telemetry.clone(),
+			_phantom: PhantomData,
 		}
 	}
 }
 
-<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> <span class="ident">JustificationImport</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>
-	<span class="kw">for</span> <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>: <span class="ident">finality_grandpa::BlockNumberOps</span>,
-	<span class="ident">BE</span>: <span class="ident">Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">Client</span>: <span class="ident">ClientForGrandpa</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">BE</span><span class="op">&gt;</span>,
-	<span class="ident">SC</span>: <span class="ident">SelectChain</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+<span class="attribute">#[async_trait::async_trait]
+</span><span class="kw">impl</span>&lt;BE, Block: BlockT, Client, SC&gt; JustificationImport&lt;Block&gt;
+	<span class="kw">for </span>GrandpaBlockImport&lt;BE, Block, Client, SC&gt;
+<span class="kw">where
+	</span>NumberFor&lt;Block&gt;: finality_grandpa::BlockNumberOps,
+	BE: Backend&lt;Block&gt;,
+	Client: ClientForGrandpa&lt;Block, BE&gt;,
+	SC: SelectChain&lt;Block&gt;,
 {
-	<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span>;
+	<span class="kw">type </span>Error = ConsensusError;
 
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">on_start</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-		<span class="kw">let</span> <span class="ident">chain_info</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">info</span>();
+	<span class="kw">async fn </span>on_start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;(Block::Hash, NumberFor&lt;Block&gt;)&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+		<span class="kw">let </span>chain_info = <span class="self">self</span>.inner.info();
 
-		<span class="comment">// request justifications for all pending changes for which change blocks have already been</span>
-		<span class="comment">// imported</span>
-		<span class="kw">let</span> <span class="ident">pending_changes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span>
-			<span class="self">self</span>.<span class="ident">authority_set</span>.<span class="ident">inner</span>().<span class="ident">pending_changes</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>();
+		<span class="comment">// request justifications for all pending changes for which change blocks have already been
+		// imported
+		</span><span class="kw">let </span>pending_changes: Vec&lt;<span class="kw">_</span>&gt; =
+			<span class="self">self</span>.authority_set.inner().pending_changes().cloned().collect();
 
-		<span class="kw">for</span> <span class="ident">pending_change</span> <span class="kw">in</span> <span class="ident">pending_changes</span> {
-			<span class="kw">if</span> <span class="ident">pending_change</span>.<span class="ident">delay_kind</span> <span class="op">==</span> <span class="ident">DelayKind::Finalized</span> <span class="op">&amp;&amp;</span>
-				<span class="ident">pending_change</span>.<span class="ident">effective_number</span>() <span class="op">&gt;</span> <span class="ident">chain_info</span>.<span class="ident">finalized_number</span> <span class="op">&amp;&amp;</span>
-				<span class="ident">pending_change</span>.<span class="ident">effective_number</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">chain_info</span>.<span class="ident">best_number</span>
+		<span class="kw">for </span>pending_change <span class="kw">in </span>pending_changes {
+			<span class="kw">if </span>pending_change.delay_kind == DelayKind::Finalized &amp;&amp;
+				pending_change.effective_number() &gt; chain_info.finalized_number &amp;&amp;
+				pending_change.effective_number() &lt;= chain_info.best_number
 			{
-				<span class="kw">let</span> <span class="ident">effective_block_hash</span> <span class="op">=</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">pending_change</span>.<span class="ident">delay</span>.<span class="ident">is_zero</span>() {
-					<span class="self">self</span>.<span class="ident">select_chain</span>
-						.<span class="ident">finality_target</span>(
-							<span class="ident">pending_change</span>.<span class="ident">canon_hash</span>,
-							<span class="prelude-val">Some</span>(<span class="ident">pending_change</span>.<span class="ident">effective_number</span>()),
+				<span class="kw">let </span>effective_block_hash = <span class="kw">if </span>!pending_change.delay.is_zero() {
+					<span class="self">self</span>.select_chain
+						.finality_target(
+							pending_change.canon_hash,
+							<span class="prelude-val">Some</span>(pending_change.effective_number()),
 						)
-						.<span class="kw">await</span>
-				} <span class="kw">else</span> {
-					<span class="prelude-val">Ok</span>(<span class="ident">pending_change</span>.<span class="ident">canon_hash</span>)
+						.<span class="kw">await
+				</span>} <span class="kw">else </span>{
+					<span class="prelude-val">Ok</span>(pending_change.canon_hash)
 				};
 
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">hash</span>) <span class="op">=</span> <span class="ident">effective_block_hash</span> {
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">header</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">header</span>(<span class="ident">BlockId::Hash</span>(<span class="ident">hash</span>)) {
-						<span class="kw">if</span> <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">number</span>() <span class="op">==</span> <span class="ident">pending_change</span>.<span class="ident">effective_number</span>() {
-							<span class="ident">out</span>.<span class="ident">push</span>((<span class="ident">header</span>.<span class="ident">hash</span>(), <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">number</span>()));
+				<span class="kw">if let </span><span class="prelude-val">Ok</span>(hash) = effective_block_hash {
+					<span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(header)) = <span class="self">self</span>.inner.header(BlockId::Hash(hash)) {
+						<span class="kw">if </span><span class="kw-2">*</span>header.number() == pending_change.effective_number() {
+							out.push((header.hash(), <span class="kw-2">*</span>header.number()));
 						}
 					}
 				}
 			}
 		}
 
-		<span class="ident">out</span>
+		out
 	}
 
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_justification</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">hash</span>: <span class="ident">Block::Hash</span>,
-		<span class="ident">number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-		<span class="ident">justification</span>: <span class="ident">Justification</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="comment">// this justification was requested by the sync service, therefore we</span>
-		<span class="comment">// are not sure if it should enact a change or not. it could have been a</span>
-		<span class="comment">// request made as part of initial sync but that means the justification</span>
-		<span class="comment">// wasn&#39;t part of the block and was requested asynchronously, probably</span>
-		<span class="comment">// makes sense to log in that case.</span>
-		<span class="ident">GrandpaBlockImport::import_justification</span>(<span class="self">self</span>, <span class="ident">hash</span>, <span class="ident">number</span>, <span class="ident">justification</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>)
+	<span class="kw">async fn </span>import_justification(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		hash: Block::Hash,
+		number: NumberFor&lt;Block&gt;,
+		justification: Justification,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
+		<span class="comment">// this justification was requested by the sync service, therefore we
+		// are not sure if it should enact a change or not. it could have been a
+		// request made as part of initial sync but that means the justification
+		// wasn&#39;t part of the block and was requested asynchronously, probably
+		// makes sense to log in that case.
+		</span>GrandpaBlockImport::import_justification(<span class="self">self</span>, hash, number, justification, <span class="bool-val">false</span>, <span class="bool-val">false</span>)
 	}
 }
 
-<span class="kw">enum</span> <span class="ident">AppliedChanges</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-	<span class="ident">Standard</span>(<span class="ident">bool</span>), <span class="comment">// true if the change is ready to be applied (i.e. it&#39;s a root)</span>
-	<span class="ident">Forced</span>(<span class="ident">NewAuthoritySet</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span>),
+<span class="kw">enum </span>AppliedChanges&lt;H, N&gt; {
+	Standard(bool), <span class="comment">// true if the change is ready to be applied (i.e. it&#39;s a root)
+	</span>Forced(NewAuthoritySet&lt;H, N&gt;),
 	<span class="prelude-val">None</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> <span class="ident">AppliedChanges</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">needs_justification</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-			<span class="ident">AppliedChanges::Standard</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-			<span class="ident">AppliedChanges::Forced</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">AppliedChanges::None</span> =&gt; <span class="bool-val">false</span>,
+<span class="kw">impl</span>&lt;H, N&gt; AppliedChanges&lt;H, N&gt; {
+	<span class="kw">fn </span>needs_justification(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+			AppliedChanges::Standard(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
+			AppliedChanges::Forced(<span class="kw">_</span>) | AppliedChanges::None =&gt; <span class="bool-val">false</span>,
 		}
 	}
 }
 
-<span class="kw">struct</span> <span class="ident">PendingSetChanges</span><span class="op">&lt;</span><span class="ident">Block</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> {
-	<span class="ident">just_in_case</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(
-		<span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">SharedDataLockedUpgradable</span><span class="op">&lt;</span><span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	)<span class="op">&gt;</span>,
-	<span class="ident">applied_changes</span>: <span class="ident">AppliedChanges</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">do_pause</span>: <span class="ident">bool</span>,
+<span class="kw">struct </span>PendingSetChanges&lt;Block: BlockT&gt; {
+	just_in_case: <span class="prelude-ty">Option</span>&lt;(
+		AuthoritySet&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;,
+		SharedDataLockedUpgradable&lt;AuthoritySet&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;&gt;,
+	)&gt;,
+	applied_changes: AppliedChanges&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;,
+	do_pause: bool,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Block</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">PendingSetChanges</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> {
-	<span class="comment">// revert the pending set change explicitly.</span>
-	<span class="kw">fn</span> <span class="ident">revert</span>(<span class="self">self</span>) {}
+<span class="kw">impl</span>&lt;Block: BlockT&gt; PendingSetChanges&lt;Block&gt; {
+	<span class="comment">// revert the pending set change explicitly.
+	</span><span class="kw">fn </span>revert(<span class="self">self</span>) {}
 
-	<span class="kw">fn</span> <span class="ident">defuse</span>(<span class="kw-2">mut</span> <span class="self">self</span>) -&gt; (<span class="ident">AppliedChanges</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">bool</span>) {
-		<span class="self">self</span>.<span class="ident">just_in_case</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-		<span class="kw">let</span> <span class="ident">applied_changes</span> <span class="op">=</span> <span class="ident">std::mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">applied_changes</span>, <span class="ident">AppliedChanges::None</span>);
-		(<span class="ident">applied_changes</span>, <span class="self">self</span>.<span class="ident">do_pause</span>)
+	<span class="kw">fn </span>defuse(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; (AppliedChanges&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;, bool) {
+		<span class="self">self</span>.just_in_case = <span class="prelude-val">None</span>;
+		<span class="kw">let </span>applied_changes = std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.applied_changes, AppliedChanges::None);
+		(applied_changes, <span class="self">self</span>.do_pause)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Block</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">PendingSetChanges</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">old_set</span>, <span class="kw-2">mut</span> <span class="ident">authorities</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">just_in_case</span>.<span class="ident">take</span>() {
-			<span class="kw-2">*</span><span class="ident">authorities</span>.<span class="ident">upgrade</span>() <span class="op">=</span> <span class="ident">old_set</span>;
+<span class="kw">impl</span>&lt;Block: BlockT&gt; Drop <span class="kw">for </span>PendingSetChanges&lt;Block&gt; {
+	<span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="kw">if let </span><span class="prelude-val">Some</span>((old_set, <span class="kw-2">mut </span>authorities)) = <span class="self">self</span>.just_in_case.take() {
+			<span class="kw-2">*</span>authorities.upgrade() = old_set;
 		}
 	}
 }
 
-<span class="doccomment">/// Checks the given header for a consensus digest signalling a **standard** scheduled change and</span>
-<span class="doccomment">/// extracts it.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_scheduled_change</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>(
-	<span class="ident">header</span>: <span class="kw-2">&amp;</span><span class="ident">B::Header</span>,
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ScheduledChange</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">OpaqueDigestItemId::Consensus</span>(<span class="kw-2">&amp;</span><span class="ident">GRANDPA_ENGINE_ID</span>);
+<span class="doccomment">/// Checks the given header for a consensus digest signalling a **standard** scheduled change and
+/// extracts it.
+</span><span class="kw">pub fn </span>find_scheduled_change&lt;B: BlockT&gt;(
+	header: <span class="kw-2">&amp;</span>B::Header,
+) -&gt; <span class="prelude-ty">Option</span>&lt;ScheduledChange&lt;NumberFor&lt;B&gt;&gt;&gt; {
+	<span class="kw">let </span>id = OpaqueDigestItemId::Consensus(<span class="kw-2">&amp;</span>GRANDPA_ENGINE_ID);
 
-	<span class="kw">let</span> <span class="ident">filter_log</span> <span class="op">=</span> <span class="op">|</span><span class="ident">log</span>: <span class="ident">ConsensusLog</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">log</span> {
-		<span class="ident">ConsensusLog::ScheduledChange</span>(<span class="ident">change</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">change</span>),
-		<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+	<span class="kw">let </span>filter_log = |log: ConsensusLog&lt;NumberFor&lt;B&gt;&gt;| <span class="kw">match </span>log {
+		ConsensusLog::ScheduledChange(change) =&gt; <span class="prelude-val">Some</span>(change),
+		<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 	};
 
-	<span class="comment">// find the first consensus digest with the right ID which converts to</span>
-	<span class="comment">// the right kind of consensus log.</span>
-	<span class="ident">header</span>.<span class="ident">digest</span>().<span class="ident">convert_first</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span>.<span class="ident">try_to</span>(<span class="ident">id</span>).<span class="ident">and_then</span>(<span class="ident">filter_log</span>))
+	<span class="comment">// find the first consensus digest with the right ID which converts to
+	// the right kind of consensus log.
+	</span>header.digest().convert_first(|l| l.try_to(id).and_then(filter_log))
 }
 
-<span class="doccomment">/// Checks the given header for a consensus digest signalling a **forced** scheduled change and</span>
-<span class="doccomment">/// extracts it.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_forced_change</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>(
-	<span class="ident">header</span>: <span class="kw-2">&amp;</span><span class="ident">B::Header</span>,
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ScheduledChange</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">OpaqueDigestItemId::Consensus</span>(<span class="kw-2">&amp;</span><span class="ident">GRANDPA_ENGINE_ID</span>);
+<span class="doccomment">/// Checks the given header for a consensus digest signalling a **forced** scheduled change and
+/// extracts it.
+</span><span class="kw">pub fn </span>find_forced_change&lt;B: BlockT&gt;(
+	header: <span class="kw-2">&amp;</span>B::Header,
+) -&gt; <span class="prelude-ty">Option</span>&lt;(NumberFor&lt;B&gt;, ScheduledChange&lt;NumberFor&lt;B&gt;&gt;)&gt; {
+	<span class="kw">let </span>id = OpaqueDigestItemId::Consensus(<span class="kw-2">&amp;</span>GRANDPA_ENGINE_ID);
 
-	<span class="kw">let</span> <span class="ident">filter_log</span> <span class="op">=</span> <span class="op">|</span><span class="ident">log</span>: <span class="ident">ConsensusLog</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">log</span> {
-		<span class="ident">ConsensusLog::ForcedChange</span>(<span class="ident">delay</span>, <span class="ident">change</span>) =&gt; <span class="prelude-val">Some</span>((<span class="ident">delay</span>, <span class="ident">change</span>)),
-		<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+	<span class="kw">let </span>filter_log = |log: ConsensusLog&lt;NumberFor&lt;B&gt;&gt;| <span class="kw">match </span>log {
+		ConsensusLog::ForcedChange(delay, change) =&gt; <span class="prelude-val">Some</span>((delay, change)),
+		<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 	};
 
-	<span class="comment">// find the first consensus digest with the right ID which converts to</span>
-	<span class="comment">// the right kind of consensus log.</span>
-	<span class="ident">header</span>.<span class="ident">digest</span>().<span class="ident">convert_first</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span>.<span class="ident">try_to</span>(<span class="ident">id</span>).<span class="ident">and_then</span>(<span class="ident">filter_log</span>))
+	<span class="comment">// find the first consensus digest with the right ID which converts to
+	// the right kind of consensus log.
+	</span>header.digest().convert_first(|l| l.try_to(id).and_then(filter_log))
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>: <span class="ident">finality_grandpa::BlockNumberOps</span>,
-	<span class="ident">BE</span>: <span class="ident">Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">Client</span>: <span class="ident">ClientForGrandpa</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">BE</span><span class="op">&gt;</span>,
-	<span class="ident">Client::Api</span>: <span class="ident">GrandpaApi</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Client</span>:
-		<span class="ident">BlockImport</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span>, <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span>: <span class="lifetime">&#39;static</span>,
+<span class="kw">impl</span>&lt;BE, Block: BlockT, Client, SC&gt; GrandpaBlockImport&lt;BE, Block, Client, SC&gt;
+<span class="kw">where
+	</span>NumberFor&lt;Block&gt;: finality_grandpa::BlockNumberOps,
+	BE: Backend&lt;Block&gt;,
+	Client: ClientForGrandpa&lt;Block, BE&gt;,
+	Client::Api: GrandpaApi&lt;Block&gt;,
+	<span class="kw">for</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Client:
+		BlockImport&lt;Block, Error = ConsensusError, Transaction = TransactionFor&lt;Client, Block&gt;&gt;,
+	TransactionFor&lt;Client, Block&gt;: <span class="lifetime">&#39;static</span>,
 {
-	<span class="comment">// check for a new authority set change.</span>
-	<span class="kw">fn</span> <span class="ident">check_new_change</span>(
+	<span class="comment">// check for a new authority set change.
+	</span><span class="kw">fn </span>check_new_change(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">header</span>: <span class="kw-2">&amp;</span><span class="ident">Block::Header</span>,
-		<span class="ident">hash</span>: <span class="ident">Block::Hash</span>,
-	) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PendingChange</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="comment">// check for forced authority set hard forks</span>
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">change</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">authority_set_hard_forks</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>) {
-			<span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">change</span>.<span class="ident">clone</span>())
+		header: <span class="kw-2">&amp;</span>Block::Header,
+		hash: Block::Hash,
+	) -&gt; <span class="prelude-ty">Option</span>&lt;PendingChange&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;&gt; {
+		<span class="comment">// check for forced authority set hard forks
+		</span><span class="kw">if let </span><span class="prelude-val">Some</span>(change) = <span class="self">self</span>.authority_set_hard_forks.get(<span class="kw-2">&amp;</span>hash) {
+			<span class="kw">return </span><span class="prelude-val">Some</span>(change.clone())
 		}
 
-		<span class="comment">// check for forced change.</span>
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">median_last_finalized</span>, <span class="ident">change</span>)) <span class="op">=</span> <span class="ident">find_forced_change</span>::<span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>(<span class="ident">header</span>) {
-			<span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">PendingChange</span> {
-				<span class="ident">next_authorities</span>: <span class="ident">change</span>.<span class="ident">next_authorities</span>,
-				<span class="ident">delay</span>: <span class="ident">change</span>.<span class="ident">delay</span>,
-				<span class="ident">canon_height</span>: <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">number</span>(),
-				<span class="ident">canon_hash</span>: <span class="ident">hash</span>,
-				<span class="ident">delay_kind</span>: <span class="ident">DelayKind::Best</span> { <span class="ident">median_last_finalized</span> },
+		<span class="comment">// check for forced change.
+		</span><span class="kw">if let </span><span class="prelude-val">Some</span>((median_last_finalized, change)) = find_forced_change::&lt;Block&gt;(header) {
+			<span class="kw">return </span><span class="prelude-val">Some</span>(PendingChange {
+				next_authorities: change.next_authorities,
+				delay: change.delay,
+				canon_height: <span class="kw-2">*</span>header.number(),
+				canon_hash: hash,
+				delay_kind: DelayKind::Best { median_last_finalized },
 			})
 		}
 
-		<span class="comment">// check normal scheduled change.</span>
-		<span class="kw">let</span> <span class="ident">change</span> <span class="op">=</span> <span class="ident">find_scheduled_change</span>::<span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>(<span class="ident">header</span>)<span class="question-mark">?</span>;
-		<span class="prelude-val">Some</span>(<span class="ident">PendingChange</span> {
-			<span class="ident">next_authorities</span>: <span class="ident">change</span>.<span class="ident">next_authorities</span>,
-			<span class="ident">delay</span>: <span class="ident">change</span>.<span class="ident">delay</span>,
-			<span class="ident">canon_height</span>: <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">number</span>(),
-			<span class="ident">canon_hash</span>: <span class="ident">hash</span>,
-			<span class="ident">delay_kind</span>: <span class="ident">DelayKind::Finalized</span>,
+		<span class="comment">// check normal scheduled change.
+		</span><span class="kw">let </span>change = find_scheduled_change::&lt;Block&gt;(header)<span class="question-mark">?</span>;
+		<span class="prelude-val">Some</span>(PendingChange {
+			next_authorities: change.next_authorities,
+			delay: change.delay,
+			canon_height: <span class="kw-2">*</span>header.number(),
+			canon_hash: hash,
+			delay_kind: DelayKind::Finalized,
 		})
 	}
 
-	<span class="kw">fn</span> <span class="ident">make_authorities_changes</span>(
+	<span class="kw">fn </span>make_authorities_changes(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">block</span>: <span class="kw-2">&amp;mut</span> <span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">hash</span>: <span class="ident">Block::Hash</span>,
-		<span class="ident">initial_sync</span>: <span class="ident">bool</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PendingSetChanges</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>, <span class="ident">ConsensusError</span><span class="op">&gt;</span> {
-		<span class="comment">// when we update the authorities, we need to hold the lock</span>
-		<span class="comment">// until the block is written to prevent a race if we need to restore</span>
-		<span class="comment">// the old authority set on error or panic.</span>
-		<span class="kw">struct</span> <span class="ident">InnerGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-			<span class="ident">old</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-			<span class="ident">guard</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SharedDataLocked</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+		block: <span class="kw-2">&amp;mut </span>BlockImportParams&lt;Block, TransactionFor&lt;Client, Block&gt;&gt;,
+		hash: Block::Hash,
+		initial_sync: bool,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;PendingSetChanges&lt;Block&gt;, ConsensusError&gt; {
+		<span class="comment">// when we update the authorities, we need to hold the lock
+		// until the block is written to prevent a race if we need to restore
+		// the old authority set on error or panic.
+		</span><span class="kw">struct </span>InnerGuard&lt;<span class="lifetime">&#39;a</span>, H, N&gt; {
+			old: <span class="prelude-ty">Option</span>&lt;AuthoritySet&lt;H, N&gt;&gt;,
+			guard: <span class="prelude-ty">Option</span>&lt;SharedDataLocked&lt;<span class="lifetime">&#39;a</span>, AuthoritySet&lt;H, N&gt;&gt;&gt;,
 		}
 
-		<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> <span class="ident">InnerGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-			<span class="kw">fn</span> <span class="ident">as_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-				<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">guard</span>.<span class="ident">as_mut</span>().<span class="ident">expect</span>(<span class="string">&quot;only taken on deconstruction; qed&quot;</span>)
+		<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, H, N&gt; InnerGuard&lt;<span class="lifetime">&#39;a</span>, H, N&gt; {
+			<span class="kw">fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>AuthoritySet&lt;H, N&gt; {
+				<span class="kw-2">&amp;mut **</span><span class="self">self</span>.guard.as_mut().expect(<span class="string">&quot;only taken on deconstruction; qed&quot;</span>)
 			}
 
-			<span class="kw">fn</span> <span class="ident">set_old</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">old</span>: <span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span>) {
-				<span class="kw">if</span> <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">is_none</span>() {
-					<span class="comment">// ignore &quot;newer&quot; old changes.</span>
-					<span class="self">self</span>.<span class="ident">old</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">old</span>);
+			<span class="kw">fn </span>set_old(<span class="kw-2">&amp;mut </span><span class="self">self</span>, old: AuthoritySet&lt;H, N&gt;) {
+				<span class="kw">if </span><span class="self">self</span>.old.is_none() {
+					<span class="comment">// ignore &quot;newer&quot; old changes.
+					</span><span class="self">self</span>.old = <span class="prelude-val">Some</span>(old);
 				}
 			}
 
-			<span class="kw">fn</span> <span class="ident">consume</span>(
-				<span class="kw-2">mut</span> <span class="self">self</span>,
-			) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span>, <span class="ident">SharedDataLocked</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">AuthoritySet</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-				<span class="self">self</span>.<span class="ident">old</span>
-					.<span class="ident">take</span>()
-					.<span class="ident">map</span>(<span class="op">|</span><span class="ident">old</span><span class="op">|</span> (<span class="ident">old</span>, <span class="self">self</span>.<span class="ident">guard</span>.<span class="ident">take</span>().<span class="ident">expect</span>(<span class="string">&quot;only taken on deconstruction; qed&quot;</span>)))
+			<span class="kw">fn </span>consume(
+				<span class="kw-2">mut </span><span class="self">self</span>,
+			) -&gt; <span class="prelude-ty">Option</span>&lt;(AuthoritySet&lt;H, N&gt;, SharedDataLocked&lt;<span class="lifetime">&#39;a</span>, AuthoritySet&lt;H, N&gt;&gt;)&gt; {
+				<span class="self">self</span>.old
+					.take()
+					.map(|old| (old, <span class="self">self</span>.guard.take().expect(<span class="string">&quot;only taken on deconstruction; qed&quot;</span>)))
 			}
 		}
 
-		<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">InnerGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-			<span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-				<span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">guard</span>), <span class="prelude-val">Some</span>(<span class="ident">old</span>)) <span class="op">=</span> (<span class="self">self</span>.<span class="ident">guard</span>.<span class="ident">take</span>(), <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">take</span>()) {
-					<span class="kw-2">*</span><span class="ident">guard</span> <span class="op">=</span> <span class="ident">old</span>;
+		<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, H, N&gt; Drop <span class="kw">for </span>InnerGuard&lt;<span class="lifetime">&#39;a</span>, H, N&gt; {
+			<span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+				<span class="kw">if let </span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>guard), <span class="prelude-val">Some</span>(old)) = (<span class="self">self</span>.guard.take(), <span class="self">self</span>.old.take()) {
+					<span class="kw-2">*</span>guard = old;
 				}
 			}
 		}
 
-		<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="kw-2">*</span>(<span class="ident">block</span>.<span class="ident">header</span>.<span class="ident">number</span>());
-		<span class="kw">let</span> <span class="ident">maybe_change</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">check_new_change</span>(<span class="kw-2">&amp;</span><span class="ident">block</span>.<span class="ident">header</span>, <span class="ident">hash</span>);
+		<span class="kw">let </span>number = <span class="kw-2">*</span>(block.header.number());
+		<span class="kw">let </span>maybe_change = <span class="self">self</span>.check_new_change(<span class="kw-2">&amp;</span>block.header, hash);
 
-		<span class="comment">// returns a function for checking whether a block is a descendent of another</span>
-		<span class="comment">// consistent with querying client directly after importing the block.</span>
-		<span class="kw">let</span> <span class="ident">parent_hash</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">block</span>.<span class="ident">header</span>.<span class="ident">parent_hash</span>();
-		<span class="kw">let</span> <span class="ident">is_descendent_of</span> <span class="op">=</span> <span class="ident">is_descendent_of</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>, <span class="prelude-val">Some</span>((<span class="ident">hash</span>, <span class="ident">parent_hash</span>)));
+		<span class="comment">// returns a function for checking whether a block is a descendent of another
+		// consistent with querying client directly after importing the block.
+		</span><span class="kw">let </span>parent_hash = <span class="kw-2">*</span>block.header.parent_hash();
+		<span class="kw">let </span>is_descendent_of = is_descendent_of(<span class="kw-2">&amp;*</span><span class="self">self</span>.inner, <span class="prelude-val">Some</span>((hash, parent_hash)));
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">InnerGuard</span> { <span class="ident">guard</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">authority_set</span>.<span class="ident">inner_locked</span>()), <span class="ident">old</span>: <span class="prelude-val">None</span> };
+		<span class="kw">let </span><span class="kw-2">mut </span>guard = InnerGuard { guard: <span class="prelude-val">Some</span>(<span class="self">self</span>.authority_set.inner_locked()), old: <span class="prelude-val">None </span>};
 
-		<span class="comment">// whether to pause the old authority set -- happens after import</span>
-		<span class="comment">// of a forced change block.</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">do_pause</span> <span class="op">=</span> <span class="bool-val">false</span>;
+		<span class="comment">// whether to pause the old authority set -- happens after import
+		// of a forced change block.
+		</span><span class="kw">let </span><span class="kw-2">mut </span>do_pause = <span class="bool-val">false</span>;
 
-		<span class="comment">// add any pending changes.</span>
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">change</span>) <span class="op">=</span> <span class="ident">maybe_change</span> {
-			<span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> <span class="ident">guard</span>.<span class="ident">as_mut</span>().<span class="ident">clone</span>();
-			<span class="ident">guard</span>.<span class="ident">set_old</span>(<span class="ident">old</span>);
+		<span class="comment">// add any pending changes.
+		</span><span class="kw">if let </span><span class="prelude-val">Some</span>(change) = maybe_change {
+			<span class="kw">let </span>old = guard.as_mut().clone();
+			guard.set_old(old);
 
-			<span class="kw">if</span> <span class="kw">let</span> <span class="ident">DelayKind::Best</span> { .. } <span class="op">=</span> <span class="ident">change</span>.<span class="ident">delay_kind</span> {
-				<span class="ident">do_pause</span> <span class="op">=</span> <span class="bool-val">true</span>;
+			<span class="kw">if let </span>DelayKind::Best { .. } = change.delay_kind {
+				do_pause = <span class="bool-val">true</span>;
 			}
 
-			<span class="ident">guard</span>
-				.<span class="ident">as_mut</span>()
-				.<span class="ident">add_pending_change</span>(<span class="ident">change</span>, <span class="kw-2">&amp;</span><span class="ident">is_descendent_of</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
+			guard
+				.as_mut()
+				.add_pending_change(change, <span class="kw-2">&amp;</span>is_descendent_of)
+				.map_err(|e| ConsensusError::ClientImport(e.to_string()))<span class="question-mark">?</span>;
 		}
 
-		<span class="kw">let</span> <span class="ident">applied_changes</span> <span class="op">=</span> {
-			<span class="kw">let</span> <span class="ident">forced_change_set</span> <span class="op">=</span> <span class="ident">guard</span>
-				.<span class="ident">as_mut</span>()
-				.<span class="ident">apply_forced_changes</span>(
-					<span class="ident">hash</span>,
-					<span class="ident">number</span>,
-					<span class="kw-2">&amp;</span><span class="ident">is_descendent_of</span>,
-					<span class="ident">initial_sync</span>,
-					<span class="self">self</span>.<span class="ident">telemetry</span>.<span class="ident">clone</span>(),
+		<span class="kw">let </span>applied_changes = {
+			<span class="kw">let </span>forced_change_set = guard
+				.as_mut()
+				.apply_forced_changes(
+					hash,
+					number,
+					<span class="kw-2">&amp;</span>is_descendent_of,
+					initial_sync,
+					<span class="self">self</span>.telemetry.clone(),
 				)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
-				.<span class="ident">map_err</span>(<span class="ident">ConsensusError::from</span>)<span class="question-mark">?</span>;
+				.map_err(|e| ConsensusError::ClientImport(e.to_string()))
+				.map_err(ConsensusError::from)<span class="question-mark">?</span>;
 
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">median_last_finalized_number</span>, <span class="ident">new_set</span>)) <span class="op">=</span> <span class="ident">forced_change_set</span> {
-				<span class="kw">let</span> <span class="ident">new_authorities</span> <span class="op">=</span> {
-					<span class="kw">let</span> (<span class="ident">set_id</span>, <span class="ident">new_authorities</span>) <span class="op">=</span> <span class="ident">new_set</span>.<span class="ident">current</span>();
+			<span class="kw">if let </span><span class="prelude-val">Some</span>((median_last_finalized_number, new_set)) = forced_change_set {
+				<span class="kw">let </span>new_authorities = {
+					<span class="kw">let </span>(set_id, new_authorities) = new_set.current();
 
-					<span class="comment">// we will use the median last finalized number as a hint</span>
-					<span class="comment">// for the canon block the new authority set should start</span>
-					<span class="comment">// with. we use the minimum between the median and the local</span>
-					<span class="comment">// best finalized block.</span>
-					<span class="kw">let</span> <span class="ident">best_finalized_number</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">info</span>().<span class="ident">finalized_number</span>;
-					<span class="kw">let</span> <span class="ident">canon_number</span> <span class="op">=</span> <span class="ident">best_finalized_number</span>.<span class="ident">min</span>(<span class="ident">median_last_finalized_number</span>);
-					<span class="kw">let</span> <span class="ident">canon_hash</span> <span class="op">=</span>
-						<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">header</span>(<span class="ident">BlockId::Number</span>(<span class="ident">canon_number</span>))
-							.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>
-							.<span class="ident">expect</span>(
+					<span class="comment">// we will use the median last finalized number as a hint
+					// for the canon block the new authority set should start
+					// with. we use the minimum between the median and the local
+					// best finalized block.
+					</span><span class="kw">let </span>best_finalized_number = <span class="self">self</span>.inner.info().finalized_number;
+					<span class="kw">let </span>canon_number = best_finalized_number.min(median_last_finalized_number);
+					<span class="kw">let </span>canon_hash =
+						<span class="self">self</span>.inner.header(BlockId::Number(canon_number))
+							.map_err(|e| ConsensusError::ClientImport(e.to_string()))<span class="question-mark">?
+							</span>.expect(
 								<span class="string">&quot;the given block number is less or equal than the current best finalized number; \
-								 current best finalized number must exist in chain; qed.&quot;</span>
-							)
-							.<span class="ident">hash</span>();
+								 current best finalized number must exist in chain; qed.&quot;
+							</span>)
+							.hash();
 
-					<span class="ident">NewAuthoritySet</span> {
-						<span class="ident">canon_number</span>,
-						<span class="ident">canon_hash</span>,
-						<span class="ident">set_id</span>,
-						<span class="ident">authorities</span>: <span class="ident">new_authorities</span>.<span class="ident">to_vec</span>(),
+					NewAuthoritySet {
+						canon_number,
+						canon_hash,
+						set_id,
+						authorities: new_authorities.to_vec(),
 					}
 				};
-				<span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> <span class="ident">::std::mem::replace</span>(<span class="ident">guard</span>.<span class="ident">as_mut</span>(), <span class="ident">new_set</span>);
-				<span class="ident">guard</span>.<span class="ident">set_old</span>(<span class="ident">old</span>);
+				<span class="kw">let </span>old = ::std::mem::replace(guard.as_mut(), new_set);
+				guard.set_old(old);
 
-				<span class="ident">AppliedChanges::Forced</span>(<span class="ident">new_authorities</span>)
-			} <span class="kw">else</span> {
-				<span class="kw">let</span> <span class="ident">did_standard</span> <span class="op">=</span> <span class="ident">guard</span>
-					.<span class="ident">as_mut</span>()
-					.<span class="ident">enacts_standard_change</span>(<span class="ident">hash</span>, <span class="ident">number</span>, <span class="kw-2">&amp;</span><span class="ident">is_descendent_of</span>)
-					.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
-					.<span class="ident">map_err</span>(<span class="ident">ConsensusError::from</span>)<span class="question-mark">?</span>;
+				AppliedChanges::Forced(new_authorities)
+			} <span class="kw">else </span>{
+				<span class="kw">let </span>did_standard = guard
+					.as_mut()
+					.enacts_standard_change(hash, number, <span class="kw-2">&amp;</span>is_descendent_of)
+					.map_err(|e| ConsensusError::ClientImport(e.to_string()))
+					.map_err(ConsensusError::from)<span class="question-mark">?</span>;
 
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">root</span>) <span class="op">=</span> <span class="ident">did_standard</span> {
-					<span class="ident">AppliedChanges::Standard</span>(<span class="ident">root</span>)
-				} <span class="kw">else</span> {
-					<span class="ident">AppliedChanges::None</span>
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(root) = did_standard {
+					AppliedChanges::Standard(root)
+				} <span class="kw">else </span>{
+					AppliedChanges::None
 				}
 			}
 		};
 
-		<span class="comment">// consume the guard safely and write necessary changes.</span>
-		<span class="kw">let</span> <span class="ident">just_in_case</span> <span class="op">=</span> <span class="ident">guard</span>.<span class="ident">consume</span>();
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="kw-2">ref</span> <span class="ident">authorities</span>)) <span class="op">=</span> <span class="ident">just_in_case</span> {
-			<span class="kw">let</span> <span class="ident">authorities_change</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">applied_changes</span> {
-				<span class="ident">AppliedChanges::Forced</span>(<span class="kw-2">ref</span> <span class="ident">new</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">new</span>),
-				<span class="ident">AppliedChanges::Standard</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>, <span class="comment">// the change isn&#39;t actually applied yet.</span>
-				<span class="ident">AppliedChanges::None</span> =&gt; <span class="prelude-val">None</span>,
+		<span class="comment">// consume the guard safely and write necessary changes.
+		</span><span class="kw">let </span>just_in_case = guard.consume();
+		<span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="kw-2">ref </span>authorities)) = just_in_case {
+			<span class="kw">let </span>authorities_change = <span class="kw">match </span>applied_changes {
+				AppliedChanges::Forced(<span class="kw-2">ref </span>new) =&gt; <span class="prelude-val">Some</span>(new),
+				AppliedChanges::Standard(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>, <span class="comment">// the change isn&#39;t actually applied yet.
+				</span>AppliedChanges::None =&gt; <span class="prelude-val">None</span>,
 			};
 
-			<span class="ident"><span class="kw">crate</span>::aux_schema::update_authority_set</span>::<span class="op">&lt;</span><span class="ident">Block</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span>(
-				<span class="ident">authorities</span>,
-				<span class="ident">authorities_change</span>,
-				<span class="op">|</span><span class="ident">insert</span><span class="op">|</span> {
-					<span class="ident">block</span>
-						.<span class="ident">auxiliary</span>
-						.<span class="ident">extend</span>(<span class="ident">insert</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="ident">v</span>.<span class="ident">to_vec</span>()))))
+			<span class="kw">crate</span>::aux_schema::update_authority_set::&lt;Block, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
+				authorities,
+				authorities_change,
+				|insert| {
+					block
+						.auxiliary
+						.extend(insert.iter().map(|(k, v)| (k.to_vec(), <span class="prelude-val">Some</span>(v.to_vec()))))
 				},
 			);
 		}
 
-		<span class="kw">let</span> <span class="ident">just_in_case</span> <span class="op">=</span> <span class="ident">just_in_case</span>.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">o</span>, <span class="ident">i</span>)<span class="op">|</span> (<span class="ident">o</span>, <span class="ident">i</span>.<span class="ident">release_mutex</span>()));
+		<span class="kw">let </span>just_in_case = just_in_case.map(|(o, i)| (o, i.release_mutex()));
 
-		<span class="prelude-val">Ok</span>(<span class="ident">PendingSetChanges</span> { <span class="ident">just_in_case</span>, <span class="ident">applied_changes</span>, <span class="ident">do_pause</span> })
+		<span class="prelude-val">Ok</span>(PendingSetChanges { just_in_case, applied_changes, do_pause })
 	}
 
-	<span class="doccomment">/// Read current set id form a given state.</span>
-	<span class="kw">fn</span> <span class="ident">current_set_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SetId</span>, <span class="ident">ConsensusError</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">runtime_version</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">runtime_api</span>().<span class="ident">version</span>(<span class="ident">id</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-			<span class="ident">ConsensusError::ClientImport</span>(<span class="macro">format!</span>(
+	<span class="doccomment">/// Read current set id form a given state.
+	</span><span class="kw">fn </span>current_set_id(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>BlockId&lt;Block&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SetId, ConsensusError&gt; {
+		<span class="kw">let </span>runtime_version = <span class="self">self</span>.inner.runtime_api().version(id).map_err(|e| {
+			ConsensusError::ClientImport(<span class="macro">format!</span>(
 				<span class="string">&quot;Unable to retrieve current runtime version. {}&quot;</span>,
-				<span class="ident">e</span>
+				e
 			))
 		})<span class="question-mark">?</span>;
-		<span class="kw">if</span> <span class="ident">runtime_version</span>
-			.<span class="ident">api_version</span>(<span class="kw-2">&amp;</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">GrandpaApi</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::ID</span>)
-			.<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span> <span class="op">&lt;</span> <span class="number">3</span>)
+		<span class="kw">if </span>runtime_version
+			.api_version(<span class="kw-2">&amp;</span>&lt;<span class="kw">dyn </span>GrandpaApi&lt;Block&gt;&gt;::ID)
+			.map_or(<span class="bool-val">false</span>, |v| v &lt; <span class="number">3</span>)
 		{
-			<span class="comment">// The new API is not supported in this runtime. Try reading directly from storage.</span>
-			<span class="comment">// This code may be removed once warp sync to an old runtime is no longer needed.</span>
-			<span class="kw">for</span> <span class="ident">prefix</span> <span class="kw">in</span> [<span class="string">&quot;GrandpaFinality&quot;</span>, <span class="string">&quot;Grandpa&quot;</span>] {
-				<span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> [<span class="ident">twox_128</span>(<span class="ident">prefix</span>.<span class="ident">as_bytes</span>()), <span class="ident">twox_128</span>(<span class="string">b&quot;CurrentSetId&quot;</span>)].<span class="ident">concat</span>();
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">id</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">storage</span>(<span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">sc_client_api::StorageKey</span>(<span class="ident">k</span>.<span class="ident">to_vec</span>()))
+			<span class="comment">// The new API is not supported in this runtime. Try reading directly from storage.
+			// This code may be removed once warp sync to an old runtime is no longer needed.
+			</span><span class="kw">for </span>prefix <span class="kw">in </span>[<span class="string">&quot;GrandpaFinality&quot;</span>, <span class="string">&quot;Grandpa&quot;</span>] {
+				<span class="kw">let </span>k = [twox_128(prefix.as_bytes()), twox_128(<span class="string">b&quot;CurrentSetId&quot;</span>)].concat();
+				<span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(id)) = <span class="self">self</span>.inner.storage(id, <span class="kw-2">&amp;</span>sc_client_api::StorageKey(k.to_vec()))
 				{
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">id</span>) <span class="op">=</span> <span class="ident">SetId::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">id</span>.<span class="number">0</span>.<span class="ident">as_ref</span>()) {
-						<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">id</span>)
+					<span class="kw">if let </span><span class="prelude-val">Ok</span>(id) = SetId::decode(<span class="kw-2">&amp;mut </span>id.<span class="number">0</span>.as_ref()) {
+						<span class="kw">return </span><span class="prelude-val">Ok</span>(id)
 					}
 				}
 			}
-			<span class="prelude-val">Err</span>(<span class="ident">ConsensusError::ClientImport</span>(<span class="string">&quot;Unable to retrieve current set id.&quot;</span>.<span class="ident">into</span>()))
-		} <span class="kw">else</span> {
-			<span class="self">self</span>.<span class="ident">inner</span>
-				.<span class="ident">runtime_api</span>()
-				.<span class="ident">current_set_id</span>(<span class="ident">id</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
+			<span class="prelude-val">Err</span>(ConsensusError::ClientImport(<span class="string">&quot;Unable to retrieve current set id.&quot;</span>.into()))
+		} <span class="kw">else </span>{
+			<span class="self">self</span>.inner
+				.runtime_api()
+				.current_set_id(id)
+				.map_err(|e| ConsensusError::ClientImport(e.to_string()))
 		}
 	}
 
-	<span class="doccomment">/// Import whole new state and reset authority set.</span>
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_state</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="kw-2">mut</span> <span class="ident">block</span>: <span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">new_cache</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">well_known_cache_keys::Id</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ImportResult</span>, <span class="ident">ConsensusError</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">post_hash</span>();
-		<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">block</span>.<span class="ident">header</span>.<span class="ident">number</span>();
-		<span class="comment">// Force imported state finality.</span>
-		<span class="ident">block</span>.<span class="ident">finalized</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="kw">let</span> <span class="ident">import_result</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>).<span class="ident">import_block</span>(<span class="ident">block</span>, <span class="ident">new_cache</span>).<span class="kw">await</span>;
-		<span class="kw">match</span> <span class="ident">import_result</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::Imported</span>(<span class="ident">aux</span>)) =&gt; {
-				<span class="comment">// We&#39;ve just imported a new state. We trust the sync module has verified</span>
-				<span class="comment">// finality proofs and that the state is correct and final.</span>
-				<span class="comment">// So we can read the authority list and set id from the state.</span>
-				<span class="self">self</span>.<span class="ident">authority_set_hard_forks</span>.<span class="ident">clear</span>();
-				<span class="kw">let</span> <span class="ident">block_id</span> <span class="op">=</span> <span class="ident">BlockId::hash</span>(<span class="ident">hash</span>);
-				<span class="kw">let</span> <span class="ident">authorities</span> <span class="op">=</span> <span class="self">self</span>
-					.<span class="ident">inner</span>
-					.<span class="ident">runtime_api</span>()
-					.<span class="ident">grandpa_authorities</span>(<span class="kw-2">&amp;</span><span class="ident">block_id</span>)
-					.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">set_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">current_set_id</span>(<span class="kw-2">&amp;</span><span class="ident">block_id</span>)<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">authority_set</span> <span class="op">=</span> <span class="ident">AuthoritySet::new</span>(
-					<span class="ident">authorities</span>.<span class="ident">clone</span>(),
-					<span class="ident">set_id</span>,
-					<span class="ident">fork_tree::ForkTree::new</span>(),
-					<span class="ident">Vec::new</span>(),
-					<span class="ident">AuthoritySetChanges::empty</span>(),
+	<span class="doccomment">/// Import whole new state and reset authority set.
+	</span><span class="kw">async fn </span>import_state(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		<span class="kw-2">mut </span>block: BlockImportParams&lt;Block, TransactionFor&lt;Client, Block&gt;&gt;,
+		new_cache: HashMap&lt;well_known_cache_keys::Id, Vec&lt;u8&gt;&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;ImportResult, ConsensusError&gt; {
+		<span class="kw">let </span>hash = block.post_hash();
+		<span class="kw">let </span>number = <span class="kw-2">*</span>block.header.number();
+		<span class="comment">// Force imported state finality.
+		</span>block.finalized = <span class="bool-val">true</span>;
+		<span class="kw">let </span>import_result = (<span class="kw-2">&amp;*</span><span class="self">self</span>.inner).import_block(block, new_cache).<span class="kw">await</span>;
+		<span class="kw">match </span>import_result {
+			<span class="prelude-val">Ok</span>(ImportResult::Imported(aux)) =&gt; {
+				<span class="comment">// We&#39;ve just imported a new state. We trust the sync module has verified
+				// finality proofs and that the state is correct and final.
+				// So we can read the authority list and set id from the state.
+				</span><span class="self">self</span>.authority_set_hard_forks.clear();
+				<span class="kw">let </span>block_id = BlockId::hash(hash);
+				<span class="kw">let </span>authorities = <span class="self">self
+					</span>.inner
+					.runtime_api()
+					.grandpa_authorities(<span class="kw-2">&amp;</span>block_id)
+					.map_err(|e| ConsensusError::ClientImport(e.to_string()))<span class="question-mark">?</span>;
+				<span class="kw">let </span>set_id = <span class="self">self</span>.current_set_id(<span class="kw-2">&amp;</span>block_id)<span class="question-mark">?</span>;
+				<span class="kw">let </span>authority_set = AuthoritySet::new(
+					authorities.clone(),
+					set_id,
+					fork_tree::ForkTree::new(),
+					Vec::new(),
+					AuthoritySetChanges::empty(),
 				)
-				.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="string">&quot;Invalid authority list&quot;</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-				<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">authority_set</span>.<span class="ident">inner_locked</span>() <span class="op">=</span> <span class="ident">authority_set</span>.<span class="ident">clone</span>();
+				.ok_or_else(|| ConsensusError::ClientImport(<span class="string">&quot;Invalid authority list&quot;</span>.into()))<span class="question-mark">?</span>;
+				<span class="kw-2">*</span><span class="self">self</span>.authority_set.inner_locked() = authority_set.clone();
 
-				<span class="ident"><span class="kw">crate</span>::aux_schema::update_authority_set</span>::<span class="op">&lt;</span><span class="ident">Block</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span>(
-					<span class="kw-2">&amp;</span><span class="ident">authority_set</span>,
+				<span class="kw">crate</span>::aux_schema::update_authority_set::&lt;Block, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
+					<span class="kw-2">&amp;</span>authority_set,
 					<span class="prelude-val">None</span>,
-					<span class="op">|</span><span class="ident">insert</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">insert_aux</span>(<span class="ident">insert</span>, []),
+					|insert| <span class="self">self</span>.inner.insert_aux(insert, []),
 				)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">new_set</span> <span class="op">=</span>
-					<span class="ident">NewAuthoritySet</span> { <span class="ident">canon_number</span>: <span class="ident">number</span>, <span class="ident">canon_hash</span>: <span class="ident">hash</span>, <span class="ident">set_id</span>, <span class="ident">authorities</span> };
-				<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>
-					.<span class="ident">send_voter_commands</span>
-					.<span class="ident">unbounded_send</span>(<span class="ident">VoterCommand::ChangeAuthorities</span>(<span class="ident">new_set</span>));
-				<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::Imported</span>(<span class="ident">aux</span>))
+				.map_err(|e| ConsensusError::ClientImport(e.to_string()))<span class="question-mark">?</span>;
+				<span class="kw">let </span>new_set =
+					NewAuthoritySet { canon_number: number, canon_hash: hash, set_id, authorities };
+				<span class="kw">let _ </span>= <span class="self">self
+					</span>.send_voter_commands
+					.unbounded_send(VoterCommand::ChangeAuthorities(new_set));
+				<span class="prelude-val">Ok</span>(ImportResult::Imported(aux))
 			},
-			<span class="prelude-val">Ok</span>(<span class="ident">r</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">r</span>),
-			<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>())),
+			<span class="prelude-val">Ok</span>(r) =&gt; <span class="prelude-val">Ok</span>(r),
+			<span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(ConsensusError::ClientImport(e.to_string())),
 		}
 	}
 }
 
-<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> <span class="ident">BlockImport</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>: <span class="ident">finality_grandpa::BlockNumberOps</span>,
-	<span class="ident">BE</span>: <span class="ident">Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">Client</span>: <span class="ident">ClientForGrandpa</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">BE</span><span class="op">&gt;</span>,
-	<span class="ident">Client::Api</span>: <span class="ident">GrandpaApi</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Client</span>:
-		<span class="ident">BlockImport</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span>, <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span>: <span class="lifetime">&#39;static</span>,
-	<span class="ident">SC</span>: <span class="ident">Send</span>,
+<span class="attribute">#[async_trait::async_trait]
+</span><span class="kw">impl</span>&lt;BE, Block: BlockT, Client, SC&gt; BlockImport&lt;Block&gt; <span class="kw">for </span>GrandpaBlockImport&lt;BE, Block, Client, SC&gt;
+<span class="kw">where
+	</span>NumberFor&lt;Block&gt;: finality_grandpa::BlockNumberOps,
+	BE: Backend&lt;Block&gt;,
+	Client: ClientForGrandpa&lt;Block, BE&gt;,
+	Client::Api: GrandpaApi&lt;Block&gt;,
+	<span class="kw">for</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Client:
+		BlockImport&lt;Block, Error = ConsensusError, Transaction = TransactionFor&lt;Client, Block&gt;&gt;,
+	TransactionFor&lt;Client, Block&gt;: <span class="lifetime">&#39;static</span>,
+	SC: Send,
 {
-	<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">ConsensusError</span>;
-	<span class="kw">type</span> <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Block</span><span class="op">&gt;</span>;
+	<span class="kw">type </span>Error = ConsensusError;
+	<span class="kw">type </span>Transaction = TransactionFor&lt;Client, Block&gt;;
 
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_block</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="kw-2">mut</span> <span class="ident">block</span>: <span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident"><span class="self">Self</span>::Transaction</span><span class="op">&gt;</span>,
-		<span class="ident">new_cache</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">well_known_cache_keys::Id</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ImportResult</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">post_hash</span>();
-		<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">block</span>.<span class="ident">header</span>.<span class="ident">number</span>();
+	<span class="kw">async fn </span>import_block(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		<span class="kw-2">mut </span>block: BlockImportParams&lt;Block, <span class="self">Self</span>::Transaction&gt;,
+		new_cache: HashMap&lt;well_known_cache_keys::Id, Vec&lt;u8&gt;&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;ImportResult, <span class="self">Self</span>::Error&gt; {
+		<span class="kw">let </span>hash = block.post_hash();
+		<span class="kw">let </span>number = <span class="kw-2">*</span>block.header.number();
 
-		<span class="comment">// early exit if block already in chain, otherwise the check for</span>
-		<span class="comment">// authority changes will error when trying to re-import a change block</span>
-		<span class="kw">match</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">status</span>(<span class="ident">BlockId::Hash</span>(<span class="ident">hash</span>)) {
-			<span class="prelude-val">Ok</span>(<span class="ident">BlockStatus::InChain</span>) =&gt; {
-				<span class="comment">// Strip justifications when re-importing an existing block.</span>
-				<span class="kw">let</span> <span class="ident">_justifications</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">justifications</span>.<span class="ident">take</span>();
-				<span class="kw">return</span> (<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>).<span class="ident">import_block</span>(<span class="ident">block</span>, <span class="ident">new_cache</span>).<span class="kw">await</span>
-			},
-			<span class="prelude-val">Ok</span>(<span class="ident">BlockStatus::Unknown</span>) =&gt; {},
-			<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>())),
+		<span class="comment">// early exit if block already in chain, otherwise the check for
+		// authority changes will error when trying to re-import a change block
+		</span><span class="kw">match </span><span class="self">self</span>.inner.status(BlockId::Hash(hash)) {
+			<span class="prelude-val">Ok</span>(BlockStatus::InChain) =&gt; {
+				<span class="comment">// Strip justifications when re-importing an existing block.
+				</span><span class="kw">let </span>_justifications = block.justifications.take();
+				<span class="kw">return </span>(<span class="kw-2">&amp;*</span><span class="self">self</span>.inner).import_block(block, new_cache).<span class="kw">await
+			</span>},
+			<span class="prelude-val">Ok</span>(BlockStatus::Unknown) =&gt; {},
+			<span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(ConsensusError::ClientImport(e.to_string())),
 		}
 
-		<span class="kw">if</span> <span class="ident">block</span>.<span class="ident">with_state</span>() {
-			<span class="kw">return</span> <span class="self">self</span>.<span class="ident">import_state</span>(<span class="ident">block</span>, <span class="ident">new_cache</span>).<span class="kw">await</span>
-		}
+		<span class="kw">if </span>block.with_state() {
+			<span class="kw">return </span><span class="self">self</span>.import_state(block, new_cache).<span class="kw">await
+		</span>}
 
-		<span class="kw">if</span> <span class="ident">number</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">info</span>().<span class="ident">finalized_number</span> {
-			<span class="comment">// Importing an old block. Just save justifications and authority set changes</span>
-			<span class="kw">if</span> <span class="self">self</span>.<span class="ident">check_new_change</span>(<span class="kw-2">&amp;</span><span class="ident">block</span>.<span class="ident">header</span>, <span class="ident">hash</span>).<span class="ident">is_some</span>() {
-				<span class="kw">if</span> <span class="ident">block</span>.<span class="ident">justifications</span>.<span class="ident">is_none</span>() {
-					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ConsensusError::ClientImport</span>(
+		<span class="kw">if </span>number &lt;= <span class="self">self</span>.inner.info().finalized_number {
+			<span class="comment">// Importing an old block. Just save justifications and authority set changes
+			</span><span class="kw">if </span><span class="self">self</span>.check_new_change(<span class="kw-2">&amp;</span>block.header, hash).is_some() {
+				<span class="kw">if </span>block.justifications.is_none() {
+					<span class="kw">return </span><span class="prelude-val">Err</span>(ConsensusError::ClientImport(
 						<span class="string">&quot;Justification required when importing \
-							an old block with authority set change.&quot;</span>
-							.<span class="ident">into</span>(),
+							an old block with authority set change.&quot;
+							</span>.into(),
 					))
 				}
-				<span class="macro">assert!</span>(<span class="ident">block</span>.<span class="ident">justifications</span>.<span class="ident">is_some</span>());
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">authority_set</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">authority_set</span>.<span class="ident">inner_locked</span>();
-				<span class="ident">authority_set</span>.<span class="ident">authority_set_changes</span>.<span class="ident">insert</span>(<span class="ident">number</span>);
-				<span class="ident"><span class="kw">crate</span>::aux_schema::update_authority_set</span>::<span class="op">&lt;</span><span class="ident">Block</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span>(
-					<span class="kw-2">&amp;</span><span class="ident">authority_set</span>,
+				<span class="macro">assert!</span>(block.justifications.is_some());
+				<span class="kw">let </span><span class="kw-2">mut </span>authority_set = <span class="self">self</span>.authority_set.inner_locked();
+				authority_set.authority_set_changes.insert(number);
+				<span class="kw">crate</span>::aux_schema::update_authority_set::&lt;Block, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
+					<span class="kw-2">&amp;</span>authority_set,
 					<span class="prelude-val">None</span>,
-					<span class="op">|</span><span class="ident">insert</span><span class="op">|</span> {
-						<span class="ident">block</span>
-							.<span class="ident">auxiliary</span>
-							.<span class="ident">extend</span>(<span class="ident">insert</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="ident">v</span>.<span class="ident">to_vec</span>()))))
+					|insert| {
+						block
+							.auxiliary
+							.extend(insert.iter().map(|(k, v)| (k.to_vec(), <span class="prelude-val">Some</span>(v.to_vec()))))
 					},
 				);
 			}
-			<span class="kw">return</span> (<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>).<span class="ident">import_block</span>(<span class="ident">block</span>, <span class="ident">new_cache</span>).<span class="kw">await</span>
-		}
+			<span class="kw">return </span>(<span class="kw-2">&amp;*</span><span class="self">self</span>.inner).import_block(block, new_cache).<span class="kw">await
+		</span>}
 
-		<span class="comment">// on initial sync we will restrict logging under info to avoid spam.</span>
-		<span class="kw">let</span> <span class="ident">initial_sync</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">origin</span> <span class="op">==</span> <span class="ident">BlockOrigin::NetworkInitialSync</span>;
+		<span class="comment">// on initial sync we will restrict logging under info to avoid spam.
+		</span><span class="kw">let </span>initial_sync = block.origin == BlockOrigin::NetworkInitialSync;
 
-		<span class="kw">let</span> <span class="ident">pending_changes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_authorities_changes</span>(<span class="kw-2">&amp;mut</span> <span class="ident">block</span>, <span class="ident">hash</span>, <span class="ident">initial_sync</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>pending_changes = <span class="self">self</span>.make_authorities_changes(<span class="kw-2">&amp;mut </span>block, hash, initial_sync)<span class="question-mark">?</span>;
 
-		<span class="comment">// we don&#39;t want to finalize on `inner.import_block`</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">justifications</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">justifications</span>.<span class="ident">take</span>();
-		<span class="kw">let</span> <span class="ident">import_result</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>).<span class="ident">import_block</span>(<span class="ident">block</span>, <span class="ident">new_cache</span>).<span class="kw">await</span>;
+		<span class="comment">// we don&#39;t want to finalize on `inner.import_block`
+		</span><span class="kw">let </span><span class="kw-2">mut </span>justifications = block.justifications.take();
+		<span class="kw">let </span>import_result = (<span class="kw-2">&amp;*</span><span class="self">self</span>.inner).import_block(block, new_cache).<span class="kw">await</span>;
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">imported_aux</span> <span class="op">=</span> {
-			<span class="kw">match</span> <span class="ident">import_result</span> {
-				<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::Imported</span>(<span class="ident">aux</span>)) =&gt; <span class="ident">aux</span>,
-				<span class="prelude-val">Ok</span>(<span class="ident">r</span>) =&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>imported_aux = {
+			<span class="kw">match </span>import_result {
+				<span class="prelude-val">Ok</span>(ImportResult::Imported(aux)) =&gt; aux,
+				<span class="prelude-val">Ok</span>(r) =&gt; {
 					<span class="macro">debug!</span>(
-						<span class="ident">target</span>: <span class="string">&quot;afg&quot;</span>,
+						target: <span class="string">&quot;afg&quot;</span>,
 						<span class="string">&quot;Restoring old authority set after block import result: {:?}&quot;</span>,
-						<span class="ident">r</span>,
+						r,
 					);
-					<span class="ident">pending_changes</span>.<span class="ident">revert</span>();
-					<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">r</span>)
+					pending_changes.revert();
+					<span class="kw">return </span><span class="prelude-val">Ok</span>(r)
 				},
-				<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+				<span class="prelude-val">Err</span>(e) =&gt; {
 					<span class="macro">debug!</span>(
-						<span class="ident">target</span>: <span class="string">&quot;afg&quot;</span>,
+						target: <span class="string">&quot;afg&quot;</span>,
 						<span class="string">&quot;Restoring old authority set after block import error: {}&quot;</span>,
-						<span class="ident">e</span>,
+						e,
 					);
-					<span class="ident">pending_changes</span>.<span class="ident">revert</span>();
-					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
+					pending_changes.revert();
+					<span class="kw">return </span><span class="prelude-val">Err</span>(ConsensusError::ClientImport(e.to_string()))
 				},
 			}
 		};
 
-		<span class="kw">let</span> (<span class="ident">applied_changes</span>, <span class="ident">do_pause</span>) <span class="op">=</span> <span class="ident">pending_changes</span>.<span class="ident">defuse</span>();
+		<span class="kw">let </span>(applied_changes, do_pause) = pending_changes.defuse();
 
-		<span class="comment">// Send the pause signal after import but BEFORE sending a `ChangeAuthorities` message.</span>
-		<span class="kw">if</span> <span class="ident">do_pause</span> {
-			<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_voter_commands</span>.<span class="ident">unbounded_send</span>(<span class="ident">VoterCommand::Pause</span>(
-				<span class="string">&quot;Forced change scheduled after inactivity&quot;</span>.<span class="ident">to_string</span>(),
+		<span class="comment">// Send the pause signal after import but BEFORE sending a `ChangeAuthorities` message.
+		</span><span class="kw">if </span>do_pause {
+			<span class="kw">let _ </span>= <span class="self">self</span>.send_voter_commands.unbounded_send(VoterCommand::Pause(
+				<span class="string">&quot;Forced change scheduled after inactivity&quot;</span>.to_string(),
 			));
 		}
 
-		<span class="kw">let</span> <span class="ident">needs_justification</span> <span class="op">=</span> <span class="ident">applied_changes</span>.<span class="ident">needs_justification</span>();
+		<span class="kw">let </span>needs_justification = applied_changes.needs_justification();
 
-		<span class="kw">match</span> <span class="ident">applied_changes</span> {
-			<span class="ident">AppliedChanges::Forced</span>(<span class="ident">new</span>) =&gt; {
-				<span class="comment">// NOTE: when we do a force change we are &quot;discrediting&quot; the old set so we</span>
-				<span class="comment">// ignore any justifications from them. this block may contain a justification</span>
-				<span class="comment">// which should be checked and imported below against the new authority</span>
-				<span class="comment">// triggered by this forced change. the new grandpa voter will start at the</span>
-				<span class="comment">// last median finalized block (which is before the block that enacts the</span>
-				<span class="comment">// change), full nodes syncing the chain will not be able to successfully</span>
-				<span class="comment">// import justifications for those blocks since their local authority set view</span>
-				<span class="comment">// is still of the set before the forced change was enacted, still after #1867</span>
-				<span class="comment">// they should import the block and discard the justification, and they will</span>
-				<span class="comment">// then request a justification from sync if it&#39;s necessary (which they should</span>
-				<span class="comment">// then be able to successfully validate).</span>
-				<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span>
-					<span class="self">self</span>.<span class="ident">send_voter_commands</span>.<span class="ident">unbounded_send</span>(<span class="ident">VoterCommand::ChangeAuthorities</span>(<span class="ident">new</span>));
+		<span class="kw">match </span>applied_changes {
+			AppliedChanges::Forced(new) =&gt; {
+				<span class="comment">// NOTE: when we do a force change we are &quot;discrediting&quot; the old set so we
+				// ignore any justifications from them. this block may contain a justification
+				// which should be checked and imported below against the new authority
+				// triggered by this forced change. the new grandpa voter will start at the
+				// last median finalized block (which is before the block that enacts the
+				// change), full nodes syncing the chain will not be able to successfully
+				// import justifications for those blocks since their local authority set view
+				// is still of the set before the forced change was enacted, still after #1867
+				// they should import the block and discard the justification, and they will
+				// then request a justification from sync if it&#39;s necessary (which they should
+				// then be able to successfully validate).
+				</span><span class="kw">let _ </span>=
+					<span class="self">self</span>.send_voter_commands.unbounded_send(VoterCommand::ChangeAuthorities(new));
 
-				<span class="comment">// we must clear all pending justifications requests, presumably they won&#39;t be</span>
-				<span class="comment">// finalized hence why this forced changes was triggered</span>
-				<span class="ident">imported_aux</span>.<span class="ident">clear_justification_requests</span> <span class="op">=</span> <span class="bool-val">true</span>;
+				<span class="comment">// we must clear all pending justifications requests, presumably they won&#39;t be
+				// finalized hence why this forced changes was triggered
+				</span>imported_aux.clear_justification_requests = <span class="bool-val">true</span>;
 			},
-			<span class="ident">AppliedChanges::Standard</span>(<span class="bool-val">false</span>) =&gt; {
-				<span class="comment">// we can&#39;t apply this change yet since there are other dependent changes that we</span>
-				<span class="comment">// need to apply first, drop any justification that might have been provided with</span>
-				<span class="comment">// the block to make sure we request them from `sync` which will ensure they&#39;ll be</span>
-				<span class="comment">// applied in-order.</span>
-				<span class="ident">justifications</span>.<span class="ident">take</span>();
+			AppliedChanges::Standard(<span class="bool-val">false</span>) =&gt; {
+				<span class="comment">// we can&#39;t apply this change yet since there are other dependent changes that we
+				// need to apply first, drop any justification that might have been provided with
+				// the block to make sure we request them from `sync` which will ensure they&#39;ll be
+				// applied in-order.
+				</span>justifications.take();
 			},
-			<span class="kw">_</span> =&gt; {},
+			<span class="kw">_ </span>=&gt; {},
 		}
 
-		<span class="kw">let</span> <span class="ident">grandpa_justification</span> <span class="op">=</span>
-			<span class="ident">justifications</span>.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">just</span><span class="op">|</span> <span class="ident">just</span>.<span class="ident">into_justification</span>(<span class="ident">GRANDPA_ENGINE_ID</span>));
+		<span class="kw">let </span>grandpa_justification =
+			justifications.and_then(|just| just.into_justification(GRANDPA_ENGINE_ID));
 
-		<span class="kw">match</span> <span class="ident">grandpa_justification</span> {
-			<span class="prelude-val">Some</span>(<span class="ident">justification</span>) =&gt; {
-				<span class="kw">let</span> <span class="ident">import_res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">import_justification</span>(
-					<span class="ident">hash</span>,
-					<span class="ident">number</span>,
-					(<span class="ident">GRANDPA_ENGINE_ID</span>, <span class="ident">justification</span>),
-					<span class="ident">needs_justification</span>,
-					<span class="ident">initial_sync</span>,
+		<span class="kw">match </span>grandpa_justification {
+			<span class="prelude-val">Some</span>(justification) =&gt; {
+				<span class="kw">let </span>import_res = <span class="self">self</span>.import_justification(
+					hash,
+					number,
+					(GRANDPA_ENGINE_ID, justification),
+					needs_justification,
+					initial_sync,
 				);
 
-				<span class="ident">import_res</span>.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-					<span class="kw">if</span> <span class="ident">needs_justification</span> {
+				import_res.unwrap_or_else(|err| {
+					<span class="kw">if </span>needs_justification {
 						<span class="macro">debug!</span>(
-							<span class="ident">target</span>: <span class="string">&quot;afg&quot;</span>,
+							target: <span class="string">&quot;afg&quot;</span>,
 							<span class="string">&quot;Requesting justification from peers due to imported block #{} that enacts authority set change with invalid justification: {}&quot;</span>,
-							<span class="ident">number</span>,
-							<span class="ident">err</span>
+							number,
+							err
 						);
-						<span class="ident">imported_aux</span>.<span class="ident">bad_justification</span> <span class="op">=</span> <span class="bool-val">true</span>;
-						<span class="ident">imported_aux</span>.<span class="ident">needs_justification</span> <span class="op">=</span> <span class="bool-val">true</span>;
+						imported_aux.bad_justification = <span class="bool-val">true</span>;
+						imported_aux.needs_justification = <span class="bool-val">true</span>;
 					}
 				});
 			},
-			<span class="prelude-val">None</span> =&gt;
-				<span class="kw">if</span> <span class="ident">needs_justification</span> {
+			<span class="prelude-val">None </span>=&gt;
+				<span class="kw">if </span>needs_justification {
 					<span class="macro">debug!</span>(
-						<span class="ident">target</span>: <span class="string">&quot;afg&quot;</span>,
+						target: <span class="string">&quot;afg&quot;</span>,
 						<span class="string">&quot;Imported unjustified block #{} that enacts authority set change, waiting for finality for enactment.&quot;</span>,
-						<span class="ident">number</span>,
+						number,
 					);
 
-					<span class="ident">imported_aux</span>.<span class="ident">needs_justification</span> <span class="op">=</span> <span class="bool-val">true</span>;
+					imported_aux.needs_justification = <span class="bool-val">true</span>;
 				},
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::Imported</span>(<span class="ident">imported_aux</span>))
+		<span class="prelude-val">Ok</span>(ImportResult::Imported(imported_aux))
 	}
 
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">check_block</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">block</span>: <span class="ident">BlockCheckParams</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ImportResult</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">check_block</span>(<span class="ident">block</span>).<span class="kw">await</span>
-	}
+	<span class="kw">async fn </span>check_block(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		block: BlockCheckParams&lt;Block&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;ImportResult, <span class="self">Self</span>::Error&gt; {
+		<span class="self">self</span>.inner.check_block(block).<span class="kw">await
+	</span>}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Backend</span>, <span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">Backend</span>, <span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> {
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(
-		<span class="ident">inner</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span>,
-		<span class="ident">select_chain</span>: <span class="ident">SC</span>,
-		<span class="ident">authority_set</span>: <span class="ident">SharedAuthoritySet</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">send_voter_commands</span>: <span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">VoterCommand</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">authority_set_hard_forks</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">SetId</span>, <span class="ident">PendingChange</span><span class="op">&lt;</span><span class="ident">Block::Hash</span>, <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
-		<span class="ident">justification_sender</span>: <span class="ident">GrandpaJustificationSender</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-		<span class="ident">telemetry</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TelemetryHandle</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">Backend</span>, <span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> {
-		<span class="comment">// check for and apply any forced authority set hard fork that applies</span>
-		<span class="comment">// to the *current* authority set.</span>
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">change</span>)) <span class="op">=</span> <span class="ident">authority_set_hard_forks</span>
-			.<span class="ident">iter</span>()
-			.<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">set_id</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">set_id</span> <span class="op">==</span> <span class="ident">authority_set</span>.<span class="ident">set_id</span>())
+<span class="kw">impl</span>&lt;Backend, Block: BlockT, Client, SC&gt; GrandpaBlockImport&lt;Backend, Block, Client, SC&gt; {
+	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
+		inner: Arc&lt;Client&gt;,
+		select_chain: SC,
+		authority_set: SharedAuthoritySet&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;,
+		send_voter_commands: TracingUnboundedSender&lt;VoterCommand&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;&gt;,
+		authority_set_hard_forks: Vec&lt;(SetId, PendingChange&lt;Block::Hash, NumberFor&lt;Block&gt;&gt;)&gt;,
+		justification_sender: GrandpaJustificationSender&lt;Block&gt;,
+		telemetry: <span class="prelude-ty">Option</span>&lt;TelemetryHandle&gt;,
+	) -&gt; GrandpaBlockImport&lt;Backend, Block, Client, SC&gt; {
+		<span class="comment">// check for and apply any forced authority set hard fork that applies
+		// to the *current* authority set.
+		</span><span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, change)) = authority_set_hard_forks
+			.iter()
+			.find(|(set_id, <span class="kw">_</span>)| <span class="kw-2">*</span>set_id == authority_set.set_id())
 		{
-			<span class="ident">authority_set</span>.<span class="ident">inner</span>().<span class="ident">current_authorities</span> <span class="op">=</span> <span class="ident">change</span>.<span class="ident">next_authorities</span>.<span class="ident">clone</span>();
+			authority_set.inner().current_authorities = change.next_authorities.clone();
 		}
 
-		<span class="comment">// index authority set hard forks by block hash so that they can be used</span>
-		<span class="comment">// by any node syncing the chain and importing a block hard fork</span>
-		<span class="comment">// authority set changes.</span>
-		<span class="kw">let</span> <span class="ident">authority_set_hard_forks</span> <span class="op">=</span> <span class="ident">authority_set_hard_forks</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">change</span>)<span class="op">|</span> (<span class="ident">change</span>.<span class="ident">canon_hash</span>, <span class="ident">change</span>))
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		<span class="comment">// index authority set hard forks by block hash so that they can be used
+		// by any node syncing the chain and importing a block hard fork
+		// authority set changes.
+		</span><span class="kw">let </span>authority_set_hard_forks = authority_set_hard_forks
+			.into_iter()
+			.map(|(<span class="kw">_</span>, change)| (change.canon_hash, change))
+			.collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
 
-		<span class="comment">// check for and apply any forced authority set hard fork that apply to</span>
-		<span class="comment">// any *pending* standard changes, checking by the block hash at which</span>
-		<span class="comment">// they were announced.</span>
-		{
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">authority_set</span> <span class="op">=</span> <span class="ident">authority_set</span>.<span class="ident">inner</span>();
+		<span class="comment">// check for and apply any forced authority set hard fork that apply to
+		// any *pending* standard changes, checking by the block hash at which
+		// they were announced.
+		</span>{
+			<span class="kw">let </span><span class="kw-2">mut </span>authority_set = authority_set.inner();
 
-			<span class="ident">authority_set</span>.<span class="ident">pending_standard_changes</span> <span class="op">=</span>
-				<span class="ident">authority_set</span>.<span class="ident">pending_standard_changes</span>.<span class="ident">clone</span>().<span class="ident">map</span>(<span class="kw-2">&amp;mut</span> <span class="op">|</span><span class="ident">hash</span>, <span class="kw">_</span>, <span class="ident">original</span><span class="op">|</span> {
-					<span class="ident">authority_set_hard_forks</span>.<span class="ident">get</span>(<span class="ident">hash</span>).<span class="ident">cloned</span>().<span class="ident">unwrap_or</span>(<span class="ident">original</span>)
+			authority_set.pending_standard_changes =
+				authority_set.pending_standard_changes.clone().map(<span class="kw-2">&amp;mut </span>|hash, <span class="kw">_</span>, original| {
+					authority_set_hard_forks.get(hash).cloned().unwrap_or(original)
 				});
 		}
 
-		<span class="ident">GrandpaBlockImport</span> {
-			<span class="ident">inner</span>,
-			<span class="ident">select_chain</span>,
-			<span class="ident">authority_set</span>,
-			<span class="ident">send_voter_commands</span>,
-			<span class="ident">authority_set_hard_forks</span>,
-			<span class="ident">justification_sender</span>,
-			<span class="ident">telemetry</span>,
-			<span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+		GrandpaBlockImport {
+			inner,
+			select_chain,
+			authority_set,
+			send_voter_commands,
+			authority_set_hard_forks,
+			justification_sender,
+			telemetry,
+			_phantom: PhantomData,
 		}
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span> <span class="ident">GrandpaBlockImport</span><span class="op">&lt;</span><span class="ident">BE</span>, <span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">SC</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">BE</span>: <span class="ident">Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">Client</span>: <span class="ident">ClientForGrandpa</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">BE</span><span class="op">&gt;</span>,
-	<span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>: <span class="ident">finality_grandpa::BlockNumberOps</span>,
+<span class="kw">impl</span>&lt;BE, Block: BlockT, Client, SC&gt; GrandpaBlockImport&lt;BE, Block, Client, SC&gt;
+<span class="kw">where
+	</span>BE: Backend&lt;Block&gt;,
+	Client: ClientForGrandpa&lt;Block, BE&gt;,
+	NumberFor&lt;Block&gt;: finality_grandpa::BlockNumberOps,
 {
-	<span class="doccomment">/// Import a block justification and finalize the block.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If `enacts_change` is set to true, then finalizing this block *must*</span>
-	<span class="doccomment">/// enact an authority set change, the function will panic otherwise.</span>
-	<span class="kw">fn</span> <span class="ident">import_justification</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">hash</span>: <span class="ident">Block::Hash</span>,
-		<span class="ident">number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-		<span class="ident">justification</span>: <span class="ident">Justification</span>,
-		<span class="ident">enacts_change</span>: <span class="ident">bool</span>,
-		<span class="ident">initial_sync</span>: <span class="ident">bool</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ConsensusError</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">justification</span>.<span class="number">0</span> <span class="op">!</span><span class="op">=</span> <span class="ident">GRANDPA_ENGINE_ID</span> {
-			<span class="comment">// TODO: the import queue needs to be refactored to be able dispatch to the correct</span>
-			<span class="comment">// `JustificationImport` instance based on `ConsensusEngineId`, or we need to build a</span>
-			<span class="comment">// justification import pipeline similar to what we do for `BlockImport`. In the</span>
-			<span class="comment">// meantime we&#39;ll just drop the justification, since this is only used for BEEFY which</span>
-			<span class="comment">// is still WIP.</span>
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(())
+	<span class="doccomment">/// Import a block justification and finalize the block.
+	///
+	/// If `enacts_change` is set to true, then finalizing this block *must*
+	/// enact an authority set change, the function will panic otherwise.
+	</span><span class="kw">fn </span>import_justification(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		hash: Block::Hash,
+		number: NumberFor&lt;Block&gt;,
+		justification: Justification,
+		enacts_change: bool,
+		initial_sync: bool,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), ConsensusError&gt; {
+		<span class="kw">if </span>justification.<span class="number">0 </span>!= GRANDPA_ENGINE_ID {
+			<span class="comment">// TODO: the import queue needs to be refactored to be able dispatch to the correct
+			// `JustificationImport` instance based on `ConsensusEngineId`, or we need to build a
+			// justification import pipeline similar to what we do for `BlockImport`. In the
+			// meantime we&#39;ll just drop the justification, since this is only used for BEEFY which
+			// is still WIP.
+			</span><span class="kw">return </span><span class="prelude-val">Ok</span>(())
 		}
 
-		<span class="kw">let</span> <span class="ident">justification</span> <span class="op">=</span> <span class="ident">GrandpaJustification::decode_and_verify_finalizes</span>(
-			<span class="kw-2">&amp;</span><span class="ident">justification</span>.<span class="number">1</span>,
-			(<span class="ident">hash</span>, <span class="ident">number</span>),
-			<span class="self">self</span>.<span class="ident">authority_set</span>.<span class="ident">set_id</span>(),
-			<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">authority_set</span>.<span class="ident">current_authorities</span>(),
+		<span class="kw">let </span>justification = GrandpaJustification::decode_and_verify_finalizes(
+			<span class="kw-2">&amp;</span>justification.<span class="number">1</span>,
+			(hash, number),
+			<span class="self">self</span>.authority_set.set_id(),
+			<span class="kw-2">&amp;</span><span class="self">self</span>.authority_set.current_authorities(),
 		);
 
-		<span class="kw">let</span> <span class="ident">justification</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">justification</span> {
-			<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ConsensusError::ClientImport</span>(<span class="ident">e</span>.<span class="ident">to_string</span>())),
-			<span class="prelude-val">Ok</span>(<span class="ident">justification</span>) =&gt; <span class="ident">justification</span>,
+		<span class="kw">let </span>justification = <span class="kw">match </span>justification {
+			<span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(ConsensusError::ClientImport(e.to_string())),
+			<span class="prelude-val">Ok</span>(justification) =&gt; justification,
 		};
 
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">finalize_block</span>(
-			<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>(),
-			<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">authority_set</span>,
+		<span class="kw">let </span>result = finalize_block(
+			<span class="self">self</span>.inner.clone(),
+			<span class="kw-2">&amp;</span><span class="self">self</span>.authority_set,
 			<span class="prelude-val">None</span>,
-			<span class="ident">hash</span>,
-			<span class="ident">number</span>,
-			<span class="ident">justification</span>.<span class="ident">into</span>(),
-			<span class="ident">initial_sync</span>,
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">justification_sender</span>),
-			<span class="self">self</span>.<span class="ident">telemetry</span>.<span class="ident">clone</span>(),
+			hash,
+			number,
+			justification.into(),
+			initial_sync,
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.justification_sender),
+			<span class="self">self</span>.telemetry.clone(),
 		);
 
-		<span class="kw">match</span> <span class="ident">result</span> {
-			<span class="prelude-val">Err</span>(<span class="ident">CommandOrError::VoterCommand</span>(<span class="ident">command</span>)) =&gt; {
+		<span class="kw">match </span>result {
+			<span class="prelude-val">Err</span>(CommandOrError::VoterCommand(command)) =&gt; {
 				<span class="macro">afg_log!</span>(
-					<span class="ident">initial_sync</span>,
+					initial_sync,
 					<span class="string">&quot;👴 Imported justification for block #{} that triggers \
 					command {}, signaling voter.&quot;</span>,
-					<span class="ident">number</span>,
-					<span class="ident">command</span>,
+					number,
+					command,
 				);
 
-				<span class="comment">// send the command to the voter</span>
-				<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_voter_commands</span>.<span class="ident">unbounded_send</span>(<span class="ident">command</span>);
+				<span class="comment">// send the command to the voter
+				</span><span class="kw">let _ </span>= <span class="self">self</span>.send_voter_commands.unbounded_send(command);
 			},
-			<span class="prelude-val">Err</span>(<span class="ident">CommandOrError::Error</span>(<span class="ident">e</span>)) =&gt;
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="kw">match</span> <span class="ident">e</span> {
-					<span class="ident">Error::Grandpa</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>.<span class="ident">to_string</span>()),
-					<span class="ident">Error::Network</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>),
-					<span class="ident">Error::Blockchain</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>),
-					<span class="ident">Error::Client</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>.<span class="ident">to_string</span>()),
-					<span class="ident">Error::Safety</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>),
-					<span class="ident">Error::Signing</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>),
-					<span class="ident">Error::Timer</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>.<span class="ident">to_string</span>()),
-					<span class="ident">Error::RuntimeApi</span>(<span class="ident">error</span>) =&gt; <span class="ident">ConsensusError::ClientImport</span>(<span class="ident">error</span>.<span class="ident">to_string</span>()),
+			<span class="prelude-val">Err</span>(CommandOrError::Error(e)) =&gt;
+				<span class="kw">return </span><span class="prelude-val">Err</span>(<span class="kw">match </span>e {
+					Error::Grandpa(error) =&gt; ConsensusError::ClientImport(error.to_string()),
+					Error::Network(error) =&gt; ConsensusError::ClientImport(error),
+					Error::Blockchain(error) =&gt; ConsensusError::ClientImport(error),
+					Error::Client(error) =&gt; ConsensusError::ClientImport(error.to_string()),
+					Error::Safety(error) =&gt; ConsensusError::ClientImport(error),
+					Error::Signing(error) =&gt; ConsensusError::ClientImport(error),
+					Error::Timer(error) =&gt; ConsensusError::ClientImport(error.to_string()),
+					Error::RuntimeApi(error) =&gt; ConsensusError::ClientImport(error.to_string()),
 				}),
 			<span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
 				<span class="macro">assert!</span>(
-					<span class="op">!</span><span class="ident">enacts_change</span>,
-					<span class="string">&quot;returns Ok when no authority set change should be enacted; qed;&quot;</span>
-				);
+					!enacts_change,
+					<span class="string">&quot;returns Ok when no authority set change should be enacted; qed;&quot;
+				</span>);
 			},
 		}
 
@@ -1676,5 +1671,4 @@
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_finality_grandpa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_finality_grandpa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

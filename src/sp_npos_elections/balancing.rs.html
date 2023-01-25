@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/npos-elections/src/balancing.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>balancing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_npos_elections/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sp_npos_elections/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sp_npos_elections/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/npos-elections/src/balancing.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>balancing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sp_npos_elections/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -202,205 +197,204 @@
 <span id="197">197</span>
 <span id="198">198</span>
 <span id="199">199</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! Balancing algorithm implementation.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Given a committee `A` and an edge weight vector `w`, a balanced solution is one that</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! 1.  it maximizes the sum of member supports, i.e `Argmax { sum(support(c)) }`. for all `c` in</span>
-<span class="doccomment">//! `A`.</span>
-<span class="doccomment">//! 2. it minimizes the sum of supports squared, i.e `Argmin { sum(support(c).pow(2)) }` for all `c`</span>
-<span class="doccomment">//! in `A`.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See [`balance`] for more information.</span>
+</span><span class="doccomment">//! Balancing algorithm implementation.
+//!
+//! Given a committee `A` and an edge weight vector `w`, a balanced solution is one that
+//!
+//! 1.  it maximizes the sum of member supports, i.e `Argmax { sum(support(c)) }`. for all `c` in
+//! `A`.
+//! 2. it minimizes the sum of supports squared, i.e `Argmin { sum(support(c).pow(2)) }` for all `c`
+//! in `A`.
+//!
+//! See [`balance`] for more information.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">BalancingConfig</span>, <span class="ident">Edge</span>, <span class="ident">ExtendedBalance</span>, <span class="ident">IdentifierT</span>, <span class="ident">Voter</span>};
-<span class="kw">use</span> <span class="ident">sp_arithmetic::traits::Zero</span>;
-<span class="kw">use</span> <span class="ident">sp_std::prelude</span>::<span class="kw-2">*</span>;
+</span><span class="kw">use crate</span>::{BalancingConfig, Edge, ExtendedBalance, IdentifierT, Voter};
+<span class="kw">use </span>sp_arithmetic::traits::Zero;
+<span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 
-<span class="doccomment">/// Balance the weight distribution of a given `voters` at most `iterations` times, or up until the</span>
-<span class="doccomment">/// point where the biggest difference created per iteration of all stakes is `tolerance`. If this</span>
-<span class="doccomment">/// is called with `tolerance = 0`, then exactly `iterations` rounds will be executed, except if no</span>
-<span class="doccomment">/// change has been made (`difference = 0`). `tolerance` and `iterations` are part of the</span>
-<span class="doccomment">/// [`BalancingConfig`] struct.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// In almost all cases, a balanced solution will have a better score than an unbalanced solution,</span>
-<span class="doccomment">/// yet this is not 100% guaranteed because the first element of a [`crate::ElectionScore`] does not</span>
-<span class="doccomment">/// directly relate to balancing.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that some reference implementation adopt an approach in which voters are balanced randomly</span>
-<span class="doccomment">/// per round. To advocate determinism, we don&#39;t do this. In each round, all voters are exactly</span>
-<span class="doccomment">/// balanced once, in the same order.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Also, note that due to re-distribution of weights, the outcome of this function might contain</span>
-<span class="doccomment">/// edges with weight zero. The call site should filter such weight if desirable. Moreover, the</span>
-<span class="doccomment">/// outcome might need balance re-normalization, see `Voter::try_normalize`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ### References</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - [A new approach to the maximum flow problem](https://dl.acm.org/doi/10.1145/48014.61051).</span>
-<span class="doccomment">/// - [Validator election in nominated proof-of-stake](https://arxiv.org/abs/2004.12990) (Appendix</span>
-<span class="doccomment">///   A.)</span>
-<span class="doccomment">/// - [Computing a balanced solution](https://research.web3.foundation/en/latest/polkadot/NPoS/3.%20Balancing.html),</span>
-<span class="doccomment">///   which contains the details of the algorithm implementation.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">balance</span><span class="op">&lt;</span><span class="ident">AccountId</span>: <span class="ident">IdentifierT</span><span class="op">&gt;</span>(
-	<span class="ident">voters</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Voter</span><span class="op">&lt;</span><span class="ident">AccountId</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">BalancingConfig</span>,
-) -&gt; <span class="ident">usize</span> {
-	<span class="kw">if</span> <span class="ident">config</span>.<span class="ident">iterations</span> <span class="op">==</span> <span class="number">0</span> {
-		<span class="kw">return</span> <span class="number">0</span>
-	}
+<span class="doccomment">/// Balance the weight distribution of a given `voters` at most `iterations` times, or up until the
+/// point where the biggest difference created per iteration of all stakes is `tolerance`. If this
+/// is called with `tolerance = 0`, then exactly `iterations` rounds will be executed, except if no
+/// change has been made (`difference = 0`). `tolerance` and `iterations` are part of the
+/// [`BalancingConfig`] struct.
+///
+/// In almost all cases, a balanced solution will have a better score than an unbalanced solution,
+/// yet this is not 100% guaranteed because the first element of a [`crate::ElectionScore`] does not
+/// directly relate to balancing.
+///
+/// Note that some reference implementation adopt an approach in which voters are balanced randomly
+/// per round. To advocate determinism, we don&#39;t do this. In each round, all voters are exactly
+/// balanced once, in the same order.
+///
+/// Also, note that due to re-distribution of weights, the outcome of this function might contain
+/// edges with weight zero. The call site should filter such weight if desirable. Moreover, the
+/// outcome might need balance re-normalization, see `Voter::try_normalize`.
+///
+/// ### References
+///
+/// - [A new approach to the maximum flow problem](https://dl.acm.org/doi/10.1145/48014.61051).
+/// - [Validator election in nominated proof-of-stake](https://arxiv.org/abs/2004.12990) (Appendix
+///   A.)
+/// - [Computing a balanced solution](https://research.web3.foundation/en/latest/polkadot/NPoS/3.%20Balancing.html),
+///   which contains the details of the algorithm implementation.
+</span><span class="kw">pub fn </span>balance&lt;AccountId: IdentifierT&gt;(
+	voters: <span class="kw-2">&amp;mut </span>Vec&lt;Voter&lt;AccountId&gt;&gt;,
+	config: <span class="kw-2">&amp;</span>BalancingConfig,
+) -&gt; usize {
+	<span class="kw">if </span>config.iterations == <span class="number">0 </span>{
+		<span class="kw">return </span><span class="number">0
+	</span>}
 
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">iter</span> <span class="op">=</span> <span class="number">0</span>;
-	<span class="kw">loop</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">max_diff</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">for</span> <span class="ident">voter</span> <span class="kw">in</span> <span class="ident">voters</span>.<span class="ident">iter_mut</span>() {
-			<span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">balance_voter</span>(<span class="ident">voter</span>, <span class="ident">config</span>.<span class="ident">tolerance</span>);
-			<span class="kw">if</span> <span class="ident">diff</span> <span class="op">&gt;</span> <span class="ident">max_diff</span> {
-				<span class="ident">max_diff</span> <span class="op">=</span> <span class="ident">diff</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="number">0</span>;
+	<span class="kw">loop </span>{
+		<span class="kw">let </span><span class="kw-2">mut </span>max_diff = <span class="number">0</span>;
+		<span class="kw">for </span>voter <span class="kw">in </span>voters.iter_mut() {
+			<span class="kw">let </span>diff = balance_voter(voter, config.tolerance);
+			<span class="kw">if </span>diff &gt; max_diff {
+				max_diff = diff;
 			}
 		}
 
-		<span class="ident">iter</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-		<span class="kw">if</span> <span class="ident">max_diff</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">config</span>.<span class="ident">tolerance</span> <span class="op">|</span><span class="op">|</span> <span class="ident">iter</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">config</span>.<span class="ident">iterations</span> {
-			<span class="kw">break</span> <span class="ident">iter</span>
+		iter += <span class="number">1</span>;
+		<span class="kw">if </span>max_diff &lt;= config.tolerance || iter &gt;= config.iterations {
+			<span class="kw">break </span>iter
 		}
 	}
 }
 
-<span class="doccomment">/// Internal implementation of balancing for one voter.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">balance_voter</span><span class="op">&lt;</span><span class="ident">AccountId</span>: <span class="ident">IdentifierT</span><span class="op">&gt;</span>(
-	<span class="ident">voter</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Voter</span><span class="op">&lt;</span><span class="ident">AccountId</span><span class="op">&gt;</span>,
-	<span class="ident">tolerance</span>: <span class="ident">ExtendedBalance</span>,
-) -&gt; <span class="ident">ExtendedBalance</span> {
-	<span class="comment">// create a shallow copy of the elected ones. The original one will not be used henceforth.</span>
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">elected_edges</span> <span class="op">=</span> <span class="ident">voter</span>
-		.<span class="ident">edges</span>
-		.<span class="ident">iter_mut</span>()
-		.<span class="ident">filter</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">candidate</span>.<span class="ident">borrow</span>().<span class="ident">elected</span>)
-		.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">Edge</span><span class="op">&lt;</span><span class="ident">AccountId</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+<span class="doccomment">/// Internal implementation of balancing for one voter.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>balance_voter&lt;AccountId: IdentifierT&gt;(
+	voter: <span class="kw-2">&amp;mut </span>Voter&lt;AccountId&gt;,
+	tolerance: ExtendedBalance,
+) -&gt; ExtendedBalance {
+	<span class="comment">// create a shallow copy of the elected ones. The original one will not be used henceforth.
+	</span><span class="kw">let </span><span class="kw-2">mut </span>elected_edges = voter
+		.edges
+		.iter_mut()
+		.filter(|e| e.candidate.borrow().elected)
+		.collect::&lt;Vec&lt;<span class="kw-2">&amp;mut </span>Edge&lt;AccountId&gt;&gt;&gt;();
 
-	<span class="comment">// Either empty, or a self vote. Not much to do in either case.</span>
-	<span class="kw">if</span> <span class="ident">elected_edges</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span> {
-		<span class="kw">return</span> <span class="ident">Zero::zero</span>()
+	<span class="comment">// Either empty, or a self vote. Not much to do in either case.
+	</span><span class="kw">if </span>elected_edges.len() &lt;= <span class="number">1 </span>{
+		<span class="kw">return </span>Zero::zero()
 	}
 
-	<span class="comment">// amount of stake from this voter that is used in edges.</span>
-	<span class="kw">let</span> <span class="ident">stake_used</span> <span class="op">=</span>
-		<span class="ident">elected_edges</span>.<span class="ident">iter</span>().<span class="ident">fold</span>(<span class="number">0</span>, <span class="op">|</span><span class="ident">a</span>: <span class="ident">ExtendedBalance</span>, <span class="ident">e</span><span class="op">|</span> <span class="ident">a</span>.<span class="ident">saturating_add</span>(<span class="ident">e</span>.<span class="ident">weight</span>));
+	<span class="comment">// amount of stake from this voter that is used in edges.
+	</span><span class="kw">let </span>stake_used =
+		elected_edges.iter().fold(<span class="number">0</span>, |a: ExtendedBalance, e| a.saturating_add(e.weight));
 
-	<span class="comment">// backed stake of each of the elected edges.</span>
-	<span class="kw">let</span> <span class="ident">backed_stakes</span> <span class="op">=</span> <span class="ident">elected_edges</span>
-		.<span class="ident">iter</span>()
-		.<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">candidate</span>.<span class="ident">borrow</span>().<span class="ident">backed_stake</span>)
-		.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+	<span class="comment">// backed stake of each of the elected edges.
+	</span><span class="kw">let </span>backed_stakes = elected_edges
+		.iter()
+		.map(|e| e.candidate.borrow().backed_stake)
+		.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-	<span class="comment">// backed stake of all the edges for whom we&#39;ve spent some stake.</span>
-	<span class="kw">let</span> <span class="ident">backing_backed_stake</span> <span class="op">=</span> <span class="ident">elected_edges</span>
-		.<span class="ident">iter</span>()
-		.<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">weight</span> <span class="op">&gt;</span> <span class="number">0</span> { <span class="prelude-val">Some</span>(<span class="ident">e</span>.<span class="ident">candidate</span>.<span class="ident">borrow</span>().<span class="ident">backed_stake</span>) } <span class="kw">else</span> { <span class="prelude-val">None</span> })
-		.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+	<span class="comment">// backed stake of all the edges for whom we&#39;ve spent some stake.
+	</span><span class="kw">let </span>backing_backed_stake = elected_edges
+		.iter()
+		.filter_map(|e| <span class="kw">if </span>e.weight &gt; <span class="number">0 </span>{ <span class="prelude-val">Some</span>(e.candidate.borrow().backed_stake) } <span class="kw">else </span>{ <span class="prelude-val">None </span>})
+		.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-	<span class="kw">let</span> <span class="ident">difference</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">backing_backed_stake</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
-		<span class="kw">let</span> <span class="ident">max_stake</span> <span class="op">=</span> <span class="ident">backing_backed_stake</span>
-			.<span class="ident">iter</span>()
-			.<span class="ident">max</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;vector with positive length will have a max; qed&quot;</span>);
-		<span class="kw">let</span> <span class="ident">min_stake</span> <span class="op">=</span> <span class="ident">backed_stakes</span>
-			.<span class="ident">iter</span>()
-			.<span class="ident">min</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;iterator with positive length will have a min; qed&quot;</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">difference</span> <span class="op">=</span> <span class="ident">max_stake</span>.<span class="ident">saturating_sub</span>(<span class="kw-2">*</span><span class="ident">min_stake</span>);
-		<span class="ident">difference</span> <span class="op">=</span> <span class="ident">difference</span>.<span class="ident">saturating_add</span>(<span class="ident">voter</span>.<span class="ident">budget</span>.<span class="ident">saturating_sub</span>(<span class="ident">stake_used</span>));
-		<span class="kw">if</span> <span class="ident">difference</span> <span class="op">&lt;</span> <span class="ident">tolerance</span> {
-			<span class="kw">return</span> <span class="ident">difference</span>
+	<span class="kw">let </span>difference = <span class="kw">if </span>backing_backed_stake.len() &gt; <span class="number">0 </span>{
+		<span class="kw">let </span>max_stake = backing_backed_stake
+			.iter()
+			.max()
+			.expect(<span class="string">&quot;vector with positive length will have a max; qed&quot;</span>);
+		<span class="kw">let </span>min_stake = backed_stakes
+			.iter()
+			.min()
+			.expect(<span class="string">&quot;iterator with positive length will have a min; qed&quot;</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>difference = max_stake.saturating_sub(<span class="kw-2">*</span>min_stake);
+		difference = difference.saturating_add(voter.budget.saturating_sub(stake_used));
+		<span class="kw">if </span>difference &lt; tolerance {
+			<span class="kw">return </span>difference
 		}
-		<span class="ident">difference</span>
-	} <span class="kw">else</span> {
-		<span class="ident">voter</span>.<span class="ident">budget</span>
+		difference
+	} <span class="kw">else </span>{
+		voter.budget
 	};
 
-	<span class="comment">// remove all backings.</span>
-	<span class="kw">for</span> <span class="ident">edge</span> <span class="kw">in</span> <span class="ident">elected_edges</span>.<span class="ident">iter_mut</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">candidate</span> <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">candidate</span>.<span class="ident">borrow_mut</span>();
-		<span class="ident">candidate</span>.<span class="ident">backed_stake</span> <span class="op">=</span> <span class="ident">candidate</span>.<span class="ident">backed_stake</span>.<span class="ident">saturating_sub</span>(<span class="ident">edge</span>.<span class="ident">weight</span>);
-		<span class="ident">edge</span>.<span class="ident">weight</span> <span class="op">=</span> <span class="number">0</span>;
+	<span class="comment">// remove all backings.
+	</span><span class="kw">for </span>edge <span class="kw">in </span>elected_edges.iter_mut() {
+		<span class="kw">let </span><span class="kw-2">mut </span>candidate = edge.candidate.borrow_mut();
+		candidate.backed_stake = candidate.backed_stake.saturating_sub(edge.weight);
+		edge.weight = <span class="number">0</span>;
 	}
 
-	<span class="ident">elected_edges</span>.<span class="ident">sort_by_key</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">candidate</span>.<span class="ident">borrow</span>().<span class="ident">backed_stake</span>);
+	elected_edges.sort_by_key(|e| e.candidate.borrow().backed_stake);
 
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cumulative_backed_stake</span> <span class="op">=</span> <span class="ident">Zero::zero</span>();
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">last_index</span> <span class="op">=</span> <span class="ident">elected_edges</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>cumulative_backed_stake = Zero::zero();
+	<span class="kw">let </span><span class="kw-2">mut </span>last_index = elected_edges.len() - <span class="number">1</span>;
 
-	<span class="kw">for</span> (<span class="ident">index</span>, <span class="ident">edge</span>) <span class="kw">in</span> <span class="ident">elected_edges</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-		<span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">index</span> <span class="kw">as</span> <span class="ident">ExtendedBalance</span>;
-		<span class="kw">let</span> <span class="ident">backed_stake</span> <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">candidate</span>.<span class="ident">borrow</span>().<span class="ident">backed_stake</span>;
-		<span class="kw">let</span> <span class="ident">temp</span> <span class="op">=</span> <span class="ident">backed_stake</span>.<span class="ident">saturating_mul</span>(<span class="ident">index</span>);
-		<span class="kw">if</span> <span class="ident">temp</span>.<span class="ident">saturating_sub</span>(<span class="ident">cumulative_backed_stake</span>) <span class="op">&gt;</span> <span class="ident">voter</span>.<span class="ident">budget</span> {
-			<span class="comment">// defensive only. length of elected_edges is checked to be above 1.</span>
-			<span class="ident">last_index</span> <span class="op">=</span> <span class="ident">index</span>.<span class="ident">saturating_sub</span>(<span class="number">1</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-			<span class="kw">break</span>
-		}
-		<span class="ident">cumulative_backed_stake</span> <span class="op">=</span> <span class="ident">cumulative_backed_stake</span>.<span class="ident">saturating_add</span>(<span class="ident">backed_stake</span>);
+	<span class="kw">for </span>(index, edge) <span class="kw">in </span>elected_edges.iter().enumerate() {
+		<span class="kw">let </span>index = index <span class="kw">as </span>ExtendedBalance;
+		<span class="kw">let </span>backed_stake = edge.candidate.borrow().backed_stake;
+		<span class="kw">let </span>temp = backed_stake.saturating_mul(index);
+		<span class="kw">if </span>temp.saturating_sub(cumulative_backed_stake) &gt; voter.budget {
+			<span class="comment">// defensive only. length of elected_edges is checked to be above 1.
+			</span>last_index = index.saturating_sub(<span class="number">1</span>) <span class="kw">as </span>usize;
+			<span class="kw">break
+		</span>}
+		cumulative_backed_stake = cumulative_backed_stake.saturating_add(backed_stake);
 	}
 
-	<span class="kw">let</span> <span class="ident">last_stake</span> <span class="op">=</span> <span class="ident">elected_edges</span>
-		.<span class="ident">get</span>(<span class="ident">last_index</span>)
-		.<span class="ident">expect</span>(
+	<span class="kw">let </span>last_stake = elected_edges
+		.get(last_index)
+		.expect(
 			<span class="string">&quot;length of elected_edges is greater than or equal 2; last_index index is at the \
  			 minimum elected_edges.len() - 1; index is within range; qed&quot;</span>,
 		)
-		.<span class="ident">candidate</span>
-		.<span class="ident">borrow</span>()
-		.<span class="ident">backed_stake</span>;
-	<span class="kw">let</span> <span class="ident">ways_to_split</span> <span class="op">=</span> <span class="ident">last_index</span> <span class="op">+</span> <span class="number">1</span>;
-	<span class="kw">let</span> <span class="ident">excess</span> <span class="op">=</span> <span class="ident">voter</span>
-		.<span class="ident">budget</span>
-		.<span class="ident">saturating_add</span>(<span class="ident">cumulative_backed_stake</span>)
-		.<span class="ident">saturating_sub</span>(<span class="ident">last_stake</span>.<span class="ident">saturating_mul</span>(<span class="ident">ways_to_split</span> <span class="kw">as</span> <span class="ident">ExtendedBalance</span>));
+		.candidate
+		.borrow()
+		.backed_stake;
+	<span class="kw">let </span>ways_to_split = last_index + <span class="number">1</span>;
+	<span class="kw">let </span>excess = voter
+		.budget
+		.saturating_add(cumulative_backed_stake)
+		.saturating_sub(last_stake.saturating_mul(ways_to_split <span class="kw">as </span>ExtendedBalance));
 
-	<span class="comment">// Do the final update.</span>
-	<span class="kw">for</span> <span class="ident">edge</span> <span class="kw">in</span> <span class="ident">elected_edges</span>.<span class="ident">into_iter</span>().<span class="ident">take</span>(<span class="ident">ways_to_split</span>) {
-		<span class="comment">// first, do one scoped borrow to get the previous candidate stake.</span>
-		<span class="kw">let</span> <span class="ident">candidate_backed_stake</span> <span class="op">=</span> {
-			<span class="kw">let</span> <span class="ident">candidate</span> <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">candidate</span>.<span class="ident">borrow</span>();
-			<span class="ident">candidate</span>.<span class="ident">backed_stake</span>
+	<span class="comment">// Do the final update.
+	</span><span class="kw">for </span>edge <span class="kw">in </span>elected_edges.into_iter().take(ways_to_split) {
+		<span class="comment">// first, do one scoped borrow to get the previous candidate stake.
+		</span><span class="kw">let </span>candidate_backed_stake = {
+			<span class="kw">let </span>candidate = edge.candidate.borrow();
+			candidate.backed_stake
 		};
 
-		<span class="kw">let</span> <span class="ident">new_edge_weight</span> <span class="op">=</span> (<span class="ident">excess</span> <span class="op">/</span> <span class="ident">ways_to_split</span> <span class="kw">as</span> <span class="ident">ExtendedBalance</span>)
-			.<span class="ident">saturating_add</span>(<span class="ident">last_stake</span>)
-			.<span class="ident">saturating_sub</span>(<span class="ident">candidate_backed_stake</span>);
+		<span class="kw">let </span>new_edge_weight = (excess / ways_to_split <span class="kw">as </span>ExtendedBalance)
+			.saturating_add(last_stake)
+			.saturating_sub(candidate_backed_stake);
 
-		<span class="comment">// write the new edge weight</span>
-		<span class="ident">edge</span>.<span class="ident">weight</span> <span class="op">=</span> <span class="ident">new_edge_weight</span>;
+		<span class="comment">// write the new edge weight
+		</span>edge.weight = new_edge_weight;
 
-		<span class="comment">// write the new candidate stake</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">candidate</span> <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">candidate</span>.<span class="ident">borrow_mut</span>();
-		<span class="ident">candidate</span>.<span class="ident">backed_stake</span> <span class="op">=</span> <span class="ident">candidate</span>.<span class="ident">backed_stake</span>.<span class="ident">saturating_add</span>(<span class="ident">new_edge_weight</span>);
+		<span class="comment">// write the new candidate stake
+		</span><span class="kw">let </span><span class="kw-2">mut </span>candidate = edge.candidate.borrow_mut();
+		candidate.backed_stake = candidate.backed_stake.saturating_add(new_edge_weight);
 	}
 
-	<span class="comment">// excess / ways_to_split can cause a small un-normalized voters to be created.</span>
-	<span class="comment">// We won&#39;t `expect` here because even a result which is not normalized is not corrupt;</span>
-	<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">voter</span>.<span class="ident">try_normalize_elected</span>();
+	<span class="comment">// excess / ways_to_split can cause a small un-normalized voters to be created.
+	// We won&#39;t `expect` here because even a result which is not normalized is not corrupt;
+	</span><span class="kw">let _ </span>= voter.try_normalize_elected();
 
-	<span class="ident">difference</span>
+	difference
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_npos_elections" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_npos_elections" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

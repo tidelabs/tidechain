@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error",""]],"mod":[["curve","Curve related structs."],["util","Utilities to manipulate the secp256k1 curve parameters."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error",""]],"mod":[["curve","Curve related structs."],["util","Utilities to manipulate the secp256k1 curve parameters."]]};

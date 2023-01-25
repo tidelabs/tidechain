@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["migrate","Migrate storage to v6."],["pre_migrate","check to execute prior to migration."]]});
+window.SIDEBAR_ITEMS = {"fn":[["migrate","Migrate storage to v6."],["pre_migrate","check to execute prior to migration."]]};

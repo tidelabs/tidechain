@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Error type for the network."]],"type":[["Result","Result type alias for the network."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","Error type for the network."]],"type":[["Result","Result type alias for the network."]]};

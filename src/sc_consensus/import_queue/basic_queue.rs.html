@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/common/src/import_queue/basic_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>basic_queue.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_consensus/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_consensus/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_consensus/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/common/src/import_queue/basic_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>basic_queue.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_consensus/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -640,643 +635,642 @@
 <span id="635">635</span>
 <span id="636">636</span>
 <span id="637">637</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
-<span class="kw">use</span> <span class="ident">futures</span>::{
-	<span class="ident">prelude</span>::<span class="kw-2">*</span>,
-	<span class="ident">task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>},
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
+</span><span class="kw">use </span>futures::{
+	prelude::<span class="kw-2">*</span>,
+	task::{Context, Poll},
 };
-<span class="kw">use</span> <span class="ident">futures_timer::Delay</span>;
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>};
-<span class="kw">use</span> <span class="ident">prometheus_endpoint::Registry</span>;
-<span class="kw">use</span> <span class="ident">sc_utils::mpsc</span>::{<span class="ident">tracing_unbounded</span>, <span class="ident">TracingUnboundedReceiver</span>, <span class="ident">TracingUnboundedSender</span>};
-<span class="kw">use</span> <span class="ident">sp_consensus::BlockOrigin</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">traits</span>::{<span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>, <span class="ident">Header</span> <span class="kw">as</span> <span class="ident">HeaderT</span>, <span class="ident">NumberFor</span>},
-	<span class="ident">Justification</span>, <span class="ident">Justifications</span>,
+<span class="kw">use </span>futures_timer::Delay;
+<span class="kw">use </span>log::{debug, trace};
+<span class="kw">use </span>prometheus_endpoint::Registry;
+<span class="kw">use </span>sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
+<span class="kw">use </span>sp_consensus::BlockOrigin;
+<span class="kw">use </span>sp_runtime::{
+	traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT, NumberFor},
+	Justification, Justifications,
 };
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">marker::PhantomData</span>, <span class="ident">pin::Pin</span>, <span class="ident">time::Duration</span>};
+<span class="kw">use </span>std::{marker::PhantomData, pin::Pin, time::Duration};
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">import_queue</span>::{
-		<span class="ident">buffered_link</span>::{<span class="self">self</span>, <span class="ident">BufferedLinkReceiver</span>, <span class="ident">BufferedLinkSender</span>},
-		<span class="ident">import_single_block_metered</span>, <span class="ident">BlockImportError</span>, <span class="ident">BlockImportStatus</span>, <span class="ident">BoxBlockImport</span>,
-		<span class="ident">BoxJustificationImport</span>, <span class="ident">ImportQueue</span>, <span class="ident">IncomingBlock</span>, <span class="ident">Link</span>, <span class="ident">Origin</span>, <span class="ident">Verifier</span>,
+<span class="kw">use crate</span>::{
+	import_queue::{
+		buffered_link::{<span class="self">self</span>, BufferedLinkReceiver, BufferedLinkSender},
+		import_single_block_metered, BlockImportError, BlockImportStatus, BoxBlockImport,
+		BoxJustificationImport, ImportQueue, IncomingBlock, Link, Origin, Verifier,
 	},
-	<span class="ident">metrics::Metrics</span>,
+	metrics::Metrics,
 };
 
-<span class="doccomment">/// Interface to a basic block import queue that is importing blocks sequentially in a separate</span>
-<span class="doccomment">/// task, with plugable verification.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BasicQueue</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">Transaction</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Channel to send justification import messages to the background task.</span>
-	<span class="ident">justification_sender</span>: <span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">worker_messages::ImportJustification</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Channel to send block import messages to the background task.</span>
-	<span class="ident">block_import_sender</span>: <span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">worker_messages::ImportBlocks</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Results coming from the worker task.</span>
-	<span class="ident">result_port</span>: <span class="ident">BufferedLinkReceiver</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Interface to a basic block import queue that is importing blocks sequentially in a separate
+/// task, with plugable verification.
+</span><span class="kw">pub struct </span>BasicQueue&lt;B: BlockT, Transaction&gt; {
+	<span class="doccomment">/// Channel to send justification import messages to the background task.
+	</span>justification_sender: TracingUnboundedSender&lt;worker_messages::ImportJustification&lt;B&gt;&gt;,
+	<span class="doccomment">/// Channel to send block import messages to the background task.
+	</span>block_import_sender: TracingUnboundedSender&lt;worker_messages::ImportBlocks&lt;B&gt;&gt;,
+	<span class="doccomment">/// Results coming from the worker task.
+	</span>result_port: BufferedLinkReceiver&lt;B&gt;,
+	_phantom: PhantomData&lt;Transaction&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">Transaction</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">BasicQueue</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="comment">// Flush the queue and close the receiver to terminate the future.</span>
-		<span class="self">self</span>.<span class="ident">justification_sender</span>.<span class="ident">close_channel</span>();
-		<span class="self">self</span>.<span class="ident">block_import_sender</span>.<span class="ident">close_channel</span>();
-		<span class="self">self</span>.<span class="ident">result_port</span>.<span class="ident">close</span>();
+<span class="kw">impl</span>&lt;B: BlockT, Transaction&gt; Drop <span class="kw">for </span>BasicQueue&lt;B, Transaction&gt; {
+	<span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="comment">// Flush the queue and close the receiver to terminate the future.
+		</span><span class="self">self</span>.justification_sender.close_channel();
+		<span class="self">self</span>.block_import_sender.close_channel();
+		<span class="self">self</span>.result_port.close();
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">Transaction</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span> <span class="ident">BasicQueue</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Instantiate a new basic queue, with given verifier.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This creates a background task, and calls `on_start` on the justification importer.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">V</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-		<span class="ident">verifier</span>: <span class="ident">V</span>,
-		<span class="ident">block_import</span>: <span class="ident">BoxBlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span>,
-		<span class="ident">justification_import</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BoxJustificationImport</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">spawner</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">sp_core::traits::SpawnEssentialNamed</span>,
-		<span class="ident">prometheus_registry</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Registry</span><span class="op">&gt;</span>,
-	) -&gt; <span class="self">Self</span> {
-		<span class="kw">let</span> (<span class="ident">result_sender</span>, <span class="ident">result_port</span>) <span class="op">=</span> <span class="ident">buffered_link::buffered_link</span>();
+<span class="kw">impl</span>&lt;B: BlockT, Transaction: Send + <span class="lifetime">&#39;static</span>&gt; BasicQueue&lt;B, Transaction&gt; {
+	<span class="doccomment">/// Instantiate a new basic queue, with given verifier.
+	///
+	/// This creates a background task, and calls `on_start` on the justification importer.
+	</span><span class="kw">pub fn </span>new&lt;V: <span class="lifetime">&#39;static </span>+ Verifier&lt;B&gt;&gt;(
+		verifier: V,
+		block_import: BoxBlockImport&lt;B, Transaction&gt;,
+		justification_import: <span class="prelude-ty">Option</span>&lt;BoxJustificationImport&lt;B&gt;&gt;,
+		spawner: <span class="kw-2">&amp;</span><span class="kw">impl </span>sp_core::traits::SpawnEssentialNamed,
+		prometheus_registry: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Registry&gt;,
+	) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span>(result_sender, result_port) = buffered_link::buffered_link();
 
-		<span class="kw">let</span> <span class="ident">metrics</span> <span class="op">=</span> <span class="ident">prometheus_registry</span>.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> {
-			<span class="ident">Metrics::register</span>(<span class="ident">r</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-					<span class="macro">log::warn!</span>(<span class="string">&quot;Failed to register Prometheus metrics: {}&quot;</span>, <span class="ident">err</span>);
+		<span class="kw">let </span>metrics = prometheus_registry.and_then(|r| {
+			Metrics::register(r)
+				.map_err(|err| {
+					<span class="macro">log::warn!</span>(<span class="string">&quot;Failed to register Prometheus metrics: {}&quot;</span>, err);
 				})
-				.<span class="ident">ok</span>()
+				.ok()
 		});
 
-		<span class="kw">let</span> (<span class="ident">future</span>, <span class="ident">justification_sender</span>, <span class="ident">block_import_sender</span>) <span class="op">=</span> <span class="ident">BlockImportWorker::new</span>(
-			<span class="ident">result_sender</span>,
-			<span class="ident">verifier</span>,
-			<span class="ident">block_import</span>,
-			<span class="ident">justification_import</span>,
-			<span class="ident">metrics</span>,
+		<span class="kw">let </span>(future, justification_sender, block_import_sender) = BlockImportWorker::new(
+			result_sender,
+			verifier,
+			block_import,
+			justification_import,
+			metrics,
 		);
 
-		<span class="ident">spawner</span>.<span class="ident">spawn_essential_blocking</span>(
+		spawner.spawn_essential_blocking(
 			<span class="string">&quot;basic-block-import-worker&quot;</span>,
 			<span class="prelude-val">Some</span>(<span class="string">&quot;block-import&quot;</span>),
-			<span class="ident">future</span>.<span class="ident">boxed</span>(),
+			future.boxed(),
 		);
 
-		<span class="self">Self</span> { <span class="ident">justification_sender</span>, <span class="ident">block_import_sender</span>, <span class="ident">result_port</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> }
+		<span class="self">Self </span>{ justification_sender, block_import_sender, result_port, _phantom: PhantomData }
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">Transaction</span>: <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">ImportQueue</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BasicQueue</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">import_blocks</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">origin</span>: <span class="ident">BlockOrigin</span>, <span class="ident">blocks</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IncomingBlock</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-		<span class="kw">if</span> <span class="ident">blocks</span>.<span class="ident">is_empty</span>() {
-			<span class="kw">return</span>
-		}
+<span class="kw">impl</span>&lt;B: BlockT, Transaction: Send&gt; ImportQueue&lt;B&gt; <span class="kw">for </span>BasicQueue&lt;B, Transaction&gt; {
+	<span class="kw">fn </span>import_blocks(<span class="kw-2">&amp;mut </span><span class="self">self</span>, origin: BlockOrigin, blocks: Vec&lt;IncomingBlock&lt;B&gt;&gt;) {
+		<span class="kw">if </span>blocks.is_empty() {
+			<span class="kw">return
+		</span>}
 
-		<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Scheduling {} blocks for import&quot;</span>, <span class="ident">blocks</span>.<span class="ident">len</span>());
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">block_import_sender</span>
-			.<span class="ident">unbounded_send</span>(<span class="ident">worker_messages::ImportBlocks</span>(<span class="ident">origin</span>, <span class="ident">blocks</span>));
+		<span class="macro">trace!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Scheduling {} blocks for import&quot;</span>, blocks.len());
+		<span class="kw">let </span>res = <span class="self">self
+			</span>.block_import_sender
+			.unbounded_send(worker_messages::ImportBlocks(origin, blocks));
 
-		<span class="kw">if</span> <span class="ident">res</span>.<span class="ident">is_err</span>() {
+		<span class="kw">if </span>res.is_err() {
 			<span class="macro">log::error!</span>(
-				<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>,
-				<span class="string">&quot;import_blocks: Background import task is no longer alive&quot;</span>
-			);
+				target: <span class="string">&quot;sync&quot;</span>,
+				<span class="string">&quot;import_blocks: Background import task is no longer alive&quot;
+			</span>);
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">import_justifications</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">who</span>: <span class="ident">Origin</span>,
-		<span class="ident">hash</span>: <span class="ident">B::Hash</span>,
-		<span class="ident">number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">justifications</span>: <span class="ident">Justifications</span>,
+	<span class="kw">fn </span>import_justifications(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		who: Origin,
+		hash: B::Hash,
+		number: NumberFor&lt;B&gt;,
+		justifications: Justifications,
 	) {
-		<span class="kw">for</span> <span class="ident">justification</span> <span class="kw">in</span> <span class="ident">justifications</span> {
-			<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">justification_sender</span>.<span class="ident">unbounded_send</span>(
-				<span class="ident">worker_messages::ImportJustification</span>(<span class="ident">who</span>, <span class="ident">hash</span>, <span class="ident">number</span>, <span class="ident">justification</span>),
+		<span class="kw">for </span>justification <span class="kw">in </span>justifications {
+			<span class="kw">let </span>res = <span class="self">self</span>.justification_sender.unbounded_send(
+				worker_messages::ImportJustification(who, hash, number, justification),
 			);
 
-			<span class="kw">if</span> <span class="ident">res</span>.<span class="ident">is_err</span>() {
+			<span class="kw">if </span>res.is_err() {
 				<span class="macro">log::error!</span>(
-					<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>,
-					<span class="string">&quot;import_justification: Background import task is no longer alive&quot;</span>
-				);
+					target: <span class="string">&quot;sync&quot;</span>,
+					<span class="string">&quot;import_justification: Background import task is no longer alive&quot;
+				</span>);
 			}
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">poll_actions</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>, <span class="ident">link</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">result_port</span>.<span class="ident">poll_actions</span>(<span class="ident">cx</span>, <span class="ident">link</span>).<span class="ident">is_err</span>() {
-			<span class="macro">log::error!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;poll_actions: Background import task is no longer alive&quot;</span>);
+	<span class="kw">fn </span>poll_actions(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>Context, link: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Link&lt;B&gt;) {
+		<span class="kw">if </span><span class="self">self</span>.result_port.poll_actions(cx, link).is_err() {
+			<span class="macro">log::error!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;poll_actions: Background import task is no longer alive&quot;</span>);
 		}
 	}
 }
 
-<span class="doccomment">/// Messages destinated to the background worker.</span>
-<span class="kw">mod</span> <span class="ident">worker_messages</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="doccomment">/// Messages destinated to the background worker.
+</span><span class="kw">mod </span>worker_messages {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-	<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ImportBlocks</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>(<span class="kw">pub</span> <span class="ident">BlockOrigin</span>, <span class="kw">pub</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IncomingBlock</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>);
-	<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ImportJustification</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>(
-		<span class="kw">pub</span> <span class="ident">Origin</span>,
-		<span class="kw">pub</span> <span class="ident">B::Hash</span>,
-		<span class="kw">pub</span> <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="kw">pub</span> <span class="ident">Justification</span>,
+	<span class="kw">pub struct </span>ImportBlocks&lt;B: BlockT&gt;(<span class="kw">pub </span>BlockOrigin, <span class="kw">pub </span>Vec&lt;IncomingBlock&lt;B&gt;&gt;);
+	<span class="kw">pub struct </span>ImportJustification&lt;B: BlockT&gt;(
+		<span class="kw">pub </span>Origin,
+		<span class="kw">pub </span>B::Hash,
+		<span class="kw">pub </span>NumberFor&lt;B&gt;,
+		<span class="kw">pub </span>Justification,
 	);
 }
 
-<span class="doccomment">/// The process of importing blocks.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This polls the `block_import_receiver` for new blocks to import and than awaits on</span>
-<span class="doccomment">/// importing these blocks. After each block is imported, this async function yields once</span>
-<span class="doccomment">/// to give other futures the possibility to be run.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns when `block_import` ended.</span>
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">block_import_process</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">Transaction</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>(
-	<span class="kw-2">mut</span> <span class="ident">block_import</span>: <span class="ident">BoxBlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span>,
-	<span class="kw-2">mut</span> <span class="ident">verifier</span>: <span class="kw">impl</span> <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="kw-2">mut</span> <span class="ident">result_sender</span>: <span class="ident">BufferedLinkSender</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="kw-2">mut</span> <span class="ident">block_import_receiver</span>: <span class="ident">TracingUnboundedReceiver</span><span class="op">&lt;</span><span class="ident">worker_messages::ImportBlocks</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">metrics</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Metrics</span><span class="op">&gt;</span>,
-	<span class="ident">delay_between_blocks</span>: <span class="ident">Duration</span>,
+<span class="doccomment">/// The process of importing blocks.
+///
+/// This polls the `block_import_receiver` for new blocks to import and than awaits on
+/// importing these blocks. After each block is imported, this async function yields once
+/// to give other futures the possibility to be run.
+///
+/// Returns when `block_import` ended.
+</span><span class="kw">async fn </span>block_import_process&lt;B: BlockT, Transaction: Send + <span class="lifetime">&#39;static</span>&gt;(
+	<span class="kw-2">mut </span>block_import: BoxBlockImport&lt;B, Transaction&gt;,
+	<span class="kw-2">mut </span>verifier: <span class="kw">impl </span>Verifier&lt;B&gt;,
+	<span class="kw-2">mut </span>result_sender: BufferedLinkSender&lt;B&gt;,
+	<span class="kw-2">mut </span>block_import_receiver: TracingUnboundedReceiver&lt;worker_messages::ImportBlocks&lt;B&gt;&gt;,
+	metrics: <span class="prelude-ty">Option</span>&lt;Metrics&gt;,
+	delay_between_blocks: Duration,
 ) {
-	<span class="kw">loop</span> {
-		<span class="kw">let</span> <span class="ident">worker_messages::ImportBlocks</span>(<span class="ident">origin</span>, <span class="ident">blocks</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">block_import_receiver</span>.<span class="ident">next</span>().<span class="kw">await</span>
-		{
-			<span class="prelude-val">Some</span>(<span class="ident">blocks</span>) =&gt; <span class="ident">blocks</span>,
-			<span class="prelude-val">None</span> =&gt; {
+	<span class="kw">loop </span>{
+		<span class="kw">let </span>worker_messages::ImportBlocks(origin, blocks) = <span class="kw">match </span>block_import_receiver.next().<span class="kw">await
+		</span>{
+			<span class="prelude-val">Some</span>(blocks) =&gt; blocks,
+			<span class="prelude-val">None </span>=&gt; {
 				<span class="macro">log::debug!</span>(
-					<span class="ident">target</span>: <span class="string">&quot;block-import&quot;</span>,
+					target: <span class="string">&quot;block-import&quot;</span>,
 					<span class="string">&quot;Stopping block import because the import channel was closed!&quot;</span>,
 				);
-				<span class="kw">return</span>
-			},
+				<span class="kw">return
+			</span>},
 		};
 
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">import_many_blocks</span>(
-			<span class="kw-2">&amp;mut</span> <span class="ident">block_import</span>,
-			<span class="ident">origin</span>,
-			<span class="ident">blocks</span>,
-			<span class="kw-2">&amp;mut</span> <span class="ident">verifier</span>,
-			<span class="ident">delay_between_blocks</span>,
-			<span class="ident">metrics</span>.<span class="ident">clone</span>(),
+		<span class="kw">let </span>res = import_many_blocks(
+			<span class="kw-2">&amp;mut </span>block_import,
+			origin,
+			blocks,
+			<span class="kw-2">&amp;mut </span>verifier,
+			delay_between_blocks,
+			metrics.clone(),
 		)
 		.<span class="kw">await</span>;
 
-		<span class="ident">result_sender</span>.<span class="ident">blocks_processed</span>(<span class="ident">res</span>.<span class="ident">imported</span>, <span class="ident">res</span>.<span class="ident">block_count</span>, <span class="ident">res</span>.<span class="ident">results</span>);
+		result_sender.blocks_processed(res.imported, res.block_count, res.results);
 	}
 }
 
-<span class="kw">struct</span> <span class="ident">BlockImportWorker</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> {
-	<span class="ident">result_sender</span>: <span class="ident">BufferedLinkSender</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">justification_import</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BoxJustificationImport</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">metrics</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Metrics</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>BlockImportWorker&lt;B: BlockT&gt; {
+	result_sender: BufferedLinkSender&lt;B&gt;,
+	justification_import: <span class="prelude-ty">Option</span>&lt;BoxJustificationImport&lt;B&gt;&gt;,
+	metrics: <span class="prelude-ty">Option</span>&lt;Metrics&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">BlockImportWorker</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">V</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">Transaction</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>(
-		<span class="ident">result_sender</span>: <span class="ident">BufferedLinkSender</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">verifier</span>: <span class="ident">V</span>,
-		<span class="ident">block_import</span>: <span class="ident">BoxBlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span>,
-		<span class="ident">justification_import</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BoxJustificationImport</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">metrics</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Metrics</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;B: BlockT&gt; BlockImportWorker&lt;B&gt; {
+	<span class="kw">fn </span>new&lt;V: <span class="lifetime">&#39;static </span>+ Verifier&lt;B&gt;, Transaction: Send + <span class="lifetime">&#39;static</span>&gt;(
+		result_sender: BufferedLinkSender&lt;B&gt;,
+		verifier: V,
+		block_import: BoxBlockImport&lt;B, Transaction&gt;,
+		justification_import: <span class="prelude-ty">Option</span>&lt;BoxJustificationImport&lt;B&gt;&gt;,
+		metrics: <span class="prelude-ty">Option</span>&lt;Metrics&gt;,
 	) -&gt; (
-		<span class="kw">impl</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> ()<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span>,
-		<span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">worker_messages::ImportJustification</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">worker_messages::ImportBlocks</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+		<span class="kw">impl </span>Future&lt;Output = ()&gt; + Send,
+		TracingUnboundedSender&lt;worker_messages::ImportJustification&lt;B&gt;&gt;,
+		TracingUnboundedSender&lt;worker_messages::ImportBlocks&lt;B&gt;&gt;,
 	) {
-		<span class="kw">use</span> <span class="ident">worker_messages</span>::<span class="kw-2">*</span>;
+		<span class="kw">use </span>worker_messages::<span class="kw-2">*</span>;
 
-		<span class="kw">let</span> (<span class="ident">justification_sender</span>, <span class="kw-2">mut</span> <span class="ident">justification_port</span>) <span class="op">=</span>
-			<span class="ident">tracing_unbounded</span>(<span class="string">&quot;mpsc_import_queue_worker_justification&quot;</span>);
+		<span class="kw">let </span>(justification_sender, <span class="kw-2">mut </span>justification_port) =
+			tracing_unbounded(<span class="string">&quot;mpsc_import_queue_worker_justification&quot;</span>);
 
-		<span class="kw">let</span> (<span class="ident">block_import_sender</span>, <span class="ident">block_import_port</span>) <span class="op">=</span>
-			<span class="ident">tracing_unbounded</span>(<span class="string">&quot;mpsc_import_queue_worker_blocks&quot;</span>);
+		<span class="kw">let </span>(block_import_sender, block_import_port) =
+			tracing_unbounded(<span class="string">&quot;mpsc_import_queue_worker_blocks&quot;</span>);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">worker</span> <span class="op">=</span> <span class="ident">BlockImportWorker</span> { <span class="ident">result_sender</span>, <span class="ident">justification_import</span>, <span class="ident">metrics</span> };
+		<span class="kw">let </span><span class="kw-2">mut </span>worker = BlockImportWorker { result_sender, justification_import, metrics };
 
-		<span class="kw">let</span> <span class="ident">delay_between_blocks</span> <span class="op">=</span> <span class="ident">Duration::default</span>();
+		<span class="kw">let </span>delay_between_blocks = Duration::default();
 
-		<span class="kw">let</span> <span class="ident">future</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {
-			<span class="comment">// Let&#39;s initialize `justification_import`</span>
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">justification_import</span>) <span class="op">=</span> <span class="ident">worker</span>.<span class="ident">justification_import</span>.<span class="ident">as_mut</span>() {
-				<span class="kw">for</span> (<span class="ident">hash</span>, <span class="ident">number</span>) <span class="kw">in</span> <span class="ident">justification_import</span>.<span class="ident">on_start</span>().<span class="kw">await</span> {
-					<span class="ident">worker</span>.<span class="ident">result_sender</span>.<span class="ident">request_justification</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>, <span class="ident">number</span>);
+		<span class="kw">let </span>future = <span class="kw">async move </span>{
+			<span class="comment">// Let&#39;s initialize `justification_import`
+			</span><span class="kw">if let </span><span class="prelude-val">Some</span>(justification_import) = worker.justification_import.as_mut() {
+				<span class="kw">for </span>(hash, number) <span class="kw">in </span>justification_import.on_start().<span class="kw">await </span>{
+					worker.result_sender.request_justification(<span class="kw-2">&amp;</span>hash, number);
 				}
 			}
 
-			<span class="kw">let</span> <span class="ident">block_import_process</span> <span class="op">=</span> <span class="ident">block_import_process</span>(
-				<span class="ident">block_import</span>,
-				<span class="ident">verifier</span>,
-				<span class="ident">worker</span>.<span class="ident">result_sender</span>.<span class="ident">clone</span>(),
-				<span class="ident">block_import_port</span>,
-				<span class="ident">worker</span>.<span class="ident">metrics</span>.<span class="ident">clone</span>(),
-				<span class="ident">delay_between_blocks</span>,
+			<span class="kw">let </span>block_import_process = block_import_process(
+				block_import,
+				verifier,
+				worker.result_sender.clone(),
+				block_import_port,
+				worker.metrics.clone(),
+				delay_between_blocks,
 			);
-			<span class="macro">futures::pin_mut!</span>(<span class="ident">block_import_process</span>);
+			<span class="macro">futures::pin_mut!</span>(block_import_process);
 
-			<span class="kw">loop</span> {
-				<span class="comment">// If the results sender is closed, that means that the import queue is shutting</span>
-				<span class="comment">// down and we should end this future.</span>
-				<span class="kw">if</span> <span class="ident">worker</span>.<span class="ident">result_sender</span>.<span class="ident">is_closed</span>() {
+			<span class="kw">loop </span>{
+				<span class="comment">// If the results sender is closed, that means that the import queue is shutting
+				// down and we should end this future.
+				</span><span class="kw">if </span>worker.result_sender.is_closed() {
 					<span class="macro">log::debug!</span>(
-						<span class="ident">target</span>: <span class="string">&quot;block-import&quot;</span>,
+						target: <span class="string">&quot;block-import&quot;</span>,
 						<span class="string">&quot;Stopping block import because result channel was closed!&quot;</span>,
 					);
-					<span class="kw">return</span>
-				}
+					<span class="kw">return
+				</span>}
 
-				<span class="comment">// Make sure to first process all justifications</span>
-				<span class="kw">while</span> <span class="kw">let</span> <span class="ident">Poll::Ready</span>(<span class="ident">justification</span>) <span class="op">=</span> <span class="macro">futures::poll!</span>(<span class="ident">justification_port</span>.<span class="ident">next</span>()) {
-					<span class="kw">match</span> <span class="ident">justification</span> {
-						<span class="prelude-val">Some</span>(<span class="ident">ImportJustification</span>(<span class="ident">who</span>, <span class="ident">hash</span>, <span class="ident">number</span>, <span class="ident">justification</span>)) =&gt;
-							<span class="ident">worker</span>.<span class="ident">import_justification</span>(<span class="ident">who</span>, <span class="ident">hash</span>, <span class="ident">number</span>, <span class="ident">justification</span>).<span class="kw">await</span>,
-						<span class="prelude-val">None</span> =&gt; {
+				<span class="comment">// Make sure to first process all justifications
+				</span><span class="kw">while let </span>Poll::Ready(justification) = <span class="macro">futures::poll!</span>(justification_port.next()) {
+					<span class="kw">match </span>justification {
+						<span class="prelude-val">Some</span>(ImportJustification(who, hash, number, justification)) =&gt;
+							worker.import_justification(who, hash, number, justification).<span class="kw">await</span>,
+						<span class="prelude-val">None </span>=&gt; {
 							<span class="macro">log::debug!</span>(
-								<span class="ident">target</span>: <span class="string">&quot;block-import&quot;</span>,
+								target: <span class="string">&quot;block-import&quot;</span>,
 								<span class="string">&quot;Stopping block import because justification channel was closed!&quot;</span>,
 							);
-							<span class="kw">return</span>
-						},
+							<span class="kw">return
+						</span>},
 					}
 				}
 
-				<span class="kw">if</span> <span class="kw">let</span> <span class="ident">Poll::Ready</span>(()) <span class="op">=</span> <span class="macro">futures::poll!</span>(<span class="kw-2">&amp;mut</span> <span class="ident">block_import_process</span>) {
-					<span class="kw">return</span>
-				}
+				<span class="kw">if let </span>Poll::Ready(()) = <span class="macro">futures::poll!</span>(<span class="kw-2">&amp;mut </span>block_import_process) {
+					<span class="kw">return
+				</span>}
 
-				<span class="comment">// All futures that we polled are now pending.</span>
-				<span class="macro">futures::pending!</span>()
+				<span class="comment">// All futures that we polled are now pending.
+				</span><span class="macro">futures::pending!</span>()
 			}
 		};
 
-		(<span class="ident">future</span>, <span class="ident">justification_sender</span>, <span class="ident">block_import_sender</span>)
+		(future, justification_sender, block_import_sender)
 	}
 
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_justification</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">who</span>: <span class="ident">Origin</span>,
-		<span class="ident">hash</span>: <span class="ident">B::Hash</span>,
-		<span class="ident">number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">justification</span>: <span class="ident">Justification</span>,
+	<span class="kw">async fn </span>import_justification(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		who: Origin,
+		hash: B::Hash,
+		number: NumberFor&lt;B&gt;,
+		justification: Justification,
 	) {
-		<span class="kw">let</span> <span class="ident">started</span> <span class="op">=</span> <span class="ident">std::time::Instant::now</span>();
+		<span class="kw">let </span>started = std::time::Instant::now();
 
-		<span class="kw">let</span> <span class="ident">success</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">justification_import</span>.<span class="ident">as_mut</span>() {
-			<span class="prelude-val">Some</span>(<span class="ident">justification_import</span>) =&gt; <span class="ident">justification_import</span>
-				.<span class="ident">import_justification</span>(<span class="ident">hash</span>, <span class="ident">number</span>, <span class="ident">justification</span>)
-				.<span class="kw">await</span>
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+		<span class="kw">let </span>success = <span class="kw">match </span><span class="self">self</span>.justification_import.as_mut() {
+			<span class="prelude-val">Some</span>(justification_import) =&gt; justification_import
+				.import_justification(hash, number, justification)
+				.<span class="kw">await
+				</span>.map_err(|e| {
 					<span class="macro">debug!</span>(
-						<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>,
+						target: <span class="string">&quot;sync&quot;</span>,
 						<span class="string">&quot;Justification import failed for hash = {:?} with number = {:?} coming from node = {:?} with error: {}&quot;</span>,
-						<span class="ident">hash</span>,
-						<span class="ident">number</span>,
-						<span class="ident">who</span>,
-						<span class="ident">e</span>,
+						hash,
+						number,
+						who,
+						e,
 					);
-					<span class="ident">e</span>
+					e
 				})
-				.<span class="ident">is_ok</span>(),
-			<span class="prelude-val">None</span> =&gt; <span class="bool-val">false</span>,
+				.is_ok(),
+			<span class="prelude-val">None </span>=&gt; <span class="bool-val">false</span>,
 		};
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">metrics</span>.<span class="ident">as_ref</span>() {
-			<span class="ident">metrics</span>.<span class="ident">justification_import_time</span>.<span class="ident">observe</span>(<span class="ident">started</span>.<span class="ident">elapsed</span>().<span class="ident">as_secs_f64</span>());
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="self">self</span>.metrics.as_ref() {
+			metrics.justification_import_time.observe(started.elapsed().as_secs_f64());
 		}
 
-		<span class="self">self</span>.<span class="ident">result_sender</span>.<span class="ident">justification_imported</span>(<span class="ident">who</span>, <span class="kw-2">&amp;</span><span class="ident">hash</span>, <span class="ident">number</span>, <span class="ident">success</span>);
+		<span class="self">self</span>.result_sender.justification_imported(who, <span class="kw-2">&amp;</span>hash, number, success);
 	}
 }
 
-<span class="doccomment">/// Result of [`import_many_blocks`].</span>
-<span class="kw">struct</span> <span class="ident">ImportManyBlocksResult</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// The number of blocks imported successfully.</span>
-	<span class="ident">imported</span>: <span class="ident">usize</span>,
-	<span class="doccomment">/// The total number of blocks processed.</span>
-	<span class="ident">block_count</span>: <span class="ident">usize</span>,
-	<span class="doccomment">/// The import results for each block.</span>
-	<span class="ident">results</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BlockImportStatus</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">BlockImportError</span><span class="op">&gt;</span>, <span class="ident">B::Hash</span>)<span class="op">&gt;</span>,
+<span class="doccomment">/// Result of [`import_many_blocks`].
+</span><span class="kw">struct </span>ImportManyBlocksResult&lt;B: BlockT&gt; {
+	<span class="doccomment">/// The number of blocks imported successfully.
+	</span>imported: usize,
+	<span class="doccomment">/// The total number of blocks processed.
+	</span>block_count: usize,
+	<span class="doccomment">/// The import results for each block.
+	</span>results: Vec&lt;(<span class="prelude-ty">Result</span>&lt;BlockImportStatus&lt;NumberFor&lt;B&gt;&gt;, BlockImportError&gt;, B::Hash)&gt;,
 }
 
-<span class="doccomment">/// Import several blocks at once, returning import result for each block.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This will yield after each imported block once, to ensure that other futures can</span>
-<span class="doccomment">/// be called as well.</span>
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_many_blocks</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">V</span>: <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">Transaction</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>(
-	<span class="ident">import_handle</span>: <span class="kw-2">&amp;mut</span> <span class="ident">BoxBlockImport</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Transaction</span><span class="op">&gt;</span>,
-	<span class="ident">blocks_origin</span>: <span class="ident">BlockOrigin</span>,
-	<span class="ident">blocks</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IncomingBlock</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">verifier</span>: <span class="kw-2">&amp;mut</span> <span class="ident">V</span>,
-	<span class="ident">delay_between_blocks</span>: <span class="ident">Duration</span>,
-	<span class="ident">metrics</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Metrics</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">ImportManyBlocksResult</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">blocks</span>.<span class="ident">len</span>();
+<span class="doccomment">/// Import several blocks at once, returning import result for each block.
+///
+/// This will yield after each imported block once, to ensure that other futures can
+/// be called as well.
+</span><span class="kw">async fn </span>import_many_blocks&lt;B: BlockT, V: Verifier&lt;B&gt;, Transaction: Send + <span class="lifetime">&#39;static</span>&gt;(
+	import_handle: <span class="kw-2">&amp;mut </span>BoxBlockImport&lt;B, Transaction&gt;,
+	blocks_origin: BlockOrigin,
+	blocks: Vec&lt;IncomingBlock&lt;B&gt;&gt;,
+	verifier: <span class="kw-2">&amp;mut </span>V,
+	delay_between_blocks: Duration,
+	metrics: <span class="prelude-ty">Option</span>&lt;Metrics&gt;,
+) -&gt; ImportManyBlocksResult&lt;B&gt; {
+	<span class="kw">let </span>count = blocks.len();
 
-	<span class="kw">let</span> <span class="ident">blocks_range</span> <span class="op">=</span> <span class="kw">match</span> (
-		<span class="ident">blocks</span>.<span class="ident">first</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="ident">b</span>.<span class="ident">header</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span>.<span class="ident">number</span>())),
-		<span class="ident">blocks</span>.<span class="ident">last</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="ident">b</span>.<span class="ident">header</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span>.<span class="ident">number</span>())),
+	<span class="kw">let </span>blocks_range = <span class="kw">match </span>(
+		blocks.first().and_then(|b| b.header.as_ref().map(|h| h.number())),
+		blocks.last().and_then(|b| b.header.as_ref().map(|h| h.number())),
 	) {
-		(<span class="prelude-val">Some</span>(<span class="ident">first</span>), <span class="prelude-val">Some</span>(<span class="ident">last</span>)) <span class="kw">if</span> <span class="ident">first</span> <span class="op">!</span><span class="op">=</span> <span class="ident">last</span> =&gt; <span class="macro">format!</span>(<span class="string">&quot; ({}..{})&quot;</span>, <span class="ident">first</span>, <span class="ident">last</span>),
-		(<span class="prelude-val">Some</span>(<span class="ident">first</span>), <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="macro">format!</span>(<span class="string">&quot; ({})&quot;</span>, <span class="ident">first</span>),
-		<span class="kw">_</span> =&gt; <span class="ident">Default::default</span>(),
+		(<span class="prelude-val">Some</span>(first), <span class="prelude-val">Some</span>(last)) <span class="kw">if </span>first != last =&gt; <span class="macro">format!</span>(<span class="string">&quot; ({}..{})&quot;</span>, first, last),
+		(<span class="prelude-val">Some</span>(first), <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="macro">format!</span>(<span class="string">&quot; ({})&quot;</span>, first),
+		<span class="kw">_ </span>=&gt; Default::default(),
 	};
 
-	<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Starting import of {} blocks {}&quot;</span>, <span class="ident">count</span>, <span class="ident">blocks_range</span>);
+	<span class="macro">trace!</span>(target: <span class="string">&quot;sync&quot;</span>, <span class="string">&quot;Starting import of {} blocks {}&quot;</span>, count, blocks_range);
 
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">imported</span> <span class="op">=</span> <span class="number">0</span>;
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">results</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">has_error</span> <span class="op">=</span> <span class="bool-val">false</span>;
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blocks</span> <span class="op">=</span> <span class="ident">blocks</span>.<span class="ident">into_iter</span>();
+	<span class="kw">let </span><span class="kw-2">mut </span>imported = <span class="number">0</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>results = <span class="macro">vec!</span>[];
+	<span class="kw">let </span><span class="kw-2">mut </span>has_error = <span class="bool-val">false</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>blocks = blocks.into_iter();
 
-	<span class="comment">// Blocks in the response/drain should be in ascending order.</span>
-	<span class="kw">loop</span> {
-		<span class="comment">// Is there any block left to import?</span>
-		<span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">blocks</span>.<span class="ident">next</span>() {
-			<span class="prelude-val">Some</span>(<span class="ident">b</span>) =&gt; <span class="ident">b</span>,
-			<span class="prelude-val">None</span> =&gt; {
-				<span class="comment">// No block left to import, success!</span>
-				<span class="kw">return</span> <span class="ident">ImportManyBlocksResult</span> { <span class="ident">block_count</span>: <span class="ident">count</span>, <span class="ident">imported</span>, <span class="ident">results</span> }
+	<span class="comment">// Blocks in the response/drain should be in ascending order.
+	</span><span class="kw">loop </span>{
+		<span class="comment">// Is there any block left to import?
+		</span><span class="kw">let </span>block = <span class="kw">match </span>blocks.next() {
+			<span class="prelude-val">Some</span>(b) =&gt; b,
+			<span class="prelude-val">None </span>=&gt; {
+				<span class="comment">// No block left to import, success!
+				</span><span class="kw">return </span>ImportManyBlocksResult { block_count: count, imported, results }
 			},
 		};
 
-		<span class="kw">let</span> <span class="ident">block_number</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">header</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">h</span>.<span class="ident">number</span>());
-		<span class="kw">let</span> <span class="ident">block_hash</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">hash</span>;
-		<span class="kw">let</span> <span class="ident">import_result</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">has_error</span> {
-			<span class="prelude-val">Err</span>(<span class="ident">BlockImportError::Cancelled</span>)
-		} <span class="kw">else</span> {
-			<span class="comment">// The actual import.</span>
-			<span class="ident">import_single_block_metered</span>(
-				<span class="ident">import_handle</span>,
-				<span class="ident">blocks_origin</span>,
-				<span class="ident">block</span>,
-				<span class="ident">verifier</span>,
-				<span class="ident">metrics</span>.<span class="ident">clone</span>(),
+		<span class="kw">let </span>block_number = block.header.as_ref().map(|h| <span class="kw-2">*</span>h.number());
+		<span class="kw">let </span>block_hash = block.hash;
+		<span class="kw">let </span>import_result = <span class="kw">if </span>has_error {
+			<span class="prelude-val">Err</span>(BlockImportError::Cancelled)
+		} <span class="kw">else </span>{
+			<span class="comment">// The actual import.
+			</span>import_single_block_metered(
+				import_handle,
+				blocks_origin,
+				block,
+				verifier,
+				metrics.clone(),
 			)
-			.<span class="kw">await</span>
-		};
+			.<span class="kw">await
+		</span>};
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="ident">metrics</span>.<span class="ident">as_ref</span>() {
-			<span class="ident">metrics</span>.<span class="ident">report_import</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">import_result</span>);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = metrics.as_ref() {
+			metrics.report_import::&lt;B&gt;(<span class="kw-2">&amp;</span>import_result);
 		}
 
-		<span class="kw">if</span> <span class="ident">import_result</span>.<span class="ident">is_ok</span>() {
+		<span class="kw">if </span>import_result.is_ok() {
 			<span class="macro">trace!</span>(
-				<span class="ident">target</span>: <span class="string">&quot;sync&quot;</span>,
+				target: <span class="string">&quot;sync&quot;</span>,
 				<span class="string">&quot;Block imported successfully {:?} ({})&quot;</span>,
-				<span class="ident">block_number</span>,
-				<span class="ident">block_hash</span>,
+				block_number,
+				block_hash,
 			);
-			<span class="ident">imported</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-		} <span class="kw">else</span> {
-			<span class="ident">has_error</span> <span class="op">=</span> <span class="bool-val">true</span>;
+			imported += <span class="number">1</span>;
+		} <span class="kw">else </span>{
+			has_error = <span class="bool-val">true</span>;
 		}
 
-		<span class="ident">results</span>.<span class="ident">push</span>((<span class="ident">import_result</span>, <span class="ident">block_hash</span>));
+		results.push((import_result, block_hash));
 
-		<span class="kw">if</span> <span class="ident">delay_between_blocks</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Duration::default</span>() <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">has_error</span> {
-			<span class="ident">Delay::new</span>(<span class="ident">delay_between_blocks</span>).<span class="kw">await</span>;
-		} <span class="kw">else</span> {
-			<span class="ident">Yield::new</span>().<span class="kw">await</span>
-		}
+		<span class="kw">if </span>delay_between_blocks != Duration::default() &amp;&amp; !has_error {
+			Delay::new(delay_between_blocks).<span class="kw">await</span>;
+		} <span class="kw">else </span>{
+			Yield::new().<span class="kw">await
+		</span>}
 	}
 }
 
-<span class="doccomment">/// A future that will always `yield` on the first call of `poll` but schedules the</span>
-<span class="doccomment">/// current task for re-execution.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is done by getting the waker and calling `wake_by_ref` followed by returning</span>
-<span class="doccomment">/// `Pending`. The next time the `poll` is called, it will return `Ready`.</span>
-<span class="kw">struct</span> <span class="ident">Yield</span>(<span class="ident">bool</span>);
+<span class="doccomment">/// A future that will always `yield` on the first call of `poll` but schedules the
+/// current task for re-execution.
+///
+/// This is done by getting the waker and calling `wake_by_ref` followed by returning
+/// `Pending`. The next time the `poll` is called, it will return `Ready`.
+</span><span class="kw">struct </span>Yield(bool);
 
-<span class="kw">impl</span> <span class="ident">Yield</span> {
-	<span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
+<span class="kw">impl </span>Yield {
+	<span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
 		<span class="self">Self</span>(<span class="bool-val">false</span>)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">Future</span> <span class="kw">for</span> <span class="ident">Yield</span> {
-	<span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> ();
+<span class="kw">impl </span>Future <span class="kw">for </span>Yield {
+	<span class="kw">type </span>Output = ();
 
-	<span class="kw">fn</span> <span class="ident">poll</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="number">0</span> {
-			<span class="self">self</span>.<span class="number">0</span> <span class="op">=</span> <span class="bool-val">true</span>;
-			<span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">wake_by_ref</span>();
-			<span class="ident">Poll::Pending</span>
-		} <span class="kw">else</span> {
-			<span class="ident">Poll::Ready</span>(())
+	<span class="kw">fn </span>poll(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;()&gt; {
+		<span class="kw">if </span>!<span class="self">self</span>.<span class="number">0 </span>{
+			<span class="self">self</span>.<span class="number">0 </span>= <span class="bool-val">true</span>;
+			cx.waker().wake_by_ref();
+			Poll::Pending
+		} <span class="kw">else </span>{
+			Poll::Ready(())
 		}
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="kw">crate</span>::{
-		<span class="ident">block_import</span>::{
-			<span class="ident">BlockCheckParams</span>, <span class="ident">BlockImport</span>, <span class="ident">BlockImportParams</span>, <span class="ident">ImportResult</span>, <span class="ident">JustificationImport</span>,
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use crate</span>::{
+		block_import::{
+			BlockCheckParams, BlockImport, BlockImportParams, ImportResult, JustificationImport,
 		},
-		<span class="ident">import_queue</span>::{<span class="ident">CacheKeyId</span>, <span class="ident">Verifier</span>},
+		import_queue::{CacheKeyId, Verifier},
 	};
-	<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">executor::block_on</span>, <span class="ident">Future</span>};
-	<span class="kw">use</span> <span class="ident">sp_test_primitives</span>::{<span class="ident">Block</span>, <span class="ident">BlockNumber</span>, <span class="ident">Extrinsic</span>, <span class="ident">Hash</span>, <span class="ident">Header</span>};
-	<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+	<span class="kw">use </span>futures::{executor::block_on, Future};
+	<span class="kw">use </span>sp_test_primitives::{Block, BlockNumber, Extrinsic, Hash, Header};
+	<span class="kw">use </span>std::collections::HashMap;
 
-	<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
-	<span class="kw">impl</span> <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="kw">for</span> () {
-		<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-			<span class="ident">block</span>: <span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">Block</span>, ()<span class="op">&gt;</span>,
-		) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">Block</span>, ()<span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">CacheKeyId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span>), <span class="ident">String</span><span class="op">&gt;</span> {
-			<span class="prelude-val">Ok</span>((<span class="ident">BlockImportParams::new</span>(<span class="ident">block</span>.<span class="ident">origin</span>, <span class="ident">block</span>.<span class="ident">header</span>), <span class="prelude-val">None</span>))
+	<span class="attribute">#[async_trait::async_trait]
+	</span><span class="kw">impl </span>Verifier&lt;Block&gt; <span class="kw">for </span>() {
+		<span class="kw">async fn </span>verify(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+			block: BlockImportParams&lt;Block, ()&gt;,
+		) -&gt; <span class="prelude-ty">Result</span>&lt;(BlockImportParams&lt;Block, ()&gt;, <span class="prelude-ty">Option</span>&lt;Vec&lt;(CacheKeyId, Vec&lt;u8&gt;)&gt;&gt;), String&gt; {
+			<span class="prelude-val">Ok</span>((BlockImportParams::new(block.origin, block.header), <span class="prelude-val">None</span>))
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
-	<span class="kw">impl</span> <span class="ident">BlockImport</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="kw">for</span> () {
-		<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">sp_consensus::Error</span>;
-		<span class="kw">type</span> <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">Extrinsic</span>;
+	<span class="attribute">#[async_trait::async_trait]
+	</span><span class="kw">impl </span>BlockImport&lt;Block&gt; <span class="kw">for </span>() {
+		<span class="kw">type </span>Error = sp_consensus::Error;
+		<span class="kw">type </span>Transaction = Extrinsic;
 
-		<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">check_block</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-			<span class="ident">_block</span>: <span class="ident">BlockCheckParams</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-		) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ImportResult</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::imported</span>(<span class="bool-val">false</span>))
+		<span class="kw">async fn </span>check_block(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+			_block: BlockCheckParams&lt;Block&gt;,
+		) -&gt; <span class="prelude-ty">Result</span>&lt;ImportResult, <span class="self">Self</span>::Error&gt; {
+			<span class="prelude-val">Ok</span>(ImportResult::imported(<span class="bool-val">false</span>))
 		}
 
-		<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_block</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-			<span class="ident">_block</span>: <span class="ident">BlockImportParams</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident"><span class="self">Self</span>::Transaction</span><span class="op">&gt;</span>,
-			<span class="ident">_cache</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">CacheKeyId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ImportResult</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">ImportResult::imported</span>(<span class="bool-val">true</span>))
+		<span class="kw">async fn </span>import_block(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+			_block: BlockImportParams&lt;Block, <span class="self">Self</span>::Transaction&gt;,
+			_cache: HashMap&lt;CacheKeyId, Vec&lt;u8&gt;&gt;,
+		) -&gt; <span class="prelude-ty">Result</span>&lt;ImportResult, <span class="self">Self</span>::Error&gt; {
+			<span class="prelude-val">Ok</span>(ImportResult::imported(<span class="bool-val">true</span>))
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
-	<span class="kw">impl</span> <span class="ident">JustificationImport</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="kw">for</span> () {
-		<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">sp_consensus::Error</span>;
+	<span class="attribute">#[async_trait::async_trait]
+	</span><span class="kw">impl </span>JustificationImport&lt;Block&gt; <span class="kw">for </span>() {
+		<span class="kw">type </span>Error = sp_consensus::Error;
 
-		<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">on_start</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Hash</span>, <span class="ident">BlockNumber</span>)<span class="op">&gt;</span> {
-			<span class="ident">Vec::new</span>()
+		<span class="kw">async fn </span>on_start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;(Hash, BlockNumber)&gt; {
+			Vec::new()
 		}
 
-		<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">import_justification</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-			<span class="ident">_hash</span>: <span class="ident">Hash</span>,
-			<span class="ident">_number</span>: <span class="ident">BlockNumber</span>,
-			<span class="ident">_justification</span>: <span class="ident">Justification</span>,
-		) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+		<span class="kw">async fn </span>import_justification(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+			_hash: Hash,
+			_number: BlockNumber,
+			_justification: Justification,
+		) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
 			<span class="prelude-val">Ok</span>(())
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
-	<span class="kw">enum</span> <span class="ident">Event</span> {
-		<span class="ident">JustificationImported</span>(<span class="ident">Hash</span>),
-		<span class="ident">BlockImported</span>(<span class="ident">Hash</span>),
+	<span class="attribute">#[derive(Debug, PartialEq)]
+	</span><span class="kw">enum </span>Event {
+		JustificationImported(Hash),
+		BlockImported(Hash),
 	}
 
-	<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-	<span class="kw">struct</span> <span class="ident">TestLink</span> {
-		<span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Event</span><span class="op">&gt;</span>,
+	<span class="attribute">#[derive(Default)]
+	</span><span class="kw">struct </span>TestLink {
+		events: Vec&lt;Event&gt;,
 	}
 
-	<span class="kw">impl</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TestLink</span> {
-		<span class="kw">fn</span> <span class="ident">blocks_processed</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-			<span class="ident">_imported</span>: <span class="ident">usize</span>,
-			<span class="ident">_count</span>: <span class="ident">usize</span>,
-			<span class="ident">results</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BlockImportStatus</span><span class="op">&lt;</span><span class="ident">BlockNumber</span><span class="op">&gt;</span>, <span class="ident">BlockImportError</span><span class="op">&gt;</span>, <span class="ident">Hash</span>)<span class="op">&gt;</span>,
+	<span class="kw">impl </span>Link&lt;Block&gt; <span class="kw">for </span>TestLink {
+		<span class="kw">fn </span>blocks_processed(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+			_imported: usize,
+			_count: usize,
+			results: Vec&lt;(<span class="prelude-ty">Result</span>&lt;BlockImportStatus&lt;BlockNumber&gt;, BlockImportError&gt;, Hash)&gt;,
 		) {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">hash</span>) <span class="op">=</span> <span class="ident">results</span>.<span class="ident">into_iter</span>().<span class="ident">find_map</span>(<span class="op">|</span>(<span class="ident">r</span>, <span class="ident">h</span>)<span class="op">|</span> <span class="ident">r</span>.<span class="ident">ok</span>().<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">h</span>)) {
-				<span class="self">self</span>.<span class="ident">events</span>.<span class="ident">push</span>(<span class="ident">Event::BlockImported</span>(<span class="ident">hash</span>));
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(hash) = results.into_iter().find_map(|(r, h)| r.ok().map(|<span class="kw">_</span>| h)) {
+				<span class="self">self</span>.events.push(Event::BlockImported(hash));
 			}
 		}
 
-		<span class="kw">fn</span> <span class="ident">justification_imported</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-			<span class="ident">_who</span>: <span class="ident">Origin</span>,
-			<span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">Hash</span>,
-			<span class="ident">_number</span>: <span class="ident">BlockNumber</span>,
-			<span class="ident">_success</span>: <span class="ident">bool</span>,
+		<span class="kw">fn </span>justification_imported(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+			_who: Origin,
+			hash: <span class="kw-2">&amp;</span>Hash,
+			_number: BlockNumber,
+			_success: bool,
 		) {
-			<span class="self">self</span>.<span class="ident">events</span>.<span class="ident">push</span>(<span class="ident">Event::JustificationImported</span>(<span class="ident">hash</span>.<span class="ident">clone</span>()))
+			<span class="self">self</span>.events.push(Event::JustificationImported(hash.clone()))
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">prioritizes_finality_work_over_block_import</span>() {
-		<span class="kw">let</span> (<span class="ident">result_sender</span>, <span class="kw-2">mut</span> <span class="ident">result_port</span>) <span class="op">=</span> <span class="ident">buffered_link::buffered_link</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>prioritizes_finality_work_over_block_import() {
+		<span class="kw">let </span>(result_sender, <span class="kw-2">mut </span>result_port) = buffered_link::buffered_link();
 
-		<span class="kw">let</span> (<span class="ident">worker</span>, <span class="kw-2">mut</span> <span class="ident">finality_sender</span>, <span class="kw-2">mut</span> <span class="ident">block_import_sender</span>) <span class="op">=</span>
-			<span class="ident">BlockImportWorker::new</span>(<span class="ident">result_sender</span>, (), <span class="ident">Box::new</span>(()), <span class="prelude-val">Some</span>(<span class="ident">Box::new</span>(())), <span class="prelude-val">None</span>);
-		<span class="macro">futures::pin_mut!</span>(<span class="ident">worker</span>);
+		<span class="kw">let </span>(worker, <span class="kw-2">mut </span>finality_sender, <span class="kw-2">mut </span>block_import_sender) =
+			BlockImportWorker::new(result_sender, (), Box::new(()), <span class="prelude-val">Some</span>(Box::new(())), <span class="prelude-val">None</span>);
+		<span class="macro">futures::pin_mut!</span>(worker);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">import_block</span> <span class="op">=</span> <span class="op">|</span><span class="ident">n</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">header</span> <span class="op">=</span> <span class="ident">Header</span> {
-				<span class="ident">parent_hash</span>: <span class="ident">Hash::random</span>(),
-				<span class="ident">number</span>: <span class="ident">n</span>,
-				<span class="ident">extrinsics_root</span>: <span class="ident">Hash::random</span>(),
-				<span class="ident">state_root</span>: <span class="ident">Default::default</span>(),
-				<span class="ident">digest</span>: <span class="ident">Default::default</span>(),
+		<span class="kw">let </span><span class="kw-2">mut </span>import_block = |n| {
+			<span class="kw">let </span>header = Header {
+				parent_hash: Hash::random(),
+				number: n,
+				extrinsics_root: Hash::random(),
+				state_root: Default::default(),
+				digest: Default::default(),
 			};
 
-			<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">header</span>.<span class="ident">hash</span>();
+			<span class="kw">let </span>hash = header.hash();
 
-			<span class="ident">block_on</span>(<span class="ident">block_import_sender</span>.<span class="ident">send</span>(<span class="ident">worker_messages::ImportBlocks</span>(
-				<span class="ident">BlockOrigin::Own</span>,
-				<span class="macro">vec!</span>[<span class="ident">IncomingBlock</span> {
-					<span class="ident">hash</span>,
-					<span class="ident">header</span>: <span class="prelude-val">Some</span>(<span class="ident">header</span>),
-					<span class="ident">body</span>: <span class="prelude-val">None</span>,
-					<span class="ident">indexed_body</span>: <span class="prelude-val">None</span>,
-					<span class="ident">justifications</span>: <span class="prelude-val">None</span>,
-					<span class="ident">origin</span>: <span class="prelude-val">None</span>,
-					<span class="ident">allow_missing_state</span>: <span class="bool-val">false</span>,
-					<span class="ident">import_existing</span>: <span class="bool-val">false</span>,
-					<span class="ident">state</span>: <span class="prelude-val">None</span>,
-					<span class="ident">skip_execution</span>: <span class="bool-val">false</span>,
+			block_on(block_import_sender.send(worker_messages::ImportBlocks(
+				BlockOrigin::Own,
+				<span class="macro">vec!</span>[IncomingBlock {
+					hash,
+					header: <span class="prelude-val">Some</span>(header),
+					body: <span class="prelude-val">None</span>,
+					indexed_body: <span class="prelude-val">None</span>,
+					justifications: <span class="prelude-val">None</span>,
+					origin: <span class="prelude-val">None</span>,
+					allow_missing_state: <span class="bool-val">false</span>,
+					import_existing: <span class="bool-val">false</span>,
+					state: <span class="prelude-val">None</span>,
+					skip_execution: <span class="bool-val">false</span>,
 				}],
 			)))
-			.<span class="ident">unwrap</span>();
+			.unwrap();
 
-			<span class="ident">hash</span>
+			hash
 		};
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">import_justification</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">Hash::random</span>();
-			<span class="ident">block_on</span>(<span class="ident">finality_sender</span>.<span class="ident">send</span>(<span class="ident">worker_messages::ImportJustification</span>(
-				<span class="ident">libp2p::PeerId::random</span>(),
-				<span class="ident">hash</span>,
+		<span class="kw">let </span><span class="kw-2">mut </span>import_justification = || {
+			<span class="kw">let </span>hash = Hash::random();
+			block_on(finality_sender.send(worker_messages::ImportJustification(
+				libp2p::PeerId::random(),
+				hash,
 				<span class="number">1</span>,
-				(<span class="kw-2">*</span><span class="string">b&quot;TEST&quot;</span>, <span class="ident">Vec::new</span>()),
+				(<span class="kw-2">*</span><span class="string">b&quot;TEST&quot;</span>, Vec::new()),
 			)))
-			.<span class="ident">unwrap</span>();
+			.unwrap();
 
-			<span class="ident">hash</span>
+			hash
 		};
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">link</span> <span class="op">=</span> <span class="ident">TestLink::default</span>();
+		<span class="kw">let </span><span class="kw-2">mut </span>link = TestLink::default();
 
-		<span class="comment">// we send a bunch of tasks to the worker</span>
-		<span class="kw">let</span> <span class="ident">block1</span> <span class="op">=</span> <span class="ident">import_block</span>(<span class="number">1</span>);
-		<span class="kw">let</span> <span class="ident">block2</span> <span class="op">=</span> <span class="ident">import_block</span>(<span class="number">2</span>);
-		<span class="kw">let</span> <span class="ident">block3</span> <span class="op">=</span> <span class="ident">import_block</span>(<span class="number">3</span>);
-		<span class="kw">let</span> <span class="ident">justification1</span> <span class="op">=</span> <span class="ident">import_justification</span>();
-		<span class="kw">let</span> <span class="ident">justification2</span> <span class="op">=</span> <span class="ident">import_justification</span>();
-		<span class="kw">let</span> <span class="ident">block4</span> <span class="op">=</span> <span class="ident">import_block</span>(<span class="number">4</span>);
-		<span class="kw">let</span> <span class="ident">block5</span> <span class="op">=</span> <span class="ident">import_block</span>(<span class="number">5</span>);
-		<span class="kw">let</span> <span class="ident">block6</span> <span class="op">=</span> <span class="ident">import_block</span>(<span class="number">6</span>);
-		<span class="kw">let</span> <span class="ident">justification3</span> <span class="op">=</span> <span class="ident">import_justification</span>();
+		<span class="comment">// we send a bunch of tasks to the worker
+		</span><span class="kw">let </span>block1 = import_block(<span class="number">1</span>);
+		<span class="kw">let </span>block2 = import_block(<span class="number">2</span>);
+		<span class="kw">let </span>block3 = import_block(<span class="number">3</span>);
+		<span class="kw">let </span>justification1 = import_justification();
+		<span class="kw">let </span>justification2 = import_justification();
+		<span class="kw">let </span>block4 = import_block(<span class="number">4</span>);
+		<span class="kw">let </span>block5 = import_block(<span class="number">5</span>);
+		<span class="kw">let </span>block6 = import_block(<span class="number">6</span>);
+		<span class="kw">let </span>justification3 = import_justification();
 
-		<span class="comment">// we poll the worker until we have processed 9 events</span>
-		<span class="ident">block_on</span>(<span class="ident">futures::future::poll_fn</span>(<span class="op">|</span><span class="ident">cx</span><span class="op">|</span> {
-			<span class="kw">while</span> <span class="ident">link</span>.<span class="ident">events</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="number">9</span> {
-				<span class="kw">match</span> <span class="ident">Future::poll</span>(<span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">worker</span>), <span class="ident">cx</span>) {
-					<span class="ident">Poll::Pending</span> =&gt; {},
-					<span class="ident">Poll::Ready</span>(()) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;import queue worker should not conclude.&quot;</span>),
+		<span class="comment">// we poll the worker until we have processed 9 events
+		</span>block_on(futures::future::poll_fn(|cx| {
+			<span class="kw">while </span>link.events.len() &lt; <span class="number">9 </span>{
+				<span class="kw">match </span>Future::poll(Pin::new(<span class="kw-2">&amp;mut </span>worker), cx) {
+					Poll::Pending =&gt; {},
+					Poll::Ready(()) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;import queue worker should not conclude.&quot;</span>),
 				}
 
-				<span class="ident">result_port</span>.<span class="ident">poll_actions</span>(<span class="ident">cx</span>, <span class="kw-2">&amp;mut</span> <span class="ident">link</span>).<span class="ident">unwrap</span>();
+				result_port.poll_actions(cx, <span class="kw-2">&amp;mut </span>link).unwrap();
 			}
 
-			<span class="ident">Poll::Ready</span>(())
+			Poll::Ready(())
 		}));
 
-		<span class="comment">// all justification tasks must be done before any block import work</span>
-		<span class="macro">assert_eq!</span>(
-			<span class="ident">link</span>.<span class="ident">events</span>,
+		<span class="comment">// all justification tasks must be done before any block import work
+		</span><span class="macro">assert_eq!</span>(
+			link.events,
 			<span class="macro">vec!</span>[
-				<span class="ident">Event::JustificationImported</span>(<span class="ident">justification1</span>),
-				<span class="ident">Event::JustificationImported</span>(<span class="ident">justification2</span>),
-				<span class="ident">Event::JustificationImported</span>(<span class="ident">justification3</span>),
-				<span class="ident">Event::BlockImported</span>(<span class="ident">block1</span>),
-				<span class="ident">Event::BlockImported</span>(<span class="ident">block2</span>),
-				<span class="ident">Event::BlockImported</span>(<span class="ident">block3</span>),
-				<span class="ident">Event::BlockImported</span>(<span class="ident">block4</span>),
-				<span class="ident">Event::BlockImported</span>(<span class="ident">block5</span>),
-				<span class="ident">Event::BlockImported</span>(<span class="ident">block6</span>),
+				Event::JustificationImported(justification1),
+				Event::JustificationImported(justification2),
+				Event::JustificationImported(justification3),
+				Event::BlockImported(block1),
+				Event::BlockImported(block2),
+				Event::BlockImported(block3),
+				Event::BlockImported(block4),
+				Event::BlockImported(block5),
+				Event::BlockImported(block6),
 			]
 		);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_consensus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_consensus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

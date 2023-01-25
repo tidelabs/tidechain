@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-bforest-0.82.3/src/pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../cranelift_bforest/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../cranelift_bforest/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../cranelift_bforest/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-bforest-0.82.3/src/pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../cranelift_bforest/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -223,226 +218,225 @@
 <span id="218">218</span>
 <span id="219">219</span>
 <span id="220">220</span>
-</pre><pre class="rust"><code><span class="doccomment">//! B+-tree node pool.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! B+-tree node pool.
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Comparator</span>;
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Forest</span>, <span class="ident">Node</span>, <span class="ident">NodeData</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entity::PrimaryMap</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">Index</span>, <span class="ident">IndexMut</span>};
+</span><span class="attribute">#[cfg(test)]
+</span><span class="kw">use </span><span class="kw">super</span>::Comparator;
+<span class="kw">use super</span>::{Forest, Node, NodeData};
+<span class="kw">use </span><span class="kw">crate</span>::entity::PrimaryMap;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">use </span>core::fmt;
+<span class="kw">use </span>core::ops::{Index, IndexMut};
 
-<span class="doccomment">/// A pool of nodes, including a free list.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">NodePool</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Forest</span><span class="op">&gt;</span> {
-    <span class="ident">nodes</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">Node</span>, <span class="ident">NodeData</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">freelist</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Node</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A pool of nodes, including a free list.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>NodePool&lt;F: Forest&gt; {
+    nodes: PrimaryMap&lt;Node, NodeData&lt;F&gt;&gt;,
+    freelist: <span class="prelude-ty">Option</span>&lt;Node&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Forest</span><span class="op">&gt;</span> <span class="ident">NodePool</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Allocate a new empty pool of nodes.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">nodes</span>: <span class="ident">PrimaryMap::new</span>(),
-            <span class="ident">freelist</span>: <span class="prelude-val">None</span>,
+<span class="kw">impl</span>&lt;F: Forest&gt; NodePool&lt;F&gt; {
+    <span class="doccomment">/// Allocate a new empty pool of nodes.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            nodes: PrimaryMap::new(),
+            freelist: <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="doccomment">/// Free all nodes.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">clear</span>();
-        <span class="self">self</span>.<span class="ident">freelist</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+    <span class="doccomment">/// Free all nodes.
+    </span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.nodes.clear();
+        <span class="self">self</span>.freelist = <span class="prelude-val">None</span>;
     }
 
-    <span class="doccomment">/// Allocate a new node containing `data`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_node</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">data</span>: <span class="ident">NodeData</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) -&gt; <span class="ident">Node</span> {
-        <span class="macro">debug_assert!</span>(<span class="op">!</span><span class="ident">data</span>.<span class="ident">is_free</span>(), <span class="string">&quot;can&#39;t allocate free node&quot;</span>);
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">freelist</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">node</span>) =&gt; {
-                <span class="comment">// Remove this node from the free list.</span>
-                <span class="kw">match</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">node</span>] {
-                    <span class="ident">NodeData::Free</span> { <span class="ident">next</span> } =&gt; <span class="self">self</span>.<span class="ident">freelist</span> <span class="op">=</span> <span class="ident">next</span>,
-                    <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid {} on free list&quot;</span>, <span class="ident">node</span>),
+    <span class="doccomment">/// Allocate a new node containing `data`.
+    </span><span class="kw">pub fn </span>alloc_node(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data: NodeData&lt;F&gt;) -&gt; Node {
+        <span class="macro">debug_assert!</span>(!data.is_free(), <span class="string">&quot;can&#39;t allocate free node&quot;</span>);
+        <span class="kw">match </span><span class="self">self</span>.freelist {
+            <span class="prelude-val">Some</span>(node) =&gt; {
+                <span class="comment">// Remove this node from the free list.
+                </span><span class="kw">match </span><span class="self">self</span>.nodes[node] {
+                    NodeData::Free { next } =&gt; <span class="self">self</span>.freelist = next,
+                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid {} on free list&quot;</span>, node),
                 }
-                <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">node</span>] <span class="op">=</span> <span class="ident">data</span>;
-                <span class="ident">node</span>
+                <span class="self">self</span>.nodes[node] = data;
+                node
             }
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="comment">// The free list is empty. Allocate a new node.</span>
-                <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">push</span>(<span class="ident">data</span>)
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="comment">// The free list is empty. Allocate a new node.
+                </span><span class="self">self</span>.nodes.push(data)
             }
         }
     }
 
-    <span class="doccomment">/// Free a node.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">free_node</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">node</span>: <span class="ident">Node</span>) {
-        <span class="comment">// Quick check for a double free.</span>
-        <span class="macro">debug_assert!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">node</span>].<span class="ident">is_free</span>(), <span class="string">&quot;{} is already free&quot;</span>, <span class="ident">node</span>);
-        <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">node</span>] <span class="op">=</span> <span class="ident">NodeData::Free</span> {
-            <span class="ident">next</span>: <span class="self">self</span>.<span class="ident">freelist</span>,
+    <span class="doccomment">/// Free a node.
+    </span><span class="kw">pub fn </span>free_node(<span class="kw-2">&amp;mut </span><span class="self">self</span>, node: Node) {
+        <span class="comment">// Quick check for a double free.
+        </span><span class="macro">debug_assert!</span>(!<span class="self">self</span>.nodes[node].is_free(), <span class="string">&quot;{} is already free&quot;</span>, node);
+        <span class="self">self</span>.nodes[node] = NodeData::Free {
+            next: <span class="self">self</span>.freelist,
         };
-        <span class="self">self</span>.<span class="ident">freelist</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>);
+        <span class="self">self</span>.freelist = <span class="prelude-val">Some</span>(node);
     }
 
-    <span class="doccomment">/// Free the entire tree rooted at `node`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">free_tree</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">node</span>: <span class="ident">Node</span>) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">NodeData::Inner</span> { <span class="ident">size</span>, <span class="ident">tree</span>, .. } <span class="op">=</span> <span class="self">self</span>[<span class="ident">node</span>] {
-            <span class="comment">// Note that we have to capture `tree` by value to avoid borrow checker trouble.</span>
-            <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cargo-clippy&quot;</span>, <span class="ident">allow</span>(<span class="ident">clippy::needless_range_loop</span>))]</span>
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">usize::from</span>(<span class="ident">size</span> <span class="op">+</span> <span class="number">1</span>) {
-                <span class="comment">// Recursively free sub-trees. This recursion can never be deeper than `MAX_PATH`,</span>
-                <span class="comment">// and since most trees have less than a handful of nodes, it is worthwhile to</span>
-                <span class="comment">// avoid the heap allocation for an iterative tree traversal.</span>
-                <span class="self">self</span>.<span class="ident">free_tree</span>(<span class="ident">tree</span>[<span class="ident">i</span>]);
+    <span class="doccomment">/// Free the entire tree rooted at `node`.
+    </span><span class="kw">pub fn </span>free_tree(<span class="kw-2">&amp;mut </span><span class="self">self</span>, node: Node) {
+        <span class="kw">if let </span>NodeData::Inner { size, tree, .. } = <span class="self">self</span>[node] {
+            <span class="comment">// Note that we have to capture `tree` by value to avoid borrow checker trouble.
+            </span><span class="attribute">#[cfg_attr(feature = <span class="string">&quot;cargo-clippy&quot;</span>, allow(clippy::needless_range_loop))]
+            </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..usize::from(size + <span class="number">1</span>) {
+                <span class="comment">// Recursively free sub-trees. This recursion can never be deeper than `MAX_PATH`,
+                // and since most trees have less than a handful of nodes, it is worthwhile to
+                // avoid the heap allocation for an iterative tree traversal.
+                </span><span class="self">self</span>.free_tree(tree[i]);
             }
         }
-        <span class="self">self</span>.<span class="ident">free_node</span>(<span class="ident">node</span>);
+        <span class="self">self</span>.free_node(node);
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Forest</span><span class="op">&gt;</span> <span class="ident">NodePool</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Verify the consistency of the tree rooted at `node`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_tree</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">Comparator</span><span class="op">&lt;</span><span class="ident">F::Key</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">node</span>: <span class="ident">Node</span>, <span class="ident">comp</span>: <span class="kw-2">&amp;</span><span class="ident">C</span>)
-    <span class="kw">where</span>
-        <span class="ident">NodeData</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>: <span class="ident">fmt::Display</span>,
-        <span class="ident">F::Key</span>: <span class="ident">fmt::Display</span>,
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">impl</span>&lt;F: Forest&gt; NodePool&lt;F&gt; {
+    <span class="doccomment">/// Verify the consistency of the tree rooted at `node`.
+    </span><span class="kw">pub fn </span>verify_tree&lt;C: Comparator&lt;F::Key&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, node: Node, comp: <span class="kw-2">&amp;</span>C)
+    <span class="kw">where
+        </span>NodeData&lt;F&gt;: fmt::Display,
+        F::Key: fmt::Display,
     {
-        <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entity::EntitySet</span>;
-        <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
-        <span class="kw">use</span> <span class="ident">core::borrow::Borrow</span>;
-        <span class="kw">use</span> <span class="ident">core::cmp::Ordering</span>;
+        <span class="kw">use </span><span class="kw">crate</span>::entity::EntitySet;
+        <span class="kw">use </span>alloc::vec::Vec;
+        <span class="kw">use </span>core::borrow::Borrow;
+        <span class="kw">use </span>core::cmp::Ordering;
 
-        <span class="comment">// The root node can&#39;t be an inner node with just a single sub-tree. It should have been</span>
-        <span class="comment">// pruned.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">NodeData::Inner</span> { <span class="ident">size</span>, .. } <span class="op">=</span> <span class="self">self</span>[<span class="ident">node</span>] {
-            <span class="macro">assert!</span>(<span class="ident">size</span> <span class="op">&gt;</span> <span class="number">0</span>, <span class="string">&quot;Root must have more than one sub-tree&quot;</span>);
+        <span class="comment">// The root node can&#39;t be an inner node with just a single sub-tree. It should have been
+        // pruned.
+        </span><span class="kw">if let </span>NodeData::Inner { size, .. } = <span class="self">self</span>[node] {
+            <span class="macro">assert!</span>(size &gt; <span class="number">0</span>, <span class="string">&quot;Root must have more than one sub-tree&quot;</span>);
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">done</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>[<span class="ident">node</span>] {
-            <span class="ident">NodeData::Inner</span> { <span class="ident">size</span>, .. } <span class="op">|</span> <span class="ident">NodeData::Leaf</span> { <span class="ident">size</span>, .. } =&gt; {
-                <span class="ident">EntitySet::with_capacity</span>(<span class="ident">size</span>.<span class="ident">into</span>())
+        <span class="kw">let </span><span class="kw-2">mut </span>done = <span class="kw">match </span><span class="self">self</span>[node] {
+            NodeData::Inner { size, .. } | NodeData::Leaf { size, .. } =&gt; {
+                EntitySet::with_capacity(size.into())
             }
-            <span class="kw">_</span> =&gt; <span class="ident">EntitySet::new</span>(),
+            <span class="kw">_ </span>=&gt; EntitySet::new(),
         };
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">todo</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>todo = Vec::new();
 
-        <span class="comment">// Todo-list entries are:</span>
-        <span class="comment">// 1. Optional LHS key which must be &lt;= all node entries.</span>
-        <span class="comment">// 2. The node reference.</span>
-        <span class="comment">// 3. Optional RHS key which must be &gt; all node entries.</span>
-        <span class="ident">todo</span>.<span class="ident">push</span>((<span class="prelude-val">None</span>, <span class="ident">node</span>, <span class="prelude-val">None</span>));
+        <span class="comment">// Todo-list entries are:
+        // 1. Optional LHS key which must be &lt;= all node entries.
+        // 2. The node reference.
+        // 3. Optional RHS key which must be &gt; all node entries.
+        </span>todo.push((<span class="prelude-val">None</span>, node, <span class="prelude-val">None</span>));
 
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">lkey</span>, <span class="ident">node</span>, <span class="ident">rkey</span>)) <span class="op">=</span> <span class="ident">todo</span>.<span class="ident">pop</span>() {
-            <span class="macro">assert!</span>(<span class="ident">done</span>.<span class="ident">insert</span>(<span class="ident">node</span>), <span class="string">&quot;Node appears more than once in tree&quot;</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">lower</span> <span class="op">=</span> <span class="ident">lkey</span>;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>((lkey, node, rkey)) = todo.pop() {
+            <span class="macro">assert!</span>(done.insert(node), <span class="string">&quot;Node appears more than once in tree&quot;</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>lower = lkey;
 
-            <span class="kw">match</span> <span class="self">self</span>[<span class="ident">node</span>] {
-                <span class="ident">NodeData::Inner</span> { <span class="ident">size</span>, <span class="ident">keys</span>, <span class="ident">tree</span> } =&gt; {
-                    <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">size</span> <span class="kw">as</span> <span class="ident">usize</span>;
-                    <span class="kw">let</span> <span class="ident">capacity</span> <span class="op">=</span> <span class="ident">tree</span>.<span class="ident">len</span>();
-                    <span class="kw">let</span> <span class="ident">keys</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">keys</span>[<span class="number">0</span>..<span class="ident">size</span>];
+            <span class="kw">match </span><span class="self">self</span>[node] {
+                NodeData::Inner { size, keys, tree } =&gt; {
+                    <span class="kw">let </span>size = size <span class="kw">as </span>usize;
+                    <span class="kw">let </span>capacity = tree.len();
+                    <span class="kw">let </span>keys = <span class="kw-2">&amp;</span>keys[<span class="number">0</span>..size];
 
-                    <span class="comment">// Verify occupancy.</span>
-                    <span class="comment">// Right-most nodes can be small, but others must be at least half full.</span>
-                    <span class="macro">assert!</span>(
-                        <span class="ident">rkey</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> (<span class="ident">size</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">*</span> <span class="number">2</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">capacity</span>,
+                    <span class="comment">// Verify occupancy.
+                    // Right-most nodes can be small, but others must be at least half full.
+                    </span><span class="macro">assert!</span>(
+                        rkey.is_none() || (size + <span class="number">1</span>) * <span class="number">2 </span>&gt;= capacity,
                         <span class="string">&quot;Only {}/{} entries in {}:{}, upper={}&quot;</span>,
-                        <span class="ident">size</span> <span class="op">+</span> <span class="number">1</span>,
-                        <span class="ident">capacity</span>,
-                        <span class="ident">node</span>,
-                        <span class="self">self</span>[<span class="ident">node</span>],
-                        <span class="ident">rkey</span>.<span class="ident">unwrap</span>()
+                        size + <span class="number">1</span>,
+                        capacity,
+                        node,
+                        <span class="self">self</span>[node],
+                        rkey.unwrap()
                     );
 
-                    <span class="comment">// Queue up the sub-trees, checking for duplicates.</span>
-                    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">size</span> <span class="op">+</span> <span class="number">1</span> {
-                        <span class="comment">// Get an upper bound for node[i].</span>
-                        <span class="kw">let</span> <span class="ident">upper</span> <span class="op">=</span> <span class="ident">keys</span>.<span class="ident">get</span>(<span class="ident">i</span>).<span class="ident">cloned</span>().<span class="ident">or</span>(<span class="ident">rkey</span>);
+                    <span class="comment">// Queue up the sub-trees, checking for duplicates.
+                    </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..size + <span class="number">1 </span>{
+                        <span class="comment">// Get an upper bound for node[i].
+                        </span><span class="kw">let </span>upper = keys.get(i).cloned().or(rkey);
 
-                        <span class="comment">// Check that keys are strictly monotonic.</span>
-                        <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">a</span>), <span class="prelude-val">Some</span>(<span class="ident">b</span>)) <span class="op">=</span> (<span class="ident">lower</span>, <span class="ident">upper</span>) {
+                        <span class="comment">// Check that keys are strictly monotonic.
+                        </span><span class="kw">if let </span>(<span class="prelude-val">Some</span>(a), <span class="prelude-val">Some</span>(b)) = (lower, upper) {
                             <span class="macro">assert_eq!</span>(
-                                <span class="ident">comp</span>.<span class="ident">cmp</span>(<span class="ident">a</span>, <span class="ident">b</span>),
-                                <span class="ident">Ordering::Less</span>,
+                                comp.cmp(a, b),
+                                Ordering::Less,
                                 <span class="string">&quot;Key order {} &lt; {} failed in {}: {}&quot;</span>,
-                                <span class="ident">a</span>,
-                                <span class="ident">b</span>,
-                                <span class="ident">node</span>,
-                                <span class="self">self</span>[<span class="ident">node</span>]
+                                a,
+                                b,
+                                node,
+                                <span class="self">self</span>[node]
                             );
                         }
 
-                        <span class="comment">// Queue up the sub-tree.</span>
-                        <span class="ident">todo</span>.<span class="ident">push</span>((<span class="ident">lower</span>, <span class="ident">tree</span>[<span class="ident">i</span>], <span class="ident">upper</span>));
+                        <span class="comment">// Queue up the sub-tree.
+                        </span>todo.push((lower, tree[i], upper));
 
-                        <span class="comment">// Set a lower bound for the next tree.</span>
-                        <span class="ident">lower</span> <span class="op">=</span> <span class="ident">upper</span>;
+                        <span class="comment">// Set a lower bound for the next tree.
+                        </span>lower = upper;
                     }
                 }
-                <span class="ident">NodeData::Leaf</span> { <span class="ident">size</span>, <span class="ident">keys</span>, .. } =&gt; {
-                    <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">size</span> <span class="kw">as</span> <span class="ident">usize</span>;
-                    <span class="kw">let</span> <span class="ident">capacity</span> <span class="op">=</span> <span class="ident">keys</span>.<span class="ident">borrow</span>().<span class="ident">len</span>();
-                    <span class="kw">let</span> <span class="ident">keys</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">keys</span>.<span class="ident">borrow</span>()[<span class="number">0</span>..<span class="ident">size</span>];
+                NodeData::Leaf { size, keys, .. } =&gt; {
+                    <span class="kw">let </span>size = size <span class="kw">as </span>usize;
+                    <span class="kw">let </span>capacity = keys.borrow().len();
+                    <span class="kw">let </span>keys = <span class="kw-2">&amp;</span>keys.borrow()[<span class="number">0</span>..size];
 
-                    <span class="comment">// Verify occupancy.</span>
-                    <span class="comment">// Right-most nodes can be small, but others must be at least half full.</span>
-                    <span class="macro">assert!</span>(<span class="ident">size</span> <span class="op">&gt;</span> <span class="number">0</span>, <span class="string">&quot;Leaf {} is empty&quot;</span>, <span class="ident">node</span>);
+                    <span class="comment">// Verify occupancy.
+                    // Right-most nodes can be small, but others must be at least half full.
+                    </span><span class="macro">assert!</span>(size &gt; <span class="number">0</span>, <span class="string">&quot;Leaf {} is empty&quot;</span>, node);
                     <span class="macro">assert!</span>(
-                        <span class="ident">rkey</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">size</span> <span class="op">*</span> <span class="number">2</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">capacity</span>,
+                        rkey.is_none() || size * <span class="number">2 </span>&gt;= capacity,
                         <span class="string">&quot;Only {}/{} entries in {}:{}, upper={}&quot;</span>,
-                        <span class="ident">size</span>,
-                        <span class="ident">capacity</span>,
-                        <span class="ident">node</span>,
-                        <span class="self">self</span>[<span class="ident">node</span>],
-                        <span class="ident">rkey</span>.<span class="ident">unwrap</span>()
+                        size,
+                        capacity,
+                        node,
+                        <span class="self">self</span>[node],
+                        rkey.unwrap()
                     );
 
-                    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">size</span> <span class="op">+</span> <span class="number">1</span> {
-                        <span class="kw">let</span> <span class="ident">upper</span> <span class="op">=</span> <span class="ident">keys</span>.<span class="ident">get</span>(<span class="ident">i</span>).<span class="ident">cloned</span>().<span class="ident">or</span>(<span class="ident">rkey</span>);
+                    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..size + <span class="number">1 </span>{
+                        <span class="kw">let </span>upper = keys.get(i).cloned().or(rkey);
 
-                        <span class="comment">// Check that keys are strictly monotonic.</span>
-                        <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">a</span>), <span class="prelude-val">Some</span>(<span class="ident">b</span>)) <span class="op">=</span> (<span class="ident">lower</span>, <span class="ident">upper</span>) {
-                            <span class="kw">let</span> <span class="ident">wanted</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="number">0</span> {
-                                <span class="ident">Ordering::Equal</span>
-                            } <span class="kw">else</span> {
-                                <span class="ident">Ordering::Less</span>
+                        <span class="comment">// Check that keys are strictly monotonic.
+                        </span><span class="kw">if let </span>(<span class="prelude-val">Some</span>(a), <span class="prelude-val">Some</span>(b)) = (lower, upper) {
+                            <span class="kw">let </span>wanted = <span class="kw">if </span>i == <span class="number">0 </span>{
+                                Ordering::Equal
+                            } <span class="kw">else </span>{
+                                Ordering::Less
                             };
                             <span class="macro">assert_eq!</span>(
-                                <span class="ident">comp</span>.<span class="ident">cmp</span>(<span class="ident">a</span>, <span class="ident">b</span>),
-                                <span class="ident">wanted</span>,
+                                comp.cmp(a, b),
+                                wanted,
                                 <span class="string">&quot;Key order for {} - {} failed in {}: {}&quot;</span>,
-                                <span class="ident">a</span>,
-                                <span class="ident">b</span>,
-                                <span class="ident">node</span>,
-                                <span class="self">self</span>[<span class="ident">node</span>]
+                                a,
+                                b,
+                                node,
+                                <span class="self">self</span>[node]
                             );
                         }
 
-                        <span class="comment">// Set a lower bound for the next key.</span>
-                        <span class="ident">lower</span> <span class="op">=</span> <span class="ident">upper</span>;
+                        <span class="comment">// Set a lower bound for the next key.
+                        </span>lower = upper;
                     }
                 }
-                <span class="ident">NodeData::Free</span> { .. } =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Free {} reached&quot;</span>, <span class="ident">node</span>),
+                NodeData::Free { .. } =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Free {} reached&quot;</span>, node),
             }
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Forest</span><span class="op">&gt;</span> <span class="ident">Index</span><span class="op">&lt;</span><span class="ident">Node</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">NodePool</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">NodeData</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;F: Forest&gt; Index&lt;Node&gt; <span class="kw">for </span>NodePool&lt;F&gt; {
+    <span class="kw">type </span>Output = NodeData&lt;F&gt;;
 
-    <span class="kw">fn</span> <span class="ident">index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">Node</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Output</span> {
-        <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">index</span>(<span class="ident">index</span>)
+    <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Node) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
+        <span class="self">self</span>.nodes.index(index)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Forest</span><span class="op">&gt;</span> <span class="ident">IndexMut</span><span class="op">&lt;</span><span class="ident">Node</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">NodePool</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">index_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">Node</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Output</span> {
-        <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">index_mut</span>(<span class="ident">index</span>)
+<span class="kw">impl</span>&lt;F: Forest&gt; IndexMut&lt;Node&gt; <span class="kw">for </span>NodePool&lt;F&gt; {
+    <span class="kw">fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: Node) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Output {
+        <span class="self">self</span>.nodes.index_mut(index)
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_bforest" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_bforest" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

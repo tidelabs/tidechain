@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-jit-0.35.3/src/code_memory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>code_memory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime_jit/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime_jit/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime_jit/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-jit-0.35.3/src/code_memory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>code_memory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime_jit/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -209,212 +204,211 @@
 <span id="204">204</span>
 <span id="205">205</span>
 <span id="206">206</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Memory management for executable code.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Memory management for executable code.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::unwind::UnwindRegistration</span>;
-<span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">bail</span>, <span class="ident">Context</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">object::read</span>::{<span class="ident">File</span>, <span class="ident">Object</span>, <span class="ident">ObjectSection</span>};
-<span class="kw">use</span> <span class="ident">std::mem::ManuallyDrop</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_runtime::MmapVec</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::unwind::UnwindRegistration;
+<span class="kw">use </span>anyhow::{bail, Context, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>object::read::{File, Object, ObjectSection};
+<span class="kw">use </span>std::mem::ManuallyDrop;
+<span class="kw">use </span>wasmtime_runtime::MmapVec;
 
-<span class="doccomment">/// Management of executable memory within a `MmapVec`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type consumes ownership of a region of memory and will manage the</span>
-<span class="doccomment">/// executable permissions of the contained JIT code as necessary.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CodeMemory</span> {
-    <span class="comment">// NB: these are `ManuallyDrop` because `unwind_registration` must be</span>
-    <span class="comment">// dropped first since it refers to memory owned by `mmap`.</span>
-    <span class="ident">mmap</span>: <span class="ident">ManuallyDrop</span><span class="op">&lt;</span><span class="ident">MmapVec</span><span class="op">&gt;</span>,
-    <span class="ident">unwind_registration</span>: <span class="ident">ManuallyDrop</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">UnwindRegistration</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">published</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// Management of executable memory within a `MmapVec`
+///
+/// This type consumes ownership of a region of memory and will manage the
+/// executable permissions of the contained JIT code as necessary.
+</span><span class="kw">pub struct </span>CodeMemory {
+    <span class="comment">// NB: these are `ManuallyDrop` because `unwind_registration` must be
+    // dropped first since it refers to memory owned by `mmap`.
+    </span>mmap: ManuallyDrop&lt;MmapVec&gt;,
+    unwind_registration: ManuallyDrop&lt;<span class="prelude-ty">Option</span>&lt;UnwindRegistration&gt;&gt;,
+    published: bool,
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">CodeMemory</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// Drop `unwind_registration` before `self.mmap`</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">ManuallyDrop::drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">unwind_registration</span>);
-            <span class="ident">ManuallyDrop::drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">mmap</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>CodeMemory {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// Drop `unwind_registration` before `self.mmap`
+        </span><span class="kw">unsafe </span>{
+            ManuallyDrop::drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>.unwind_registration);
+            ManuallyDrop::drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>.mmap);
         }
     }
 }
 
-<span class="kw">fn</span> <span class="ident">_assert</span>() {
-    <span class="kw">fn</span> <span class="ident">_assert_send_sync</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>() {}
-    <span class="ident">_assert_send_sync</span>::<span class="op">&lt;</span><span class="ident">CodeMemory</span><span class="op">&gt;</span>();
+<span class="kw">fn </span>_assert() {
+    <span class="kw">fn </span>_assert_send_sync&lt;T: Send + Sync&gt;() {}
+    _assert_send_sync::&lt;CodeMemory&gt;();
 }
 
-<span class="doccomment">/// Result of publishing a `CodeMemory`, containing references to the parsed</span>
-<span class="doccomment">/// internals.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Publish</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The parsed ELF image that resides within the original `MmapVec`.</span>
-    <span class="kw">pub</span> <span class="ident">obj</span>: <span class="ident">File</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Result of publishing a `CodeMemory`, containing references to the parsed
+/// internals.
+</span><span class="kw">pub struct </span>Publish&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// The parsed ELF image that resides within the original `MmapVec`.
+    </span><span class="kw">pub </span>obj: File&lt;<span class="lifetime">&#39;a</span>&gt;,
 
-    <span class="doccomment">/// Reference to the entire `MmapVec` and its contents.</span>
-    <span class="kw">pub</span> <span class="ident">mmap</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>],
+    <span class="doccomment">/// Reference to the entire `MmapVec` and its contents.
+    </span><span class="kw">pub </span>mmap: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
 
-    <span class="doccomment">/// Reference to just the text section of the object file, a subslice of</span>
-    <span class="doccomment">/// `mmap`.</span>
-    <span class="kw">pub</span> <span class="ident">text</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>],
+    <span class="doccomment">/// Reference to just the text section of the object file, a subslice of
+    /// `mmap`.
+    </span><span class="kw">pub </span>text: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
 }
 
-<span class="kw">impl</span> <span class="ident">CodeMemory</span> {
-    <span class="doccomment">/// Creates a new `CodeMemory` by taking ownership of the provided</span>
-    <span class="doccomment">/// `MmapVec`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The returned `CodeMemory` manages the internal `MmapVec` and the</span>
-    <span class="doccomment">/// `publish` method is used to actually make the memory executable.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">mmap</span>: <span class="ident">MmapVec</span>) -&gt; <span class="self">Self</span> {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-        {
-            <span class="comment">// This is a requirement of the `membarrier` call executed by the `publish` method.</span>
-            <span class="ident">rustix::process::membarrier</span>(
-                <span class="ident">rustix::process::MembarrierCommand::RegisterPrivateExpeditedSyncCore</span>,
+<span class="kw">impl </span>CodeMemory {
+    <span class="doccomment">/// Creates a new `CodeMemory` by taking ownership of the provided
+    /// `MmapVec`.
+    ///
+    /// The returned `CodeMemory` manages the internal `MmapVec` and the
+    /// `publish` method is used to actually make the memory executable.
+    </span><span class="kw">pub fn </span>new(mmap: MmapVec) -&gt; <span class="self">Self </span>{
+        <span class="attribute">#[cfg(all(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+        </span>{
+            <span class="comment">// This is a requirement of the `membarrier` call executed by the `publish` method.
+            </span>rustix::process::membarrier(
+                rustix::process::MembarrierCommand::RegisterPrivateExpeditedSyncCore,
             )
-            .<span class="ident">unwrap</span>();
+            .unwrap();
         }
 
-        <span class="self">Self</span> {
-            <span class="ident">mmap</span>: <span class="ident">ManuallyDrop::new</span>(<span class="ident">mmap</span>),
-            <span class="ident">unwind_registration</span>: <span class="ident">ManuallyDrop::new</span>(<span class="prelude-val">None</span>),
-            <span class="ident">published</span>: <span class="bool-val">false</span>,
+        <span class="self">Self </span>{
+            mmap: ManuallyDrop::new(mmap),
+            unwind_registration: ManuallyDrop::new(<span class="prelude-val">None</span>),
+            published: <span class="bool-val">false</span>,
         }
     }
 
-    <span class="doccomment">/// Returns a reference to the underlying `MmapVec` this memory owns.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mmap</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">MmapVec</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>
+    <span class="doccomment">/// Returns a reference to the underlying `MmapVec` this memory owns.
+    </span><span class="kw">pub fn </span>mmap(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MmapVec {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.mmap
     }
 
-    <span class="doccomment">/// Publishes the internal ELF image to be ready for execution.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method can only be called once and will panic if called twice. This</span>
-    <span class="doccomment">/// will parse the ELF image from the original `MmapVec` and do everything</span>
-    <span class="doccomment">/// necessary to get it ready for execution, including:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * Change page protections from read/write to read/execute.</span>
-    <span class="doccomment">/// * Register unwinding information with the OS</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// After this function executes all JIT code should be ready to execute.</span>
-    <span class="doccomment">/// The various parsed results of the internals of the `MmapVec` are</span>
-    <span class="doccomment">/// returned through the `Publish` structure.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">publish</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Publish</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">published</span>);
-        <span class="self">self</span>.<span class="ident">published</span> <span class="op">=</span> <span class="bool-val">true</span>;
+    <span class="doccomment">/// Publishes the internal ELF image to be ready for execution.
+    ///
+    /// This method can only be called once and will panic if called twice. This
+    /// will parse the ELF image from the original `MmapVec` and do everything
+    /// necessary to get it ready for execution, including:
+    ///
+    /// * Change page protections from read/write to read/execute.
+    /// * Register unwinding information with the OS
+    ///
+    /// After this function executes all JIT code should be ready to execute.
+    /// The various parsed results of the internals of the `MmapVec` are
+    /// returned through the `Publish` structure.
+    </span><span class="kw">pub fn </span>publish(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Publish&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+        <span class="macro">assert!</span>(!<span class="self">self</span>.published);
+        <span class="self">self</span>.published = <span class="bool-val">true</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">Publish</span> {
-            <span class="ident">obj</span>: <span class="ident">File::parse</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>[..])
-                .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;failed to parse internal compilation artifact&quot;</span>)<span class="question-mark">?</span>,
-            <span class="ident">mmap</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mmap</span>,
-            <span class="ident">text</span>: <span class="kw-2">&amp;</span>[],
+        <span class="kw">let </span><span class="kw-2">mut </span>ret = Publish {
+            obj: File::parse(<span class="kw-2">&amp;</span><span class="self">self</span>.mmap[..])
+                .with_context(|| <span class="string">&quot;failed to parse internal compilation artifact&quot;</span>)<span class="question-mark">?</span>,
+            mmap: <span class="kw-2">&amp;</span><span class="self">self</span>.mmap,
+            text: <span class="kw-2">&amp;</span>[],
         };
-        <span class="kw">let</span> <span class="ident">mmap_ptr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">u64</span>;
+        <span class="kw">let </span>mmap_ptr = <span class="self">self</span>.mmap.as_ptr() <span class="kw">as </span>u64;
 
-        <span class="comment">// Sanity-check that all sections are aligned correctly.</span>
-        <span class="kw">for</span> <span class="ident">section</span> <span class="kw">in</span> <span class="ident">ret</span>.<span class="ident">obj</span>.<span class="ident">sections</span>() {
-            <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">section</span>.<span class="ident">data</span>() {
-                <span class="prelude-val">Ok</span>(<span class="ident">data</span>) =&gt; <span class="ident">data</span>,
+        <span class="comment">// Sanity-check that all sections are aligned correctly.
+        </span><span class="kw">for </span>section <span class="kw">in </span>ret.obj.sections() {
+            <span class="kw">let </span>data = <span class="kw">match </span>section.data() {
+                <span class="prelude-val">Ok</span>(data) =&gt; data,
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">continue</span>,
             };
-            <span class="kw">if</span> <span class="ident">section</span>.<span class="ident">align</span>() <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">data</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> {
+            <span class="kw">if </span>section.align() == <span class="number">0 </span>|| data.len() == <span class="number">0 </span>{
                 <span class="kw">continue</span>;
             }
-            <span class="kw">if</span> (<span class="ident">data</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">u64</span> <span class="op">-</span> <span class="ident">mmap_ptr</span>) <span class="op">%</span> <span class="ident">section</span>.<span class="ident">align</span>() <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="kw">if </span>(data.as_ptr() <span class="kw">as </span>u64 - mmap_ptr) % section.align() != <span class="number">0 </span>{
                 <span class="macro">bail!</span>(
                     <span class="string">&quot;section `{}` isn&#39;t aligned to {:#x}&quot;</span>,
-                    <span class="ident">section</span>.<span class="ident">name</span>().<span class="ident">unwrap_or</span>(<span class="string">&quot;ERROR&quot;</span>),
-                    <span class="ident">section</span>.<span class="ident">align</span>()
+                    section.name().unwrap_or(<span class="string">&quot;ERROR&quot;</span>),
+                    section.align()
                 );
             }
         }
 
-        <span class="comment">// Find the `.text` section with executable code in it.</span>
-        <span class="kw">let</span> <span class="ident">text</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ret</span>.<span class="ident">obj</span>.<span class="ident">section_by_name</span>(<span class="string">&quot;.text&quot;</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">section</span>) =&gt; <span class="ident">section</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ret</span>),
+        <span class="comment">// Find the `.text` section with executable code in it.
+        </span><span class="kw">let </span>text = <span class="kw">match </span>ret.obj.section_by_name(<span class="string">&quot;.text&quot;</span>) {
+            <span class="prelude-val">Some</span>(section) =&gt; section,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(ret),
         };
-        <span class="ident">ret</span>.<span class="ident">text</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">text</span>.<span class="ident">data</span>() {
-            <span class="prelude-val">Ok</span>(<span class="ident">data</span>) <span class="kw">if</span> <span class="op">!</span><span class="ident">data</span>.<span class="ident">is_empty</span>() =&gt; <span class="ident">data</span>,
-            <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ret</span>),
+        ret.text = <span class="kw">match </span>text.data() {
+            <span class="prelude-val">Ok</span>(data) <span class="kw">if </span>!data.is_empty() =&gt; data,
+            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(ret),
         };
 
-        <span class="comment">// The unsafety here comes from a few things:</span>
-        <span class="comment">//</span>
-        <span class="comment">// * First in `apply_reloc` we&#39;re walking around the `File` that the</span>
-        <span class="comment">//   `object` crate has to get a mutable view into the text section.</span>
-        <span class="comment">//   Currently the `object` crate doesn&#39;t support easily parsing a file</span>
-        <span class="comment">//   and updating small bits and pieces of it, so we work around it for</span>
-        <span class="comment">//   now. ELF&#39;s file format should guarantee that `text_mut` doesn&#39;t</span>
-        <span class="comment">//   collide with any memory accessed by `text.relocations()`.</span>
-        <span class="comment">//</span>
-        <span class="comment">// * Second we&#39;re actually updating some page protections to executable</span>
-        <span class="comment">//   memory.</span>
-        <span class="comment">//</span>
-        <span class="comment">// * Finally we&#39;re registering unwinding information which relies on the</span>
-        <span class="comment">//   correctness of the information in the first place. This applies to</span>
-        <span class="comment">//   both the actual unwinding tables as well as the validity of the</span>
-        <span class="comment">//   pointers we pass in itself.</span>
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">text_mut</span> <span class="op">=</span>
-                <span class="ident">std::slice::from_raw_parts_mut</span>(<span class="ident">ret</span>.<span class="ident">text</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">ret</span>.<span class="ident">text</span>.<span class="ident">len</span>());
-            <span class="kw">let</span> <span class="ident">text_offset</span> <span class="op">=</span> <span class="ident">ret</span>.<span class="ident">text</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="ident">ret</span>.<span class="ident">mmap</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-            <span class="kw">let</span> <span class="ident">text_range</span> <span class="op">=</span> <span class="ident">text_offset</span>..<span class="ident">text_offset</span> <span class="op">+</span> <span class="ident">text_mut</span>.<span class="ident">len</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">text_section_readwrite</span> <span class="op">=</span> <span class="bool-val">false</span>;
-            <span class="kw">for</span> (<span class="ident">offset</span>, <span class="ident">r</span>) <span class="kw">in</span> <span class="ident">text</span>.<span class="ident">relocations</span>() {
-                <span class="comment">// If the text section was mapped at readonly we need to make it</span>
-                <span class="comment">// briefly read/write here as we apply relocations.</span>
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">text_section_readwrite</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">mmap</span>.<span class="ident">is_readonly</span>() {
-                    <span class="self">self</span>.<span class="ident">mmap</span>
-                        .<span class="ident">make_writable</span>(<span class="ident">text_range</span>.<span class="ident">clone</span>())
-                        .<span class="ident">expect</span>(<span class="string">&quot;unable to make memory writable&quot;</span>);
-                    <span class="ident">text_section_readwrite</span> <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="comment">// The unsafety here comes from a few things:
+        //
+        // * First in `apply_reloc` we&#39;re walking around the `File` that the
+        //   `object` crate has to get a mutable view into the text section.
+        //   Currently the `object` crate doesn&#39;t support easily parsing a file
+        //   and updating small bits and pieces of it, so we work around it for
+        //   now. ELF&#39;s file format should guarantee that `text_mut` doesn&#39;t
+        //   collide with any memory accessed by `text.relocations()`.
+        //
+        // * Second we&#39;re actually updating some page protections to executable
+        //   memory.
+        //
+        // * Finally we&#39;re registering unwinding information which relies on the
+        //   correctness of the information in the first place. This applies to
+        //   both the actual unwinding tables as well as the validity of the
+        //   pointers we pass in itself.
+        </span><span class="kw">unsafe </span>{
+            <span class="kw">let </span>text_mut =
+                std::slice::from_raw_parts_mut(ret.text.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>u8, ret.text.len());
+            <span class="kw">let </span>text_offset = ret.text.as_ptr() <span class="kw">as </span>usize - ret.mmap.as_ptr() <span class="kw">as </span>usize;
+            <span class="kw">let </span>text_range = text_offset..text_offset + text_mut.len();
+            <span class="kw">let </span><span class="kw-2">mut </span>text_section_readwrite = <span class="bool-val">false</span>;
+            <span class="kw">for </span>(offset, r) <span class="kw">in </span>text.relocations() {
+                <span class="comment">// If the text section was mapped at readonly we need to make it
+                // briefly read/write here as we apply relocations.
+                </span><span class="kw">if </span>!text_section_readwrite &amp;&amp; <span class="self">self</span>.mmap.is_readonly() {
+                    <span class="self">self</span>.mmap
+                        .make_writable(text_range.clone())
+                        .expect(<span class="string">&quot;unable to make memory writable&quot;</span>);
+                    text_section_readwrite = <span class="bool-val">true</span>;
                 }
-                <span class="ident"><span class="kw">crate</span>::link::apply_reloc</span>(<span class="kw-2">&amp;</span><span class="ident">ret</span>.<span class="ident">obj</span>, <span class="ident">text_mut</span>, <span class="ident">offset</span>, <span class="ident">r</span>);
+                <span class="kw">crate</span>::link::apply_reloc(<span class="kw-2">&amp;</span>ret.obj, text_mut, offset, r);
             }
 
-            <span class="comment">// Switch the executable portion from read/write to</span>
-            <span class="comment">// read/execute, notably not using read/write/execute to prevent</span>
-            <span class="comment">// modifications.</span>
-            <span class="self">self</span>.<span class="ident">mmap</span>
-                .<span class="ident">make_executable</span>(<span class="ident">text_range</span>.<span class="ident">clone</span>())
-                .<span class="ident">expect</span>(<span class="string">&quot;unable to make memory executable&quot;</span>);
+            <span class="comment">// Switch the executable portion from read/write to
+            // read/execute, notably not using read/write/execute to prevent
+            // modifications.
+            </span><span class="self">self</span>.mmap
+                .make_executable(text_range.clone())
+                .expect(<span class="string">&quot;unable to make memory executable&quot;</span>);
 
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            {
-                <span class="comment">// Ensure that no processor has fetched a stale instruction stream.</span>
-                <span class="ident">rustix::process::membarrier</span>(
-                    <span class="ident">rustix::process::MembarrierCommand::PrivateExpeditedSyncCore</span>,
+            <span class="attribute">#[cfg(all(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+            </span>{
+                <span class="comment">// Ensure that no processor has fetched a stale instruction stream.
+                </span>rustix::process::membarrier(
+                    rustix::process::MembarrierCommand::PrivateExpeditedSyncCore,
                 )
-                .<span class="ident">unwrap</span>();
+                .unwrap();
             }
 
-            <span class="comment">// With all our memory set up use the platform-specific</span>
-            <span class="comment">// `UnwindRegistration` implementation to inform the general</span>
-            <span class="comment">// runtime that there&#39;s unwinding information available for all</span>
-            <span class="comment">// our just-published JIT functions.</span>
-            <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">unwind_registration</span> <span class="op">=</span> <span class="ident">register_unwind_info</span>(<span class="kw-2">&amp;</span><span class="ident">ret</span>.<span class="ident">obj</span>, <span class="ident">ret</span>.<span class="ident">text</span>)<span class="question-mark">?</span>;
+            <span class="comment">// With all our memory set up use the platform-specific
+            // `UnwindRegistration` implementation to inform the general
+            // runtime that there&#39;s unwinding information available for all
+            // our just-published JIT functions.
+            </span><span class="kw-2">*</span><span class="self">self</span>.unwind_registration = register_unwind_info(<span class="kw-2">&amp;</span>ret.obj, ret.text)<span class="question-mark">?</span>;
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">ret</span>)
+        <span class="prelude-val">Ok</span>(ret)
     }
 }
 
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">register_unwind_info</span>(<span class="ident">obj</span>: <span class="kw-2">&amp;</span><span class="ident">File</span>, <span class="ident">text</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">UnwindRegistration</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">unwind_info</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">obj</span>
-        .<span class="ident">section_by_name</span>(<span class="ident">UnwindRegistration::section_name</span>())
-        .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">data</span>().<span class="ident">ok</span>())
+<span class="kw">unsafe fn </span>register_unwind_info(obj: <span class="kw-2">&amp;</span>File, text: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;UnwindRegistration&gt;&gt; {
+    <span class="kw">let </span>unwind_info = <span class="kw">match </span>obj
+        .section_by_name(UnwindRegistration::section_name())
+        .and_then(|s| s.data().ok())
     {
-        <span class="prelude-val">Some</span>(<span class="ident">info</span>) =&gt; <span class="ident">info</span>,
-        <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+        <span class="prelude-val">Some</span>(info) =&gt; info,
+        <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
     };
-    <span class="kw">if</span> <span class="ident">unwind_info</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> {
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+    <span class="kw">if </span>unwind_info.len() == <span class="number">0 </span>{
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
     }
     <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
-        <span class="ident">UnwindRegistration::new</span>(<span class="ident">text</span>.<span class="ident">as_ptr</span>(), <span class="ident">unwind_info</span>.<span class="ident">as_ptr</span>(), <span class="ident">unwind_info</span>.<span class="ident">len</span>())
-            .<span class="ident">context</span>(<span class="string">&quot;failed to create unwind info registration&quot;</span>)<span class="question-mark">?</span>,
+        UnwindRegistration::new(text.as_ptr(), unwind_info.as_ptr(), unwind_info.len())
+            .context(<span class="string">&quot;failed to create unwind info registration&quot;</span>)<span class="question-mark">?</span>,
     ))
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_jit" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_jit" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

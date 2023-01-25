@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["migrate","Migration to sorted `VoterList`."]]});
+window.SIDEBAR_ITEMS = {"fn":[["migrate","Migration to sorted `VoterList`."]]};

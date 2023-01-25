@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/scoped_hash_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>scoped_hash_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/scoped_hash_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>scoped_hash_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -236,239 +231,238 @@
 <span id="231">231</span>
 <span id="232">232</span>
 <span id="233">233</span>
-</pre><pre class="rust"><code><span class="doccomment">//! `ScopedHashMap`</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This module defines a struct `ScopedHashMap&lt;K, V&gt;` which defines a `FxHashMap`-like</span>
-<span class="doccomment">//! container that has a concept of scopes that can be entered and exited, such that</span>
-<span class="doccomment">//! values inserted while inside a scope aren&#39;t visible outside the scope.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! `ScopedHashMap`
+//!
+//! This module defines a struct `ScopedHashMap&lt;K, V&gt;` which defines a `FxHashMap`-like
+//! container that has a concept of scopes that can be entered and exited, such that
+//! values inserted while inside a scope aren&#39;t visible outside the scope.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fx::FxHashMap</span>;
-<span class="kw">use</span> <span class="ident">core::hash::Hash</span>;
-<span class="kw">use</span> <span class="ident">core::mem</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::fx::FxHashMap;
+<span class="kw">use </span>core::hash::Hash;
+<span class="kw">use </span>core::mem;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fx::FxHasher</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">type</span> <span class="ident">Hasher</span> <span class="op">=</span> <span class="ident">core::hash::BuildHasherDefault</span><span class="op">&lt;</span><span class="ident">FxHasher</span><span class="op">&gt;</span>;
+<span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">use </span><span class="kw">crate</span>::fx::FxHasher;
+<span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">type </span>Hasher = core::hash::BuildHasherDefault&lt;FxHasher&gt;;
 
-<span class="kw">struct</span> <span class="ident">Val</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-    <span class="ident">value</span>: <span class="ident">V</span>,
-    <span class="ident">next_key</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-    <span class="ident">depth</span>: <span class="ident">usize</span>,
+<span class="kw">struct </span>Val&lt;K, V&gt; {
+    value: V,
+    next_key: <span class="prelude-ty">Option</span>&lt;K&gt;,
+    depth: usize,
 }
 
-<span class="doccomment">/// A view into an occupied entry in a `ScopedHashMap`. It is part of the `Entry` enum.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OccupiedEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>: <span class="lifetime">&#39;a</span>, <span class="ident">V</span>: <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-    <span class="ident">entry</span>: <span class="ident"><span class="kw">super</span>::hash_map::OccupiedEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">Val</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-    <span class="ident">entry</span>: <span class="ident"><span class="kw">super</span>::hash_map::OccupiedEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">Val</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>, <span class="ident">Hasher</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A view into an occupied entry in a `ScopedHashMap`. It is part of the `Entry` enum.
+</span><span class="kw">pub struct </span>OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K: <span class="lifetime">&#39;a</span>, V: <span class="lifetime">&#39;a</span>&gt; {
+    <span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span>entry: <span class="kw">super</span>::hash_map::OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, Val&lt;K, V&gt;&gt;,
+    <span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    </span>entry: <span class="kw">super</span>::hash_map::OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, Val&lt;K, V&gt;, Hasher&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">OccupiedEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Gets a reference to the value in the entry.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">V</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">entry</span>.<span class="ident">get</span>().<span class="ident">value</span>
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    <span class="doccomment">/// Gets a reference to the value in the entry.
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>V {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.entry.get().value
     }
 }
 
-<span class="doccomment">/// A view into a vacant entry in a `ScopedHashMap`. It is part of the `Entry` enum.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VacantEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>: <span class="lifetime">&#39;a</span>, <span class="ident">V</span>: <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-    <span class="ident">entry</span>: <span class="ident"><span class="kw">super</span>::hash_map::VacantEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">Val</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-    <span class="ident">entry</span>: <span class="ident"><span class="kw">super</span>::hash_map::VacantEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">Val</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>, <span class="ident">Hasher</span><span class="op">&gt;</span>,
-    <span class="ident">next_key</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-    <span class="ident">depth</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// A view into a vacant entry in a `ScopedHashMap`. It is part of the `Entry` enum.
+</span><span class="kw">pub struct </span>VacantEntry&lt;<span class="lifetime">&#39;a</span>, K: <span class="lifetime">&#39;a</span>, V: <span class="lifetime">&#39;a</span>&gt; {
+    <span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span>entry: <span class="kw">super</span>::hash_map::VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, Val&lt;K, V&gt;&gt;,
+    <span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    </span>entry: <span class="kw">super</span>::hash_map::VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, Val&lt;K, V&gt;, Hasher&gt;,
+    next_key: <span class="prelude-ty">Option</span>&lt;K&gt;,
+    depth: usize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>: <span class="ident">Hash</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">VacantEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Sets the value of the entry with the `VacantEntry`&#39;s key.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert</span>(<span class="self">self</span>, <span class="ident">value</span>: <span class="ident">V</span>) {
-        <span class="self">self</span>.<span class="ident">entry</span>.<span class="ident">insert</span>(<span class="ident">Val</span> {
-            <span class="ident">value</span>,
-            <span class="ident">next_key</span>: <span class="self">self</span>.<span class="ident">next_key</span>,
-            <span class="ident">depth</span>: <span class="self">self</span>.<span class="ident">depth</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K: Hash, V&gt; VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    <span class="doccomment">/// Sets the value of the entry with the `VacantEntry`&#39;s key.
+    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: V) {
+        <span class="self">self</span>.entry.insert(Val {
+            value,
+            next_key: <span class="self">self</span>.next_key,
+            depth: <span class="self">self</span>.depth,
         });
     }
 }
 
-<span class="doccomment">/// A view into a single entry in a map, which may either be vacant or occupied.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This enum is constructed from the `entry` method on `ScopedHashMap`.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Entry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>: <span class="lifetime">&#39;a</span>, <span class="ident">V</span>: <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">Occupied</span>(<span class="ident">OccupiedEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>),
-    <span class="ident">Vacant</span>(<span class="ident">VacantEntry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>),
+<span class="doccomment">/// A view into a single entry in a map, which may either be vacant or occupied.
+///
+/// This enum is constructed from the `entry` method on `ScopedHashMap`.
+</span><span class="kw">pub enum </span>Entry&lt;<span class="lifetime">&#39;a</span>, K: <span class="lifetime">&#39;a</span>, V: <span class="lifetime">&#39;a</span>&gt; {
+    Occupied(OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt;),
+    Vacant(VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt;),
 }
 
-<span class="doccomment">/// A wrapper around a `FxHashMap` which adds the concept of scopes. Items inserted</span>
-<span class="doccomment">/// within a scope are removed when the scope is exited.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Shadowing, where one scope has entries with the same keys as a containing scope,</span>
-<span class="doccomment">/// is not supported in this implementation.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ScopedHashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-    <span class="ident">map</span>: <span class="ident">FxHashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">Val</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">last_insert</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-    <span class="ident">current_depth</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// A wrapper around a `FxHashMap` which adds the concept of scopes. Items inserted
+/// within a scope are removed when the scope is exited.
+///
+/// Shadowing, where one scope has entries with the same keys as a containing scope,
+/// is not supported in this implementation.
+</span><span class="kw">pub struct </span>ScopedHashMap&lt;K, V&gt; {
+    map: FxHashMap&lt;K, Val&lt;K, V&gt;&gt;,
+    last_insert: <span class="prelude-ty">Option</span>&lt;K&gt;,
+    current_depth: usize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">ScopedHashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Clone</span>,
+<span class="kw">impl</span>&lt;K, V&gt; ScopedHashMap&lt;K, V&gt;
+<span class="kw">where
+    </span>K: PartialEq + Eq + Hash + Clone,
 {
-    <span class="doccomment">/// Creates an empty `ScopedHashMap`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">map</span>: <span class="ident">FxHashMap</span>(),
-            <span class="ident">last_insert</span>: <span class="prelude-val">None</span>,
-            <span class="ident">current_depth</span>: <span class="number">0</span>,
+    <span class="doccomment">/// Creates an empty `ScopedHashMap`.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            map: FxHashMap(),
+            last_insert: <span class="prelude-val">None</span>,
+            current_depth: <span class="number">0</span>,
         }
     }
 
-    <span class="doccomment">/// Similar to `FxHashMap::entry`, gets the given key&#39;s corresponding entry in the map for</span>
-    <span class="doccomment">/// in-place manipulation.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">entry</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">K</span>) -&gt; <span class="ident">Entry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::hash_map::Entry</span>::<span class="kw-2">*</span>;
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">entry</span>(<span class="ident">key</span>) {
-            <span class="ident">Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="ident">Entry::Occupied</span>(<span class="ident">OccupiedEntry</span> { <span class="ident">entry</span> }),
-            <span class="ident">Vacant</span>(<span class="ident">entry</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">clone_key</span> <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">key</span>().<span class="ident">clone</span>();
-                <span class="ident">Entry::Vacant</span>(<span class="ident">VacantEntry</span> {
-                    <span class="ident">entry</span>,
-                    <span class="ident">next_key</span>: <span class="ident">mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">last_insert</span>, <span class="prelude-val">Some</span>(<span class="ident">clone_key</span>)),
-                    <span class="ident">depth</span>: <span class="self">self</span>.<span class="ident">current_depth</span>,
+    <span class="doccomment">/// Similar to `FxHashMap::entry`, gets the given key&#39;s corresponding entry in the map for
+    /// in-place manipulation.
+    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K) -&gt; Entry&lt;K, V&gt; {
+        <span class="kw">use </span><span class="kw">super</span>::hash_map::Entry::<span class="kw-2">*</span>;
+        <span class="kw">match </span><span class="self">self</span>.map.entry(key) {
+            Occupied(entry) =&gt; Entry::Occupied(OccupiedEntry { entry }),
+            Vacant(entry) =&gt; {
+                <span class="kw">let </span>clone_key = entry.key().clone();
+                Entry::Vacant(VacantEntry {
+                    entry,
+                    next_key: mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.last_insert, <span class="prelude-val">Some</span>(clone_key)),
+                    depth: <span class="self">self</span>.current_depth,
                 })
             }
         }
     }
 
-    <span class="doccomment">/// Enter a new scope.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">increment_depth</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// Increment the depth.</span>
-        <span class="self">self</span>.<span class="ident">current_depth</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">current_depth</span>.<span class="ident">checked_add</span>(<span class="number">1</span>).<span class="ident">unwrap</span>();
+    <span class="doccomment">/// Enter a new scope.
+    </span><span class="kw">pub fn </span>increment_depth(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// Increment the depth.
+        </span><span class="self">self</span>.current_depth = <span class="self">self</span>.current_depth.checked_add(<span class="number">1</span>).unwrap();
     }
 
-    <span class="doccomment">/// Exit the current scope.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decrement_depth</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// Remove all elements inserted at the current depth.</span>
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">key</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">last_insert</span>.<span class="ident">clone</span>() {
-            <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hash_map::Entry</span>::<span class="kw-2">*</span>;
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">entry</span>(<span class="ident">key</span>) {
-                <span class="ident">Occupied</span>(<span class="ident">entry</span>) =&gt; {
-                    <span class="kw">if</span> <span class="ident">entry</span>.<span class="ident">get</span>().<span class="ident">depth</span> <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">current_depth</span> {
+    <span class="doccomment">/// Exit the current scope.
+    </span><span class="kw">pub fn </span>decrement_depth(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// Remove all elements inserted at the current depth.
+        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(key) = <span class="self">self</span>.last_insert.clone() {
+            <span class="kw">use </span><span class="kw">crate</span>::hash_map::Entry::<span class="kw-2">*</span>;
+            <span class="kw">match </span><span class="self">self</span>.map.entry(key) {
+                Occupied(entry) =&gt; {
+                    <span class="kw">if </span>entry.get().depth != <span class="self">self</span>.current_depth {
                         <span class="kw">break</span>;
                     }
-                    <span class="self">self</span>.<span class="ident">last_insert</span> <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">remove_entry</span>().<span class="number">1</span>.<span class="ident">next_key</span>;
+                    <span class="self">self</span>.last_insert = entry.remove_entry().<span class="number">1</span>.next_key;
                 }
-                <span class="ident">Vacant</span>(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(),
+                Vacant(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(),
             }
         }
 
-        <span class="comment">// Decrement the depth.</span>
-        <span class="self">self</span>.<span class="ident">current_depth</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">current_depth</span>.<span class="ident">checked_sub</span>(<span class="number">1</span>).<span class="ident">unwrap</span>();
+        <span class="comment">// Decrement the depth.
+        </span><span class="self">self</span>.current_depth = <span class="self">self</span>.current_depth.checked_sub(<span class="number">1</span>).unwrap();
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">basic</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span>: <span class="ident">ScopedHashMap</span><span class="op">&lt;</span><span class="ident">i32</span>, <span class="ident">i32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ScopedHashMap::new</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>basic() {
+        <span class="kw">let </span><span class="kw-2">mut </span>map: ScopedHashMap&lt;i32, i32&gt; = ScopedHashMap::new();
 
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">0</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">entry</span>) =&gt; <span class="ident">entry</span>.<span class="ident">insert</span>(<span class="number">1</span>),
+        <span class="kw">match </span>map.entry(<span class="number">0</span>) {
+            Entry::Occupied(_entry) =&gt; <span class="macro">panic!</span>(),
+            Entry::Vacant(entry) =&gt; entry.insert(<span class="number">1</span>),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">entry</span>) =&gt; <span class="ident">entry</span>.<span class="ident">insert</span>(<span class="number">8</span>),
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(_entry) =&gt; <span class="macro">panic!</span>(),
+            Entry::Vacant(entry) =&gt; entry.insert(<span class="number">8</span>),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="ident">map</span>.<span class="ident">increment_depth</span>();
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        map.increment_depth();
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">1</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">entry</span>) =&gt; <span class="ident">entry</span>.<span class="ident">insert</span>(<span class="number">3</span>),
+        <span class="kw">match </span>map.entry(<span class="number">1</span>) {
+            Entry::Occupied(_entry) =&gt; <span class="macro">panic!</span>(),
+            Entry::Vacant(entry) =&gt; entry.insert(<span class="number">3</span>),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">1</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">3</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">1</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">3</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">0</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">1</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">0</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">1</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="ident">map</span>.<span class="ident">decrement_depth</span>();
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">0</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">1</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        map.decrement_depth();
+        <span class="kw">match </span>map.entry(<span class="number">0</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">1</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="ident">map</span>.<span class="ident">increment_depth</span>();
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        map.increment_depth();
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">1</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">entry</span>) =&gt; <span class="ident">entry</span>.<span class="ident">insert</span>(<span class="number">4</span>),
+        <span class="kw">match </span>map.entry(<span class="number">1</span>) {
+            Entry::Occupied(_entry) =&gt; <span class="macro">panic!</span>(),
+            Entry::Vacant(entry) =&gt; entry.insert(<span class="number">4</span>),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">1</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">4</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">1</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">4</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="ident">map</span>.<span class="ident">decrement_depth</span>();
-        <span class="ident">map</span>.<span class="ident">increment_depth</span>();
-        <span class="ident">map</span>.<span class="ident">increment_depth</span>();
-        <span class="ident">map</span>.<span class="ident">increment_depth</span>();
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        map.decrement_depth();
+        map.increment_depth();
+        map.increment_depth();
+        map.increment_depth();
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">1</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">entry</span>) =&gt; <span class="ident">entry</span>.<span class="ident">insert</span>(<span class="number">5</span>),
+        <span class="kw">match </span>map.entry(<span class="number">1</span>) {
+            Entry::Occupied(_entry) =&gt; <span class="macro">panic!</span>(),
+            Entry::Vacant(entry) =&gt; entry.insert(<span class="number">5</span>),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">1</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">5</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">1</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">5</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="ident">map</span>.<span class="ident">decrement_depth</span>();
-        <span class="ident">map</span>.<span class="ident">decrement_depth</span>();
-        <span class="ident">map</span>.<span class="ident">decrement_depth</span>();
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">2</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">entry</span>) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">entry</span>.<span class="ident">get</span>() <span class="op">==</span> <span class="number">8</span>),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
+        map.decrement_depth();
+        map.decrement_depth();
+        map.decrement_depth();
+        <span class="kw">match </span>map.entry(<span class="number">2</span>) {
+            Entry::Occupied(entry) =&gt; <span class="macro">assert!</span>(<span class="kw-2">*</span>entry.get() == <span class="number">8</span>),
+            Entry::Vacant(_entry) =&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">match</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="number">1</span>) {
-            <span class="ident">Entry::Occupied</span>(<span class="ident">_entry</span>) =&gt; <span class="macro">panic!</span>(),
-            <span class="ident">Entry::Vacant</span>(<span class="ident">entry</span>) =&gt; <span class="ident">entry</span>.<span class="ident">insert</span>(<span class="number">3</span>),
+        <span class="kw">match </span>map.entry(<span class="number">1</span>) {
+            Entry::Occupied(_entry) =&gt; <span class="macro">panic!</span>(),
+            Entry::Vacant(entry) =&gt; entry.insert(<span class="number">3</span>),
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

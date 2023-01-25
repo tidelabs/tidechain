@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["GivensRotation","A Givens rotation."]]});
+window.SIDEBAR_ITEMS = {"struct":[["GivensRotation","A Givens rotation."]]};

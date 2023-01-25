@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/matrixmultiply-0.3.2/src/gemm.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>gemm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../matrixmultiply/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../matrixmultiply/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../matrixmultiply/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/matrixmultiply-0.3.2/src/gemm.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>gemm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../matrixmultiply/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -610,613 +605,612 @@
 <span id="605">605</span>
 <span id="606">606</span>
 <span id="607">607</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2016 - 2018 Ulrik Sverdrup &quot;bluss&quot;</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license</span>
-<span class="comment">// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your</span>
-<span class="comment">// option. This file may not be copied, modified, or distributed</span>
-<span class="comment">// except according to those terms.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2016 - 2018 Ulrik Sverdrup &quot;bluss&quot;
+//
+// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license
+// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">core::cell::UnsafeCell</span>;
-<span class="kw">use</span> <span class="ident">core::cmp::min</span>;
-<span class="kw">use</span> <span class="ident">core::mem::size_of</span>;
-<span class="kw">use</span> <span class="ident">core::ptr::copy_nonoverlapping</span>;
-<span class="kw">use</span> <span class="ident">core::slice</span>;
+</span><span class="attribute">#[cfg(feature=<span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>core::cell::UnsafeCell;
+<span class="kw">use </span>core::cmp::min;
+<span class="kw">use </span>core::mem::size_of;
+<span class="kw">use </span>core::ptr::copy_nonoverlapping;
+<span class="kw">use </span>core::slice;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::aligned_alloc::Alloc</span>;
+<span class="kw">use </span><span class="kw">crate</span>::aligned_alloc::Alloc;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ptr::Ptr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::range_chunk</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::round_up_to</span>;
+<span class="kw">use </span><span class="kw">crate</span>::ptr::Ptr;
+<span class="kw">use </span><span class="kw">crate</span>::util::range_chunk;
+<span class="kw">use </span><span class="kw">crate</span>::util::round_up_to;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel::ConstNum</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel::Element</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel::GemmKernel</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel::GemmSelect</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cgemm&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::kernel</span>::{<span class="ident">c32</span>, <span class="ident">c64</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::threading</span>::{<span class="ident">get_thread_pool</span>, <span class="ident">ThreadPoolCtx</span>, <span class="ident">LoopThreadConfig</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::sgemm_kernel</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dgemm_kernel</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cgemm&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cgemm_kernel</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cgemm&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::zgemm_kernel</span>;
-<span class="kw">use</span> <span class="ident">rawpointer::PointerExt</span>;
+<span class="kw">use </span><span class="kw">crate</span>::kernel::ConstNum;
+<span class="kw">use </span><span class="kw">crate</span>::kernel::Element;
+<span class="kw">use </span><span class="kw">crate</span>::kernel::GemmKernel;
+<span class="kw">use </span><span class="kw">crate</span>::kernel::GemmSelect;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;cgemm&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::kernel::{c32, c64};
+<span class="kw">use </span><span class="kw">crate</span>::threading::{get_thread_pool, ThreadPoolCtx, LoopThreadConfig};
+<span class="kw">use </span><span class="kw">crate</span>::sgemm_kernel;
+<span class="kw">use </span><span class="kw">crate</span>::dgemm_kernel;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;cgemm&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::cgemm_kernel;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;cgemm&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::zgemm_kernel;
+<span class="kw">use </span>rawpointer::PointerExt;
 
-<span class="doccomment">/// General matrix multiplication (f32)</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// C ← α A B + β C</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + m, k, n: dimensions</span>
-<span class="doccomment">/// + a, b, c: pointer to the first element in the matrix</span>
-<span class="doccomment">/// + A: m by k matrix</span>
-<span class="doccomment">/// + B: k by n matrix</span>
-<span class="doccomment">/// + C: m by n matrix</span>
-<span class="doccomment">/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*</span>
-<span class="doccomment">/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Strides for A and B may be arbitrary. Strides for C must not result in</span>
-<span class="doccomment">/// elements that alias each other, for example they can not be zero.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If β is zero, then C does not need to be initialized.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">sgemm</span>(
-    <span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>,
-    <span class="ident">alpha</span>: <span class="ident">f32</span>,
-    <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">f32</span>, <span class="ident">rsa</span>: <span class="ident">isize</span>, <span class="ident">csa</span>: <span class="ident">isize</span>,
-    <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">f32</span>, <span class="ident">rsb</span>: <span class="ident">isize</span>, <span class="ident">csb</span>: <span class="ident">isize</span>,
-    <span class="ident">beta</span>: <span class="ident">f32</span>,
-    <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">f32</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="doccomment">/// General matrix multiplication (f32)
+///
+/// C ← α A B + β C
+///
+/// + m, k, n: dimensions
+/// + a, b, c: pointer to the first element in the matrix
+/// + A: m by k matrix
+/// + B: k by n matrix
+/// + C: m by n matrix
+/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*
+/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*
+///
+/// Strides for A and B may be arbitrary. Strides for C must not result in
+/// elements that alias each other, for example they can not be zero.
+///
+/// If β is zero, then C does not need to be initialized.
+</span><span class="kw">pub unsafe fn </span>sgemm(
+    m: usize, k: usize, n: usize,
+    alpha: f32,
+    a: <span class="kw-2">*const </span>f32, rsa: isize, csa: isize,
+    b: <span class="kw-2">*const </span>f32, rsb: isize, csb: isize,
+    beta: f32,
+    c: <span class="kw-2">*mut </span>f32, rsc: isize, csc: isize)
 {
-    <span class="ident">sgemm_kernel::detect</span>(<span class="ident">GemmParameters</span> { <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>,
-                <span class="ident">alpha</span>,
-                <span class="ident">a</span>, <span class="ident">rsa</span>, <span class="ident">csa</span>,
-                <span class="ident">b</span>, <span class="ident">rsb</span>, <span class="ident">csb</span>,
-                <span class="ident">beta</span>,
-                <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>})
+    sgemm_kernel::detect(GemmParameters { m, k, n,
+                alpha,
+                a, rsa, csa,
+                b, rsb, csb,
+                beta,
+                c, rsc, csc})
 }
 
-<span class="doccomment">/// General matrix multiplication (f64)</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// C ← α A B + β C</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + m, k, n: dimensions</span>
-<span class="doccomment">/// + a, b, c: pointer to the first element in the matrix</span>
-<span class="doccomment">/// + A: m by k matrix</span>
-<span class="doccomment">/// + B: k by n matrix</span>
-<span class="doccomment">/// + C: m by n matrix</span>
-<span class="doccomment">/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*</span>
-<span class="doccomment">/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Strides for A and B may be arbitrary. Strides for C must not result in</span>
-<span class="doccomment">/// elements that alias each other, for example they can not be zero.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If β is zero, then C does not need to be initialized.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">dgemm</span>(
-    <span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>,
-    <span class="ident">alpha</span>: <span class="ident">f64</span>,
-    <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">f64</span>, <span class="ident">rsa</span>: <span class="ident">isize</span>, <span class="ident">csa</span>: <span class="ident">isize</span>,
-    <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">f64</span>, <span class="ident">rsb</span>: <span class="ident">isize</span>, <span class="ident">csb</span>: <span class="ident">isize</span>,
-    <span class="ident">beta</span>: <span class="ident">f64</span>,
-    <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">f64</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="doccomment">/// General matrix multiplication (f64)
+///
+/// C ← α A B + β C
+///
+/// + m, k, n: dimensions
+/// + a, b, c: pointer to the first element in the matrix
+/// + A: m by k matrix
+/// + B: k by n matrix
+/// + C: m by n matrix
+/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*
+/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*
+///
+/// Strides for A and B may be arbitrary. Strides for C must not result in
+/// elements that alias each other, for example they can not be zero.
+///
+/// If β is zero, then C does not need to be initialized.
+</span><span class="kw">pub unsafe fn </span>dgemm(
+    m: usize, k: usize, n: usize,
+    alpha: f64,
+    a: <span class="kw-2">*const </span>f64, rsa: isize, csa: isize,
+    b: <span class="kw-2">*const </span>f64, rsb: isize, csb: isize,
+    beta: f64,
+    c: <span class="kw-2">*mut </span>f64, rsc: isize, csc: isize)
 {
-    <span class="ident">dgemm_kernel::detect</span>(<span class="ident">GemmParameters</span> { <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>,
-                <span class="ident">alpha</span>,
-                <span class="ident">a</span>, <span class="ident">rsa</span>, <span class="ident">csa</span>,
-                <span class="ident">b</span>, <span class="ident">rsb</span>, <span class="ident">csb</span>,
-                <span class="ident">beta</span>,
-                <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>})
+    dgemm_kernel::detect(GemmParameters { m, k, n,
+                alpha,
+                a, rsa, csa,
+                b, rsb, csb,
+                beta,
+                c, rsc, csc})
 }
 
-<span class="doccomment">/// cgemm/zgemm per-operand options</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// TBD.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cgemm&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CGemmOption</span> {
-    <span class="doccomment">/// Standard</span>
-    <span class="ident">Standard</span>,
+<span class="doccomment">/// cgemm/zgemm per-operand options
+///
+/// TBD.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;cgemm&quot;</span>)]
+#[non_exhaustive]
+#[derive(Copy, Clone, Debug)]
+</span><span class="kw">pub enum </span>CGemmOption {
+    <span class="doccomment">/// Standard
+    </span>Standard,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cgemm&quot;</span>)]</span>
-<span class="doccomment">/// General matrix multiplication (complex f32)</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// C ← α A B + β C</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + m, k, n: dimensions</span>
-<span class="doccomment">/// + a, b, c: pointer to the first element in the matrix</span>
-<span class="doccomment">/// + A: m by k matrix</span>
-<span class="doccomment">/// + B: k by n matrix</span>
-<span class="doccomment">/// + C: m by n matrix</span>
-<span class="doccomment">/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*</span>
-<span class="doccomment">/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Strides for A and B may be arbitrary. Strides for C must not result in</span>
-<span class="doccomment">/// elements that alias each other, for example they can not be zero.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If β is zero, then C does not need to be initialized.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Requires crate feature `&quot;cgemm&quot;`</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">cgemm</span>(
-    <span class="ident">flaga</span>: <span class="ident">CGemmOption</span>, <span class="ident">flagb</span>: <span class="ident">CGemmOption</span>,
-    <span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>,
-    <span class="ident">alpha</span>: <span class="ident">c32</span>,
-    <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">c32</span>, <span class="ident">rsa</span>: <span class="ident">isize</span>, <span class="ident">csa</span>: <span class="ident">isize</span>,
-    <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">c32</span>, <span class="ident">rsb</span>: <span class="ident">isize</span>, <span class="ident">csb</span>: <span class="ident">isize</span>,
-    <span class="ident">beta</span>: <span class="ident">c32</span>,
-    <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">c32</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="attribute">#[cfg(feature = <span class="string">&quot;cgemm&quot;</span>)]
+</span><span class="doccomment">/// General matrix multiplication (complex f32)
+///
+/// C ← α A B + β C
+///
+/// + m, k, n: dimensions
+/// + a, b, c: pointer to the first element in the matrix
+/// + A: m by k matrix
+/// + B: k by n matrix
+/// + C: m by n matrix
+/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*
+/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*
+///
+/// Strides for A and B may be arbitrary. Strides for C must not result in
+/// elements that alias each other, for example they can not be zero.
+///
+/// If β is zero, then C does not need to be initialized.
+///
+/// Requires crate feature `&quot;cgemm&quot;`
+</span><span class="kw">pub unsafe fn </span>cgemm(
+    flaga: CGemmOption, flagb: CGemmOption,
+    m: usize, k: usize, n: usize,
+    alpha: c32,
+    a: <span class="kw-2">*const </span>c32, rsa: isize, csa: isize,
+    b: <span class="kw-2">*const </span>c32, rsb: isize, csb: isize,
+    beta: c32,
+    c: <span class="kw-2">*mut </span>c32, rsc: isize, csc: isize)
 {
-    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> (<span class="ident">flaga</span>, <span class="ident">flagb</span>);
-    <span class="ident">cgemm_kernel::detect</span>(<span class="ident">GemmParameters</span> { <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>,
-                <span class="ident">alpha</span>,
-                <span class="ident">a</span>, <span class="ident">rsa</span>, <span class="ident">csa</span>,
-                <span class="ident">b</span>, <span class="ident">rsb</span>, <span class="ident">csb</span>,
-                <span class="ident">beta</span>,
-                <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>})
+    <span class="kw">let _ </span>= (flaga, flagb);
+    cgemm_kernel::detect(GemmParameters { m, k, n,
+                alpha,
+                a, rsa, csa,
+                b, rsb, csb,
+                beta,
+                c, rsc, csc})
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cgemm&quot;</span>)]</span>
-<span class="doccomment">/// General matrix multiplication (complex f64)</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// C ← α A B + β C</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + m, k, n: dimensions</span>
-<span class="doccomment">/// + a, b, c: pointer to the first element in the matrix</span>
-<span class="doccomment">/// + A: m by k matrix</span>
-<span class="doccomment">/// + B: k by n matrix</span>
-<span class="doccomment">/// + C: m by n matrix</span>
-<span class="doccomment">/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*</span>
-<span class="doccomment">/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Strides for A and B may be arbitrary. Strides for C must not result in</span>
-<span class="doccomment">/// elements that alias each other, for example they can not be zero.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If β is zero, then C does not need to be initialized.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Requires crate feature `&quot;cgemm&quot;`</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">zgemm</span>(
-    <span class="ident">flaga</span>: <span class="ident">CGemmOption</span>, <span class="ident">flagb</span>: <span class="ident">CGemmOption</span>,
-    <span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>,
-    <span class="ident">alpha</span>: <span class="ident">c64</span>,
-    <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">c64</span>, <span class="ident">rsa</span>: <span class="ident">isize</span>, <span class="ident">csa</span>: <span class="ident">isize</span>,
-    <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">c64</span>, <span class="ident">rsb</span>: <span class="ident">isize</span>, <span class="ident">csb</span>: <span class="ident">isize</span>,
-    <span class="ident">beta</span>: <span class="ident">c64</span>,
-    <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">c64</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
+<span class="attribute">#[cfg(feature = <span class="string">&quot;cgemm&quot;</span>)]
+</span><span class="doccomment">/// General matrix multiplication (complex f64)
+///
+/// C ← α A B + β C
+///
+/// + m, k, n: dimensions
+/// + a, b, c: pointer to the first element in the matrix
+/// + A: m by k matrix
+/// + B: k by n matrix
+/// + C: m by n matrix
+/// + rs&lt;em&gt;x&lt;/em&gt;: row stride of *x*
+/// + cs&lt;em&gt;x&lt;/em&gt;: col stride of *x*
+///
+/// Strides for A and B may be arbitrary. Strides for C must not result in
+/// elements that alias each other, for example they can not be zero.
+///
+/// If β is zero, then C does not need to be initialized.
+///
+/// Requires crate feature `&quot;cgemm&quot;`
+</span><span class="kw">pub unsafe fn </span>zgemm(
+    flaga: CGemmOption, flagb: CGemmOption,
+    m: usize, k: usize, n: usize,
+    alpha: c64,
+    a: <span class="kw-2">*const </span>c64, rsa: isize, csa: isize,
+    b: <span class="kw-2">*const </span>c64, rsb: isize, csb: isize,
+    beta: c64,
+    c: <span class="kw-2">*mut </span>c64, rsc: isize, csc: isize)
 {
-    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> (<span class="ident">flaga</span>, <span class="ident">flagb</span>);
-    <span class="ident">zgemm_kernel::detect</span>(<span class="ident">GemmParameters</span> { <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>,
-                <span class="ident">alpha</span>,
-                <span class="ident">a</span>, <span class="ident">rsa</span>, <span class="ident">csa</span>,
-                <span class="ident">b</span>, <span class="ident">rsb</span>, <span class="ident">csb</span>,
-                <span class="ident">beta</span>,
-                <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>})
+    <span class="kw">let _ </span>= (flaga, flagb);
+    zgemm_kernel::detect(GemmParameters { m, k, n,
+                alpha,
+                a, rsa, csa,
+                b, rsb, csb,
+                beta,
+                c, rsc, csc})
 }
 
-<span class="kw">struct</span> <span class="ident">GemmParameters</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="comment">// Parameters grouped logically in rows</span>
-    <span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>,
-    <span class="ident">alpha</span>: <span class="ident">T</span>,
-    <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">rsa</span>: <span class="ident">isize</span>, <span class="ident">csa</span>: <span class="ident">isize</span>,
-    <span class="ident">beta</span>: <span class="ident">T</span>,
-    <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">rsb</span>: <span class="ident">isize</span>, <span class="ident">csb</span>: <span class="ident">isize</span>,
-    <span class="ident">c</span>:   <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>,
+<span class="kw">struct </span>GemmParameters&lt;T&gt; {
+    <span class="comment">// Parameters grouped logically in rows
+    </span>m: usize, k: usize, n: usize,
+    alpha: T,
+    a: <span class="kw-2">*const </span>T, rsa: isize, csa: isize,
+    beta: T,
+    b: <span class="kw-2">*const </span>T, rsb: isize, csb: isize,
+    c:   <span class="kw-2">*mut </span>T, rsc: isize, csc: isize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">GemmSelect</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">GemmParameters</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">select</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">_kernel</span>: <span class="ident">K</span>)
-       <span class="kw">where</span> <span class="ident">K</span>: <span class="ident">GemmKernel</span><span class="op">&lt;</span><span class="ident">Elem</span><span class="op">=</span><span class="ident">T</span><span class="op">&gt;</span>,
-             <span class="ident">T</span>: <span class="ident">Element</span>,
+<span class="kw">impl</span>&lt;T&gt; GemmSelect&lt;T&gt; <span class="kw">for </span>GemmParameters&lt;T&gt; {
+    <span class="kw">fn </span>select&lt;K&gt;(<span class="self">self</span>, _kernel: K)
+       <span class="kw">where </span>K: GemmKernel&lt;Elem=T&gt;,
+             T: Element,
     {
-        <span class="comment">// This is where we enter with the configuration specific kernel</span>
-        <span class="comment">// We could cache kernel specific function pointers here, if we</span>
-        <span class="comment">// needed to support more constly configuration detection.</span>
-        <span class="kw">let</span> <span class="ident">GemmParameters</span> {
-            <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>,
-            <span class="ident">alpha</span>,
-            <span class="ident">a</span>, <span class="ident">rsa</span>, <span class="ident">csa</span>,
-            <span class="ident">b</span>, <span class="ident">rsb</span>, <span class="ident">csb</span>,
-            <span class="ident">beta</span>,
-            <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>} <span class="op">=</span> <span class="self">self</span>;
+        <span class="comment">// This is where we enter with the configuration specific kernel
+        // We could cache kernel specific function pointers here, if we
+        // needed to support more constly configuration detection.
+        </span><span class="kw">let </span>GemmParameters {
+            m, k, n,
+            alpha,
+            a, rsa, csa,
+            b, rsb, csb,
+            beta,
+            c, rsc, csc} = <span class="self">self</span>;
 
-        <span class="kw">unsafe</span> {
-            <span class="ident">gemm_loop</span>::<span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(
-                <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>,
-                <span class="ident">alpha</span>,
-                <span class="ident">a</span>, <span class="ident">rsa</span>, <span class="ident">csa</span>,
-                <span class="ident">b</span>, <span class="ident">rsb</span>, <span class="ident">csb</span>,
-                <span class="ident">beta</span>,
-                <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>)
+        <span class="kw">unsafe </span>{
+            gemm_loop::&lt;K&gt;(
+                m, k, n,
+                alpha,
+                a, rsa, csa,
+                b, rsb, csb,
+                beta,
+                c, rsc, csc)
         }
     }
 }
 
 
-<span class="doccomment">/// Ensure that GemmKernel parameters are supported</span>
-<span class="doccomment">/// (alignment, microkernel size).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function is optimized out for a supported configuration.</span>
-<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-<span class="kw">fn</span> <span class="ident">ensure_kernel_params</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>()
-    <span class="kw">where</span> <span class="ident">K</span>: <span class="ident">GemmKernel</span>
+<span class="doccomment">/// Ensure that GemmKernel parameters are supported
+/// (alignment, microkernel size).
+///
+/// This function is optimized out for a supported configuration.
+</span><span class="attribute">#[inline(always)]
+</span><span class="kw">fn </span>ensure_kernel_params&lt;K&gt;()
+    <span class="kw">where </span>K: GemmKernel
 {
-    <span class="kw">let</span> <span class="ident">mr</span> <span class="op">=</span> <span class="ident">K::MR</span>;
-    <span class="kw">let</span> <span class="ident">nr</span> <span class="op">=</span> <span class="ident">K::NR</span>;
-    <span class="comment">// These are current limitations,</span>
-    <span class="comment">// can change if corresponding code in gemm_loop is updated.</span>
-    <span class="macro">assert!</span>(<span class="ident">mr</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">mr</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">8</span>);
-    <span class="macro">assert!</span>(<span class="ident">nr</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">nr</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">8</span>);
-    <span class="macro">assert!</span>(<span class="ident">mr</span> <span class="op">*</span> <span class="ident">nr</span> <span class="op">*</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">K::Elem</span><span class="op">&gt;</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">8</span> <span class="op">*</span> <span class="number">4</span> <span class="op">*</span> <span class="number">8</span>);
-    <span class="macro">assert!</span>(<span class="ident">K::align_to</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">32</span>);
-    <span class="comment">// one row/col of the kernel is limiting the max align we can provide</span>
-    <span class="kw">let</span> <span class="ident">max_align</span> <span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">K::Elem</span><span class="op">&gt;</span>() <span class="op">*</span> <span class="ident">min</span>(<span class="ident">mr</span>, <span class="ident">nr</span>);
-    <span class="macro">assert!</span>(<span class="ident">K::align_to</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">max_align</span>);
+    <span class="kw">let </span>mr = K::MR;
+    <span class="kw">let </span>nr = K::NR;
+    <span class="comment">// These are current limitations,
+    // can change if corresponding code in gemm_loop is updated.
+    </span><span class="macro">assert!</span>(mr &gt; <span class="number">0 </span>&amp;&amp; mr &lt;= <span class="number">8</span>);
+    <span class="macro">assert!</span>(nr &gt; <span class="number">0 </span>&amp;&amp; nr &lt;= <span class="number">8</span>);
+    <span class="macro">assert!</span>(mr * nr * size_of::&lt;K::Elem&gt;() &lt;= <span class="number">8 </span>* <span class="number">4 </span>* <span class="number">8</span>);
+    <span class="macro">assert!</span>(K::align_to() &lt;= <span class="number">32</span>);
+    <span class="comment">// one row/col of the kernel is limiting the max align we can provide
+    </span><span class="kw">let </span>max_align = size_of::&lt;K::Elem&gt;() * min(mr, nr);
+    <span class="macro">assert!</span>(K::align_to() &lt;= max_align);
 
-    <span class="macro">assert!</span>(<span class="ident">K::MR</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">K::mc</span>());
-    <span class="macro">assert!</span>(<span class="ident">K::mc</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">K::kc</span>());
-    <span class="macro">assert!</span>(<span class="ident">K::kc</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">K::nc</span>());
-    <span class="macro">assert!</span>(<span class="ident">K::nc</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">65536</span>);
+    <span class="macro">assert!</span>(K::MR &lt;= K::mc());
+    <span class="macro">assert!</span>(K::mc() &lt;= K::kc());
+    <span class="macro">assert!</span>(K::kc() &lt;= K::nc());
+    <span class="macro">assert!</span>(K::nc() &lt;= <span class="number">65536</span>);
 }
 
-<span class="doccomment">/// Implement matrix multiply using packed buffers and a microkernel</span>
-<span class="doccomment">/// strategy, the type parameter `K` is the gemm microkernel.</span>
-<span class="comment">// no inline is best for the default case, where we support many K per</span>
-<span class="comment">// gemm entry point. FIXME: make this conditional on feature detection</span>
-<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">gemm_loop</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(
-    <span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>,
-    <span class="ident">alpha</span>: <span class="ident">K::Elem</span>,
-    <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">K::Elem</span>, <span class="ident">rsa</span>: <span class="ident">isize</span>, <span class="ident">csa</span>: <span class="ident">isize</span>,
-    <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">K::Elem</span>, <span class="ident">rsb</span>: <span class="ident">isize</span>, <span class="ident">csb</span>: <span class="ident">isize</span>,
-    <span class="ident">beta</span>: <span class="ident">K::Elem</span>,
-    <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">K::Elem</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
-    <span class="kw">where</span> <span class="ident">K</span>: <span class="ident">GemmKernel</span>
+<span class="doccomment">/// Implement matrix multiply using packed buffers and a microkernel
+/// strategy, the type parameter `K` is the gemm microkernel.
+</span><span class="comment">// no inline is best for the default case, where we support many K per
+// gemm entry point. FIXME: make this conditional on feature detection
+</span><span class="attribute">#[inline(never)]
+</span><span class="kw">unsafe fn </span>gemm_loop&lt;K&gt;(
+    m: usize, k: usize, n: usize,
+    alpha: K::Elem,
+    a: <span class="kw-2">*const </span>K::Elem, rsa: isize, csa: isize,
+    b: <span class="kw-2">*const </span>K::Elem, rsb: isize, csb: isize,
+    beta: K::Elem,
+    c: <span class="kw-2">*mut </span>K::Elem, rsc: isize, csc: isize)
+    <span class="kw">where </span>K: GemmKernel
 {
-    <span class="macro">debug_assert!</span>(<span class="ident">m</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span> <span class="op">|</span><span class="op">|</span> <span class="ident">n</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">rsc</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>);
-    <span class="macro">debug_assert!</span>(<span class="ident">m</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">n</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span> <span class="op">|</span><span class="op">|</span> <span class="ident">csc</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>);
+    <span class="macro">debug_assert!</span>(m &lt;= <span class="number">1 </span>|| n == <span class="number">0 </span>|| rsc != <span class="number">0</span>);
+    <span class="macro">debug_assert!</span>(m == <span class="number">0 </span>|| n &lt;= <span class="number">1 </span>|| csc != <span class="number">0</span>);
 
-    <span class="comment">// if A or B have no elements, compute C ← βC and return</span>
-    <span class="kw">if</span> <span class="ident">m</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">k</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">n</span> <span class="op">==</span> <span class="number">0</span> {
-        <span class="kw">return</span> <span class="ident">c_to_beta_c</span>(<span class="ident">m</span>, <span class="ident">n</span>, <span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>);
+    <span class="comment">// if A or B have no elements, compute C ← βC and return
+    </span><span class="kw">if </span>m == <span class="number">0 </span>|| k == <span class="number">0 </span>|| n == <span class="number">0 </span>{
+        <span class="kw">return </span>c_to_beta_c(m, n, beta, c, rsc, csc);
     }
 
-    <span class="kw">let</span> <span class="ident">knc</span> <span class="op">=</span> <span class="ident">K::nc</span>();
-    <span class="kw">let</span> <span class="ident">kkc</span> <span class="op">=</span> <span class="ident">K::kc</span>();
-    <span class="kw">let</span> <span class="ident">kmc</span> <span class="op">=</span> <span class="ident">K::mc</span>();
-    <span class="ident">ensure_kernel_params</span>::<span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>();
+    <span class="kw">let </span>knc = K::nc();
+    <span class="kw">let </span>kkc = K::kc();
+    <span class="kw">let </span>kmc = K::mc();
+    ensure_kernel_params::&lt;K&gt;();
 
-    <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">Ptr</span>(<span class="ident">a</span>);
-    <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">Ptr</span>(<span class="ident">b</span>);
-    <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">Ptr</span>(<span class="ident">c</span>);
+    <span class="kw">let </span>a = Ptr(a);
+    <span class="kw">let </span>b = Ptr(b);
+    <span class="kw">let </span>c = Ptr(c);
 
-    <span class="kw">let</span> (<span class="ident">nthreads</span>, <span class="ident">tp</span>) <span class="op">=</span> <span class="ident">get_thread_pool</span>();
-    <span class="kw">let</span> <span class="ident">thread_config</span> <span class="op">=</span> <span class="ident">LoopThreadConfig::new</span>::<span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>, <span class="ident">nthreads</span>);
-    <span class="kw">let</span> <span class="ident">nap</span> <span class="op">=</span> <span class="ident">thread_config</span>.<span class="ident">num_pack_a</span>();
+    <span class="kw">let </span>(nthreads, tp) = get_thread_pool();
+    <span class="kw">let </span>thread_config = LoopThreadConfig::new::&lt;K&gt;(m, k, n, nthreads);
+    <span class="kw">let </span>nap = thread_config.num_pack_a();
 
-    <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">packing_buffer</span>, <span class="ident">ap_size</span>) <span class="op">=</span> <span class="ident">make_packing_buffer</span>::<span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">n</span>, <span class="ident">nap</span>);
-    <span class="kw">let</span> <span class="ident">app</span> <span class="op">=</span> <span class="ident">Ptr</span>(<span class="ident">packing_buffer</span>.<span class="ident">ptr_mut</span>());
-    <span class="kw">let</span> <span class="ident">bpp</span> <span class="op">=</span> <span class="ident">app</span>.<span class="ident">add</span>(<span class="ident">ap_size</span> <span class="op">*</span> <span class="ident">nap</span>);
+    <span class="kw">let </span>(<span class="kw-2">mut </span>packing_buffer, ap_size) = make_packing_buffer::&lt;K&gt;(m, k, n, nap);
+    <span class="kw">let </span>app = Ptr(packing_buffer.ptr_mut());
+    <span class="kw">let </span>bpp = app.add(ap_size * nap);
 
-    <span class="comment">// LOOP 5: split n into nc parts (B, C)</span>
-    <span class="kw">for</span> (<span class="ident">l5</span>, <span class="ident">nc</span>) <span class="kw">in</span> <span class="ident">range_chunk</span>(<span class="ident">n</span>, <span class="ident">knc</span>) {
-        <span class="macro">dprint!</span>(<span class="string">&quot;LOOP 5, {}, nc={}&quot;</span>, <span class="ident">l5</span>, <span class="ident">nc</span>);
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">stride_offset</span>(<span class="ident">csb</span>, <span class="ident">knc</span> <span class="op">*</span> <span class="ident">l5</span>);
-        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">stride_offset</span>(<span class="ident">csc</span>, <span class="ident">knc</span> <span class="op">*</span> <span class="ident">l5</span>);
+    <span class="comment">// LOOP 5: split n into nc parts (B, C)
+    </span><span class="kw">for </span>(l5, nc) <span class="kw">in </span>range_chunk(n, knc) {
+        <span class="macro">dprint!</span>(<span class="string">&quot;LOOP 5, {}, nc={}&quot;</span>, l5, nc);
+        <span class="kw">let </span>b = b.stride_offset(csb, knc * l5);
+        <span class="kw">let </span>c = c.stride_offset(csc, knc * l5);
 
-        <span class="comment">// LOOP 4: split k in kc parts (A, B)</span>
-        <span class="comment">// This particular loop can&#39;t be parallelized because the</span>
-        <span class="comment">// C chunk (writable) is shared between iterations.</span>
-        <span class="kw">for</span> (<span class="ident">l4</span>, <span class="ident">kc</span>) <span class="kw">in</span> <span class="ident">range_chunk</span>(<span class="ident">k</span>, <span class="ident">kkc</span>) {
-            <span class="macro">dprint!</span>(<span class="string">&quot;LOOP 4, {}, kc={}&quot;</span>, <span class="ident">l4</span>, <span class="ident">kc</span>);
-            <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">stride_offset</span>(<span class="ident">rsb</span>, <span class="ident">kkc</span> <span class="op">*</span> <span class="ident">l4</span>);
-            <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">stride_offset</span>(<span class="ident">csa</span>, <span class="ident">kkc</span> <span class="op">*</span> <span class="ident">l4</span>);
+        <span class="comment">// LOOP 4: split k in kc parts (A, B)
+        // This particular loop can&#39;t be parallelized because the
+        // C chunk (writable) is shared between iterations.
+        </span><span class="kw">for </span>(l4, kc) <span class="kw">in </span>range_chunk(k, kkc) {
+            <span class="macro">dprint!</span>(<span class="string">&quot;LOOP 4, {}, kc={}&quot;</span>, l4, kc);
+            <span class="kw">let </span>b = b.stride_offset(rsb, kkc * l4);
+            <span class="kw">let </span>a = a.stride_offset(csa, kkc * l4);
 
-            <span class="comment">// Pack B -&gt; B~</span>
-            <span class="ident">pack</span>::<span class="op">&lt;</span><span class="ident">K::NRTy</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">kc</span>, <span class="ident">nc</span>, <span class="ident">bpp</span>.<span class="ident">ptr</span>(), <span class="ident">b</span>.<span class="ident">ptr</span>(), <span class="ident">csb</span>, <span class="ident">rsb</span>);
+            <span class="comment">// Pack B -&gt; B~
+            </span>pack::&lt;K::NRTy, <span class="kw">_</span>&gt;(kc, nc, bpp.ptr(), b.ptr(), csb, rsb);
 
-            <span class="comment">// First time writing to C, use user&#39;s `beta`, else accumulate</span>
-            <span class="kw">let</span> <span class="ident">betap</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">l4</span> <span class="op">==</span> <span class="number">0</span> { <span class="ident">beta</span> } <span class="kw">else</span> { <span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="ident">::one</span>() };
+            <span class="comment">// First time writing to C, use user&#39;s `beta`, else accumulate
+            </span><span class="kw">let </span>betap = <span class="kw">if </span>l4 == <span class="number">0 </span>{ beta } <span class="kw">else </span>{ &lt;<span class="kw">_</span>&gt;::one() };
 
-            <span class="comment">// LOOP 3: split m into mc parts (A, C)</span>
-            <span class="ident">range_chunk</span>(<span class="ident">m</span>, <span class="ident">kmc</span>)
-                .<span class="ident">parallel</span>(<span class="ident">thread_config</span>.<span class="ident">loop3</span>, <span class="ident">tp</span>)
-                .<span class="ident">thread_local</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">i</span>, <span class="ident">_nt</span><span class="op">|</span> {
-                    <span class="comment">// a packing buffer A~ per thread</span>
-                    <span class="macro">debug_assert!</span>(<span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">nap</span>);
-                    <span class="ident">app</span>.<span class="ident">add</span>(<span class="ident">ap_size</span> <span class="op">*</span> <span class="ident">i</span>)
+            <span class="comment">// LOOP 3: split m into mc parts (A, C)
+            </span>range_chunk(m, kmc)
+                .parallel(thread_config.loop3, tp)
+                .thread_local(<span class="kw">move </span>|i, _nt| {
+                    <span class="comment">// a packing buffer A~ per thread
+                    </span><span class="macro">debug_assert!</span>(i &lt; nap);
+                    app.add(ap_size * i)
                 })
-                .<span class="ident">for_each</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">tp</span>, <span class="kw-2">&amp;mut</span> <span class="ident">app</span>, <span class="ident">l3</span>, <span class="ident">mc</span><span class="op">|</span> {
-                    <span class="macro">dprint!</span>(<span class="string">&quot;LOOP 3, {}, mc={}&quot;</span>, <span class="ident">l3</span>, <span class="ident">mc</span>);
-                    <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">stride_offset</span>(<span class="ident">rsa</span>, <span class="ident">kmc</span> <span class="op">*</span> <span class="ident">l3</span>);
-                    <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">stride_offset</span>(<span class="ident">rsc</span>, <span class="ident">kmc</span> <span class="op">*</span> <span class="ident">l3</span>);
+                .for_each(<span class="kw">move </span>|tp, <span class="kw-2">&amp;mut </span>app, l3, mc| {
+                    <span class="macro">dprint!</span>(<span class="string">&quot;LOOP 3, {}, mc={}&quot;</span>, l3, mc);
+                    <span class="kw">let </span>a = a.stride_offset(rsa, kmc * l3);
+                    <span class="kw">let </span>c = c.stride_offset(rsc, kmc * l3);
 
-                    <span class="comment">// Pack A -&gt; A~</span>
-                    <span class="ident">pack</span>::<span class="op">&lt;</span><span class="ident">K::MRTy</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">kc</span>, <span class="ident">mc</span>, <span class="ident">app</span>.<span class="ident">ptr</span>(), <span class="ident">a</span>.<span class="ident">ptr</span>(), <span class="ident">rsa</span>, <span class="ident">csa</span>);
+                    <span class="comment">// Pack A -&gt; A~
+                    </span>pack::&lt;K::MRTy, <span class="kw">_</span>&gt;(kc, mc, app.ptr(), a.ptr(), rsa, csa);
 
-                    <span class="comment">// LOOP 2 and 1</span>
-                    <span class="ident">gemm_packed</span>::<span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">nc</span>, <span class="ident">kc</span>, <span class="ident">mc</span>,
-                                     <span class="ident">alpha</span>,
-                                     <span class="ident">app</span>.<span class="ident">to_const</span>(), <span class="ident">bpp</span>.<span class="ident">to_const</span>(),
-                                     <span class="ident">betap</span>,
-                                     <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>,
-                                     <span class="ident">tp</span>, <span class="ident">thread_config</span>);
+                    <span class="comment">// LOOP 2 and 1
+                    </span>gemm_packed::&lt;K&gt;(nc, kc, mc,
+                                     alpha,
+                                     app.to_const(), bpp.to_const(),
+                                     betap,
+                                     c, rsc, csc,
+                                     tp, thread_config);
                 });
         }
     }
 }
 
-<span class="comment">// set up buffer for masked (redirected output of) kernel</span>
-<span class="kw">const</span> <span class="ident">KERNEL_MAX_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span> <span class="op">*</span> <span class="number">8</span> <span class="op">*</span> <span class="number">4</span>;
-<span class="kw">const</span> <span class="ident">KERNEL_MAX_ALIGN</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
-<span class="kw">const</span> <span class="ident">MASK_BUF_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">KERNEL_MAX_SIZE</span> <span class="op">+</span> <span class="ident">KERNEL_MAX_ALIGN</span> <span class="op">-</span> <span class="number">1</span>;
+<span class="comment">// set up buffer for masked (redirected output of) kernel
+</span><span class="kw">const </span>KERNEL_MAX_SIZE: usize = <span class="number">8 </span>* <span class="number">8 </span>* <span class="number">4</span>;
+<span class="kw">const </span>KERNEL_MAX_ALIGN: usize = <span class="number">32</span>;
+<span class="kw">const </span>MASK_BUF_SIZE: usize = KERNEL_MAX_SIZE + KERNEL_MAX_ALIGN - <span class="number">1</span>;
 
-<span class="comment">// Pointers into buffer will be manually aligned anyway, due to</span>
-<span class="comment">// bugs we have seen on certain platforms (macos) that look like</span>
-<span class="comment">// we don&#39;t get aligned allocations out of TLS (?).</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">align</span>(<span class="number">32</span>))]</span>
-<span class="kw">struct</span> <span class="ident">MaskBuffer</span> {
-    <span class="ident">buffer</span>: [<span class="ident">u8</span>; <span class="ident">MASK_BUF_SIZE</span>],
+<span class="comment">// Pointers into buffer will be manually aligned anyway, due to
+// bugs we have seen on certain platforms (macos) that look like
+// we don&#39;t get aligned allocations out of TLS (?).
+</span><span class="attribute">#[repr(align(<span class="number">32</span>))]
+</span><span class="kw">struct </span>MaskBuffer {
+    buffer: [u8; MASK_BUF_SIZE],
 }
 
-<span class="comment">// Use thread local if we can; this is faster even in the single threaded case because</span>
-<span class="comment">// it is possible to skip zeroing out the array.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="macro">thread_local!</span> {
-    <span class="kw">static</span> <span class="ident">MASK_BUF</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">MaskBuffer</span><span class="op">&gt;</span> <span class="op">=</span>
-        <span class="ident">UnsafeCell::new</span>(<span class="ident">MaskBuffer</span> { <span class="ident">buffer</span>: [<span class="number">0</span>; <span class="ident">MASK_BUF_SIZE</span>] });
+<span class="comment">// Use thread local if we can; this is faster even in the single threaded case because
+// it is possible to skip zeroing out the array.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="macro">thread_local! </span>{
+    <span class="kw">static </span>MASK_BUF: UnsafeCell&lt;MaskBuffer&gt; =
+        UnsafeCell::new(MaskBuffer { buffer: [<span class="number">0</span>; MASK_BUF_SIZE] });
 }
 
-<span class="doccomment">/// Loops 1 and 2 around the µ-kernel</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + app: packed A (A~)</span>
-<span class="doccomment">/// + bpp: packed B (B~)</span>
-<span class="doccomment">/// + nc: columns of packed B</span>
-<span class="doccomment">/// + kc: columns of packed A / rows of packed B</span>
-<span class="doccomment">/// + mc: rows of packed A</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">gemm_packed</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">nc</span>: <span class="ident">usize</span>, <span class="ident">kc</span>: <span class="ident">usize</span>, <span class="ident">mc</span>: <span class="ident">usize</span>,
-                         <span class="ident">alpha</span>: <span class="ident">K::Elem</span>,
-                         <span class="ident">app</span>: <span class="ident">Ptr</span><span class="op">&lt;</span><span class="kw-2">*const</span> <span class="ident">K::Elem</span><span class="op">&gt;</span>, <span class="ident">bpp</span>: <span class="ident">Ptr</span><span class="op">&lt;</span><span class="kw-2">*const</span> <span class="ident">K::Elem</span><span class="op">&gt;</span>,
-                         <span class="ident">beta</span>: <span class="ident">K::Elem</span>,
-                         <span class="ident">c</span>: <span class="ident">Ptr</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">K::Elem</span><span class="op">&gt;</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>,
-                         <span class="ident">tp</span>: <span class="ident">ThreadPoolCtx</span>, <span class="ident">thread_config</span>: <span class="ident">LoopThreadConfig</span>)
-    <span class="kw">where</span> <span class="ident">K</span>: <span class="ident">GemmKernel</span>,
+<span class="doccomment">/// Loops 1 and 2 around the µ-kernel
+///
+/// + app: packed A (A~)
+/// + bpp: packed B (B~)
+/// + nc: columns of packed B
+/// + kc: columns of packed A / rows of packed B
+/// + mc: rows of packed A
+</span><span class="kw">unsafe fn </span>gemm_packed&lt;K&gt;(nc: usize, kc: usize, mc: usize,
+                         alpha: K::Elem,
+                         app: Ptr&lt;<span class="kw-2">*const </span>K::Elem&gt;, bpp: Ptr&lt;<span class="kw-2">*const </span>K::Elem&gt;,
+                         beta: K::Elem,
+                         c: Ptr&lt;<span class="kw-2">*mut </span>K::Elem&gt;, rsc: isize, csc: isize,
+                         tp: ThreadPoolCtx, thread_config: LoopThreadConfig)
+    <span class="kw">where </span>K: GemmKernel,
 {
-    <span class="kw">let</span> <span class="ident">mr</span> <span class="op">=</span> <span class="ident">K::MR</span>;
-    <span class="kw">let</span> <span class="ident">nr</span> <span class="op">=</span> <span class="ident">K::NR</span>;
-    <span class="comment">// check for the mask buffer that fits 8 x 8 f32 and 8 x 4 f64 kernels and alignment</span>
-    <span class="macro">assert!</span>(<span class="ident">mr</span> <span class="op">*</span> <span class="ident">nr</span> <span class="op">*</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">K::Elem</span><span class="op">&gt;</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">KERNEL_MAX_SIZE</span> <span class="op">&amp;&amp;</span> <span class="ident">K::align_to</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">KERNEL_MAX_ALIGN</span>);
+    <span class="kw">let </span>mr = K::MR;
+    <span class="kw">let </span>nr = K::NR;
+    <span class="comment">// check for the mask buffer that fits 8 x 8 f32 and 8 x 4 f64 kernels and alignment
+    </span><span class="macro">assert!</span>(mr * nr * size_of::&lt;K::Elem&gt;() &lt;= KERNEL_MAX_SIZE &amp;&amp; K::align_to() &lt;= KERNEL_MAX_ALIGN);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mask_buf</span> <span class="op">=</span> <span class="ident">MaskBuffer</span> { <span class="ident">buffer</span>: [<span class="number">0</span>; <span class="ident">MASK_BUF_SIZE</span>] };
+    <span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    </span><span class="kw">let </span><span class="kw-2">mut </span>mask_buf = MaskBuffer { buffer: [<span class="number">0</span>; MASK_BUF_SIZE] };
 
-    <span class="comment">// LOOP 2: through micropanels in packed `b` (B~, C)</span>
-    <span class="ident">range_chunk</span>(<span class="ident">nc</span>, <span class="ident">nr</span>)
-        .<span class="ident">parallel</span>(<span class="ident">thread_config</span>.<span class="ident">loop2</span>, <span class="ident">tp</span>)
-        .<span class="ident">thread_local</span>(<span class="op">|</span><span class="ident">_i</span>, <span class="ident">_nt</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ptr</span>;
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-            {
-                <span class="macro">debug_assert_eq!</span>(<span class="ident">_nt</span>, <span class="number">1</span>);
-                <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">mask_buf</span>.<span class="ident">buffer</span>.<span class="ident">as_mut_ptr</span>();
+    <span class="comment">// LOOP 2: through micropanels in packed `b` (B~, C)
+    </span>range_chunk(nc, nr)
+        .parallel(thread_config.loop2, tp)
+        .thread_local(|_i, _nt| {
+            <span class="kw">let </span><span class="kw-2">mut </span>ptr;
+            <span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+            </span>{
+                <span class="macro">debug_assert_eq!</span>(_nt, <span class="number">1</span>);
+                ptr = mask_buf.buffer.as_mut_ptr();
             }
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-            {
-                <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">MASK_BUF</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">buf</span><span class="op">|</span> (<span class="kw-2">*</span><span class="ident">buf</span>.<span class="ident">get</span>()).<span class="ident">buffer</span>.<span class="ident">as_mut_ptr</span>());
+            <span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+            </span>{
+                ptr = MASK_BUF.with(|buf| (<span class="kw-2">*</span>buf.get()).buffer.as_mut_ptr());
             }
-            <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">align_ptr</span>(<span class="ident">K::align_to</span>(), <span class="ident">ptr</span>);
-            <span class="ident">slice::from_raw_parts_mut</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">K::Elem</span>, <span class="ident">KERNEL_MAX_SIZE</span> <span class="op">/</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">K::Elem</span><span class="op">&gt;</span>())
+            ptr = align_ptr(K::align_to(), ptr);
+            slice::from_raw_parts_mut(ptr <span class="kw">as </span><span class="kw-2">*mut </span>K::Elem, KERNEL_MAX_SIZE / size_of::&lt;K::Elem&gt;())
         })
-        .<span class="ident">for_each</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">_tp</span>, <span class="ident">mask_buf</span>, <span class="ident">l2</span>, <span class="ident">nr_</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">bpp</span> <span class="op">=</span> <span class="ident">bpp</span>.<span class="ident">stride_offset</span>(<span class="number">1</span>, <span class="ident">kc</span> <span class="op">*</span> <span class="ident">nr</span> <span class="op">*</span> <span class="ident">l2</span>);
-            <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">stride_offset</span>(<span class="ident">csc</span>, <span class="ident">nr</span> <span class="op">*</span> <span class="ident">l2</span>);
+        .for_each(<span class="kw">move </span>|_tp, mask_buf, l2, nr_| {
+            <span class="kw">let </span>bpp = bpp.stride_offset(<span class="number">1</span>, kc * nr * l2);
+            <span class="kw">let </span>c = c.stride_offset(csc, nr * l2);
 
-            <span class="comment">// LOOP 1: through micropanels in packed `a` while `b` is constant (A~, C)</span>
-            <span class="kw">for</span> (<span class="ident">l1</span>, <span class="ident">mr_</span>) <span class="kw">in</span> <span class="ident">range_chunk</span>(<span class="ident">mc</span>, <span class="ident">mr</span>) {
-                <span class="kw">let</span> <span class="ident">app</span> <span class="op">=</span> <span class="ident">app</span>.<span class="ident">stride_offset</span>(<span class="number">1</span>, <span class="ident">kc</span> <span class="op">*</span> <span class="ident">mr</span> <span class="op">*</span> <span class="ident">l1</span>);
-                <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">stride_offset</span>(<span class="ident">rsc</span>, <span class="ident">mr</span> <span class="op">*</span> <span class="ident">l1</span>);
+            <span class="comment">// LOOP 1: through micropanels in packed `a` while `b` is constant (A~, C)
+            </span><span class="kw">for </span>(l1, mr_) <span class="kw">in </span>range_chunk(mc, mr) {
+                <span class="kw">let </span>app = app.stride_offset(<span class="number">1</span>, kc * mr * l1);
+                <span class="kw">let </span>c = c.stride_offset(rsc, mr * l1);
 
-                <span class="comment">// GEMM KERNEL</span>
-                <span class="comment">// NOTE: For the rust kernels, it performs better to simply</span>
-                <span class="comment">// always use the masked kernel function!</span>
-                <span class="kw">if</span> <span class="ident">K::always_masked</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">nr_</span> <span class="op">&lt;</span> <span class="ident">nr</span> <span class="op">|</span><span class="op">|</span> <span class="ident">mr_</span> <span class="op">&lt;</span> <span class="ident">mr</span> {
-                    <span class="ident">masked_kernel</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">kc</span>, <span class="ident">alpha</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">app</span>.<span class="ident">ptr</span>(), <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">bpp</span>.<span class="ident">ptr</span>(),
-                                          <span class="ident">beta</span>, <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">c</span>.<span class="ident">ptr</span>(), <span class="ident">rsc</span>, <span class="ident">csc</span>,
-                                          <span class="ident">mr_</span>, <span class="ident">nr_</span>, <span class="ident">mask_buf</span>);
+                <span class="comment">// GEMM KERNEL
+                // NOTE: For the rust kernels, it performs better to simply
+                // always use the masked kernel function!
+                </span><span class="kw">if </span>K::always_masked() || nr_ &lt; nr || mr_ &lt; mr {
+                    masked_kernel::&lt;<span class="kw">_</span>, K&gt;(kc, alpha, <span class="kw-2">&amp;*</span>app.ptr(), <span class="kw-2">&amp;*</span>bpp.ptr(),
+                                          beta, <span class="kw-2">&amp;mut *</span>c.ptr(), rsc, csc,
+                                          mr_, nr_, mask_buf);
                     <span class="kw">continue</span>;
-                } <span class="kw">else</span> {
-                    <span class="ident">K::kernel</span>(<span class="ident">kc</span>, <span class="ident">alpha</span>, <span class="ident">app</span>.<span class="ident">ptr</span>(), <span class="ident">bpp</span>.<span class="ident">ptr</span>(), <span class="ident">beta</span>, <span class="ident">c</span>.<span class="ident">ptr</span>(), <span class="ident">rsc</span>, <span class="ident">csc</span>);
+                } <span class="kw">else </span>{
+                    K::kernel(kc, alpha, app.ptr(), bpp.ptr(), beta, c.ptr(), rsc, csc);
                 }
             }
         });
 }
 
-<span class="doccomment">/// Allocate a vector of uninitialized data to be used for both packing buffers.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + A~ needs be KC x MC</span>
-<span class="doccomment">/// + B~ needs be KC x NC</span>
-<span class="doccomment">/// but we can make them smaller if the matrix is smaller than this (just ensure</span>
-<span class="doccomment">/// we have rounded up to a multiple of the kernel size).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// na: Number of buffers to alloc for A</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Return packing buffer and size of A~ (The offset to B~ is A~ size times `na`).</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">make_packing_buffer</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>, <span class="ident">na</span>: <span class="ident">usize</span>) -&gt; (<span class="ident">Alloc</span><span class="op">&lt;</span><span class="ident">K::Elem</span><span class="op">&gt;</span>, <span class="ident">usize</span>)
-    <span class="kw">where</span> <span class="ident">K</span>: <span class="ident">GemmKernel</span>,
+<span class="doccomment">/// Allocate a vector of uninitialized data to be used for both packing buffers.
+///
+/// + A~ needs be KC x MC
+/// + B~ needs be KC x NC
+/// but we can make them smaller if the matrix is smaller than this (just ensure
+/// we have rounded up to a multiple of the kernel size).
+///
+/// na: Number of buffers to alloc for A
+///
+/// Return packing buffer and size of A~ (The offset to B~ is A~ size times `na`).
+</span><span class="kw">unsafe fn </span>make_packing_buffer&lt;K&gt;(m: usize, k: usize, n: usize, na: usize) -&gt; (Alloc&lt;K::Elem&gt;, usize)
+    <span class="kw">where </span>K: GemmKernel,
 {
-    <span class="comment">// max alignment requirement is a multiple of min(MR, NR) * sizeof&lt;Elem&gt;</span>
-    <span class="comment">// because apack_size is a multiple of MR, start of b aligns fine</span>
-    <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">min</span>(<span class="ident">m</span>, <span class="ident">K::mc</span>());
-    <span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">min</span>(<span class="ident">k</span>, <span class="ident">K::kc</span>());
-    <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">min</span>(<span class="ident">n</span>, <span class="ident">K::nc</span>());
-    <span class="comment">// round up k, n to multiples of mr, nr</span>
-    <span class="comment">// round up to multiple of kc</span>
-    <span class="macro">debug_assert_ne!</span>(<span class="ident">na</span>, <span class="number">0</span>);
-    <span class="macro">debug_assert!</span>(<span class="ident">na</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">128</span>);
-    <span class="kw">let</span> <span class="ident">apack_size</span> <span class="op">=</span> <span class="ident">k</span> <span class="op">*</span> <span class="ident">round_up_to</span>(<span class="ident">m</span>, <span class="ident">K::MR</span>);
-    <span class="kw">let</span> <span class="ident">bpack_size</span> <span class="op">=</span> <span class="ident">k</span> <span class="op">*</span> <span class="ident">round_up_to</span>(<span class="ident">n</span>, <span class="ident">K::NR</span>);
-    <span class="kw">let</span> <span class="ident">nelem</span> <span class="op">=</span> <span class="ident">apack_size</span> <span class="op">*</span> <span class="ident">na</span> <span class="op">+</span> <span class="ident">bpack_size</span>;
+    <span class="comment">// max alignment requirement is a multiple of min(MR, NR) * sizeof&lt;Elem&gt;
+    // because apack_size is a multiple of MR, start of b aligns fine
+    </span><span class="kw">let </span>m = min(m, K::mc());
+    <span class="kw">let </span>k = min(k, K::kc());
+    <span class="kw">let </span>n = min(n, K::nc());
+    <span class="comment">// round up k, n to multiples of mr, nr
+    // round up to multiple of kc
+    </span><span class="macro">debug_assert_ne!</span>(na, <span class="number">0</span>);
+    <span class="macro">debug_assert!</span>(na &lt;= <span class="number">128</span>);
+    <span class="kw">let </span>apack_size = k * round_up_to(m, K::MR);
+    <span class="kw">let </span>bpack_size = k * round_up_to(n, K::NR);
+    <span class="kw">let </span>nelem = apack_size * na + bpack_size;
 
     <span class="macro">dprint!</span>(<span class="string">&quot;packed nelem={}, apack={}, bpack={},
              m={} k={} n={}, na={}&quot;</span>,
-             <span class="ident">nelem</span>, <span class="ident">apack_size</span>, <span class="ident">bpack_size</span>,
-             <span class="ident">m</span>,<span class="ident">k</span>,<span class="ident">n</span>, <span class="ident">na</span>);
+             nelem, apack_size, bpack_size,
+             m,k,n, na);
 
-    (<span class="ident">Alloc::new</span>(<span class="ident">nelem</span>, <span class="ident">K::align_to</span>()), <span class="ident">apack_size</span>)
+    (Alloc::new(nelem, K::align_to()), apack_size)
 }
 
-<span class="doccomment">/// offset the ptr forwards to align to a specific byte count</span>
-<span class="doccomment">/// Safety: align_to must be a power of two and ptr valid for the pointer arithmetic</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">align_ptr</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">align_to</span>: <span class="ident">usize</span>, <span class="kw-2">mut</span> <span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">T</span> {
-    <span class="kw">if</span> <span class="ident">align_to</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-        <span class="kw">let</span> <span class="ident">cur_align</span> <span class="op">=</span> <span class="ident">ptr</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">%</span> <span class="ident">align_to</span>;
-        <span class="kw">if</span> <span class="ident">cur_align</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">ptr</span>.<span class="ident">offset</span>(((<span class="ident">align_to</span> <span class="op">-</span> <span class="ident">cur_align</span>) <span class="op">/</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>()) <span class="kw">as</span> <span class="ident">isize</span>);
+<span class="doccomment">/// offset the ptr forwards to align to a specific byte count
+/// Safety: align_to must be a power of two and ptr valid for the pointer arithmetic
+</span><span class="attribute">#[inline]
+</span><span class="kw">unsafe fn </span>align_ptr&lt;T&gt;(align_to: usize, <span class="kw-2">mut </span>ptr: <span class="kw-2">*mut </span>T) -&gt; <span class="kw-2">*mut </span>T {
+    <span class="kw">if </span>align_to != <span class="number">0 </span>{
+        <span class="kw">let </span>cur_align = ptr <span class="kw">as </span>usize % align_to;
+        <span class="kw">if </span>cur_align != <span class="number">0 </span>{
+            ptr = ptr.offset(((align_to - cur_align) / size_of::&lt;T&gt;()) <span class="kw">as </span>isize);
         }
     }
-    <span class="ident">ptr</span>
+    ptr
 }
 
-<span class="doccomment">/// Pack matrix into `pack`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + kc: length of the micropanel</span>
-<span class="doccomment">/// + mc: number of rows/columns in the matrix to be packed</span>
-<span class="doccomment">/// + pack: packing buffer</span>
-<span class="doccomment">/// + a: matrix,</span>
-<span class="doccomment">/// + rsa: row stride</span>
-<span class="doccomment">/// + csa: column stride</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + MR: kernel rows/columns that we round up to</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">pack</span><span class="op">&lt;</span><span class="ident">MR</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">kc</span>: <span class="ident">usize</span>, <span class="ident">mc</span>: <span class="ident">usize</span>, <span class="ident">pack</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-                      <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>, <span class="ident">rsa</span>: <span class="ident">isize</span>, <span class="ident">csa</span>: <span class="ident">isize</span>)
-    <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">Element</span>,
-          <span class="ident">MR</span>: <span class="ident">ConstNum</span>,
+<span class="doccomment">/// Pack matrix into `pack`
+///
+/// + kc: length of the micropanel
+/// + mc: number of rows/columns in the matrix to be packed
+/// + pack: packing buffer
+/// + a: matrix,
+/// + rsa: row stride
+/// + csa: column stride
+///
+/// + MR: kernel rows/columns that we round up to
+</span><span class="kw">unsafe fn </span>pack&lt;MR, T&gt;(kc: usize, mc: usize, pack: <span class="kw-2">*mut </span>T,
+                      a: <span class="kw-2">*const </span>T, rsa: isize, csa: isize)
+    <span class="kw">where </span>T: Element,
+          MR: ConstNum,
 {
-    <span class="kw">let</span> <span class="ident">mr</span> <span class="op">=</span> <span class="ident">MR::VALUE</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">p</span> <span class="op">=</span> <span class="number">0</span>; <span class="comment">// offset into pack</span>
+    <span class="kw">let </span>mr = MR::VALUE;
+    <span class="kw">let </span><span class="kw-2">mut </span>p = <span class="number">0</span>; <span class="comment">// offset into pack
 
-    <span class="kw">if</span> <span class="ident">rsa</span> <span class="op">==</span> <span class="number">1</span> {
-        <span class="comment">// if the matrix is contiguous in the same direction we are packing,</span>
-        <span class="comment">// copy a kernel row at a time.</span>
-        <span class="kw">for</span> <span class="ident">ir</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">mc</span><span class="op">/</span><span class="ident">mr</span> {
-            <span class="kw">let</span> <span class="ident">row_offset</span> <span class="op">=</span> <span class="ident">ir</span> <span class="op">*</span> <span class="ident">mr</span>;
-            <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">kc</span> {
-                <span class="kw">let</span> <span class="ident">a_row</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">stride_offset</span>(<span class="ident">rsa</span>, <span class="ident">row_offset</span>)
-                             .<span class="ident">stride_offset</span>(<span class="ident">csa</span>, <span class="ident">j</span>);
-                <span class="ident">copy_nonoverlapping</span>(<span class="ident">a_row</span>, <span class="ident">pack</span>.<span class="ident">add</span>(<span class="ident">p</span>), <span class="ident">mr</span>);
-                <span class="ident">p</span> <span class="op">+</span><span class="op">=</span> <span class="ident">mr</span>;
+    </span><span class="kw">if </span>rsa == <span class="number">1 </span>{
+        <span class="comment">// if the matrix is contiguous in the same direction we are packing,
+        // copy a kernel row at a time.
+        </span><span class="kw">for </span>ir <span class="kw">in </span><span class="number">0</span>..mc/mr {
+            <span class="kw">let </span>row_offset = ir * mr;
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..kc {
+                <span class="kw">let </span>a_row = a.stride_offset(rsa, row_offset)
+                             .stride_offset(csa, j);
+                copy_nonoverlapping(a_row, pack.add(p), mr);
+                p += mr;
             }
         }
-    } <span class="kw">else</span> {
-        <span class="comment">// general layout case</span>
-        <span class="kw">for</span> <span class="ident">ir</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">mc</span><span class="op">/</span><span class="ident">mr</span> {
-            <span class="kw">let</span> <span class="ident">row_offset</span> <span class="op">=</span> <span class="ident">ir</span> <span class="op">*</span> <span class="ident">mr</span>;
-            <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">kc</span> {
-                <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">mr</span> {
-                    <span class="kw">let</span> <span class="ident">a_elt</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">stride_offset</span>(<span class="ident">rsa</span>, <span class="ident">i</span> <span class="op">+</span> <span class="ident">row_offset</span>)
-                                 .<span class="ident">stride_offset</span>(<span class="ident">csa</span>, <span class="ident">j</span>);
-                    <span class="ident">copy_nonoverlapping</span>(<span class="ident">a_elt</span>, <span class="ident">pack</span>.<span class="ident">add</span>(<span class="ident">p</span>), <span class="number">1</span>);
-                    <span class="ident">p</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    } <span class="kw">else </span>{
+        <span class="comment">// general layout case
+        </span><span class="kw">for </span>ir <span class="kw">in </span><span class="number">0</span>..mc/mr {
+            <span class="kw">let </span>row_offset = ir * mr;
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..kc {
+                <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..mr {
+                    <span class="kw">let </span>a_elt = a.stride_offset(rsa, i + row_offset)
+                                 .stride_offset(csa, j);
+                    copy_nonoverlapping(a_elt, pack.add(p), <span class="number">1</span>);
+                    p += <span class="number">1</span>;
                 }
             }
         }
     }
 
-    <span class="kw">let</span> <span class="ident">zero</span> <span class="op">=</span> <span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="ident">::zero</span>();
+    <span class="kw">let </span>zero = &lt;<span class="kw">_</span>&gt;::zero();
 
-    <span class="comment">// Pad with zeros to multiple of kernel size (uneven mc)</span>
-    <span class="kw">let</span> <span class="ident">rest</span> <span class="op">=</span> <span class="ident">mc</span> <span class="op">%</span> <span class="ident">mr</span>;
-    <span class="kw">if</span> <span class="ident">rest</span> <span class="op">&gt;</span> <span class="number">0</span> {
-        <span class="kw">let</span> <span class="ident">row_offset</span> <span class="op">=</span> (<span class="ident">mc</span><span class="op">/</span><span class="ident">mr</span>) <span class="op">*</span> <span class="ident">mr</span>;
-        <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">kc</span> {
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">mr</span> {
-                <span class="kw">if</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">rest</span> {
-                    <span class="kw">let</span> <span class="ident">a_elt</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">stride_offset</span>(<span class="ident">rsa</span>, <span class="ident">i</span> <span class="op">+</span> <span class="ident">row_offset</span>)
-                                 .<span class="ident">stride_offset</span>(<span class="ident">csa</span>, <span class="ident">j</span>);
-                    <span class="ident">copy_nonoverlapping</span>(<span class="ident">a_elt</span>, <span class="ident">pack</span>.<span class="ident">add</span>(<span class="ident">p</span>), <span class="number">1</span>);
-                } <span class="kw">else</span> {
-                    <span class="kw-2">*</span><span class="ident">pack</span>.<span class="ident">add</span>(<span class="ident">p</span>) <span class="op">=</span> <span class="ident">zero</span>;
+    <span class="comment">// Pad with zeros to multiple of kernel size (uneven mc)
+    </span><span class="kw">let </span>rest = mc % mr;
+    <span class="kw">if </span>rest &gt; <span class="number">0 </span>{
+        <span class="kw">let </span>row_offset = (mc/mr) * mr;
+        <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..kc {
+            <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..mr {
+                <span class="kw">if </span>i &lt; rest {
+                    <span class="kw">let </span>a_elt = a.stride_offset(rsa, i + row_offset)
+                                 .stride_offset(csa, j);
+                    copy_nonoverlapping(a_elt, pack.add(p), <span class="number">1</span>);
+                } <span class="kw">else </span>{
+                    <span class="kw-2">*</span>pack.add(p) = zero;
                 }
-                <span class="ident">p</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                p += <span class="number">1</span>;
             }
         }
     }
 }
 
-<span class="doccomment">/// Call the GEMM kernel with a &quot;masked&quot; output C.</span>
-<span class="doccomment">/// </span>
-<span class="doccomment">/// Simply redirect the MR by NR kernel output to the passed</span>
-<span class="doccomment">/// in `mask_buf`, and copy the non masked region to the real</span>
-<span class="doccomment">/// C.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// + rows: rows of kernel unmasked</span>
-<span class="doccomment">/// + cols: cols of kernel unmasked</span>
-<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">masked_kernel</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">k</span>: <span class="ident">usize</span>, <span class="ident">alpha</span>: <span class="ident">T</span>,
-                              <span class="ident">a</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-                              <span class="ident">b</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-                              <span class="ident">beta</span>: <span class="ident">T</span>,
-                              <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>,
-                              <span class="ident">rows</span>: <span class="ident">usize</span>, <span class="ident">cols</span>: <span class="ident">usize</span>,
-                              <span class="ident">mask_buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>])
-    <span class="kw">where</span> <span class="ident">K</span>: <span class="ident">GemmKernel</span><span class="op">&lt;</span><span class="ident">Elem</span><span class="op">=</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">T</span>: <span class="ident">Element</span>,
+<span class="doccomment">/// Call the GEMM kernel with a &quot;masked&quot; output C.
+/// 
+/// Simply redirect the MR by NR kernel output to the passed
+/// in `mask_buf`, and copy the non masked region to the real
+/// C.
+///
+/// + rows: rows of kernel unmasked
+/// + cols: cols of kernel unmasked
+</span><span class="attribute">#[inline(never)]
+</span><span class="kw">unsafe fn </span>masked_kernel&lt;T, K&gt;(k: usize, alpha: T,
+                              a: <span class="kw-2">*const </span>T,
+                              b: <span class="kw-2">*const </span>T,
+                              beta: T,
+                              c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize,
+                              rows: usize, cols: usize,
+                              mask_buf: <span class="kw-2">&amp;mut </span>[T])
+    <span class="kw">where </span>K: GemmKernel&lt;Elem=T&gt;, T: Element,
 {
-    <span class="comment">// use column major order for `mask_buf`</span>
-    <span class="ident">K::kernel</span>(<span class="ident">k</span>, <span class="ident">alpha</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">T::zero</span>(), <span class="ident">mask_buf</span>.<span class="ident">as_mut_ptr</span>(), <span class="number">1</span>, <span class="ident">K::MR</span> <span class="kw">as</span> <span class="ident">isize</span>);
-    <span class="ident">c_to_masked_ab_beta_c</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">beta</span>, <span class="ident">c</span>, <span class="ident">rsc</span>, <span class="ident">csc</span>, <span class="ident">rows</span>, <span class="ident">cols</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">mask_buf</span>);
+    <span class="comment">// use column major order for `mask_buf`
+    </span>K::kernel(k, alpha, a, b, T::zero(), mask_buf.as_mut_ptr(), <span class="number">1</span>, K::MR <span class="kw">as </span>isize);
+    c_to_masked_ab_beta_c::&lt;<span class="kw">_</span>, K&gt;(beta, c, rsc, csc, rows, cols, <span class="kw-2">&amp;*</span>mask_buf);
 }
 
-<span class="doccomment">/// Copy output in `mask_buf` to the actual c matrix</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// C ← M + βC  where M is the `mask_buf`</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">c_to_masked_ab_beta_c</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">K</span><span class="op">&gt;</span>(<span class="ident">beta</span>: <span class="ident">T</span>,
-                                      <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>,
-                                      <span class="ident">rows</span>: <span class="ident">usize</span>, <span class="ident">cols</span>: <span class="ident">usize</span>,
-                                      <span class="ident">mask_buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>])
-    <span class="kw">where</span> <span class="ident">K</span>: <span class="ident">GemmKernel</span><span class="op">&lt;</span><span class="ident">Elem</span><span class="op">=</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">T</span>: <span class="ident">Element</span>,
+<span class="doccomment">/// Copy output in `mask_buf` to the actual c matrix
+///
+/// C ← M + βC  where M is the `mask_buf`
+</span><span class="attribute">#[inline]
+</span><span class="kw">unsafe fn </span>c_to_masked_ab_beta_c&lt;T, K&gt;(beta: T,
+                                      c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize,
+                                      rows: usize, cols: usize,
+                                      mask_buf: <span class="kw-2">&amp;</span>[T])
+    <span class="kw">where </span>K: GemmKernel&lt;Elem=T&gt;, T: Element,
 {
-    <span class="comment">// note: use separate function here with `&amp;T` argument for mask buf,</span>
-    <span class="comment">// so that the compiler sees that `c` and `mask_buf` never alias.</span>
-    <span class="kw">let</span> <span class="ident">mr</span> <span class="op">=</span> <span class="ident">K::MR</span>;
-    <span class="kw">let</span> <span class="ident">nr</span> <span class="op">=</span> <span class="ident">K::NR</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ab</span> <span class="op">=</span> <span class="ident">mask_buf</span>.<span class="ident">as_ptr</span>();
-    <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nr</span> {
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">mr</span> {
-            <span class="kw">if</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">rows</span> <span class="op">&amp;&amp;</span> <span class="ident">j</span> <span class="op">&lt;</span> <span class="ident">cols</span> {
-                <span class="kw">let</span> <span class="ident">cptr</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">stride_offset</span>(<span class="ident">rsc</span>, <span class="ident">i</span>)
-                            .<span class="ident">stride_offset</span>(<span class="ident">csc</span>, <span class="ident">j</span>);
-                <span class="kw">if</span> <span class="ident">beta</span>.<span class="ident">is_zero</span>() {
-                    <span class="kw-2">*</span><span class="ident">cptr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">ab</span>; <span class="comment">// initialize</span>
-                } <span class="kw">else</span> {
-                    (<span class="kw-2">*</span><span class="ident">cptr</span>).<span class="ident">mul_assign</span>(<span class="ident">beta</span>);
-                    (<span class="kw-2">*</span><span class="ident">cptr</span>).<span class="ident">add_assign</span>(<span class="kw-2">*</span><span class="ident">ab</span>);
+    <span class="comment">// note: use separate function here with `&amp;T` argument for mask buf,
+    // so that the compiler sees that `c` and `mask_buf` never alias.
+    </span><span class="kw">let </span>mr = K::MR;
+    <span class="kw">let </span>nr = K::NR;
+    <span class="kw">let </span><span class="kw-2">mut </span>ab = mask_buf.as_ptr();
+    <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..nr {
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..mr {
+            <span class="kw">if </span>i &lt; rows &amp;&amp; j &lt; cols {
+                <span class="kw">let </span>cptr = c.stride_offset(rsc, i)
+                            .stride_offset(csc, j);
+                <span class="kw">if </span>beta.is_zero() {
+                    <span class="kw-2">*</span>cptr = <span class="kw-2">*</span>ab; <span class="comment">// initialize
+                </span>} <span class="kw">else </span>{
+                    (<span class="kw-2">*</span>cptr).mul_assign(beta);
+                    (<span class="kw-2">*</span>cptr).add_assign(<span class="kw-2">*</span>ab);
                 }
             }
-            <span class="ident">ab</span>.<span class="ident">inc</span>();
+            ab.inc();
         }
     }
 }
 
-<span class="comment">// Compute just C ← βC</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">c_to_beta_c</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">m</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>, <span class="ident">beta</span>: <span class="ident">T</span>,
-                         <span class="ident">c</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">rsc</span>: <span class="ident">isize</span>, <span class="ident">csc</span>: <span class="ident">isize</span>)
-    <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">Element</span>
+<span class="comment">// Compute just C ← βC
+</span><span class="kw">unsafe fn </span>c_to_beta_c&lt;T&gt;(m: usize, n: usize, beta: T,
+                         c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize)
+    <span class="kw">where </span>T: Element
 {
-    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">m</span> {
-        <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">n</span> {
-            <span class="kw">let</span> <span class="ident">cptr</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">stride_offset</span>(<span class="ident">rsc</span>, <span class="ident">i</span>)
-                        .<span class="ident">stride_offset</span>(<span class="ident">csc</span>, <span class="ident">j</span>);
-            <span class="kw">if</span> <span class="ident">beta</span>.<span class="ident">is_zero</span>() {
-                <span class="kw-2">*</span><span class="ident">cptr</span> <span class="op">=</span> <span class="ident">T::zero</span>(); <span class="comment">// initialize C</span>
-            } <span class="kw">else</span> {
-                (<span class="kw-2">*</span><span class="ident">cptr</span>).<span class="ident">mul_assign</span>(<span class="ident">beta</span>);
+    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..m {
+        <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..n {
+            <span class="kw">let </span>cptr = c.stride_offset(rsc, i)
+                        .stride_offset(csc, j);
+            <span class="kw">if </span>beta.is_zero() {
+                <span class="kw-2">*</span>cptr = T::zero(); <span class="comment">// initialize C
+            </span>} <span class="kw">else </span>{
+                (<span class="kw-2">*</span>cptr).mul_assign(beta);
             }
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="matrixmultiply" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="matrixmultiply" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

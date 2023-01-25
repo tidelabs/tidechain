@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/process/auxv.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>auxv.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/process/auxv.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>auxv.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -111,114 +106,113 @@
 <span id="106">106</span>
 <span id="107">107</span>
 <span id="108">108</span>
-</pre><pre class="rust"><code><span class="doccomment">//! On mustang, the `init` function is unsafe because it operates on raw</span>
-<span class="doccomment">//! pointers.</span>
-<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;mustang&quot;</span>, <span class="ident">allow</span>(<span class="ident">unsafe_code</span>))]</span>
+</pre><pre class="rust"><code><span class="doccomment">//! On mustang, the `init` function is unsafe because it operates on raw
+//! pointers.
+</span><span class="attribute">#![cfg_attr(target_vendor = <span class="string">&quot;mustang&quot;</span>, allow(unsafe_code))]
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(
-    <span class="ident">linux_raw</span>,
-    <span class="ident">all</span>(
-        <span class="ident">libc</span>,
-        <span class="ident">any</span>(
-            <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>),
-            <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>
-        )
+#[cfg(any(
+    linux_raw,
+    all(
+        libc,
+        any(
+            all(target_os = <span class="string">&quot;android&quot;</span>, target_pointer_width = <span class="string">&quot;64&quot;</span>),
+            target_os = <span class="string">&quot;linux&quot;
+        </span>)
     )
-))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ffi::ZStr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::imp</span>;
+))]
+</span><span class="kw">use </span><span class="kw">crate</span>::ffi::ZStr;
+<span class="kw">use </span><span class="kw">crate</span>::imp;
 
-<span class="doccomment">/// `sysconf(_SC_PAGESIZE)`—Returns the process&#39; page size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Also known as `getpagesize`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux `sysconf`]</span>
-<span class="doccomment">///  - [Linux `getpagesize`]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/sysconf.html</span>
-<span class="doccomment">/// [Linux `sysconf`]: https://man7.org/linux/man-pages/man3/sysconf.3.html</span>
-<span class="doccomment">/// [Linux `getpagesize`]: https://man7.org/linux/man-pages/man2/getpagesize.2.html</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;_SC_PAGESIZE&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;_SC_PAGE_SIZE&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;getpagesize&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">page_size</span>() -&gt; <span class="ident">usize</span> {
-    <span class="ident">imp::process::page_size</span>()
+<span class="doccomment">/// `sysconf(_SC_PAGESIZE)`—Returns the process&#39; page size.
+///
+/// Also known as `getpagesize`.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux `sysconf`]
+///  - [Linux `getpagesize`]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/sysconf.html
+/// [Linux `sysconf`]: https://man7.org/linux/man-pages/man3/sysconf.3.html
+/// [Linux `getpagesize`]: https://man7.org/linux/man-pages/man2/getpagesize.2.html
+</span><span class="attribute">#[inline]
+#[doc(alias = <span class="string">&quot;_SC_PAGESIZE&quot;</span>)]
+#[doc(alias = <span class="string">&quot;_SC_PAGE_SIZE&quot;</span>)]
+#[doc(alias = <span class="string">&quot;getpagesize&quot;</span>)]
+</span><span class="kw">pub fn </span>page_size() -&gt; usize {
+    imp::process::page_size()
 }
 
-<span class="doccomment">/// `sysconf(_SC_CLK_TCK)`—Returns the process&#39; clock ticks per second.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/sysconf.html</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man3/sysconf.3.html</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;wasi&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;_SC_CLK_TCK&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clock_ticks_per_second</span>() -&gt; <span class="ident">u64</span> {
-    <span class="ident">imp::process::clock_ticks_per_second</span>()
+<span class="doccomment">/// `sysconf(_SC_CLK_TCK)`—Returns the process&#39; clock ticks per second.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/sysconf.html
+/// [Linux]: https://man7.org/linux/man-pages/man3/sysconf.3.html
+</span><span class="attribute">#[cfg(not(target_os = <span class="string">&quot;wasi&quot;</span>))]
+#[inline]
+#[doc(alias = <span class="string">&quot;_SC_CLK_TCK&quot;</span>)]
+</span><span class="kw">pub fn </span>clock_ticks_per_second() -&gt; u64 {
+    imp::process::clock_ticks_per_second()
 }
 
-<span class="doccomment">/// `(getauxval(AT_HWCAP), getauxval(AT_HWCAP2)`—Returns the Linux &quot;hwcap&quot;</span>
-<span class="doccomment">/// data.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Return the Linux `AT_HWCAP` and `AT_HWCAP2` values passed to the</span>
-<span class="doccomment">/// current process. Returns 0 for each value if it is not available.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man3/getauxval.3.html</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(
-    <span class="ident">linux_raw</span>,
-    <span class="ident">all</span>(
-        <span class="ident">libc</span>,
-        <span class="ident">any</span>(
-            <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>),
-            <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>
-        )
+<span class="doccomment">/// `(getauxval(AT_HWCAP), getauxval(AT_HWCAP2)`—Returns the Linux &quot;hwcap&quot;
+/// data.
+///
+/// Return the Linux `AT_HWCAP` and `AT_HWCAP2` values passed to the
+/// current process. Returns 0 for each value if it is not available.
+///
+/// # References
+///  - [Linux]
+///
+/// [Linux]: https://man7.org/linux/man-pages/man3/getauxval.3.html
+</span><span class="attribute">#[cfg(any(
+    linux_raw,
+    all(
+        libc,
+        any(
+            all(target_os = <span class="string">&quot;android&quot;</span>, target_pointer_width = <span class="string">&quot;64&quot;</span>),
+            target_os = <span class="string">&quot;linux&quot;
+        </span>)
     )
-))]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">linux_hwcap</span>() -&gt; (<span class="ident">usize</span>, <span class="ident">usize</span>) {
-    <span class="ident">imp::process::linux_hwcap</span>()
+))]
+#[inline]
+</span><span class="kw">pub fn </span>linux_hwcap() -&gt; (usize, usize) {
+    imp::process::linux_hwcap()
 }
 
-<span class="doccomment">/// `getauxval(AT_EXECFN)`—Returns the Linux &quot;execfn&quot; string.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Return the string that Linux has recorded as the filesystem path to the</span>
-<span class="doccomment">/// executable. Returns an empty string if the string is not available.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man3/getauxval.3.html</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(
-    <span class="ident">linux_raw</span>,
-    <span class="ident">all</span>(
-        <span class="ident">libc</span>,
-        <span class="ident">any</span>(
-            <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>),
-            <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>
-        )
+<span class="doccomment">/// `getauxval(AT_EXECFN)`—Returns the Linux &quot;execfn&quot; string.
+///
+/// Return the string that Linux has recorded as the filesystem path to the
+/// executable. Returns an empty string if the string is not available.
+///
+/// # References
+///  - [Linux]
+///
+/// [Linux]: https://man7.org/linux/man-pages/man3/getauxval.3.html
+</span><span class="attribute">#[cfg(any(
+    linux_raw,
+    all(
+        libc,
+        any(
+            all(target_os = <span class="string">&quot;android&quot;</span>, target_pointer_width = <span class="string">&quot;64&quot;</span>),
+            target_os = <span class="string">&quot;linux&quot;
+        </span>)
     )
-))]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">linux_execfn</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">ZStr</span> {
-    <span class="ident">imp::process::linux_execfn</span>()
+))]
+#[inline]
+</span><span class="kw">pub fn </span>linux_execfn() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>ZStr {
+    imp::process::linux_execfn()
 }
 
-<span class="doccomment">/// Initialize process-wide state.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;mustang&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">init</span>(<span class="ident">envp</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>) {
-    <span class="ident">imp::process::init</span>(<span class="ident">envp</span>)
+<span class="doccomment">/// Initialize process-wide state.
+</span><span class="attribute">#[cfg(target_vendor = <span class="string">&quot;mustang&quot;</span>)]
+#[inline]
+#[doc(hidden)]
+</span><span class="kw">pub unsafe fn </span>init(envp: <span class="kw-2">*mut *mut </span>u8) {
+    imp::process::init(envp)
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

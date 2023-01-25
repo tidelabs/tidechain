@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/session/src/historical/offchain.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>offchain.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../pallet_session/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../pallet_session/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../pallet_session/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/session/src/historical/offchain.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>offchain.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../pallet_session/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -264,267 +259,266 @@
 <span id="259">259</span>
 <span id="260">260</span>
 <span id="261">261</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! Off-chain logic for creating a proof based data provided by on-chain logic.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Validator-set extracting an iterator from an off-chain worker stored list containing</span>
-<span class="doccomment">//! historical validator-sets.</span>
-<span class="doccomment">//! Based on the logic of historical slashing, but the validation is done off-chain.</span>
-<span class="doccomment">//! Use [`fn store_current_session_validator_set_to_offchain()`](super::onchain) to store the</span>
-<span class="doccomment">//! required data to the offchain validator set.</span>
-<span class="doccomment">//! This is used in conjunction with [`ProvingTrie`](super::ProvingTrie) and</span>
-<span class="doccomment">//! the off-chain indexing API.</span>
+</span><span class="doccomment">//! Off-chain logic for creating a proof based data provided by on-chain logic.
+//!
+//! Validator-set extracting an iterator from an off-chain worker stored list containing
+//! historical validator-sets.
+//! Based on the logic of historical slashing, but the validation is done off-chain.
+//! Use [`fn store_current_session_validator_set_to_offchain()`](super::onchain) to store the
+//! required data to the offchain validator set.
+//! This is used in conjunction with [`ProvingTrie`](super::ProvingTrie) and
+//! the off-chain indexing API.
 
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">offchain::storage</span>::{<span class="ident">MutateStorageError</span>, <span class="ident">StorageRetrievalError</span>, <span class="ident">StorageValueRef</span>},
-	<span class="ident">KeyTypeId</span>,
+</span><span class="kw">use </span>sp_runtime::{
+	offchain::storage::{MutateStorageError, StorageRetrievalError, StorageValueRef},
+	KeyTypeId,
 };
-<span class="kw">use</span> <span class="ident">sp_session::MembershipProof</span>;
-<span class="kw">use</span> <span class="ident">sp_std::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use </span>sp_session::MembershipProof;
+<span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">shared</span>, <span class="ident">Config</span>, <span class="ident">IdentificationTuple</span>, <span class="ident">ProvingTrie</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Pallet</span> <span class="kw">as</span> <span class="ident">SessionModule</span>, <span class="ident">SessionIndex</span>};
+<span class="kw">use super</span>::{shared, Config, IdentificationTuple, ProvingTrie};
+<span class="kw">use crate</span>::{Pallet <span class="kw">as </span>SessionModule, SessionIndex};
 
-<span class="doccomment">/// A set of validators, which was used for a fixed session index.</span>
-<span class="kw">struct</span> <span class="ident">ValidatorSet</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Config</span><span class="op">&gt;</span> {
-	<span class="ident">validator_set</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IdentificationTuple</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A set of validators, which was used for a fixed session index.
+</span><span class="kw">struct </span>ValidatorSet&lt;T: Config&gt; {
+	validator_set: Vec&lt;IdentificationTuple&lt;T&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Config</span><span class="op">&gt;</span> <span class="ident">ValidatorSet</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Load the set of validators for a particular session index from the off-chain storage.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If none is found or decodable given `prefix` and `session`, it will return `None`.</span>
-	<span class="doccomment">/// Empty validator sets should only ever exist for genesis blocks.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">load_from_offchain_db</span>(<span class="ident">session_index</span>: <span class="ident">SessionIndex</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">derived_key</span> <span class="op">=</span> <span class="ident">shared::derive_key</span>(<span class="ident">shared::PREFIX</span>, <span class="ident">session_index</span>);
-		<span class="ident">StorageValueRef::persistent</span>(<span class="ident">derived_key</span>.<span class="ident">as_ref</span>())
-			.<span class="ident">get</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">T::ValidatorId</span>, <span class="ident">T::FullIdentification</span>)<span class="op">&gt;</span><span class="op">&gt;</span>()
-			.<span class="ident">ok</span>()
-			.<span class="ident">flatten</span>()
-			.<span class="ident">map</span>(<span class="op">|</span><span class="ident">validator_set</span><span class="op">|</span> <span class="self">Self</span> { <span class="ident">validator_set</span> })
+<span class="kw">impl</span>&lt;T: Config&gt; ValidatorSet&lt;T&gt; {
+	<span class="doccomment">/// Load the set of validators for a particular session index from the off-chain storage.
+	///
+	/// If none is found or decodable given `prefix` and `session`, it will return `None`.
+	/// Empty validator sets should only ever exist for genesis blocks.
+	</span><span class="kw">pub fn </span>load_from_offchain_db(session_index: SessionIndex) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+		<span class="kw">let </span>derived_key = shared::derive_key(shared::PREFIX, session_index);
+		StorageValueRef::persistent(derived_key.as_ref())
+			.get::&lt;Vec&lt;(T::ValidatorId, T::FullIdentification)&gt;&gt;()
+			.ok()
+			.flatten()
+			.map(|validator_set| <span class="self">Self </span>{ validator_set })
 	}
 
-	<span class="attribute">#[<span class="ident">inline</span>]</span>
-	<span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-		<span class="self">self</span>.<span class="ident">validator_set</span>.<span class="ident">len</span>()
-	}
-}
-
-<span class="doccomment">/// Implement conversion into iterator for usage</span>
-<span class="doccomment">/// with [ProvingTrie](super::ProvingTrie::generate_for).</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Config</span><span class="op">&gt;</span> <span class="ident">sp_std::iter::IntoIterator</span> <span class="kw">for</span> <span class="ident">ValidatorSet</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="ident">T::ValidatorId</span>, <span class="ident">T::FullIdentification</span>);
-	<span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">sp_std::vec::IntoIter</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>;
-	<span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-		<span class="self">self</span>.<span class="ident">validator_set</span>.<span class="ident">into_iter</span>()
+	<span class="attribute">#[inline]
+	</span><span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+		<span class="self">self</span>.validator_set.len()
 	}
 }
 
-<span class="doccomment">/// Create a proof based on the data available in the off-chain database.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Based on the yielded `MembershipProof` the implementer may decide what</span>
-<span class="doccomment">/// to do, i.e. in case of a failed proof, enqueue a transaction back on</span>
-<span class="doccomment">/// chain reflecting that, with all its consequences such as i.e. slashing.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prove_session_membership</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Config</span>, <span class="ident">D</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(
-	<span class="ident">session_index</span>: <span class="ident">SessionIndex</span>,
-	<span class="ident">session_key</span>: (<span class="ident">KeyTypeId</span>, <span class="ident">D</span>),
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MembershipProof</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">validators</span> <span class="op">=</span> <span class="ident">ValidatorSet</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::load_from_offchain_db</span>(<span class="ident">session_index</span>)<span class="question-mark">?</span>;
-	<span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">validators</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>;
-	<span class="kw">let</span> <span class="ident">trie</span> <span class="op">=</span> <span class="ident">ProvingTrie</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::generate_for</span>(<span class="ident">validators</span>.<span class="ident">into_iter</span>()).<span class="ident">ok</span>()<span class="question-mark">?</span>;
+<span class="doccomment">/// Implement conversion into iterator for usage
+/// with [ProvingTrie](super::ProvingTrie::generate_for).
+</span><span class="kw">impl</span>&lt;T: Config&gt; sp_std::iter::IntoIterator <span class="kw">for </span>ValidatorSet&lt;T&gt; {
+	<span class="kw">type </span>Item = (T::ValidatorId, T::FullIdentification);
+	<span class="kw">type </span>IntoIter = sp_std::vec::IntoIter&lt;<span class="self">Self</span>::Item&gt;;
+	<span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+		<span class="self">self</span>.validator_set.into_iter()
+	}
+}
 
-	<span class="kw">let</span> (<span class="ident">id</span>, <span class="ident">data</span>) <span class="op">=</span> <span class="ident">session_key</span>;
-	<span class="ident">trie</span>.<span class="ident">prove</span>(<span class="ident">id</span>, <span class="ident">data</span>.<span class="ident">as_ref</span>()).<span class="ident">map</span>(<span class="op">|</span><span class="ident">trie_nodes</span><span class="op">|</span> <span class="ident">MembershipProof</span> {
-		<span class="ident">session</span>: <span class="ident">session_index</span>,
-		<span class="ident">trie_nodes</span>,
-		<span class="ident">validator_count</span>: <span class="ident">count</span>,
+<span class="doccomment">/// Create a proof based on the data available in the off-chain database.
+///
+/// Based on the yielded `MembershipProof` the implementer may decide what
+/// to do, i.e. in case of a failed proof, enqueue a transaction back on
+/// chain reflecting that, with all its consequences such as i.e. slashing.
+</span><span class="kw">pub fn </span>prove_session_membership&lt;T: Config, D: AsRef&lt;[u8]&gt;&gt;(
+	session_index: SessionIndex,
+	session_key: (KeyTypeId, D),
+) -&gt; <span class="prelude-ty">Option</span>&lt;MembershipProof&gt; {
+	<span class="kw">let </span>validators = ValidatorSet::&lt;T&gt;::load_from_offchain_db(session_index)<span class="question-mark">?</span>;
+	<span class="kw">let </span>count = validators.len() <span class="kw">as </span>u32;
+	<span class="kw">let </span>trie = ProvingTrie::&lt;T&gt;::generate_for(validators.into_iter()).ok()<span class="question-mark">?</span>;
+
+	<span class="kw">let </span>(id, data) = session_key;
+	trie.prove(id, data.as_ref()).map(|trie_nodes| MembershipProof {
+		session: session_index,
+		trie_nodes,
+		validator_count: count,
 	})
 }
 
-<span class="doccomment">/// Attempt to prune anything that is older than `first_to_keep` session index.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Due to re-organisation it could be that the `first_to_keep` might be less</span>
-<span class="doccomment">/// than the stored one, in which case the conservative choice is made to keep records</span>
-<span class="doccomment">/// up to the one that is the lesser.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prune_older_than</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Config</span><span class="op">&gt;</span>(<span class="ident">first_to_keep</span>: <span class="ident">SessionIndex</span>) {
-	<span class="kw">let</span> <span class="ident">derived_key</span> <span class="op">=</span> <span class="ident">shared::LAST_PRUNE</span>.<span class="ident">to_vec</span>();
-	<span class="kw">let</span> <span class="ident">entry</span> <span class="op">=</span> <span class="ident">StorageValueRef::persistent</span>(<span class="ident">derived_key</span>.<span class="ident">as_ref</span>());
-	<span class="kw">match</span> <span class="ident">entry</span>.<span class="ident">mutate</span>(
-		<span class="op">|</span><span class="ident">current</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SessionIndex</span><span class="op">&gt;</span>, <span class="ident">StorageRetrievalError</span><span class="op">&gt;</span><span class="op">|</span> -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, ()<span class="op">&gt;</span> {
-			<span class="kw">match</span> <span class="ident">current</span> {
-				<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">current</span>)) <span class="kw">if</span> <span class="ident">current</span> <span class="op">&lt;</span> <span class="ident">first_to_keep</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">first_to_keep</span>),
-				<span class="comment">// do not move the cursor, if the new one would be behind ours</span>
-				<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">current</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">current</span>),
-				<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">first_to_keep</span>),
-				<span class="comment">// if the storage contains undecodable data, overwrite with current anyways</span>
-				<span class="comment">// which might leak some entries being never purged, but that is acceptable</span>
-				<span class="comment">// in this context</span>
-				<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">first_to_keep</span>),
+<span class="doccomment">/// Attempt to prune anything that is older than `first_to_keep` session index.
+///
+/// Due to re-organisation it could be that the `first_to_keep` might be less
+/// than the stored one, in which case the conservative choice is made to keep records
+/// up to the one that is the lesser.
+</span><span class="kw">pub fn </span>prune_older_than&lt;T: Config&gt;(first_to_keep: SessionIndex) {
+	<span class="kw">let </span>derived_key = shared::LAST_PRUNE.to_vec();
+	<span class="kw">let </span>entry = StorageValueRef::persistent(derived_key.as_ref());
+	<span class="kw">match </span>entry.mutate(
+		|current: <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SessionIndex&gt;, StorageRetrievalError&gt;| -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, ()&gt; {
+			<span class="kw">match </span>current {
+				<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(current)) <span class="kw">if </span>current &lt; first_to_keep =&gt; <span class="prelude-val">Ok</span>(first_to_keep),
+				<span class="comment">// do not move the cursor, if the new one would be behind ours
+				</span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(current)) =&gt; <span class="prelude-val">Ok</span>(current),
+				<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(first_to_keep),
+				<span class="comment">// if the storage contains undecodable data, overwrite with current anyways
+				// which might leak some entries being never purged, but that is acceptable
+				// in this context
+				</span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(first_to_keep),
 			}
 		},
 	) {
-		<span class="prelude-val">Ok</span>(<span class="ident">new_value</span>) =&gt; {
-			<span class="comment">// on a re-org this is not necessarily true, with the above they might be equal</span>
-			<span class="kw">if</span> <span class="ident">new_value</span> <span class="op">&lt;</span> <span class="ident">first_to_keep</span> {
-				<span class="kw">for</span> <span class="ident">session_index</span> <span class="kw">in</span> <span class="ident">new_value</span>..<span class="ident">first_to_keep</span> {
-					<span class="kw">let</span> <span class="ident">derived_key</span> <span class="op">=</span> <span class="ident">shared::derive_key</span>(<span class="ident">shared::PREFIX</span>, <span class="ident">session_index</span>);
-					<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">StorageValueRef::persistent</span>(<span class="ident">derived_key</span>.<span class="ident">as_ref</span>()).<span class="ident">clear</span>();
+		<span class="prelude-val">Ok</span>(new_value) =&gt; {
+			<span class="comment">// on a re-org this is not necessarily true, with the above they might be equal
+			</span><span class="kw">if </span>new_value &lt; first_to_keep {
+				<span class="kw">for </span>session_index <span class="kw">in </span>new_value..first_to_keep {
+					<span class="kw">let </span>derived_key = shared::derive_key(shared::PREFIX, session_index);
+					<span class="kw">let _ </span>= StorageValueRef::persistent(derived_key.as_ref()).clear();
 				}
 			}
 		},
-		<span class="prelude-val">Err</span>(<span class="ident">MutateStorageError::ConcurrentModification</span>(<span class="kw">_</span>)) =&gt; {},
-		<span class="prelude-val">Err</span>(<span class="ident">MutateStorageError::ValueFunctionFailed</span>(<span class="kw">_</span>)) =&gt; {},
+		<span class="prelude-val">Err</span>(MutateStorageError::ConcurrentModification(<span class="kw">_</span>)) =&gt; {},
+		<span class="prelude-val">Err</span>(MutateStorageError::ValueFunctionFailed(<span class="kw">_</span>)) =&gt; {},
 	}
 }
 
-<span class="doccomment">/// Keep the newest `n` items, and prune all items older than that.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">keep_newest</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Config</span><span class="op">&gt;</span>(<span class="ident">n_to_keep</span>: <span class="ident">usize</span>) {
-	<span class="kw">let</span> <span class="ident">session_index</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">SessionModule</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::current_index</span>();
-	<span class="kw">let</span> <span class="ident">n_to_keep</span> <span class="op">=</span> <span class="ident">n_to_keep</span> <span class="kw">as</span> <span class="ident">SessionIndex</span>;
-	<span class="kw">if</span> <span class="ident">n_to_keep</span> <span class="op">&lt;</span> <span class="ident">session_index</span> {
-		<span class="ident">prune_older_than</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">session_index</span> <span class="op">-</span> <span class="ident">n_to_keep</span>)
+<span class="doccomment">/// Keep the newest `n` items, and prune all items older than that.
+</span><span class="kw">pub fn </span>keep_newest&lt;T: Config&gt;(n_to_keep: usize) {
+	<span class="kw">let </span>session_index = &lt;SessionModule&lt;T&gt;&gt;::current_index();
+	<span class="kw">let </span>n_to_keep = n_to_keep <span class="kw">as </span>SessionIndex;
+	<span class="kw">if </span>n_to_keep &lt; session_index {
+		prune_older_than::&lt;T&gt;(session_index - n_to_keep)
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="kw">crate</span>::{
-		<span class="ident">historical</span>::{<span class="ident">onchain</span>, <span class="ident">Pallet</span>},
-		<span class="ident">mock</span>::{<span class="ident">force_new_session</span>, <span class="ident">set_next_validators</span>, <span class="ident">Session</span>, <span class="ident">System</span>, <span class="ident">Test</span>, <span class="ident">NEXT_VALIDATORS</span>},
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use crate</span>::{
+		historical::{onchain, Pallet},
+		mock::{force_new_session, set_next_validators, Session, System, Test, NEXT_VALIDATORS},
 	};
 
-	<span class="kw">use</span> <span class="ident">codec::Encode</span>;
-	<span class="kw">use</span> <span class="ident">sp_core</span>::{
-		<span class="ident">crypto::key_types::DUMMY</span>,
-		<span class="ident">offchain</span>::{<span class="ident">testing::TestOffchainExt</span>, <span class="ident">OffchainDbExt</span>, <span class="ident">OffchainWorkerExt</span>, <span class="ident">StorageKind</span>},
+	<span class="kw">use </span>codec::Encode;
+	<span class="kw">use </span>sp_core::{
+		crypto::key_types::DUMMY,
+		offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt, StorageKind},
 	};
-	<span class="kw">use</span> <span class="ident">sp_runtime::testing::UintAuthorityId</span>;
+	<span class="kw">use </span>sp_runtime::testing::UintAuthorityId;
 
-	<span class="kw">use</span> <span class="ident">frame_support</span>::{
-		<span class="ident">traits</span>::{<span class="ident">GenesisBuild</span>, <span class="ident">KeyOwnerProofSystem</span>, <span class="ident">OnInitialize</span>},
-		<span class="ident">BasicExternalities</span>,
+	<span class="kw">use </span>frame_support::{
+		traits::{GenesisBuild, KeyOwnerProofSystem, OnInitialize},
+		BasicExternalities,
 	};
 
-	<span class="kw">type</span> <span class="ident">Historical</span> <span class="op">=</span> <span class="ident">Pallet</span><span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span>;
+	<span class="kw">type </span>Historical = Pallet&lt;Test&gt;;
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_test_ext</span>() -&gt; <span class="ident">sp_io::TestExternalities</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">t</span> <span class="op">=</span> <span class="ident">frame_system::GenesisConfig::default</span>()
-			.<span class="ident">build_storage</span>::<span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;Failed to create test externalities.&quot;</span>);
+	<span class="kw">pub fn </span>new_test_ext() -&gt; sp_io::TestExternalities {
+		<span class="kw">let </span><span class="kw-2">mut </span>t = frame_system::GenesisConfig::default()
+			.build_storage::&lt;Test&gt;()
+			.expect(<span class="string">&quot;Failed to create test externalities.&quot;</span>);
 
-		<span class="kw">let</span> <span class="ident">keys</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">NEXT_VALIDATORS</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> {
-			<span class="ident">l</span>.<span class="ident">borrow</span>().<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> (<span class="ident">i</span>, <span class="ident">i</span>, <span class="ident">UintAuthorityId</span>(<span class="ident">i</span>).<span class="ident">into</span>())).<span class="ident">collect</span>()
+		<span class="kw">let </span>keys: Vec&lt;<span class="kw">_</span>&gt; = NEXT_VALIDATORS.with(|l| {
+			l.borrow().iter().cloned().map(|i| (i, i, UintAuthorityId(i).into())).collect()
 		});
-		<span class="ident">BasicExternalities::execute_with_storage</span>(<span class="kw-2">&amp;mut</span> <span class="ident">t</span>, <span class="op">|</span><span class="op">|</span> {
-			<span class="kw">for</span> (<span class="kw-2">ref</span> <span class="ident">k</span>, ..) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">keys</span> {
-				<span class="ident">frame_system::Pallet</span>::<span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span><span class="ident">::inc_providers</span>(<span class="ident">k</span>);
+		BasicExternalities::execute_with_storage(<span class="kw-2">&amp;mut </span>t, || {
+			<span class="kw">for </span>(<span class="kw-2">ref </span>k, ..) <span class="kw">in </span><span class="kw-2">&amp;</span>keys {
+				frame_system::Pallet::&lt;Test&gt;::inc_providers(k);
 			}
 		});
 
-		<span class="ident"><span class="kw">crate</span>::GenesisConfig</span>::<span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span> { <span class="ident">keys</span> }.<span class="ident">assimilate_storage</span>(<span class="kw-2">&amp;mut</span> <span class="ident">t</span>).<span class="ident">unwrap</span>();
+		<span class="kw">crate</span>::GenesisConfig::&lt;Test&gt; { keys }.assimilate_storage(<span class="kw-2">&amp;mut </span>t).unwrap();
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ext</span> <span class="op">=</span> <span class="ident">sp_io::TestExternalities::new</span>(<span class="ident">t</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>ext = sp_io::TestExternalities::new(t);
 
-		<span class="kw">let</span> (<span class="ident">offchain</span>, <span class="ident">offchain_state</span>) <span class="op">=</span> <span class="ident">TestOffchainExt::with_offchain_db</span>(<span class="ident">ext</span>.<span class="ident">offchain_db</span>());
+		<span class="kw">let </span>(offchain, offchain_state) = TestOffchainExt::with_offchain_db(ext.offchain_db());
 
-		<span class="kw">const</span> <span class="ident">ITERATIONS</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">5u32</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">seed</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-		<span class="ident">seed</span>[<span class="number">0</span>..<span class="number">4</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">ITERATIONS</span>.<span class="ident">to_le_bytes</span>());
-		<span class="ident">offchain_state</span>.<span class="ident">write</span>().<span class="ident">seed</span> <span class="op">=</span> <span class="ident">seed</span>;
+		<span class="kw">const </span>ITERATIONS: u32 = <span class="number">5u32</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>seed = [<span class="number">0u8</span>; <span class="number">32</span>];
+		seed[<span class="number">0</span>..<span class="number">4</span>].copy_from_slice(<span class="kw-2">&amp;</span>ITERATIONS.to_le_bytes());
+		offchain_state.write().seed = seed;
 
-		<span class="ident">ext</span>.<span class="ident">register_extension</span>(<span class="ident">OffchainDbExt::new</span>(<span class="ident">offchain</span>.<span class="ident">clone</span>()));
-		<span class="ident">ext</span>.<span class="ident">register_extension</span>(<span class="ident">OffchainWorkerExt::new</span>(<span class="ident">offchain</span>));
-		<span class="ident">ext</span>
+		ext.register_extension(OffchainDbExt::new(offchain.clone()));
+		ext.register_extension(OffchainWorkerExt::new(offchain));
+		ext
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">encode_decode_roundtrip</span>() {
-		<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span></span>::{<span class="ident"><span class="kw">super</span>::Config</span> <span class="kw">as</span> <span class="ident">SessionConfig</span>, <span class="ident">Config</span> <span class="kw">as</span> <span class="ident">HistoricalConfig</span>};
-		<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>encode_decode_roundtrip() {
+		<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::{<span class="kw">super</span>::Config <span class="kw">as </span>SessionConfig, Config <span class="kw">as </span>HistoricalConfig};
+		<span class="kw">use </span>codec::{Decode, Encode};
 
-		<span class="kw">let</span> <span class="ident">sample</span> <span class="op">=</span> (
-			<span class="number">22u32</span> <span class="kw">as</span> <span class="op">&lt;</span><span class="ident">Test</span> <span class="kw">as</span> <span class="ident">SessionConfig</span><span class="op">&gt;</span><span class="ident">::ValidatorId</span>,
-			<span class="number">7_777_777</span> <span class="kw">as</span> <span class="op">&lt;</span><span class="ident">Test</span> <span class="kw">as</span> <span class="ident">HistoricalConfig</span><span class="op">&gt;</span><span class="ident">::FullIdentification</span>,
+		<span class="kw">let </span>sample = (
+			<span class="number">22u32 </span><span class="kw">as </span>&lt;Test <span class="kw">as </span>SessionConfig&gt;::ValidatorId,
+			<span class="number">7_777_777 </span><span class="kw">as </span>&lt;Test <span class="kw">as </span>HistoricalConfig&gt;::FullIdentification,
 		);
 
-		<span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">sample</span>.<span class="ident">encode</span>();
-		<span class="kw">let</span> <span class="ident">decoded</span> <span class="op">=</span> <span class="ident">Decode::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">encoded</span>.<span class="ident">as_slice</span>()).<span class="ident">expect</span>(<span class="string">&quot;Must decode&quot;</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">sample</span>, <span class="ident">decoded</span>);
+		<span class="kw">let </span>encoded = sample.encode();
+		<span class="kw">let </span>decoded = Decode::decode(<span class="kw-2">&amp;mut </span>encoded.as_slice()).expect(<span class="string">&quot;Must decode&quot;</span>);
+		<span class="macro">assert_eq!</span>(sample, decoded);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">onchain_to_offchain</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ext</span> <span class="op">=</span> <span class="ident">new_test_ext</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>onchain_to_offchain() {
+		<span class="kw">let </span><span class="kw-2">mut </span>ext = new_test_ext();
 
-		<span class="kw">const</span> <span class="ident">DATA</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>];
-		<span class="ident">ext</span>.<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="string">b&quot;alphaomega&quot;</span>[..].<span class="ident">using_encoded</span>(<span class="op">|</span><span class="ident">key</span><span class="op">|</span> <span class="ident">sp_io::offchain_index::set</span>(<span class="ident">key</span>, <span class="ident">DATA</span>));
+		<span class="kw">const </span>DATA: <span class="kw-2">&amp;</span>[u8] = <span class="kw-2">&amp;</span>[<span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>];
+		ext.execute_with(|| {
+			<span class="string">b&quot;alphaomega&quot;</span>[..].using_encoded(|key| sp_io::offchain_index::set(key, DATA));
 		});
 
-		<span class="ident">ext</span>.<span class="ident">persist_offchain_overlay</span>();
+		ext.persist_offchain_overlay();
 
-		<span class="ident">ext</span>.<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="string">b&quot;alphaomega&quot;</span>[..].<span class="ident">using_encoded</span>(<span class="op">|</span><span class="ident">key</span><span class="op">|</span> {
-				<span class="ident">sp_io::offchain::local_storage_get</span>(<span class="ident">StorageKind::PERSISTENT</span>, <span class="ident">key</span>)
+		ext.execute_with(|| {
+			<span class="kw">let </span>data = <span class="string">b&quot;alphaomega&quot;</span>[..].using_encoded(|key| {
+				sp_io::offchain::local_storage_get(StorageKind::PERSISTENT, key)
 			});
-			<span class="macro">assert_eq!</span>(<span class="ident">data</span>, <span class="prelude-val">Some</span>(<span class="ident">DATA</span>.<span class="ident">to_vec</span>()));
+			<span class="macro">assert_eq!</span>(data, <span class="prelude-val">Some</span>(DATA.to_vec()));
 		});
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">historical_proof_offchain</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ext</span> <span class="op">=</span> <span class="ident">new_test_ext</span>();
-		<span class="kw">let</span> <span class="ident">encoded_key_1</span> <span class="op">=</span> <span class="ident">UintAuthorityId</span>(<span class="number">1</span>).<span class="ident">encode</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>historical_proof_offchain() {
+		<span class="kw">let </span><span class="kw-2">mut </span>ext = new_test_ext();
+		<span class="kw">let </span>encoded_key_1 = UintAuthorityId(<span class="number">1</span>).encode();
 
-		<span class="ident">ext</span>.<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">set_next_validators</span>(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>]);
-			<span class="ident">force_new_session</span>();
+		ext.execute_with(|| {
+			set_next_validators(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>]);
+			force_new_session();
 
-			<span class="ident">System::set_block_number</span>(<span class="number">1</span>);
-			<span class="ident">Session::on_initialize</span>(<span class="number">1</span>);
+			System::set_block_number(<span class="number">1</span>);
+			Session::on_initialize(<span class="number">1</span>);
 
-			<span class="comment">// &quot;on-chain&quot;</span>
-			<span class="ident">onchain::store_current_session_validator_set_to_offchain</span>::<span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span>();
-			<span class="macro">assert_eq!</span>(<span class="op">&lt;</span><span class="ident">SessionModule</span><span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::current_index</span>(), <span class="number">1</span>);
+			<span class="comment">// &quot;on-chain&quot;
+			</span>onchain::store_current_session_validator_set_to_offchain::&lt;Test&gt;();
+			<span class="macro">assert_eq!</span>(&lt;SessionModule&lt;Test&gt;&gt;::current_index(), <span class="number">1</span>);
 
-			<span class="ident">set_next_validators</span>(<span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">8</span>]);
+			set_next_validators(<span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">8</span>]);
 
-			<span class="ident">force_new_session</span>();
+			force_new_session();
 		});
 
-		<span class="ident">ext</span>.<span class="ident">persist_offchain_overlay</span>();
+		ext.persist_offchain_overlay();
 
-		<span class="ident">ext</span>.<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">System::set_block_number</span>(<span class="number">2</span>);
-			<span class="ident">Session::on_initialize</span>(<span class="number">2</span>);
-			<span class="macro">assert_eq!</span>(<span class="op">&lt;</span><span class="ident">SessionModule</span><span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::current_index</span>(), <span class="number">2</span>);
+		ext.execute_with(|| {
+			System::set_block_number(<span class="number">2</span>);
+			Session::on_initialize(<span class="number">2</span>);
+			<span class="macro">assert_eq!</span>(&lt;SessionModule&lt;Test&gt;&gt;::current_index(), <span class="number">2</span>);
 
-			<span class="comment">// &quot;off-chain&quot;</span>
-			<span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">prove_session_membership</span>::<span class="op">&lt;</span><span class="ident">Test</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="number">1</span>, (<span class="ident">DUMMY</span>, <span class="kw-2">&amp;</span><span class="ident">encoded_key_1</span>));
-			<span class="macro">assert!</span>(<span class="ident">proof</span>.<span class="ident">is_some</span>());
-			<span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">proof</span>.<span class="ident">expect</span>(<span class="string">&quot;Must be Some(Proof)&quot;</span>);
+			<span class="comment">// &quot;off-chain&quot;
+			</span><span class="kw">let </span>proof = prove_session_membership::&lt;Test, <span class="kw">_</span>&gt;(<span class="number">1</span>, (DUMMY, <span class="kw-2">&amp;</span>encoded_key_1));
+			<span class="macro">assert!</span>(proof.is_some());
+			<span class="kw">let </span>proof = proof.expect(<span class="string">&quot;Must be Some(Proof)&quot;</span>);
 
-			<span class="macro">assert!</span>(<span class="ident">Historical::check_proof</span>((<span class="ident">DUMMY</span>, <span class="kw-2">&amp;</span><span class="ident">encoded_key_1</span>[..]), <span class="ident">proof</span>.<span class="ident">clone</span>()).<span class="ident">is_some</span>());
+			<span class="macro">assert!</span>(Historical::check_proof((DUMMY, <span class="kw-2">&amp;</span>encoded_key_1[..]), proof.clone()).is_some());
 		});
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="pallet_session" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="pallet_session" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

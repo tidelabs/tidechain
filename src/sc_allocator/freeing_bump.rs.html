@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/allocator/src/freeing_bump.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>freeing_bump.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_allocator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_allocator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_allocator/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/allocator/src/freeing_bump.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>freeing_bump.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_allocator/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -992,995 +987,994 @@
 <span id="987">987</span>
 <span id="988">988</span>
 <span id="989">989</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! This module implements a freeing-bump allocator.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The heap is a continuous linear memory and chunks are allocated using a bump allocator.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```ignore</span>
-<span class="doccomment">//! +-------------+-------------------------------------------------+</span>
-<span class="doccomment">//! | &lt;allocated&gt; | &lt;unallocated&gt;                                   |</span>
-<span class="doccomment">//! +-------------+-------------------------------------------------+</span>
-<span class="doccomment">//!               ^</span>
-<span class="doccomment">//!               |_ bumper</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Only allocations with sizes of power of two can be allocated. If the incoming request has a non</span>
-<span class="doccomment">//! power of two size it is increased to the nearest power of two. The power of two of size is</span>
-<span class="doccomment">//! referred as **an order**.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Each allocation has a header immediately preceding to it. The header is always 8 bytes and can</span>
-<span class="doccomment">//! be of two types: free and occupied.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! For implementing freeing we maintain a linked lists for each order. The maximum supported</span>
-<span class="doccomment">//! allocation size is capped, therefore the number of orders and thus the linked lists is as well</span>
-<span class="doccomment">//! limited. Currently, the maximum size of an allocation is 32 MiB.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! When the allocator serves an allocation request it first checks the linked list for the</span>
-<span class="doccomment">//! respective order. If it doesn&#39;t have any free chunks, the allocator requests memory from the</span>
-<span class="doccomment">//! bump allocator. In any case the order is stored in the header of the allocation.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Upon deallocation we get the order of the allocation from its header and then add that</span>
-<span class="doccomment">//! allocation to the linked list for the respective order.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Caveats</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This is a fast allocator but it is also dumb. There are specifically two main shortcomings</span>
-<span class="doccomment">//! that the user should keep in mind:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! - Once the bump allocator space is exhausted, there is no way to reclaim the memory. This means</span>
-<span class="doccomment">//!   that it&#39;s possible to end up in a situation where there are no live allocations yet a new</span>
-<span class="doccomment">//!   allocation will fail.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!   Let&#39;s look into an example. Given a heap of 32 MiB. The user makes a 32 MiB allocation that we</span>
-<span class="doccomment">//!   call `X` . Now the heap is full. Then user deallocates `X`. Since all the space in the bump</span>
-<span class="doccomment">//!   allocator was consumed by the 32 MiB allocation, allocations of all sizes except 32 MiB will</span>
-<span class="doccomment">//!   fail.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! - Sizes of allocations are rounded up to the nearest order. That is, an allocation of 2,00001</span>
-<span class="doccomment">//!   MiB will be put into the bucket of 4 MiB. Therefore, any allocation of size `(N, 2N]` will</span>
-<span class="doccomment">//!   take up to `2N`, thus assuming a uniform distribution of allocation sizes, the average amount</span>
-<span class="doccomment">//!   in use of a `2N` space on the heap will be `(3N + ε) / 2`. So average utilization is going to</span>
-<span class="doccomment">//!   be around 75% (`(3N + ε) / 2 / 2N`) meaning that around 25% of the space in allocation will be</span>
-<span class="doccomment">//!   wasted. This is more pronounced (in terms of absolute heap amounts) with larger allocation</span>
-<span class="doccomment">//!   sizes.</span>
+</span><span class="doccomment">//! This module implements a freeing-bump allocator.
+//!
+//! The heap is a continuous linear memory and chunks are allocated using a bump allocator.
+//!
+//! ```ignore
+//! +-------------+-------------------------------------------------+
+//! | &lt;allocated&gt; | &lt;unallocated&gt;                                   |
+//! +-------------+-------------------------------------------------+
+//!               ^
+//!               |_ bumper
+//! ```
+//!
+//! Only allocations with sizes of power of two can be allocated. If the incoming request has a non
+//! power of two size it is increased to the nearest power of two. The power of two of size is
+//! referred as **an order**.
+//!
+//! Each allocation has a header immediately preceding to it. The header is always 8 bytes and can
+//! be of two types: free and occupied.
+//!
+//! For implementing freeing we maintain a linked lists for each order. The maximum supported
+//! allocation size is capped, therefore the number of orders and thus the linked lists is as well
+//! limited. Currently, the maximum size of an allocation is 32 MiB.
+//!
+//! When the allocator serves an allocation request it first checks the linked list for the
+//! respective order. If it doesn&#39;t have any free chunks, the allocator requests memory from the
+//! bump allocator. In any case the order is stored in the header of the allocation.
+//!
+//! Upon deallocation we get the order of the allocation from its header and then add that
+//! allocation to the linked list for the respective order.
+//!
+//! # Caveats
+//!
+//! This is a fast allocator but it is also dumb. There are specifically two main shortcomings
+//! that the user should keep in mind:
+//!
+//! - Once the bump allocator space is exhausted, there is no way to reclaim the memory. This means
+//!   that it&#39;s possible to end up in a situation where there are no live allocations yet a new
+//!   allocation will fail.
+//!
+//!   Let&#39;s look into an example. Given a heap of 32 MiB. The user makes a 32 MiB allocation that we
+//!   call `X` . Now the heap is full. Then user deallocates `X`. Since all the space in the bump
+//!   allocator was consumed by the 32 MiB allocation, allocations of all sizes except 32 MiB will
+//!   fail.
+//!
+//! - Sizes of allocations are rounded up to the nearest order. That is, an allocation of 2,00001
+//!   MiB will be put into the bucket of 4 MiB. Therefore, any allocation of size `(N, 2N]` will
+//!   take up to `2N`, thus assuming a uniform distribution of allocation sizes, the average amount
+//!   in use of a `2N` space on the heap will be `(3N + ε) / 2`. So average utilization is going to
+//!   be around 75% (`(3N + ε) / 2 / 2N`) meaning that around 25% of the space in allocation will be
+//!   wasted. This is more pronounced (in terms of absolute heap amounts) with larger allocation
+//!   sizes.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Error</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">sp_core::MAX_POSSIBLE_ALLOCATION</span>;
-<span class="kw">use</span> <span class="ident">sp_wasm_interface</span>::{<span class="ident">Pointer</span>, <span class="ident">WordSize</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">mem</span>,
-	<span class="ident">ops</span>::{<span class="ident">Index</span>, <span class="ident">IndexMut</span>, <span class="ident">Range</span>},
+</span><span class="kw">use </span><span class="kw">crate</span>::Error;
+<span class="kw">pub use </span>sp_core::MAX_POSSIBLE_ALLOCATION;
+<span class="kw">use </span>sp_wasm_interface::{Pointer, WordSize};
+<span class="kw">use </span>std::{
+	mem,
+	ops::{Index, IndexMut, Range},
 };
 
-<span class="doccomment">/// The minimal alignment guaranteed by this allocator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The alignment of 8 is chosen because it is the maximum size of a primitive type supported by the</span>
-<span class="doccomment">/// target version of wasm32: i64&#39;s natural alignment is 8.</span>
-<span class="kw">const</span> <span class="ident">ALIGNMENT</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">8</span>;
+<span class="doccomment">/// The minimal alignment guaranteed by this allocator.
+///
+/// The alignment of 8 is chosen because it is the maximum size of a primitive type supported by the
+/// target version of wasm32: i64&#39;s natural alignment is 8.
+</span><span class="kw">const </span>ALIGNMENT: u32 = <span class="number">8</span>;
 
-<span class="comment">// Each pointer is prefixed with 8 bytes, which identify the list index</span>
-<span class="comment">// to which it belongs.</span>
-<span class="kw">const</span> <span class="ident">HEADER_SIZE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">8</span>;
+<span class="comment">// Each pointer is prefixed with 8 bytes, which identify the list index
+// to which it belongs.
+</span><span class="kw">const </span>HEADER_SIZE: u32 = <span class="number">8</span>;
 
-<span class="doccomment">/// Create an allocator error.</span>
-<span class="kw">fn</span> <span class="ident">error</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>) -&gt; <span class="ident">Error</span> {
-	<span class="ident">Error::Other</span>(<span class="ident">msg</span>)
+<span class="doccomment">/// Create an allocator error.
+</span><span class="kw">fn </span>error(msg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; Error {
+	Error::Other(msg)
 }
 
-<span class="kw">const</span> <span class="ident">LOG_TARGET</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;wasm-heap&quot;</span>;
+<span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;wasm-heap&quot;</span>;
 
-<span class="comment">// The minimum possible allocation size is chosen to be 8 bytes because in that case we would have</span>
-<span class="comment">// easier time to provide the guaranteed alignment of 8.</span>
-<span class="comment">//</span>
-<span class="comment">// The maximum possible allocation size is set in the primitives to 32MiB.</span>
-<span class="comment">//</span>
-<span class="comment">// N_ORDERS - represents the number of orders supported.</span>
-<span class="comment">//</span>
-<span class="comment">// This number corresponds to the number of powers between the minimum possible allocation and</span>
-<span class="comment">// maximum possible allocation, or: 2^3...2^25 (both ends inclusive, hence 23).</span>
-<span class="kw">const</span> <span class="ident">N_ORDERS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">23</span>;
-<span class="kw">const</span> <span class="ident">MIN_POSSIBLE_ALLOCATION</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">8</span>; <span class="comment">// 2^3 bytes, 8 bytes</span>
+<span class="comment">// The minimum possible allocation size is chosen to be 8 bytes because in that case we would have
+// easier time to provide the guaranteed alignment of 8.
+//
+// The maximum possible allocation size is set in the primitives to 32MiB.
+//
+// N_ORDERS - represents the number of orders supported.
+//
+// This number corresponds to the number of powers between the minimum possible allocation and
+// maximum possible allocation, or: 2^3...2^25 (both ends inclusive, hence 23).
+</span><span class="kw">const </span>N_ORDERS: usize = <span class="number">23</span>;
+<span class="kw">const </span>MIN_POSSIBLE_ALLOCATION: u32 = <span class="number">8</span>; <span class="comment">// 2^3 bytes, 8 bytes
 
-<span class="doccomment">/// The exponent for the power of two sized block adjusted to the minimum size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This way, if `MIN_POSSIBLE_ALLOCATION == 8`, we would get:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// power_of_two_size | order</span>
-<span class="doccomment">/// 8                 | 0</span>
-<span class="doccomment">/// 16                | 1</span>
-<span class="doccomment">/// 32                | 2</span>
-<span class="doccomment">/// 64                | 3</span>
-<span class="doccomment">/// ...</span>
-<span class="doccomment">/// 16777216          | 21</span>
-<span class="doccomment">/// 33554432          | 22</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// and so on.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">struct</span> <span class="ident">Order</span>(<span class="ident">u32</span>);
+</span><span class="doccomment">/// The exponent for the power of two sized block adjusted to the minimum size.
+///
+/// This way, if `MIN_POSSIBLE_ALLOCATION == 8`, we would get:
+///
+/// power_of_two_size | order
+/// 8                 | 0
+/// 16                | 1
+/// 32                | 2
+/// 64                | 3
+/// ...
+/// 16777216          | 21
+/// 33554432          | 22
+///
+/// and so on.
+</span><span class="attribute">#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+</span><span class="kw">struct </span>Order(u32);
 
-<span class="kw">impl</span> <span class="ident">Order</span> {
-	<span class="doccomment">/// Create `Order` object from a raw order.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns `Err` if it is greater than the maximum supported order.</span>
-	<span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">order</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">order</span> <span class="op">&lt;</span> <span class="ident">N_ORDERS</span> <span class="kw">as</span> <span class="ident">u32</span> {
-			<span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">order</span>))
-		} <span class="kw">else</span> {
-			<span class="prelude-val">Err</span>(<span class="ident">error</span>(<span class="string">&quot;invalid order&quot;</span>))
+<span class="kw">impl </span>Order {
+	<span class="doccomment">/// Create `Order` object from a raw order.
+	///
+	/// Returns `Err` if it is greater than the maximum supported order.
+	</span><span class="kw">fn </span>from_raw(order: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+		<span class="kw">if </span>order &lt; N_ORDERS <span class="kw">as </span>u32 {
+			<span class="prelude-val">Ok</span>(<span class="self">Self</span>(order))
+		} <span class="kw">else </span>{
+			<span class="prelude-val">Err</span>(error(<span class="string">&quot;invalid order&quot;</span>))
 		}
 	}
 
-	<span class="doccomment">/// Compute the order by the given size</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The size is clamped, so that the following holds:</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// `MIN_POSSIBLE_ALLOCATION &lt;= size &lt;= MAX_POSSIBLE_ALLOCATION`</span>
-	<span class="kw">fn</span> <span class="ident">from_size</span>(<span class="ident">size</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">clamped_size</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">size</span> <span class="op">&gt;</span> <span class="ident">MAX_POSSIBLE_ALLOCATION</span> {
-			<span class="macro">log::warn!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;going to fail due to allocating {:?}&quot;</span>, <span class="ident">size</span>);
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::RequestedAllocationTooLarge</span>)
-		} <span class="kw">else</span> <span class="kw">if</span> <span class="ident">size</span> <span class="op">&lt;</span> <span class="ident">MIN_POSSIBLE_ALLOCATION</span> {
-			<span class="ident">MIN_POSSIBLE_ALLOCATION</span>
-		} <span class="kw">else</span> {
-			<span class="ident">size</span>
+	<span class="doccomment">/// Compute the order by the given size
+	///
+	/// The size is clamped, so that the following holds:
+	///
+	/// `MIN_POSSIBLE_ALLOCATION &lt;= size &lt;= MAX_POSSIBLE_ALLOCATION`
+	</span><span class="kw">fn </span>from_size(size: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+		<span class="kw">let </span>clamped_size = <span class="kw">if </span>size &gt; MAX_POSSIBLE_ALLOCATION {
+			<span class="macro">log::warn!</span>(target: LOG_TARGET, <span class="string">&quot;going to fail due to allocating {:?}&quot;</span>, size);
+			<span class="kw">return </span><span class="prelude-val">Err</span>(Error::RequestedAllocationTooLarge)
+		} <span class="kw">else if </span>size &lt; MIN_POSSIBLE_ALLOCATION {
+			MIN_POSSIBLE_ALLOCATION
+		} <span class="kw">else </span>{
+			size
 		};
 
-		<span class="comment">// Round the clamped size to the next power of two.</span>
-		<span class="comment">//</span>
-		<span class="comment">// It returns the unchanged value if the value is already a power of two.</span>
-		<span class="kw">let</span> <span class="ident">power_of_two_size</span> <span class="op">=</span> <span class="ident">clamped_size</span>.<span class="ident">next_power_of_two</span>();
+		<span class="comment">// Round the clamped size to the next power of two.
+		//
+		// It returns the unchanged value if the value is already a power of two.
+		</span><span class="kw">let </span>power_of_two_size = clamped_size.next_power_of_two();
 
-		<span class="comment">// Compute the number of trailing zeroes to get the order. We adjust it by the number of</span>
-		<span class="comment">// trailing zeroes in the minimum possible allocation.</span>
-		<span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">power_of_two_size</span>.<span class="ident">trailing_zeros</span>() <span class="op">-</span> <span class="ident">MIN_POSSIBLE_ALLOCATION</span>.<span class="ident">trailing_zeros</span>();
+		<span class="comment">// Compute the number of trailing zeroes to get the order. We adjust it by the number of
+		// trailing zeroes in the minimum possible allocation.
+		</span><span class="kw">let </span>order = power_of_two_size.trailing_zeros() - MIN_POSSIBLE_ALLOCATION.trailing_zeros();
 
-		<span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">order</span>))
+		<span class="prelude-val">Ok</span>(<span class="self">Self</span>(order))
 	}
 
-	<span class="doccomment">/// Returns the corresponding size in bytes for this order.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Note that it is always a power of two.</span>
-	<span class="kw">fn</span> <span class="ident">size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-		<span class="ident">MIN_POSSIBLE_ALLOCATION</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="self">self</span>.<span class="number">0</span>
-	}
+	<span class="doccomment">/// Returns the corresponding size in bytes for this order.
+	///
+	/// Note that it is always a power of two.
+	</span><span class="kw">fn </span>size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+		MIN_POSSIBLE_ALLOCATION &lt;&lt; <span class="self">self</span>.<span class="number">0
+	</span>}
 
-	<span class="doccomment">/// Extract the order as `u32`.</span>
-	<span class="kw">fn</span> <span class="ident">into_raw</span>(<span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-		<span class="self">self</span>.<span class="number">0</span>
-	}
+	<span class="doccomment">/// Extract the order as `u32`.
+	</span><span class="kw">fn </span>into_raw(<span class="self">self</span>) -&gt; u32 {
+		<span class="self">self</span>.<span class="number">0
+	</span>}
 }
 
-<span class="doccomment">/// A special magic value for a pointer in a link that denotes the end of the linked list.</span>
-<span class="kw">const</span> <span class="ident">NIL_MARKER</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="ident">u32::MAX</span>;
+<span class="doccomment">/// A special magic value for a pointer in a link that denotes the end of the linked list.
+</span><span class="kw">const </span>NIL_MARKER: u32 = u32::MAX;
 
-<span class="doccomment">/// A link between headers in the free list.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">enum</span> <span class="ident">Link</span> {
-	<span class="doccomment">/// Nil, denotes that there is no next element.</span>
-	<span class="ident">Nil</span>,
-	<span class="doccomment">/// Link to the next element represented as a pointer to the a header.</span>
-	<span class="ident">Ptr</span>(<span class="ident">u32</span>),
+<span class="doccomment">/// A link between headers in the free list.
+</span><span class="attribute">#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+</span><span class="kw">enum </span>Link {
+	<span class="doccomment">/// Nil, denotes that there is no next element.
+	</span>Nil,
+	<span class="doccomment">/// Link to the next element represented as a pointer to the a header.
+	</span>Ptr(u32),
 }
 
-<span class="kw">impl</span> <span class="ident">Link</span> {
-	<span class="doccomment">/// Creates a link from raw value.</span>
-	<span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">raw</span>: <span class="ident">u32</span>) -&gt; <span class="self">Self</span> {
-		<span class="kw">if</span> <span class="ident">raw</span> <span class="op">!</span><span class="op">=</span> <span class="ident">NIL_MARKER</span> {
-			<span class="ident"><span class="self">Self</span>::Ptr</span>(<span class="ident">raw</span>)
-		} <span class="kw">else</span> {
-			<span class="ident"><span class="self">Self</span>::Nil</span>
+<span class="kw">impl </span>Link {
+	<span class="doccomment">/// Creates a link from raw value.
+	</span><span class="kw">fn </span>from_raw(raw: u32) -&gt; <span class="self">Self </span>{
+		<span class="kw">if </span>raw != NIL_MARKER {
+			<span class="self">Self</span>::Ptr(raw)
+		} <span class="kw">else </span>{
+			<span class="self">Self</span>::Nil
 		}
 	}
 
-	<span class="doccomment">/// Converts this link into a raw u32.</span>
-	<span class="kw">fn</span> <span class="ident">into_raw</span>(<span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-		<span class="kw">match</span> <span class="self">self</span> {
-			<span class="ident"><span class="self">Self</span>::Nil</span> =&gt; <span class="ident">NIL_MARKER</span>,
-			<span class="ident"><span class="self">Self</span>::Ptr</span>(<span class="ident">ptr</span>) =&gt; <span class="ident">ptr</span>,
+	<span class="doccomment">/// Converts this link into a raw u32.
+	</span><span class="kw">fn </span>into_raw(<span class="self">self</span>) -&gt; u32 {
+		<span class="kw">match </span><span class="self">self </span>{
+			<span class="self">Self</span>::Nil =&gt; NIL_MARKER,
+			<span class="self">Self</span>::Ptr(ptr) =&gt; ptr,
 		}
 	}
 }
 
-<span class="doccomment">/// A header of an allocation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The header is encoded in memory as follows.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ## Free header</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```ignore</span>
-<span class="doccomment">/// 64             32                  0</span>
-<span class="comment">//  +--------------+-------------------+</span>
-<span class="doccomment">/// |            0 | next element link |</span>
-<span class="doccomment">/// +--------------+-------------------+</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// ## Occupied header</span>
-<span class="doccomment">/// ```ignore</span>
-<span class="doccomment">/// 64             32                  0</span>
-<span class="comment">//  +--------------+-------------------+</span>
-<span class="doccomment">/// |            1 |             order |</span>
-<span class="doccomment">/// +--------------+-------------------+</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">enum</span> <span class="ident">Header</span> {
-	<span class="doccomment">/// A free header contains a link to the next element to form a free linked list.</span>
-	<span class="ident">Free</span>(<span class="ident">Link</span>),
-	<span class="doccomment">/// An occupied header has attached order to know in which free list we should put the</span>
-	<span class="doccomment">/// allocation upon deallocation.</span>
-	<span class="ident">Occupied</span>(<span class="ident">Order</span>),
+<span class="doccomment">/// A header of an allocation.
+///
+/// The header is encoded in memory as follows.
+///
+/// ## Free header
+///
+/// ```ignore
+/// 64             32                  0
+</span><span class="comment">//  +--------------+-------------------+
+</span><span class="doccomment">/// |            0 | next element link |
+/// +--------------+-------------------+
+/// ```
+/// ## Occupied header
+/// ```ignore
+/// 64             32                  0
+</span><span class="comment">//  +--------------+-------------------+
+</span><span class="doccomment">/// |            1 |             order |
+/// +--------------+-------------------+
+/// ```
+</span><span class="attribute">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">enum </span>Header {
+	<span class="doccomment">/// A free header contains a link to the next element to form a free linked list.
+	</span>Free(Link),
+	<span class="doccomment">/// An occupied header has attached order to know in which free list we should put the
+	/// allocation upon deallocation.
+	</span>Occupied(Order),
 }
 
-<span class="kw">impl</span> <span class="ident">Header</span> {
-	<span class="doccomment">/// Reads a header from memory.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns an error if the `header_ptr` is out of bounds of the linear memory or if the read</span>
-	<span class="doccomment">/// header is corrupted (e.g. the order is incorrect).</span>
-	<span class="kw">fn</span> <span class="ident">read_from</span><span class="op">&lt;</span><span class="ident">M</span>: <span class="ident">Memory</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="ident">memory</span>: <span class="kw-2">&amp;</span><span class="ident">M</span>, <span class="ident">header_ptr</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">raw_header</span> <span class="op">=</span> <span class="ident">memory</span>.<span class="ident">read_le_u64</span>(<span class="ident">header_ptr</span>)<span class="question-mark">?</span>;
+<span class="kw">impl </span>Header {
+	<span class="doccomment">/// Reads a header from memory.
+	///
+	/// Returns an error if the `header_ptr` is out of bounds of the linear memory or if the read
+	/// header is corrupted (e.g. the order is incorrect).
+	</span><span class="kw">fn </span>read_from&lt;M: Memory + <span class="question-mark">?</span>Sized&gt;(memory: <span class="kw-2">&amp;</span>M, header_ptr: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+		<span class="kw">let </span>raw_header = memory.read_le_u64(header_ptr)<span class="question-mark">?</span>;
 
-		<span class="comment">// Check if the header represents an occupied or free allocation and extract the header data</span>
-		<span class="comment">// by trimming (and discarding) the high bits.</span>
-		<span class="kw">let</span> <span class="ident">occupied</span> <span class="op">=</span> <span class="ident">raw_header</span> <span class="op">&amp;</span> <span class="number">0x00000001_00000000</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">let</span> <span class="ident">header_data</span> <span class="op">=</span> <span class="ident">raw_header</span> <span class="kw">as</span> <span class="ident">u32</span>;
+		<span class="comment">// Check if the header represents an occupied or free allocation and extract the header data
+		// by trimming (and discarding) the high bits.
+		</span><span class="kw">let </span>occupied = raw_header &amp; <span class="number">0x00000001_00000000 </span>!= <span class="number">0</span>;
+		<span class="kw">let </span>header_data = raw_header <span class="kw">as </span>u32;
 
-		<span class="prelude-val">Ok</span>(<span class="kw">if</span> <span class="ident">occupied</span> {
-			<span class="ident"><span class="self">Self</span>::Occupied</span>(<span class="ident">Order::from_raw</span>(<span class="ident">header_data</span>)<span class="question-mark">?</span>)
-		} <span class="kw">else</span> {
-			<span class="ident"><span class="self">Self</span>::Free</span>(<span class="ident">Link::from_raw</span>(<span class="ident">header_data</span>))
+		<span class="prelude-val">Ok</span>(<span class="kw">if </span>occupied {
+			<span class="self">Self</span>::Occupied(Order::from_raw(header_data)<span class="question-mark">?</span>)
+		} <span class="kw">else </span>{
+			<span class="self">Self</span>::Free(Link::from_raw(header_data))
 		})
 	}
 
-	<span class="doccomment">/// Write out this header to memory.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns an error if the `header_ptr` is out of bounds of the linear memory.</span>
-	<span class="kw">fn</span> <span class="ident">write_into</span><span class="op">&lt;</span><span class="ident">M</span>: <span class="ident">Memory</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">memory</span>: <span class="kw-2">&amp;mut</span> <span class="ident">M</span>, <span class="ident">header_ptr</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> (<span class="ident">header_data</span>, <span class="ident">occupied_mask</span>) <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-			<span class="ident"><span class="self">Self</span>::Occupied</span>(<span class="ident">order</span>) =&gt; (<span class="ident">order</span>.<span class="ident">into_raw</span>(), <span class="number">0x00000001_00000000</span>),
-			<span class="ident"><span class="self">Self</span>::Free</span>(<span class="ident">link</span>) =&gt; (<span class="ident">link</span>.<span class="ident">into_raw</span>(), <span class="number">0x00000000_00000000</span>),
+	<span class="doccomment">/// Write out this header to memory.
+	///
+	/// Returns an error if the `header_ptr` is out of bounds of the linear memory.
+	</span><span class="kw">fn </span>write_into&lt;M: Memory + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, memory: <span class="kw-2">&amp;mut </span>M, header_ptr: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="kw">let </span>(header_data, occupied_mask) = <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+			<span class="self">Self</span>::Occupied(order) =&gt; (order.into_raw(), <span class="number">0x00000001_00000000</span>),
+			<span class="self">Self</span>::Free(link) =&gt; (link.into_raw(), <span class="number">0x00000000_00000000</span>),
 		};
-		<span class="kw">let</span> <span class="ident">raw_header</span> <span class="op">=</span> <span class="ident">header_data</span> <span class="kw">as</span> <span class="ident">u64</span> <span class="op">|</span> <span class="ident">occupied_mask</span>;
-		<span class="ident">memory</span>.<span class="ident">write_le_u64</span>(<span class="ident">header_ptr</span>, <span class="ident">raw_header</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>raw_header = header_data <span class="kw">as </span>u64 | occupied_mask;
+		memory.write_le_u64(header_ptr, raw_header)<span class="question-mark">?</span>;
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Returns the order of the allocation if this is an occupied header.</span>
-	<span class="kw">fn</span> <span class="ident">into_occupied</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Order</span><span class="op">&gt;</span> {
-		<span class="kw">match</span> <span class="self">self</span> {
-			<span class="ident"><span class="self">Self</span>::Occupied</span>(<span class="ident">order</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">order</span>),
-			<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+	<span class="doccomment">/// Returns the order of the allocation if this is an occupied header.
+	</span><span class="kw">fn </span>into_occupied(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Order&gt; {
+		<span class="kw">match </span><span class="self">self </span>{
+			<span class="self">Self</span>::Occupied(order) =&gt; <span class="prelude-val">Some</span>(order),
+			<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 		}
 	}
 
-	<span class="doccomment">/// Returns the link to the next element in the free list if this is a free header.</span>
-	<span class="kw">fn</span> <span class="ident">into_free</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Link</span><span class="op">&gt;</span> {
-		<span class="kw">match</span> <span class="self">self</span> {
-			<span class="ident"><span class="self">Self</span>::Free</span>(<span class="ident">link</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">link</span>),
-			<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+	<span class="doccomment">/// Returns the link to the next element in the free list if this is a free header.
+	</span><span class="kw">fn </span>into_free(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Link&gt; {
+		<span class="kw">match </span><span class="self">self </span>{
+			<span class="self">Self</span>::Free(link) =&gt; <span class="prelude-val">Some</span>(link),
+			<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 		}
 	}
 }
 
-<span class="doccomment">/// This struct represents a collection of intrusive linked lists for each order.</span>
-<span class="kw">struct</span> <span class="ident">FreeLists</span> {
-	<span class="ident">heads</span>: [<span class="ident">Link</span>; <span class="ident">N_ORDERS</span>],
+<span class="doccomment">/// This struct represents a collection of intrusive linked lists for each order.
+</span><span class="kw">struct </span>FreeLists {
+	heads: [Link; N_ORDERS],
 }
 
-<span class="kw">impl</span> <span class="ident">FreeLists</span> {
-	<span class="doccomment">/// Creates the free empty lists.</span>
-	<span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">heads</span>: [<span class="ident">Link::Nil</span>; <span class="ident">N_ORDERS</span>] }
+<span class="kw">impl </span>FreeLists {
+	<span class="doccomment">/// Creates the free empty lists.
+	</span><span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ heads: [Link::Nil; N_ORDERS] }
 	}
 
-	<span class="doccomment">/// Replaces a given link for the specified order and returns the old one.</span>
-	<span class="kw">fn</span> <span class="ident">replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">order</span>: <span class="ident">Order</span>, <span class="ident">new</span>: <span class="ident">Link</span>) -&gt; <span class="ident">Link</span> {
-		<span class="kw">let</span> <span class="ident">prev</span> <span class="op">=</span> <span class="self">self</span>[<span class="ident">order</span>];
-		<span class="self">self</span>[<span class="ident">order</span>] <span class="op">=</span> <span class="ident">new</span>;
-		<span class="ident">prev</span>
-	}
-}
-
-<span class="kw">impl</span> <span class="ident">Index</span><span class="op">&lt;</span><span class="ident">Order</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">FreeLists</span> {
-	<span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Link</span>;
-	<span class="kw">fn</span> <span class="ident">index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">Order</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Link</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">index</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>]
+	<span class="doccomment">/// Replaces a given link for the specified order and returns the old one.
+	</span><span class="kw">fn </span>replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>, order: Order, new: Link) -&gt; Link {
+		<span class="kw">let </span>prev = <span class="self">self</span>[order];
+		<span class="self">self</span>[order] = new;
+		prev
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">IndexMut</span><span class="op">&lt;</span><span class="ident">Order</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">FreeLists</span> {
-	<span class="kw">fn</span> <span class="ident">index_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">Order</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">Link</span> {
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">index</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>]
+<span class="kw">impl </span>Index&lt;Order&gt; <span class="kw">for </span>FreeLists {
+	<span class="kw">type </span>Output = Link;
+	<span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Order) -&gt; <span class="kw-2">&amp;</span>Link {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.heads[index.<span class="number">0 </span><span class="kw">as </span>usize]
 	}
 }
 
-<span class="doccomment">/// An implementation of freeing bump allocator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Refer to the module-level documentation for further details.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FreeingBumpHeapAllocator</span> {
-	<span class="ident">bumper</span>: <span class="ident">u32</span>,
-	<span class="ident">free_lists</span>: <span class="ident">FreeLists</span>,
-	<span class="ident">total_size</span>: <span class="ident">u32</span>,
-	<span class="ident">poisoned</span>: <span class="ident">bool</span>,
-	<span class="ident">max_total_size</span>: <span class="ident">u32</span>,
-	<span class="ident">max_bumper</span>: <span class="ident">u32</span>,
-	<span class="ident">last_observed_memory_size</span>: <span class="ident">u32</span>,
+<span class="kw">impl </span>IndexMut&lt;Order&gt; <span class="kw">for </span>FreeLists {
+	<span class="kw">fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: Order) -&gt; <span class="kw-2">&amp;mut </span>Link {
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>.heads[index.<span class="number">0 </span><span class="kw">as </span>usize]
+	}
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">FreeingBumpHeapAllocator</span> {
-	<span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
+<span class="doccomment">/// An implementation of freeing bump allocator.
+///
+/// Refer to the module-level documentation for further details.
+</span><span class="kw">pub struct </span>FreeingBumpHeapAllocator {
+	bumper: u32,
+	free_lists: FreeLists,
+	total_size: u32,
+	poisoned: bool,
+	max_total_size: u32,
+	max_bumper: u32,
+	last_observed_memory_size: u32,
+}
+
+<span class="kw">impl </span>Drop <span class="kw">for </span>FreeingBumpHeapAllocator {
+	<span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 		<span class="macro">log::debug!</span>(
-			<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
+			target: LOG_TARGET,
 			<span class="string">&quot;allocator being destroyed, max_total_size {}, max_bumper {}&quot;</span>,
-			<span class="self">self</span>.<span class="ident">max_total_size</span>,
-			<span class="self">self</span>.<span class="ident">max_bumper</span>,
+			<span class="self">self</span>.max_total_size,
+			<span class="self">self</span>.max_bumper,
 		)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">FreeingBumpHeapAllocator</span> {
-	<span class="doccomment">/// Creates a new allocation heap which follows a freeing-bump strategy.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// # Arguments</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// - `heap_base` - the offset from the beginning of the linear memory where the heap starts.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">heap_base</span>: <span class="ident">u32</span>) -&gt; <span class="self">Self</span> {
-		<span class="kw">let</span> <span class="ident">aligned_heap_base</span> <span class="op">=</span> (<span class="ident">heap_base</span> <span class="op">+</span> <span class="ident">ALIGNMENT</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">/</span> <span class="ident">ALIGNMENT</span> <span class="op">*</span> <span class="ident">ALIGNMENT</span>;
+<span class="kw">impl </span>FreeingBumpHeapAllocator {
+	<span class="doccomment">/// Creates a new allocation heap which follows a freeing-bump strategy.
+	///
+	/// # Arguments
+	///
+	/// - `heap_base` - the offset from the beginning of the linear memory where the heap starts.
+	</span><span class="kw">pub fn </span>new(heap_base: u32) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span>aligned_heap_base = (heap_base + ALIGNMENT - <span class="number">1</span>) / ALIGNMENT * ALIGNMENT;
 
-		<span class="ident">FreeingBumpHeapAllocator</span> {
-			<span class="ident">bumper</span>: <span class="ident">aligned_heap_base</span>,
-			<span class="ident">free_lists</span>: <span class="ident">FreeLists::new</span>(),
-			<span class="ident">total_size</span>: <span class="number">0</span>,
-			<span class="ident">poisoned</span>: <span class="bool-val">false</span>,
-			<span class="ident">max_total_size</span>: <span class="number">0</span>,
-			<span class="ident">max_bumper</span>: <span class="ident">aligned_heap_base</span>,
-			<span class="ident">last_observed_memory_size</span>: <span class="number">0</span>,
+		FreeingBumpHeapAllocator {
+			bumper: aligned_heap_base,
+			free_lists: FreeLists::new(),
+			total_size: <span class="number">0</span>,
+			poisoned: <span class="bool-val">false</span>,
+			max_total_size: <span class="number">0</span>,
+			max_bumper: aligned_heap_base,
+			last_observed_memory_size: <span class="number">0</span>,
 		}
 	}
 
-	<span class="doccomment">/// Gets requested number of bytes to allocate and returns a pointer.</span>
-	<span class="doccomment">/// The maximum size which can be allocated at once is 32 MiB.</span>
-	<span class="doccomment">/// There is no minimum size, but whatever size is passed into</span>
-	<span class="doccomment">/// this function is rounded to the next power of two. If the requested</span>
-	<span class="doccomment">/// size is below 8 bytes it will be rounded up to 8 bytes.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The identity or the type of the passed memory object does not matter. However, the size of</span>
-	<span class="doccomment">/// memory cannot shrink compared to the memory passed in previous invocations.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE: Once the allocator has returned an error all subsequent requests will return an error.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// # Arguments</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// - `mem` - a slice representing the linear memory on which this allocator operates.</span>
-	<span class="doccomment">/// - `size` - size in bytes of the allocation request</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate</span><span class="op">&lt;</span><span class="ident">M</span>: <span class="ident">Memory</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">mem</span>: <span class="kw-2">&amp;mut</span> <span class="ident">M</span>,
-		<span class="ident">size</span>: <span class="ident">WordSize</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">poisoned</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>(<span class="string">&quot;the allocator has been poisoned&quot;</span>))
+	<span class="doccomment">/// Gets requested number of bytes to allocate and returns a pointer.
+	/// The maximum size which can be allocated at once is 32 MiB.
+	/// There is no minimum size, but whatever size is passed into
+	/// this function is rounded to the next power of two. If the requested
+	/// size is below 8 bytes it will be rounded up to 8 bytes.
+	///
+	/// The identity or the type of the passed memory object does not matter. However, the size of
+	/// memory cannot shrink compared to the memory passed in previous invocations.
+	///
+	/// NOTE: Once the allocator has returned an error all subsequent requests will return an error.
+	///
+	/// # Arguments
+	///
+	/// - `mem` - a slice representing the linear memory on which this allocator operates.
+	/// - `size` - size in bytes of the allocation request
+	</span><span class="kw">pub fn </span>allocate&lt;M: Memory + <span class="question-mark">?</span>Sized&gt;(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		mem: <span class="kw-2">&amp;mut </span>M,
+		size: WordSize,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Pointer&lt;u8&gt;, Error&gt; {
+		<span class="kw">if </span><span class="self">self</span>.poisoned {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(error(<span class="string">&quot;the allocator has been poisoned&quot;</span>))
 		}
 
-		<span class="kw">let</span> <span class="ident">bomb</span> <span class="op">=</span> <span class="ident">PoisonBomb</span> { <span class="ident">poisoned</span>: <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">poisoned</span> };
+		<span class="kw">let </span>bomb = PoisonBomb { poisoned: <span class="kw-2">&amp;mut </span><span class="self">self</span>.poisoned };
 
-		<span class="ident"><span class="self">Self</span>::observe_memory_size</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">last_observed_memory_size</span>, <span class="ident">mem</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">Order::from_size</span>(<span class="ident">size</span>)<span class="question-mark">?</span>;
+		<span class="self">Self</span>::observe_memory_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>.last_observed_memory_size, mem)<span class="question-mark">?</span>;
+		<span class="kw">let </span>order = Order::from_size(size)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">header_ptr</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">free_lists</span>[<span class="ident">order</span>] {
-			<span class="ident">Link::Ptr</span>(<span class="ident">header_ptr</span>) =&gt; {
+		<span class="kw">let </span>header_ptr: u32 = <span class="kw">match </span><span class="self">self</span>.free_lists[order] {
+			Link::Ptr(header_ptr) =&gt; {
 				<span class="macro">assert!</span>(
-					<span class="ident">header_ptr</span> <span class="op">+</span> <span class="ident">order</span>.<span class="ident">size</span>() <span class="op">+</span> <span class="ident">HEADER_SIZE</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">mem</span>.<span class="ident">size</span>(),
+					header_ptr + order.size() + HEADER_SIZE &lt;= mem.size(),
 					<span class="string">&quot;Pointer is looked up in list of free entries, into which
-					only valid values are inserted; qed&quot;</span>
-				);
+					only valid values are inserted; qed&quot;
+				</span>);
 
-				<span class="comment">// Remove this header from the free list.</span>
-				<span class="kw">let</span> <span class="ident">next_free</span> <span class="op">=</span> <span class="ident">Header::read_from</span>(<span class="ident">mem</span>, <span class="ident">header_ptr</span>)<span class="question-mark">?</span>
-					.<span class="ident">into_free</span>()
-					.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error</span>(<span class="string">&quot;free list points to a occupied header&quot;</span>))<span class="question-mark">?</span>;
-				<span class="self">self</span>.<span class="ident">free_lists</span>[<span class="ident">order</span>] <span class="op">=</span> <span class="ident">next_free</span>;
+				<span class="comment">// Remove this header from the free list.
+				</span><span class="kw">let </span>next_free = Header::read_from(mem, header_ptr)<span class="question-mark">?
+					</span>.into_free()
+					.ok_or_else(|| error(<span class="string">&quot;free list points to a occupied header&quot;</span>))<span class="question-mark">?</span>;
+				<span class="self">self</span>.free_lists[order] = next_free;
 
-				<span class="ident">header_ptr</span>
+				header_ptr
 			},
-			<span class="ident">Link::Nil</span> =&gt; {
-				<span class="comment">// Corresponding free list is empty. Allocate a new item.</span>
-				<span class="ident"><span class="self">Self</span>::bump</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">bumper</span>, <span class="ident">order</span>.<span class="ident">size</span>() <span class="op">+</span> <span class="ident">HEADER_SIZE</span>, <span class="ident">mem</span>.<span class="ident">size</span>())<span class="question-mark">?</span>
-			},
+			Link::Nil =&gt; {
+				<span class="comment">// Corresponding free list is empty. Allocate a new item.
+				</span><span class="self">Self</span>::bump(<span class="kw-2">&amp;mut </span><span class="self">self</span>.bumper, order.size() + HEADER_SIZE, mem.size())<span class="question-mark">?
+			</span>},
 		};
 
-		<span class="comment">// Write the order in the occupied header.</span>
-		<span class="ident">Header::Occupied</span>(<span class="ident">order</span>).<span class="ident">write_into</span>(<span class="ident">mem</span>, <span class="ident">header_ptr</span>)<span class="question-mark">?</span>;
+		<span class="comment">// Write the order in the occupied header.
+		</span>Header::Occupied(order).write_into(mem, header_ptr)<span class="question-mark">?</span>;
 
-		<span class="self">self</span>.<span class="ident">total_size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">order</span>.<span class="ident">size</span>() <span class="op">+</span> <span class="ident">HEADER_SIZE</span>;
+		<span class="self">self</span>.total_size += order.size() + HEADER_SIZE;
 
 		<span class="macro">log::trace!</span>(
-			<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
+			target: LOG_TARGET,
 			<span class="string">&quot;after allocation, total_size = {}, bumper = {}.&quot;</span>,
-			<span class="self">self</span>.<span class="ident">total_size</span>,
-			<span class="self">self</span>.<span class="ident">bumper</span>,
+			<span class="self">self</span>.total_size,
+			<span class="self">self</span>.bumper,
 		);
 
-		<span class="comment">// update trackers if needed.</span>
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">total_size</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">max_total_size</span> {
-			<span class="self">self</span>.<span class="ident">max_total_size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">total_size</span>;
+		<span class="comment">// update trackers if needed.
+		</span><span class="kw">if </span><span class="self">self</span>.total_size &gt; <span class="self">self</span>.max_total_size {
+			<span class="self">self</span>.max_total_size = <span class="self">self</span>.total_size;
 		}
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">bumper</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">max_bumper</span> {
-			<span class="self">self</span>.<span class="ident">max_bumper</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">bumper</span>;
+		<span class="kw">if </span><span class="self">self</span>.bumper &gt; <span class="self">self</span>.max_bumper {
+			<span class="self">self</span>.max_bumper = <span class="self">self</span>.bumper;
 		}
 
-		<span class="ident">bomb</span>.<span class="ident">disarm</span>();
-		<span class="prelude-val">Ok</span>(<span class="ident">Pointer::new</span>(<span class="ident">header_ptr</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span>))
+		bomb.disarm();
+		<span class="prelude-val">Ok</span>(Pointer::new(header_ptr + HEADER_SIZE))
 	}
 
-	<span class="doccomment">/// Deallocates the space which was allocated for a pointer.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The identity or the type of the passed memory object does not matter. However, the size of</span>
-	<span class="doccomment">/// memory cannot shrink compared to the memory passed in previous invocations.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE: Once the allocator has returned an error all subsequent requests will return an error.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// # Arguments</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// - `mem` - a slice representing the linear memory on which this allocator operates.</span>
-	<span class="doccomment">/// - `ptr` - pointer to the allocated chunk</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deallocate</span><span class="op">&lt;</span><span class="ident">M</span>: <span class="ident">Memory</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">mem</span>: <span class="kw-2">&amp;mut</span> <span class="ident">M</span>,
-		<span class="ident">ptr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">poisoned</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>(<span class="string">&quot;the allocator has been poisoned&quot;</span>))
+	<span class="doccomment">/// Deallocates the space which was allocated for a pointer.
+	///
+	/// The identity or the type of the passed memory object does not matter. However, the size of
+	/// memory cannot shrink compared to the memory passed in previous invocations.
+	///
+	/// NOTE: Once the allocator has returned an error all subsequent requests will return an error.
+	///
+	/// # Arguments
+	///
+	/// - `mem` - a slice representing the linear memory on which this allocator operates.
+	/// - `ptr` - pointer to the allocated chunk
+	</span><span class="kw">pub fn </span>deallocate&lt;M: Memory + <span class="question-mark">?</span>Sized&gt;(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		mem: <span class="kw-2">&amp;mut </span>M,
+		ptr: Pointer&lt;u8&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="kw">if </span><span class="self">self</span>.poisoned {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(error(<span class="string">&quot;the allocator has been poisoned&quot;</span>))
 		}
 
-		<span class="kw">let</span> <span class="ident">bomb</span> <span class="op">=</span> <span class="ident">PoisonBomb</span> { <span class="ident">poisoned</span>: <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">poisoned</span> };
+		<span class="kw">let </span>bomb = PoisonBomb { poisoned: <span class="kw-2">&amp;mut </span><span class="self">self</span>.poisoned };
 
-		<span class="ident"><span class="self">Self</span>::observe_memory_size</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">last_observed_memory_size</span>, <span class="ident">mem</span>)<span class="question-mark">?</span>;
+		<span class="self">Self</span>::observe_memory_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>.last_observed_memory_size, mem)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">header_ptr</span> <span class="op">=</span> <span class="ident">u32::from</span>(<span class="ident">ptr</span>)
-			.<span class="ident">checked_sub</span>(<span class="ident">HEADER_SIZE</span>)
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error</span>(<span class="string">&quot;Invalid pointer for deallocation&quot;</span>))<span class="question-mark">?</span>;
+		<span class="kw">let </span>header_ptr = u32::from(ptr)
+			.checked_sub(HEADER_SIZE)
+			.ok_or_else(|| error(<span class="string">&quot;Invalid pointer for deallocation&quot;</span>))<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">Header::read_from</span>(<span class="ident">mem</span>, <span class="ident">header_ptr</span>)<span class="question-mark">?</span>
-			.<span class="ident">into_occupied</span>()
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error</span>(<span class="string">&quot;the allocation points to an empty header&quot;</span>))<span class="question-mark">?</span>;
+		<span class="kw">let </span>order = Header::read_from(mem, header_ptr)<span class="question-mark">?
+			</span>.into_occupied()
+			.ok_or_else(|| error(<span class="string">&quot;the allocation points to an empty header&quot;</span>))<span class="question-mark">?</span>;
 
-		<span class="comment">// Update the just freed header and knit it back to the free list.</span>
-		<span class="kw">let</span> <span class="ident">prev_head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">free_lists</span>.<span class="ident">replace</span>(<span class="ident">order</span>, <span class="ident">Link::Ptr</span>(<span class="ident">header_ptr</span>));
-		<span class="ident">Header::Free</span>(<span class="ident">prev_head</span>).<span class="ident">write_into</span>(<span class="ident">mem</span>, <span class="ident">header_ptr</span>)<span class="question-mark">?</span>;
+		<span class="comment">// Update the just freed header and knit it back to the free list.
+		</span><span class="kw">let </span>prev_head = <span class="self">self</span>.free_lists.replace(order, Link::Ptr(header_ptr));
+		Header::Free(prev_head).write_into(mem, header_ptr)<span class="question-mark">?</span>;
 
-		<span class="comment">// Do the total_size book keeping.</span>
-		<span class="self">self</span>.<span class="ident">total_size</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">total_size</span>
-			.<span class="ident">checked_sub</span>(<span class="ident">order</span>.<span class="ident">size</span>() <span class="op">+</span> <span class="ident">HEADER_SIZE</span>)
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error</span>(<span class="string">&quot;Unable to subtract from total heap size without overflow&quot;</span>))<span class="question-mark">?</span>;
+		<span class="comment">// Do the total_size book keeping.
+		</span><span class="self">self</span>.total_size = <span class="self">self
+			</span>.total_size
+			.checked_sub(order.size() + HEADER_SIZE)
+			.ok_or_else(|| error(<span class="string">&quot;Unable to subtract from total heap size without overflow&quot;</span>))<span class="question-mark">?</span>;
 		<span class="macro">log::trace!</span>(
 			<span class="string">&quot;after deallocation, total_size = {}, bumper = {}.&quot;</span>,
-			<span class="self">self</span>.<span class="ident">total_size</span>,
-			<span class="self">self</span>.<span class="ident">bumper</span>,
+			<span class="self">self</span>.total_size,
+			<span class="self">self</span>.bumper,
 		);
 
-		<span class="ident">bomb</span>.<span class="ident">disarm</span>();
+		bomb.disarm();
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Increases the `bumper` by `size`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns the `bumper` from before the increase. Returns an `Error::AllocatorOutOfSpace` if</span>
-	<span class="doccomment">/// the operation would exhaust the heap.</span>
-	<span class="kw">fn</span> <span class="ident">bump</span>(<span class="ident">bumper</span>: <span class="kw-2">&amp;mut</span> <span class="ident">u32</span>, <span class="ident">size</span>: <span class="ident">u32</span>, <span class="ident">heap_end</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="kw-2">*</span><span class="ident">bumper</span> <span class="op">+</span> <span class="ident">size</span> <span class="op">&gt;</span> <span class="ident">heap_end</span> {
+	<span class="doccomment">/// Increases the `bumper` by `size`.
+	///
+	/// Returns the `bumper` from before the increase. Returns an `Error::AllocatorOutOfSpace` if
+	/// the operation would exhaust the heap.
+	</span><span class="kw">fn </span>bump(bumper: <span class="kw-2">&amp;mut </span>u32, size: u32, heap_end: u32) -&gt; <span class="prelude-ty">Result</span>&lt;u32, Error&gt; {
+		<span class="kw">if </span><span class="kw-2">*</span>bumper + size &gt; heap_end {
 			<span class="macro">log::error!</span>(
-				<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
+				target: LOG_TARGET,
 				<span class="string">&quot;running out of space with current bumper {}, mem size {}&quot;</span>,
-				<span class="ident">bumper</span>,
-				<span class="ident">heap_end</span>
+				bumper,
+				heap_end
 			);
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::AllocatorOutOfSpace</span>)
+			<span class="kw">return </span><span class="prelude-val">Err</span>(Error::AllocatorOutOfSpace)
 		}
 
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">bumper</span>;
-		<span class="kw-2">*</span><span class="ident">bumper</span> <span class="op">+</span><span class="op">=</span> <span class="ident">size</span>;
-		<span class="prelude-val">Ok</span>(<span class="ident">res</span>)
+		<span class="kw">let </span>res = <span class="kw-2">*</span>bumper;
+		<span class="kw-2">*</span>bumper += size;
+		<span class="prelude-val">Ok</span>(res)
 	}
 
-	<span class="kw">fn</span> <span class="ident">observe_memory_size</span><span class="op">&lt;</span><span class="ident">M</span>: <span class="ident">Memory</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(
-		<span class="ident">last_observed_memory_size</span>: <span class="kw-2">&amp;mut</span> <span class="ident">u32</span>,
-		<span class="ident">mem</span>: <span class="kw-2">&amp;mut</span> <span class="ident">M</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">mem</span>.<span class="ident">size</span>() <span class="op">&lt;</span> <span class="kw-2">*</span><span class="ident">last_observed_memory_size</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::MemoryShrinked</span>)
+	<span class="kw">fn </span>observe_memory_size&lt;M: Memory + <span class="question-mark">?</span>Sized&gt;(
+		last_observed_memory_size: <span class="kw-2">&amp;mut </span>u32,
+		mem: <span class="kw-2">&amp;mut </span>M,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="kw">if </span>mem.size() &lt; <span class="kw-2">*</span>last_observed_memory_size {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(Error::MemoryShrinked)
 		}
-		<span class="kw-2">*</span><span class="ident">last_observed_memory_size</span> <span class="op">=</span> <span class="ident">mem</span>.<span class="ident">size</span>();
+		<span class="kw-2">*</span>last_observed_memory_size = mem.size();
 		<span class="prelude-val">Ok</span>(())
 	}
 }
 
-<span class="doccomment">/// A trait for abstraction of accesses to a wasm linear memory. Used to read or modify the</span>
-<span class="doccomment">/// allocation prefixes.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// A wasm linear memory behaves similarly to a vector. The address space doesn&#39;t have holes and is</span>
-<span class="doccomment">/// accessible up to the reported size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The linear memory can grow in size with the wasm page granularity (64KiB), but it cannot shrink.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Memory</span> {
-	<span class="doccomment">/// Read a u64 from the heap in LE form. Returns an error if any of the bytes read are out of</span>
-	<span class="doccomment">/// bounds.</span>
-	<span class="kw">fn</span> <span class="ident">read_le_u64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
-	<span class="doccomment">/// Write a u64 to the heap in LE form. Returns an error if any of the bytes written are out of</span>
-	<span class="doccomment">/// bounds.</span>
-	<span class="kw">fn</span> <span class="ident">write_le_u64</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ptr</span>: <span class="ident">u32</span>, <span class="ident">val</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
-	<span class="doccomment">/// Returns the full size of the memory in bytes.</span>
-	<span class="kw">fn</span> <span class="ident">size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span>;
+<span class="doccomment">/// A trait for abstraction of accesses to a wasm linear memory. Used to read or modify the
+/// allocation prefixes.
+///
+/// A wasm linear memory behaves similarly to a vector. The address space doesn&#39;t have holes and is
+/// accessible up to the reported size.
+///
+/// The linear memory can grow in size with the wasm page granularity (64KiB), but it cannot shrink.
+</span><span class="kw">pub trait </span>Memory {
+	<span class="doccomment">/// Read a u64 from the heap in LE form. Returns an error if any of the bytes read are out of
+	/// bounds.
+	</span><span class="kw">fn </span>read_le_u64(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: u32) -&gt; <span class="prelude-ty">Result</span>&lt;u64, Error&gt;;
+	<span class="doccomment">/// Write a u64 to the heap in LE form. Returns an error if any of the bytes written are out of
+	/// bounds.
+	</span><span class="kw">fn </span>write_le_u64(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: u32, val: u64) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
+	<span class="doccomment">/// Returns the full size of the memory in bytes.
+	</span><span class="kw">fn </span>size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32;
 }
 
-<span class="kw">impl</span> <span class="ident">Memory</span> <span class="kw">for</span> [<span class="ident">u8</span>] {
-	<span class="kw">fn</span> <span class="ident">read_le_u64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span>
-			<span class="ident">heap_range</span>(<span class="ident">ptr</span>, <span class="number">8</span>, <span class="self">self</span>.<span class="ident">len</span>()).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error</span>(<span class="string">&quot;read out of heap bounds&quot;</span>))<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="self">self</span>[<span class="ident">range</span>]
-			.<span class="ident">try_into</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;[u8] slice of length 8 must be convertible to [u8; 8]&quot;</span>);
-		<span class="prelude-val">Ok</span>(<span class="ident">u64::from_le_bytes</span>(<span class="ident">bytes</span>))
+<span class="kw">impl </span>Memory <span class="kw">for </span>[u8] {
+	<span class="kw">fn </span>read_le_u64(<span class="kw-2">&amp;</span><span class="self">self</span>, ptr: u32) -&gt; <span class="prelude-ty">Result</span>&lt;u64, Error&gt; {
+		<span class="kw">let </span>range =
+			heap_range(ptr, <span class="number">8</span>, <span class="self">self</span>.len()).ok_or_else(|| error(<span class="string">&quot;read out of heap bounds&quot;</span>))<span class="question-mark">?</span>;
+		<span class="kw">let </span>bytes = <span class="self">self</span>[range]
+			.try_into()
+			.expect(<span class="string">&quot;[u8] slice of length 8 must be convertible to [u8; 8]&quot;</span>);
+		<span class="prelude-val">Ok</span>(u64::from_le_bytes(bytes))
 	}
-	<span class="kw">fn</span> <span class="ident">write_le_u64</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ptr</span>: <span class="ident">u32</span>, <span class="ident">val</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span>
-			<span class="ident">heap_range</span>(<span class="ident">ptr</span>, <span class="number">8</span>, <span class="self">self</span>.<span class="ident">len</span>()).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error</span>(<span class="string">&quot;write out of heap bounds&quot;</span>))<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">val</span>.<span class="ident">to_le_bytes</span>();
-		<span class="self">self</span>[<span class="ident">range</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..]);
+	<span class="kw">fn </span>write_le_u64(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: u32, val: u64) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="kw">let </span>range =
+			heap_range(ptr, <span class="number">8</span>, <span class="self">self</span>.len()).ok_or_else(|| error(<span class="string">&quot;write out of heap bounds&quot;</span>))<span class="question-mark">?</span>;
+		<span class="kw">let </span>bytes = val.to_le_bytes();
+		<span class="self">self</span>[range].copy_from_slice(<span class="kw-2">&amp;</span>bytes[..]);
 		<span class="prelude-val">Ok</span>(())
 	}
-	<span class="kw">fn</span> <span class="ident">size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-		<span class="ident">u32::try_from</span>(<span class="self">self</span>.<span class="ident">len</span>()).<span class="ident">expect</span>(<span class="string">&quot;size of Wasm linear memory is &lt;2^32; qed&quot;</span>)
+	<span class="kw">fn </span>size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+		u32::try_from(<span class="self">self</span>.len()).expect(<span class="string">&quot;size of Wasm linear memory is &lt;2^32; qed&quot;</span>)
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">heap_range</span>(<span class="ident">offset</span>: <span class="ident">u32</span>, <span class="ident">length</span>: <span class="ident">u32</span>, <span class="ident">heap_len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">offset</span> <span class="kw">as</span> <span class="ident">usize</span>;
-	<span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">offset</span>.<span class="ident">checked_add</span>(<span class="ident">length</span>)<span class="question-mark">?</span> <span class="kw">as</span> <span class="ident">usize</span>;
-	<span class="kw">if</span> <span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">heap_len</span> {
-		<span class="prelude-val">Some</span>(<span class="ident">start</span>..<span class="ident">end</span>)
-	} <span class="kw">else</span> {
-		<span class="prelude-val">None</span>
+<span class="kw">fn </span>heap_range(offset: u32, length: u32, heap_len: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Range&lt;usize&gt;&gt; {
+	<span class="kw">let </span>start = offset <span class="kw">as </span>usize;
+	<span class="kw">let </span>end = offset.checked_add(length)<span class="question-mark">? </span><span class="kw">as </span>usize;
+	<span class="kw">if </span>end &lt;= heap_len {
+		<span class="prelude-val">Some</span>(start..end)
+	} <span class="kw">else </span>{
+		<span class="prelude-val">None
+	</span>}
+}
+
+<span class="doccomment">/// A guard that will raise the poisoned flag on drop unless disarmed.
+</span><span class="kw">struct </span>PoisonBomb&lt;<span class="lifetime">&#39;a</span>&gt; {
+	poisoned: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>bool,
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; PoisonBomb&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">fn </span>disarm(<span class="self">self</span>) {
+		mem::forget(<span class="self">self</span>)
 	}
 }
 
-<span class="doccomment">/// A guard that will raise the poisoned flag on drop unless disarmed.</span>
-<span class="kw">struct</span> <span class="ident">PoisonBomb</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="ident">poisoned</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">bool</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">PoisonBomb</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">disarm</span>(<span class="self">self</span>) {
-		<span class="ident">mem::forget</span>(<span class="self">self</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Drop <span class="kw">for </span>PoisonBomb&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="kw-2">*</span><span class="self">self</span>.poisoned = <span class="bool-val">true</span>;
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">PoisonBomb</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">poisoned</span> <span class="op">=</span> <span class="bool-val">true</span>;
-	}
-}
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+	<span class="kw">const </span>PAGE_SIZE: u32 = <span class="number">65536</span>;
 
-	<span class="kw">const</span> <span class="ident">PAGE_SIZE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">65536</span>;
-
-	<span class="doccomment">/// Makes a pointer out of the given address.</span>
-	<span class="kw">fn</span> <span class="ident">to_pointer</span>(<span class="ident">address</span>: <span class="ident">u32</span>) -&gt; <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-		<span class="ident">Pointer::new</span>(<span class="ident">address</span>)
+	<span class="doccomment">/// Makes a pointer out of the given address.
+	</span><span class="kw">fn </span>to_pointer(address: u32) -&gt; Pointer&lt;u8&gt; {
+		Pointer::new(address)
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_allocate_properly</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_allocate_properly() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">1</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">1</span>).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="comment">// returned pointer must start right after `HEADER_SIZE`</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr</span>, <span class="ident">to_pointer</span>(<span class="ident">HEADER_SIZE</span>));
+		<span class="comment">// then
+		// returned pointer must start right after `HEADER_SIZE`
+		</span><span class="macro">assert_eq!</span>(ptr, to_pointer(HEADER_SIZE));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_always_align_pointers_to_multiples_of_8</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">13</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_always_align_pointers_to_multiples_of_8() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">13</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">1</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">1</span>).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="comment">// the pointer must start at the next multiple of 8 from 13</span>
-		<span class="comment">// + the prefix of 8 bytes.</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr</span>, <span class="ident">to_pointer</span>(<span class="number">24</span>));
+		<span class="comment">// then
+		// the pointer must start at the next multiple of 8 from 13
+		// + the prefix of 8 bytes.
+		</span><span class="macro">assert_eq!</span>(ptr, to_pointer(<span class="number">24</span>));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_increment_pointers_properly</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_increment_pointers_properly() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr1</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">1</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">ptr2</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">9</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">ptr3</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">1</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr1 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">1</span>).unwrap();
+		<span class="kw">let </span>ptr2 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">9</span>).unwrap();
+		<span class="kw">let </span>ptr3 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">1</span>).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="comment">// a prefix of 8 bytes is prepended to each pointer</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr1</span>, <span class="ident">to_pointer</span>(<span class="ident">HEADER_SIZE</span>));
+		<span class="comment">// then
+		// a prefix of 8 bytes is prepended to each pointer
+		</span><span class="macro">assert_eq!</span>(ptr1, to_pointer(HEADER_SIZE));
 
-		<span class="comment">// the prefix of 8 bytes + the content of ptr1 padded to the lowest possible</span>
-		<span class="comment">// item size of 8 bytes + the prefix of ptr1</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr2</span>, <span class="ident">to_pointer</span>(<span class="number">24</span>));
+		<span class="comment">// the prefix of 8 bytes + the content of ptr1 padded to the lowest possible
+		// item size of 8 bytes + the prefix of ptr1
+		</span><span class="macro">assert_eq!</span>(ptr2, to_pointer(<span class="number">24</span>));
 
-		<span class="comment">// ptr2 + its content of 16 bytes + the prefix of 8 bytes</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr3</span>, <span class="ident">to_pointer</span>(<span class="number">24</span> <span class="op">+</span> <span class="number">16</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span>));
+		<span class="comment">// ptr2 + its content of 16 bytes + the prefix of 8 bytes
+		</span><span class="macro">assert_eq!</span>(ptr3, to_pointer(<span class="number">24 </span>+ <span class="number">16 </span>+ HEADER_SIZE));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_free_properly</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
-		<span class="kw">let</span> <span class="ident">ptr1</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">1</span>).<span class="ident">unwrap</span>();
-		<span class="comment">// the prefix of 8 bytes is prepended to the pointer</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr1</span>, <span class="ident">to_pointer</span>(<span class="ident">HEADER_SIZE</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_free_properly() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
+		<span class="kw">let </span>ptr1 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">1</span>).unwrap();
+		<span class="comment">// the prefix of 8 bytes is prepended to the pointer
+		</span><span class="macro">assert_eq!</span>(ptr1, to_pointer(HEADER_SIZE));
 
-		<span class="kw">let</span> <span class="ident">ptr2</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">1</span>).<span class="ident">unwrap</span>();
-		<span class="comment">// the prefix of 8 bytes + the content of ptr 1 is prepended to the pointer</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr2</span>, <span class="ident">to_pointer</span>(<span class="number">24</span>));
+		<span class="kw">let </span>ptr2 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">1</span>).unwrap();
+		<span class="comment">// the prefix of 8 bytes + the content of ptr 1 is prepended to the pointer
+		</span><span class="macro">assert_eq!</span>(ptr2, to_pointer(<span class="number">24</span>));
 
-		<span class="comment">// when</span>
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr2</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span>heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr2).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="comment">// then the heads table should contain a pointer to the</span>
-		<span class="comment">// prefix of ptr2 in the leftmost entry</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">free_lists</span>.<span class="ident">heads</span>[<span class="number">0</span>], <span class="ident">Link::Ptr</span>(<span class="ident">u32::from</span>(<span class="ident">ptr2</span>) <span class="op">-</span> <span class="ident">HEADER_SIZE</span>));
+		<span class="comment">// then
+		// then the heads table should contain a pointer to the
+		// prefix of ptr2 in the leftmost entry
+		</span><span class="macro">assert_eq!</span>(heap.free_lists.heads[<span class="number">0</span>], Link::Ptr(u32::from(ptr2) - HEADER_SIZE));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_deallocate_and_reallocate_properly</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="ident">padded_offset</span> <span class="op">=</span> <span class="number">16</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">13</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_deallocate_and_reallocate_properly() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span>padded_offset = <span class="number">16</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">13</span>);
 
-		<span class="kw">let</span> <span class="ident">ptr1</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">1</span>).<span class="ident">unwrap</span>();
-		<span class="comment">// the prefix of 8 bytes is prepended to the pointer</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr1</span>, <span class="ident">to_pointer</span>(<span class="ident">padded_offset</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span>));
+		<span class="kw">let </span>ptr1 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">1</span>).unwrap();
+		<span class="comment">// the prefix of 8 bytes is prepended to the pointer
+		</span><span class="macro">assert_eq!</span>(ptr1, to_pointer(padded_offset + HEADER_SIZE));
 
-		<span class="kw">let</span> <span class="ident">ptr2</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">9</span>).<span class="ident">unwrap</span>();
-		<span class="comment">// the padded_offset + the previously allocated ptr (8 bytes prefix +</span>
-		<span class="comment">// 8 bytes content) + the prefix of 8 bytes which is prepended to the</span>
-		<span class="comment">// current pointer</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr2</span>, <span class="ident">to_pointer</span>(<span class="ident">padded_offset</span> <span class="op">+</span> <span class="number">16</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span>));
+		<span class="kw">let </span>ptr2 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">9</span>).unwrap();
+		<span class="comment">// the padded_offset + the previously allocated ptr (8 bytes prefix +
+		// 8 bytes content) + the prefix of 8 bytes which is prepended to the
+		// current pointer
+		</span><span class="macro">assert_eq!</span>(ptr2, to_pointer(padded_offset + <span class="number">16 </span>+ HEADER_SIZE));
 
-		<span class="comment">// when</span>
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr2</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">ptr3</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">9</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span>heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr2).unwrap();
+		<span class="kw">let </span>ptr3 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">9</span>).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="comment">// should have re-allocated</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr3</span>, <span class="ident">to_pointer</span>(<span class="ident">padded_offset</span> <span class="op">+</span> <span class="number">16</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">free_lists</span>.<span class="ident">heads</span>, [<span class="ident">Link::Nil</span>; <span class="ident">N_ORDERS</span>]);
+		<span class="comment">// then
+		// should have re-allocated
+		</span><span class="macro">assert_eq!</span>(ptr3, to_pointer(padded_offset + <span class="number">16 </span>+ HEADER_SIZE));
+		<span class="macro">assert_eq!</span>(heap.free_lists.heads, [Link::Nil; N_ORDERS]);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_build_linked_list_of_free_areas_properly</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_build_linked_list_of_free_areas_properly() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="kw">let</span> <span class="ident">ptr1</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">8</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">ptr2</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">8</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">ptr3</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">8</span>).<span class="ident">unwrap</span>();
+		<span class="kw">let </span>ptr1 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">8</span>).unwrap();
+		<span class="kw">let </span>ptr2 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">8</span>).unwrap();
+		<span class="kw">let </span>ptr3 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">8</span>).unwrap();
 
-		<span class="comment">// when</span>
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr1</span>).<span class="ident">unwrap</span>();
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr2</span>).<span class="ident">unwrap</span>();
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr3</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span>heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr1).unwrap();
+		heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr2).unwrap();
+		heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr3).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">free_lists</span>.<span class="ident">heads</span>[<span class="number">0</span>], <span class="ident">Link::Ptr</span>(<span class="ident">u32::from</span>(<span class="ident">ptr3</span>) <span class="op">-</span> <span class="ident">HEADER_SIZE</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(heap.free_lists.heads[<span class="number">0</span>], Link::Ptr(u32::from(ptr3) - HEADER_SIZE));
 
-		<span class="kw">let</span> <span class="ident">ptr4</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">8</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr4</span>, <span class="ident">ptr3</span>);
+		<span class="kw">let </span>ptr4 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">8</span>).unwrap();
+		<span class="macro">assert_eq!</span>(ptr4, ptr3);
 
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">free_lists</span>.<span class="ident">heads</span>[<span class="number">0</span>], <span class="ident">Link::Ptr</span>(<span class="ident">u32::from</span>(<span class="ident">ptr2</span>) <span class="op">-</span> <span class="ident">HEADER_SIZE</span>));
+		<span class="macro">assert_eq!</span>(heap.free_lists.heads[<span class="number">0</span>], Link::Ptr(u32::from(ptr2) - HEADER_SIZE));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_not_allocate_if_too_large</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">13</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_not_allocate_if_too_large() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">13</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">PAGE_SIZE</span> <span class="op">-</span> <span class="number">13</span>);
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], PAGE_SIZE - <span class="number">13</span>);
 
-		<span class="comment">// then</span>
-		<span class="kw">match</span> <span class="ident">ptr</span>.<span class="ident">unwrap_err</span>() {
-			<span class="ident">Error::AllocatorOutOfSpace</span> =&gt; {},
-			<span class="ident">e</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocator out of space error, got: {:?}&quot;</span>, <span class="ident">e</span>),
+		<span class="comment">// then
+		</span><span class="kw">match </span>ptr.unwrap_err() {
+			Error::AllocatorOutOfSpace =&gt; {},
+			e =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocator out of space error, got: {:?}&quot;</span>, e),
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_not_allocate_if_full</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
-		<span class="kw">let</span> <span class="ident">ptr1</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], (<span class="ident">PAGE_SIZE</span> <span class="op">/</span> <span class="number">2</span>) <span class="op">-</span> <span class="ident">HEADER_SIZE</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr1</span>, <span class="ident">to_pointer</span>(<span class="ident">HEADER_SIZE</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_not_allocate_if_full() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
+		<span class="kw">let </span>ptr1 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], (PAGE_SIZE / <span class="number">2</span>) - HEADER_SIZE).unwrap();
+		<span class="macro">assert_eq!</span>(ptr1, to_pointer(HEADER_SIZE));
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr2</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">PAGE_SIZE</span> <span class="op">/</span> <span class="number">2</span>);
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr2 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], PAGE_SIZE / <span class="number">2</span>);
 
-		<span class="comment">// then</span>
-		<span class="comment">// there is no room for another half page incl. its 8 byte prefix</span>
-		<span class="kw">match</span> <span class="ident">ptr2</span>.<span class="ident">unwrap_err</span>() {
-			<span class="ident">Error::AllocatorOutOfSpace</span> =&gt; {},
-			<span class="ident">e</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocator out of space error, got: {:?}&quot;</span>, <span class="ident">e</span>),
+		<span class="comment">// then
+		// there is no room for another half page incl. its 8 byte prefix
+		</span><span class="kw">match </span>ptr2.unwrap_err() {
+			Error::AllocatorOutOfSpace =&gt; {},
+			e =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocator out of space error, got: {:?}&quot;</span>, e),
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_allocate_max_possible_allocation_size</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0u8</span>; (<span class="ident">MAX_POSSIBLE_ALLOCATION</span> <span class="op">+</span> <span class="ident">PAGE_SIZE</span>) <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_allocate_max_possible_allocation_size() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = <span class="macro">vec!</span>[<span class="number">0u8</span>; (MAX_POSSIBLE_ALLOCATION + PAGE_SIZE) <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">MAX_POSSIBLE_ALLOCATION</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], MAX_POSSIBLE_ALLOCATION).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr</span>, <span class="ident">to_pointer</span>(<span class="ident">HEADER_SIZE</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(ptr, to_pointer(HEADER_SIZE));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_not_allocate_if_requested_size_too_large</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_not_allocate_if_requested_size_too_large() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">MAX_POSSIBLE_ALLOCATION</span> <span class="op">+</span> <span class="number">1</span>);
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], MAX_POSSIBLE_ALLOCATION + <span class="number">1</span>);
 
-		<span class="comment">// then</span>
-		<span class="kw">match</span> <span class="ident">ptr</span>.<span class="ident">unwrap_err</span>() {
-			<span class="ident">Error::RequestedAllocationTooLarge</span> =&gt; {},
-			<span class="ident">e</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocation size too large error, got: {:?}&quot;</span>, <span class="ident">e</span>),
+		<span class="comment">// then
+		</span><span class="kw">match </span>ptr.unwrap_err() {
+			Error::RequestedAllocationTooLarge =&gt; {},
+			e =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocation size too large error, got: {:?}&quot;</span>, e),
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_return_error_when_bumper_greater_than_heap_size</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_return_error_when_bumper_greater_than_heap_size() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; <span class="number">64</span>];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="kw">let</span> <span class="ident">ptr1</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">32</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr1</span>, <span class="ident">to_pointer</span>(<span class="ident">HEADER_SIZE</span>));
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr1</span>).<span class="ident">expect</span>(<span class="string">&quot;failed freeing ptr1&quot;</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">total_size</span>, <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">bumper</span>, <span class="number">40</span>);
+		<span class="kw">let </span>ptr1 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">32</span>).unwrap();
+		<span class="macro">assert_eq!</span>(ptr1, to_pointer(HEADER_SIZE));
+		heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr1).expect(<span class="string">&quot;failed freeing ptr1&quot;</span>);
+		<span class="macro">assert_eq!</span>(heap.total_size, <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(heap.bumper, <span class="number">40</span>);
 
-		<span class="kw">let</span> <span class="ident">ptr2</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">16</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr2</span>, <span class="ident">to_pointer</span>(<span class="number">48</span>));
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr2</span>).<span class="ident">expect</span>(<span class="string">&quot;failed freeing ptr2&quot;</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">total_size</span>, <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">bumper</span>, <span class="number">64</span>);
+		<span class="kw">let </span>ptr2 = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">16</span>).unwrap();
+		<span class="macro">assert_eq!</span>(ptr2, to_pointer(<span class="number">48</span>));
+		heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr2).expect(<span class="string">&quot;failed freeing ptr2&quot;</span>);
+		<span class="macro">assert_eq!</span>(heap.total_size, <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(heap.bumper, <span class="number">64</span>);
 
-		<span class="comment">// when</span>
-		<span class="comment">// the `bumper` value is equal to `size` here and any</span>
-		<span class="comment">// further allocation which would increment the bumper must fail.</span>
-		<span class="comment">// we try to allocate 8 bytes here, which will increment the</span>
-		<span class="comment">// bumper since no 8 byte item has been allocated+freed before.</span>
-		<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">8</span>);
+		<span class="comment">// when
+		// the `bumper` value is equal to `size` here and any
+		// further allocation which would increment the bumper must fail.
+		// we try to allocate 8 bytes here, which will increment the
+		// bumper since no 8 byte item has been allocated+freed before.
+		</span><span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">8</span>);
 
-		<span class="comment">// then</span>
-		<span class="kw">match</span> <span class="ident">ptr</span>.<span class="ident">unwrap_err</span>() {
-			<span class="ident">Error::AllocatorOutOfSpace</span> =&gt; {},
-			<span class="ident">e</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocator out of space error, got: {:?}&quot;</span>, <span class="ident">e</span>),
+		<span class="comment">// then
+		</span><span class="kw">match </span>ptr.unwrap_err() {
+			Error::AllocatorOutOfSpace =&gt; {},
+			e =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Expected allocator out of space error, got: {:?}&quot;</span>, e),
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_include_prefixes_in_total_heap_size</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">1</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_include_prefixes_in_total_heap_size() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">1</span>);
 
-		<span class="comment">// when</span>
-		<span class="comment">// an item size of 16 must be used then</span>
-		<span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">9</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		// an item size of 16 must be used then
+		</span>heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">9</span>).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">total_size</span>, <span class="ident">HEADER_SIZE</span> <span class="op">+</span> <span class="number">16</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(heap.total_size, HEADER_SIZE + <span class="number">16</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_calculate_total_heap_size_to_zero</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">13</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_calculate_total_heap_size_to_zero() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">13</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">42</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">ptr</span>, <span class="ident">to_pointer</span>(<span class="number">16</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span>));
-		<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span><span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">42</span>).unwrap();
+		<span class="macro">assert_eq!</span>(ptr, to_pointer(<span class="number">16 </span>+ HEADER_SIZE));
+		heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">total_size</span>, <span class="number">0</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(heap.total_size, <span class="number">0</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_calculate_total_size_of_zero</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">19</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_calculate_total_size_of_zero() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">19</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">1</span>..<span class="number">10</span> {
-			<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">42</span>).<span class="ident">unwrap</span>();
-			<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span><span class="kw">for _ in </span><span class="number">1</span>..<span class="number">10 </span>{
+			<span class="kw">let </span>ptr = heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">42</span>).unwrap();
+			heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr).unwrap();
 		}
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">heap</span>.<span class="ident">total_size</span>, <span class="number">0</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(heap.total_size, <span class="number">0</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_read_and_write_u64_correctly</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">PAGE_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>];
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_read_and_write_u64_correctly() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; PAGE_SIZE <span class="kw">as </span>usize];
 
-		<span class="comment">// when</span>
-		<span class="ident">Memory::write_le_u64</span>(<span class="ident">mem</span>.<span class="ident">as_mut</span>(), <span class="number">40</span>, <span class="number">4480113</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span>Memory::write_le_u64(mem.as_mut(), <span class="number">40</span>, <span class="number">4480113</span>).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">Memory::read_le_u64</span>(<span class="ident">mem</span>.<span class="ident">as_mut</span>(), <span class="number">40</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">value</span>, <span class="number">4480113</span>);
+		<span class="comment">// then
+		</span><span class="kw">let </span>value = Memory::read_le_u64(mem.as_mut(), <span class="number">40</span>).unwrap();
+		<span class="macro">assert_eq!</span>(value, <span class="number">4480113</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_get_item_size_from_order</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">raw_order</span> <span class="op">=</span> <span class="number">0</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_get_item_size_from_order() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>raw_order = <span class="number">0</span>;
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">item_size</span> <span class="op">=</span> <span class="ident">Order::from_raw</span>(<span class="ident">raw_order</span>).<span class="ident">unwrap</span>().<span class="ident">size</span>();
+		<span class="comment">// when
+		</span><span class="kw">let </span>item_size = Order::from_raw(raw_order).unwrap().size();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">item_size</span>, <span class="number">8</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(item_size, <span class="number">8</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_get_max_item_size_from_index</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">raw_order</span> <span class="op">=</span> <span class="number">22</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_get_max_item_size_from_index() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>raw_order = <span class="number">22</span>;
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">item_size</span> <span class="op">=</span> <span class="ident">Order::from_raw</span>(<span class="ident">raw_order</span>).<span class="ident">unwrap</span>().<span class="ident">size</span>();
+		<span class="comment">// when
+		</span><span class="kw">let </span>item_size = Order::from_raw(raw_order).unwrap().size();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">item_size</span> <span class="kw">as</span> <span class="ident">u32</span>, <span class="ident">MAX_POSSIBLE_ALLOCATION</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(item_size <span class="kw">as </span>u32, MAX_POSSIBLE_ALLOCATION);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">deallocate_needs_to_maintain_linked_list</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span> <span class="op">*</span> <span class="number">2</span> <span class="op">*</span> <span class="number">4</span> <span class="op">+</span> <span class="ident">ALIGNMENT</span> <span class="kw">as</span> <span class="ident">usize</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>deallocate_needs_to_maintain_linked_list() {
+		<span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; <span class="number">8 </span>* <span class="number">2 </span>* <span class="number">4 </span>+ ALIGNMENT <span class="kw">as </span>usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="comment">// Allocate and free some pointers</span>
-		<span class="kw">let</span> <span class="ident">ptrs</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">4</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">8</span>).<span class="ident">unwrap</span>()).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-		<span class="ident">ptrs</span>.<span class="ident">into_iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">ptr</span><span class="op">|</span> <span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ptr</span>).<span class="ident">unwrap</span>());
+		<span class="comment">// Allocate and free some pointers
+		</span><span class="kw">let </span>ptrs = (<span class="number">0</span>..<span class="number">4</span>).map(|<span class="kw">_</span>| heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">8</span>).unwrap()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+		ptrs.into_iter().for_each(|ptr| heap.deallocate(<span class="kw-2">&amp;mut </span>mem[..], ptr).unwrap());
 
-		<span class="comment">// Second time we should be able to allocate all of them again.</span>
-		<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">4</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="number">8</span>).<span class="ident">unwrap</span>()).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		<span class="comment">// Second time we should be able to allocate all of them again.
+		</span><span class="kw">let _ </span>= (<span class="number">0</span>..<span class="number">4</span>).map(|<span class="kw">_</span>| heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], <span class="number">8</span>).unwrap()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">header_read_write</span>() {
-		<span class="kw">let</span> <span class="ident">roundtrip</span> <span class="op">=</span> <span class="op">|</span><span class="ident">header</span>: <span class="ident">Header</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memory</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-			<span class="ident">header</span>.<span class="ident">write_into</span>(<span class="ident">memory</span>.<span class="ident">as_mut</span>(), <span class="number">0</span>).<span class="ident">unwrap</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>header_read_write() {
+		<span class="kw">let </span>roundtrip = |header: Header| {
+			<span class="kw">let </span><span class="kw-2">mut </span>memory = [<span class="number">0u8</span>; <span class="number">32</span>];
+			header.write_into(memory.as_mut(), <span class="number">0</span>).unwrap();
 
-			<span class="kw">let</span> <span class="ident">read_header</span> <span class="op">=</span> <span class="ident">Header::read_from</span>(<span class="ident">memory</span>.<span class="ident">as_mut</span>(), <span class="number">0</span>).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">header</span>, <span class="ident">read_header</span>);
+			<span class="kw">let </span>read_header = Header::read_from(memory.as_mut(), <span class="number">0</span>).unwrap();
+			<span class="macro">assert_eq!</span>(header, read_header);
 		};
 
-		<span class="ident">roundtrip</span>(<span class="ident">Header::Occupied</span>(<span class="ident">Order</span>(<span class="number">0</span>)));
-		<span class="ident">roundtrip</span>(<span class="ident">Header::Occupied</span>(<span class="ident">Order</span>(<span class="number">1</span>)));
-		<span class="ident">roundtrip</span>(<span class="ident">Header::Free</span>(<span class="ident">Link::Nil</span>));
-		<span class="ident">roundtrip</span>(<span class="ident">Header::Free</span>(<span class="ident">Link::Ptr</span>(<span class="number">0</span>)));
-		<span class="ident">roundtrip</span>(<span class="ident">Header::Free</span>(<span class="ident">Link::Ptr</span>(<span class="number">4</span>)));
+		roundtrip(Header::Occupied(Order(<span class="number">0</span>)));
+		roundtrip(Header::Occupied(Order(<span class="number">1</span>)));
+		roundtrip(Header::Free(Link::Nil));
+		roundtrip(Header::Free(Link::Ptr(<span class="number">0</span>)));
+		roundtrip(Header::Free(Link::Ptr(<span class="number">4</span>)));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">poison_oom</span>() {
-		<span class="comment">// given</span>
-		<span class="comment">// a heap of 32 bytes. Should be enough for two allocations.</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>poison_oom() {
+		<span class="comment">// given
+		// a heap of 32 bytes. Should be enough for two allocations.
+		</span><span class="kw">let </span><span class="kw-2">mut </span>mem = [<span class="number">0u8</span>; <span class="number">32</span>];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="comment">// when</span>
-		<span class="macro">assert!</span>(<span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="ident">mem</span>.<span class="ident">as_mut</span>(), <span class="number">8</span>).<span class="ident">is_ok</span>());
-		<span class="kw">let</span> <span class="ident">alloc_ptr</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="ident">mem</span>.<span class="ident">as_mut</span>(), <span class="number">8</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert!</span>(<span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="ident">mem</span>.<span class="ident">as_mut</span>(), <span class="number">8</span>).<span class="ident">is_err</span>());
+		<span class="comment">// when
+		</span><span class="macro">assert!</span>(heap.allocate(mem.as_mut(), <span class="number">8</span>).is_ok());
+		<span class="kw">let </span>alloc_ptr = heap.allocate(mem.as_mut(), <span class="number">8</span>).unwrap();
+		<span class="macro">assert!</span>(heap.allocate(mem.as_mut(), <span class="number">8</span>).is_err());
 
-		<span class="comment">// then</span>
-		<span class="macro">assert!</span>(<span class="ident">heap</span>.<span class="ident">poisoned</span>);
-		<span class="macro">assert!</span>(<span class="ident">heap</span>.<span class="ident">deallocate</span>(<span class="ident">mem</span>.<span class="ident">as_mut</span>(), <span class="ident">alloc_ptr</span>).<span class="ident">is_err</span>());
+		<span class="comment">// then
+		</span><span class="macro">assert!</span>(heap.poisoned);
+		<span class="macro">assert!</span>(heap.deallocate(mem.as_mut(), alloc_ptr).is_err());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">test_n_orders</span>() {
-		<span class="comment">// Test that N_ORDERS is consistent with min and max possible allocation.</span>
-		<span class="macro">assert_eq!</span>(
-			<span class="ident">MIN_POSSIBLE_ALLOCATION</span> <span class="op">*</span> <span class="number">2u32</span>.<span class="ident">pow</span>(<span class="ident">N_ORDERS</span> <span class="kw">as</span> <span class="ident">u32</span> <span class="op">-</span> <span class="number">1</span>),
-			<span class="ident">MAX_POSSIBLE_ALLOCATION</span>
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>test_n_orders() {
+		<span class="comment">// Test that N_ORDERS is consistent with min and max possible allocation.
+		</span><span class="macro">assert_eq!</span>(
+			MIN_POSSIBLE_ALLOCATION * <span class="number">2u32</span>.pow(N_ORDERS <span class="kw">as </span>u32 - <span class="number">1</span>),
+			MAX_POSSIBLE_ALLOCATION
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">accepts_growing_memory</span>() {
-		<span class="kw">const</span> <span class="ident">ITEM_SIZE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">16</span>;
-		<span class="kw">const</span> <span class="ident">ITEM_ON_HEAP_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>accepts_growing_memory() {
+		<span class="kw">const </span>ITEM_SIZE: u32 = <span class="number">16</span>;
+		<span class="kw">const </span>ITEM_ON_HEAP_SIZE: usize = <span class="number">16 </span>+ HEADER_SIZE <span class="kw">as </span>usize;
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="ident">ITEM_ON_HEAP_SIZE</span> <span class="op">*</span> <span class="number">2</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>mem = <span class="macro">vec!</span>[<span class="number">0u8</span>; ITEM_ON_HEAP_SIZE * <span class="number">2</span>];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ITEM_SIZE</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ITEM_SIZE</span>).<span class="ident">unwrap</span>();
+		<span class="kw">let _ </span>= heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], ITEM_SIZE).unwrap();
+		<span class="kw">let _ </span>= heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], ITEM_SIZE).unwrap();
 
-		<span class="ident">mem</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>; <span class="ident">ITEM_ON_HEAP_SIZE</span>]);
+		mem.extend_from_slice(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>; ITEM_ON_HEAP_SIZE]);
 
-		<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ITEM_SIZE</span>).<span class="ident">unwrap</span>();
+		<span class="kw">let _ </span>= heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], ITEM_SIZE).unwrap();
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">doesnt_accept_shrinking_memory</span>() {
-		<span class="kw">const</span> <span class="ident">ITEM_SIZE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">16</span>;
-		<span class="kw">const</span> <span class="ident">ITEM_ON_HEAP_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span> <span class="op">+</span> <span class="ident">HEADER_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>doesnt_accept_shrinking_memory() {
+		<span class="kw">const </span>ITEM_SIZE: u32 = <span class="number">16</span>;
+		<span class="kw">const </span>ITEM_ON_HEAP_SIZE: usize = <span class="number">16 </span>+ HEADER_SIZE <span class="kw">as </span>usize;
 
-		<span class="kw">let</span> <span class="ident">initial_size</span> <span class="op">=</span> <span class="ident">ITEM_ON_HEAP_SIZE</span> <span class="op">*</span> <span class="number">3</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mem</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="ident">initial_size</span>];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="number">0</span>);
+		<span class="kw">let </span>initial_size = ITEM_ON_HEAP_SIZE * <span class="number">3</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>mem = <span class="macro">vec!</span>[<span class="number">0u8</span>; initial_size];
+		<span class="kw">let </span><span class="kw-2">mut </span>heap = FreeingBumpHeapAllocator::new(<span class="number">0</span>);
 
-		<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ITEM_SIZE</span>).<span class="ident">unwrap</span>();
+		<span class="kw">let _ </span>= heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], ITEM_SIZE).unwrap();
 
-		<span class="ident">mem</span>.<span class="ident">truncate</span>(<span class="ident">initial_size</span> <span class="op">-</span> <span class="number">1</span>);
+		mem.truncate(initial_size - <span class="number">1</span>);
 
-		<span class="kw">match</span> <span class="ident">heap</span>.<span class="ident">allocate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mem</span>[..], <span class="ident">ITEM_SIZE</span>).<span class="ident">unwrap_err</span>() {
-			<span class="ident">Error::MemoryShrinked</span> =&gt; (),
-			<span class="kw">_</span> =&gt; <span class="macro">panic!</span>(),
+		<span class="kw">match </span>heap.allocate(<span class="kw-2">&amp;mut </span>mem[..], ITEM_SIZE).unwrap_err() {
+			Error::MemoryShrinked =&gt; (),
+			<span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(),
 		}
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_allocator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_allocator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/regalloc-0.0.34/src/bt_coalescing_analysis.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bt_coalescing_analysis.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../regalloc/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../regalloc/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../regalloc/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/regalloc-0.0.34/src/bt_coalescing_analysis.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bt_coalescing_analysis.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../regalloc/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -682,676 +677,676 @@
 <span id="677">677</span>
 <span id="678">678</span>
 <span id="679">679</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Analysis in support of copy coalescing for the backtracking allocator.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This detects and collects information about all copy coalescing</span>
-<span class="doccomment">//! opportunities in the incoming function.  It does not use that information</span>
-<span class="doccomment">//! at all -- that is for the main allocation loop and the spill slot allocator</span>
-<span class="doccomment">//! to do.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Coalescing analysis creates 4 pieces of information:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! * a map from `VirtualRangeIx` to a set of `Hint`s (see below) which state a</span>
-<span class="doccomment">//!   preference for which register that range would prefer to be allocated to.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! * equivalence class groupings for the virtual ranges.  Two virtual ranges</span>
-<span class="doccomment">//!   will be assigned the same equivalence class if there is a move instruction</span>
-<span class="doccomment">//!   that transfers a value from one range to the other.  The equivalence</span>
-<span class="doccomment">//!   classes created are the transitive closure of this pairwise relation.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! * a simple mapping from instruction index to bool, indicating those</span>
-<span class="doccomment">//! instructions that are moves between virtual registers, and that have been</span>
-<span class="doccomment">//! used to construct the equivalence classes above.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! * a mapping from virtual registers to virtual ranges.  This is really</span>
-<span class="doccomment">//!   produced as a side-effect of computing the above three elements, but is</span>
-<span class="doccomment">//!   useful in its own right and so is also returned.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Analysis in support of copy coalescing for the backtracking allocator.
+//!
+//! This detects and collects information about all copy coalescing
+//! opportunities in the incoming function.  It does not use that information
+//! at all -- that is for the main allocation loop and the spill slot allocator
+//! to do.
+//!
+//! Coalescing analysis creates 4 pieces of information:
+//!
+//! * a map from `VirtualRangeIx` to a set of `Hint`s (see below) which state a
+//!   preference for which register that range would prefer to be allocated to.
+//!
+//! * equivalence class groupings for the virtual ranges.  Two virtual ranges
+//!   will be assigned the same equivalence class if there is a move instruction
+//!   that transfers a value from one range to the other.  The equivalence
+//!   classes created are the transitive closure of this pairwise relation.
+//!
+//! * a simple mapping from instruction index to bool, indicating those
+//! instructions that are moves between virtual registers, and that have been
+//! used to construct the equivalence classes above.
+//!
+//! * a mapping from virtual registers to virtual ranges.  This is really
+//!   produced as a side-effect of computing the above three elements, but is
+//!   useful in its own right and so is also returned.
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_snake_case</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
+</span><span class="attribute">#![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
 
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">log_enabled</span>, <span class="ident">trace</span>, <span class="ident">Level</span>};
-<span class="kw">use</span> <span class="ident">smallvec</span>::{<span class="ident">smallvec</span>, <span class="ident">SmallVec</span>};
+</span><span class="kw">use </span>log::{log_enabled, trace, Level};
+<span class="kw">use </span>smallvec::{smallvec, SmallVec};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::data_structures</span>::{
-    <span class="ident">InstIx</span>, <span class="ident">InstPoint</span>, <span class="ident">Map</span>, <span class="ident">MoveInfo</span>, <span class="ident">MoveInfoElem</span>, <span class="ident">RangeFrag</span>, <span class="ident">RangeFragIx</span>, <span class="ident">RealRange</span>, <span class="ident">RealRangeIx</span>,
-    <span class="ident">RealReg</span>, <span class="ident">RealRegUniverse</span>, <span class="ident">RegToRangesMaps</span>, <span class="ident">SpillCost</span>, <span class="ident">TypedIxVec</span>, <span class="ident">VirtualRange</span>, <span class="ident">VirtualRangeIx</span>,
-    <span class="ident">VirtualReg</span>,
+<span class="kw">use </span><span class="kw">crate</span>::data_structures::{
+    InstIx, InstPoint, Map, MoveInfo, MoveInfoElem, RangeFrag, RangeFragIx, RealRange, RealRangeIx,
+    RealReg, RealRegUniverse, RegToRangesMaps, SpillCost, TypedIxVec, VirtualRange, VirtualRangeIx,
+    VirtualReg,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::union_find</span>::{<span class="ident">ToFromU32</span>, <span class="ident">UnionFind</span>, <span class="ident">UnionFindEquivClasses</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Function</span>;
+<span class="kw">use </span><span class="kw">crate</span>::union_find::{ToFromU32, UnionFind, UnionFindEquivClasses};
+<span class="kw">use </span><span class="kw">crate</span>::Function;
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">//</span>
-<span class="comment">// *** Some important comments about the interaction between this coalescing</span>
-<span class="comment">// *** analysis, the main allocation loop and the spill slot allocator.</span>
-<span class="comment">//</span>
-<span class="comment">// The main allocation loop tries to assign the same register to all the</span>
-<span class="comment">// VirtualRanges in an equivalence class.  Similarly, the spill slot allocator</span>
-<span class="comment">// tries to allocate the same spill slot to all the VirtualRanges in an</span>
-<span class="comment">// equivalence class.  In most cases they are successful, and so the moves</span>
-<span class="comment">// between those VirtualRanges will later disappear.  However, the complete</span>
-<span class="comment">// story is not quite so simple.</span>
-<span class="comment">//</span>
-<span class="comment">// It is only safe to assign the VirtualRanges in the same equivalence class</span>
-<span class="comment">// to a single register or spill slot if those VirtualRanges are</span>
-<span class="comment">// non-overlapping.  That is, if their overall collection of RangeFrags is</span>
-<span class="comment">// disjoint.  If two such VirtualRanges overlapped, then they could be</span>
-<span class="comment">// carrying different values, and so they would need separate registers or</span>
-<span class="comment">// spill slots.</span>
-<span class="comment">//</span>
-<span class="comment">// Most of the time, these equivalence classes are indeed internally</span>
-<span class="comment">// non-overlapping.  But that&#39;s just luck -- that&#39;s how the input VCode mostly</span>
-<span class="comment">// is.  The coalescing analysis *doesn&#39;t* properly check for overlaps within an</span>
-<span class="comment">// equivalence class, so it can be the case that the members of an equivalence</span>
-<span class="comment">// class overlap.  The users of that information -- the main allocation loop</span>
-<span class="comment">// and the spill slot allocator -- currently check for, and handle, such</span>
-<span class="comment">// situations.  So the generated allocation is correct.</span>
-<span class="comment">//</span>
-<span class="comment">// It does, however, cause imprecision and unnecessary spilling, and, in the</span>
-<span class="comment">// main allocation loop, slightly increased evictions.</span>
-<span class="comment">//</span>
-<span class="comment">// The &quot;proper&quot; fix for all this would be to fix the coalescing analysis so as</span>
-<span class="comment">// only to build non-internally-overlapping VirtualRange equivalence classes.</span>
-<span class="comment">// However, that sounds expensive.  Instead there is a half-hearted effort</span>
-<span class="comment">// made to avoid creating equivalence classes whose elements (VirtualRanges)</span>
-<span class="comment">// overlap.  This is done by doing an overlap check on two VirtualRanges</span>
-<span class="comment">// connected by a move, and not merging their equivalence classes if they</span>
-<span class="comment">// overlap.  That helps, but it doesn&#39;t completely avoid the problem because</span>
-<span class="comment">// there might be overlaps between other members (VirtualRanges) of the</span>
-<span class="comment">// about-to-be-merged equivalence classes.</span>
+<span class="comment">//=============================================================================
+//
+// *** Some important comments about the interaction between this coalescing
+// *** analysis, the main allocation loop and the spill slot allocator.
+//
+// The main allocation loop tries to assign the same register to all the
+// VirtualRanges in an equivalence class.  Similarly, the spill slot allocator
+// tries to allocate the same spill slot to all the VirtualRanges in an
+// equivalence class.  In most cases they are successful, and so the moves
+// between those VirtualRanges will later disappear.  However, the complete
+// story is not quite so simple.
+//
+// It is only safe to assign the VirtualRanges in the same equivalence class
+// to a single register or spill slot if those VirtualRanges are
+// non-overlapping.  That is, if their overall collection of RangeFrags is
+// disjoint.  If two such VirtualRanges overlapped, then they could be
+// carrying different values, and so they would need separate registers or
+// spill slots.
+//
+// Most of the time, these equivalence classes are indeed internally
+// non-overlapping.  But that&#39;s just luck -- that&#39;s how the input VCode mostly
+// is.  The coalescing analysis *doesn&#39;t* properly check for overlaps within an
+// equivalence class, so it can be the case that the members of an equivalence
+// class overlap.  The users of that information -- the main allocation loop
+// and the spill slot allocator -- currently check for, and handle, such
+// situations.  So the generated allocation is correct.
+//
+// It does, however, cause imprecision and unnecessary spilling, and, in the
+// main allocation loop, slightly increased evictions.
+//
+// The &quot;proper&quot; fix for all this would be to fix the coalescing analysis so as
+// only to build non-internally-overlapping VirtualRange equivalence classes.
+// However, that sounds expensive.  Instead there is a half-hearted effort
+// made to avoid creating equivalence classes whose elements (VirtualRanges)
+// overlap.  This is done by doing an overlap check on two VirtualRanges
+// connected by a move, and not merging their equivalence classes if they
+// overlap.  That helps, but it doesn&#39;t completely avoid the problem because
+// there might be overlaps between other members (VirtualRanges) of the
+// about-to-be-merged equivalence classes.
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">// Coalescing analysis: Hints</span>
-<span class="comment">//</span>
-<span class="comment">// A coalescing hint for a virtual live range.  The u32 is an arbitrary</span>
-<span class="comment">// &quot;weight&quot; value which indicates a relative strength-of-preference for the</span>
-<span class="comment">// hint.  It exists because a VLR can have arbitrarily many copy</span>
-<span class="comment">// instructions at its &quot;boundary&quot;, and hence arbitrarily many hints.  Of</span>
-<span class="comment">// course the allocator core can honour at most one of them, so it needs a</span>
-<span class="comment">// way to choose between them.  In this implementation, the u32s are simply</span>
-<span class="comment">// the estimated execution count of the associated copy instruction.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Hint</span> {
-    <span class="comment">// I would like to have the same real register as some other virtual range.</span>
-    <span class="ident">SameAs</span>(<span class="ident">VirtualRangeIx</span>, <span class="ident">u32</span>),
-    <span class="comment">// I would like to have exactly this real register.</span>
-    <span class="ident">Exactly</span>(<span class="ident">RealReg</span>, <span class="ident">u32</span>),
+//=============================================================================
+// Coalescing analysis: Hints
+//
+// A coalescing hint for a virtual live range.  The u32 is an arbitrary
+// &quot;weight&quot; value which indicates a relative strength-of-preference for the
+// hint.  It exists because a VLR can have arbitrarily many copy
+// instructions at its &quot;boundary&quot;, and hence arbitrarily many hints.  Of
+// course the allocator core can honour at most one of them, so it needs a
+// way to choose between them.  In this implementation, the u32s are simply
+// the estimated execution count of the associated copy instruction.
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub enum </span>Hint {
+    <span class="comment">// I would like to have the same real register as some other virtual range.
+    </span>SameAs(VirtualRangeIx, u32),
+    <span class="comment">// I would like to have exactly this real register.
+    </span>Exactly(RealReg, u32),
 }
-<span class="kw">fn</span> <span class="ident">show_hint</span>(<span class="ident">h</span>: <span class="kw-2">&amp;</span><span class="ident">Hint</span>, <span class="ident">univ</span>: <span class="kw-2">&amp;</span><span class="ident">RealRegUniverse</span>) -&gt; <span class="ident">String</span> {
-    <span class="kw">match</span> <span class="ident">h</span> {
-        <span class="ident">Hint::SameAs</span>(<span class="ident">vlrix</span>, <span class="ident">weight</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;(SameAs {:?}, weight={})&quot;</span>, <span class="ident">vlrix</span>, <span class="ident">weight</span>),
-        <span class="ident">Hint::Exactly</span>(<span class="ident">rreg</span>, <span class="ident">weight</span>) =&gt; <span class="macro">format!</span>(
+<span class="kw">fn </span>show_hint(h: <span class="kw-2">&amp;</span>Hint, univ: <span class="kw-2">&amp;</span>RealRegUniverse) -&gt; String {
+    <span class="kw">match </span>h {
+        Hint::SameAs(vlrix, weight) =&gt; <span class="macro">format!</span>(<span class="string">&quot;(SameAs {:?}, weight={})&quot;</span>, vlrix, weight),
+        Hint::Exactly(rreg, weight) =&gt; <span class="macro">format!</span>(
             <span class="string">&quot;(Exactly {}, weight={})&quot;</span>,
-            <span class="ident">rreg</span>.<span class="ident">to_reg</span>().<span class="ident">show_with_rru</span>(<span class="kw-2">&amp;</span><span class="ident">univ</span>),
-            <span class="ident">weight</span>
+            rreg.to_reg().show_with_rru(<span class="kw-2">&amp;</span>univ),
+            weight
         ),
     }
 }
-<span class="kw">impl</span> <span class="ident">Hint</span> {
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">get_weight</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Hint::SameAs</span>(<span class="ident">_vlrix</span>, <span class="ident">weight</span>) =&gt; <span class="kw-2">*</span><span class="ident">weight</span>,
-            <span class="ident">Hint::Exactly</span>(<span class="ident">_rreg</span>, <span class="ident">weight</span>) =&gt; <span class="kw-2">*</span><span class="ident">weight</span>,
+<span class="kw">impl </span>Hint {
+    <span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>get_weight(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="kw">match </span><span class="self">self </span>{
+            Hint::SameAs(_vlrix, weight) =&gt; <span class="kw-2">*</span>weight,
+            Hint::Exactly(_rreg, weight) =&gt; <span class="kw-2">*</span>weight,
         }
     }
 }
 
-<span class="comment">// We need this in order to construct a UnionFind&lt;VirtualRangeIx&gt;.</span>
-<span class="kw">impl</span> <span class="ident">ToFromU32</span> <span class="kw">for</span> <span class="ident">VirtualRangeIx</span> {
-    <span class="kw">fn</span> <span class="ident">to_u32</span>(<span class="ident">x</span>: <span class="ident">VirtualRangeIx</span>) -&gt; <span class="ident">u32</span> {
-        <span class="ident">x</span>.<span class="ident">get</span>()
+<span class="comment">// We need this in order to construct a UnionFind&lt;VirtualRangeIx&gt;.
+</span><span class="kw">impl </span>ToFromU32 <span class="kw">for </span>VirtualRangeIx {
+    <span class="kw">fn </span>to_u32(x: VirtualRangeIx) -&gt; u32 {
+        x.get()
     }
-    <span class="kw">fn</span> <span class="ident">from_u32</span>(<span class="ident">x</span>: <span class="ident">u32</span>) -&gt; <span class="ident">VirtualRangeIx</span> {
-        <span class="ident">VirtualRangeIx::new</span>(<span class="ident">x</span>)
+    <span class="kw">fn </span>from_u32(x: u32) -&gt; VirtualRangeIx {
+        VirtualRangeIx::new(x)
     }
 }
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">// Coalescing analysis: top level function</span>
+<span class="comment">//=============================================================================
+// Coalescing analysis: top level function
 
-<span class="comment">// This performs coalescing analysis and returns info as a 3-tuple.  Note that</span>
-<span class="comment">// it also may change the spill costs for some of the VLRs in `vlr_env` to</span>
-<span class="comment">// better reflect the spill cost situation in the presence of coalescing.</span>
-<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">do_coalescing_analysis</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Function</span><span class="op">&gt;</span>(
-    <span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>,
-    <span class="ident">univ</span>: <span class="kw-2">&amp;</span><span class="ident">RealRegUniverse</span>,
-    <span class="ident">rlr_env</span>: <span class="kw-2">&amp;</span><span class="ident">TypedIxVec</span><span class="op">&lt;</span><span class="ident">RealRangeIx</span>, <span class="ident">RealRange</span><span class="op">&gt;</span>,
-    <span class="ident">vlr_env</span>: <span class="kw-2">&amp;mut</span> <span class="ident">TypedIxVec</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span>, <span class="ident">VirtualRange</span><span class="op">&gt;</span>,
-    <span class="ident">frag_env</span>: <span class="kw-2">&amp;</span><span class="ident">TypedIxVec</span><span class="op">&lt;</span><span class="ident">RangeFragIx</span>, <span class="ident">RangeFrag</span><span class="op">&gt;</span>,
-    <span class="ident">reg_to_ranges_maps</span>: <span class="kw-2">&amp;</span><span class="ident">RegToRangesMaps</span>,
-    <span class="ident">move_info</span>: <span class="kw-2">&amp;</span><span class="ident">MoveInfo</span>,
+// This performs coalescing analysis and returns info as a 3-tuple.  Note that
+// it also may change the spill costs for some of the VLRs in `vlr_env` to
+// better reflect the spill cost situation in the presence of coalescing.
+</span><span class="attribute">#[inline(never)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>do_coalescing_analysis&lt;F: Function&gt;(
+    func: <span class="kw-2">&amp;</span>F,
+    univ: <span class="kw-2">&amp;</span>RealRegUniverse,
+    rlr_env: <span class="kw-2">&amp;</span>TypedIxVec&lt;RealRangeIx, RealRange&gt;,
+    vlr_env: <span class="kw-2">&amp;mut </span>TypedIxVec&lt;VirtualRangeIx, VirtualRange&gt;,
+    frag_env: <span class="kw-2">&amp;</span>TypedIxVec&lt;RangeFragIx, RangeFrag&gt;,
+    reg_to_ranges_maps: <span class="kw-2">&amp;</span>RegToRangesMaps,
+    move_info: <span class="kw-2">&amp;</span>MoveInfo,
 ) -&gt; (
-    <span class="ident">TypedIxVec</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span>, <span class="ident">SmallVec</span><span class="op">&lt;</span>[<span class="ident">Hint</span>; <span class="number">8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span><span class="op">&gt;</span>,
-    <span class="ident">TypedIxVec</span><span class="op">&lt;</span><span class="ident">InstIx</span>, <span class="ident">bool</span><span class="op">&gt;</span>,
+    TypedIxVec&lt;VirtualRangeIx, SmallVec&lt;[Hint; <span class="number">8</span>]&gt;&gt;,
+    UnionFindEquivClasses&lt;VirtualRangeIx&gt;,
+    TypedIxVec&lt;InstIx, bool&gt;,
 ) {
     <span class="macro">trace!</span>(<span class="string">&quot;&quot;</span>);
     <span class="macro">trace!</span>(<span class="string">&quot;do_coalescing_analysis: begin&quot;</span>);
 
-    <span class="comment">// This function contains significant additional complexity due to the requirement to handle</span>
-    <span class="comment">// pathological cases in reasonable time without unduly burdening the common cases.</span>
-    <span class="comment">//</span>
-    <span class="comment">// ========================================================================================</span>
-    <span class="comment">//</span>
-    <span class="comment">// The core questions that the coalescing analysis asks is:</span>
-    <span class="comment">//</span>
-    <span class="comment">//    For an instruction I and a reg V:</span>
-    <span class="comment">//</span>
-    <span class="comment">//    * does I start a live range fragment for V?  In other words, is it a &quot;first def of V&quot; ?</span>
-    <span class="comment">//</span>
-    <span class="comment">//    * and dually: does I end a live range fragment for V?  IOW, is it a &quot;last use of V&quot; ?</span>
-    <span class="comment">//</span>
-    <span class="comment">// V may be a real or virtual register -- we must handle both.  I is invariably a move</span>
-    <span class="comment">// instruction.  We could ask such questions about other kinds of insns, but we don&#39;t care</span>
-    <span class="comment">// about those.</span>
-    <span class="comment">//</span>
-    <span class="comment">// The reason we care about this is as follows.  If we can find some move insn I, which is</span>
-    <span class="comment">// the last use of some reg V1 and the first def of some other reg V2, then V1 and V2 can at</span>
-    <span class="comment">// least in principle be allocated to the same real register.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Note that the &quot;last&quot; and &quot;first&quot; aspect is critical for correctness.  Consider this:</span>
-    <span class="comment">//</span>
-    <span class="comment">//       V1 = ...</span>
-    <span class="comment">//   I   V2 = V1</span>
-    <span class="comment">//   *   V2 = V2 - 99</span>
-    <span class="comment">//   #   V3 = V1 + 47</span>
-    <span class="comment">//</span>
-    <span class="comment">// Here, I might be a first def of V2, but it&#39;s certainly not the last use of V1, and so if</span>
-    <span class="comment">// we allocate V1 and V2 to the same real register, the insn marked * will trash the value</span>
-    <span class="comment">// of V1 while it&#39;s still needed at #, and we&#39;ll create wrong code.  For the same reason, we</span>
-    <span class="comment">// can only coalesce out a move if the destination is a first def.</span>
-    <span class="comment">//</span>
-    <span class="comment">// The use of names V* in the above example is slightly misleading.  As mentioned, the above</span>
-    <span class="comment">// criteria apply to both real and virtual registers.  The only limitation is that,</span>
-    <span class="comment">// obviously, we can&#39;t coalesce out a move if both registers involved are real.  But if only</span>
-    <span class="comment">// one is real then we have at least the possibility to do that.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Now to the question of compiler performance.  The simplest way to establish whether (for</span>
-    <span class="comment">// example) I is a first def of V is to visit all of V&#39;s `RangeFrag`s, to see if any of them</span>
-    <span class="comment">// start at `I.d`.  That can be done by iterating over all of the live ranges that belong to</span>
-    <span class="comment">// V, and through each `RangeFrag` in each live range.  Hence it&#39;s a linear search through</span>
-    <span class="comment">// V&#39;s `RangeFrag`s.</span>
-    <span class="comment">//</span>
-    <span class="comment">// For the vast majority of cases, this works well because most regs -- and especially, most</span>
-    <span class="comment">// virtual regs, in code derived from an SSA precursor -- have short live ranges, and</span>
-    <span class="comment">// usually only one, and so there are very few `RangeFrag`s to visit.  However, there are</span>
-    <span class="comment">// cases where a register has many `RangeFrag`s -- we&#39;ve seen inputs where that number</span>
-    <span class="comment">// exceeds 100,000 -- in which case a linear search is disastrously slow.</span>
-    <span class="comment">//</span>
-    <span class="comment">// To fix this, there is a Plan B scheme for establishing the same facts.  It relies on the</span>
-    <span class="comment">// observation that the `RangeFrag`s for each register are mutually non-overlapping.  Hence</span>
-    <span class="comment">// their start points are all unique, so we can park them all in a vector, sort it, and</span>
-    <span class="comment">// binary search it.  And the same for the end points.  This is the purpose of structs</span>
-    <span class="comment">// `ManyFragsInfoR` and `ManyFragsInfoV` below.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Although this plan keeps us out of performance black holes in pathological cases, it is</span>
-    <span class="comment">// expensive in a constant-factors sense: it requires dynamic memory allocation for these</span>
-    <span class="comment">// vectors, and it requires sorting them.  Hence we try to avoid it as much as possible, and</span>
-    <span class="comment">// route almost all work via the simple linear-search scheme.</span>
-    <span class="comment">//</span>
-    <span class="comment">// The linear-vs-binary-search choice is made for each register individually.  Incoming</span>
-    <span class="comment">// parameter `reg_to_ranges_maps` contains fields `r/vregs_with_many_frags`, and it is only</span>
-    <span class="comment">// for those that sorted vectors are prepared.  Those vectors are tracked by the maps</span>
-    <span class="comment">// `r/v_many_map` below.  `reg_to_ranges_maps` also contains field `many_frags_thresh` which</span>
-    <span class="comment">// tells us what the size threshold actually was, and this is used to opportunistically</span>
-    <span class="comment">// pre-size the vectors.  It&#39;s not required for correctness.</span>
-    <span class="comment">//</span>
-    <span class="comment">// All this complexity is bought together in the four closures `doesVRegHaveLastUseAt`,</span>
-    <span class="comment">// `doesVRegHaveFirstDefAt`, `doesRRegHaveLastUseAt` and `doesRRegHaveFirstDefAt`.  In each</span>
-    <span class="comment">// case, they first try to resolve the query by binary search, which usually fails, in which</span>
-    <span class="comment">// case they fall back to a linear search, which will always give a correct result.  In</span>
-    <span class="comment">// debug builds, if the binary search does produce an answer, it is crosschecked against the</span>
-    <span class="comment">// linear search result.</span>
-    <span class="comment">//</span>
-    <span class="comment">// The duplication in the four closures is undesirable but hard to avoid.  The real- and</span>
-    <span class="comment">// virtual-reg cases have different types.  Similarly, the first/last cases are slightly</span>
-    <span class="comment">// different.  If there were a way to guarantee that rustc would inline closures, then it</span>
-    <span class="comment">// might be worth trying to common them up, on the basis that rustc can inline and</span>
-    <span class="comment">// specialise, leading back to what we currently have here.  However, in the absence of such</span>
-    <span class="comment">// a facility, I didn&#39;t want to risk it, given that these closures are performance-critical.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Finally, note that the coalescing analysis proper involves more than just the above</span>
-    <span class="comment">// described searches, and one sees the code for the rest of it following the search</span>
-    <span class="comment">// closures below.  However, the rest of it isn&#39;t performance critical, and is not described</span>
-    <span class="comment">// in this comment.</span>
-    <span class="comment">//</span>
-    <span class="comment">// ========================================================================================</span>
+    <span class="comment">// This function contains significant additional complexity due to the requirement to handle
+    // pathological cases in reasonable time without unduly burdening the common cases.
+    //
+    // ========================================================================================
+    //
+    // The core questions that the coalescing analysis asks is:
+    //
+    //    For an instruction I and a reg V:
+    //
+    //    * does I start a live range fragment for V?  In other words, is it a &quot;first def of V&quot; ?
+    //
+    //    * and dually: does I end a live range fragment for V?  IOW, is it a &quot;last use of V&quot; ?
+    //
+    // V may be a real or virtual register -- we must handle both.  I is invariably a move
+    // instruction.  We could ask such questions about other kinds of insns, but we don&#39;t care
+    // about those.
+    //
+    // The reason we care about this is as follows.  If we can find some move insn I, which is
+    // the last use of some reg V1 and the first def of some other reg V2, then V1 and V2 can at
+    // least in principle be allocated to the same real register.
+    //
+    // Note that the &quot;last&quot; and &quot;first&quot; aspect is critical for correctness.  Consider this:
+    //
+    //       V1 = ...
+    //   I   V2 = V1
+    //   *   V2 = V2 - 99
+    //   #   V3 = V1 + 47
+    //
+    // Here, I might be a first def of V2, but it&#39;s certainly not the last use of V1, and so if
+    // we allocate V1 and V2 to the same real register, the insn marked * will trash the value
+    // of V1 while it&#39;s still needed at #, and we&#39;ll create wrong code.  For the same reason, we
+    // can only coalesce out a move if the destination is a first def.
+    //
+    // The use of names V* in the above example is slightly misleading.  As mentioned, the above
+    // criteria apply to both real and virtual registers.  The only limitation is that,
+    // obviously, we can&#39;t coalesce out a move if both registers involved are real.  But if only
+    // one is real then we have at least the possibility to do that.
+    //
+    // Now to the question of compiler performance.  The simplest way to establish whether (for
+    // example) I is a first def of V is to visit all of V&#39;s `RangeFrag`s, to see if any of them
+    // start at `I.d`.  That can be done by iterating over all of the live ranges that belong to
+    // V, and through each `RangeFrag` in each live range.  Hence it&#39;s a linear search through
+    // V&#39;s `RangeFrag`s.
+    //
+    // For the vast majority of cases, this works well because most regs -- and especially, most
+    // virtual regs, in code derived from an SSA precursor -- have short live ranges, and
+    // usually only one, and so there are very few `RangeFrag`s to visit.  However, there are
+    // cases where a register has many `RangeFrag`s -- we&#39;ve seen inputs where that number
+    // exceeds 100,000 -- in which case a linear search is disastrously slow.
+    //
+    // To fix this, there is a Plan B scheme for establishing the same facts.  It relies on the
+    // observation that the `RangeFrag`s for each register are mutually non-overlapping.  Hence
+    // their start points are all unique, so we can park them all in a vector, sort it, and
+    // binary search it.  And the same for the end points.  This is the purpose of structs
+    // `ManyFragsInfoR` and `ManyFragsInfoV` below.
+    //
+    // Although this plan keeps us out of performance black holes in pathological cases, it is
+    // expensive in a constant-factors sense: it requires dynamic memory allocation for these
+    // vectors, and it requires sorting them.  Hence we try to avoid it as much as possible, and
+    // route almost all work via the simple linear-search scheme.
+    //
+    // The linear-vs-binary-search choice is made for each register individually.  Incoming
+    // parameter `reg_to_ranges_maps` contains fields `r/vregs_with_many_frags`, and it is only
+    // for those that sorted vectors are prepared.  Those vectors are tracked by the maps
+    // `r/v_many_map` below.  `reg_to_ranges_maps` also contains field `many_frags_thresh` which
+    // tells us what the size threshold actually was, and this is used to opportunistically
+    // pre-size the vectors.  It&#39;s not required for correctness.
+    //
+    // All this complexity is bought together in the four closures `doesVRegHaveLastUseAt`,
+    // `doesVRegHaveFirstDefAt`, `doesRRegHaveLastUseAt` and `doesRRegHaveFirstDefAt`.  In each
+    // case, they first try to resolve the query by binary search, which usually fails, in which
+    // case they fall back to a linear search, which will always give a correct result.  In
+    // debug builds, if the binary search does produce an answer, it is crosschecked against the
+    // linear search result.
+    //
+    // The duplication in the four closures is undesirable but hard to avoid.  The real- and
+    // virtual-reg cases have different types.  Similarly, the first/last cases are slightly
+    // different.  If there were a way to guarantee that rustc would inline closures, then it
+    // might be worth trying to common them up, on the basis that rustc can inline and
+    // specialise, leading back to what we currently have here.  However, in the absence of such
+    // a facility, I didn&#39;t want to risk it, given that these closures are performance-critical.
+    //
+    // Finally, note that the coalescing analysis proper involves more than just the above
+    // described searches, and one sees the code for the rest of it following the search
+    // closures below.  However, the rest of it isn&#39;t performance critical, and is not described
+    // in this comment.
+    //
+    // ========================================================================================
 
-    <span class="comment">// So, first: for the registers which `reg_to_ranges_maps` tells us have &quot;many&quot; fragments,</span>
-    <span class="comment">// prepare the binary-search vectors.  This is done first for the real regs and then below</span>
-    <span class="comment">// for virtual regs.</span>
+    // So, first: for the registers which `reg_to_ranges_maps` tells us have &quot;many&quot; fragments,
+    // prepare the binary-search vectors.  This is done first for the real regs and then below
+    // for virtual regs.
 
-    <span class="kw">struct</span> <span class="ident">ManyFragsInfoR</span> {
-        <span class="ident">sorted_firsts</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">InstPoint</span>, <span class="ident">RealRangeIx</span>)<span class="op">&gt;</span>,
-        <span class="ident">sorted_lasts</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">InstPoint</span>, <span class="ident">RealRangeIx</span>)<span class="op">&gt;</span>,
+    </span><span class="kw">struct </span>ManyFragsInfoR {
+        sorted_firsts: Vec&lt;(InstPoint, RealRangeIx)&gt;,
+        sorted_lasts: Vec&lt;(InstPoint, RealRangeIx)&gt;,
     }
-    <span class="kw">let</span> <span class="ident">r_many_card</span> <span class="op">=</span> <span class="ident">reg_to_ranges_maps</span>.<span class="ident">rregs_with_many_frags</span>.<span class="ident">len</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r_many_map</span> <span class="op">=</span> <span class="ident">Map</span>::<span class="op">&lt;</span><span class="ident">u32</span> <span class="comment">/*RealReg index*/</span>, <span class="ident">ManyFragsInfoR</span><span class="op">&gt;</span><span class="ident">::default</span>();
-    <span class="ident">r_many_map</span>.<span class="ident">reserve</span>(<span class="ident">r_many_card</span>);
+    <span class="kw">let </span>r_many_card = reg_to_ranges_maps.rregs_with_many_frags.len();
+    <span class="kw">let </span><span class="kw-2">mut </span>r_many_map = Map::&lt;u32 <span class="comment">/*RealReg index*/</span>, ManyFragsInfoR&gt;::default();
+    r_many_map.reserve(r_many_card);
 
-    <span class="kw">for</span> <span class="ident">rreg_no</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">rregs_with_many_frags</span> {
-        <span class="comment">// `2 * reg_to_ranges_maps.many_frags_thresh` is clearly a heuristic hack, but we do</span>
-        <span class="comment">// know for sure that each vector will contain at least</span>
-        <span class="comment">// `reg_to_ranges_maps.many_frags_thresh` and very likely more.  And that threshold is</span>
-        <span class="comment">// already quite high, so pre-sizing the vectors at this point avoids quite a number of</span>
-        <span class="comment">// resize-reallocations later.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">many_frags_info</span> <span class="op">=</span> <span class="ident">ManyFragsInfoR</span> {
-            <span class="ident">sorted_firsts</span>: <span class="ident">Vec::with_capacity</span>(<span class="number">2</span> <span class="op">*</span> <span class="ident">reg_to_ranges_maps</span>.<span class="ident">many_frags_thresh</span>),
-            <span class="ident">sorted_lasts</span>: <span class="ident">Vec::with_capacity</span>(<span class="number">2</span> <span class="op">*</span> <span class="ident">reg_to_ranges_maps</span>.<span class="ident">many_frags_thresh</span>),
+    <span class="kw">for </span>rreg_no <span class="kw">in </span><span class="kw-2">&amp;</span>reg_to_ranges_maps.rregs_with_many_frags {
+        <span class="comment">// `2 * reg_to_ranges_maps.many_frags_thresh` is clearly a heuristic hack, but we do
+        // know for sure that each vector will contain at least
+        // `reg_to_ranges_maps.many_frags_thresh` and very likely more.  And that threshold is
+        // already quite high, so pre-sizing the vectors at this point avoids quite a number of
+        // resize-reallocations later.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>many_frags_info = ManyFragsInfoR {
+            sorted_firsts: Vec::with_capacity(<span class="number">2 </span>* reg_to_ranges_maps.many_frags_thresh),
+            sorted_lasts: Vec::with_capacity(<span class="number">2 </span>* reg_to_ranges_maps.many_frags_thresh),
         };
-        <span class="kw">let</span> <span class="ident">rlrixs</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">rreg_to_rlrs_map</span>[<span class="kw-2">*</span><span class="ident">rreg_no</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">for</span> <span class="ident">rlrix</span> <span class="kw">in</span> <span class="ident">rlrixs</span> {
-            <span class="kw">for</span> <span class="ident">fix</span> <span class="kw">in</span> <span class="ident">rlr_env</span>[<span class="kw-2">*</span><span class="ident">rlrix</span>].<span class="ident">sorted_frags</span>.<span class="ident">iter</span>() {
-                <span class="kw">let</span> <span class="ident">frag</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">frag_env</span>[<span class="kw-2">*</span><span class="ident">fix</span>];
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>.<span class="ident">push</span>((<span class="ident">frag</span>.<span class="ident">first</span>, <span class="kw-2">*</span><span class="ident">rlrix</span>));
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>.<span class="ident">push</span>((<span class="ident">frag</span>.<span class="ident">last</span>, <span class="kw-2">*</span><span class="ident">rlrix</span>));
+        <span class="kw">let </span>rlrixs = <span class="kw-2">&amp;</span>reg_to_ranges_maps.rreg_to_rlrs_map[<span class="kw-2">*</span>rreg_no <span class="kw">as </span>usize];
+        <span class="kw">for </span>rlrix <span class="kw">in </span>rlrixs {
+            <span class="kw">for </span>fix <span class="kw">in </span>rlr_env[<span class="kw-2">*</span>rlrix].sorted_frags.iter() {
+                <span class="kw">let </span>frag = <span class="kw-2">&amp;</span>frag_env[<span class="kw-2">*</span>fix];
+                many_frags_info.sorted_firsts.push((frag.first, <span class="kw-2">*</span>rlrix));
+                many_frags_info.sorted_lasts.push((frag.last, <span class="kw-2">*</span>rlrix));
             }
         }
-        <span class="ident">many_frags_info</span>
-            .<span class="ident">sorted_firsts</span>
-            .<span class="ident">sort_unstable_by_key</span>(<span class="op">|</span><span class="kw-2">&amp;</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">point</span>);
-        <span class="ident">many_frags_info</span>
-            .<span class="ident">sorted_lasts</span>
-            .<span class="ident">sort_unstable_by_key</span>(<span class="op">|</span><span class="kw-2">&amp;</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">point</span>);
-        <span class="macro">debug_assert!</span>(<span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>.<span class="ident">len</span>());
-        <span class="comment">// Because the RangeFrags for any reg (virtual or real) are non-overlapping, it follows</span>
-        <span class="comment">// that both the sorted first points and sorted last points contain no duplicates.  (In</span>
-        <span class="comment">// fact the implied condition (no duplicates) is weaker than the premise</span>
-        <span class="comment">// (non-overlapping), but this is nevertheless correct.)</span>
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..(<span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>.<span class="ident">len</span>()) {
+        many_frags_info
+            .sorted_firsts
+            .sort_unstable_by_key(|<span class="kw-2">&amp;</span>(point, <span class="kw">_</span>)| point);
+        many_frags_info
+            .sorted_lasts
+            .sort_unstable_by_key(|<span class="kw-2">&amp;</span>(point, <span class="kw">_</span>)| point);
+        <span class="macro">debug_assert!</span>(many_frags_info.sorted_firsts.len() == many_frags_info.sorted_lasts.len());
+        <span class="comment">// Because the RangeFrags for any reg (virtual or real) are non-overlapping, it follows
+        // that both the sorted first points and sorted last points contain no duplicates.  (In
+        // fact the implied condition (no duplicates) is weaker than the premise
+        // (non-overlapping), but this is nevertheless correct.)
+        </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..(many_frags_info.sorted_firsts.len()) {
             <span class="macro">debug_assert!</span>(
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>[<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>].<span class="number">0</span> <span class="op">&lt;</span> <span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>[<span class="ident">i</span>].<span class="number">0</span>
-            );
+                many_frags_info.sorted_firsts[i - <span class="number">1</span>].<span class="number">0 </span>&lt; many_frags_info.sorted_firsts[i].<span class="number">0
+            </span>);
         }
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..(<span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>.<span class="ident">len</span>()) {
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..(many_frags_info.sorted_lasts.len()) {
             <span class="macro">debug_assert!</span>(
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>[<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>].<span class="number">0</span> <span class="op">&lt;</span> <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>[<span class="ident">i</span>].<span class="number">0</span>
-            );
+                many_frags_info.sorted_lasts[i - <span class="number">1</span>].<span class="number">0 </span>&lt; many_frags_info.sorted_lasts[i].<span class="number">0
+            </span>);
         }
-        <span class="ident">r_many_map</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">rreg_no</span>, <span class="ident">many_frags_info</span>);
+        r_many_map.insert(<span class="kw-2">*</span>rreg_no, many_frags_info);
     }
 
-    <span class="comment">// And the same for virtual regs.</span>
-    <span class="kw">struct</span> <span class="ident">ManyFragsInfoV</span> {
-        <span class="ident">sorted_firsts</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">InstPoint</span>, <span class="ident">VirtualRangeIx</span>)<span class="op">&gt;</span>,
-        <span class="ident">sorted_lasts</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">InstPoint</span>, <span class="ident">VirtualRangeIx</span>)<span class="op">&gt;</span>,
+    <span class="comment">// And the same for virtual regs.
+    </span><span class="kw">struct </span>ManyFragsInfoV {
+        sorted_firsts: Vec&lt;(InstPoint, VirtualRangeIx)&gt;,
+        sorted_lasts: Vec&lt;(InstPoint, VirtualRangeIx)&gt;,
     }
-    <span class="kw">let</span> <span class="ident">v_many_card</span> <span class="op">=</span> <span class="ident">reg_to_ranges_maps</span>.<span class="ident">vregs_with_many_frags</span>.<span class="ident">len</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v_many_map</span> <span class="op">=</span> <span class="ident">Map</span>::<span class="op">&lt;</span><span class="ident">u32</span> <span class="comment">/*VirtualReg index*/</span>, <span class="ident">ManyFragsInfoV</span><span class="op">&gt;</span><span class="ident">::default</span>();
-    <span class="ident">v_many_map</span>.<span class="ident">reserve</span>(<span class="ident">v_many_card</span>);
+    <span class="kw">let </span>v_many_card = reg_to_ranges_maps.vregs_with_many_frags.len();
+    <span class="kw">let </span><span class="kw-2">mut </span>v_many_map = Map::&lt;u32 <span class="comment">/*VirtualReg index*/</span>, ManyFragsInfoV&gt;::default();
+    v_many_map.reserve(v_many_card);
 
-    <span class="kw">for</span> <span class="ident">vreg_no</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">vregs_with_many_frags</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">many_frags_info</span> <span class="op">=</span> <span class="ident">ManyFragsInfoV</span> {
-            <span class="ident">sorted_firsts</span>: <span class="ident">Vec::with_capacity</span>(<span class="number">2</span> <span class="op">*</span> <span class="ident">reg_to_ranges_maps</span>.<span class="ident">many_frags_thresh</span>),
-            <span class="ident">sorted_lasts</span>: <span class="ident">Vec::with_capacity</span>(<span class="number">2</span> <span class="op">*</span> <span class="ident">reg_to_ranges_maps</span>.<span class="ident">many_frags_thresh</span>),
+    <span class="kw">for </span>vreg_no <span class="kw">in </span><span class="kw-2">&amp;</span>reg_to_ranges_maps.vregs_with_many_frags {
+        <span class="kw">let </span><span class="kw-2">mut </span>many_frags_info = ManyFragsInfoV {
+            sorted_firsts: Vec::with_capacity(<span class="number">2 </span>* reg_to_ranges_maps.many_frags_thresh),
+            sorted_lasts: Vec::with_capacity(<span class="number">2 </span>* reg_to_ranges_maps.many_frags_thresh),
         };
-        <span class="kw">let</span> <span class="ident">vlrixs</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">vreg_to_vlrs_map</span>[<span class="kw-2">*</span><span class="ident">vreg_no</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">for</span> <span class="ident">vlrix</span> <span class="kw">in</span> <span class="ident">vlrixs</span> {
-            <span class="kw">for</span> <span class="ident">frag</span> <span class="kw">in</span> <span class="ident">vlr_env</span>[<span class="kw-2">*</span><span class="ident">vlrix</span>].<span class="ident">sorted_frags</span>.<span class="ident">iter</span>() {
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>.<span class="ident">push</span>((<span class="ident">frag</span>.<span class="ident">first</span>, <span class="kw-2">*</span><span class="ident">vlrix</span>));
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>.<span class="ident">push</span>((<span class="ident">frag</span>.<span class="ident">last</span>, <span class="kw-2">*</span><span class="ident">vlrix</span>));
+        <span class="kw">let </span>vlrixs = <span class="kw-2">&amp;</span>reg_to_ranges_maps.vreg_to_vlrs_map[<span class="kw-2">*</span>vreg_no <span class="kw">as </span>usize];
+        <span class="kw">for </span>vlrix <span class="kw">in </span>vlrixs {
+            <span class="kw">for </span>frag <span class="kw">in </span>vlr_env[<span class="kw-2">*</span>vlrix].sorted_frags.iter() {
+                many_frags_info.sorted_firsts.push((frag.first, <span class="kw-2">*</span>vlrix));
+                many_frags_info.sorted_lasts.push((frag.last, <span class="kw-2">*</span>vlrix));
             }
         }
-        <span class="ident">many_frags_info</span>
-            .<span class="ident">sorted_firsts</span>
-            .<span class="ident">sort_unstable_by_key</span>(<span class="op">|</span><span class="kw-2">&amp;</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">point</span>);
-        <span class="ident">many_frags_info</span>
-            .<span class="ident">sorted_lasts</span>
-            .<span class="ident">sort_unstable_by_key</span>(<span class="op">|</span><span class="kw-2">&amp;</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">point</span>);
-        <span class="macro">debug_assert!</span>(<span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>.<span class="ident">len</span>());
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..(<span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>.<span class="ident">len</span>()) {
+        many_frags_info
+            .sorted_firsts
+            .sort_unstable_by_key(|<span class="kw-2">&amp;</span>(point, <span class="kw">_</span>)| point);
+        many_frags_info
+            .sorted_lasts
+            .sort_unstable_by_key(|<span class="kw-2">&amp;</span>(point, <span class="kw">_</span>)| point);
+        <span class="macro">debug_assert!</span>(many_frags_info.sorted_firsts.len() == many_frags_info.sorted_lasts.len());
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..(many_frags_info.sorted_firsts.len()) {
             <span class="macro">debug_assert!</span>(
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>[<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>].<span class="number">0</span> <span class="op">&lt;</span> <span class="ident">many_frags_info</span>.<span class="ident">sorted_firsts</span>[<span class="ident">i</span>].<span class="number">0</span>
-            );
+                many_frags_info.sorted_firsts[i - <span class="number">1</span>].<span class="number">0 </span>&lt; many_frags_info.sorted_firsts[i].<span class="number">0
+            </span>);
         }
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..(<span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>.<span class="ident">len</span>()) {
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..(many_frags_info.sorted_lasts.len()) {
             <span class="macro">debug_assert!</span>(
-                <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>[<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>].<span class="number">0</span> <span class="op">&lt;</span> <span class="ident">many_frags_info</span>.<span class="ident">sorted_lasts</span>[<span class="ident">i</span>].<span class="number">0</span>
-            );
+                many_frags_info.sorted_lasts[i - <span class="number">1</span>].<span class="number">0 </span>&lt; many_frags_info.sorted_lasts[i].<span class="number">0
+            </span>);
         }
-        <span class="ident">v_many_map</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">vreg_no</span>, <span class="ident">many_frags_info</span>);
+        v_many_map.insert(<span class="kw-2">*</span>vreg_no, many_frags_info);
     }
 
-    <span class="comment">// There now follows the abovementioned four (well, actually, eight) closures, which are</span>
-    <span class="comment">// used to find out whether a real or virtual reg has a last use or first def at some</span>
-    <span class="comment">// instruction.  This is the central activity of the coalescing analysis -- finding move</span>
-    <span class="comment">// instructions that are the last def for the src reg and the first def for the dst reg.</span>
+    <span class="comment">// There now follows the abovementioned four (well, actually, eight) closures, which are
+    // used to find out whether a real or virtual reg has a last use or first def at some
+    // instruction.  This is the central activity of the coalescing analysis -- finding move
+    // instructions that are the last def for the src reg and the first def for the dst reg.
 
-    <span class="comment">// ---------------- Range checks for VirtualRegs: last use ----------------</span>
-    <span class="comment">// Checks whether `vreg` has a last use at `iix`.u.</span>
+    // ---------------- Range checks for VirtualRegs: last use ----------------
+    // Checks whether `vreg` has a last use at `iix`.u.
 
-    <span class="kw">let</span> <span class="ident">doesVRegHaveLastUseAt_LINEAR</span> <span class="op">=</span> <span class="op">|</span><span class="ident">vreg</span>: <span class="ident">VirtualReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_use</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">vreg_no</span> <span class="op">=</span> <span class="ident">vreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="ident">vlrixs</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">vreg_to_vlrs_map</span>[<span class="ident">vreg_no</span>];
-        <span class="kw">for</span> <span class="ident">vlrix</span> <span class="kw">in</span> <span class="ident">vlrixs</span> {
-            <span class="kw">for</span> <span class="ident">frag</span> <span class="kw">in</span> <span class="ident">vlr_env</span>[<span class="kw-2">*</span><span class="ident">vlrix</span>].<span class="ident">sorted_frags</span>.<span class="ident">iter</span>() {
-                <span class="kw">if</span> <span class="ident">frag</span>.<span class="ident">last</span> <span class="op">==</span> <span class="ident">point_to_find</span> {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">vlrix</span>);
+    </span><span class="kw">let </span>doesVRegHaveLastUseAt_LINEAR = |vreg: VirtualReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;VirtualRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_use(iix);
+        <span class="kw">let </span>vreg_no = vreg.get_index();
+        <span class="kw">let </span>vlrixs = <span class="kw-2">&amp;</span>reg_to_ranges_maps.vreg_to_vlrs_map[vreg_no];
+        <span class="kw">for </span>vlrix <span class="kw">in </span>vlrixs {
+            <span class="kw">for </span>frag <span class="kw">in </span>vlr_env[<span class="kw-2">*</span>vlrix].sorted_frags.iter() {
+                <span class="kw">if </span>frag.last == point_to_find {
+                    <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="kw-2">*</span>vlrix);
                 }
             }
         }
-        <span class="prelude-val">None</span>
-    };
+        <span class="prelude-val">None
+    </span>};
 
-    <span class="kw">let</span> <span class="ident">doesVRegHaveLastUseAt</span> <span class="op">=</span> <span class="op">|</span><span class="ident">vreg</span>: <span class="ident">VirtualReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_use</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">vreg_no</span> <span class="op">=</span> <span class="ident">vreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">mfi</span>) <span class="op">=</span> <span class="ident">v_many_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">vreg_no</span> <span class="kw">as</span> <span class="ident">u32</span>)) {
-            <span class="kw">match</span> <span class="ident">mfi</span>
-                .<span class="ident">sorted_lasts</span>
-                .<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">point_to_find</span>, <span class="op">|</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">point</span>)
+    <span class="kw">let </span>doesVRegHaveLastUseAt = |vreg: VirtualReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;VirtualRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_use(iix);
+        <span class="kw">let </span>vreg_no = vreg.get_index();
+        <span class="kw">let </span><span class="kw-2">mut </span>binary_search_result = <span class="prelude-val">None</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>mfi) = v_many_map.get(<span class="kw-2">&amp;</span>(vreg_no <span class="kw">as </span>u32)) {
+            <span class="kw">match </span>mfi
+                .sorted_lasts
+                .binary_search_by_key(<span class="kw-2">&amp;</span>point_to_find, |(point, <span class="kw">_</span>)| <span class="kw-2">*</span>point)
             {
-                <span class="prelude-val">Ok</span>(<span class="ident">found_at_ix</span>) =&gt; <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">mfi</span>.<span class="ident">sorted_lasts</span>[<span class="ident">found_at_ix</span>].<span class="number">1</span>),
+                <span class="prelude-val">Ok</span>(found_at_ix) =&gt; binary_search_result = <span class="prelude-val">Some</span>(mfi.sorted_lasts[found_at_ix].<span class="number">1</span>),
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {}
             }
         }
-        <span class="kw">match</span> <span class="ident">binary_search_result</span> {
-            <span class="prelude-val">None</span> =&gt; <span class="ident">doesVRegHaveLastUseAt_LINEAR</span>(<span class="ident">vreg</span>, <span class="ident">iix</span>),
+        <span class="kw">match </span>binary_search_result {
+            <span class="prelude-val">None </span>=&gt; doesVRegHaveLastUseAt_LINEAR(vreg, iix),
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">debug_assert!</span>(<span class="ident">binary_search_result</span> <span class="op">==</span> <span class="ident">doesVRegHaveLastUseAt_LINEAR</span>(<span class="ident">vreg</span>, <span class="ident">iix</span>));
-                <span class="ident">binary_search_result</span>
+                <span class="macro">debug_assert!</span>(binary_search_result == doesVRegHaveLastUseAt_LINEAR(vreg, iix));
+                binary_search_result
             }
         }
     };
 
-    <span class="comment">// ---------------- Range checks for VirtualRegs: first def ----------------</span>
-    <span class="comment">// Checks whether `vreg` has a first def at `iix`.d.</span>
+    <span class="comment">// ---------------- Range checks for VirtualRegs: first def ----------------
+    // Checks whether `vreg` has a first def at `iix`.d.
 
-    <span class="kw">let</span> <span class="ident">doesVRegHaveFirstDefAt_LINEAR</span> <span class="op">=</span> <span class="op">|</span><span class="ident">vreg</span>: <span class="ident">VirtualReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_def</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">vreg_no</span> <span class="op">=</span> <span class="ident">vreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="ident">vlrixs</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">vreg_to_vlrs_map</span>[<span class="ident">vreg_no</span>];
-        <span class="kw">for</span> <span class="ident">vlrix</span> <span class="kw">in</span> <span class="ident">vlrixs</span> {
-            <span class="kw">for</span> <span class="ident">frag</span> <span class="kw">in</span> <span class="ident">vlr_env</span>[<span class="kw-2">*</span><span class="ident">vlrix</span>].<span class="ident">sorted_frags</span>.<span class="ident">iter</span>() {
-                <span class="kw">if</span> <span class="ident">frag</span>.<span class="ident">first</span> <span class="op">==</span> <span class="ident">point_to_find</span> {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">vlrix</span>);
+    </span><span class="kw">let </span>doesVRegHaveFirstDefAt_LINEAR = |vreg: VirtualReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;VirtualRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_def(iix);
+        <span class="kw">let </span>vreg_no = vreg.get_index();
+        <span class="kw">let </span>vlrixs = <span class="kw-2">&amp;</span>reg_to_ranges_maps.vreg_to_vlrs_map[vreg_no];
+        <span class="kw">for </span>vlrix <span class="kw">in </span>vlrixs {
+            <span class="kw">for </span>frag <span class="kw">in </span>vlr_env[<span class="kw-2">*</span>vlrix].sorted_frags.iter() {
+                <span class="kw">if </span>frag.first == point_to_find {
+                    <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="kw-2">*</span>vlrix);
                 }
             }
         }
-        <span class="prelude-val">None</span>
-    };
+        <span class="prelude-val">None
+    </span>};
 
-    <span class="kw">let</span> <span class="ident">doesVRegHaveFirstDefAt</span> <span class="op">=</span> <span class="op">|</span><span class="ident">vreg</span>: <span class="ident">VirtualReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_def</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">vreg_no</span> <span class="op">=</span> <span class="ident">vreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">mfi</span>) <span class="op">=</span> <span class="ident">v_many_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">vreg_no</span> <span class="kw">as</span> <span class="ident">u32</span>)) {
-            <span class="kw">match</span> <span class="ident">mfi</span>
-                .<span class="ident">sorted_firsts</span>
-                .<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">point_to_find</span>, <span class="op">|</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">point</span>)
+    <span class="kw">let </span>doesVRegHaveFirstDefAt = |vreg: VirtualReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;VirtualRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_def(iix);
+        <span class="kw">let </span>vreg_no = vreg.get_index();
+        <span class="kw">let </span><span class="kw-2">mut </span>binary_search_result = <span class="prelude-val">None</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>mfi) = v_many_map.get(<span class="kw-2">&amp;</span>(vreg_no <span class="kw">as </span>u32)) {
+            <span class="kw">match </span>mfi
+                .sorted_firsts
+                .binary_search_by_key(<span class="kw-2">&amp;</span>point_to_find, |(point, <span class="kw">_</span>)| <span class="kw-2">*</span>point)
             {
-                <span class="prelude-val">Ok</span>(<span class="ident">found_at_ix</span>) =&gt; <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">mfi</span>.<span class="ident">sorted_firsts</span>[<span class="ident">found_at_ix</span>].<span class="number">1</span>),
+                <span class="prelude-val">Ok</span>(found_at_ix) =&gt; binary_search_result = <span class="prelude-val">Some</span>(mfi.sorted_firsts[found_at_ix].<span class="number">1</span>),
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {}
             }
         }
-        <span class="kw">match</span> <span class="ident">binary_search_result</span> {
-            <span class="prelude-val">None</span> =&gt; <span class="ident">doesVRegHaveFirstDefAt_LINEAR</span>(<span class="ident">vreg</span>, <span class="ident">iix</span>),
+        <span class="kw">match </span>binary_search_result {
+            <span class="prelude-val">None </span>=&gt; doesVRegHaveFirstDefAt_LINEAR(vreg, iix),
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">debug_assert!</span>(<span class="ident">binary_search_result</span> <span class="op">==</span> <span class="ident">doesVRegHaveFirstDefAt_LINEAR</span>(<span class="ident">vreg</span>, <span class="ident">iix</span>));
-                <span class="ident">binary_search_result</span>
+                <span class="macro">debug_assert!</span>(binary_search_result == doesVRegHaveFirstDefAt_LINEAR(vreg, iix));
+                binary_search_result
             }
         }
     };
 
-    <span class="comment">// ---------------- Range checks for RealRegs: last use ----------------</span>
-    <span class="comment">// Checks whether `rreg` has a last use at `iix`.u.</span>
+    <span class="comment">// ---------------- Range checks for RealRegs: last use ----------------
+    // Checks whether `rreg` has a last use at `iix`.u.
 
-    <span class="kw">let</span> <span class="ident">doesRRegHaveLastUseAt_LINEAR</span> <span class="op">=</span> <span class="op">|</span><span class="ident">rreg</span>: <span class="ident">RealReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RealRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_use</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">rreg_no</span> <span class="op">=</span> <span class="ident">rreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="ident">rlrixs</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">rreg_to_rlrs_map</span>[<span class="ident">rreg_no</span>];
-        <span class="kw">for</span> <span class="ident">rlrix</span> <span class="kw">in</span> <span class="ident">rlrixs</span> {
-            <span class="kw">let</span> <span class="ident">frags</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">rlr_env</span>[<span class="kw-2">*</span><span class="ident">rlrix</span>].<span class="ident">sorted_frags</span>;
-            <span class="kw">for</span> <span class="ident">fix</span> <span class="kw">in</span> <span class="ident">frags</span>.<span class="ident">iter</span>() {
-                <span class="kw">let</span> <span class="ident">frag</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">frag_env</span>[<span class="kw-2">*</span><span class="ident">fix</span>];
-                <span class="kw">if</span> <span class="ident">frag</span>.<span class="ident">last</span> <span class="op">==</span> <span class="ident">point_to_find</span> {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">rlrix</span>);
+    </span><span class="kw">let </span>doesRRegHaveLastUseAt_LINEAR = |rreg: RealReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;RealRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_use(iix);
+        <span class="kw">let </span>rreg_no = rreg.get_index();
+        <span class="kw">let </span>rlrixs = <span class="kw-2">&amp;</span>reg_to_ranges_maps.rreg_to_rlrs_map[rreg_no];
+        <span class="kw">for </span>rlrix <span class="kw">in </span>rlrixs {
+            <span class="kw">let </span>frags = <span class="kw-2">&amp;</span>rlr_env[<span class="kw-2">*</span>rlrix].sorted_frags;
+            <span class="kw">for </span>fix <span class="kw">in </span>frags.iter() {
+                <span class="kw">let </span>frag = <span class="kw-2">&amp;</span>frag_env[<span class="kw-2">*</span>fix];
+                <span class="kw">if </span>frag.last == point_to_find {
+                    <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="kw-2">*</span>rlrix);
                 }
             }
         }
-        <span class="prelude-val">None</span>
-    };
+        <span class="prelude-val">None
+    </span>};
 
-    <span class="kw">let</span> <span class="ident">doesRRegHaveLastUseAt</span> <span class="op">=</span> <span class="op">|</span><span class="ident">rreg</span>: <span class="ident">RealReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RealRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_use</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">rreg_no</span> <span class="op">=</span> <span class="ident">rreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">mfi</span>) <span class="op">=</span> <span class="ident">r_many_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">rreg_no</span> <span class="kw">as</span> <span class="ident">u32</span>)) {
-            <span class="kw">match</span> <span class="ident">mfi</span>
-                .<span class="ident">sorted_lasts</span>
-                .<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">point_to_find</span>, <span class="op">|</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">point</span>)
+    <span class="kw">let </span>doesRRegHaveLastUseAt = |rreg: RealReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;RealRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_use(iix);
+        <span class="kw">let </span>rreg_no = rreg.get_index();
+        <span class="kw">let </span><span class="kw-2">mut </span>binary_search_result = <span class="prelude-val">None</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>mfi) = r_many_map.get(<span class="kw-2">&amp;</span>(rreg_no <span class="kw">as </span>u32)) {
+            <span class="kw">match </span>mfi
+                .sorted_lasts
+                .binary_search_by_key(<span class="kw-2">&amp;</span>point_to_find, |(point, <span class="kw">_</span>)| <span class="kw-2">*</span>point)
             {
-                <span class="prelude-val">Ok</span>(<span class="ident">found_at_ix</span>) =&gt; <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">mfi</span>.<span class="ident">sorted_lasts</span>[<span class="ident">found_at_ix</span>].<span class="number">1</span>),
+                <span class="prelude-val">Ok</span>(found_at_ix) =&gt; binary_search_result = <span class="prelude-val">Some</span>(mfi.sorted_lasts[found_at_ix].<span class="number">1</span>),
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {}
             }
         }
-        <span class="kw">match</span> <span class="ident">binary_search_result</span> {
-            <span class="prelude-val">None</span> =&gt; <span class="ident">doesRRegHaveLastUseAt_LINEAR</span>(<span class="ident">rreg</span>, <span class="ident">iix</span>),
+        <span class="kw">match </span>binary_search_result {
+            <span class="prelude-val">None </span>=&gt; doesRRegHaveLastUseAt_LINEAR(rreg, iix),
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">debug_assert!</span>(<span class="ident">binary_search_result</span> <span class="op">==</span> <span class="ident">doesRRegHaveLastUseAt_LINEAR</span>(<span class="ident">rreg</span>, <span class="ident">iix</span>));
-                <span class="ident">binary_search_result</span>
+                <span class="macro">debug_assert!</span>(binary_search_result == doesRRegHaveLastUseAt_LINEAR(rreg, iix));
+                binary_search_result
             }
         }
     };
 
-    <span class="comment">// ---------------- Range checks for RealRegs: first def ----------------</span>
-    <span class="comment">// Checks whether `rreg` has a first def at `iix`.d.</span>
+    <span class="comment">// ---------------- Range checks for RealRegs: first def ----------------
+    // Checks whether `rreg` has a first def at `iix`.d.
 
-    <span class="kw">let</span> <span class="ident">doesRRegHaveFirstDefAt_LINEAR</span> <span class="op">=</span> <span class="op">|</span><span class="ident">rreg</span>: <span class="ident">RealReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RealRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_def</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">rreg_no</span> <span class="op">=</span> <span class="ident">rreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="ident">rlrixs</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">reg_to_ranges_maps</span>.<span class="ident">rreg_to_rlrs_map</span>[<span class="ident">rreg_no</span>];
-        <span class="kw">for</span> <span class="ident">rlrix</span> <span class="kw">in</span> <span class="ident">rlrixs</span> {
-            <span class="kw">let</span> <span class="ident">frags</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">rlr_env</span>[<span class="kw-2">*</span><span class="ident">rlrix</span>].<span class="ident">sorted_frags</span>;
-            <span class="kw">for</span> <span class="ident">fix</span> <span class="kw">in</span> <span class="ident">frags</span>.<span class="ident">iter</span>() {
-                <span class="kw">let</span> <span class="ident">frag</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">frag_env</span>[<span class="kw-2">*</span><span class="ident">fix</span>];
-                <span class="kw">if</span> <span class="ident">frag</span>.<span class="ident">first</span> <span class="op">==</span> <span class="ident">point_to_find</span> {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">rlrix</span>);
+    </span><span class="kw">let </span>doesRRegHaveFirstDefAt_LINEAR = |rreg: RealReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;RealRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_def(iix);
+        <span class="kw">let </span>rreg_no = rreg.get_index();
+        <span class="kw">let </span>rlrixs = <span class="kw-2">&amp;</span>reg_to_ranges_maps.rreg_to_rlrs_map[rreg_no];
+        <span class="kw">for </span>rlrix <span class="kw">in </span>rlrixs {
+            <span class="kw">let </span>frags = <span class="kw-2">&amp;</span>rlr_env[<span class="kw-2">*</span>rlrix].sorted_frags;
+            <span class="kw">for </span>fix <span class="kw">in </span>frags.iter() {
+                <span class="kw">let </span>frag = <span class="kw-2">&amp;</span>frag_env[<span class="kw-2">*</span>fix];
+                <span class="kw">if </span>frag.first == point_to_find {
+                    <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="kw-2">*</span>rlrix);
                 }
             }
         }
-        <span class="prelude-val">None</span>
-    };
+        <span class="prelude-val">None
+    </span>};
 
-    <span class="kw">let</span> <span class="ident">doesRRegHaveFirstDefAt</span> <span class="op">=</span> <span class="op">|</span><span class="ident">rreg</span>: <span class="ident">RealReg</span>, <span class="ident">iix</span>: <span class="ident">InstIx</span><span class="op">|</span> -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RealRangeIx</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">point_to_find</span> <span class="op">=</span> <span class="ident">InstPoint::new_def</span>(<span class="ident">iix</span>);
-        <span class="kw">let</span> <span class="ident">rreg_no</span> <span class="op">=</span> <span class="ident">rreg</span>.<span class="ident">get_index</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">mfi</span>) <span class="op">=</span> <span class="ident">r_many_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">rreg_no</span> <span class="kw">as</span> <span class="ident">u32</span>)) {
-            <span class="kw">match</span> <span class="ident">mfi</span>
-                .<span class="ident">sorted_firsts</span>
-                .<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">point_to_find</span>, <span class="op">|</span>(<span class="ident">point</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">point</span>)
+    <span class="kw">let </span>doesRRegHaveFirstDefAt = |rreg: RealReg, iix: InstIx| -&gt; <span class="prelude-ty">Option</span>&lt;RealRangeIx&gt; {
+        <span class="kw">let </span>point_to_find = InstPoint::new_def(iix);
+        <span class="kw">let </span>rreg_no = rreg.get_index();
+        <span class="kw">let </span><span class="kw-2">mut </span>binary_search_result = <span class="prelude-val">None</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>mfi) = r_many_map.get(<span class="kw-2">&amp;</span>(rreg_no <span class="kw">as </span>u32)) {
+            <span class="kw">match </span>mfi
+                .sorted_firsts
+                .binary_search_by_key(<span class="kw-2">&amp;</span>point_to_find, |(point, <span class="kw">_</span>)| <span class="kw-2">*</span>point)
             {
-                <span class="prelude-val">Ok</span>(<span class="ident">found_at_ix</span>) =&gt; <span class="ident">binary_search_result</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">mfi</span>.<span class="ident">sorted_firsts</span>[<span class="ident">found_at_ix</span>].<span class="number">1</span>),
+                <span class="prelude-val">Ok</span>(found_at_ix) =&gt; binary_search_result = <span class="prelude-val">Some</span>(mfi.sorted_firsts[found_at_ix].<span class="number">1</span>),
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {}
             }
         }
-        <span class="kw">match</span> <span class="ident">binary_search_result</span> {
-            <span class="prelude-val">None</span> =&gt; <span class="ident">doesRRegHaveFirstDefAt_LINEAR</span>(<span class="ident">rreg</span>, <span class="ident">iix</span>),
+        <span class="kw">match </span>binary_search_result {
+            <span class="prelude-val">None </span>=&gt; doesRRegHaveFirstDefAt_LINEAR(rreg, iix),
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">debug_assert!</span>(<span class="ident">binary_search_result</span> <span class="op">==</span> <span class="ident">doesRRegHaveFirstDefAt_LINEAR</span>(<span class="ident">rreg</span>, <span class="ident">iix</span>));
-                <span class="ident">binary_search_result</span>
+                <span class="macro">debug_assert!</span>(binary_search_result == doesRRegHaveFirstDefAt_LINEAR(rreg, iix));
+                binary_search_result
             }
         }
     };
 
-    <span class="comment">// Finally we come to the core logic of the coalescing analysis.  It uses the complex</span>
-    <span class="comment">// hybrid-search mechanism described extensively above.  The comments above however don&#39;t</span>
-    <span class="comment">// describe any of the logic after this point.</span>
+    <span class="comment">// Finally we come to the core logic of the coalescing analysis.  It uses the complex
+    // hybrid-search mechanism described extensively above.  The comments above however don&#39;t
+    // describe any of the logic after this point.
 
-    <span class="comment">// RETURNED TO CALLER</span>
-    <span class="comment">// Hints for each VirtualRange.  Note that the SmallVecs could contain duplicates, I</span>
-    <span class="comment">// suppose, for example if there are two identical copy insns at different points on the</span>
-    <span class="comment">// &quot;boundary&quot; for some VLR.  I don&#39;t think it matters though since we&#39;re going to rank the</span>
-    <span class="comment">// hints by strength and then choose at most one.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hints</span> <span class="op">=</span> <span class="ident">TypedIxVec</span>::<span class="op">&lt;</span><span class="ident">VirtualRangeIx</span>, <span class="ident">SmallVec</span><span class="op">&lt;</span>[<span class="ident">Hint</span>; <span class="number">8</span>]<span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::new</span>();
-    <span class="ident">hints</span>.<span class="ident">resize</span>(<span class="ident">vlr_env</span>.<span class="ident">len</span>(), <span class="macro">smallvec!</span>[]);
+    // RETURNED TO CALLER
+    // Hints for each VirtualRange.  Note that the SmallVecs could contain duplicates, I
+    // suppose, for example if there are two identical copy insns at different points on the
+    // &quot;boundary&quot; for some VLR.  I don&#39;t think it matters though since we&#39;re going to rank the
+    // hints by strength and then choose at most one.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>hints = TypedIxVec::&lt;VirtualRangeIx, SmallVec&lt;[Hint; <span class="number">8</span>]&gt;&gt;::new();
+    hints.resize(vlr_env.len(), <span class="macro">smallvec!</span>[]);
 
-    <span class="comment">// RETURNED TO CALLER</span>
-    <span class="comment">// A vector that simply records which insns are v-to-v boundary moves, as established by the</span>
-    <span class="comment">// analysis below.  This info is collected here because (1) the caller (BT) needs to have it</span>
-    <span class="comment">// and (2) this is the first point at which we can efficiently compute it.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">is_vv_boundary_move</span> <span class="op">=</span> <span class="ident">TypedIxVec</span>::<span class="op">&lt;</span><span class="ident">InstIx</span>, <span class="ident">bool</span><span class="op">&gt;</span><span class="ident">::new</span>();
-    <span class="ident">is_vv_boundary_move</span>.<span class="ident">resize</span>(<span class="ident">func</span>.<span class="ident">insns</span>().<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>, <span class="bool-val">false</span>);
+    <span class="comment">// RETURNED TO CALLER
+    // A vector that simply records which insns are v-to-v boundary moves, as established by the
+    // analysis below.  This info is collected here because (1) the caller (BT) needs to have it
+    // and (2) this is the first point at which we can efficiently compute it.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>is_vv_boundary_move = TypedIxVec::&lt;InstIx, bool&gt;::new();
+    is_vv_boundary_move.resize(func.insns().len() <span class="kw">as </span>u32, <span class="bool-val">false</span>);
 
-    <span class="comment">// RETURNED TO CALLER (after finalisation)</span>
-    <span class="comment">// The virtual-to-virtual equivalence classes we&#39;re collecting.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vlrEquivClassesUF</span> <span class="op">=</span> <span class="ident">UnionFind</span>::<span class="op">&lt;</span><span class="ident">VirtualRangeIx</span><span class="op">&gt;</span><span class="ident">::new</span>(<span class="ident">vlr_env</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">usize</span>);
+    <span class="comment">// RETURNED TO CALLER (after finalisation)
+    // The virtual-to-virtual equivalence classes we&#39;re collecting.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>vlrEquivClassesUF = UnionFind::&lt;VirtualRangeIx&gt;::new(vlr_env.len() <span class="kw">as </span>usize);
 
-    <span class="comment">// Not returned to caller; for use only in this function.</span>
-    <span class="comment">// A list of `VirtualRange`s for which the `total_cost` (hence also their</span>
-    <span class="comment">// `spill_cost`) should be adjusted downwards by the supplied `u32`.  We</span>
-    <span class="comment">// can&#39;t do this directly in the loop below due to borrowing constraints,</span>
-    <span class="comment">// hence we collect the required info in this vector and do it in a second</span>
-    <span class="comment">// loop.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">decVLRcosts</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span>(<span class="ident">VirtualRangeIx</span>, <span class="ident">VirtualRangeIx</span>, <span class="ident">u32</span>)<span class="op">&gt;</span><span class="ident">::new</span>();
+    <span class="comment">// Not returned to caller; for use only in this function.
+    // A list of `VirtualRange`s for which the `total_cost` (hence also their
+    // `spill_cost`) should be adjusted downwards by the supplied `u32`.  We
+    // can&#39;t do this directly in the loop below due to borrowing constraints,
+    // hence we collect the required info in this vector and do it in a second
+    // loop.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>decVLRcosts = Vec::&lt;(VirtualRangeIx, VirtualRangeIx, u32)&gt;::new();
 
-    <span class="kw">for</span> <span class="ident">MoveInfoElem</span> {
-        <span class="ident">dst</span>,
-        <span class="ident">src</span>,
-        <span class="ident">iix</span>,
-        <span class="ident">est_freq</span>,
+    <span class="kw">for </span>MoveInfoElem {
+        dst,
+        src,
+        iix,
+        est_freq,
         ..
-    } <span class="kw">in</span> <span class="ident">move_info</span>.<span class="ident">iter</span>()
+    } <span class="kw">in </span>move_info.iter()
     {
         <span class="macro">trace!</span>(
             <span class="string">&quot;connected by moves: {:?} {:?} &lt;- {:?} (est_freq {})&quot;</span>,
-            <span class="ident">iix</span>,
-            <span class="ident">dst</span>,
-            <span class="ident">src</span>,
-            <span class="ident">est_freq</span>
+            iix,
+            dst,
+            src,
+            est_freq
         );
-        <span class="kw">match</span> (<span class="ident">dst</span>.<span class="ident">is_virtual</span>(), <span class="ident">src</span>.<span class="ident">is_virtual</span>()) {
+        <span class="kw">match </span>(dst.is_virtual(), src.is_virtual()) {
             (<span class="bool-val">true</span>, <span class="bool-val">true</span>) =&gt; {
-                <span class="comment">// Check for a V &lt;- V hint.</span>
-                <span class="kw">let</span> <span class="ident">srcV</span> <span class="op">=</span> <span class="ident">src</span>.<span class="ident">to_virtual_reg</span>();
-                <span class="kw">let</span> <span class="ident">dstV</span> <span class="op">=</span> <span class="ident">dst</span>.<span class="ident">to_virtual_reg</span>();
-                <span class="kw">let</span> <span class="ident">mb_vlrixSrc</span> <span class="op">=</span> <span class="ident">doesVRegHaveLastUseAt</span>(<span class="ident">srcV</span>, <span class="kw-2">*</span><span class="ident">iix</span>);
-                <span class="kw">let</span> <span class="ident">mb_vlrixDst</span> <span class="op">=</span> <span class="ident">doesVRegHaveFirstDefAt</span>(<span class="ident">dstV</span>, <span class="kw-2">*</span><span class="ident">iix</span>);
-                <span class="kw">if</span> <span class="ident">mb_vlrixSrc</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">mb_vlrixDst</span>.<span class="ident">is_some</span>() {
-                    <span class="kw">let</span> <span class="ident">vlrixSrc</span> <span class="op">=</span> <span class="ident">mb_vlrixSrc</span>.<span class="ident">unwrap</span>();
-                    <span class="kw">let</span> <span class="ident">vlrixDst</span> <span class="op">=</span> <span class="ident">mb_vlrixDst</span>.<span class="ident">unwrap</span>();
-                    <span class="comment">// Per block comment at top of file, make a half-hearted</span>
-                    <span class="comment">// attempt to avoid creating equivalence classes with</span>
-                    <span class="comment">// internal overlaps.  Note this can&#39;t be completely</span>
-                    <span class="comment">// effective as presently implemented.</span>
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">vlr_env</span>[<span class="ident">vlrixSrc</span>].<span class="ident">overlaps</span>(<span class="kw-2">&amp;</span><span class="ident">vlr_env</span>[<span class="ident">vlrixDst</span>]) {
-                        <span class="comment">// Add hints for both VLRs, since we don&#39;t know which one will</span>
-                        <span class="comment">// assign first.  Indeed, a VLR may be assigned and un-assigned</span>
-                        <span class="comment">// arbitrarily many times.</span>
-                        <span class="ident">hints</span>[<span class="ident">vlrixSrc</span>].<span class="ident">push</span>(<span class="ident">Hint::SameAs</span>(<span class="ident">vlrixDst</span>, <span class="kw-2">*</span><span class="ident">est_freq</span>));
-                        <span class="ident">hints</span>[<span class="ident">vlrixDst</span>].<span class="ident">push</span>(<span class="ident">Hint::SameAs</span>(<span class="ident">vlrixSrc</span>, <span class="kw-2">*</span><span class="ident">est_freq</span>));
-                        <span class="ident">vlrEquivClassesUF</span>.<span class="ident">union</span>(<span class="ident">vlrixDst</span>, <span class="ident">vlrixSrc</span>);
-                        <span class="ident">is_vv_boundary_move</span>[<span class="kw-2">*</span><span class="ident">iix</span>] <span class="op">=</span> <span class="bool-val">true</span>;
-                        <span class="comment">// Reduce the total cost, and hence the spill cost, of</span>
-                        <span class="comment">// both `vlrixSrc` and `vlrixDst`.  This is so as to reduce to</span>
-                        <span class="comment">// zero, the cost of a VLR whose only instructions are its</span>
-                        <span class="comment">// v-v boundary copies.</span>
-                        <span class="macro">trace!</span>(<span class="string">&quot;reduce cost of {:?} and {:?}&quot;</span>, <span class="ident">vlrixSrc</span>, <span class="ident">vlrixDst</span>);
-                        <span class="ident">decVLRcosts</span>.<span class="ident">push</span>((<span class="ident">vlrixSrc</span>, <span class="ident">vlrixDst</span>, <span class="number">1</span> <span class="op">*</span> <span class="ident">est_freq</span>));
+                <span class="comment">// Check for a V &lt;- V hint.
+                </span><span class="kw">let </span>srcV = src.to_virtual_reg();
+                <span class="kw">let </span>dstV = dst.to_virtual_reg();
+                <span class="kw">let </span>mb_vlrixSrc = doesVRegHaveLastUseAt(srcV, <span class="kw-2">*</span>iix);
+                <span class="kw">let </span>mb_vlrixDst = doesVRegHaveFirstDefAt(dstV, <span class="kw-2">*</span>iix);
+                <span class="kw">if </span>mb_vlrixSrc.is_some() &amp;&amp; mb_vlrixDst.is_some() {
+                    <span class="kw">let </span>vlrixSrc = mb_vlrixSrc.unwrap();
+                    <span class="kw">let </span>vlrixDst = mb_vlrixDst.unwrap();
+                    <span class="comment">// Per block comment at top of file, make a half-hearted
+                    // attempt to avoid creating equivalence classes with
+                    // internal overlaps.  Note this can&#39;t be completely
+                    // effective as presently implemented.
+                    </span><span class="kw">if </span>!vlr_env[vlrixSrc].overlaps(<span class="kw-2">&amp;</span>vlr_env[vlrixDst]) {
+                        <span class="comment">// Add hints for both VLRs, since we don&#39;t know which one will
+                        // assign first.  Indeed, a VLR may be assigned and un-assigned
+                        // arbitrarily many times.
+                        </span>hints[vlrixSrc].push(Hint::SameAs(vlrixDst, <span class="kw-2">*</span>est_freq));
+                        hints[vlrixDst].push(Hint::SameAs(vlrixSrc, <span class="kw-2">*</span>est_freq));
+                        vlrEquivClassesUF.union(vlrixDst, vlrixSrc);
+                        is_vv_boundary_move[<span class="kw-2">*</span>iix] = <span class="bool-val">true</span>;
+                        <span class="comment">// Reduce the total cost, and hence the spill cost, of
+                        // both `vlrixSrc` and `vlrixDst`.  This is so as to reduce to
+                        // zero, the cost of a VLR whose only instructions are its
+                        // v-v boundary copies.
+                        </span><span class="macro">trace!</span>(<span class="string">&quot;reduce cost of {:?} and {:?}&quot;</span>, vlrixSrc, vlrixDst);
+                        decVLRcosts.push((vlrixSrc, vlrixDst, <span class="number">1 </span>* est_freq));
                     }
                 }
             }
             (<span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; {
-                <span class="comment">// Check for a V &lt;- R hint.</span>
-                <span class="kw">let</span> <span class="ident">srcR</span> <span class="op">=</span> <span class="ident">src</span>.<span class="ident">to_real_reg</span>();
-                <span class="kw">let</span> <span class="ident">dstV</span> <span class="op">=</span> <span class="ident">dst</span>.<span class="ident">to_virtual_reg</span>();
-                <span class="kw">let</span> <span class="ident">mb_rlrSrc</span> <span class="op">=</span> <span class="ident">doesRRegHaveLastUseAt</span>(<span class="ident">srcR</span>, <span class="kw-2">*</span><span class="ident">iix</span>);
-                <span class="kw">let</span> <span class="ident">mb_vlrDst</span> <span class="op">=</span> <span class="ident">doesVRegHaveFirstDefAt</span>(<span class="ident">dstV</span>, <span class="kw-2">*</span><span class="ident">iix</span>);
-                <span class="kw">if</span> <span class="ident">mb_rlrSrc</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">mb_vlrDst</span>.<span class="ident">is_some</span>() {
-                    <span class="kw">let</span> <span class="ident">vlrDst</span> <span class="op">=</span> <span class="ident">mb_vlrDst</span>.<span class="ident">unwrap</span>();
-                    <span class="ident">hints</span>[<span class="ident">vlrDst</span>].<span class="ident">push</span>(<span class="ident">Hint::Exactly</span>(<span class="ident">srcR</span>, <span class="kw-2">*</span><span class="ident">est_freq</span>));
+                <span class="comment">// Check for a V &lt;- R hint.
+                </span><span class="kw">let </span>srcR = src.to_real_reg();
+                <span class="kw">let </span>dstV = dst.to_virtual_reg();
+                <span class="kw">let </span>mb_rlrSrc = doesRRegHaveLastUseAt(srcR, <span class="kw-2">*</span>iix);
+                <span class="kw">let </span>mb_vlrDst = doesVRegHaveFirstDefAt(dstV, <span class="kw-2">*</span>iix);
+                <span class="kw">if </span>mb_rlrSrc.is_some() &amp;&amp; mb_vlrDst.is_some() {
+                    <span class="kw">let </span>vlrDst = mb_vlrDst.unwrap();
+                    hints[vlrDst].push(Hint::Exactly(srcR, <span class="kw-2">*</span>est_freq));
                 }
             }
             (<span class="bool-val">false</span>, <span class="bool-val">true</span>) =&gt; {
-                <span class="comment">// Check for a R &lt;- V hint.</span>
-                <span class="kw">let</span> <span class="ident">srcV</span> <span class="op">=</span> <span class="ident">src</span>.<span class="ident">to_virtual_reg</span>();
-                <span class="kw">let</span> <span class="ident">dstR</span> <span class="op">=</span> <span class="ident">dst</span>.<span class="ident">to_real_reg</span>();
-                <span class="kw">let</span> <span class="ident">mb_vlrSrc</span> <span class="op">=</span> <span class="ident">doesVRegHaveLastUseAt</span>(<span class="ident">srcV</span>, <span class="kw-2">*</span><span class="ident">iix</span>);
-                <span class="kw">let</span> <span class="ident">mb_rlrDst</span> <span class="op">=</span> <span class="ident">doesRRegHaveFirstDefAt</span>(<span class="ident">dstR</span>, <span class="kw-2">*</span><span class="ident">iix</span>);
-                <span class="kw">if</span> <span class="ident">mb_vlrSrc</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">mb_rlrDst</span>.<span class="ident">is_some</span>() {
-                    <span class="kw">let</span> <span class="ident">vlrSrc</span> <span class="op">=</span> <span class="ident">mb_vlrSrc</span>.<span class="ident">unwrap</span>();
-                    <span class="ident">hints</span>[<span class="ident">vlrSrc</span>].<span class="ident">push</span>(<span class="ident">Hint::Exactly</span>(<span class="ident">dstR</span>, <span class="kw-2">*</span><span class="ident">est_freq</span>));
+                <span class="comment">// Check for a R &lt;- V hint.
+                </span><span class="kw">let </span>srcV = src.to_virtual_reg();
+                <span class="kw">let </span>dstR = dst.to_real_reg();
+                <span class="kw">let </span>mb_vlrSrc = doesVRegHaveLastUseAt(srcV, <span class="kw-2">*</span>iix);
+                <span class="kw">let </span>mb_rlrDst = doesRRegHaveFirstDefAt(dstR, <span class="kw-2">*</span>iix);
+                <span class="kw">if </span>mb_vlrSrc.is_some() &amp;&amp; mb_rlrDst.is_some() {
+                    <span class="kw">let </span>vlrSrc = mb_vlrSrc.unwrap();
+                    hints[vlrSrc].push(Hint::Exactly(dstR, <span class="kw-2">*</span>est_freq));
                 }
             }
             (<span class="bool-val">false</span>, <span class="bool-val">false</span>) =&gt; {
-                <span class="comment">// This is a real-to-real move.  There&#39;s nothing we can do.  Ignore it.</span>
-            }
+                <span class="comment">// This is a real-to-real move.  There&#39;s nothing we can do.  Ignore it.
+            </span>}
         }
     }
 
-    <span class="comment">// Now decrease the `total_cost` and `spill_cost` fields of selected</span>
-    <span class="comment">// `VirtualRange`s, as detected by the previous loop.  Don&#39;t decrease the</span>
-    <span class="comment">// `spill_cost` literally to zero; doing that causes various assertion</span>
-    <span class="comment">// failures and boundary problems later on, in the `CommitmentMap`s.  In</span>
-    <span class="comment">// such a case, make the `spill_cost` be tiny but nonzero.</span>
-    <span class="kw">fn</span> <span class="ident">decrease_vlr_total_cost_by</span>(<span class="ident">vlr</span>: <span class="kw-2">&amp;mut</span> <span class="ident">VirtualRange</span>, <span class="ident">decrease_total_cost_by</span>: <span class="ident">u32</span>) {
-        <span class="comment">// Adjust `total_cost`.</span>
-        <span class="kw">if</span> <span class="ident">vlr</span>.<span class="ident">total_cost</span> <span class="op">&lt;</span> <span class="ident">decrease_total_cost_by</span> {
-            <span class="ident">vlr</span>.<span class="ident">total_cost</span> <span class="op">=</span> <span class="number">0</span>;
-        } <span class="kw">else</span> {
-            <span class="ident">vlr</span>.<span class="ident">total_cost</span> <span class="op">-</span><span class="op">=</span> <span class="ident">decrease_total_cost_by</span>;
+    <span class="comment">// Now decrease the `total_cost` and `spill_cost` fields of selected
+    // `VirtualRange`s, as detected by the previous loop.  Don&#39;t decrease the
+    // `spill_cost` literally to zero; doing that causes various assertion
+    // failures and boundary problems later on, in the `CommitmentMap`s.  In
+    // such a case, make the `spill_cost` be tiny but nonzero.
+    </span><span class="kw">fn </span>decrease_vlr_total_cost_by(vlr: <span class="kw-2">&amp;mut </span>VirtualRange, decrease_total_cost_by: u32) {
+        <span class="comment">// Adjust `total_cost`.
+        </span><span class="kw">if </span>vlr.total_cost &lt; decrease_total_cost_by {
+            vlr.total_cost = <span class="number">0</span>;
+        } <span class="kw">else </span>{
+            vlr.total_cost -= decrease_total_cost_by;
         }
-        <span class="comment">// And recompute `spill_cost` accordingly.</span>
-        <span class="kw">if</span> <span class="ident">vlr</span>.<span class="ident">total_cost</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="ident">vlr</span>.<span class="ident">spill_cost</span> <span class="op">=</span> <span class="ident">SpillCost::finite</span>(<span class="number">1.0e-6</span>);
-        } <span class="kw">else</span> {
-            <span class="macro">assert!</span>(<span class="ident">vlr</span>.<span class="ident">size</span> <span class="op">&gt;</span> <span class="number">0</span>);
-            <span class="ident">vlr</span>.<span class="ident">spill_cost</span> <span class="op">=</span> <span class="ident">SpillCost::finite</span>(<span class="ident">vlr</span>.<span class="ident">total_cost</span> <span class="kw">as</span> <span class="ident">f32</span> <span class="op">/</span> <span class="ident">vlr</span>.<span class="ident">size</span> <span class="kw">as</span> <span class="ident">f32</span>);
+        <span class="comment">// And recompute `spill_cost` accordingly.
+        </span><span class="kw">if </span>vlr.total_cost == <span class="number">0 </span>{
+            vlr.spill_cost = SpillCost::finite(<span class="number">1.0e-6</span>);
+        } <span class="kw">else </span>{
+            <span class="macro">assert!</span>(vlr.size &gt; <span class="number">0</span>);
+            vlr.spill_cost = SpillCost::finite(vlr.total_cost <span class="kw">as </span>f32 / vlr.size <span class="kw">as </span>f32);
         }
     }
 
-    <span class="kw">for</span> (<span class="ident">vlrix1</span>, <span class="ident">vlrix2</span>, <span class="ident">decrease_total_cost_by</span>) <span class="kw">in</span> <span class="ident">decVLRcosts</span> {
-        <span class="ident">decrease_vlr_total_cost_by</span>(<span class="kw-2">&amp;mut</span> <span class="ident">vlr_env</span>[<span class="ident">vlrix1</span>], <span class="ident">decrease_total_cost_by</span>);
-        <span class="ident">decrease_vlr_total_cost_by</span>(<span class="kw-2">&amp;mut</span> <span class="ident">vlr_env</span>[<span class="ident">vlrix2</span>], <span class="ident">decrease_total_cost_by</span>);
+    <span class="kw">for </span>(vlrix1, vlrix2, decrease_total_cost_by) <span class="kw">in </span>decVLRcosts {
+        decrease_vlr_total_cost_by(<span class="kw-2">&amp;mut </span>vlr_env[vlrix1], decrease_total_cost_by);
+        decrease_vlr_total_cost_by(<span class="kw-2">&amp;mut </span>vlr_env[vlrix2], decrease_total_cost_by);
     }
 
-    <span class="comment">// For the convenience of the allocator core, sort the hints for each VLR so</span>
-    <span class="comment">// as to move the most preferred to the front.</span>
-    <span class="kw">for</span> <span class="ident">hints_for_one_vlr</span> <span class="kw">in</span> <span class="ident">hints</span>.<span class="ident">iter_mut</span>() {
-        <span class="ident">hints_for_one_vlr</span>.<span class="ident">sort_by</span>(<span class="op">|</span><span class="ident">h1</span>, <span class="ident">h2</span><span class="op">|</span> <span class="ident">h2</span>.<span class="ident">get_weight</span>().<span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="ident">h1</span>.<span class="ident">get_weight</span>()).<span class="ident">unwrap</span>());
+    <span class="comment">// For the convenience of the allocator core, sort the hints for each VLR so
+    // as to move the most preferred to the front.
+    </span><span class="kw">for </span>hints_for_one_vlr <span class="kw">in </span>hints.iter_mut() {
+        hints_for_one_vlr.sort_by(|h1, h2| h2.get_weight().partial_cmp(<span class="kw-2">&amp;</span>h1.get_weight()).unwrap());
     }
 
-    <span class="kw">let</span> <span class="ident">vlrEquivClasses</span>: <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">VirtualRangeIx</span><span class="op">&gt;</span> <span class="op">=</span>
-        <span class="ident">vlrEquivClassesUF</span>.<span class="ident">get_equiv_classes</span>();
+    <span class="kw">let </span>vlrEquivClasses: UnionFindEquivClasses&lt;VirtualRangeIx&gt; =
+        vlrEquivClassesUF.get_equiv_classes();
 
-    <span class="kw">if</span> <span class="macro">log_enabled!</span>(<span class="ident">Level::Trace</span>) {
+    <span class="kw">if </span><span class="macro">log_enabled!</span>(Level::Trace) {
         <span class="macro">trace!</span>(<span class="string">&quot;Revised VLRs:&quot;</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">for</span> <span class="ident">vlr</span> <span class="kw">in</span> <span class="ident">vlr_env</span>.<span class="ident">iter</span>() {
-            <span class="macro">trace!</span>(<span class="string">&quot;{:&lt;4?}   {:?}&quot;</span>, <span class="ident">VirtualRangeIx::new</span>(<span class="ident">n</span>), <span class="ident">vlr</span>);
-            <span class="ident">n</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>n = <span class="number">0</span>;
+        <span class="kw">for </span>vlr <span class="kw">in </span>vlr_env.iter() {
+            <span class="macro">trace!</span>(<span class="string">&quot;{:&lt;4?}   {:?}&quot;</span>, VirtualRangeIx::new(n), vlr);
+            n += <span class="number">1</span>;
         }
 
         <span class="macro">trace!</span>(<span class="string">&quot;Coalescing hints:&quot;</span>);
-        <span class="ident">n</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">for</span> <span class="ident">hints_for_one_vlr</span> <span class="kw">in</span> <span class="ident">hints</span>.<span class="ident">iter</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">s</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>();
-            <span class="kw">for</span> <span class="ident">hint</span> <span class="kw">in</span> <span class="ident">hints_for_one_vlr</span> {
-                <span class="ident">s</span> <span class="op">=</span> <span class="ident">s</span> <span class="op">+</span> <span class="kw-2">&amp;</span><span class="ident">show_hint</span>(<span class="ident">hint</span>, <span class="kw-2">&amp;</span><span class="ident">univ</span>) <span class="op">+</span> <span class="kw-2">&amp;</span><span class="string">&quot; &quot;</span>.<span class="ident">to_string</span>();
+        n = <span class="number">0</span>;
+        <span class="kw">for </span>hints_for_one_vlr <span class="kw">in </span>hints.iter() {
+            <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;&quot;</span>.to_string();
+            <span class="kw">for </span>hint <span class="kw">in </span>hints_for_one_vlr {
+                s = s + <span class="kw-2">&amp;</span>show_hint(hint, <span class="kw-2">&amp;</span>univ) + <span class="kw-2">&amp;</span><span class="string">&quot; &quot;</span>.to_string();
             }
-            <span class="macro">trace!</span>(<span class="string">&quot;  hintsfor {:&lt;4?} = {}&quot;</span>, <span class="ident">VirtualRangeIx::new</span>(<span class="ident">n</span>), <span class="ident">s</span>);
-            <span class="ident">n</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="macro">trace!</span>(<span class="string">&quot;  hintsfor {:&lt;4?} = {}&quot;</span>, VirtualRangeIx::new(n), s);
+            n += <span class="number">1</span>;
         }
 
-        <span class="kw">for</span> <span class="ident">n</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">vlr_env</span>.<span class="ident">len</span>() {
-            <span class="kw">let</span> <span class="ident">vlrix</span> <span class="op">=</span> <span class="ident">VirtualRangeIx::new</span>(<span class="ident">n</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tmpvec</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-            <span class="kw">for</span> <span class="ident">elem</span> <span class="kw">in</span> <span class="ident">vlrEquivClasses</span>.<span class="ident">equiv_class_elems_iter</span>(<span class="ident">vlrix</span>) {
-                <span class="ident">tmpvec</span>.<span class="ident">reverse</span>();
-                <span class="ident">tmpvec</span>.<span class="ident">push</span>(<span class="ident">elem</span>);
+        <span class="kw">for </span>n <span class="kw">in </span><span class="number">0</span>..vlr_env.len() {
+            <span class="kw">let </span>vlrix = VirtualRangeIx::new(n);
+            <span class="kw">let </span><span class="kw-2">mut </span>tmpvec = <span class="macro">vec!</span>[];
+            <span class="kw">for </span>elem <span class="kw">in </span>vlrEquivClasses.equiv_class_elems_iter(vlrix) {
+                tmpvec.reverse();
+                tmpvec.push(elem);
             }
-            <span class="macro">trace!</span>(<span class="string">&quot;  eclassof {:?} = {:?}&quot;</span>, <span class="ident">vlrix</span>, <span class="ident">tmpvec</span>);
+            <span class="macro">trace!</span>(<span class="string">&quot;  eclassof {:?} = {:?}&quot;</span>, vlrix, tmpvec);
         }
 
-        <span class="kw">for</span> (<span class="ident">b</span>, <span class="ident">i</span>) <span class="kw">in</span> <span class="ident">is_vv_boundary_move</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="number">0</span>..) {
-            <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">b</span> {
-                <span class="macro">trace!</span>(<span class="string">&quot;  vv_boundary_move at {:?}&quot;</span>, <span class="ident">InstIx::new</span>(<span class="ident">i</span>));
+        <span class="kw">for </span>(b, i) <span class="kw">in </span>is_vv_boundary_move.iter().zip(<span class="number">0</span>..) {
+            <span class="kw">if </span><span class="kw-2">*</span>b {
+                <span class="macro">trace!</span>(<span class="string">&quot;  vv_boundary_move at {:?}&quot;</span>, InstIx::new(i));
             }
         }
     }
@@ -1359,8 +1354,7 @@
     <span class="macro">trace!</span>(<span class="string">&quot;do_coalescing_analysis: end&quot;</span>);
     <span class="macro">trace!</span>(<span class="string">&quot;&quot;</span>);
 
-    (<span class="ident">hints</span>, <span class="ident">vlrEquivClasses</span>, <span class="ident">is_vv_boundary_move</span>)
+    (hints, vlrEquivClasses, is_vv_boundary_move)
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="regalloc" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="regalloc" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

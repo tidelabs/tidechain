@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Error",""],["StackWithLimit","Stack with limit."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Error",""],["StackWithLimit","Stack with limit."]]};

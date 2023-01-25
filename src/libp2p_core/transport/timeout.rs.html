@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-core-0.33.0/src/transport/timeout.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>timeout.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../libp2p_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../libp2p_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../libp2p_core/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-core-0.33.0/src/transport/timeout.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>timeout.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../libp2p_core/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -251,254 +246,253 @@
 <span id="246">246</span>
 <span id="247">247</span>
 <span id="248">248</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2018 Parity Technologies (UK) Ltd.</span>
-<span class="comment">//</span>
-<span class="comment">// Permission is hereby granted, free of charge, to any person obtaining a</span>
-<span class="comment">// copy of this software and associated documentation files (the &quot;Software&quot;),</span>
-<span class="comment">// to deal in the Software without restriction, including without limitation</span>
-<span class="comment">// the rights to use, copy, modify, merge, publish, distribute, sublicense,</span>
-<span class="comment">// and/or sell copies of the Software, and to permit persons to whom the</span>
-<span class="comment">// Software is furnished to do so, subject to the following conditions:</span>
-<span class="comment">//</span>
-<span class="comment">// The above copyright notice and this permission notice shall be included in</span>
-<span class="comment">// all copies or substantial portions of the Software.</span>
-<span class="comment">//</span>
-<span class="comment">// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS</span>
-<span class="comment">// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
-<span class="comment">// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
-<span class="comment">// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
-<span class="comment">// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING</span>
-<span class="comment">// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER</span>
-<span class="comment">// DEALINGS IN THE SOFTWARE.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2018 Parity Technologies (UK) Ltd.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the &quot;Software&quot;),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
-<span class="doccomment">//! Transports with timeouts on the connection setup.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The connection setup includes all protocol upgrades applied on the</span>
-<span class="doccomment">//! underlying `Transport`.</span>
-<span class="comment">// TODO: add example</span>
+</span><span class="doccomment">//! Transports with timeouts on the connection setup.
+//!
+//! The connection setup includes all protocol upgrades applied on the
+//! underlying `Transport`.
+</span><span class="comment">// TODO: add example
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">transport</span>::{<span class="ident">ListenerEvent</span>, <span class="ident">TransportError</span>},
-    <span class="ident">Multiaddr</span>, <span class="ident">Transport</span>,
+</span><span class="kw">use crate</span>::{
+    transport::{ListenerEvent, TransportError},
+    Multiaddr, Transport,
 };
-<span class="kw">use</span> <span class="ident">futures::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">futures_timer::Delay</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">error</span>, <span class="ident">fmt</span>, <span class="ident">io</span>, <span class="ident">pin::Pin</span>, <span class="ident">task::Context</span>, <span class="ident">task::Poll</span>, <span class="ident">time::Duration</span>};
+<span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>futures_timer::Delay;
+<span class="kw">use </span>std::{error, fmt, io, pin::Pin, task::Context, task::Poll, time::Duration};
 
-<span class="doccomment">/// A `TransportTimeout` is a `Transport` that wraps another `Transport` and adds</span>
-<span class="doccomment">/// timeouts to all inbound and outbound connection attempts.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// **Note**: `listen_on` is never subject to a timeout, only the setup of each</span>
-<span class="doccomment">/// individual accepted connection.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TransportTimeout</span><span class="op">&lt;</span><span class="ident">InnerTrans</span><span class="op">&gt;</span> {
-    <span class="ident">inner</span>: <span class="ident">InnerTrans</span>,
-    <span class="ident">outgoing_timeout</span>: <span class="ident">Duration</span>,
-    <span class="ident">incoming_timeout</span>: <span class="ident">Duration</span>,
+<span class="doccomment">/// A `TransportTimeout` is a `Transport` that wraps another `Transport` and adds
+/// timeouts to all inbound and outbound connection attempts.
+///
+/// **Note**: `listen_on` is never subject to a timeout, only the setup of each
+/// individual accepted connection.
+</span><span class="attribute">#[derive(Debug, Copy, Clone)]
+</span><span class="kw">pub struct </span>TransportTimeout&lt;InnerTrans&gt; {
+    inner: InnerTrans,
+    outgoing_timeout: Duration,
+    incoming_timeout: Duration,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">InnerTrans</span><span class="op">&gt;</span> <span class="ident">TransportTimeout</span><span class="op">&lt;</span><span class="ident">InnerTrans</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Wraps around a `Transport` to add timeouts to all the sockets created by it.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">trans</span>: <span class="ident">InnerTrans</span>, <span class="ident">timeout</span>: <span class="ident">Duration</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">TransportTimeout</span> {
-            <span class="ident">inner</span>: <span class="ident">trans</span>,
-            <span class="ident">outgoing_timeout</span>: <span class="ident">timeout</span>,
-            <span class="ident">incoming_timeout</span>: <span class="ident">timeout</span>,
+<span class="kw">impl</span>&lt;InnerTrans&gt; TransportTimeout&lt;InnerTrans&gt; {
+    <span class="doccomment">/// Wraps around a `Transport` to add timeouts to all the sockets created by it.
+    </span><span class="kw">pub fn </span>new(trans: InnerTrans, timeout: Duration) -&gt; <span class="self">Self </span>{
+        TransportTimeout {
+            inner: trans,
+            outgoing_timeout: timeout,
+            incoming_timeout: timeout,
         }
     }
 
-    <span class="doccomment">/// Wraps around a `Transport` to add timeouts to the outgoing connections.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_outgoing_timeout</span>(<span class="ident">trans</span>: <span class="ident">InnerTrans</span>, <span class="ident">timeout</span>: <span class="ident">Duration</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">TransportTimeout</span> {
-            <span class="ident">inner</span>: <span class="ident">trans</span>,
-            <span class="ident">outgoing_timeout</span>: <span class="ident">timeout</span>,
-            <span class="ident">incoming_timeout</span>: <span class="ident">Duration::from_secs</span>(<span class="number">100</span> <span class="op">*</span> <span class="number">365</span> <span class="op">*</span> <span class="number">24</span> <span class="op">*</span> <span class="number">3600</span>), <span class="comment">// 100 years</span>
-        }
+    <span class="doccomment">/// Wraps around a `Transport` to add timeouts to the outgoing connections.
+    </span><span class="kw">pub fn </span>with_outgoing_timeout(trans: InnerTrans, timeout: Duration) -&gt; <span class="self">Self </span>{
+        TransportTimeout {
+            inner: trans,
+            outgoing_timeout: timeout,
+            incoming_timeout: Duration::from_secs(<span class="number">100 </span>* <span class="number">365 </span>* <span class="number">24 </span>* <span class="number">3600</span>), <span class="comment">// 100 years
+        </span>}
     }
 
-    <span class="doccomment">/// Wraps around a `Transport` to add timeouts to the ingoing connections.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_ingoing_timeout</span>(<span class="ident">trans</span>: <span class="ident">InnerTrans</span>, <span class="ident">timeout</span>: <span class="ident">Duration</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">TransportTimeout</span> {
-            <span class="ident">inner</span>: <span class="ident">trans</span>,
-            <span class="ident">outgoing_timeout</span>: <span class="ident">Duration::from_secs</span>(<span class="number">100</span> <span class="op">*</span> <span class="number">365</span> <span class="op">*</span> <span class="number">24</span> <span class="op">*</span> <span class="number">3600</span>), <span class="comment">// 100 years</span>
-            <span class="ident">incoming_timeout</span>: <span class="ident">timeout</span>,
+    <span class="doccomment">/// Wraps around a `Transport` to add timeouts to the ingoing connections.
+    </span><span class="kw">pub fn </span>with_ingoing_timeout(trans: InnerTrans, timeout: Duration) -&gt; <span class="self">Self </span>{
+        TransportTimeout {
+            inner: trans,
+            outgoing_timeout: Duration::from_secs(<span class="number">100 </span>* <span class="number">365 </span>* <span class="number">24 </span>* <span class="number">3600</span>), <span class="comment">// 100 years
+            </span>incoming_timeout: timeout,
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">InnerTrans</span><span class="op">&gt;</span> <span class="ident">Transport</span> <span class="kw">for</span> <span class="ident">TransportTimeout</span><span class="op">&lt;</span><span class="ident">InnerTrans</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">InnerTrans</span>: <span class="ident">Transport</span>,
-    <span class="ident">InnerTrans::Error</span>: <span class="lifetime">&#39;static</span>,
+<span class="kw">impl</span>&lt;InnerTrans&gt; Transport <span class="kw">for </span>TransportTimeout&lt;InnerTrans&gt;
+<span class="kw">where
+    </span>InnerTrans: Transport,
+    InnerTrans::Error: <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">InnerTrans::Output</span>;
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">TransportTimeoutError</span><span class="op">&lt;</span><span class="ident">InnerTrans::Error</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Listener</span> <span class="op">=</span> <span class="ident">TimeoutListener</span><span class="op">&lt;</span><span class="ident">InnerTrans::Listener</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">ListenerUpgrade</span> <span class="op">=</span> <span class="ident">Timeout</span><span class="op">&lt;</span><span class="ident">InnerTrans::ListenerUpgrade</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Dial</span> <span class="op">=</span> <span class="ident">Timeout</span><span class="op">&lt;</span><span class="ident">InnerTrans::Dial</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Output = InnerTrans::Output;
+    <span class="kw">type </span>Error = TransportTimeoutError&lt;InnerTrans::Error&gt;;
+    <span class="kw">type </span>Listener = TimeoutListener&lt;InnerTrans::Listener&gt;;
+    <span class="kw">type </span>ListenerUpgrade = Timeout&lt;InnerTrans::ListenerUpgrade&gt;;
+    <span class="kw">type </span>Dial = Timeout&lt;InnerTrans::Dial&gt;;
 
-    <span class="kw">fn</span> <span class="ident">listen_on</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">addr</span>: <span class="ident">Multiaddr</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Listener</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">inner</span>
-            .<span class="ident">listen_on</span>(<span class="ident">addr</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">err</span>.<span class="ident">map</span>(<span class="ident">TransportTimeoutError::Other</span>))<span class="question-mark">?</span>;
+    <span class="kw">fn </span>listen_on(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        addr: Multiaddr,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Listener, TransportError&lt;<span class="self">Self</span>::Error&gt;&gt; {
+        <span class="kw">let </span>listener = <span class="self">self
+            </span>.inner
+            .listen_on(addr)
+            .map_err(|err| err.map(TransportTimeoutError::Other))<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">listener</span> <span class="op">=</span> <span class="ident">TimeoutListener</span> {
-            <span class="ident">inner</span>: <span class="ident">listener</span>,
-            <span class="ident">timeout</span>: <span class="self">self</span>.<span class="ident">incoming_timeout</span>,
+        <span class="kw">let </span>listener = TimeoutListener {
+            inner: listener,
+            timeout: <span class="self">self</span>.incoming_timeout,
         };
 
-        <span class="prelude-val">Ok</span>(<span class="ident">listener</span>)
+        <span class="prelude-val">Ok</span>(listener)
     }
 
-    <span class="kw">fn</span> <span class="ident">dial</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">addr</span>: <span class="ident">Multiaddr</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Dial</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">dial</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">inner</span>
-            .<span class="ident">dial</span>(<span class="ident">addr</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">err</span>.<span class="ident">map</span>(<span class="ident">TransportTimeoutError::Other</span>))<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">Timeout</span> {
-            <span class="ident">inner</span>: <span class="ident">dial</span>,
-            <span class="ident">timer</span>: <span class="ident">Delay::new</span>(<span class="self">self</span>.<span class="ident">outgoing_timeout</span>),
+    <span class="kw">fn </span>dial(<span class="kw-2">&amp;mut </span><span class="self">self</span>, addr: Multiaddr) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Dial, TransportError&lt;<span class="self">Self</span>::Error&gt;&gt; {
+        <span class="kw">let </span>dial = <span class="self">self
+            </span>.inner
+            .dial(addr)
+            .map_err(|err| err.map(TransportTimeoutError::Other))<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Timeout {
+            inner: dial,
+            timer: Delay::new(<span class="self">self</span>.outgoing_timeout),
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">dial_as_listener</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">addr</span>: <span class="ident">Multiaddr</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Dial</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">dial</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">inner</span>
-            .<span class="ident">dial_as_listener</span>(<span class="ident">addr</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">err</span>.<span class="ident">map</span>(<span class="ident">TransportTimeoutError::Other</span>))<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">Timeout</span> {
-            <span class="ident">inner</span>: <span class="ident">dial</span>,
-            <span class="ident">timer</span>: <span class="ident">Delay::new</span>(<span class="self">self</span>.<span class="ident">outgoing_timeout</span>),
+    <span class="kw">fn </span>dial_as_listener(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        addr: Multiaddr,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Dial, TransportError&lt;<span class="self">Self</span>::Error&gt;&gt; {
+        <span class="kw">let </span>dial = <span class="self">self
+            </span>.inner
+            .dial_as_listener(addr)
+            .map_err(|err| err.map(TransportTimeoutError::Other))<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Timeout {
+            inner: dial,
+            timer: Delay::new(<span class="self">self</span>.outgoing_timeout),
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">address_translation</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">server</span>: <span class="kw-2">&amp;</span><span class="ident">Multiaddr</span>, <span class="ident">observed</span>: <span class="kw-2">&amp;</span><span class="ident">Multiaddr</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Multiaddr</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">address_translation</span>(<span class="ident">server</span>, <span class="ident">observed</span>)
+    <span class="kw">fn </span>address_translation(<span class="kw-2">&amp;</span><span class="self">self</span>, server: <span class="kw-2">&amp;</span>Multiaddr, observed: <span class="kw-2">&amp;</span>Multiaddr) -&gt; <span class="prelude-ty">Option</span>&lt;Multiaddr&gt; {
+        <span class="self">self</span>.inner.address_translation(server, observed)
     }
 }
 
-<span class="comment">// TODO: can be removed and replaced with an `impl Stream` once impl Trait is fully stable</span>
-<span class="comment">//       in Rust (https://github.com/rust-lang/rust/issues/34511)</span>
-<span class="attribute">#[<span class="ident">pin_project::pin_project</span>]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TimeoutListener</span><span class="op">&lt;</span><span class="ident">InnerStream</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">pin</span>]</span>
-    <span class="ident">inner</span>: <span class="ident">InnerStream</span>,
-    <span class="ident">timeout</span>: <span class="ident">Duration</span>,
+<span class="comment">// TODO: can be removed and replaced with an `impl Stream` once impl Trait is fully stable
+//       in Rust (https://github.com/rust-lang/rust/issues/34511)
+</span><span class="attribute">#[pin_project::pin_project]
+</span><span class="kw">pub struct </span>TimeoutListener&lt;InnerStream&gt; {
+    <span class="attribute">#[pin]
+    </span>inner: InnerStream,
+    timeout: Duration,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">InnerStream</span>, <span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="ident">Stream</span> <span class="kw">for</span> <span class="ident">TimeoutListener</span><span class="op">&lt;</span><span class="ident">InnerStream</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">InnerStream</span>: <span class="ident">TryStream</span><span class="op">&lt;</span><span class="prelude-val">Ok</span> <span class="op">=</span> <span class="ident">ListenerEvent</span><span class="op">&lt;</span><span class="ident">O</span>, <span class="ident">E</span><span class="op">&gt;</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">E</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;InnerStream, O, E&gt; Stream <span class="kw">for </span>TimeoutListener&lt;InnerStream&gt;
+<span class="kw">where
+    </span>InnerStream: TryStream&lt;<span class="prelude-val">Ok </span>= ListenerEvent&lt;O, E&gt;, Error = E&gt;,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span>
-        <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ListenerEvent</span><span class="op">&lt;</span><span class="ident">Timeout</span><span class="op">&lt;</span><span class="ident">O</span><span class="op">&gt;</span>, <span class="ident">TransportTimeoutError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">TransportTimeoutError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Item =
+        <span class="prelude-ty">Result</span>&lt;ListenerEvent&lt;Timeout&lt;O&gt;, TransportTimeoutError&lt;E&gt;&gt;, TransportTimeoutError&lt;E&gt;&gt;;
 
-    <span class="kw">fn</span> <span class="ident">poll_next</span>(<span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">project</span>();
+    <span class="kw">fn </span>poll_next(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
+        <span class="kw">let </span>this = <span class="self">self</span>.project();
 
-        <span class="kw">let</span> <span class="ident">poll_out</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">TryStream::try_poll_next</span>(<span class="ident">this</span>.<span class="ident">inner</span>, <span class="ident">cx</span>) {
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>))) =&gt; {
-                <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">TransportTimeoutError::Other</span>(<span class="ident">err</span>))))
+        <span class="kw">let </span>poll_out = <span class="kw">match </span>TryStream::try_poll_next(this.inner, cx) {
+            Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err))) =&gt; {
+                <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(TransportTimeoutError::Other(err))))
             }
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">v</span>))) =&gt; <span class="ident">v</span>,
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>),
-            <span class="ident">Poll::Pending</span> =&gt; <span class="kw">return</span> <span class="ident">Poll::Pending</span>,
+            Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(v))) =&gt; v,
+            Poll::Ready(<span class="prelude-val">None</span>) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">None</span>),
+            Poll::Pending =&gt; <span class="kw">return </span>Poll::Pending,
         };
 
-        <span class="kw">let</span> <span class="ident">timeout</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">timeout</span>;
-        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">poll_out</span>
-            .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">inner_fut</span><span class="op">|</span> <span class="ident">Timeout</span> {
-                <span class="ident">inner</span>: <span class="ident">inner_fut</span>,
-                <span class="ident">timer</span>: <span class="ident">Delay::new</span>(<span class="ident">timeout</span>),
+        <span class="kw">let </span>timeout = <span class="kw-2">*</span>this.timeout;
+        <span class="kw">let </span>event = poll_out
+            .map(<span class="kw">move </span>|inner_fut| Timeout {
+                inner: inner_fut,
+                timer: Delay::new(timeout),
             })
-            .<span class="ident">map_err</span>(<span class="ident">TransportTimeoutError::Other</span>);
+            .map_err(TransportTimeoutError::Other);
 
-        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">event</span>)))
+        Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(event)))
     }
 }
 
-<span class="doccomment">/// Wraps around a `Future`. Turns the error type from `TimeoutError&lt;Err&gt;` to</span>
-<span class="doccomment">/// `TransportTimeoutError&lt;Err&gt;`.</span>
-<span class="comment">// TODO: can be replaced with `impl Future` once `impl Trait` are fully stable in Rust</span>
-<span class="comment">//       (https://github.com/rust-lang/rust/issues/34511)</span>
-<span class="attribute">#[<span class="ident">pin_project::pin_project</span>]</span>
-<span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;futures do nothing unless polled&quot;</span>]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Timeout</span><span class="op">&lt;</span><span class="ident">InnerFut</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">pin</span>]</span>
-    <span class="ident">inner</span>: <span class="ident">InnerFut</span>,
-    <span class="ident">timer</span>: <span class="ident">Delay</span>,
+<span class="doccomment">/// Wraps around a `Future`. Turns the error type from `TimeoutError&lt;Err&gt;` to
+/// `TransportTimeoutError&lt;Err&gt;`.
+</span><span class="comment">// TODO: can be replaced with `impl Future` once `impl Trait` are fully stable in Rust
+//       (https://github.com/rust-lang/rust/issues/34511)
+</span><span class="attribute">#[pin_project::pin_project]
+#[must_use = <span class="string">&quot;futures do nothing unless polled&quot;</span>]
+</span><span class="kw">pub struct </span>Timeout&lt;InnerFut&gt; {
+    <span class="attribute">#[pin]
+    </span>inner: InnerFut,
+    timer: Delay,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">InnerFut</span><span class="op">&gt;</span> <span class="ident">Future</span> <span class="kw">for</span> <span class="ident">Timeout</span><span class="op">&lt;</span><span class="ident">InnerFut</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">InnerFut</span>: <span class="ident">TryFuture</span>,
+<span class="kw">impl</span>&lt;InnerFut&gt; Future <span class="kw">for </span>Timeout&lt;InnerFut&gt;
+<span class="kw">where
+    </span>InnerFut: TryFuture,
 {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InnerFut::Ok</span>, <span class="ident">TransportTimeoutError</span><span class="op">&lt;</span><span class="ident">InnerFut::Error</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Output = <span class="prelude-ty">Result</span>&lt;InnerFut::Ok, TransportTimeoutError&lt;InnerFut::Error&gt;&gt;;
 
-    <span class="kw">fn</span> <span class="ident">poll</span>(<span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span><span class="op">&gt;</span> {
-        <span class="comment">// It is debatable whether we should poll the inner future first or the timer first.</span>
-        <span class="comment">// For example, if you start dialing with a timeout of 10 seconds, then after 15 seconds</span>
-        <span class="comment">// the dialing succeeds on the wire, then after 20 seconds you poll, then depending on</span>
-        <span class="comment">// which gets polled first, the outcome will be success or failure.</span>
+    <span class="kw">fn </span>poll(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="self">Self</span>::Output&gt; {
+        <span class="comment">// It is debatable whether we should poll the inner future first or the timer first.
+        // For example, if you start dialing with a timeout of 10 seconds, then after 15 seconds
+        // the dialing succeeds on the wire, then after 20 seconds you poll, then depending on
+        // which gets polled first, the outcome will be success or failure.
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">this</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">project</span>();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>this = <span class="self">self</span>.project();
 
-        <span class="kw">match</span> <span class="ident">TryFuture::try_poll</span>(<span class="ident">this</span>.<span class="ident">inner</span>, <span class="ident">cx</span>) {
-            <span class="ident">Poll::Pending</span> =&gt; {}
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="ident">v</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="ident">v</span>)),
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">TransportTimeoutError::Other</span>(<span class="ident">err</span>))),
+        <span class="kw">match </span>TryFuture::try_poll(this.inner, cx) {
+            Poll::Pending =&gt; {}
+            Poll::Ready(<span class="prelude-val">Ok</span>(v)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(v)),
+            Poll::Ready(<span class="prelude-val">Err</span>(err)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(TransportTimeoutError::Other(err))),
         }
 
-        <span class="kw">match</span> <span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">this</span>.<span class="ident">timer</span>).<span class="ident">poll</span>(<span class="ident">cx</span>) {
-            <span class="ident">Poll::Pending</span> =&gt; <span class="ident">Poll::Pending</span>,
-            <span class="ident">Poll::Ready</span>(()) =&gt; <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">TransportTimeoutError::Timeout</span>)),
-        }
-    }
-}
-
-<span class="doccomment">/// Error that can be produced by the `TransportTimeout` layer.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TransportTimeoutError</span><span class="op">&lt;</span><span class="ident">TErr</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The transport timed out.</span>
-    <span class="ident">Timeout</span>,
-    <span class="doccomment">/// An error happened in the timer.</span>
-    <span class="ident">TimerError</span>(<span class="ident">io::Error</span>),
-    <span class="doccomment">/// Other kind of error.</span>
-    <span class="ident">Other</span>(<span class="ident">TErr</span>),
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">TErr</span><span class="op">&gt;</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">TransportTimeoutError</span><span class="op">&lt;</span><span class="ident">TErr</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">TErr</span>: <span class="ident">fmt::Display</span>,
-{
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">TransportTimeoutError::Timeout</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Timeout has been reached&quot;</span>),
-            <span class="ident">TransportTimeoutError::TimerError</span>(<span class="ident">err</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Error in the timer: {}&quot;</span>, <span class="ident">err</span>),
-            <span class="ident">TransportTimeoutError::Other</span>(<span class="ident">err</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">err</span>),
+        <span class="kw">match </span>Pin::new(<span class="kw-2">&amp;mut </span>this.timer).poll(cx) {
+            Poll::Pending =&gt; Poll::Pending,
+            Poll::Ready(()) =&gt; Poll::Ready(<span class="prelude-val">Err</span>(TransportTimeoutError::Timeout)),
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">TErr</span><span class="op">&gt;</span> <span class="ident">error::Error</span> <span class="kw">for</span> <span class="ident">TransportTimeoutError</span><span class="op">&lt;</span><span class="ident">TErr</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">TErr</span>: <span class="ident">error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+<span class="doccomment">/// Error that can be produced by the `TransportTimeout` layer.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub enum </span>TransportTimeoutError&lt;TErr&gt; {
+    <span class="doccomment">/// The transport timed out.
+    </span>Timeout,
+    <span class="doccomment">/// An error happened in the timer.
+    </span>TimerError(io::Error),
+    <span class="doccomment">/// Other kind of error.
+    </span>Other(TErr),
+}
+
+<span class="kw">impl</span>&lt;TErr&gt; fmt::Display <span class="kw">for </span>TransportTimeoutError&lt;TErr&gt;
+<span class="kw">where
+    </span>TErr: fmt::Display,
 {
-    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">TransportTimeoutError::Timeout</span> =&gt; <span class="prelude-val">None</span>,
-            <span class="ident">TransportTimeoutError::TimerError</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">err</span>),
-            <span class="ident">TransportTimeoutError::Other</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">err</span>),
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            TransportTimeoutError::Timeout =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Timeout has been reached&quot;</span>),
+            TransportTimeoutError::TimerError(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Error in the timer: {}&quot;</span>, err),
+            TransportTimeoutError::Other(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, err),
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;TErr&gt; error::Error <span class="kw">for </span>TransportTimeoutError&lt;TErr&gt;
+<span class="kw">where
+    </span>TErr: error::Error + <span class="lifetime">&#39;static</span>,
+{
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>error::Error + <span class="lifetime">&#39;static</span>)&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            TransportTimeoutError::Timeout =&gt; <span class="prelude-val">None</span>,
+            TransportTimeoutError::TimerError(err) =&gt; <span class="prelude-val">Some</span>(err),
+            TransportTimeoutError::Other(err) =&gt; <span class="prelude-val">Some</span>(err),
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="libp2p_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="libp2p_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/network/sync/src/block_request_handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>block_request_handler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_network_sync/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_network_sync/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_network_sync/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/network/sync/src/block_request_handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>block_request_handler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_network_sync/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -418,421 +413,420 @@
 <span id="413">413</span>
 <span id="414">414</span>
 <span id="415">415</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies (UK) Ltd.
+// This file is part of Substrate.
 
-<span class="comment">// Substrate is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// Substrate is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// Substrate is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// Substrate is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with Substrate.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with Substrate.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Helper for handling (i.e. answering) block requests from a remote peer via the</span>
-<span class="doccomment">//! `crate::request_responses::RequestResponsesBehaviour`.</span>
+</span><span class="doccomment">//! Helper for handling (i.e. answering) block requests from a remote peer via the
+//! `crate::request_responses::RequestResponsesBehaviour`.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">message::BlockAttributes</span>,
-	<span class="ident">schema::v1</span>::{<span class="ident">block_request::FromBlock</span>, <span class="ident">BlockResponse</span>, <span class="ident">Direction</span>},
+</span><span class="kw">use crate</span>::{
+	message::BlockAttributes,
+	schema::v1::{block_request::FromBlock, BlockResponse, Direction},
 };
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
-<span class="kw">use</span> <span class="ident">futures</span>::{
-	<span class="ident">channel</span>::{<span class="ident">mpsc</span>, <span class="ident">oneshot</span>},
-	<span class="ident">stream::StreamExt</span>,
+<span class="kw">use </span>codec::{Decode, Encode};
+<span class="kw">use </span>futures::{
+	channel::{mpsc, oneshot},
+	stream::StreamExt,
 };
-<span class="kw">use</span> <span class="ident">libp2p::PeerId</span>;
-<span class="kw">use</span> <span class="ident">log::debug</span>;
-<span class="kw">use</span> <span class="ident">lru::LruCache</span>;
-<span class="kw">use</span> <span class="ident">prost::Message</span>;
-<span class="kw">use</span> <span class="ident">sc_client_api::BlockBackend</span>;
-<span class="kw">use</span> <span class="ident">sc_network_common</span>::{
-	<span class="ident">config::ProtocolId</span>,
-	<span class="ident">request_responses</span>::{<span class="ident">IncomingRequest</span>, <span class="ident">OutgoingResponse</span>, <span class="ident">ProtocolConfig</span>},
+<span class="kw">use </span>libp2p::PeerId;
+<span class="kw">use </span>log::debug;
+<span class="kw">use </span>lru::LruCache;
+<span class="kw">use </span>prost::Message;
+<span class="kw">use </span>sc_client_api::BlockBackend;
+<span class="kw">use </span>sc_network_common::{
+	config::ProtocolId,
+	request_responses::{IncomingRequest, OutgoingResponse, ProtocolConfig},
 };
-<span class="kw">use</span> <span class="ident">sp_blockchain::HeaderBackend</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">generic::BlockId</span>,
-	<span class="ident">traits</span>::{<span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>, <span class="ident">Header</span>, <span class="ident">One</span>, <span class="ident">Zero</span>},
+<span class="kw">use </span>sp_blockchain::HeaderBackend;
+<span class="kw">use </span>sp_runtime::{
+	generic::BlockId,
+	traits::{Block <span class="kw">as </span>BlockT, Header, One, Zero},
 };
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">cmp::min</span>,
-	<span class="ident">hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>},
-	<span class="ident">sync::Arc</span>,
-	<span class="ident">time::Duration</span>,
+<span class="kw">use </span>std::{
+	cmp::min,
+	hash::{Hash, Hasher},
+	sync::Arc,
+	time::Duration,
 };
 
-<span class="kw">const</span> <span class="ident">LOG_TARGET</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;sync&quot;</span>;
-<span class="kw">const</span> <span class="ident">MAX_BLOCKS_IN_RESPONSE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
-<span class="kw">const</span> <span class="ident">MAX_BODY_BYTES</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span> <span class="op">*</span> <span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span>;
-<span class="kw">const</span> <span class="ident">MAX_NUMBER_OF_SAME_REQUESTS_PER_PEER</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span>;
+<span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;sync&quot;</span>;
+<span class="kw">const </span>MAX_BLOCKS_IN_RESPONSE: usize = <span class="number">128</span>;
+<span class="kw">const </span>MAX_BODY_BYTES: usize = <span class="number">8 </span>* <span class="number">1024 </span>* <span class="number">1024</span>;
+<span class="kw">const </span>MAX_NUMBER_OF_SAME_REQUESTS_PER_PEER: usize = <span class="number">2</span>;
 
-<span class="kw">mod</span> <span class="ident">rep</span> {
-	<span class="kw">use</span> <span class="ident">sc_peerset::ReputationChange</span> <span class="kw">as</span> <span class="ident">Rep</span>;
+<span class="kw">mod </span>rep {
+	<span class="kw">use </span>sc_peerset::ReputationChange <span class="kw">as </span>Rep;
 
-	<span class="doccomment">/// Reputation change when a peer sent us the same request multiple times.</span>
-	<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SAME_REQUEST</span>: <span class="ident">Rep</span> <span class="op">=</span> <span class="ident">Rep::new_fatal</span>(<span class="string">&quot;Same block request multiple times&quot;</span>);
+	<span class="doccomment">/// Reputation change when a peer sent us the same request multiple times.
+	</span><span class="kw">pub const </span>SAME_REQUEST: Rep = Rep::new_fatal(<span class="string">&quot;Same block request multiple times&quot;</span>);
 
-	<span class="doccomment">/// Reputation change when a peer sent us the same &quot;small&quot; request multiple times.</span>
-	<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SAME_SMALL_REQUEST</span>: <span class="ident">Rep</span> <span class="op">=</span>
-		<span class="ident">Rep::new</span>(<span class="op">-</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>), <span class="string">&quot;same small block request multiple times&quot;</span>);
+	<span class="doccomment">/// Reputation change when a peer sent us the same &quot;small&quot; request multiple times.
+	</span><span class="kw">pub const </span>SAME_SMALL_REQUEST: Rep =
+		Rep::new(-(<span class="number">1 </span>&lt;&lt; <span class="number">10</span>), <span class="string">&quot;same small block request multiple times&quot;</span>);
 }
 
-<span class="doccomment">/// Generates a [`ProtocolConfig`] for the block request protocol, refusing incoming requests.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_protocol_config</span>(<span class="ident">protocol_id</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolId</span>) -&gt; <span class="ident">ProtocolConfig</span> {
-	<span class="ident">ProtocolConfig</span> {
-		<span class="ident">name</span>: <span class="ident">generate_protocol_name</span>(<span class="ident">protocol_id</span>).<span class="ident">into</span>(),
-		<span class="ident">max_request_size</span>: <span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span>,
-		<span class="ident">max_response_size</span>: <span class="number">16</span> <span class="op">*</span> <span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span>,
-		<span class="ident">request_timeout</span>: <span class="ident">Duration::from_secs</span>(<span class="number">20</span>),
-		<span class="ident">inbound_queue</span>: <span class="prelude-val">None</span>,
+<span class="doccomment">/// Generates a [`ProtocolConfig`] for the block request protocol, refusing incoming requests.
+</span><span class="kw">pub fn </span>generate_protocol_config(protocol_id: <span class="kw-2">&amp;</span>ProtocolId) -&gt; ProtocolConfig {
+	ProtocolConfig {
+		name: generate_protocol_name(protocol_id).into(),
+		max_request_size: <span class="number">1024 </span>* <span class="number">1024</span>,
+		max_response_size: <span class="number">16 </span>* <span class="number">1024 </span>* <span class="number">1024</span>,
+		request_timeout: Duration::from_secs(<span class="number">20</span>),
+		inbound_queue: <span class="prelude-val">None</span>,
 	}
 }
 
-<span class="doccomment">/// Generate the block protocol name from chain specific protocol identifier.</span>
-<span class="kw">fn</span> <span class="ident">generate_protocol_name</span>(<span class="ident">protocol_id</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolId</span>) -&gt; <span class="ident">String</span> {
-	<span class="macro">format!</span>(<span class="string">&quot;/{}/sync/2&quot;</span>, <span class="ident">protocol_id</span>.<span class="ident">as_ref</span>())
+<span class="doccomment">/// Generate the block protocol name from chain specific protocol identifier.
+</span><span class="kw">fn </span>generate_protocol_name(protocol_id: <span class="kw-2">&amp;</span>ProtocolId) -&gt; String {
+	<span class="macro">format!</span>(<span class="string">&quot;/{}/sync/2&quot;</span>, protocol_id.as_ref())
 }
 
-<span class="doccomment">/// The key of [`BlockRequestHandler::seen_requests`].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Eq</span>, <span class="ident">PartialEq</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">struct</span> <span class="ident">SeenRequestsKey</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> {
-	<span class="ident">peer</span>: <span class="ident">PeerId</span>,
-	<span class="ident">from</span>: <span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">max_blocks</span>: <span class="ident">usize</span>,
-	<span class="ident">direction</span>: <span class="ident">Direction</span>,
-	<span class="ident">attributes</span>: <span class="ident">BlockAttributes</span>,
-	<span class="ident">support_multiple_justifications</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// The key of [`BlockRequestHandler::seen_requests`].
+</span><span class="attribute">#[derive(Eq, PartialEq, Clone)]
+</span><span class="kw">struct </span>SeenRequestsKey&lt;B: BlockT&gt; {
+	peer: PeerId,
+	from: BlockId&lt;B&gt;,
+	max_blocks: usize,
+	direction: Direction,
+	attributes: BlockAttributes,
+	support_multiple_justifications: bool,
 }
 
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::derive_hash_xor_eq</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">SeenRequestsKey</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">state</span>: <span class="kw-2">&amp;mut</span> <span class="ident">H</span>) {
-		<span class="self">self</span>.<span class="ident">peer</span>.<span class="ident">hash</span>(<span class="ident">state</span>);
-		<span class="self">self</span>.<span class="ident">max_blocks</span>.<span class="ident">hash</span>(<span class="ident">state</span>);
-		<span class="self">self</span>.<span class="ident">direction</span>.<span class="ident">hash</span>(<span class="ident">state</span>);
-		<span class="self">self</span>.<span class="ident">attributes</span>.<span class="ident">hash</span>(<span class="ident">state</span>);
-		<span class="self">self</span>.<span class="ident">support_multiple_justifications</span>.<span class="ident">hash</span>(<span class="ident">state</span>);
-		<span class="kw">match</span> <span class="self">self</span>.<span class="ident">from</span> {
-			<span class="ident">BlockId::Hash</span>(<span class="ident">h</span>) =&gt; <span class="ident">h</span>.<span class="ident">hash</span>(<span class="ident">state</span>),
-			<span class="ident">BlockId::Number</span>(<span class="ident">n</span>) =&gt; <span class="ident">n</span>.<span class="ident">hash</span>(<span class="ident">state</span>),
+<span class="attribute">#[allow(clippy::derive_hash_xor_eq)]
+</span><span class="kw">impl</span>&lt;B: BlockT&gt; Hash <span class="kw">for </span>SeenRequestsKey&lt;B&gt; {
+	<span class="kw">fn </span>hash&lt;H: Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
+		<span class="self">self</span>.peer.hash(state);
+		<span class="self">self</span>.max_blocks.hash(state);
+		<span class="self">self</span>.direction.hash(state);
+		<span class="self">self</span>.attributes.hash(state);
+		<span class="self">self</span>.support_multiple_justifications.hash(state);
+		<span class="kw">match </span><span class="self">self</span>.from {
+			BlockId::Hash(h) =&gt; h.hash(state),
+			BlockId::Number(n) =&gt; n.hash(state),
 		}
 	}
 }
 
-<span class="doccomment">/// The value of [`BlockRequestHandler::seen_requests`].</span>
-<span class="kw">enum</span> <span class="ident">SeenRequestsValue</span> {
-	<span class="doccomment">/// First time we have seen the request.</span>
-	<span class="ident">First</span>,
-	<span class="doccomment">/// We have fulfilled the request `n` times.</span>
-	<span class="ident">Fulfilled</span>(<span class="ident">usize</span>),
+<span class="doccomment">/// The value of [`BlockRequestHandler::seen_requests`].
+</span><span class="kw">enum </span>SeenRequestsValue {
+	<span class="doccomment">/// First time we have seen the request.
+	</span>First,
+	<span class="doccomment">/// We have fulfilled the request `n` times.
+	</span>Fulfilled(usize),
 }
 
-<span class="doccomment">/// Handler for incoming block requests from a remote peer.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BlockRequestHandler</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span>, <span class="ident">Client</span><span class="op">&gt;</span> {
-	<span class="ident">client</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span>,
-	<span class="ident">request_receiver</span>: <span class="ident">mpsc::Receiver</span><span class="op">&lt;</span><span class="ident">IncomingRequest</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Maps from request to number of times we have seen this request.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This is used to check if a peer is spamming us with the same request.</span>
-	<span class="ident">seen_requests</span>: <span class="ident">LruCache</span><span class="op">&lt;</span><span class="ident">SeenRequestsKey</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">SeenRequestsValue</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Handler for incoming block requests from a remote peer.
+</span><span class="kw">pub struct </span>BlockRequestHandler&lt;B: BlockT, Client&gt; {
+	client: Arc&lt;Client&gt;,
+	request_receiver: mpsc::Receiver&lt;IncomingRequest&gt;,
+	<span class="doccomment">/// Maps from request to number of times we have seen this request.
+	///
+	/// This is used to check if a peer is spamming us with the same request.
+	</span>seen_requests: LruCache&lt;SeenRequestsKey&lt;B&gt;, SeenRequestsValue&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Client</span><span class="op">&gt;</span> <span class="ident">BlockRequestHandler</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Client</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">B</span>: <span class="ident">BlockT</span>,
-	<span class="ident">Client</span>: <span class="ident">HeaderBackend</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">BlockBackend</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+<span class="kw">impl</span>&lt;B, Client&gt; BlockRequestHandler&lt;B, Client&gt;
+<span class="kw">where
+	</span>B: BlockT,
+	Client: HeaderBackend&lt;B&gt; + BlockBackend&lt;B&gt; + Send + Sync + <span class="lifetime">&#39;static</span>,
 {
-	<span class="doccomment">/// Create a new [`BlockRequestHandler`].</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-		<span class="ident">protocol_id</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolId</span>,
-		<span class="ident">client</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span>,
-		<span class="ident">num_peer_hint</span>: <span class="ident">usize</span>,
-	) -&gt; (<span class="self">Self</span>, <span class="ident">ProtocolConfig</span>) {
-		<span class="comment">// Reserve enough request slots for one request per peer when we are at the maximum</span>
-		<span class="comment">// number of peers.</span>
-		<span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">request_receiver</span>) <span class="op">=</span> <span class="ident">mpsc::channel</span>(<span class="ident">num_peer_hint</span>);
+	<span class="doccomment">/// Create a new [`BlockRequestHandler`].
+	</span><span class="kw">pub fn </span>new(
+		protocol_id: <span class="kw-2">&amp;</span>ProtocolId,
+		client: Arc&lt;Client&gt;,
+		num_peer_hint: usize,
+	) -&gt; (<span class="self">Self</span>, ProtocolConfig) {
+		<span class="comment">// Reserve enough request slots for one request per peer when we are at the maximum
+		// number of peers.
+		</span><span class="kw">let </span>(tx, request_receiver) = mpsc::channel(num_peer_hint);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol_config</span> <span class="op">=</span> <span class="ident">generate_protocol_config</span>(<span class="ident">protocol_id</span>);
-		<span class="ident">protocol_config</span>.<span class="ident">inbound_queue</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">tx</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>protocol_config = generate_protocol_config(protocol_id);
+		protocol_config.inbound_queue = <span class="prelude-val">Some</span>(tx);
 
-		<span class="kw">let</span> <span class="ident">seen_requests</span> <span class="op">=</span> <span class="ident">LruCache::new</span>(<span class="ident">num_peer_hint</span> <span class="op">*</span> <span class="number">2</span>);
+		<span class="kw">let </span>seen_requests = LruCache::new(num_peer_hint * <span class="number">2</span>);
 
-		(<span class="self">Self</span> { <span class="ident">client</span>, <span class="ident">request_receiver</span>, <span class="ident">seen_requests</span> }, <span class="ident">protocol_config</span>)
+		(<span class="self">Self </span>{ client, request_receiver, seen_requests }, protocol_config)
 	}
 
-	<span class="doccomment">/// Run [`BlockRequestHandler`].</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">mut</span> <span class="self">self</span>) {
-		<span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">request</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">request_receiver</span>.<span class="ident">next</span>().<span class="kw">await</span> {
-			<span class="kw">let</span> <span class="ident">IncomingRequest</span> { <span class="ident">peer</span>, <span class="ident">payload</span>, <span class="ident">pending_response</span> } <span class="op">=</span> <span class="ident">request</span>;
+	<span class="doccomment">/// Run [`BlockRequestHandler`].
+	</span><span class="kw">pub async fn </span>run(<span class="kw-2">mut </span><span class="self">self</span>) {
+		<span class="kw">while let </span><span class="prelude-val">Some</span>(request) = <span class="self">self</span>.request_receiver.next().<span class="kw">await </span>{
+			<span class="kw">let </span>IncomingRequest { peer, payload, pending_response } = request;
 
-			<span class="kw">match</span> <span class="self">self</span>.<span class="ident">handle_request</span>(<span class="ident">payload</span>, <span class="ident">pending_response</span>, <span class="kw-2">&amp;</span><span class="ident">peer</span>) {
-				<span class="prelude-val">Ok</span>(()) =&gt; <span class="macro">debug!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Handled block request from {}.&quot;</span>, <span class="ident">peer</span>),
-				<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">debug!</span>(
-					<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
-					<span class="string">&quot;Failed to handle block request from {}: {}&quot;</span>, <span class="ident">peer</span>, <span class="ident">e</span>,
+			<span class="kw">match </span><span class="self">self</span>.handle_request(payload, pending_response, <span class="kw-2">&amp;</span>peer) {
+				<span class="prelude-val">Ok</span>(()) =&gt; <span class="macro">debug!</span>(target: LOG_TARGET, <span class="string">&quot;Handled block request from {}.&quot;</span>, peer),
+				<span class="prelude-val">Err</span>(e) =&gt; <span class="macro">debug!</span>(
+					target: LOG_TARGET,
+					<span class="string">&quot;Failed to handle block request from {}: {}&quot;</span>, peer, e,
 				),
 			}
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">handle_request</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">payload</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">pending_response</span>: <span class="ident">oneshot::Sender</span><span class="op">&lt;</span><span class="ident">OutgoingResponse</span><span class="op">&gt;</span>,
-		<span class="ident">peer</span>: <span class="kw-2">&amp;</span><span class="ident">PeerId</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">HandleRequestError</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::schema::v1::BlockRequest::decode</span>(<span class="kw-2">&amp;</span><span class="ident">payload</span>[..])<span class="question-mark">?</span>;
+	<span class="kw">fn </span>handle_request(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		payload: Vec&lt;u8&gt;,
+		pending_response: oneshot::Sender&lt;OutgoingResponse&gt;,
+		peer: <span class="kw-2">&amp;</span>PeerId,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), HandleRequestError&gt; {
+		<span class="kw">let </span>request = <span class="kw">crate</span>::schema::v1::BlockRequest::decode(<span class="kw-2">&amp;</span>payload[..])<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">from_block_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">request</span>.<span class="ident">from_block</span>.<span class="ident">ok_or</span>(<span class="ident">HandleRequestError::MissingFromField</span>)<span class="question-mark">?</span> {
-			<span class="ident">FromBlock::Hash</span>(<span class="kw-2">ref</span> <span class="ident">h</span>) =&gt; {
-				<span class="kw">let</span> <span class="ident">h</span> <span class="op">=</span> <span class="ident">Decode::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">h</span>.<span class="ident">as_ref</span>())<span class="question-mark">?</span>;
-				<span class="ident">BlockId</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="ident">::Hash</span>(<span class="ident">h</span>)
+		<span class="kw">let </span>from_block_id = <span class="kw">match </span>request.from_block.ok_or(HandleRequestError::MissingFromField)<span class="question-mark">? </span>{
+			FromBlock::Hash(<span class="kw-2">ref </span>h) =&gt; {
+				<span class="kw">let </span>h = Decode::decode(<span class="kw-2">&amp;mut </span>h.as_ref())<span class="question-mark">?</span>;
+				BlockId::&lt;B&gt;::Hash(h)
 			},
-			<span class="ident">FromBlock::Number</span>(<span class="kw-2">ref</span> <span class="ident">n</span>) =&gt; {
-				<span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">Decode::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">n</span>.<span class="ident">as_ref</span>())<span class="question-mark">?</span>;
-				<span class="ident">BlockId</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="ident">::Number</span>(<span class="ident">n</span>)
+			FromBlock::Number(<span class="kw-2">ref </span>n) =&gt; {
+				<span class="kw">let </span>n = Decode::decode(<span class="kw-2">&amp;mut </span>n.as_ref())<span class="question-mark">?</span>;
+				BlockId::&lt;B&gt;::Number(n)
 			},
 		};
 
-		<span class="kw">let</span> <span class="ident">max_blocks</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">max_blocks</span> <span class="op">==</span> <span class="number">0</span> {
-			<span class="ident">MAX_BLOCKS_IN_RESPONSE</span>
-		} <span class="kw">else</span> {
-			<span class="ident">min</span>(<span class="ident">request</span>.<span class="ident">max_blocks</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">MAX_BLOCKS_IN_RESPONSE</span>)
+		<span class="kw">let </span>max_blocks = <span class="kw">if </span>request.max_blocks == <span class="number">0 </span>{
+			MAX_BLOCKS_IN_RESPONSE
+		} <span class="kw">else </span>{
+			min(request.max_blocks <span class="kw">as </span>usize, MAX_BLOCKS_IN_RESPONSE)
 		};
 
-		<span class="kw">let</span> <span class="ident">direction</span> <span class="op">=</span>
-			<span class="ident">Direction::from_i32</span>(<span class="ident">request</span>.<span class="ident">direction</span>).<span class="ident">ok_or</span>(<span class="ident">HandleRequestError::ParseDirection</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>direction =
+			Direction::from_i32(request.direction).ok_or(HandleRequestError::ParseDirection)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">attributes</span> <span class="op">=</span> <span class="ident">BlockAttributes::from_be_u32</span>(<span class="ident">request</span>.<span class="ident">fields</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>attributes = BlockAttributes::from_be_u32(request.fields)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">support_multiple_justifications</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">support_multiple_justifications</span>;
+		<span class="kw">let </span>support_multiple_justifications = request.support_multiple_justifications;
 
-		<span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">SeenRequestsKey</span> {
-			<span class="ident">peer</span>: <span class="kw-2">*</span><span class="ident">peer</span>,
-			<span class="ident">max_blocks</span>,
-			<span class="ident">direction</span>,
-			<span class="ident">from</span>: <span class="ident">from_block_id</span>,
-			<span class="ident">attributes</span>,
-			<span class="ident">support_multiple_justifications</span>,
+		<span class="kw">let </span>key = SeenRequestsKey {
+			peer: <span class="kw-2">*</span>peer,
+			max_blocks,
+			direction,
+			from: from_block_id,
+			attributes,
+			support_multiple_justifications,
 		};
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reputation_change</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>reputation_change = <span class="prelude-val">None</span>;
 
-		<span class="kw">let</span> <span class="ident">small_request</span> <span class="op">=</span> <span class="ident">attributes</span>
-			.<span class="ident">difference</span>(<span class="ident">BlockAttributes::HEADER</span> <span class="op">|</span> <span class="ident">BlockAttributes::JUSTIFICATION</span>)
-			.<span class="ident">is_empty</span>();
+		<span class="kw">let </span>small_request = attributes
+			.difference(BlockAttributes::HEADER | BlockAttributes::JUSTIFICATION)
+			.is_empty();
 
-		<span class="kw">match</span> <span class="self">self</span>.<span class="ident">seen_requests</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>) {
-			<span class="prelude-val">Some</span>(<span class="ident">SeenRequestsValue::First</span>) =&gt; {},
-			<span class="prelude-val">Some</span>(<span class="ident">SeenRequestsValue::Fulfilled</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">requests</span>)) =&gt; {
-				<span class="kw-2">*</span><span class="ident">requests</span> <span class="op">=</span> <span class="ident">requests</span>.<span class="ident">saturating_add</span>(<span class="number">1</span>);
+		<span class="kw">match </span><span class="self">self</span>.seen_requests.get_mut(<span class="kw-2">&amp;</span>key) {
+			<span class="prelude-val">Some</span>(SeenRequestsValue::First) =&gt; {},
+			<span class="prelude-val">Some</span>(SeenRequestsValue::Fulfilled(<span class="kw-2">ref mut </span>requests)) =&gt; {
+				<span class="kw-2">*</span>requests = requests.saturating_add(<span class="number">1</span>);
 
-				<span class="kw">if</span> <span class="kw-2">*</span><span class="ident">requests</span> <span class="op">&gt;</span> <span class="ident">MAX_NUMBER_OF_SAME_REQUESTS_PER_PEER</span> {
-					<span class="ident">reputation_change</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw">if</span> <span class="ident">small_request</span> {
-						<span class="ident">rep::SAME_SMALL_REQUEST</span>
-					} <span class="kw">else</span> {
-						<span class="ident">rep::SAME_REQUEST</span>
+				<span class="kw">if </span><span class="kw-2">*</span>requests &gt; MAX_NUMBER_OF_SAME_REQUESTS_PER_PEER {
+					reputation_change = <span class="prelude-val">Some</span>(<span class="kw">if </span>small_request {
+						rep::SAME_SMALL_REQUEST
+					} <span class="kw">else </span>{
+						rep::SAME_REQUEST
 					});
 				}
 			},
-			<span class="prelude-val">None</span> =&gt; {
-				<span class="self">self</span>.<span class="ident">seen_requests</span>.<span class="ident">put</span>(<span class="ident">key</span>.<span class="ident">clone</span>(), <span class="ident">SeenRequestsValue::First</span>);
+			<span class="prelude-val">None </span>=&gt; {
+				<span class="self">self</span>.seen_requests.put(key.clone(), SeenRequestsValue::First);
 			},
 		}
 
 		<span class="macro">debug!</span>(
-			<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
+			target: LOG_TARGET,
 			<span class="string">&quot;Handling block request from {}: Starting at `{:?}` with maximum blocks \
 			 of `{}`, direction `{:?}` and attributes `{:?}`.&quot;</span>,
-			<span class="ident">peer</span>,
-			<span class="ident">from_block_id</span>,
-			<span class="ident">max_blocks</span>,
-			<span class="ident">direction</span>,
-			<span class="ident">attributes</span>,
+			peer,
+			from_block_id,
+			max_blocks,
+			direction,
+			attributes,
 		);
 
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">reputation_change</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">small_request</span> {
-			<span class="kw">let</span> <span class="ident">block_response</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_block_response</span>(
-				<span class="ident">attributes</span>,
-				<span class="ident">from_block_id</span>,
-				<span class="ident">direction</span>,
-				<span class="ident">max_blocks</span>,
-				<span class="ident">support_multiple_justifications</span>,
+		<span class="kw">let </span>result = <span class="kw">if </span>reputation_change.is_none() || small_request {
+			<span class="kw">let </span>block_response = <span class="self">self</span>.get_block_response(
+				attributes,
+				from_block_id,
+				direction,
+				max_blocks,
+				support_multiple_justifications,
 			)<span class="question-mark">?</span>;
 
-			<span class="comment">// If any of the blocks contains any data, we can consider it as successful request.</span>
-			<span class="kw">if</span> <span class="ident">block_response</span>
-				.<span class="ident">blocks</span>
-				.<span class="ident">iter</span>()
-				.<span class="ident">any</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="op">!</span><span class="ident">b</span>.<span class="ident">header</span>.<span class="ident">is_empty</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">b</span>.<span class="ident">body</span>.<span class="ident">is_empty</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">b</span>.<span class="ident">is_empty_justification</span>)
+			<span class="comment">// If any of the blocks contains any data, we can consider it as successful request.
+			</span><span class="kw">if </span>block_response
+				.blocks
+				.iter()
+				.any(|b| !b.header.is_empty() || !b.body.is_empty() || b.is_empty_justification)
 			{
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">seen_requests</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>) {
-					<span class="comment">// If this is the first time we have processed this request, we need to change</span>
-					<span class="comment">// it to `Fulfilled`.</span>
-					<span class="kw">if</span> <span class="kw">let</span> <span class="ident">SeenRequestsValue::First</span> <span class="op">=</span> <span class="ident">value</span> {
-						<span class="kw-2">*</span><span class="ident">value</span> <span class="op">=</span> <span class="ident">SeenRequestsValue::Fulfilled</span>(<span class="number">1</span>);
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(value) = <span class="self">self</span>.seen_requests.get_mut(<span class="kw-2">&amp;</span>key) {
+					<span class="comment">// If this is the first time we have processed this request, we need to change
+					// it to `Fulfilled`.
+					</span><span class="kw">if let </span>SeenRequestsValue::First = value {
+						<span class="kw-2">*</span>value = SeenRequestsValue::Fulfilled(<span class="number">1</span>);
 					}
 				}
 			}
 
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">block_response</span>.<span class="ident">encoded_len</span>());
-			<span class="ident">block_response</span>.<span class="ident">encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>)<span class="question-mark">?</span>;
+			<span class="kw">let </span><span class="kw-2">mut </span>data = Vec::with_capacity(block_response.encoded_len());
+			block_response.encode(<span class="kw-2">&amp;mut </span>data)<span class="question-mark">?</span>;
 
-			<span class="prelude-val">Ok</span>(<span class="ident">data</span>)
-		} <span class="kw">else</span> {
+			<span class="prelude-val">Ok</span>(data)
+		} <span class="kw">else </span>{
 			<span class="prelude-val">Err</span>(())
 		};
 
-		<span class="ident">pending_response</span>
-			.<span class="ident">send</span>(<span class="ident">OutgoingResponse</span> {
-				<span class="ident">result</span>,
-				<span class="ident">reputation_changes</span>: <span class="ident">reputation_change</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>(),
-				<span class="ident">sent_feedback</span>: <span class="prelude-val">None</span>,
+		pending_response
+			.send(OutgoingResponse {
+				result,
+				reputation_changes: reputation_change.into_iter().collect(),
+				sent_feedback: <span class="prelude-val">None</span>,
 			})
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">HandleRequestError::SendResponse</span>)
+			.map_err(|<span class="kw">_</span>| HandleRequestError::SendResponse)
 	}
 
-	<span class="kw">fn</span> <span class="ident">get_block_response</span>(
+	<span class="kw">fn </span>get_block_response(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">attributes</span>: <span class="ident">BlockAttributes</span>,
-		<span class="kw-2">mut</span> <span class="ident">block_id</span>: <span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">direction</span>: <span class="ident">Direction</span>,
-		<span class="ident">max_blocks</span>: <span class="ident">usize</span>,
-		<span class="ident">support_multiple_justifications</span>: <span class="ident">bool</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BlockResponse</span>, <span class="ident">HandleRequestError</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">get_header</span> <span class="op">=</span> <span class="ident">attributes</span>.<span class="ident">contains</span>(<span class="ident">BlockAttributes::HEADER</span>);
-		<span class="kw">let</span> <span class="ident">get_body</span> <span class="op">=</span> <span class="ident">attributes</span>.<span class="ident">contains</span>(<span class="ident">BlockAttributes::BODY</span>);
-		<span class="kw">let</span> <span class="ident">get_indexed_body</span> <span class="op">=</span> <span class="ident">attributes</span>.<span class="ident">contains</span>(<span class="ident">BlockAttributes::INDEXED_BODY</span>);
-		<span class="kw">let</span> <span class="ident">get_justification</span> <span class="op">=</span> <span class="ident">attributes</span>.<span class="ident">contains</span>(<span class="ident">BlockAttributes::JUSTIFICATION</span>);
+		attributes: BlockAttributes,
+		<span class="kw-2">mut </span>block_id: BlockId&lt;B&gt;,
+		direction: Direction,
+		max_blocks: usize,
+		support_multiple_justifications: bool,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;BlockResponse, HandleRequestError&gt; {
+		<span class="kw">let </span>get_header = attributes.contains(BlockAttributes::HEADER);
+		<span class="kw">let </span>get_body = attributes.contains(BlockAttributes::BODY);
+		<span class="kw">let </span>get_indexed_body = attributes.contains(BlockAttributes::INDEXED_BODY);
+		<span class="kw">let </span>get_justification = attributes.contains(BlockAttributes::JUSTIFICATION);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blocks</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+		<span class="kw">let </span><span class="kw-2">mut </span>blocks = Vec::new();
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_size</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">header</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">header</span>(<span class="ident">block_id</span>).<span class="ident">unwrap_or_default</span>() {
-			<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">number</span>();
-			<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">header</span>.<span class="ident">hash</span>();
-			<span class="kw">let</span> <span class="ident">parent_hash</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">header</span>.<span class="ident">parent_hash</span>();
-			<span class="kw">let</span> <span class="ident">justifications</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">get_justification</span> {
-				<span class="self">self</span>.<span class="ident">client</span>.<span class="ident">justifications</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Hash</span>(<span class="ident">hash</span>))<span class="question-mark">?</span>
-			} <span class="kw">else</span> {
-				<span class="prelude-val">None</span>
-			};
+		<span class="kw">let </span><span class="kw-2">mut </span>total_size: usize = <span class="number">0</span>;
+		<span class="kw">while let </span><span class="prelude-val">Some</span>(header) = <span class="self">self</span>.client.header(block_id).unwrap_or_default() {
+			<span class="kw">let </span>number = <span class="kw-2">*</span>header.number();
+			<span class="kw">let </span>hash = header.hash();
+			<span class="kw">let </span>parent_hash = <span class="kw-2">*</span>header.parent_hash();
+			<span class="kw">let </span>justifications = <span class="kw">if </span>get_justification {
+				<span class="self">self</span>.client.justifications(<span class="kw-2">&amp;</span>BlockId::Hash(hash))<span class="question-mark">?
+			</span>} <span class="kw">else </span>{
+				<span class="prelude-val">None
+			</span>};
 
-			<span class="kw">let</span> (<span class="ident">justifications</span>, <span class="ident">justification</span>, <span class="ident">is_empty_justification</span>) <span class="op">=</span>
-				<span class="kw">if</span> <span class="ident">support_multiple_justifications</span> {
-					<span class="kw">let</span> <span class="ident">justifications</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">justifications</span> {
-						<span class="prelude-val">Some</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>.<span class="ident">encode</span>(),
-						<span class="prelude-val">None</span> =&gt; <span class="ident">Vec::new</span>(),
+			<span class="kw">let </span>(justifications, justification, is_empty_justification) =
+				<span class="kw">if </span>support_multiple_justifications {
+					<span class="kw">let </span>justifications = <span class="kw">match </span>justifications {
+						<span class="prelude-val">Some</span>(v) =&gt; v.encode(),
+						<span class="prelude-val">None </span>=&gt; Vec::new(),
 					};
-					(<span class="ident">justifications</span>, <span class="ident">Vec::new</span>(), <span class="bool-val">false</span>)
-				} <span class="kw">else</span> {
-					<span class="comment">// For now we keep compatibility by selecting precisely the GRANDPA one, and not</span>
-					<span class="comment">// just the first one. When sending we could have just taken the first one,</span>
-					<span class="comment">// since we don&#39;t expect there to be any other kind currently, but when</span>
-					<span class="comment">// receiving we need to add the engine ID tag.</span>
-					<span class="comment">// The ID tag is hardcoded here to avoid depending on the GRANDPA crate, and</span>
-					<span class="comment">// will be removed once we remove the backwards compatibility.</span>
-					<span class="comment">// See: https://github.com/paritytech/substrate/issues/8172</span>
-					<span class="kw">let</span> <span class="ident">justification</span> <span class="op">=</span>
-						<span class="ident">justifications</span>.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">just</span><span class="op">|</span> <span class="ident">just</span>.<span class="ident">into_justification</span>(<span class="kw-2">*</span><span class="string">b&quot;FRNK&quot;</span>));
+					(justifications, Vec::new(), <span class="bool-val">false</span>)
+				} <span class="kw">else </span>{
+					<span class="comment">// For now we keep compatibility by selecting precisely the GRANDPA one, and not
+					// just the first one. When sending we could have just taken the first one,
+					// since we don&#39;t expect there to be any other kind currently, but when
+					// receiving we need to add the engine ID tag.
+					// The ID tag is hardcoded here to avoid depending on the GRANDPA crate, and
+					// will be removed once we remove the backwards compatibility.
+					// See: https://github.com/paritytech/substrate/issues/8172
+					</span><span class="kw">let </span>justification =
+						justifications.and_then(|just| just.into_justification(<span class="kw-2">*</span><span class="string">b&quot;FRNK&quot;</span>));
 
-					<span class="kw">let</span> <span class="ident">is_empty_justification</span> <span class="op">=</span>
-						<span class="ident">justification</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">j</span><span class="op">|</span> <span class="ident">j</span>.<span class="ident">is_empty</span>()).<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>);
+					<span class="kw">let </span>is_empty_justification =
+						justification.as_ref().map(|j| j.is_empty()).unwrap_or(<span class="bool-val">false</span>);
 
-					<span class="kw">let</span> <span class="ident">justification</span> <span class="op">=</span> <span class="ident">justification</span>.<span class="ident">unwrap_or_default</span>();
+					<span class="kw">let </span>justification = justification.unwrap_or_default();
 
-					(<span class="ident">Vec::new</span>(), <span class="ident">justification</span>, <span class="ident">is_empty_justification</span>)
+					(Vec::new(), justification, is_empty_justification)
 				};
 
-			<span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">get_body</span> {
-				<span class="kw">match</span> <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">block_body</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Hash</span>(<span class="ident">hash</span>))<span class="question-mark">?</span> {
-					<span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">extrinsics</span>) =&gt;
-						<span class="ident">extrinsics</span>.<span class="ident">iter_mut</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">extrinsic</span><span class="op">|</span> <span class="ident">extrinsic</span>.<span class="ident">encode</span>()).<span class="ident">collect</span>(),
-					<span class="prelude-val">None</span> =&gt; {
-						<span class="macro">log::trace!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Missing data for block request.&quot;</span>);
-						<span class="kw">break</span>
-					},
+			<span class="kw">let </span>body = <span class="kw">if </span>get_body {
+				<span class="kw">match </span><span class="self">self</span>.client.block_body(<span class="kw-2">&amp;</span>BlockId::Hash(hash))<span class="question-mark">? </span>{
+					<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>extrinsics) =&gt;
+						extrinsics.iter_mut().map(|extrinsic| extrinsic.encode()).collect(),
+					<span class="prelude-val">None </span>=&gt; {
+						<span class="macro">log::trace!</span>(target: LOG_TARGET, <span class="string">&quot;Missing data for block request.&quot;</span>);
+						<span class="kw">break
+					</span>},
 				}
-			} <span class="kw">else</span> {
-				<span class="ident">Vec::new</span>()
+			} <span class="kw">else </span>{
+				Vec::new()
 			};
 
-			<span class="kw">let</span> <span class="ident">indexed_body</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">get_indexed_body</span> {
-				<span class="kw">match</span> <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">block_indexed_body</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Hash</span>(<span class="ident">hash</span>))<span class="question-mark">?</span> {
-					<span class="prelude-val">Some</span>(<span class="ident">transactions</span>) =&gt; <span class="ident">transactions</span>,
-					<span class="prelude-val">None</span> =&gt; {
+			<span class="kw">let </span>indexed_body = <span class="kw">if </span>get_indexed_body {
+				<span class="kw">match </span><span class="self">self</span>.client.block_indexed_body(<span class="kw-2">&amp;</span>BlockId::Hash(hash))<span class="question-mark">? </span>{
+					<span class="prelude-val">Some</span>(transactions) =&gt; transactions,
+					<span class="prelude-val">None </span>=&gt; {
 						<span class="macro">log::trace!</span>(
-							<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
-							<span class="string">&quot;Missing indexed block data for block request.&quot;</span>
-						);
-						<span class="comment">// If the indexed body is missing we still continue returning headers.</span>
-						<span class="comment">// Ideally `None` should distinguish a missing body from the empty body,</span>
-						<span class="comment">// but the current protobuf based protocol does not allow it.</span>
-						<span class="ident">Vec::new</span>()
+							target: LOG_TARGET,
+							<span class="string">&quot;Missing indexed block data for block request.&quot;
+						</span>);
+						<span class="comment">// If the indexed body is missing we still continue returning headers.
+						// Ideally `None` should distinguish a missing body from the empty body,
+						// but the current protobuf based protocol does not allow it.
+						</span>Vec::new()
 					},
 				}
-			} <span class="kw">else</span> {
-				<span class="ident">Vec::new</span>()
+			} <span class="kw">else </span>{
+				Vec::new()
 			};
 
-			<span class="kw">let</span> <span class="ident">block_data</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::schema::v1::BlockData</span> {
-				<span class="ident">hash</span>: <span class="ident">hash</span>.<span class="ident">encode</span>(),
-				<span class="ident">header</span>: <span class="kw">if</span> <span class="ident">get_header</span> { <span class="ident">header</span>.<span class="ident">encode</span>() } <span class="kw">else</span> { <span class="ident">Vec::new</span>() },
-				<span class="ident">body</span>,
-				<span class="ident">receipt</span>: <span class="ident">Vec::new</span>(),
-				<span class="ident">message_queue</span>: <span class="ident">Vec::new</span>(),
-				<span class="ident">justification</span>,
-				<span class="ident">is_empty_justification</span>,
-				<span class="ident">justifications</span>,
-				<span class="ident">indexed_body</span>,
+			<span class="kw">let </span>block_data = <span class="kw">crate</span>::schema::v1::BlockData {
+				hash: hash.encode(),
+				header: <span class="kw">if </span>get_header { header.encode() } <span class="kw">else </span>{ Vec::new() },
+				body,
+				receipt: Vec::new(),
+				message_queue: Vec::new(),
+				justification,
+				is_empty_justification,
+				justifications,
+				indexed_body,
 			};
 
-			<span class="ident">total_size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">block_data</span>.<span class="ident">body</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">ex</span><span class="op">|</span> <span class="ident">ex</span>.<span class="ident">len</span>()).<span class="ident">sum</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>();
-			<span class="ident">total_size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">block_data</span>.<span class="ident">indexed_body</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">ex</span><span class="op">|</span> <span class="ident">ex</span>.<span class="ident">len</span>()).<span class="ident">sum</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>();
-			<span class="ident">blocks</span>.<span class="ident">push</span>(<span class="ident">block_data</span>);
+			total_size += block_data.body.iter().map(|ex| ex.len()).sum::&lt;usize&gt;();
+			total_size += block_data.indexed_body.iter().map(|ex| ex.len()).sum::&lt;usize&gt;();
+			blocks.push(block_data);
 
-			<span class="kw">if</span> <span class="ident">blocks</span>.<span class="ident">len</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="ident">max_blocks</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">|</span><span class="op">|</span> <span class="ident">total_size</span> <span class="op">&gt;</span> <span class="ident">MAX_BODY_BYTES</span> {
-				<span class="kw">break</span>
-			}
+			<span class="kw">if </span>blocks.len() &gt;= max_blocks <span class="kw">as </span>usize || total_size &gt; MAX_BODY_BYTES {
+				<span class="kw">break
+			</span>}
 
-			<span class="kw">match</span> <span class="ident">direction</span> {
-				<span class="ident">Direction::Ascending</span> =&gt; <span class="ident">block_id</span> <span class="op">=</span> <span class="ident">BlockId::Number</span>(<span class="ident">number</span> <span class="op">+</span> <span class="ident">One::one</span>()),
-				<span class="ident">Direction::Descending</span> =&gt; {
-					<span class="kw">if</span> <span class="ident">number</span>.<span class="ident">is_zero</span>() {
-						<span class="kw">break</span>
-					}
-					<span class="ident">block_id</span> <span class="op">=</span> <span class="ident">BlockId::Hash</span>(<span class="ident">parent_hash</span>)
+			<span class="kw">match </span>direction {
+				Direction::Ascending =&gt; block_id = BlockId::Number(number + One::one()),
+				Direction::Descending =&gt; {
+					<span class="kw">if </span>number.is_zero() {
+						<span class="kw">break
+					</span>}
+					block_id = BlockId::Hash(parent_hash)
 				},
 			}
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">BlockResponse</span> { <span class="ident">blocks</span> })
+		<span class="prelude-val">Ok</span>(BlockResponse { blocks })
 	}
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">thiserror::Error</span>)]</span>
-<span class="kw">enum</span> <span class="ident">HandleRequestError</span> {
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to decode request: {0}.&quot;</span>)]</span>
-	<span class="ident">DecodeProto</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">prost::DecodeError</span>),
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to encode response: {0}.&quot;</span>)]</span>
-	<span class="ident">EncodeProto</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">prost::EncodeError</span>),
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to decode block hash: {0}.&quot;</span>)]</span>
-	<span class="ident">DecodeScale</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">codec::Error</span>),
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Missing `BlockRequest::from_block` field.&quot;</span>)]</span>
-	<span class="ident">MissingFromField</span>,
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to parse BlockRequest::direction.&quot;</span>)]</span>
-	<span class="ident">ParseDirection</span>,
-	<span class="attribute">#[<span class="ident">error</span>(<span class="ident">transparent</span>)]</span>
-	<span class="ident">Client</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">sp_blockchain::Error</span>),
-	<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to send response.&quot;</span>)]</span>
-	<span class="ident">SendResponse</span>,
+<span class="attribute">#[derive(Debug, thiserror::Error)]
+</span><span class="kw">enum </span>HandleRequestError {
+	<span class="attribute">#[error(<span class="string">&quot;Failed to decode request: {0}.&quot;</span>)]
+	</span>DecodeProto(<span class="attribute">#[from] </span>prost::DecodeError),
+	<span class="attribute">#[error(<span class="string">&quot;Failed to encode response: {0}.&quot;</span>)]
+	</span>EncodeProto(<span class="attribute">#[from] </span>prost::EncodeError),
+	<span class="attribute">#[error(<span class="string">&quot;Failed to decode block hash: {0}.&quot;</span>)]
+	</span>DecodeScale(<span class="attribute">#[from] </span>codec::Error),
+	<span class="attribute">#[error(<span class="string">&quot;Missing `BlockRequest::from_block` field.&quot;</span>)]
+	</span>MissingFromField,
+	<span class="attribute">#[error(<span class="string">&quot;Failed to parse BlockRequest::direction.&quot;</span>)]
+	</span>ParseDirection,
+	<span class="attribute">#[error(transparent)]
+	</span>Client(<span class="attribute">#[from] </span>sp_blockchain::Error),
+	<span class="attribute">#[error(<span class="string">&quot;Failed to send response.&quot;</span>)]
+	</span>SendResponse,
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_network_sync" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_network_sync" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

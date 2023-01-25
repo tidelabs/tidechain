@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/legalizer/globalvalue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>globalvalue.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/legalizer/globalvalue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>globalvalue.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -130,133 +125,132 @@
 <span id="125">125</span>
 <span id="126">126</span>
 <span id="127">127</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Legalization of global values.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This module exports the `expand_global_value` function which transforms a `global_value`</span>
-<span class="doccomment">//! instruction into code that depends on the kind of global value referenced.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Legalization of global values.
+//!
+//! This module exports the `expand_global_value` function which transforms a `global_value`
+//! instruction into code that depends on the kind of global value referenced.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cursor</span>::{<span class="ident">Cursor</span>, <span class="ident">FuncCursor</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="self">self</span>, <span class="ident">InstBuilder</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::isa::TargetIsa</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::cursor::{Cursor, FuncCursor};
+<span class="kw">use </span><span class="kw">crate</span>::ir::{<span class="self">self</span>, InstBuilder};
+<span class="kw">use </span><span class="kw">crate</span>::isa::TargetIsa;
 
-<span class="doccomment">/// Expand a `global_value` instruction according to the definition of the global value.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">expand_global_value</span>(
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
-    <span class="ident">global_value</span>: <span class="ident">ir::GlobalValue</span>,
+<span class="doccomment">/// Expand a `global_value` instruction according to the definition of the global value.
+</span><span class="kw">pub fn </span>expand_global_value(
+    inst: ir::Inst,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
+    global_value: ir::GlobalValue,
 ) {
-    <span class="kw">match</span> <span class="ident">func</span>.<span class="ident">global_values</span>[<span class="ident">global_value</span>] {
-        <span class="ident">ir::GlobalValueData::VMContext</span> =&gt; <span class="ident">vmctx_addr</span>(<span class="ident">inst</span>, <span class="ident">func</span>),
-        <span class="ident">ir::GlobalValueData::IAddImm</span> {
-            <span class="ident">base</span>,
-            <span class="ident">offset</span>,
-            <span class="ident">global_type</span>,
-        } =&gt; <span class="ident">iadd_imm_addr</span>(<span class="ident">inst</span>, <span class="ident">func</span>, <span class="ident">base</span>, <span class="ident">offset</span>.<span class="ident">into</span>(), <span class="ident">global_type</span>),
-        <span class="ident">ir::GlobalValueData::Load</span> {
-            <span class="ident">base</span>,
-            <span class="ident">offset</span>,
-            <span class="ident">global_type</span>,
-            <span class="ident">readonly</span>,
-        } =&gt; <span class="ident">load_addr</span>(<span class="ident">inst</span>, <span class="ident">func</span>, <span class="ident">base</span>, <span class="ident">offset</span>, <span class="ident">global_type</span>, <span class="ident">readonly</span>, <span class="ident">isa</span>),
-        <span class="ident">ir::GlobalValueData::Symbol</span> { <span class="ident">tls</span>, .. } =&gt; <span class="ident">symbol</span>(<span class="ident">inst</span>, <span class="ident">func</span>, <span class="ident">global_value</span>, <span class="ident">isa</span>, <span class="ident">tls</span>),
+    <span class="kw">match </span>func.global_values[global_value] {
+        ir::GlobalValueData::VMContext =&gt; vmctx_addr(inst, func),
+        ir::GlobalValueData::IAddImm {
+            base,
+            offset,
+            global_type,
+        } =&gt; iadd_imm_addr(inst, func, base, offset.into(), global_type),
+        ir::GlobalValueData::Load {
+            base,
+            offset,
+            global_type,
+            readonly,
+        } =&gt; load_addr(inst, func, base, offset, global_type, readonly, isa),
+        ir::GlobalValueData::Symbol { tls, .. } =&gt; symbol(inst, func, global_value, isa, tls),
     }
 }
 
-<span class="doccomment">/// Expand a `global_value` instruction for a vmctx global.</span>
-<span class="kw">fn</span> <span class="ident">vmctx_addr</span>(<span class="ident">inst</span>: <span class="ident">ir::Inst</span>, <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>) {
-    <span class="comment">// Get the value representing the `vmctx` argument.</span>
-    <span class="kw">let</span> <span class="ident">vmctx</span> <span class="op">=</span> <span class="ident">func</span>
-        .<span class="ident">special_param</span>(<span class="ident">ir::ArgumentPurpose::VMContext</span>)
-        .<span class="ident">expect</span>(<span class="string">&quot;Missing vmctx parameter&quot;</span>);
+<span class="doccomment">/// Expand a `global_value` instruction for a vmctx global.
+</span><span class="kw">fn </span>vmctx_addr(inst: ir::Inst, func: <span class="kw-2">&amp;mut </span>ir::Function) {
+    <span class="comment">// Get the value representing the `vmctx` argument.
+    </span><span class="kw">let </span>vmctx = func
+        .special_param(ir::ArgumentPurpose::VMContext)
+        .expect(<span class="string">&quot;Missing vmctx parameter&quot;</span>);
 
-    <span class="comment">// Replace the `global_value` instruction&#39;s value with an alias to the vmctx arg.</span>
-    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">first_result</span>(<span class="ident">inst</span>);
-    <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">clear_results</span>(<span class="ident">inst</span>);
-    <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">change_to_alias</span>(<span class="ident">result</span>, <span class="ident">vmctx</span>);
-    <span class="ident">func</span>.<span class="ident">layout</span>.<span class="ident">remove_inst</span>(<span class="ident">inst</span>);
+    <span class="comment">// Replace the `global_value` instruction&#39;s value with an alias to the vmctx arg.
+    </span><span class="kw">let </span>result = func.dfg.first_result(inst);
+    func.dfg.clear_results(inst);
+    func.dfg.change_to_alias(result, vmctx);
+    func.layout.remove_inst(inst);
 }
 
-<span class="doccomment">/// Expand a `global_value` instruction for an iadd_imm global.</span>
-<span class="kw">fn</span> <span class="ident">iadd_imm_addr</span>(
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="ident">base</span>: <span class="ident">ir::GlobalValue</span>,
-    <span class="ident">offset</span>: <span class="ident">i64</span>,
-    <span class="ident">global_type</span>: <span class="ident">ir::Type</span>,
+<span class="doccomment">/// Expand a `global_value` instruction for an iadd_imm global.
+</span><span class="kw">fn </span>iadd_imm_addr(
+    inst: ir::Inst,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    base: ir::GlobalValue,
+    offset: i64,
+    global_type: ir::Type,
 ) {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_inst</span>(<span class="ident">inst</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_inst(inst);
 
-    <span class="comment">// Get the value for the lhs. For tidiness, expand VMContext here so that we avoid</span>
-    <span class="comment">// `vmctx_addr` which creates an otherwise unneeded value alias.</span>
-    <span class="kw">let</span> <span class="ident">lhs</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ir::GlobalValueData::VMContext</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">global_values</span>[<span class="ident">base</span>] {
-        <span class="ident">pos</span>.<span class="ident">func</span>
-            .<span class="ident">special_param</span>(<span class="ident">ir::ArgumentPurpose::VMContext</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;Missing vmctx parameter&quot;</span>)
-    } <span class="kw">else</span> {
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">global_value</span>(<span class="ident">global_type</span>, <span class="ident">base</span>)
+    <span class="comment">// Get the value for the lhs. For tidiness, expand VMContext here so that we avoid
+    // `vmctx_addr` which creates an otherwise unneeded value alias.
+    </span><span class="kw">let </span>lhs = <span class="kw">if let </span>ir::GlobalValueData::VMContext = pos.func.global_values[base] {
+        pos.func
+            .special_param(ir::ArgumentPurpose::VMContext)
+            .expect(<span class="string">&quot;Missing vmctx parameter&quot;</span>)
+    } <span class="kw">else </span>{
+        pos.ins().global_value(global_type, base)
     };
 
-    <span class="comment">// Simply replace the `global_value` instruction with an `iadd_imm`, reusing the result value.</span>
-    <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace</span>(<span class="ident">inst</span>).<span class="ident">iadd_imm</span>(<span class="ident">lhs</span>, <span class="ident">offset</span>);
+    <span class="comment">// Simply replace the `global_value` instruction with an `iadd_imm`, reusing the result value.
+    </span>pos.func.dfg.replace(inst).iadd_imm(lhs, offset);
 }
 
-<span class="doccomment">/// Expand a `global_value` instruction for a load global.</span>
-<span class="kw">fn</span> <span class="ident">load_addr</span>(
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="ident">base</span>: <span class="ident">ir::GlobalValue</span>,
-    <span class="ident">offset</span>: <span class="ident">ir::immediates::Offset32</span>,
-    <span class="ident">global_type</span>: <span class="ident">ir::Type</span>,
-    <span class="ident">readonly</span>: <span class="ident">bool</span>,
-    <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
+<span class="doccomment">/// Expand a `global_value` instruction for a load global.
+</span><span class="kw">fn </span>load_addr(
+    inst: ir::Inst,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    base: ir::GlobalValue,
+    offset: ir::immediates::Offset32,
+    global_type: ir::Type,
+    readonly: bool,
+    isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
 ) {
-    <span class="comment">// We need to load a pointer from the `base` global value, so insert a new `global_value`</span>
-    <span class="comment">// instruction. This depends on the iterative legalization loop. Note that the IR verifier</span>
-    <span class="comment">// detects any cycles in the `load` globals.</span>
-    <span class="kw">let</span> <span class="ident">ptr_ty</span> <span class="op">=</span> <span class="ident">isa</span>.<span class="ident">pointer_type</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_inst</span>(<span class="ident">inst</span>);
-    <span class="ident">pos</span>.<span class="ident">use_srcloc</span>(<span class="ident">inst</span>);
+    <span class="comment">// We need to load a pointer from the `base` global value, so insert a new `global_value`
+    // instruction. This depends on the iterative legalization loop. Note that the IR verifier
+    // detects any cycles in the `load` globals.
+    </span><span class="kw">let </span>ptr_ty = isa.pointer_type();
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_inst(inst);
+    pos.use_srcloc(inst);
 
-    <span class="comment">// Get the value for the base. For tidiness, expand VMContext here so that we avoid</span>
-    <span class="comment">// `vmctx_addr` which creates an otherwise unneeded value alias.</span>
-    <span class="kw">let</span> <span class="ident">base_addr</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ir::GlobalValueData::VMContext</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">global_values</span>[<span class="ident">base</span>] {
-        <span class="ident">pos</span>.<span class="ident">func</span>
-            .<span class="ident">special_param</span>(<span class="ident">ir::ArgumentPurpose::VMContext</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;Missing vmctx parameter&quot;</span>)
-    } <span class="kw">else</span> {
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">global_value</span>(<span class="ident">ptr_ty</span>, <span class="ident">base</span>)
+    <span class="comment">// Get the value for the base. For tidiness, expand VMContext here so that we avoid
+    // `vmctx_addr` which creates an otherwise unneeded value alias.
+    </span><span class="kw">let </span>base_addr = <span class="kw">if let </span>ir::GlobalValueData::VMContext = pos.func.global_values[base] {
+        pos.func
+            .special_param(ir::ArgumentPurpose::VMContext)
+            .expect(<span class="string">&quot;Missing vmctx parameter&quot;</span>)
+    } <span class="kw">else </span>{
+        pos.ins().global_value(ptr_ty, base)
     };
 
-    <span class="comment">// Global-value loads are always notrap and aligned. They may be readonly.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mflags</span> <span class="op">=</span> <span class="ident">ir::MemFlags::trusted</span>();
-    <span class="kw">if</span> <span class="ident">readonly</span> {
-        <span class="ident">mflags</span>.<span class="ident">set_readonly</span>();
+    <span class="comment">// Global-value loads are always notrap and aligned. They may be readonly.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>mflags = ir::MemFlags::trusted();
+    <span class="kw">if </span>readonly {
+        mflags.set_readonly();
     }
 
-    <span class="comment">// Perform the load.</span>
-    <span class="ident">pos</span>.<span class="ident">func</span>
-        .<span class="ident">dfg</span>
-        .<span class="ident">replace</span>(<span class="ident">inst</span>)
-        .<span class="ident">load</span>(<span class="ident">global_type</span>, <span class="ident">mflags</span>, <span class="ident">base_addr</span>, <span class="ident">offset</span>);
+    <span class="comment">// Perform the load.
+    </span>pos.func
+        .dfg
+        .replace(inst)
+        .load(global_type, mflags, base_addr, offset);
 }
 
-<span class="doccomment">/// Expand a `global_value` instruction for a symbolic name global.</span>
-<span class="kw">fn</span> <span class="ident">symbol</span>(
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="ident">gv</span>: <span class="ident">ir::GlobalValue</span>,
-    <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
-    <span class="ident">tls</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// Expand a `global_value` instruction for a symbolic name global.
+</span><span class="kw">fn </span>symbol(
+    inst: ir::Inst,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    gv: ir::GlobalValue,
+    isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
+    tls: bool,
 ) {
-    <span class="kw">let</span> <span class="ident">ptr_ty</span> <span class="op">=</span> <span class="ident">isa</span>.<span class="ident">pointer_type</span>();
+    <span class="kw">let </span>ptr_ty = isa.pointer_type();
 
-    <span class="kw">if</span> <span class="ident">tls</span> {
-        <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace</span>(<span class="ident">inst</span>).<span class="ident">tls_value</span>(<span class="ident">ptr_ty</span>, <span class="ident">gv</span>);
-    } <span class="kw">else</span> {
-        <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace</span>(<span class="ident">inst</span>).<span class="ident">symbol_value</span>(<span class="ident">ptr_ty</span>, <span class="ident">gv</span>);
+    <span class="kw">if </span>tls {
+        func.dfg.replace(inst).tls_value(ptr_ty, gv);
+    } <span class="kw">else </span>{
+        func.dfg.replace(inst).symbol_value(ptr_ty, gv);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

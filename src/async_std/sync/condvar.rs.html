@@ -1,11 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/async-std-1.12.0/src/sync/condvar.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>condvar.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../async_std/index.html"><div class="logo-container"><img src="https://async.rs/images/logo--hero.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../async_std/index.html"><div class="logo-container">
-                    <img src="https://async.rs/images/logo--hero.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../async_std/index.html">
-                        <img src="https://async.rs/images/logo--hero.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/async-std-1.12.0/src/sync/condvar.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>condvar.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../async_std/index.html">
+                        <img src="https://async.rs/images/logo--hero.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -422,423 +416,422 @@
 <span id="415">415</span>
 <span id="416">416</span>
 <span id="417">417</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::fmt</span>;
-<span class="kw">use</span> <span class="ident">std::pin::Pin</span>;
-<span class="kw">use</span> <span class="ident">std::time::Duration</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>std::fmt;
+<span class="kw">use </span>std::pin::Pin;
+<span class="kw">use </span>std::time::Duration;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::MutexGuard</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::future</span>::{<span class="ident">timeout</span>, <span class="ident">Future</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::sync::WakerSet</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>};
+<span class="kw">use </span><span class="kw">super</span>::MutexGuard;
+<span class="kw">use </span><span class="kw">crate</span>::future::{timeout, Future};
+<span class="kw">use </span><span class="kw">crate</span>::sync::WakerSet;
+<span class="kw">use </span><span class="kw">crate</span>::task::{Context, Poll};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">WaitTimeoutResult</span>(<span class="ident">bool</span>);
+<span class="attribute">#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+</span><span class="kw">pub struct </span>WaitTimeoutResult(bool);
 
-<span class="doccomment">/// A type indicating whether a timed wait on a condition variable returned due to a time out or</span>
-<span class="doccomment">/// not</span>
-<span class="kw">impl</span> <span class="ident">WaitTimeoutResult</span> {
-    <span class="doccomment">/// Returns `true` if the wait was known to have timed out.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">timed_out</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="number">0</span>
+<span class="doccomment">/// A type indicating whether a timed wait on a condition variable returned due to a time out or
+/// not
+</span><span class="kw">impl </span>WaitTimeoutResult {
+    <span class="doccomment">/// Returns `true` if the wait was known to have timed out.
+    </span><span class="kw">pub fn </span>timed_out(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.<span class="number">0
+    </span>}
+}
+
+<span class="doccomment">/// A Condition Variable
+///
+/// This type is an async version of [`std::sync::Condvar`].
+///
+/// [`std::sync::Condvar`]: https://doc.rust-lang.org/std/sync/struct.Condvar.html
+///
+/// # Examples
+///
+/// ```
+/// # async_std::task::block_on(async {
+/// #
+/// use std::sync::Arc;
+///
+/// use async_std::sync::{Mutex, Condvar};
+/// use async_std::task;
+///
+/// let pair = Arc::new((Mutex::new(false), Condvar::new()));
+/// let pair2 = pair.clone();
+///
+/// // Inside of our lock, spawn a new thread, and then wait for it to start.
+/// task::spawn(async move {
+///     let (lock, cvar) = &amp;*pair2;
+///     let mut started = lock.lock().await;
+///     *started = true;
+///     // We notify the condvar that the value has changed.
+///     cvar.notify_one();
+/// });
+///
+/// // Wait for the thread to start up.
+/// let (lock, cvar) = &amp;*pair;
+/// let mut started = lock.lock().await;
+/// while !*started {
+///     started = cvar.wait(started).await;
+/// }
+///
+/// # })
+/// ```
+</span><span class="kw">pub struct </span>Condvar {
+    wakers: WakerSet,
+}
+
+<span class="kw">unsafe impl </span>Send <span class="kw">for </span>Condvar {}
+<span class="kw">unsafe impl </span>Sync <span class="kw">for </span>Condvar {}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>Condvar {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        Condvar::new()
     }
 }
 
-<span class="doccomment">/// A Condition Variable</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type is an async version of [`std::sync::Condvar`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`std::sync::Condvar`]: https://doc.rust-lang.org/std/sync/struct.Condvar.html</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Examples</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// # async_std::task::block_on(async {</span>
-<span class="doccomment">/// #</span>
-<span class="doccomment">/// use std::sync::Arc;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// use async_std::sync::{Mutex, Condvar};</span>
-<span class="doccomment">/// use async_std::task;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let pair = Arc::new((Mutex::new(false), Condvar::new()));</span>
-<span class="doccomment">/// let pair2 = pair.clone();</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Inside of our lock, spawn a new thread, and then wait for it to start.</span>
-<span class="doccomment">/// task::spawn(async move {</span>
-<span class="doccomment">///     let (lock, cvar) = &amp;*pair2;</span>
-<span class="doccomment">///     let mut started = lock.lock().await;</span>
-<span class="doccomment">///     *started = true;</span>
-<span class="doccomment">///     // We notify the condvar that the value has changed.</span>
-<span class="doccomment">///     cvar.notify_one();</span>
-<span class="doccomment">/// });</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Wait for the thread to start up.</span>
-<span class="doccomment">/// let (lock, cvar) = &amp;*pair;</span>
-<span class="doccomment">/// let mut started = lock.lock().await;</span>
-<span class="doccomment">/// while !*started {</span>
-<span class="doccomment">///     started = cvar.wait(started).await;</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # })</span>
-<span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Condvar</span> {
-    <span class="ident">wakers</span>: <span class="ident">WakerSet</span>,
-}
-
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">Condvar</span> {}
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">Condvar</span> {}
-
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Condvar</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident">Condvar::new</span>()
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Condvar</span> {
-    <span class="doccomment">/// Creates a new condition variable</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use async_std::sync::Condvar;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let cvar = Condvar::new();</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident">Condvar</span> {
-            <span class="ident">wakers</span>: <span class="ident">WakerSet::new</span>(),
+<span class="kw">impl </span>Condvar {
+    <span class="doccomment">/// Creates a new condition variable
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use async_std::sync::Condvar;
+    ///
+    /// let cvar = Condvar::new();
+    /// ```
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        Condvar {
+            wakers: WakerSet::new(),
         }
     }
 
-    <span class="doccomment">/// Blocks the current task until this condition variable receives a notification.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Unlike the std equivalent, this does not check that a single mutex is used at runtime.</span>
-    <span class="doccomment">/// However, as a best practice avoid using with multiple mutexes.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # async_std::task::block_on(async {</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// use async_std::sync::{Mutex, Condvar};</span>
-    <span class="doccomment">/// use async_std::task;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let pair = Arc::new((Mutex::new(false), Condvar::new()));</span>
-    <span class="doccomment">/// let pair2 = pair.clone();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// task::spawn(async move {</span>
-    <span class="doccomment">///     let (lock, cvar) = &amp;*pair2;</span>
-    <span class="doccomment">///     let mut started = lock.lock().await;</span>
-    <span class="doccomment">///     *started = true;</span>
-    <span class="doccomment">///     // We notify the condvar that the value has changed.</span>
-    <span class="doccomment">///     cvar.notify_one();</span>
-    <span class="doccomment">/// });</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // Wait for the thread to start up.</span>
-    <span class="doccomment">/// let (lock, cvar) = &amp;*pair;</span>
-    <span class="doccomment">/// let mut started = lock.lock().await;</span>
-    <span class="doccomment">/// while !*started {</span>
-    <span class="doccomment">///     started = cvar.wait(started).await;</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// # })</span>
-    <span class="doccomment">/// ```</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::needless_lifetimes</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">guard</span>: <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">mutex</span> <span class="op">=</span> <span class="ident">MutexGuard::source</span>(<span class="kw-2">&amp;</span><span class="ident">guard</span>);
+    <span class="doccomment">/// Blocks the current task until this condition variable receives a notification.
+    ///
+    /// Unlike the std equivalent, this does not check that a single mutex is used at runtime.
+    /// However, as a best practice avoid using with multiple mutexes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async_std::task::block_on(async {
+    /// use std::sync::Arc;
+    ///
+    /// use async_std::sync::{Mutex, Condvar};
+    /// use async_std::task;
+    ///
+    /// let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    /// let pair2 = pair.clone();
+    ///
+    /// task::spawn(async move {
+    ///     let (lock, cvar) = &amp;*pair2;
+    ///     let mut started = lock.lock().await;
+    ///     *started = true;
+    ///     // We notify the condvar that the value has changed.
+    ///     cvar.notify_one();
+    /// });
+    ///
+    /// // Wait for the thread to start up.
+    /// let (lock, cvar) = &amp;*pair;
+    /// let mut started = lock.lock().await;
+    /// while !*started {
+    ///     started = cvar.wait(started).await;
+    /// }
+    /// # })
+    /// ```
+    </span><span class="attribute">#[allow(clippy::needless_lifetimes)]
+    </span><span class="kw">pub async fn </span>wait&lt;<span class="lifetime">&#39;a</span>, T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, guard: MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;) -&gt; MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+        <span class="kw">let </span>mutex = MutexGuard::source(<span class="kw-2">&amp;</span>guard);
 
-        <span class="self">self</span>.<span class="ident">await_notify</span>(<span class="ident">guard</span>).<span class="kw">await</span>;
+        <span class="self">self</span>.await_notify(guard).<span class="kw">await</span>;
 
-        <span class="ident">mutex</span>.<span class="ident">lock</span>().<span class="kw">await</span>
-    }
+        mutex.lock().<span class="kw">await
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">await_notify</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">guard</span>: <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="ident">AwaitNotify</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">AwaitNotify</span> {
-            <span class="ident">cond</span>: <span class="self">self</span>,
-            <span class="ident">guard</span>: <span class="prelude-val">Some</span>(<span class="ident">guard</span>),
-            <span class="ident">key</span>: <span class="prelude-val">None</span>,
+    <span class="kw">fn </span>await_notify&lt;<span class="lifetime">&#39;a</span>, T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, guard: MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;) -&gt; AwaitNotify&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;a</span>, T&gt; {
+        AwaitNotify {
+            cond: <span class="self">self</span>,
+            guard: <span class="prelude-val">Some</span>(guard),
+            key: <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="doccomment">/// Blocks the current taks until this condition variable receives a notification and the</span>
-    <span class="doccomment">/// required condition is met. Spurious wakeups are ignored and this function will only</span>
-    <span class="doccomment">/// return once the condition has been met.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # async_std::task::block_on(async {</span>
-    <span class="doccomment">/// #</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// use async_std::sync::{Mutex, Condvar};</span>
-    <span class="doccomment">/// use async_std::task;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let pair = Arc::new((Mutex::new(false), Condvar::new()));</span>
-    <span class="doccomment">/// let pair2 = pair.clone();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// task::spawn(async move {</span>
-    <span class="doccomment">///     let (lock, cvar) = &amp;*pair2;</span>
-    <span class="doccomment">///     let mut started = lock.lock().await;</span>
-    <span class="doccomment">///     *started = true;</span>
-    <span class="doccomment">///     // We notify the condvar that the value has changed.</span>
-    <span class="doccomment">///     cvar.notify_one();</span>
-    <span class="doccomment">/// });</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // Wait for the thread to start up.</span>
-    <span class="doccomment">/// let (lock, cvar) = &amp;*pair;</span>
-    <span class="doccomment">/// // As long as the value inside the `Mutex&lt;bool&gt;` is `false`, we wait.</span>
-    <span class="doccomment">/// let _guard = cvar.wait_until(lock.lock().await, |started| { *started }).await;</span>
-    <span class="doccomment">/// #</span>
-    <span class="doccomment">/// # })</span>
-    <span class="doccomment">/// ```</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::needless_lifetimes</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_until</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Blocks the current taks until this condition variable receives a notification and the
+    /// required condition is met. Spurious wakeups are ignored and this function will only
+    /// return once the condition has been met.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async_std::task::block_on(async {
+    /// #
+    /// use std::sync::Arc;
+    ///
+    /// use async_std::sync::{Mutex, Condvar};
+    /// use async_std::task;
+    ///
+    /// let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    /// let pair2 = pair.clone();
+    ///
+    /// task::spawn(async move {
+    ///     let (lock, cvar) = &amp;*pair2;
+    ///     let mut started = lock.lock().await;
+    ///     *started = true;
+    ///     // We notify the condvar that the value has changed.
+    ///     cvar.notify_one();
+    /// });
+    ///
+    /// // Wait for the thread to start up.
+    /// let (lock, cvar) = &amp;*pair;
+    /// // As long as the value inside the `Mutex&lt;bool&gt;` is `false`, we wait.
+    /// let _guard = cvar.wait_until(lock.lock().await, |started| { *started }).await;
+    /// #
+    /// # })
+    /// ```
+    </span><span class="attribute">#[allow(clippy::needless_lifetimes)]
+    </span><span class="kw">pub async fn </span>wait_until&lt;<span class="lifetime">&#39;a</span>, T, F&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">guard</span>: <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>,
-        <span class="kw-2">mut</span> <span class="ident">condition</span>: <span class="ident">F</span>,
-    ) -&gt; <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;mut</span> <span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+        <span class="kw-2">mut </span>guard: MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;,
+        <span class="kw-2">mut </span>condition: F,
+    ) -&gt; MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;mut </span>T) -&gt; bool,
     {
-        <span class="kw">while</span> <span class="op">!</span><span class="ident">condition</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">guard</span>) {
-            <span class="ident">guard</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">wait</span>(<span class="ident">guard</span>).<span class="kw">await</span>;
+        <span class="kw">while </span>!condition(<span class="kw-2">&amp;mut *</span>guard) {
+            guard = <span class="self">self</span>.wait(guard).<span class="kw">await</span>;
         }
-        <span class="ident">guard</span>
+        guard
     }
 
-    <span class="doccomment">/// Waits on this condition variable for a notification, timing out after a specified duration.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For these reasons `Condvar::wait_timeout_until` is recommended in most cases.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # async_std::task::block_on(async {</span>
-    <span class="doccomment">/// #</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">/// use std::time::Duration;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// use async_std::sync::{Mutex, Condvar};</span>
-    <span class="doccomment">/// use async_std::task;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let pair = Arc::new((Mutex::new(false), Condvar::new()));</span>
-    <span class="doccomment">/// let pair2 = pair.clone();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// task::spawn(async move {</span>
-    <span class="doccomment">///   let (lock, cvar) = &amp;*pair2;</span>
-    <span class="doccomment">///   let mut started = lock.lock().await;</span>
-    <span class="doccomment">///   *started = true;</span>
-    <span class="doccomment">///   // We notify the condvar that the value has changed.</span>
-    <span class="doccomment">///   cvar.notify_one();</span>
-    <span class="doccomment">/// });</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // wait for the thread to start up</span>
-    <span class="doccomment">/// let (lock, cvar) = &amp;*pair;</span>
-    <span class="doccomment">/// let mut started = lock.lock().await;</span>
-    <span class="doccomment">/// loop {</span>
-    <span class="doccomment">///   let result = cvar.wait_timeout(started, Duration::from_millis(10)).await;</span>
-    <span class="doccomment">///   started = result.0;</span>
-    <span class="doccomment">///   if *started == true {</span>
-    <span class="doccomment">///       // We received the notification and the value has been updated, we can leave.</span>
-    <span class="doccomment">///       break</span>
-    <span class="doccomment">///   }</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// #</span>
-    <span class="doccomment">/// # })</span>
-    <span class="doccomment">/// ```</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::needless_lifetimes</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_timeout</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Waits on this condition variable for a notification, timing out after a specified duration.
+    ///
+    /// For these reasons `Condvar::wait_timeout_until` is recommended in most cases.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async_std::task::block_on(async {
+    /// #
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    ///
+    /// use async_std::sync::{Mutex, Condvar};
+    /// use async_std::task;
+    ///
+    /// let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    /// let pair2 = pair.clone();
+    ///
+    /// task::spawn(async move {
+    ///   let (lock, cvar) = &amp;*pair2;
+    ///   let mut started = lock.lock().await;
+    ///   *started = true;
+    ///   // We notify the condvar that the value has changed.
+    ///   cvar.notify_one();
+    /// });
+    ///
+    /// // wait for the thread to start up
+    /// let (lock, cvar) = &amp;*pair;
+    /// let mut started = lock.lock().await;
+    /// loop {
+    ///   let result = cvar.wait_timeout(started, Duration::from_millis(10)).await;
+    ///   started = result.0;
+    ///   if *started == true {
+    ///       // We received the notification and the value has been updated, we can leave.
+    ///       break
+    ///   }
+    /// }
+    /// #
+    /// # })
+    /// ```
+    </span><span class="attribute">#[allow(clippy::needless_lifetimes)]
+    </span><span class="kw">pub async fn </span>wait_timeout&lt;<span class="lifetime">&#39;a</span>, T&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">guard</span>: <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>,
-        <span class="ident">dur</span>: <span class="ident">Duration</span>,
-    ) -&gt; (<span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">WaitTimeoutResult</span>) {
-        <span class="kw">let</span> <span class="ident">mutex</span> <span class="op">=</span> <span class="ident">MutexGuard::source</span>(<span class="kw-2">&amp;</span><span class="ident">guard</span>);
-        <span class="kw">match</span> <span class="ident">timeout</span>(<span class="ident">dur</span>, <span class="self">self</span>.<span class="ident">wait</span>(<span class="ident">guard</span>)).<span class="kw">await</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">guard</span>) =&gt; (<span class="ident">guard</span>, <span class="ident">WaitTimeoutResult</span>(<span class="bool-val">false</span>)),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; (<span class="ident">mutex</span>.<span class="ident">lock</span>().<span class="kw">await</span>, <span class="ident">WaitTimeoutResult</span>(<span class="bool-val">true</span>)),
+        guard: MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;,
+        dur: Duration,
+    ) -&gt; (MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;, WaitTimeoutResult) {
+        <span class="kw">let </span>mutex = MutexGuard::source(<span class="kw-2">&amp;</span>guard);
+        <span class="kw">match </span>timeout(dur, <span class="self">self</span>.wait(guard)).<span class="kw">await </span>{
+            <span class="prelude-val">Ok</span>(guard) =&gt; (guard, WaitTimeoutResult(<span class="bool-val">false</span>)),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; (mutex.lock().<span class="kw">await</span>, WaitTimeoutResult(<span class="bool-val">true</span>)),
         }
     }
 
-    <span class="doccomment">/// Waits on this condition variable for a notification, timing out after a specified duration.</span>
-    <span class="doccomment">/// Spurious wakes will not cause this function to return.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # async_std::task::block_on(async {</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">/// use std::time::Duration;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// use async_std::sync::{Mutex, Condvar};</span>
-    <span class="doccomment">/// use async_std::task;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let pair = Arc::new((Mutex::new(false), Condvar::new()));</span>
-    <span class="doccomment">/// let pair2 = pair.clone();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// task::spawn(async move {</span>
-    <span class="doccomment">///     let (lock, cvar) = &amp;*pair2;</span>
-    <span class="doccomment">///     let mut started = lock.lock().await;</span>
-    <span class="doccomment">///     *started = true;</span>
-    <span class="doccomment">///     // We notify the condvar that the value has changed.</span>
-    <span class="doccomment">///     cvar.notify_one();</span>
-    <span class="doccomment">/// });</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // wait for the thread to start up</span>
-    <span class="doccomment">/// let (lock, cvar) = &amp;*pair;</span>
-    <span class="doccomment">/// let result = cvar.wait_timeout_until(</span>
-    <span class="doccomment">///     lock.lock().await,</span>
-    <span class="doccomment">///     Duration::from_millis(100),</span>
-    <span class="doccomment">///     |&amp;mut started| started,</span>
-    <span class="doccomment">/// ).await;</span>
-    <span class="doccomment">/// if result.1.timed_out() {</span>
-    <span class="doccomment">///     // timed-out without the condition ever evaluating to true.</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// // access the locked mutex via result.0</span>
-    <span class="doccomment">/// # });</span>
-    <span class="doccomment">/// ```</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::needless_lifetimes</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_timeout_until</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Waits on this condition variable for a notification, timing out after a specified duration.
+    /// Spurious wakes will not cause this function to return.
+    ///
+    /// # Examples
+    /// ```
+    /// # async_std::task::block_on(async {
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    ///
+    /// use async_std::sync::{Mutex, Condvar};
+    /// use async_std::task;
+    ///
+    /// let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    /// let pair2 = pair.clone();
+    ///
+    /// task::spawn(async move {
+    ///     let (lock, cvar) = &amp;*pair2;
+    ///     let mut started = lock.lock().await;
+    ///     *started = true;
+    ///     // We notify the condvar that the value has changed.
+    ///     cvar.notify_one();
+    /// });
+    ///
+    /// // wait for the thread to start up
+    /// let (lock, cvar) = &amp;*pair;
+    /// let result = cvar.wait_timeout_until(
+    ///     lock.lock().await,
+    ///     Duration::from_millis(100),
+    ///     |&amp;mut started| started,
+    /// ).await;
+    /// if result.1.timed_out() {
+    ///     // timed-out without the condition ever evaluating to true.
+    /// }
+    /// // access the locked mutex via result.0
+    /// # });
+    /// ```
+    </span><span class="attribute">#[allow(clippy::needless_lifetimes)]
+    </span><span class="kw">pub async fn </span>wait_timeout_until&lt;<span class="lifetime">&#39;a</span>, T, F&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">guard</span>: <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>,
-        <span class="ident">dur</span>: <span class="ident">Duration</span>,
-        <span class="ident">condition</span>: <span class="ident">F</span>,
-    ) -&gt; (<span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">WaitTimeoutResult</span>)
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;mut</span> <span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+        guard: MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;,
+        dur: Duration,
+        condition: F,
+    ) -&gt; (MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;, WaitTimeoutResult)
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;mut </span>T) -&gt; bool,
     {
-        <span class="kw">let</span> <span class="ident">mutex</span> <span class="op">=</span> <span class="ident">MutexGuard::source</span>(<span class="kw-2">&amp;</span><span class="ident">guard</span>);
-        <span class="kw">match</span> <span class="ident">timeout</span>(<span class="ident">dur</span>, <span class="self">self</span>.<span class="ident">wait_until</span>(<span class="ident">guard</span>, <span class="ident">condition</span>)).<span class="kw">await</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">guard</span>) =&gt; (<span class="ident">guard</span>, <span class="ident">WaitTimeoutResult</span>(<span class="bool-val">false</span>)),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; (<span class="ident">mutex</span>.<span class="ident">lock</span>().<span class="kw">await</span>, <span class="ident">WaitTimeoutResult</span>(<span class="bool-val">true</span>)),
+        <span class="kw">let </span>mutex = MutexGuard::source(<span class="kw-2">&amp;</span>guard);
+        <span class="kw">match </span>timeout(dur, <span class="self">self</span>.wait_until(guard, condition)).<span class="kw">await </span>{
+            <span class="prelude-val">Ok</span>(guard) =&gt; (guard, WaitTimeoutResult(<span class="bool-val">false</span>)),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; (mutex.lock().<span class="kw">await</span>, WaitTimeoutResult(<span class="bool-val">true</span>)),
         }
     }
 
-    <span class="doccomment">/// Wakes up one blocked task on this condvar.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # fn main() { async_std::task::block_on(async {</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// use async_std::sync::{Mutex, Condvar};</span>
-    <span class="doccomment">/// use async_std::task;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let pair = Arc::new((Mutex::new(false), Condvar::new()));</span>
-    <span class="doccomment">/// let pair2 = pair.clone();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// task::spawn(async move {</span>
-    <span class="doccomment">///     let (lock, cvar) = &amp;*pair2;</span>
-    <span class="doccomment">///     let mut started = lock.lock().await;</span>
-    <span class="doccomment">///     *started = true;</span>
-    <span class="doccomment">///     // We notify the condvar that the value has changed.</span>
-    <span class="doccomment">///     cvar.notify_one();</span>
-    <span class="doccomment">/// });</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // Wait for the thread to start up.</span>
-    <span class="doccomment">/// let (lock, cvar) = &amp;*pair;</span>
-    <span class="doccomment">/// let mut started = lock.lock().await;</span>
-    <span class="doccomment">/// while !*started {</span>
-    <span class="doccomment">///     started = cvar.wait(started).await;</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// # }) }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">wakers</span>.<span class="ident">notify_one</span>();
+    <span class="doccomment">/// Wakes up one blocked task on this condvar.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # fn main() { async_std::task::block_on(async {
+    /// use std::sync::Arc;
+    ///
+    /// use async_std::sync::{Mutex, Condvar};
+    /// use async_std::task;
+    ///
+    /// let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    /// let pair2 = pair.clone();
+    ///
+    /// task::spawn(async move {
+    ///     let (lock, cvar) = &amp;*pair2;
+    ///     let mut started = lock.lock().await;
+    ///     *started = true;
+    ///     // We notify the condvar that the value has changed.
+    ///     cvar.notify_one();
+    /// });
+    ///
+    /// // Wait for the thread to start up.
+    /// let (lock, cvar) = &amp;*pair;
+    /// let mut started = lock.lock().await;
+    /// while !*started {
+    ///     started = cvar.wait(started).await;
+    /// }
+    /// # }) }
+    /// ```
+    </span><span class="kw">pub fn </span>notify_one(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.wakers.notify_one();
     }
 
-    <span class="doccomment">/// Wakes up all blocked tasks on this condvar.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # fn main() { async_std::task::block_on(async {</span>
-    <span class="doccomment">/// #</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// use async_std::sync::{Mutex, Condvar};</span>
-    <span class="doccomment">/// use async_std::task;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let pair = Arc::new((Mutex::new(false), Condvar::new()));</span>
-    <span class="doccomment">/// let pair2 = pair.clone();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// task::spawn(async move {</span>
-    <span class="doccomment">///     let (lock, cvar) = &amp;*pair2;</span>
-    <span class="doccomment">///     let mut started = lock.lock().await;</span>
-    <span class="doccomment">///     *started = true;</span>
-    <span class="doccomment">///     // We notify the condvar that the value has changed.</span>
-    <span class="doccomment">///     cvar.notify_all();</span>
-    <span class="doccomment">/// });</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // Wait for the thread to start up.</span>
-    <span class="doccomment">/// let (lock, cvar) = &amp;*pair;</span>
-    <span class="doccomment">/// let mut started = lock.lock().await;</span>
-    <span class="doccomment">/// // As long as the value inside the `Mutex&lt;bool&gt;` is `false`, we wait.</span>
-    <span class="doccomment">/// while !*started {</span>
-    <span class="doccomment">///     started = cvar.wait(started).await;</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// #</span>
-    <span class="doccomment">/// # }) }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">wakers</span>.<span class="ident">notify_all</span>();
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Condvar</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Condvar { .. }&quot;</span>)
+    <span class="doccomment">/// Wakes up all blocked tasks on this condvar.
+    ///
+    /// # Examples
+    /// ```
+    /// # fn main() { async_std::task::block_on(async {
+    /// #
+    /// use std::sync::Arc;
+    ///
+    /// use async_std::sync::{Mutex, Condvar};
+    /// use async_std::task;
+    ///
+    /// let pair = Arc::new((Mutex::new(false), Condvar::new()));
+    /// let pair2 = pair.clone();
+    ///
+    /// task::spawn(async move {
+    ///     let (lock, cvar) = &amp;*pair2;
+    ///     let mut started = lock.lock().await;
+    ///     *started = true;
+    ///     // We notify the condvar that the value has changed.
+    ///     cvar.notify_all();
+    /// });
+    ///
+    /// // Wait for the thread to start up.
+    /// let (lock, cvar) = &amp;*pair;
+    /// let mut started = lock.lock().await;
+    /// // As long as the value inside the `Mutex&lt;bool&gt;` is `false`, we wait.
+    /// while !*started {
+    ///     started = cvar.wait(started).await;
+    /// }
+    /// #
+    /// # }) }
+    /// ```
+    </span><span class="kw">pub fn </span>notify_all(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.wakers.notify_all();
     }
 }
 
-<span class="doccomment">/// A future that waits for another task to notify the condition variable.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is an internal future that `wait` and `wait_until` await on.</span>
-<span class="kw">struct</span> <span class="ident">AwaitNotify</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The condition variable that we are waiting on</span>
-    <span class="ident">cond</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Condvar</span>,
-    <span class="doccomment">/// The lock used with `cond`.</span>
-    <span class="doccomment">/// This will be released the first time the future is polled,</span>
-    <span class="doccomment">/// after registering the context to be notified.</span>
-    <span class="ident">guard</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// A key into the conditions variable&#39;s `WakerSet`.</span>
-    <span class="doccomment">/// This is set to the index of the `Waker` for the context each time</span>
-    <span class="doccomment">/// the future is polled and not completed.</span>
-    <span class="ident">key</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Condvar {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.pad(<span class="string">&quot;Condvar { .. }&quot;</span>)
+    }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Future</span> <span class="kw">for</span> <span class="ident">AwaitNotify</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> ();
+<span class="doccomment">/// A future that waits for another task to notify the condition variable.
+///
+/// This is an internal future that `wait` and `wait_until` await on.
+</span><span class="kw">struct </span>AwaitNotify&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, T&gt; {
+    <span class="doccomment">/// The condition variable that we are waiting on
+    </span>cond: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Condvar,
+    <span class="doccomment">/// The lock used with `cond`.
+    /// This will be released the first time the future is polled,
+    /// after registering the context to be notified.
+    </span>guard: <span class="prelude-ty">Option</span>&lt;MutexGuard&lt;<span class="lifetime">&#39;b</span>, T&gt;&gt;,
+    <span class="doccomment">/// A key into the conditions variable&#39;s `WakerSet`.
+    /// This is set to the index of the `Waker` for the context each time
+    /// the future is polled and not completed.
+    </span>key: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+}
 
-    <span class="kw">fn</span> <span class="ident">poll</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">guard</span>.<span class="ident">take</span>() {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, T&gt; Future <span class="kw">for </span>AwaitNotify&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, T&gt; {
+    <span class="kw">type </span>Output = ();
+
+    <span class="kw">fn </span>poll(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="self">Self</span>::Output&gt; {
+        <span class="kw">match </span><span class="self">self</span>.guard.take() {
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">key</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cond</span>.<span class="ident">wakers</span>.<span class="ident">insert</span>(<span class="ident">cx</span>));
-                <span class="comment">// the guard is dropped when we return, which frees the lock</span>
-                <span class="ident">Poll::Pending</span>
+                <span class="self">self</span>.key = <span class="prelude-val">Some</span>(<span class="self">self</span>.cond.wakers.insert(cx));
+                <span class="comment">// the guard is dropped when we return, which frees the lock
+                </span>Poll::Pending
             }
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">key</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">key</span> {
-                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">cond</span>.<span class="ident">wakers</span>.<span class="ident">remove_if_notified</span>(<span class="ident">key</span>, <span class="ident">cx</span>) {
-                        <span class="self">self</span>.<span class="ident">key</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-                        <span class="ident">Poll::Ready</span>(())
-                    } <span class="kw">else</span> {
-                        <span class="ident">Poll::Pending</span>
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = <span class="self">self</span>.key {
+                    <span class="kw">if </span><span class="self">self</span>.cond.wakers.remove_if_notified(key, cx) {
+                        <span class="self">self</span>.key = <span class="prelude-val">None</span>;
+                        Poll::Ready(())
+                    } <span class="kw">else </span>{
+                        Poll::Pending
                     }
-                } <span class="kw">else</span> {
-                    <span class="comment">// This should only happen if it is polled twice after receiving a notification</span>
-                    <span class="ident">Poll::Ready</span>(())
+                } <span class="kw">else </span>{
+                    <span class="comment">// This should only happen if it is polled twice after receiving a notification
+                    </span>Poll::Ready(())
                 }
             }
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">AwaitNotify</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">key</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">key</span> {
-            <span class="self">self</span>.<span class="ident">cond</span>.<span class="ident">wakers</span>.<span class="ident">cancel</span>(<span class="ident">key</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, T&gt; Drop <span class="kw">for </span>AwaitNotify&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, T&gt; {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = <span class="self">self</span>.key {
+            <span class="self">self</span>.cond.wakers.cancel(key);
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="async_std" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="async_std" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

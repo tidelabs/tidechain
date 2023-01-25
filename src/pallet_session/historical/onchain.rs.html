@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/session/src/historical/onchain.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>onchain.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../pallet_session/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../pallet_session/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../pallet_session/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/session/src/historical/onchain.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>onchain.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../pallet_session/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -62,65 +57,64 @@
 <span id="57">57</span>
 <span id="58">58</span>
 <span id="59">59</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! On-chain logic to store a validator-set for deferred validation using an off-chain worker.</span>
+</span><span class="doccomment">//! On-chain logic to store a validator-set for deferred validation using an off-chain worker.
 
-<span class="kw">use</span> <span class="ident">codec::Encode</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime::traits::Convert</span>;
-<span class="kw">use</span> <span class="ident">sp_std::prelude</span>::<span class="kw-2">*</span>;
+</span><span class="kw">use </span>codec::Encode;
+<span class="kw">use </span>sp_runtime::traits::Convert;
+<span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">shared</span>, <span class="ident">Config</span> <span class="kw">as</span> <span class="ident">HistoricalConfig</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Config</span> <span class="kw">as</span> <span class="ident">SessionConfig</span>, <span class="ident">Pallet</span> <span class="kw">as</span> <span class="ident">SessionModule</span>, <span class="ident">SessionIndex</span>};
+<span class="kw">use super</span>::{shared, Config <span class="kw">as </span>HistoricalConfig};
+<span class="kw">use crate</span>::{Config <span class="kw">as </span>SessionConfig, Pallet <span class="kw">as </span>SessionModule, SessionIndex};
 
-<span class="doccomment">/// Store the validator-set associated to the `session_index` to the off-chain database.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Further processing is then done [`off-chain side`](super::offchain).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// **Must** be called from on-chain, i.e. a call that originates from</span>
-<span class="doccomment">/// `on_initialize(..)` or `on_finalization(..)`.</span>
-<span class="doccomment">/// **Must** be called during the session, which validator-set is to be stored for further</span>
-<span class="doccomment">/// off-chain processing. Otherwise the `FullIdentification` might not be available.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">store_session_validator_set_to_offchain</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">HistoricalConfig</span> <span class="op">+</span> <span class="ident">SessionConfig</span><span class="op">&gt;</span>(
-	<span class="ident">session_index</span>: <span class="ident">SessionIndex</span>,
+<span class="doccomment">/// Store the validator-set associated to the `session_index` to the off-chain database.
+///
+/// Further processing is then done [`off-chain side`](super::offchain).
+///
+/// **Must** be called from on-chain, i.e. a call that originates from
+/// `on_initialize(..)` or `on_finalization(..)`.
+/// **Must** be called during the session, which validator-set is to be stored for further
+/// off-chain processing. Otherwise the `FullIdentification` might not be available.
+</span><span class="kw">pub fn </span>store_session_validator_set_to_offchain&lt;T: HistoricalConfig + SessionConfig&gt;(
+	session_index: SessionIndex,
 ) {
-	<span class="kw">let</span> <span class="ident">encoded_validator_list</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">SessionModule</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::validators</span>()
-		.<span class="ident">into_iter</span>()
-		.<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">validator_id</span>: <span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">SessionConfig</span><span class="op">&gt;</span><span class="ident">::ValidatorId</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">full_identification</span> <span class="op">=</span>
-				<span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">HistoricalConfig</span><span class="op">&gt;</span><span class="ident">::FullIdentificationOf</span><span class="op">&gt;</span><span class="ident">::convert</span>(<span class="ident">validator_id</span>.<span class="ident">clone</span>());
-			<span class="ident">full_identification</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">full_identification</span><span class="op">|</span> (<span class="ident">validator_id</span>, <span class="ident">full_identification</span>))
+	<span class="kw">let </span>encoded_validator_list = &lt;SessionModule&lt;T&gt;&gt;::validators()
+		.into_iter()
+		.filter_map(|validator_id: &lt;T <span class="kw">as </span>SessionConfig&gt;::ValidatorId| {
+			<span class="kw">let </span>full_identification =
+				&lt;&lt;T <span class="kw">as </span>HistoricalConfig&gt;::FullIdentificationOf&gt;::convert(validator_id.clone());
+			full_identification.map(|full_identification| (validator_id, full_identification))
 		})
-		.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-	<span class="ident">encoded_validator_list</span>.<span class="ident">using_encoded</span>(<span class="op">|</span><span class="ident">encoded_validator_list</span><span class="op">|</span> {
-		<span class="kw">let</span> <span class="ident">derived_key</span> <span class="op">=</span> <span class="ident">shared::derive_key</span>(<span class="ident">shared::PREFIX</span>, <span class="ident">session_index</span>);
-		<span class="ident">sp_io::offchain_index::set</span>(<span class="ident">derived_key</span>.<span class="ident">as_slice</span>(), <span class="ident">encoded_validator_list</span>);
+	encoded_validator_list.using_encoded(|encoded_validator_list| {
+		<span class="kw">let </span>derived_key = shared::derive_key(shared::PREFIX, session_index);
+		sp_io::offchain_index::set(derived_key.as_slice(), encoded_validator_list);
 	});
 }
 
-<span class="doccomment">/// Store the validator set associated to the _current_ session index to the off-chain database.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// See [`store_session_validator_set_to_offchain`]</span>
-<span class="doccomment">/// for further information and restrictions.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">store_current_session_validator_set_to_offchain</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">HistoricalConfig</span> <span class="op">+</span> <span class="ident">SessionConfig</span><span class="op">&gt;</span>() {
-	<span class="ident">store_session_validator_set_to_offchain</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="op">&lt;</span><span class="ident">SessionModule</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::current_index</span>());
+<span class="doccomment">/// Store the validator set associated to the _current_ session index to the off-chain database.
+///
+/// See [`store_session_validator_set_to_offchain`]
+/// for further information and restrictions.
+</span><span class="kw">pub fn </span>store_current_session_validator_set_to_offchain&lt;T: HistoricalConfig + SessionConfig&gt;() {
+	store_session_validator_set_to_offchain::&lt;T&gt;(&lt;SessionModule&lt;T&gt;&gt;::current_index());
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="pallet_session" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="pallet_session" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

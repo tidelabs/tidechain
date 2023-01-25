@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["AllowHosts","Policy for validating the `HTTP host header`."],["Port","Port pattern"]],"struct":[["Host","Host type"]]});
+window.SIDEBAR_ITEMS = {"enum":[["AllowHosts","Policy for validating the `HTTP host header`."],["Port","Port pattern"]],"struct":[["Host","Host type"]]};

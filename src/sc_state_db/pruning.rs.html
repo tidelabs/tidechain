@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/state-db/src/pruning.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pruning.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_state_db/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_state_db/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_state_db/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/state-db/src/pruning.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pruning.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_state_db/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -444,447 +439,446 @@
 <span id="439">439</span>
 <span id="440">440</span>
 <span id="441">441</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Pruning window.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! For each block we maintain a list of nodes pending deletion.</span>
-<span class="doccomment">//! There is also a global index of node key to block number.</span>
-<span class="doccomment">//! If a node is re-inserted into the window it gets removed from</span>
-<span class="doccomment">//! the death list.</span>
-<span class="doccomment">//! The changes are journaled in the DB.</span>
+</span><span class="doccomment">//! Pruning window.
+//!
+//! For each block we maintain a list of nodes pending deletion.
+//! There is also a global index of node key to block number.
+//! If a node is re-inserted into the window it gets removed from
+//! the death list.
+//! The changes are journaled in the DB.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">to_meta_key</span>, <span class="ident">CommitSet</span>, <span class="ident">Error</span>, <span class="ident">Hash</span>, <span class="ident">MetaDb</span>};
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">trace</span>, <span class="ident">warn</span>};
-<span class="kw">use</span> <span class="ident">std::collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>, <span class="ident">VecDeque</span>};
+</span><span class="kw">use crate</span>::{to_meta_key, CommitSet, Error, Hash, MetaDb};
+<span class="kw">use </span>codec::{Decode, Encode};
+<span class="kw">use </span>log::{trace, warn};
+<span class="kw">use </span>std::collections::{HashMap, HashSet, VecDeque};
 
-<span class="kw">const</span> <span class="ident">LAST_PRUNED</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;last_pruned&quot;</span>;
-<span class="kw">const</span> <span class="ident">PRUNING_JOURNAL</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;pruning_journal&quot;</span>;
+<span class="kw">const </span>LAST_PRUNED: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;last_pruned&quot;</span>;
+<span class="kw">const </span>PRUNING_JOURNAL: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;pruning_journal&quot;</span>;
 
-<span class="doccomment">/// See module documentation.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">parity_util_mem_derive::MallocSizeOf</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">BlockHash</span>: <span class="ident">Hash</span>, <span class="ident">Key</span>: <span class="ident">Hash</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// A queue of keys that should be deleted for each block in the pruning window.</span>
-	<span class="ident">death_rows</span>: <span class="ident">VecDeque</span><span class="op">&lt;</span><span class="ident">DeathRow</span><span class="op">&lt;</span><span class="ident">BlockHash</span>, <span class="ident">Key</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// An index that maps each key from `death_rows` to block number.</span>
-	<span class="ident">death_index</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Key</span>, <span class="ident">u64</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Block number that corresponds to the front of `death_rows`.</span>
-	<span class="ident">pending_number</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Number of call of `note_canonical` after</span>
-	<span class="doccomment">/// last call `apply_pending` or `revert_pending`</span>
-	<span class="ident">pending_canonicalizations</span>: <span class="ident">usize</span>,
-	<span class="doccomment">/// Number of calls of `prune_one` after</span>
-	<span class="doccomment">/// last call `apply_pending` or `revert_pending`</span>
-	<span class="ident">pending_prunings</span>: <span class="ident">usize</span>,
-	<span class="doccomment">/// Keep track of re-inserted keys and do not delete them when pruning.</span>
-	<span class="doccomment">/// Setting this to false requires backend that supports reference</span>
-	<span class="doccomment">/// counting.</span>
-	<span class="ident">count_insertions</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// See module documentation.
+</span><span class="attribute">#[derive(parity_util_mem_derive::MallocSizeOf)]
+</span><span class="kw">pub struct </span>RefWindow&lt;BlockHash: Hash, Key: Hash&gt; {
+	<span class="doccomment">/// A queue of keys that should be deleted for each block in the pruning window.
+	</span>death_rows: VecDeque&lt;DeathRow&lt;BlockHash, Key&gt;&gt;,
+	<span class="doccomment">/// An index that maps each key from `death_rows` to block number.
+	</span>death_index: HashMap&lt;Key, u64&gt;,
+	<span class="doccomment">/// Block number that corresponds to the front of `death_rows`.
+	</span>pending_number: u64,
+	<span class="doccomment">/// Number of call of `note_canonical` after
+	/// last call `apply_pending` or `revert_pending`
+	</span>pending_canonicalizations: usize,
+	<span class="doccomment">/// Number of calls of `prune_one` after
+	/// last call `apply_pending` or `revert_pending`
+	</span>pending_prunings: usize,
+	<span class="doccomment">/// Keep track of re-inserted keys and do not delete them when pruning.
+	/// Setting this to false requires backend that supports reference
+	/// counting.
+	</span>count_insertions: bool,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">parity_util_mem_derive::MallocSizeOf</span>)]</span>
-<span class="kw">struct</span> <span class="ident">DeathRow</span><span class="op">&lt;</span><span class="ident">BlockHash</span>: <span class="ident">Hash</span>, <span class="ident">Key</span>: <span class="ident">Hash</span><span class="op">&gt;</span> {
-	<span class="ident">hash</span>: <span class="ident">BlockHash</span>,
-	<span class="ident">journal_key</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-	<span class="ident">deleted</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Debug, PartialEq, Eq, parity_util_mem_derive::MallocSizeOf)]
+</span><span class="kw">struct </span>DeathRow&lt;BlockHash: Hash, Key: Hash&gt; {
+	hash: BlockHash,
+	journal_key: Vec&lt;u8&gt;,
+	deleted: HashSet&lt;Key&gt;,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Encode</span>, <span class="ident">Decode</span>)]</span>
-<span class="kw">struct</span> <span class="ident">JournalRecord</span><span class="op">&lt;</span><span class="ident">BlockHash</span>: <span class="ident">Hash</span>, <span class="ident">Key</span>: <span class="ident">Hash</span><span class="op">&gt;</span> {
-	<span class="ident">hash</span>: <span class="ident">BlockHash</span>,
-	<span class="ident">inserted</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>,
-	<span class="ident">deleted</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Encode, Decode)]
+</span><span class="kw">struct </span>JournalRecord&lt;BlockHash: Hash, Key: Hash&gt; {
+	hash: BlockHash,
+	inserted: Vec&lt;Key&gt;,
+	deleted: Vec&lt;Key&gt;,
 }
 
-<span class="kw">fn</span> <span class="ident">to_journal_key</span>(<span class="ident">block</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-	<span class="ident">to_meta_key</span>(<span class="ident">PRUNING_JOURNAL</span>, <span class="kw-2">&amp;</span><span class="ident">block</span>)
+<span class="kw">fn </span>to_journal_key(block: u64) -&gt; Vec&lt;u8&gt; {
+	to_meta_key(PRUNING_JOURNAL, <span class="kw-2">&amp;</span>block)
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">BlockHash</span>: <span class="ident">Hash</span>, <span class="ident">Key</span>: <span class="ident">Hash</span><span class="op">&gt;</span> <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">BlockHash</span>, <span class="ident">Key</span><span class="op">&gt;</span> {
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">MetaDb</span><span class="op">&gt;</span>(
-		<span class="ident">db</span>: <span class="kw-2">&amp;</span><span class="ident">D</span>,
-		<span class="ident">count_insertions</span>: <span class="ident">bool</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">BlockHash</span>, <span class="ident">Key</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&lt;</span><span class="ident">D::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">last_pruned</span> <span class="op">=</span> <span class="ident">db</span>.<span class="ident">get_meta</span>(<span class="kw-2">&amp;</span><span class="ident">to_meta_key</span>(<span class="ident">LAST_PRUNED</span>, <span class="kw-2">&amp;</span>())).<span class="ident">map_err</span>(<span class="ident">Error::Db</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">pending_number</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">last_pruned</span> {
-			<span class="prelude-val">Some</span>(<span class="ident">buffer</span>) =&gt; <span class="ident">u64::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">buffer</span>.<span class="ident">as_slice</span>())<span class="question-mark">?</span> <span class="op">+</span> <span class="number">1</span>,
-			<span class="prelude-val">None</span> =&gt; <span class="number">0</span>,
+<span class="kw">impl</span>&lt;BlockHash: Hash, Key: Hash&gt; RefWindow&lt;BlockHash, Key&gt; {
+	<span class="kw">pub fn </span>new&lt;D: MetaDb&gt;(
+		db: <span class="kw-2">&amp;</span>D,
+		count_insertions: bool,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;RefWindow&lt;BlockHash, Key&gt;, Error&lt;D::Error&gt;&gt; {
+		<span class="kw">let </span>last_pruned = db.get_meta(<span class="kw-2">&amp;</span>to_meta_key(LAST_PRUNED, <span class="kw-2">&amp;</span>())).map_err(Error::Db)<span class="question-mark">?</span>;
+		<span class="kw">let </span>pending_number: u64 = <span class="kw">match </span>last_pruned {
+			<span class="prelude-val">Some</span>(buffer) =&gt; u64::decode(<span class="kw-2">&amp;mut </span>buffer.as_slice())<span class="question-mark">? </span>+ <span class="number">1</span>,
+			<span class="prelude-val">None </span>=&gt; <span class="number">0</span>,
 		};
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">pending_number</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span> <span class="op">=</span> <span class="ident">RefWindow</span> {
-			<span class="ident">death_rows</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">death_index</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">pending_number</span>,
-			<span class="ident">pending_canonicalizations</span>: <span class="number">0</span>,
-			<span class="ident">pending_prunings</span>: <span class="number">0</span>,
-			<span class="ident">count_insertions</span>,
+		<span class="kw">let </span><span class="kw-2">mut </span>block = pending_number;
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning = RefWindow {
+			death_rows: Default::default(),
+			death_index: Default::default(),
+			pending_number,
+			pending_canonicalizations: <span class="number">0</span>,
+			pending_prunings: <span class="number">0</span>,
+			count_insertions,
 		};
-		<span class="comment">// read the journal</span>
-		<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Reading pruning journal. Pending #{}&quot;</span>, <span class="ident">pending_number</span>);
-		<span class="kw">loop</span> {
-			<span class="kw">let</span> <span class="ident">journal_key</span> <span class="op">=</span> <span class="ident">to_journal_key</span>(<span class="ident">block</span>);
-			<span class="kw">match</span> <span class="ident">db</span>.<span class="ident">get_meta</span>(<span class="kw-2">&amp;</span><span class="ident">journal_key</span>).<span class="ident">map_err</span>(<span class="ident">Error::Db</span>)<span class="question-mark">?</span> {
-				<span class="prelude-val">Some</span>(<span class="ident">record</span>) =&gt; {
-					<span class="kw">let</span> <span class="ident">record</span>: <span class="ident">JournalRecord</span><span class="op">&lt;</span><span class="ident">BlockHash</span>, <span class="ident">Key</span><span class="op">&gt;</span> <span class="op">=</span>
-						<span class="ident">Decode::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">record</span>.<span class="ident">as_slice</span>())<span class="question-mark">?</span>;
-					<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Pruning journal entry {} ({} inserted, {} deleted)&quot;</span>, <span class="ident">block</span>, <span class="ident">record</span>.<span class="ident">inserted</span>.<span class="ident">len</span>(), <span class="ident">record</span>.<span class="ident">deleted</span>.<span class="ident">len</span>());
-					<span class="ident">pruning</span>.<span class="ident">import</span>(
-						<span class="kw-2">&amp;</span><span class="ident">record</span>.<span class="ident">hash</span>,
-						<span class="ident">journal_key</span>,
-						<span class="ident">record</span>.<span class="ident">inserted</span>.<span class="ident">into_iter</span>(),
-						<span class="ident">record</span>.<span class="ident">deleted</span>,
+		<span class="comment">// read the journal
+		</span><span class="macro">trace!</span>(target: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Reading pruning journal. Pending #{}&quot;</span>, pending_number);
+		<span class="kw">loop </span>{
+			<span class="kw">let </span>journal_key = to_journal_key(block);
+			<span class="kw">match </span>db.get_meta(<span class="kw-2">&amp;</span>journal_key).map_err(Error::Db)<span class="question-mark">? </span>{
+				<span class="prelude-val">Some</span>(record) =&gt; {
+					<span class="kw">let </span>record: JournalRecord&lt;BlockHash, Key&gt; =
+						Decode::decode(<span class="kw-2">&amp;mut </span>record.as_slice())<span class="question-mark">?</span>;
+					<span class="macro">trace!</span>(target: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Pruning journal entry {} ({} inserted, {} deleted)&quot;</span>, block, record.inserted.len(), record.deleted.len());
+					pruning.import(
+						<span class="kw-2">&amp;</span>record.hash,
+						journal_key,
+						record.inserted.into_iter(),
+						record.deleted,
 					);
 				},
-				<span class="prelude-val">None</span> =&gt; <span class="kw">break</span>,
+				<span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 			}
-			<span class="ident">block</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+			block += <span class="number">1</span>;
 		}
-		<span class="prelude-val">Ok</span>(<span class="ident">pruning</span>)
+		<span class="prelude-val">Ok</span>(pruning)
 	}
 
-	<span class="kw">fn</span> <span class="ident">import</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Key</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">BlockHash</span>,
-		<span class="ident">journal_key</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">inserted</span>: <span class="ident">I</span>,
-		<span class="ident">deleted</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>,
+	<span class="kw">fn </span>import&lt;I: IntoIterator&lt;Item = Key&gt;&gt;(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		hash: <span class="kw-2">&amp;</span>BlockHash,
+		journal_key: Vec&lt;u8&gt;,
+		inserted: I,
+		deleted: Vec&lt;Key&gt;,
 	) {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">count_insertions</span> {
-			<span class="comment">// remove all re-inserted keys from death rows</span>
-			<span class="kw">for</span> <span class="ident">k</span> <span class="kw">in</span> <span class="ident">inserted</span> {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">block</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">death_index</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">k</span>) {
-					<span class="self">self</span>.<span class="ident">death_rows</span>[(<span class="ident">block</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">pending_number</span>) <span class="kw">as</span> <span class="ident">usize</span>].<span class="ident">deleted</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">k</span>);
+		<span class="kw">if </span><span class="self">self</span>.count_insertions {
+			<span class="comment">// remove all re-inserted keys from death rows
+			</span><span class="kw">for </span>k <span class="kw">in </span>inserted {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(block) = <span class="self">self</span>.death_index.remove(<span class="kw-2">&amp;</span>k) {
+					<span class="self">self</span>.death_rows[(block - <span class="self">self</span>.pending_number) <span class="kw">as </span>usize].deleted.remove(<span class="kw-2">&amp;</span>k);
 				}
 			}
 
-			<span class="comment">// add new keys</span>
-			<span class="kw">let</span> <span class="ident">imported_block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pending_number</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>;
-			<span class="kw">for</span> <span class="ident">k</span> <span class="kw">in</span> <span class="ident">deleted</span>.<span class="ident">iter</span>() {
-				<span class="self">self</span>.<span class="ident">death_index</span>.<span class="ident">insert</span>(<span class="ident">k</span>.<span class="ident">clone</span>(), <span class="ident">imported_block</span>);
+			<span class="comment">// add new keys
+			</span><span class="kw">let </span>imported_block = <span class="self">self</span>.pending_number + <span class="self">self</span>.death_rows.len() <span class="kw">as </span>u64;
+			<span class="kw">for </span>k <span class="kw">in </span>deleted.iter() {
+				<span class="self">self</span>.death_index.insert(k.clone(), imported_block);
 			}
 		}
-		<span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">push_back</span>(<span class="ident">DeathRow</span> {
-			<span class="ident">hash</span>: <span class="ident">hash</span>.<span class="ident">clone</span>(),
-			<span class="ident">deleted</span>: <span class="ident">deleted</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>(),
-			<span class="ident">journal_key</span>,
+		<span class="self">self</span>.death_rows.push_back(DeathRow {
+			hash: hash.clone(),
+			deleted: deleted.into_iter().collect(),
+			journal_key,
 		});
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">window_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-		(<span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="self">self</span>.<span class="ident">pending_prunings</span>) <span class="kw">as</span> <span class="ident">u64</span>
+	<span class="kw">pub fn </span>window_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+		(<span class="self">self</span>.death_rows.len() - <span class="self">self</span>.pending_prunings) <span class="kw">as </span>u64
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">next_hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BlockHash</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">pending_prunings</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>.<span class="ident">hash</span>.<span class="ident">clone</span>())
+	<span class="kw">pub fn </span>next_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;BlockHash&gt; {
+		<span class="self">self</span>.death_rows.get(<span class="self">self</span>.pending_prunings).map(|r| r.hash.clone())
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mem_used</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-		<span class="number">0</span>
+	<span class="kw">pub fn </span>mem_used(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+		<span class="number">0
+	</span>}
+
+	<span class="kw">pub fn </span>pending(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+		<span class="self">self</span>.pending_number + <span class="self">self</span>.pending_prunings <span class="kw">as </span>u64
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pending</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-		<span class="self">self</span>.<span class="ident">pending_number</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">pending_prunings</span> <span class="kw">as</span> <span class="ident">u64</span>
+	<span class="kw">pub fn </span>have_block(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>BlockHash) -&gt; bool {
+		<span class="self">self</span>.death_rows.iter().skip(<span class="self">self</span>.pending_prunings).any(|r| r.hash == <span class="kw-2">*</span>hash)
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">have_block</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">BlockHash</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">iter</span>().<span class="ident">skip</span>(<span class="self">self</span>.<span class="ident">pending_prunings</span>).<span class="ident">any</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>.<span class="ident">hash</span> <span class="op">==</span> <span class="kw-2">*</span><span class="ident">hash</span>)
-	}
-
-	<span class="doccomment">/// Prune next block. Expects at least one block in the window. Adds changes to `commit`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">commit</span>: <span class="kw-2">&amp;mut</span> <span class="ident">CommitSet</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>) {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pruned</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">pending_prunings</span>) {
-			<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Pruning {:?} ({} deleted)&quot;</span>, <span class="ident">pruned</span>.<span class="ident">hash</span>, <span class="ident">pruned</span>.<span class="ident">deleted</span>.<span class="ident">len</span>());
-			<span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pending_number</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">pending_prunings</span> <span class="kw">as</span> <span class="ident">u64</span>;
-			<span class="ident">commit</span>.<span class="ident">data</span>.<span class="ident">deleted</span>.<span class="ident">extend</span>(<span class="ident">pruned</span>.<span class="ident">deleted</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>());
-			<span class="ident">commit</span>.<span class="ident">meta</span>.<span class="ident">inserted</span>.<span class="ident">push</span>((<span class="ident">to_meta_key</span>(<span class="ident">LAST_PRUNED</span>, <span class="kw-2">&amp;</span>()), <span class="ident">index</span>.<span class="ident">encode</span>()));
-			<span class="ident">commit</span>.<span class="ident">meta</span>.<span class="ident">deleted</span>.<span class="ident">push</span>(<span class="ident">pruned</span>.<span class="ident">journal_key</span>.<span class="ident">clone</span>());
-			<span class="self">self</span>.<span class="ident">pending_prunings</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-		} <span class="kw">else</span> {
-			<span class="macro">warn!</span>(<span class="ident">target</span>: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Trying to prune when there&#39;s nothing to prune&quot;</span>);
+	<span class="doccomment">/// Prune next block. Expects at least one block in the window. Adds changes to `commit`.
+	</span><span class="kw">pub fn </span>prune_one(<span class="kw-2">&amp;mut </span><span class="self">self</span>, commit: <span class="kw-2">&amp;mut </span>CommitSet&lt;Key&gt;) {
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(pruned) = <span class="self">self</span>.death_rows.get(<span class="self">self</span>.pending_prunings) {
+			<span class="macro">trace!</span>(target: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Pruning {:?} ({} deleted)&quot;</span>, pruned.hash, pruned.deleted.len());
+			<span class="kw">let </span>index = <span class="self">self</span>.pending_number + <span class="self">self</span>.pending_prunings <span class="kw">as </span>u64;
+			commit.data.deleted.extend(pruned.deleted.iter().cloned());
+			commit.meta.inserted.push((to_meta_key(LAST_PRUNED, <span class="kw-2">&amp;</span>()), index.encode()));
+			commit.meta.deleted.push(pruned.journal_key.clone());
+			<span class="self">self</span>.pending_prunings += <span class="number">1</span>;
+		} <span class="kw">else </span>{
+			<span class="macro">warn!</span>(target: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Trying to prune when there&#39;s nothing to prune&quot;</span>);
 		}
 	}
 
-	<span class="doccomment">/// Add a change set to the window. Creates a journal record and pushes it to `commit`</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">note_canonical</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">BlockHash</span>, <span class="ident">commit</span>: <span class="kw-2">&amp;mut</span> <span class="ident">CommitSet</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>) {
-		<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Adding to pruning window: {:?} ({} inserted, {} deleted)&quot;</span>, <span class="ident">hash</span>, <span class="ident">commit</span>.<span class="ident">data</span>.<span class="ident">inserted</span>.<span class="ident">len</span>(), <span class="ident">commit</span>.<span class="ident">data</span>.<span class="ident">deleted</span>.<span class="ident">len</span>());
-		<span class="kw">let</span> <span class="ident">inserted</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">count_insertions</span> {
-			<span class="ident">commit</span>.<span class="ident">data</span>.<span class="ident">inserted</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">k</span>.<span class="ident">clone</span>()).<span class="ident">collect</span>()
-		} <span class="kw">else</span> {
-			<span class="ident">Default::default</span>()
+	<span class="doccomment">/// Add a change set to the window. Creates a journal record and pushes it to `commit`
+	</span><span class="kw">pub fn </span>note_canonical(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>BlockHash, commit: <span class="kw-2">&amp;mut </span>CommitSet&lt;Key&gt;) {
+		<span class="macro">trace!</span>(target: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Adding to pruning window: {:?} ({} inserted, {} deleted)&quot;</span>, hash, commit.data.inserted.len(), commit.data.deleted.len());
+		<span class="kw">let </span>inserted = <span class="kw">if </span><span class="self">self</span>.count_insertions {
+			commit.data.inserted.iter().map(|(k, <span class="kw">_</span>)| k.clone()).collect()
+		} <span class="kw">else </span>{
+			Default::default()
 		};
-		<span class="kw">let</span> <span class="ident">deleted</span> <span class="op">=</span> <span class="ident">::std::mem::take</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>.<span class="ident">data</span>.<span class="ident">deleted</span>);
-		<span class="kw">let</span> <span class="ident">journal_record</span> <span class="op">=</span> <span class="ident">JournalRecord</span> { <span class="ident">hash</span>: <span class="ident">hash</span>.<span class="ident">clone</span>(), <span class="ident">inserted</span>, <span class="ident">deleted</span> };
-		<span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pending_number</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>;
-		<span class="kw">let</span> <span class="ident">journal_key</span> <span class="op">=</span> <span class="ident">to_journal_key</span>(<span class="ident">block</span>);
-		<span class="ident">commit</span>.<span class="ident">meta</span>.<span class="ident">inserted</span>.<span class="ident">push</span>((<span class="ident">journal_key</span>.<span class="ident">clone</span>(), <span class="ident">journal_record</span>.<span class="ident">encode</span>()));
-		<span class="self">self</span>.<span class="ident">import</span>(
-			<span class="kw-2">&amp;</span><span class="ident">journal_record</span>.<span class="ident">hash</span>,
-			<span class="ident">journal_key</span>,
-			<span class="ident">journal_record</span>.<span class="ident">inserted</span>.<span class="ident">into_iter</span>(),
-			<span class="ident">journal_record</span>.<span class="ident">deleted</span>,
+		<span class="kw">let </span>deleted = ::std::mem::take(<span class="kw-2">&amp;mut </span>commit.data.deleted);
+		<span class="kw">let </span>journal_record = JournalRecord { hash: hash.clone(), inserted, deleted };
+		<span class="kw">let </span>block = <span class="self">self</span>.pending_number + <span class="self">self</span>.death_rows.len() <span class="kw">as </span>u64;
+		<span class="kw">let </span>journal_key = to_journal_key(block);
+		commit.meta.inserted.push((journal_key.clone(), journal_record.encode()));
+		<span class="self">self</span>.import(
+			<span class="kw-2">&amp;</span>journal_record.hash,
+			journal_key,
+			journal_record.inserted.into_iter(),
+			journal_record.deleted,
 		);
-		<span class="self">self</span>.<span class="ident">pending_canonicalizations</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+		<span class="self">self</span>.pending_canonicalizations += <span class="number">1</span>;
 	}
 
-	<span class="doccomment">/// Apply all pending changes</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">apply_pending</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">pending_canonicalizations</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">pending_prunings</span> {
-			<span class="kw">let</span> <span class="ident">pruned</span> <span class="op">=</span> <span class="self">self</span>
-				.<span class="ident">death_rows</span>
-				.<span class="ident">pop_front</span>()
-				.<span class="ident">expect</span>(<span class="string">&quot;pending_prunings is always &lt; death_rows.len()&quot;</span>);
-			<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Applying pruning {:?} ({} deleted)&quot;</span>, <span class="ident">pruned</span>.<span class="ident">hash</span>, <span class="ident">pruned</span>.<span class="ident">deleted</span>.<span class="ident">len</span>());
-			<span class="kw">if</span> <span class="self">self</span>.<span class="ident">count_insertions</span> {
-				<span class="kw">for</span> <span class="ident">k</span> <span class="kw">in</span> <span class="ident">pruned</span>.<span class="ident">deleted</span>.<span class="ident">iter</span>() {
-					<span class="self">self</span>.<span class="ident">death_index</span>.<span class="ident">remove</span>(<span class="ident">k</span>);
+	<span class="doccomment">/// Apply all pending changes
+	</span><span class="kw">pub fn </span>apply_pending(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.pending_canonicalizations = <span class="number">0</span>;
+		<span class="kw">for _ in </span><span class="number">0</span>..<span class="self">self</span>.pending_prunings {
+			<span class="kw">let </span>pruned = <span class="self">self
+				</span>.death_rows
+				.pop_front()
+				.expect(<span class="string">&quot;pending_prunings is always &lt; death_rows.len()&quot;</span>);
+			<span class="macro">trace!</span>(target: <span class="string">&quot;state-db&quot;</span>, <span class="string">&quot;Applying pruning {:?} ({} deleted)&quot;</span>, pruned.hash, pruned.deleted.len());
+			<span class="kw">if </span><span class="self">self</span>.count_insertions {
+				<span class="kw">for </span>k <span class="kw">in </span>pruned.deleted.iter() {
+					<span class="self">self</span>.death_index.remove(k);
 				}
 			}
-			<span class="self">self</span>.<span class="ident">pending_number</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+			<span class="self">self</span>.pending_number += <span class="number">1</span>;
 		}
-		<span class="self">self</span>.<span class="ident">pending_prunings</span> <span class="op">=</span> <span class="number">0</span>;
+		<span class="self">self</span>.pending_prunings = <span class="number">0</span>;
 	}
 
-	<span class="doccomment">/// Revert all pending changes</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">revert_pending</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="comment">// Revert pending deletions.</span>
-		<span class="comment">// Note that pending insertions might cause some existing deletions to be removed from</span>
-		<span class="comment">// `death_index` We don&#39;t bother to track and revert that for now. This means that a few</span>
-		<span class="comment">// nodes might end up no being deleted in case transaction fails and `revert_pending` is</span>
-		<span class="comment">// called.</span>
-		<span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">truncate</span>(<span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="self">self</span>.<span class="ident">pending_canonicalizations</span>);
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">count_insertions</span> {
-			<span class="kw">let</span> <span class="ident">new_max_block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">death_rows</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">pending_number</span>;
-			<span class="self">self</span>.<span class="ident">death_index</span>.<span class="ident">retain</span>(<span class="op">|</span><span class="kw">_</span>, <span class="ident">block</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">block</span> <span class="op">&lt;</span> <span class="ident">new_max_block</span>);
+	<span class="doccomment">/// Revert all pending changes
+	</span><span class="kw">pub fn </span>revert_pending(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="comment">// Revert pending deletions.
+		// Note that pending insertions might cause some existing deletions to be removed from
+		// `death_index` We don&#39;t bother to track and revert that for now. This means that a few
+		// nodes might end up no being deleted in case transaction fails and `revert_pending` is
+		// called.
+		</span><span class="self">self</span>.death_rows.truncate(<span class="self">self</span>.death_rows.len() - <span class="self">self</span>.pending_canonicalizations);
+		<span class="kw">if </span><span class="self">self</span>.count_insertions {
+			<span class="kw">let </span>new_max_block = <span class="self">self</span>.death_rows.len() <span class="kw">as </span>u64 + <span class="self">self</span>.pending_number;
+			<span class="self">self</span>.death_index.retain(|<span class="kw">_</span>, block| <span class="kw-2">*</span>block &lt; new_max_block);
 		}
-		<span class="self">self</span>.<span class="ident">pending_canonicalizations</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="self">self</span>.<span class="ident">pending_prunings</span> <span class="op">=</span> <span class="number">0</span>;
+		<span class="self">self</span>.pending_canonicalizations = <span class="number">0</span>;
+		<span class="self">self</span>.pending_prunings = <span class="number">0</span>;
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::RefWindow</span>;
-	<span class="kw">use</span> <span class="kw">crate</span>::{
-		<span class="ident">test</span>::{<span class="ident">make_commit</span>, <span class="ident">make_db</span>, <span class="ident">TestDb</span>},
-		<span class="ident">CommitSet</span>,
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use </span><span class="kw">super</span>::RefWindow;
+	<span class="kw">use crate</span>::{
+		test::{make_commit, make_db, TestDb},
+		CommitSet,
 	};
-	<span class="kw">use</span> <span class="ident">sp_core::H256</span>;
+	<span class="kw">use </span>sp_core::H256;
 
-	<span class="kw">fn</span> <span class="ident">check_journal</span>(<span class="ident">pruning</span>: <span class="kw-2">&amp;</span><span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span>, <span class="ident">db</span>: <span class="kw-2">&amp;</span><span class="ident">TestDb</span>) {
-		<span class="kw">let</span> <span class="ident">restored</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="ident">db</span>, <span class="ident">pruning</span>.<span class="ident">count_insertions</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="ident">restored</span>.<span class="ident">pending_number</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">death_rows</span>, <span class="ident">restored</span>.<span class="ident">death_rows</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">death_index</span>, <span class="ident">restored</span>.<span class="ident">death_index</span>);
+	<span class="kw">fn </span>check_journal(pruning: <span class="kw-2">&amp;</span>RefWindow&lt;H256, H256&gt;, db: <span class="kw-2">&amp;</span>TestDb) {
+		<span class="kw">let </span>restored: RefWindow&lt;H256, H256&gt; = RefWindow::new(db, pruning.count_insertions).unwrap();
+		<span class="macro">assert_eq!</span>(pruning.pending_number, restored.pending_number);
+		<span class="macro">assert_eq!</span>(pruning.death_rows, restored.death_rows);
+		<span class="macro">assert_eq!</span>(pruning.death_index, restored.death_index);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">created_from_empty_db</span>() {
-		<span class="kw">let</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[]);
-		<span class="kw">let</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">true</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="number">0</span>);
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">death_rows</span>.<span class="ident">is_empty</span>());
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">death_index</span>.<span class="ident">is_empty</span>());
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>created_from_empty_db() {
+		<span class="kw">let </span>db = make_db(<span class="kw-2">&amp;</span>[]);
+		<span class="kw">let </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">true</span>).unwrap();
+		<span class="macro">assert_eq!</span>(pruning.pending_number, <span class="number">0</span>);
+		<span class="macro">assert!</span>(pruning.death_rows.is_empty());
+		<span class="macro">assert!</span>(pruning.death_index.is_empty());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">prune_empty</span>() {
-		<span class="kw">let</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[]);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">true</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="number">0</span>);
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">death_rows</span>.<span class="ident">is_empty</span>());
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">death_index</span>.<span class="ident">is_empty</span>());
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">pending_prunings</span> <span class="op">==</span> <span class="number">0</span>);
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">pending_canonicalizations</span> <span class="op">==</span> <span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>prune_empty() {
+		<span class="kw">let </span>db = make_db(<span class="kw-2">&amp;</span>[]);
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">true</span>).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		<span class="macro">assert_eq!</span>(pruning.pending_number, <span class="number">0</span>);
+		<span class="macro">assert!</span>(pruning.death_rows.is_empty());
+		<span class="macro">assert!</span>(pruning.death_index.is_empty());
+		<span class="macro">assert!</span>(pruning.pending_prunings == <span class="number">0</span>);
+		<span class="macro">assert!</span>(pruning.pending_canonicalizations == <span class="number">0</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">prune_one</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">true</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">4</span>, <span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>]);
-		<span class="kw">let</span> <span class="ident">h</span> <span class="op">=</span> <span class="ident">H256::random</span>();
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">h</span>, <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">have_block</span>(<span class="kw-2">&amp;</span><span class="ident">h</span>));
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">have_block</span>(<span class="kw-2">&amp;</span><span class="ident">h</span>));
-		<span class="macro">assert!</span>(<span class="ident">commit</span>.<span class="ident">data</span>.<span class="ident">deleted</span>.<span class="ident">is_empty</span>());
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">death_rows</span>.<span class="ident">len</span>(), <span class="number">1</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">death_index</span>.<span class="ident">len</span>(), <span class="number">2</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
-		<span class="ident">check_journal</span>(<span class="kw-2">&amp;</span><span class="ident">pruning</span>, <span class="kw-2">&amp;</span><span class="ident">db</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>prune_one() {
+		<span class="kw">let </span><span class="kw-2">mut </span>db = make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">true</span>).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">4</span>, <span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>]);
+		<span class="kw">let </span>h = H256::random();
+		pruning.note_canonical(<span class="kw-2">&amp;</span>h, <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(pruning.have_block(<span class="kw-2">&amp;</span>h));
+		pruning.apply_pending();
+		<span class="macro">assert!</span>(pruning.have_block(<span class="kw-2">&amp;</span>h));
+		<span class="macro">assert!</span>(commit.data.deleted.is_empty());
+		<span class="macro">assert_eq!</span>(pruning.death_rows.len(), <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(pruning.death_index.len(), <span class="number">2</span>);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
+		check_journal(<span class="kw-2">&amp;</span>pruning, <span class="kw-2">&amp;</span>db);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">pruning</span>.<span class="ident">have_block</span>(<span class="kw-2">&amp;</span><span class="ident">h</span>));
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">pruning</span>.<span class="ident">have_block</span>(<span class="kw-2">&amp;</span><span class="ident">h</span>));
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">4</span>, <span class="number">5</span>])));
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">death_rows</span>.<span class="ident">is_empty</span>());
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">death_index</span>.<span class="ident">is_empty</span>());
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="number">1</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		<span class="macro">assert!</span>(!pruning.have_block(<span class="kw-2">&amp;</span>h));
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		pruning.apply_pending();
+		<span class="macro">assert!</span>(!pruning.have_block(<span class="kw-2">&amp;</span>h));
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">4</span>, <span class="number">5</span>])));
+		<span class="macro">assert!</span>(pruning.death_rows.is_empty());
+		<span class="macro">assert!</span>(pruning.death_index.is_empty());
+		<span class="macro">assert_eq!</span>(pruning.pending_number, <span class="number">1</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">prune_two</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">true</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">4</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>prune_two() {
+		<span class="kw">let </span><span class="kw-2">mut </span>db = make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">true</span>).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">4</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		pruning.apply_pending();
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
 
-		<span class="ident">check_journal</span>(<span class="kw-2">&amp;</span><span class="ident">pruning</span>, <span class="kw-2">&amp;</span><span class="ident">db</span>);
+		check_journal(<span class="kw-2">&amp;</span>pruning, <span class="kw-2">&amp;</span>db);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="number">2</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		pruning.apply_pending();
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		pruning.apply_pending();
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
+		<span class="macro">assert_eq!</span>(pruning.pending_number, <span class="number">2</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">prune_two_pending</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">true</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">4</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="number">2</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>prune_two_pending() {
+		<span class="kw">let </span><span class="kw-2">mut </span>db = make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">true</span>).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">4</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		pruning.apply_pending();
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])));
+		<span class="macro">assert_eq!</span>(pruning.pending_number, <span class="number">2</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">reinserted_survives</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">true</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>], <span class="kw-2">&amp;</span>[]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>reinserted_survives() {
+		<span class="kw">let </span><span class="kw-2">mut </span>db = make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">true</span>).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">2</span>], <span class="kw-2">&amp;</span>[]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
+		pruning.apply_pending();
 
-		<span class="ident">check_journal</span>(<span class="kw-2">&amp;</span><span class="ident">pruning</span>, <span class="kw-2">&amp;</span><span class="ident">db</span>);
+		check_journal(<span class="kw-2">&amp;</span>pruning, <span class="kw-2">&amp;</span>db);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>])));
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="number">3</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>])));
+		pruning.apply_pending();
+		<span class="macro">assert_eq!</span>(pruning.pending_number, <span class="number">3</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">reinserted_survive_pending</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">true</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>], <span class="kw-2">&amp;</span>[]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>reinserted_survive_pending() {
+		<span class="kw">let </span><span class="kw-2">mut </span>db = make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">true</span>).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">2</span>], <span class="kw-2">&amp;</span>[]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>])));
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pruning</span>.<span class="ident">pending_number</span>, <span class="number">3</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>])));
+		pruning.apply_pending();
+		<span class="macro">assert_eq!</span>(pruning.pending_number, <span class="number">3</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">reinserted_ignores</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruning</span>: <span class="ident">RefWindow</span><span class="op">&lt;</span><span class="ident">H256</span>, <span class="ident">H256</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefWindow::new</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>, <span class="bool-val">false</span>).<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>], <span class="kw-2">&amp;</span>[]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">make_commit</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
-		<span class="ident">pruning</span>.<span class="ident">note_canonical</span>(<span class="kw-2">&amp;</span><span class="ident">H256::random</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
-		<span class="ident">pruning</span>.<span class="ident">apply_pending</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>reinserted_ignores() {
+		<span class="kw">let </span><span class="kw-2">mut </span>db = make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+		<span class="kw">let </span><span class="kw-2">mut </span>pruning: RefWindow&lt;H256, H256&gt; = RefWindow::new(<span class="kw-2">&amp;</span>db, <span class="bool-val">false</span>).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[<span class="number">2</span>], <span class="kw-2">&amp;</span>[]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = make_commit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">2</span>]);
+		pruning.note_canonical(<span class="kw-2">&amp;</span>H256::random(), <span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])));
+		pruning.apply_pending();
 
-		<span class="ident">check_journal</span>(<span class="kw-2">&amp;</span><span class="ident">pruning</span>, <span class="kw-2">&amp;</span><span class="ident">db</span>);
+		check_journal(<span class="kw-2">&amp;</span>pruning, <span class="kw-2">&amp;</span>db);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commit</span> <span class="op">=</span> <span class="ident">CommitSet::default</span>();
-		<span class="ident">pruning</span>.<span class="ident">prune_one</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commit</span>);
-		<span class="ident">db</span>.<span class="ident">commit</span>(<span class="kw-2">&amp;</span><span class="ident">commit</span>);
-		<span class="macro">assert!</span>(<span class="ident">db</span>.<span class="ident">data_eq</span>(<span class="kw-2">&amp;</span><span class="ident">make_db</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>])));
-		<span class="macro">assert!</span>(<span class="ident">pruning</span>.<span class="ident">death_index</span>.<span class="ident">is_empty</span>());
+		<span class="kw">let </span><span class="kw-2">mut </span>commit = CommitSet::default();
+		pruning.prune_one(<span class="kw-2">&amp;mut </span>commit);
+		db.commit(<span class="kw-2">&amp;</span>commit);
+		<span class="macro">assert!</span>(db.data_eq(<span class="kw-2">&amp;</span>make_db(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>])));
+		<span class="macro">assert!</span>(pruning.death_index.is_empty());
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_state_db" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_state_db" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

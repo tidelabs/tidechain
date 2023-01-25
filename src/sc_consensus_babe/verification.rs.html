@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/babe/src/verification.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>verification.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_consensus_babe/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_consensus_babe/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_consensus_babe/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/babe/src/verification.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>verification.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_consensus_babe/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -242,245 +237,244 @@
 <span id="237">237</span>
 <span id="238">238</span>
 <span id="239">239</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Verification for BABE headers.</span>
-<span class="kw">use</span> <span class="kw">super</span>::{
-	<span class="ident">authorship</span>::{<span class="ident">calculate_primary_threshold</span>, <span class="ident">check_primary_threshold</span>, <span class="ident">secondary_slot_author</span>},
-	<span class="ident">babe_err</span>, <span class="ident">find_pre_digest</span>, <span class="ident">BlockT</span>, <span class="ident">Epoch</span>, <span class="ident">Error</span>,
+</span><span class="doccomment">//! Verification for BABE headers.
+</span><span class="kw">use super</span>::{
+	authorship::{calculate_primary_threshold, check_primary_threshold, secondary_slot_author},
+	babe_err, find_pre_digest, BlockT, Epoch, Error,
 };
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>};
-<span class="kw">use</span> <span class="ident">sc_consensus_slots::CheckedHeader</span>;
-<span class="kw">use</span> <span class="ident">sp_consensus_babe</span>::{
-	<span class="ident">digests</span>::{
-		<span class="ident">CompatibleDigestItem</span>, <span class="ident">PreDigest</span>, <span class="ident">PrimaryPreDigest</span>, <span class="ident">SecondaryPlainPreDigest</span>,
-		<span class="ident">SecondaryVRFPreDigest</span>,
+<span class="kw">use </span>log::{debug, trace};
+<span class="kw">use </span>sc_consensus_slots::CheckedHeader;
+<span class="kw">use </span>sp_consensus_babe::{
+	digests::{
+		CompatibleDigestItem, PreDigest, PrimaryPreDigest, SecondaryPlainPreDigest,
+		SecondaryVRFPreDigest,
 	},
-	<span class="ident">make_transcript</span>, <span class="ident">AuthorityId</span>, <span class="ident">AuthorityPair</span>, <span class="ident">AuthoritySignature</span>,
+	make_transcript, AuthorityId, AuthorityPair, AuthoritySignature,
 };
-<span class="kw">use</span> <span class="ident">sp_consensus_slots::Slot</span>;
-<span class="kw">use</span> <span class="ident">sp_core</span>::{<span class="ident">ByteArray</span>, <span class="ident">Pair</span>};
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{<span class="ident">traits::Header</span>, <span class="ident">DigestItem</span>};
+<span class="kw">use </span>sp_consensus_slots::Slot;
+<span class="kw">use </span>sp_core::{ByteArray, Pair};
+<span class="kw">use </span>sp_runtime::{traits::Header, DigestItem};
 
-<span class="doccomment">/// BABE verification parameters</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">VerificationParams</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="ident">BlockT</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// The header being verified.</span>
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">header</span>: <span class="ident">B::Header</span>,
-	<span class="doccomment">/// The pre-digest of the header being verified. this is optional - if prior</span>
-	<span class="doccomment">/// verification code had to read it, it can be included here to avoid duplicate</span>
-	<span class="doccomment">/// work.</span>
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">pre_digest</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PreDigest</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// The slot number of the current time.</span>
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">slot_now</span>: <span class="ident">Slot</span>,
-	<span class="doccomment">/// Epoch descriptor of the epoch this block _should_ be under, if it&#39;s valid.</span>
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Epoch</span>,
+<span class="doccomment">/// BABE verification parameters
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>VerificationParams&lt;<span class="lifetime">&#39;a</span>, B: <span class="lifetime">&#39;a </span>+ BlockT&gt; {
+	<span class="doccomment">/// The header being verified.
+	</span><span class="kw">pub</span>(<span class="kw">super</span>) header: B::Header,
+	<span class="doccomment">/// The pre-digest of the header being verified. this is optional - if prior
+	/// verification code had to read it, it can be included here to avoid duplicate
+	/// work.
+	</span><span class="kw">pub</span>(<span class="kw">super</span>) pre_digest: <span class="prelude-ty">Option</span>&lt;PreDigest&gt;,
+	<span class="doccomment">/// The slot number of the current time.
+	</span><span class="kw">pub</span>(<span class="kw">super</span>) slot_now: Slot,
+	<span class="doccomment">/// Epoch descriptor of the epoch this block _should_ be under, if it&#39;s valid.
+	</span><span class="kw">pub</span>(<span class="kw">super</span>) epoch: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Epoch,
 }
 
-<span class="doccomment">/// Check a header has been signed by the right key. If the slot is too far in</span>
-<span class="doccomment">/// the future, an error will be returned. If successful, returns the pre-header</span>
-<span class="doccomment">/// and the digest item containing the seal.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The seal must be the last digest.  Otherwise, the whole header is considered</span>
-<span class="doccomment">/// unsigned.  This is required for security and must not be changed.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This digest item will always return `Some` when used with `as_babe_pre_digest`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The given header can either be from a primary or secondary slot assignment,</span>
-<span class="doccomment">/// with each having different validation logic.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">check_header</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span> <span class="op">+</span> <span class="ident">Sized</span><span class="op">&gt;</span>(
-	<span class="ident">params</span>: <span class="ident">VerificationParams</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CheckedHeader</span><span class="op">&lt;</span><span class="ident">B::Header</span>, <span class="ident">VerifiedHeaderInfo</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">VerificationParams</span> { <span class="kw-2">mut</span> <span class="ident">header</span>, <span class="ident">pre_digest</span>, <span class="ident">slot_now</span>, <span class="ident">epoch</span> } <span class="op">=</span> <span class="ident">params</span>;
+<span class="doccomment">/// Check a header has been signed by the right key. If the slot is too far in
+/// the future, an error will be returned. If successful, returns the pre-header
+/// and the digest item containing the seal.
+///
+/// The seal must be the last digest.  Otherwise, the whole header is considered
+/// unsigned.  This is required for security and must not be changed.
+///
+/// This digest item will always return `Some` when used with `as_babe_pre_digest`.
+///
+/// The given header can either be from a primary or secondary slot assignment,
+/// with each having different validation logic.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>check_header&lt;B: BlockT + Sized&gt;(
+	params: VerificationParams&lt;B&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;CheckedHeader&lt;B::Header, VerifiedHeaderInfo&gt;, Error&lt;B&gt;&gt; {
+	<span class="kw">let </span>VerificationParams { <span class="kw-2">mut </span>header, pre_digest, slot_now, epoch } = params;
 
-	<span class="kw">let</span> <span class="ident">authorities</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">authorities</span>;
-	<span class="kw">let</span> <span class="ident">pre_digest</span> <span class="op">=</span> <span class="ident">pre_digest</span>.<span class="ident">map</span>(<span class="prelude-val">Ok</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">find_pre_digest</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">header</span>))<span class="question-mark">?</span>;
+	<span class="kw">let </span>authorities = <span class="kw-2">&amp;</span>epoch.authorities;
+	<span class="kw">let </span>pre_digest = pre_digest.map(<span class="prelude-val">Ok</span>).unwrap_or_else(|| find_pre_digest::&lt;B&gt;(<span class="kw-2">&amp;</span>header))<span class="question-mark">?</span>;
 
-	<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;babe&quot;</span>, <span class="string">&quot;Checking header&quot;</span>);
-	<span class="kw">let</span> <span class="ident">seal</span> <span class="op">=</span> <span class="ident">header</span>
-		.<span class="ident">digest_mut</span>()
-		.<span class="ident">pop</span>()
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">babe_err</span>(<span class="ident">Error::HeaderUnsealed</span>(<span class="ident">header</span>.<span class="ident">hash</span>())))<span class="question-mark">?</span>;
+	<span class="macro">trace!</span>(target: <span class="string">&quot;babe&quot;</span>, <span class="string">&quot;Checking header&quot;</span>);
+	<span class="kw">let </span>seal = header
+		.digest_mut()
+		.pop()
+		.ok_or_else(|| babe_err(Error::HeaderUnsealed(header.hash())))<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">seal</span>
-		.<span class="ident">as_babe_seal</span>()
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">babe_err</span>(<span class="ident">Error::HeaderBadSeal</span>(<span class="ident">header</span>.<span class="ident">hash</span>())))<span class="question-mark">?</span>;
+	<span class="kw">let </span>sig = seal
+		.as_babe_seal()
+		.ok_or_else(|| babe_err(Error::HeaderBadSeal(header.hash())))<span class="question-mark">?</span>;
 
-	<span class="comment">// the pre-hash of the header doesn&#39;t include the seal</span>
-	<span class="comment">// and that&#39;s what we sign</span>
-	<span class="kw">let</span> <span class="ident">pre_hash</span> <span class="op">=</span> <span class="ident">header</span>.<span class="ident">hash</span>();
+	<span class="comment">// the pre-hash of the header doesn&#39;t include the seal
+	// and that&#39;s what we sign
+	</span><span class="kw">let </span>pre_hash = header.hash();
 
-	<span class="kw">if</span> <span class="ident">pre_digest</span>.<span class="ident">slot</span>() <span class="op">&gt;</span> <span class="ident">slot_now</span> {
-		<span class="ident">header</span>.<span class="ident">digest_mut</span>().<span class="ident">push</span>(<span class="ident">seal</span>);
-		<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">CheckedHeader::Deferred</span>(<span class="ident">header</span>, <span class="ident">pre_digest</span>.<span class="ident">slot</span>()))
+	<span class="kw">if </span>pre_digest.slot() &gt; slot_now {
+		header.digest_mut().push(seal);
+		<span class="kw">return </span><span class="prelude-val">Ok</span>(CheckedHeader::Deferred(header, pre_digest.slot()))
 	}
 
-	<span class="kw">let</span> <span class="ident">author</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">authorities</span>.<span class="ident">get</span>(<span class="ident">pre_digest</span>.<span class="ident">authority_index</span>() <span class="kw">as</span> <span class="ident">usize</span>) {
-		<span class="prelude-val">Some</span>(<span class="ident">author</span>) =&gt; <span class="ident">author</span>.<span class="number">0</span>.<span class="ident">clone</span>(),
-		<span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">babe_err</span>(<span class="ident">Error::SlotAuthorNotFound</span>)),
+	<span class="kw">let </span>author = <span class="kw">match </span>authorities.get(pre_digest.authority_index() <span class="kw">as </span>usize) {
+		<span class="prelude-val">Some</span>(author) =&gt; author.<span class="number">0</span>.clone(),
+		<span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(babe_err(Error::SlotAuthorNotFound)),
 	};
 
-	<span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">pre_digest</span> {
-		<span class="ident">PreDigest::Primary</span>(<span class="ident">primary</span>) =&gt; {
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;babe&quot;</span>,
+	<span class="kw">match </span><span class="kw-2">&amp;</span>pre_digest {
+		PreDigest::Primary(primary) =&gt; {
+			<span class="macro">debug!</span>(target: <span class="string">&quot;babe&quot;</span>,
 				<span class="string">&quot;Verifying primary block #{} at slot: {}&quot;</span>,
-				<span class="ident">header</span>.<span class="ident">number</span>(),
-				<span class="ident">primary</span>.<span class="ident">slot</span>,
+				header.number(),
+				primary.slot,
 			);
 
-			<span class="ident">check_primary_header</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(<span class="ident">pre_hash</span>, <span class="ident">primary</span>, <span class="ident">sig</span>, <span class="ident">epoch</span>, <span class="ident">epoch</span>.<span class="ident">config</span>.<span class="ident">c</span>)<span class="question-mark">?</span>;
+			check_primary_header::&lt;B&gt;(pre_hash, primary, sig, epoch, epoch.config.c)<span class="question-mark">?</span>;
 		},
-		<span class="ident">PreDigest::SecondaryPlain</span>(<span class="ident">secondary</span>)
-			<span class="kw">if</span> <span class="ident">epoch</span>.<span class="ident">config</span>.<span class="ident">allowed_slots</span>.<span class="ident">is_secondary_plain_slots_allowed</span>() =&gt;
+		PreDigest::SecondaryPlain(secondary)
+			<span class="kw">if </span>epoch.config.allowed_slots.is_secondary_plain_slots_allowed() =&gt;
 		{
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;babe&quot;</span>,
+			<span class="macro">debug!</span>(target: <span class="string">&quot;babe&quot;</span>,
 				<span class="string">&quot;Verifying secondary plain block #{} at slot: {}&quot;</span>,
-				<span class="ident">header</span>.<span class="ident">number</span>(),
-				<span class="ident">secondary</span>.<span class="ident">slot</span>,
+				header.number(),
+				secondary.slot,
 			);
 
-			<span class="ident">check_secondary_plain_header</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(<span class="ident">pre_hash</span>, <span class="ident">secondary</span>, <span class="ident">sig</span>, <span class="ident">epoch</span>)<span class="question-mark">?</span>;
+			check_secondary_plain_header::&lt;B&gt;(pre_hash, secondary, sig, epoch)<span class="question-mark">?</span>;
 		},
-		<span class="ident">PreDigest::SecondaryVRF</span>(<span class="ident">secondary</span>)
-			<span class="kw">if</span> <span class="ident">epoch</span>.<span class="ident">config</span>.<span class="ident">allowed_slots</span>.<span class="ident">is_secondary_vrf_slots_allowed</span>() =&gt;
+		PreDigest::SecondaryVRF(secondary)
+			<span class="kw">if </span>epoch.config.allowed_slots.is_secondary_vrf_slots_allowed() =&gt;
 		{
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;babe&quot;</span>,
+			<span class="macro">debug!</span>(target: <span class="string">&quot;babe&quot;</span>,
 				<span class="string">&quot;Verifying secondary VRF block #{} at slot: {}&quot;</span>,
-				<span class="ident">header</span>.<span class="ident">number</span>(),
-				<span class="ident">secondary</span>.<span class="ident">slot</span>,
+				header.number(),
+				secondary.slot,
 			);
 
-			<span class="ident">check_secondary_vrf_header</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(<span class="ident">pre_hash</span>, <span class="ident">secondary</span>, <span class="ident">sig</span>, <span class="ident">epoch</span>)<span class="question-mark">?</span>;
+			check_secondary_vrf_header::&lt;B&gt;(pre_hash, secondary, sig, epoch)<span class="question-mark">?</span>;
 		},
-		<span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">babe_err</span>(<span class="ident">Error::SecondarySlotAssignmentsDisabled</span>)),
+		<span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(babe_err(Error::SecondarySlotAssignmentsDisabled)),
 	}
 
-	<span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="ident">VerifiedHeaderInfo</span> {
-		<span class="ident">pre_digest</span>: <span class="ident">CompatibleDigestItem::babe_pre_digest</span>(<span class="ident">pre_digest</span>),
-		<span class="ident">seal</span>,
-		<span class="ident">author</span>,
+	<span class="kw">let </span>info = VerifiedHeaderInfo {
+		pre_digest: CompatibleDigestItem::babe_pre_digest(pre_digest),
+		seal,
+		author,
 	};
-	<span class="prelude-val">Ok</span>(<span class="ident">CheckedHeader::Checked</span>(<span class="ident">header</span>, <span class="ident">info</span>))
+	<span class="prelude-val">Ok</span>(CheckedHeader::Checked(header, info))
 }
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">VerifiedHeaderInfo</span> {
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">pre_digest</span>: <span class="ident">DigestItem</span>,
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">seal</span>: <span class="ident">DigestItem</span>,
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">author</span>: <span class="ident">AuthorityId</span>,
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>VerifiedHeaderInfo {
+	<span class="kw">pub</span>(<span class="kw">super</span>) pre_digest: DigestItem,
+	<span class="kw">pub</span>(<span class="kw">super</span>) seal: DigestItem,
+	<span class="kw">pub</span>(<span class="kw">super</span>) author: AuthorityId,
 }
 
-<span class="doccomment">/// Check a primary slot proposal header. We validate that the given header is</span>
-<span class="doccomment">/// properly signed by the expected authority, and that the contained VRF proof</span>
-<span class="doccomment">/// is valid. Additionally, the weight of this block must increase compared to</span>
-<span class="doccomment">/// its parent since it is a primary block.</span>
-<span class="kw">fn</span> <span class="ident">check_primary_header</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span> <span class="op">+</span> <span class="ident">Sized</span><span class="op">&gt;</span>(
-	<span class="ident">pre_hash</span>: <span class="ident">B::Hash</span>,
-	<span class="ident">pre_digest</span>: <span class="kw-2">&amp;</span><span class="ident">PrimaryPreDigest</span>,
-	<span class="ident">signature</span>: <span class="ident">AuthoritySignature</span>,
-	<span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="ident">Epoch</span>,
-	<span class="ident">c</span>: (<span class="ident">u64</span>, <span class="ident">u64</span>),
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">author</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">authorities</span>[<span class="ident">pre_digest</span>.<span class="ident">authority_index</span> <span class="kw">as</span> <span class="ident">usize</span>].<span class="number">0</span>;
+<span class="doccomment">/// Check a primary slot proposal header. We validate that the given header is
+/// properly signed by the expected authority, and that the contained VRF proof
+/// is valid. Additionally, the weight of this block must increase compared to
+/// its parent since it is a primary block.
+</span><span class="kw">fn </span>check_primary_header&lt;B: BlockT + Sized&gt;(
+	pre_hash: B::Hash,
+	pre_digest: <span class="kw-2">&amp;</span>PrimaryPreDigest,
+	signature: AuthoritySignature,
+	epoch: <span class="kw-2">&amp;</span>Epoch,
+	c: (u64, u64),
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&lt;B&gt;&gt; {
+	<span class="kw">let </span>author = <span class="kw-2">&amp;</span>epoch.authorities[pre_digest.authority_index <span class="kw">as </span>usize].<span class="number">0</span>;
 
-	<span class="kw">if</span> <span class="ident">AuthorityPair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="ident">pre_hash</span>, <span class="ident">author</span>) {
-		<span class="kw">let</span> (<span class="ident">inout</span>, <span class="kw">_</span>) <span class="op">=</span> {
-			<span class="kw">let</span> <span class="ident">transcript</span> <span class="op">=</span> <span class="ident">make_transcript</span>(<span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">randomness</span>, <span class="ident">pre_digest</span>.<span class="ident">slot</span>, <span class="ident">epoch</span>.<span class="ident">epoch_index</span>);
+	<span class="kw">if </span>AuthorityPair::verify(<span class="kw-2">&amp;</span>signature, pre_hash, author) {
+		<span class="kw">let </span>(inout, <span class="kw">_</span>) = {
+			<span class="kw">let </span>transcript = make_transcript(<span class="kw-2">&amp;</span>epoch.randomness, pre_digest.slot, epoch.epoch_index);
 
-			<span class="ident">schnorrkel::PublicKey::from_bytes</span>(<span class="ident">author</span>.<span class="ident">as_slice</span>())
-				.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> {
-					<span class="ident">p</span>.<span class="ident">vrf_verify</span>(<span class="ident">transcript</span>, <span class="kw-2">&amp;</span><span class="ident">pre_digest</span>.<span class="ident">vrf_output</span>, <span class="kw-2">&amp;</span><span class="ident">pre_digest</span>.<span class="ident">vrf_proof</span>)
+			schnorrkel::PublicKey::from_bytes(author.as_slice())
+				.and_then(|p| {
+					p.vrf_verify(transcript, <span class="kw-2">&amp;</span>pre_digest.vrf_output, <span class="kw-2">&amp;</span>pre_digest.vrf_proof)
 				})
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">babe_err</span>(<span class="ident">Error::VRFVerificationFailed</span>(<span class="ident">s</span>)))<span class="question-mark">?</span>
-		};
+				.map_err(|s| babe_err(Error::VRFVerificationFailed(s)))<span class="question-mark">?
+		</span>};
 
-		<span class="kw">let</span> <span class="ident">threshold</span> <span class="op">=</span>
-			<span class="ident">calculate_primary_threshold</span>(<span class="ident">c</span>, <span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">authorities</span>, <span class="ident">pre_digest</span>.<span class="ident">authority_index</span> <span class="kw">as</span> <span class="ident">usize</span>);
+		<span class="kw">let </span>threshold =
+			calculate_primary_threshold(c, <span class="kw-2">&amp;</span>epoch.authorities, pre_digest.authority_index <span class="kw">as </span>usize);
 
-		<span class="kw">if</span> <span class="op">!</span><span class="ident">check_primary_threshold</span>(<span class="kw-2">&amp;</span><span class="ident">inout</span>, <span class="ident">threshold</span>) {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">babe_err</span>(<span class="ident">Error::VRFVerificationOfBlockFailed</span>(<span class="ident">author</span>.<span class="ident">clone</span>(), <span class="ident">threshold</span>)))
+		<span class="kw">if </span>!check_primary_threshold(<span class="kw-2">&amp;</span>inout, threshold) {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(babe_err(Error::VRFVerificationOfBlockFailed(author.clone(), threshold)))
 		}
 
 		<span class="prelude-val">Ok</span>(())
-	} <span class="kw">else</span> {
-		<span class="prelude-val">Err</span>(<span class="ident">babe_err</span>(<span class="ident">Error::BadSignature</span>(<span class="ident">pre_hash</span>)))
+	} <span class="kw">else </span>{
+		<span class="prelude-val">Err</span>(babe_err(Error::BadSignature(pre_hash)))
 	}
 }
 
-<span class="doccomment">/// Check a secondary slot proposal header. We validate that the given header is</span>
-<span class="doccomment">/// properly signed by the expected authority, which we have a deterministic way</span>
-<span class="doccomment">/// of computing. Additionally, the weight of this block must stay the same</span>
-<span class="doccomment">/// compared to its parent since it is a secondary block.</span>
-<span class="kw">fn</span> <span class="ident">check_secondary_plain_header</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>(
-	<span class="ident">pre_hash</span>: <span class="ident">B::Hash</span>,
-	<span class="ident">pre_digest</span>: <span class="kw-2">&amp;</span><span class="ident">SecondaryPlainPreDigest</span>,
-	<span class="ident">signature</span>: <span class="ident">AuthoritySignature</span>,
-	<span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="ident">Epoch</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="comment">// check the signature is valid under the expected authority and</span>
-	<span class="comment">// chain state.</span>
-	<span class="kw">let</span> <span class="ident">expected_author</span> <span class="op">=</span>
-		<span class="ident">secondary_slot_author</span>(<span class="ident">pre_digest</span>.<span class="ident">slot</span>, <span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">authorities</span>, <span class="ident">epoch</span>.<span class="ident">randomness</span>)
-			.<span class="ident">ok_or</span>(<span class="ident">Error::NoSecondaryAuthorExpected</span>)<span class="question-mark">?</span>;
+<span class="doccomment">/// Check a secondary slot proposal header. We validate that the given header is
+/// properly signed by the expected authority, which we have a deterministic way
+/// of computing. Additionally, the weight of this block must stay the same
+/// compared to its parent since it is a secondary block.
+</span><span class="kw">fn </span>check_secondary_plain_header&lt;B: BlockT&gt;(
+	pre_hash: B::Hash,
+	pre_digest: <span class="kw-2">&amp;</span>SecondaryPlainPreDigest,
+	signature: AuthoritySignature,
+	epoch: <span class="kw-2">&amp;</span>Epoch,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&lt;B&gt;&gt; {
+	<span class="comment">// check the signature is valid under the expected authority and
+	// chain state.
+	</span><span class="kw">let </span>expected_author =
+		secondary_slot_author(pre_digest.slot, <span class="kw-2">&amp;</span>epoch.authorities, epoch.randomness)
+			.ok_or(Error::NoSecondaryAuthorExpected)<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="ident">author</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">authorities</span>[<span class="ident">pre_digest</span>.<span class="ident">authority_index</span> <span class="kw">as</span> <span class="ident">usize</span>].<span class="number">0</span>;
+	<span class="kw">let </span>author = <span class="kw-2">&amp;</span>epoch.authorities[pre_digest.authority_index <span class="kw">as </span>usize].<span class="number">0</span>;
 
-	<span class="kw">if</span> <span class="ident">expected_author</span> <span class="op">!</span><span class="op">=</span> <span class="ident">author</span> {
-		<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidAuthor</span>(<span class="ident">expected_author</span>.<span class="ident">clone</span>(), <span class="ident">author</span>.<span class="ident">clone</span>()))
+	<span class="kw">if </span>expected_author != author {
+		<span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidAuthor(expected_author.clone(), author.clone()))
 	}
 
-	<span class="kw">if</span> <span class="ident">AuthorityPair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="ident">pre_hash</span>.<span class="ident">as_ref</span>(), <span class="ident">author</span>) {
+	<span class="kw">if </span>AuthorityPair::verify(<span class="kw-2">&amp;</span>signature, pre_hash.as_ref(), author) {
 		<span class="prelude-val">Ok</span>(())
-	} <span class="kw">else</span> {
-		<span class="prelude-val">Err</span>(<span class="ident">Error::BadSignature</span>(<span class="ident">pre_hash</span>))
+	} <span class="kw">else </span>{
+		<span class="prelude-val">Err</span>(Error::BadSignature(pre_hash))
 	}
 }
 
-<span class="doccomment">/// Check a secondary VRF slot proposal header.</span>
-<span class="kw">fn</span> <span class="ident">check_secondary_vrf_header</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>(
-	<span class="ident">pre_hash</span>: <span class="ident">B::Hash</span>,
-	<span class="ident">pre_digest</span>: <span class="kw-2">&amp;</span><span class="ident">SecondaryVRFPreDigest</span>,
-	<span class="ident">signature</span>: <span class="ident">AuthoritySignature</span>,
-	<span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="ident">Epoch</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="comment">// check the signature is valid under the expected authority and</span>
-	<span class="comment">// chain state.</span>
-	<span class="kw">let</span> <span class="ident">expected_author</span> <span class="op">=</span>
-		<span class="ident">secondary_slot_author</span>(<span class="ident">pre_digest</span>.<span class="ident">slot</span>, <span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">authorities</span>, <span class="ident">epoch</span>.<span class="ident">randomness</span>)
-			.<span class="ident">ok_or</span>(<span class="ident">Error::NoSecondaryAuthorExpected</span>)<span class="question-mark">?</span>;
+<span class="doccomment">/// Check a secondary VRF slot proposal header.
+</span><span class="kw">fn </span>check_secondary_vrf_header&lt;B: BlockT&gt;(
+	pre_hash: B::Hash,
+	pre_digest: <span class="kw-2">&amp;</span>SecondaryVRFPreDigest,
+	signature: AuthoritySignature,
+	epoch: <span class="kw-2">&amp;</span>Epoch,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&lt;B&gt;&gt; {
+	<span class="comment">// check the signature is valid under the expected authority and
+	// chain state.
+	</span><span class="kw">let </span>expected_author =
+		secondary_slot_author(pre_digest.slot, <span class="kw-2">&amp;</span>epoch.authorities, epoch.randomness)
+			.ok_or(Error::NoSecondaryAuthorExpected)<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="ident">author</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">authorities</span>[<span class="ident">pre_digest</span>.<span class="ident">authority_index</span> <span class="kw">as</span> <span class="ident">usize</span>].<span class="number">0</span>;
+	<span class="kw">let </span>author = <span class="kw-2">&amp;</span>epoch.authorities[pre_digest.authority_index <span class="kw">as </span>usize].<span class="number">0</span>;
 
-	<span class="kw">if</span> <span class="ident">expected_author</span> <span class="op">!</span><span class="op">=</span> <span class="ident">author</span> {
-		<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidAuthor</span>(<span class="ident">expected_author</span>.<span class="ident">clone</span>(), <span class="ident">author</span>.<span class="ident">clone</span>()))
+	<span class="kw">if </span>expected_author != author {
+		<span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidAuthor(expected_author.clone(), author.clone()))
 	}
 
-	<span class="kw">if</span> <span class="ident">AuthorityPair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="ident">pre_hash</span>.<span class="ident">as_ref</span>(), <span class="ident">author</span>) {
-		<span class="kw">let</span> <span class="ident">transcript</span> <span class="op">=</span> <span class="ident">make_transcript</span>(<span class="kw-2">&amp;</span><span class="ident">epoch</span>.<span class="ident">randomness</span>, <span class="ident">pre_digest</span>.<span class="ident">slot</span>, <span class="ident">epoch</span>.<span class="ident">epoch_index</span>);
+	<span class="kw">if </span>AuthorityPair::verify(<span class="kw-2">&amp;</span>signature, pre_hash.as_ref(), author) {
+		<span class="kw">let </span>transcript = make_transcript(<span class="kw-2">&amp;</span>epoch.randomness, pre_digest.slot, epoch.epoch_index);
 
-		<span class="ident">schnorrkel::PublicKey::from_bytes</span>(<span class="ident">author</span>.<span class="ident">as_slice</span>())
-			.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">vrf_verify</span>(<span class="ident">transcript</span>, <span class="kw-2">&amp;</span><span class="ident">pre_digest</span>.<span class="ident">vrf_output</span>, <span class="kw-2">&amp;</span><span class="ident">pre_digest</span>.<span class="ident">vrf_proof</span>))
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">babe_err</span>(<span class="ident">Error::VRFVerificationFailed</span>(<span class="ident">s</span>)))<span class="question-mark">?</span>;
+		schnorrkel::PublicKey::from_bytes(author.as_slice())
+			.and_then(|p| p.vrf_verify(transcript, <span class="kw-2">&amp;</span>pre_digest.vrf_output, <span class="kw-2">&amp;</span>pre_digest.vrf_proof))
+			.map_err(|s| babe_err(Error::VRFVerificationFailed(s)))<span class="question-mark">?</span>;
 
 		<span class="prelude-val">Ok</span>(())
-	} <span class="kw">else</span> {
-		<span class="prelude-val">Err</span>(<span class="ident">Error::BadSignature</span>(<span class="ident">pre_hash</span>))
+	} <span class="kw">else </span>{
+		<span class="prelude-val">Err</span>(Error::BadSignature(pre_hash))
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_consensus_babe" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_consensus_babe" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

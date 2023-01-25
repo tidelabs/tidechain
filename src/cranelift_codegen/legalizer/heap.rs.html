@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/legalizer/heap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>heap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/legalizer/heap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>heap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -262,265 +257,264 @@
 <span id="257">257</span>
 <span id="258">258</span>
 <span id="259">259</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Legalization of heaps.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This module exports the `expand_heap_addr` function which transforms a `heap_addr`</span>
-<span class="doccomment">//! instruction into code that depends on the kind of heap referenced.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Legalization of heaps.
+//!
+//! This module exports the `expand_heap_addr` function which transforms a `heap_addr`
+//! instruction into code that depends on the kind of heap referenced.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cursor</span>::{<span class="ident">Cursor</span>, <span class="ident">FuncCursor</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::flowgraph::ControlFlowGraph</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::condcodes::IntCC</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::immediates::Uimm32</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="self">self</span>, <span class="ident">InstBuilder</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::isa::TargetIsa</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::cursor::{Cursor, FuncCursor};
+<span class="kw">use </span><span class="kw">crate</span>::flowgraph::ControlFlowGraph;
+<span class="kw">use </span><span class="kw">crate</span>::ir::condcodes::IntCC;
+<span class="kw">use </span><span class="kw">crate</span>::ir::immediates::Uimm32;
+<span class="kw">use </span><span class="kw">crate</span>::ir::{<span class="self">self</span>, InstBuilder};
+<span class="kw">use </span><span class="kw">crate</span>::isa::TargetIsa;
 
-<span class="doccomment">/// Expand a `heap_addr` instruction according to the definition of the heap.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">expand_heap_addr</span>(
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="ident">cfg</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ControlFlowGraph</span>,
-    <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
-    <span class="ident">heap</span>: <span class="ident">ir::Heap</span>,
-    <span class="ident">offset</span>: <span class="ident">ir::Value</span>,
-    <span class="ident">access_size</span>: <span class="ident">Uimm32</span>,
+<span class="doccomment">/// Expand a `heap_addr` instruction according to the definition of the heap.
+</span><span class="kw">pub fn </span>expand_heap_addr(
+    inst: ir::Inst,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    cfg: <span class="kw-2">&amp;mut </span>ControlFlowGraph,
+    isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
+    heap: ir::Heap,
+    offset: ir::Value,
+    access_size: Uimm32,
 ) {
-    <span class="kw">match</span> <span class="ident">func</span>.<span class="ident">heaps</span>[<span class="ident">heap</span>].<span class="ident">style</span> {
-        <span class="ident">ir::HeapStyle::Dynamic</span> { <span class="ident">bound_gv</span> } =&gt; <span class="ident">dynamic_addr</span>(
-            <span class="ident">isa</span>,
-            <span class="ident">inst</span>,
-            <span class="ident">heap</span>,
-            <span class="ident">offset</span>,
-            <span class="ident">u64::from</span>(<span class="ident">access_size</span>),
-            <span class="ident">bound_gv</span>,
-            <span class="ident">func</span>,
+    <span class="kw">match </span>func.heaps[heap].style {
+        ir::HeapStyle::Dynamic { bound_gv } =&gt; dynamic_addr(
+            isa,
+            inst,
+            heap,
+            offset,
+            u64::from(access_size),
+            bound_gv,
+            func,
         ),
-        <span class="ident">ir::HeapStyle::Static</span> { <span class="ident">bound</span> } =&gt; <span class="ident">static_addr</span>(
-            <span class="ident">isa</span>,
-            <span class="ident">inst</span>,
-            <span class="ident">heap</span>,
-            <span class="ident">offset</span>,
-            <span class="ident">u64::from</span>(<span class="ident">access_size</span>),
-            <span class="ident">bound</span>.<span class="ident">into</span>(),
-            <span class="ident">func</span>,
-            <span class="ident">cfg</span>,
+        ir::HeapStyle::Static { bound } =&gt; static_addr(
+            isa,
+            inst,
+            heap,
+            offset,
+            u64::from(access_size),
+            bound.into(),
+            func,
+            cfg,
         ),
     }
 }
 
-<span class="doccomment">/// Expand a `heap_addr` for a dynamic heap.</span>
-<span class="kw">fn</span> <span class="ident">dynamic_addr</span>(
-    <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">heap</span>: <span class="ident">ir::Heap</span>,
-    <span class="ident">offset</span>: <span class="ident">ir::Value</span>,
-    <span class="ident">access_size</span>: <span class="ident">u64</span>,
-    <span class="ident">bound_gv</span>: <span class="ident">ir::GlobalValue</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
+<span class="doccomment">/// Expand a `heap_addr` for a dynamic heap.
+</span><span class="kw">fn </span>dynamic_addr(
+    isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
+    inst: ir::Inst,
+    heap: ir::Heap,
+    offset: ir::Value,
+    access_size: u64,
+    bound_gv: ir::GlobalValue,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
 ) {
-    <span class="kw">let</span> <span class="ident">offset_ty</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">offset</span>);
-    <span class="kw">let</span> <span class="ident">addr_ty</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">first_result</span>(<span class="ident">inst</span>));
-    <span class="kw">let</span> <span class="ident">min_size</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">heaps</span>[<span class="ident">heap</span>].<span class="ident">min_size</span>.<span class="ident">into</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_inst</span>(<span class="ident">inst</span>);
-    <span class="ident">pos</span>.<span class="ident">use_srcloc</span>(<span class="ident">inst</span>);
+    <span class="kw">let </span>offset_ty = func.dfg.value_type(offset);
+    <span class="kw">let </span>addr_ty = func.dfg.value_type(func.dfg.first_result(inst));
+    <span class="kw">let </span>min_size = func.heaps[heap].min_size.into();
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_inst(inst);
+    pos.use_srcloc(inst);
 
-    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">cast_offset_to_pointer_ty</span>(<span class="ident">offset</span>, <span class="ident">offset_ty</span>, <span class="ident">addr_ty</span>, <span class="kw-2">&amp;mut</span> <span class="ident">pos</span>);
+    <span class="kw">let </span>offset = cast_offset_to_pointer_ty(offset, offset_ty, addr_ty, <span class="kw-2">&amp;mut </span>pos);
 
-    <span class="comment">// Start with the bounds check. Trap if `offset + access_size &gt; bound`.</span>
-    <span class="kw">let</span> <span class="ident">bound</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">global_value</span>(<span class="ident">addr_ty</span>, <span class="ident">bound_gv</span>);
-    <span class="kw">let</span> (<span class="ident">cc</span>, <span class="ident">lhs</span>, <span class="ident">bound</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">access_size</span> <span class="op">==</span> <span class="number">1</span> {
-        <span class="comment">// `offset &gt; bound - 1` is the same as `offset &gt;= bound`.</span>
-        (<span class="ident">IntCC::UnsignedGreaterThanOrEqual</span>, <span class="ident">offset</span>, <span class="ident">bound</span>)
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">access_size</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">min_size</span> {
-        <span class="comment">// We know that bound &gt;= min_size, so here we can compare `offset &gt; bound - access_size`</span>
-        <span class="comment">// without wrapping.</span>
-        <span class="kw">let</span> <span class="ident">adj_bound</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iadd_imm</span>(<span class="ident">bound</span>, <span class="op">-</span>(<span class="ident">access_size</span> <span class="kw">as</span> <span class="ident">i64</span>));
-        (<span class="ident">IntCC::UnsignedGreaterThan</span>, <span class="ident">offset</span>, <span class="ident">adj_bound</span>)
-    } <span class="kw">else</span> {
-        <span class="comment">// We need an overflow check for the adjusted offset.</span>
-        <span class="kw">let</span> <span class="ident">access_size_val</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">addr_ty</span>, <span class="ident">access_size</span> <span class="kw">as</span> <span class="ident">i64</span>);
-        <span class="kw">let</span> (<span class="ident">adj_offset</span>, <span class="ident">overflow</span>) <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iadd_ifcout</span>(<span class="ident">offset</span>, <span class="ident">access_size_val</span>);
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">trapif</span>(
-            <span class="ident">isa</span>.<span class="ident">unsigned_add_overflow_condition</span>(),
-            <span class="ident">overflow</span>,
-            <span class="ident">ir::TrapCode::HeapOutOfBounds</span>,
+    <span class="comment">// Start with the bounds check. Trap if `offset + access_size &gt; bound`.
+    </span><span class="kw">let </span>bound = pos.ins().global_value(addr_ty, bound_gv);
+    <span class="kw">let </span>(cc, lhs, bound) = <span class="kw">if </span>access_size == <span class="number">1 </span>{
+        <span class="comment">// `offset &gt; bound - 1` is the same as `offset &gt;= bound`.
+        </span>(IntCC::UnsignedGreaterThanOrEqual, offset, bound)
+    } <span class="kw">else if </span>access_size &lt;= min_size {
+        <span class="comment">// We know that bound &gt;= min_size, so here we can compare `offset &gt; bound - access_size`
+        // without wrapping.
+        </span><span class="kw">let </span>adj_bound = pos.ins().iadd_imm(bound, -(access_size <span class="kw">as </span>i64));
+        (IntCC::UnsignedGreaterThan, offset, adj_bound)
+    } <span class="kw">else </span>{
+        <span class="comment">// We need an overflow check for the adjusted offset.
+        </span><span class="kw">let </span>access_size_val = pos.ins().iconst(addr_ty, access_size <span class="kw">as </span>i64);
+        <span class="kw">let </span>(adj_offset, overflow) = pos.ins().iadd_ifcout(offset, access_size_val);
+        pos.ins().trapif(
+            isa.unsigned_add_overflow_condition(),
+            overflow,
+            ir::TrapCode::HeapOutOfBounds,
         );
-        (<span class="ident">IntCC::UnsignedGreaterThan</span>, <span class="ident">adj_offset</span>, <span class="ident">bound</span>)
+        (IntCC::UnsignedGreaterThan, adj_offset, bound)
     };
-    <span class="kw">let</span> <span class="ident">oob</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">icmp</span>(<span class="ident">cc</span>, <span class="ident">lhs</span>, <span class="ident">bound</span>);
-    <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">trapnz</span>(<span class="ident">oob</span>, <span class="ident">ir::TrapCode::HeapOutOfBounds</span>);
+    <span class="kw">let </span>oob = pos.ins().icmp(cc, lhs, bound);
+    pos.ins().trapnz(oob, ir::TrapCode::HeapOutOfBounds);
 
-    <span class="kw">let</span> <span class="ident">spectre_oob_comparison</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">isa</span>.<span class="ident">flags</span>().<span class="ident">enable_heap_access_spectre_mitigation</span>() {
-        <span class="prelude-val">Some</span>((<span class="ident">cc</span>, <span class="ident">lhs</span>, <span class="ident">bound</span>))
-    } <span class="kw">else</span> {
-        <span class="prelude-val">None</span>
-    };
+    <span class="kw">let </span>spectre_oob_comparison = <span class="kw">if </span>isa.flags().enable_heap_access_spectre_mitigation() {
+        <span class="prelude-val">Some</span>((cc, lhs, bound))
+    } <span class="kw">else </span>{
+        <span class="prelude-val">None
+    </span>};
 
-    <span class="ident">compute_addr</span>(
-        <span class="ident">isa</span>,
-        <span class="ident">inst</span>,
-        <span class="ident">heap</span>,
-        <span class="ident">addr_ty</span>,
-        <span class="ident">offset</span>,
-        <span class="ident">pos</span>.<span class="ident">func</span>,
-        <span class="ident">spectre_oob_comparison</span>,
+    compute_addr(
+        isa,
+        inst,
+        heap,
+        addr_ty,
+        offset,
+        pos.func,
+        spectre_oob_comparison,
     );
 }
 
-<span class="doccomment">/// Expand a `heap_addr` for a static heap.</span>
-<span class="kw">fn</span> <span class="ident">static_addr</span>(
-    <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">heap</span>: <span class="ident">ir::Heap</span>,
-    <span class="kw-2">mut</span> <span class="ident">offset</span>: <span class="ident">ir::Value</span>,
-    <span class="ident">access_size</span>: <span class="ident">u64</span>,
-    <span class="ident">bound</span>: <span class="ident">u64</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="ident">cfg</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ControlFlowGraph</span>,
+<span class="doccomment">/// Expand a `heap_addr` for a static heap.
+</span><span class="kw">fn </span>static_addr(
+    isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
+    inst: ir::Inst,
+    heap: ir::Heap,
+    <span class="kw-2">mut </span>offset: ir::Value,
+    access_size: u64,
+    bound: u64,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    cfg: <span class="kw-2">&amp;mut </span>ControlFlowGraph,
 ) {
-    <span class="kw">let</span> <span class="ident">offset_ty</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">offset</span>);
-    <span class="kw">let</span> <span class="ident">addr_ty</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">first_result</span>(<span class="ident">inst</span>));
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_inst</span>(<span class="ident">inst</span>);
-    <span class="ident">pos</span>.<span class="ident">use_srcloc</span>(<span class="ident">inst</span>);
+    <span class="kw">let </span>offset_ty = func.dfg.value_type(offset);
+    <span class="kw">let </span>addr_ty = func.dfg.value_type(func.dfg.first_result(inst));
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_inst(inst);
+    pos.use_srcloc(inst);
 
-    <span class="comment">// The goal here is to trap if `offset + access_size &gt; bound`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// This first case is a trivial case where we can easily trap.</span>
-    <span class="kw">if</span> <span class="ident">access_size</span> <span class="op">&gt;</span> <span class="ident">bound</span> {
-        <span class="comment">// This will simply always trap since `offset &gt;= 0`.</span>
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">trap</span>(<span class="ident">ir::TrapCode::HeapOutOfBounds</span>);
-        <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace</span>(<span class="ident">inst</span>).<span class="ident">iconst</span>(<span class="ident">addr_ty</span>, <span class="number">0</span>);
+    <span class="comment">// The goal here is to trap if `offset + access_size &gt; bound`.
+    //
+    // This first case is a trivial case where we can easily trap.
+    </span><span class="kw">if </span>access_size &gt; bound {
+        <span class="comment">// This will simply always trap since `offset &gt;= 0`.
+        </span>pos.ins().trap(ir::TrapCode::HeapOutOfBounds);
+        pos.func.dfg.replace(inst).iconst(addr_ty, <span class="number">0</span>);
 
-        <span class="comment">// Split Block, as the trap is a terminator instruction.</span>
-        <span class="kw">let</span> <span class="ident">curr_block</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">current_block</span>().<span class="ident">expect</span>(<span class="string">&quot;Cursor is not in a block&quot;</span>);
-        <span class="kw">let</span> <span class="ident">new_block</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="ident">pos</span>.<span class="ident">insert_block</span>(<span class="ident">new_block</span>);
-        <span class="ident">cfg</span>.<span class="ident">recompute_block</span>(<span class="ident">pos</span>.<span class="ident">func</span>, <span class="ident">curr_block</span>);
-        <span class="ident">cfg</span>.<span class="ident">recompute_block</span>(<span class="ident">pos</span>.<span class="ident">func</span>, <span class="ident">new_block</span>);
+        <span class="comment">// Split Block, as the trap is a terminator instruction.
+        </span><span class="kw">let </span>curr_block = pos.current_block().expect(<span class="string">&quot;Cursor is not in a block&quot;</span>);
+        <span class="kw">let </span>new_block = pos.func.dfg.make_block();
+        pos.insert_block(new_block);
+        cfg.recompute_block(pos.func, curr_block);
+        cfg.recompute_block(pos.func, new_block);
         <span class="kw">return</span>;
     }
 
-    <span class="comment">// After the trivial case is done we&#39;re now mostly interested in trapping</span>
-    <span class="comment">// if `offset &gt; bound - access_size`. We know `bound - access_size` here is</span>
-    <span class="comment">// non-negative from the above comparison.</span>
-    <span class="comment">//</span>
-    <span class="comment">// If we can know `bound - access_size &gt;= 4GB` then with a 32-bit offset</span>
-    <span class="comment">// we&#39;re guaranteed:</span>
-    <span class="comment">//</span>
-    <span class="comment">//      bound - access_size &gt;= 4GB &gt; offset</span>
-    <span class="comment">//</span>
-    <span class="comment">// or, in other words, `offset &lt; bound - access_size`, meaning we can&#39;t trap</span>
-    <span class="comment">// for any value of `offset`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// With that we have an optimization here where with 32-bit offsets and</span>
-    <span class="comment">// `bound - access_size &gt;= 4GB` we can omit a bounds check.</span>
-    <span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">bound</span> <span class="op">-</span> <span class="ident">access_size</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">spectre_oob_comparison</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-    <span class="ident">offset</span> <span class="op">=</span> <span class="ident">cast_offset_to_pointer_ty</span>(<span class="ident">offset</span>, <span class="ident">offset_ty</span>, <span class="ident">addr_ty</span>, <span class="kw-2">&amp;mut</span> <span class="ident">pos</span>);
-    <span class="kw">if</span> <span class="ident">offset_ty</span> <span class="op">!</span><span class="op">=</span> <span class="ident">ir::types::I32</span> <span class="op">|</span><span class="op">|</span> <span class="ident">limit</span> <span class="op">&lt;</span> <span class="number">0xffff_ffff</span> {
-        <span class="comment">// Here we want to test the condition `offset &gt; limit` and if that&#39;s</span>
-        <span class="comment">// true then this is an out-of-bounds access and needs to trap. For ARM</span>
-        <span class="comment">// and other RISC architectures it&#39;s easier to test against an immediate</span>
-        <span class="comment">// that&#39;s even instead of odd, so if `limit` is odd then we instead test</span>
-        <span class="comment">// for `offset &gt;= limit + 1`.</span>
-        <span class="comment">//</span>
-        <span class="comment">// The thinking behind this is that:</span>
-        <span class="comment">//</span>
-        <span class="comment">//      A &gt;= B + 1  =&gt;  A - 1 &gt;= B  =&gt;  A &gt; B</span>
-        <span class="comment">//</span>
-        <span class="comment">// where the last step here is true because A/B are integers, which</span>
-        <span class="comment">// should mean that `A &gt;= B + 1` is an equivalent check for `A &gt; B`</span>
-        <span class="kw">let</span> (<span class="ident">cc</span>, <span class="ident">lhs</span>, <span class="ident">limit_imm</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">limit</span> <span class="op">&amp;</span> <span class="number">1</span> <span class="op">==</span> <span class="number">1</span> {
-            <span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">limit</span> <span class="kw">as</span> <span class="ident">i64</span> <span class="op">+</span> <span class="number">1</span>;
-            (<span class="ident">IntCC::UnsignedGreaterThanOrEqual</span>, <span class="ident">offset</span>, <span class="ident">limit</span>)
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">limit</span> <span class="kw">as</span> <span class="ident">i64</span>;
-            (<span class="ident">IntCC::UnsignedGreaterThan</span>, <span class="ident">offset</span>, <span class="ident">limit</span>)
+    <span class="comment">// After the trivial case is done we&#39;re now mostly interested in trapping
+    // if `offset &gt; bound - access_size`. We know `bound - access_size` here is
+    // non-negative from the above comparison.
+    //
+    // If we can know `bound - access_size &gt;= 4GB` then with a 32-bit offset
+    // we&#39;re guaranteed:
+    //
+    //      bound - access_size &gt;= 4GB &gt; offset
+    //
+    // or, in other words, `offset &lt; bound - access_size`, meaning we can&#39;t trap
+    // for any value of `offset`.
+    //
+    // With that we have an optimization here where with 32-bit offsets and
+    // `bound - access_size &gt;= 4GB` we can omit a bounds check.
+    </span><span class="kw">let </span>limit = bound - access_size;
+    <span class="kw">let </span><span class="kw-2">mut </span>spectre_oob_comparison = <span class="prelude-val">None</span>;
+    offset = cast_offset_to_pointer_ty(offset, offset_ty, addr_ty, <span class="kw-2">&amp;mut </span>pos);
+    <span class="kw">if </span>offset_ty != ir::types::I32 || limit &lt; <span class="number">0xffff_ffff </span>{
+        <span class="comment">// Here we want to test the condition `offset &gt; limit` and if that&#39;s
+        // true then this is an out-of-bounds access and needs to trap. For ARM
+        // and other RISC architectures it&#39;s easier to test against an immediate
+        // that&#39;s even instead of odd, so if `limit` is odd then we instead test
+        // for `offset &gt;= limit + 1`.
+        //
+        // The thinking behind this is that:
+        //
+        //      A &gt;= B + 1  =&gt;  A - 1 &gt;= B  =&gt;  A &gt; B
+        //
+        // where the last step here is true because A/B are integers, which
+        // should mean that `A &gt;= B + 1` is an equivalent check for `A &gt; B`
+        </span><span class="kw">let </span>(cc, lhs, limit_imm) = <span class="kw">if </span>limit &amp; <span class="number">1 </span>== <span class="number">1 </span>{
+            <span class="kw">let </span>limit = limit <span class="kw">as </span>i64 + <span class="number">1</span>;
+            (IntCC::UnsignedGreaterThanOrEqual, offset, limit)
+        } <span class="kw">else </span>{
+            <span class="kw">let </span>limit = limit <span class="kw">as </span>i64;
+            (IntCC::UnsignedGreaterThan, offset, limit)
         };
-        <span class="kw">let</span> <span class="ident">oob</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">icmp_imm</span>(<span class="ident">cc</span>, <span class="ident">lhs</span>, <span class="ident">limit_imm</span>);
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">trapnz</span>(<span class="ident">oob</span>, <span class="ident">ir::TrapCode::HeapOutOfBounds</span>);
-        <span class="kw">if</span> <span class="ident">isa</span>.<span class="ident">flags</span>().<span class="ident">enable_heap_access_spectre_mitigation</span>() {
-            <span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">addr_ty</span>, <span class="ident">limit_imm</span>);
-            <span class="ident">spectre_oob_comparison</span> <span class="op">=</span> <span class="prelude-val">Some</span>((<span class="ident">cc</span>, <span class="ident">lhs</span>, <span class="ident">limit</span>));
+        <span class="kw">let </span>oob = pos.ins().icmp_imm(cc, lhs, limit_imm);
+        pos.ins().trapnz(oob, ir::TrapCode::HeapOutOfBounds);
+        <span class="kw">if </span>isa.flags().enable_heap_access_spectre_mitigation() {
+            <span class="kw">let </span>limit = pos.ins().iconst(addr_ty, limit_imm);
+            spectre_oob_comparison = <span class="prelude-val">Some</span>((cc, lhs, limit));
         }
     }
 
-    <span class="ident">compute_addr</span>(
-        <span class="ident">isa</span>,
-        <span class="ident">inst</span>,
-        <span class="ident">heap</span>,
-        <span class="ident">addr_ty</span>,
-        <span class="ident">offset</span>,
-        <span class="ident">pos</span>.<span class="ident">func</span>,
-        <span class="ident">spectre_oob_comparison</span>,
+    compute_addr(
+        isa,
+        inst,
+        heap,
+        addr_ty,
+        offset,
+        pos.func,
+        spectre_oob_comparison,
     );
 }
 
-<span class="kw">fn</span> <span class="ident">cast_offset_to_pointer_ty</span>(
-    <span class="ident">offset</span>: <span class="ident">ir::Value</span>,
-    <span class="ident">offset_ty</span>: <span class="ident">ir::Type</span>,
-    <span class="ident">addr_ty</span>: <span class="ident">ir::Type</span>,
-    <span class="ident">pos</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FuncCursor</span>,
-) -&gt; <span class="ident">ir::Value</span> {
-    <span class="kw">if</span> <span class="ident">offset_ty</span> <span class="op">==</span> <span class="ident">addr_ty</span> {
-        <span class="kw">return</span> <span class="ident">offset</span>;
+<span class="kw">fn </span>cast_offset_to_pointer_ty(
+    offset: ir::Value,
+    offset_ty: ir::Type,
+    addr_ty: ir::Type,
+    pos: <span class="kw-2">&amp;mut </span>FuncCursor,
+) -&gt; ir::Value {
+    <span class="kw">if </span>offset_ty == addr_ty {
+        <span class="kw">return </span>offset;
     }
-    <span class="comment">// Note that using 64-bit heaps on a 32-bit host is not currently supported,</span>
-    <span class="comment">// would require at least a bounds check here to ensure that the truncation</span>
-    <span class="comment">// from 64-to-32 bits doesn&#39;t lose any upper bits. For now though we&#39;re</span>
-    <span class="comment">// mostly interested in the 32-bit-heaps-on-64-bit-hosts cast.</span>
-    <span class="macro">assert!</span>(<span class="ident">offset_ty</span>.<span class="ident">bits</span>() <span class="op">&lt;</span> <span class="ident">addr_ty</span>.<span class="ident">bits</span>());
+    <span class="comment">// Note that using 64-bit heaps on a 32-bit host is not currently supported,
+    // would require at least a bounds check here to ensure that the truncation
+    // from 64-to-32 bits doesn&#39;t lose any upper bits. For now though we&#39;re
+    // mostly interested in the 32-bit-heaps-on-64-bit-hosts cast.
+    </span><span class="macro">assert!</span>(offset_ty.bits() &lt; addr_ty.bits());
 
-    <span class="comment">// Convert `offset` to `addr_ty`.</span>
-    <span class="kw">let</span> <span class="ident">extended_offset</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">uextend</span>(<span class="ident">addr_ty</span>, <span class="ident">offset</span>);
+    <span class="comment">// Convert `offset` to `addr_ty`.
+    </span><span class="kw">let </span>extended_offset = pos.ins().uextend(addr_ty, offset);
 
-    <span class="comment">// Add debug value-label alias so that debuginfo can name the extended</span>
-    <span class="comment">// value as the address</span>
-    <span class="kw">let</span> <span class="ident">loc</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">srcloc</span>();
-    <span class="ident">pos</span>.<span class="ident">func</span>
-        .<span class="ident">dfg</span>
-        .<span class="ident">add_value_label_alias</span>(<span class="ident">extended_offset</span>, <span class="ident">loc</span>, <span class="ident">offset</span>);
+    <span class="comment">// Add debug value-label alias so that debuginfo can name the extended
+    // value as the address
+    </span><span class="kw">let </span>loc = pos.srcloc();
+    pos.func
+        .dfg
+        .add_value_label_alias(extended_offset, loc, offset);
 
-    <span class="ident">extended_offset</span>
+    extended_offset
 }
 
-<span class="doccomment">/// Emit code for the base address computation of a `heap_addr` instruction.</span>
-<span class="kw">fn</span> <span class="ident">compute_addr</span>(
-    <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
-    <span class="ident">inst</span>: <span class="ident">ir::Inst</span>,
-    <span class="ident">heap</span>: <span class="ident">ir::Heap</span>,
-    <span class="ident">addr_ty</span>: <span class="ident">ir::Type</span>,
-    <span class="ident">offset</span>: <span class="ident">ir::Value</span>,
-    <span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ir::Function</span>,
-    <span class="comment">// If we are performing Spectre mitigation with conditional selects, the</span>
-    <span class="comment">// values to compare and the condition code that indicates an out-of bounds</span>
-    <span class="comment">// condition; on this condition, the conditional move will choose a</span>
-    <span class="comment">// speculatively safe address (a zero / null pointer) instead.</span>
-    <span class="ident">spectre_oob_comparison</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">IntCC</span>, <span class="ident">ir::Value</span>, <span class="ident">ir::Value</span>)<span class="op">&gt;</span>,
+<span class="doccomment">/// Emit code for the base address computation of a `heap_addr` instruction.
+</span><span class="kw">fn </span>compute_addr(
+    isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
+    inst: ir::Inst,
+    heap: ir::Heap,
+    addr_ty: ir::Type,
+    offset: ir::Value,
+    func: <span class="kw-2">&amp;mut </span>ir::Function,
+    <span class="comment">// If we are performing Spectre mitigation with conditional selects, the
+    // values to compare and the condition code that indicates an out-of bounds
+    // condition; on this condition, the conditional move will choose a
+    // speculatively safe address (a zero / null pointer) instead.
+    </span>spectre_oob_comparison: <span class="prelude-ty">Option</span>&lt;(IntCC, ir::Value, ir::Value)&gt;,
 ) {
-    <span class="macro">debug_assert_eq!</span>(<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">offset</span>), <span class="ident">addr_ty</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>).<span class="ident">at_inst</span>(<span class="ident">inst</span>);
-    <span class="ident">pos</span>.<span class="ident">use_srcloc</span>(<span class="ident">inst</span>);
+    <span class="macro">debug_assert_eq!</span>(func.dfg.value_type(offset), addr_ty);
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func).at_inst(inst);
+    pos.use_srcloc(inst);
 
-    <span class="comment">// Add the heap base address base</span>
-    <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">isa</span>.<span class="ident">flags</span>().<span class="ident">enable_pinned_reg</span>() <span class="op">&amp;&amp;</span> <span class="ident">isa</span>.<span class="ident">flags</span>().<span class="ident">use_pinned_reg_as_heap_base</span>() {
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">get_pinned_reg</span>(<span class="ident">isa</span>.<span class="ident">pointer_type</span>())
-    } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">base_gv</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">heaps</span>[<span class="ident">heap</span>].<span class="ident">base</span>;
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">global_value</span>(<span class="ident">addr_ty</span>, <span class="ident">base_gv</span>)
+    <span class="comment">// Add the heap base address base
+    </span><span class="kw">let </span>base = <span class="kw">if </span>isa.flags().enable_pinned_reg() &amp;&amp; isa.flags().use_pinned_reg_as_heap_base() {
+        pos.ins().get_pinned_reg(isa.pointer_type())
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>base_gv = pos.func.heaps[heap].base;
+        pos.ins().global_value(addr_ty, base_gv)
     };
 
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">cc</span>, <span class="ident">a</span>, <span class="ident">b</span>)) <span class="op">=</span> <span class="ident">spectre_oob_comparison</span> {
-        <span class="kw">let</span> <span class="ident">final_addr</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iadd</span>(<span class="ident">base</span>, <span class="ident">offset</span>);
-        <span class="kw">let</span> <span class="ident">zero</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">addr_ty</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">ifcmp</span>(<span class="ident">a</span>, <span class="ident">b</span>);
-        <span class="ident">pos</span>.<span class="ident">func</span>
-            .<span class="ident">dfg</span>
-            .<span class="ident">replace</span>(<span class="ident">inst</span>)
-            .<span class="ident">selectif_spectre_guard</span>(<span class="ident">addr_ty</span>, <span class="ident">cc</span>, <span class="ident">flags</span>, <span class="ident">zero</span>, <span class="ident">final_addr</span>);
-    } <span class="kw">else</span> {
-        <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace</span>(<span class="ident">inst</span>).<span class="ident">iadd</span>(<span class="ident">base</span>, <span class="ident">offset</span>);
+    <span class="kw">if let </span><span class="prelude-val">Some</span>((cc, a, b)) = spectre_oob_comparison {
+        <span class="kw">let </span>final_addr = pos.ins().iadd(base, offset);
+        <span class="kw">let </span>zero = pos.ins().iconst(addr_ty, <span class="number">0</span>);
+        <span class="kw">let </span>flags = pos.ins().ifcmp(a, b);
+        pos.func
+            .dfg
+            .replace(inst)
+            .selectif_spectre_guard(addr_ty, cc, flags, zero, final_addr);
+    } <span class="kw">else </span>{
+        pos.func.dfg.replace(inst).iadd(base, offset);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

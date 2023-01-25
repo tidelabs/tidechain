@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Dev RPC errors."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","Dev RPC errors."]]};

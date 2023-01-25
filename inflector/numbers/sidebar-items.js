@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["deordinalize","Provides deordinalization of a string."],["ordinalize","Provides ordinalization of a string."]]});
+window.SIDEBAR_ITEMS = {"mod":[["deordinalize","Provides deordinalization of a string."],["ordinalize","Provides ordinalization of a string."]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/tracing/src/logging/fast_local_time.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fast_local_time.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_tracing/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_tracing/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_tracing/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/tracing/src/logging/fast_local_time.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fast_local_time.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_tracing/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -163,166 +158,165 @@
 <span id="158">158</span>
 <span id="159">159</span>
 <span id="160">160</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2021-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2021-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">Datelike</span>, <span class="ident">Timelike</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">cell::RefCell</span>, <span class="ident">fmt::Write</span>, <span class="ident">time::SystemTime</span>};
-<span class="kw">use</span> <span class="ident">tracing_subscriber::fmt::time::FormatTime</span>;
+</span><span class="kw">use </span>chrono::{Datelike, Timelike};
+<span class="kw">use </span>std::{cell::RefCell, fmt::Write, time::SystemTime};
+<span class="kw">use </span>tracing_subscriber::fmt::time::FormatTime;
 
-<span class="doccomment">/// A structure which, when `Display`d, will print out the current local time.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FastLocalTime</span> {
-	<span class="doccomment">/// Decides whenever the fractional timestamp with be included in the output.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If `false` the output will match the following `chrono` format string:</span>
-	<span class="doccomment">///   `%Y-%m-%d %H:%M:%S`</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If `true` the output will match the following `chrono` format string:</span>
-	<span class="doccomment">///   `%Y-%m-%d %H:%M:%S%.3f`</span>
-	<span class="kw">pub</span> <span class="ident">with_fractional</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// A structure which, when `Display`d, will print out the current local time.
+</span><span class="attribute">#[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
+</span><span class="kw">pub struct </span>FastLocalTime {
+	<span class="doccomment">/// Decides whenever the fractional timestamp with be included in the output.
+	///
+	/// If `false` the output will match the following `chrono` format string:
+	///   `%Y-%m-%d %H:%M:%S`
+	///
+	/// If `true` the output will match the following `chrono` format string:
+	///   `%Y-%m-%d %H:%M:%S%.3f`
+	</span><span class="kw">pub </span>with_fractional: bool,
 }
 
-<span class="comment">// This is deliberately slightly larger than we actually need, just in case.</span>
-<span class="kw">const</span> <span class="ident">TIMESTAMP_MAXIMUM_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
+<span class="comment">// This is deliberately slightly larger than we actually need, just in case.
+</span><span class="kw">const </span>TIMESTAMP_MAXIMUM_LENGTH: usize = <span class="number">32</span>;
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-<span class="kw">struct</span> <span class="ident">InlineString</span> {
-	<span class="ident">buffer</span>: [<span class="ident">u8</span>; <span class="ident">TIMESTAMP_MAXIMUM_LENGTH</span>],
-	<span class="ident">length</span>: <span class="ident">usize</span>,
+<span class="attribute">#[derive(Default)]
+</span><span class="kw">struct </span>InlineString {
+	buffer: [u8; TIMESTAMP_MAXIMUM_LENGTH],
+	length: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">Write</span> <span class="kw">for</span> <span class="ident">InlineString</span> {
-	<span class="kw">fn</span> <span class="ident">write_str</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">std::fmt::Result</span> {
-		<span class="kw">let</span> <span class="ident">new_length</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">length</span> <span class="op">+</span> <span class="ident">s</span>.<span class="ident">len</span>();
+<span class="kw">impl </span>Write <span class="kw">for </span>InlineString {
+	<span class="kw">fn </span>write_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>, s: <span class="kw-2">&amp;</span>str) -&gt; std::fmt::Result {
+		<span class="kw">let </span>new_length = <span class="self">self</span>.length + s.len();
 		<span class="macro">assert!</span>(
-			<span class="ident">new_length</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">TIMESTAMP_MAXIMUM_LENGTH</span>,
-			<span class="string">&quot;buffer overflow when formatting the current timestamp&quot;</span>
-		);
+			new_length &lt;= TIMESTAMP_MAXIMUM_LENGTH,
+			<span class="string">&quot;buffer overflow when formatting the current timestamp&quot;
+		</span>);
 
-		<span class="self">self</span>.<span class="ident">buffer</span>[<span class="self">self</span>.<span class="ident">length</span>..<span class="ident">new_length</span>].<span class="ident">copy_from_slice</span>(<span class="ident">s</span>.<span class="ident">as_bytes</span>());
-		<span class="self">self</span>.<span class="ident">length</span> <span class="op">=</span> <span class="ident">new_length</span>;
+		<span class="self">self</span>.buffer[<span class="self">self</span>.length..new_length].copy_from_slice(s.as_bytes());
+		<span class="self">self</span>.length = new_length;
 		<span class="prelude-val">Ok</span>(())
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">InlineString</span> {
-	<span class="kw">fn</span> <span class="ident">as_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">str</span> {
-		<span class="comment">// SAFETY: this is safe since the only place we append to the buffer</span>
-		<span class="comment">//         is in `write_str` from an `&amp;str`</span>
-		<span class="kw">unsafe</span> { <span class="ident">std::str::from_utf8_unchecked</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">buffer</span>[..<span class="self">self</span>.<span class="ident">length</span>]) }
+<span class="kw">impl </span>InlineString {
+	<span class="kw">fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+		<span class="comment">// SAFETY: this is safe since the only place we append to the buffer
+		//         is in `write_str` from an `&amp;str`
+		</span><span class="kw">unsafe </span>{ std::str::from_utf8_unchecked(<span class="kw-2">&amp;</span><span class="self">self</span>.buffer[..<span class="self">self</span>.length]) }
 	}
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-<span class="kw">struct</span> <span class="ident">CachedTimestamp</span> {
-	<span class="ident">buffer</span>: <span class="ident">InlineString</span>,
-	<span class="ident">last_regenerated_at</span>: <span class="ident">u64</span>,
-	<span class="ident">last_fractional</span>: <span class="ident">u32</span>,
+<span class="attribute">#[derive(Default)]
+</span><span class="kw">struct </span>CachedTimestamp {
+	buffer: InlineString,
+	last_regenerated_at: u64,
+	last_fractional: u32,
 }
 
-<span class="macro">thread_local!</span> {
-	<span class="kw">static</span> <span class="ident">TIMESTAMP</span>: <span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">CachedTimestamp</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Default::default</span>();
+<span class="macro">thread_local! </span>{
+	<span class="kw">static </span>TIMESTAMP: RefCell&lt;CachedTimestamp&gt; = Default::default();
 }
 
-<span class="kw">impl</span> <span class="ident">FormatTime</span> <span class="kw">for</span> <span class="ident">FastLocalTime</span> {
-	<span class="kw">fn</span> <span class="ident">format_time</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Write</span>) -&gt; <span class="ident">std::fmt::Result</span> {
-		<span class="kw">const</span> <span class="ident">TIMESTAMP_PARTIAL_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="string">&quot;0000-00-00 00:00:00&quot;</span>.<span class="ident">len</span>();
+<span class="kw">impl </span>FormatTime <span class="kw">for </span>FastLocalTime {
+	<span class="kw">fn </span>format_time(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write) -&gt; std::fmt::Result {
+		<span class="kw">const </span>TIMESTAMP_PARTIAL_LENGTH: usize = <span class="string">&quot;0000-00-00 00:00:00&quot;</span>.len();
 
-		<span class="kw">let</span> <span class="ident">elapsed</span> <span class="op">=</span> <span class="ident">SystemTime::now</span>()
-			.<span class="ident">duration_since</span>(<span class="ident">SystemTime::UNIX_EPOCH</span>)
-			.<span class="ident">expect</span>(<span class="string">&quot;system time is never before UNIX epoch; qed&quot;</span>);
-		<span class="kw">let</span> <span class="ident">unix_time</span> <span class="op">=</span> <span class="ident">elapsed</span>.<span class="ident">as_secs</span>();
+		<span class="kw">let </span>elapsed = SystemTime::now()
+			.duration_since(SystemTime::UNIX_EPOCH)
+			.expect(<span class="string">&quot;system time is never before UNIX epoch; qed&quot;</span>);
+		<span class="kw">let </span>unix_time = elapsed.as_secs();
 
-		<span class="ident">TIMESTAMP</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">cache</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cache</span> <span class="op">=</span> <span class="ident">cache</span>.<span class="ident">borrow_mut</span>();
+		TIMESTAMP.with(|cache| {
+			<span class="kw">let </span><span class="kw-2">mut </span>cache = cache.borrow_mut();
 
-			<span class="comment">// Regenerate the timestamp only at most once each second.</span>
-			<span class="kw">if</span> <span class="ident">cache</span>.<span class="ident">last_regenerated_at</span> <span class="op">!</span><span class="op">=</span> <span class="ident">unix_time</span> {
-				<span class="kw">let</span> <span class="ident">ts</span> <span class="op">=</span> <span class="ident">chrono::Local::now</span>();
-				<span class="kw">let</span> <span class="ident">fractional</span> <span class="op">=</span> (<span class="ident">ts</span>.<span class="ident">nanosecond</span>() <span class="op">%</span> <span class="number">1_000_000_000</span>) <span class="op">/</span> <span class="number">1_000_000</span>;
-				<span class="ident">cache</span>.<span class="ident">last_regenerated_at</span> <span class="op">=</span> <span class="ident">unix_time</span>;
-				<span class="ident">cache</span>.<span class="ident">last_fractional</span> <span class="op">=</span> <span class="ident">fractional</span>;
-				<span class="ident">cache</span>.<span class="ident">buffer</span>.<span class="ident">length</span> <span class="op">=</span> <span class="number">0</span>;
+			<span class="comment">// Regenerate the timestamp only at most once each second.
+			</span><span class="kw">if </span>cache.last_regenerated_at != unix_time {
+				<span class="kw">let </span>ts = chrono::Local::now();
+				<span class="kw">let </span>fractional = (ts.nanosecond() % <span class="number">1_000_000_000</span>) / <span class="number">1_000_000</span>;
+				cache.last_regenerated_at = unix_time;
+				cache.last_fractional = fractional;
+				cache.buffer.length = <span class="number">0</span>;
 
 				<span class="macro">write!</span>(
-					<span class="kw-2">&amp;mut</span> <span class="ident">cache</span>.<span class="ident">buffer</span>,
+					<span class="kw-2">&amp;mut </span>cache.buffer,
 					<span class="string">&quot;{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}&quot;</span>,
-					<span class="ident">ts</span>.<span class="ident">year</span>(),
-					<span class="ident">ts</span>.<span class="ident">month</span>(),
-					<span class="ident">ts</span>.<span class="ident">day</span>(),
-					<span class="ident">ts</span>.<span class="ident">hour</span>(),
-					<span class="ident">ts</span>.<span class="ident">minute</span>(),
-					<span class="ident">ts</span>.<span class="ident">second</span>(),
-					<span class="ident">fractional</span>
+					ts.year(),
+					ts.month(),
+					ts.day(),
+					ts.hour(),
+					ts.minute(),
+					ts.second(),
+					fractional
 				)<span class="question-mark">?</span>;
-			} <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">with_fractional</span> {
-				<span class="kw">let</span> <span class="ident">fractional</span> <span class="op">=</span> <span class="ident">elapsed</span>.<span class="ident">subsec_millis</span>();
+			} <span class="kw">else if </span><span class="self">self</span>.with_fractional {
+				<span class="kw">let </span>fractional = elapsed.subsec_millis();
 
-				<span class="comment">// Regenerate the fractional part at most once each millisecond.</span>
-				<span class="kw">if</span> <span class="ident">cache</span>.<span class="ident">last_fractional</span> <span class="op">!</span><span class="op">=</span> <span class="ident">fractional</span> {
-					<span class="ident">cache</span>.<span class="ident">last_fractional</span> <span class="op">=</span> <span class="ident">fractional</span>;
-					<span class="ident">cache</span>.<span class="ident">buffer</span>.<span class="ident">length</span> <span class="op">=</span> <span class="ident">TIMESTAMP_PARTIAL_LENGTH</span> <span class="op">+</span> <span class="number">1</span>;
-					<span class="macro">write!</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cache</span>.<span class="ident">buffer</span>, <span class="string">&quot;{:03}&quot;</span>, <span class="ident">fractional</span>)<span class="question-mark">?</span>;
+				<span class="comment">// Regenerate the fractional part at most once each millisecond.
+				</span><span class="kw">if </span>cache.last_fractional != fractional {
+					cache.last_fractional = fractional;
+					cache.buffer.length = TIMESTAMP_PARTIAL_LENGTH + <span class="number">1</span>;
+					<span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>cache.buffer, <span class="string">&quot;{:03}&quot;</span>, fractional)<span class="question-mark">?</span>;
 				}
 			}
 
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">cache</span>.<span class="ident">buffer</span>.<span class="ident">as_str</span>();
-			<span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">with_fractional</span> {
-				<span class="ident">slice</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">slice</span>[..<span class="ident">TIMESTAMP_PARTIAL_LENGTH</span>];
+			<span class="kw">let </span><span class="kw-2">mut </span>slice = cache.buffer.as_str();
+			<span class="kw">if </span>!<span class="self">self</span>.with_fractional {
+				slice = <span class="kw-2">&amp;</span>slice[..TIMESTAMP_PARTIAL_LENGTH];
 			}
 
-			<span class="ident">w</span>.<span class="ident">write_str</span>(<span class="ident">slice</span>)
+			w.write_str(slice)
 		})
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">std::fmt::Display</span> <span class="kw">for</span> <span class="ident">FastLocalTime</span> {
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">std::fmt::Formatter</span>) -&gt; <span class="ident">std::fmt::Result</span> {
-		<span class="self">self</span>.<span class="ident">format_time</span>(<span class="ident">w</span>)
+<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>FastLocalTime {
+	<span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
+		<span class="self">self</span>.format_time(w)
 	}
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_format_fast_local_time</span>() {
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_format_fast_local_time() {
 	<span class="macro">assert_eq!</span>(
-		<span class="ident">chrono::Local::now</span>().<span class="ident">format</span>(<span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>).<span class="ident">to_string</span>().<span class="ident">len</span>(),
-		<span class="ident">FastLocalTime</span> { <span class="ident">with_fractional</span>: <span class="bool-val">false</span> }.<span class="ident">to_string</span>().<span class="ident">len</span>()
+		chrono::Local::now().format(<span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>).to_string().len(),
+		FastLocalTime { with_fractional: <span class="bool-val">false </span>}.to_string().len()
 	);
 	<span class="macro">assert_eq!</span>(
-		<span class="ident">chrono::Local::now</span>().<span class="ident">format</span>(<span class="string">&quot;%Y-%m-%d %H:%M:%S%.3f&quot;</span>).<span class="ident">to_string</span>().<span class="ident">len</span>(),
-		<span class="ident">FastLocalTime</span> { <span class="ident">with_fractional</span>: <span class="bool-val">true</span> }.<span class="ident">to_string</span>().<span class="ident">len</span>()
+		chrono::Local::now().format(<span class="string">&quot;%Y-%m-%d %H:%M:%S%.3f&quot;</span>).to_string().len(),
+		FastLocalTime { with_fractional: <span class="bool-val">true </span>}.to_string().len()
 	);
 
-	<span class="comment">// A simple trick to make sure this test won&#39;t randomly fail if we so happen</span>
-	<span class="comment">// to land on the exact moment when we tick over to the next second.</span>
-	<span class="kw">let</span> <span class="ident">now_1</span> <span class="op">=</span> <span class="ident">FastLocalTime</span> { <span class="ident">with_fractional</span>: <span class="bool-val">false</span> }.<span class="ident">to_string</span>();
-	<span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">chrono::Local::now</span>().<span class="ident">format</span>(<span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>).<span class="ident">to_string</span>();
-	<span class="kw">let</span> <span class="ident">now_2</span> <span class="op">=</span> <span class="ident">FastLocalTime</span> { <span class="ident">with_fractional</span>: <span class="bool-val">false</span> }.<span class="ident">to_string</span>();
+	<span class="comment">// A simple trick to make sure this test won&#39;t randomly fail if we so happen
+	// to land on the exact moment when we tick over to the next second.
+	</span><span class="kw">let </span>now_1 = FastLocalTime { with_fractional: <span class="bool-val">false </span>}.to_string();
+	<span class="kw">let </span>expected = chrono::Local::now().format(<span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>).to_string();
+	<span class="kw">let </span>now_2 = FastLocalTime { with_fractional: <span class="bool-val">false </span>}.to_string();
 
 	<span class="macro">assert!</span>(
-		<span class="ident">now_1</span> <span class="op">==</span> <span class="ident">expected</span> <span class="op">|</span><span class="op">|</span> <span class="ident">now_2</span> <span class="op">==</span> <span class="ident">expected</span>,
+		now_1 == expected || now_2 == expected,
 		<span class="string">&quot;&#39;{}&#39; or &#39;{}&#39; should have been equal to &#39;{}&#39;&quot;</span>,
-		<span class="ident">now_1</span>,
-		<span class="ident">now_2</span>,
-		<span class="ident">expected</span>
+		now_1,
+		now_2,
+		expected
 	);
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_tracing" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_tracing" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

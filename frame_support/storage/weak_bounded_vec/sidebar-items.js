@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["WeakBoundedVec","A weakly bounded vector."]]});
+window.SIDEBAR_ITEMS = {"struct":[["WeakBoundedVec","A weakly bounded vector."]]};

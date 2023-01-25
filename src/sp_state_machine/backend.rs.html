@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/state-machine/src/backend.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>backend.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_state_machine/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sp_state_machine/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sp_state_machine/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/state-machine/src/backend.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>backend.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sp_state_machine/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -355,358 +350,357 @@
 <span id="350">350</span>
 <span id="351">351</span>
 <span id="352">352</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! State machine backends. These manage the code and storage of contracts.</span>
+</span><span class="doccomment">//! State machine backends. These manage the code and storage of contracts.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">trie_backend::TrieBackend</span>, <span class="ident">trie_backend_essence::TrieBackendStorage</span>, <span class="ident">ChildStorageCollection</span>,
-	<span class="ident">StorageCollection</span>, <span class="ident">StorageKey</span>, <span class="ident">StorageValue</span>, <span class="ident">UsageInfo</span>,
+</span><span class="kw">use crate</span>::{
+	trie_backend::TrieBackend, trie_backend_essence::TrieBackendStorage, ChildStorageCollection,
+	StorageCollection, StorageKey, StorageValue, UsageInfo,
 };
-<span class="kw">use</span> <span class="ident">codec::Encode</span>;
-<span class="kw">use</span> <span class="ident">hash_db::Hasher</span>;
-<span class="kw">use</span> <span class="ident">sp_core::storage</span>::{<span class="ident">ChildInfo</span>, <span class="ident">StateVersion</span>, <span class="ident">TrackedStorageKey</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">sp_core::traits::RuntimeCode</span>;
-<span class="kw">use</span> <span class="ident">sp_std::vec::Vec</span>;
+<span class="kw">use </span>codec::Encode;
+<span class="kw">use </span>hash_db::Hasher;
+<span class="kw">use </span>sp_core::storage::{ChildInfo, StateVersion, TrackedStorageKey};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>sp_core::traits::RuntimeCode;
+<span class="kw">use </span>sp_std::vec::Vec;
 
-<span class="doccomment">/// A state backend is used to read state data and can have changes committed</span>
-<span class="doccomment">/// to it.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The clone operation (if implemented) should be cheap.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Backend</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>: <span class="ident">sp_std::fmt::Debug</span> {
-	<span class="doccomment">/// An error type when fetching data is not possible.</span>
-	<span class="kw">type</span> <span class="ident">Error</span>: <span class="ident"><span class="kw">super</span>::Error</span>;
+<span class="doccomment">/// A state backend is used to read state data and can have changes committed
+/// to it.
+///
+/// The clone operation (if implemented) should be cheap.
+</span><span class="kw">pub trait </span>Backend&lt;H: Hasher&gt;: sp_std::fmt::Debug {
+	<span class="doccomment">/// An error type when fetching data is not possible.
+	</span><span class="kw">type </span>Error: <span class="kw">super</span>::Error;
 
-	<span class="doccomment">/// Storage changes to be applied if committing</span>
-	<span class="kw">type</span> <span class="ident">Transaction</span>: <span class="ident">Consolidate</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">Send</span>;
+	<span class="doccomment">/// Storage changes to be applied if committing
+	</span><span class="kw">type </span>Transaction: Consolidate + Default + Send;
 
-	<span class="doccomment">/// Type of trie backend storage.</span>
-	<span class="kw">type</span> <span class="ident">TrieBackendStorage</span>: <span class="ident">TrieBackendStorage</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Overlay</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::Transaction</span><span class="op">&gt;</span>;
+	<span class="doccomment">/// Type of trie backend storage.
+	</span><span class="kw">type </span>TrieBackendStorage: TrieBackendStorage&lt;H, Overlay = <span class="self">Self</span>::Transaction&gt;;
 
-	<span class="doccomment">/// Get keyed storage or None if there is nothing associated.</span>
-	<span class="kw">fn</span> <span class="ident">storage</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+	<span class="doccomment">/// Get keyed storage or None if there is nothing associated.
+	</span><span class="kw">fn </span>storage(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;StorageValue&gt;, <span class="self">Self</span>::Error&gt;;
 
-	<span class="doccomment">/// Get keyed storage value hash or None if there is nothing associated.</span>
-	<span class="kw">fn</span> <span class="ident">storage_hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">H::Out</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">storage</span>(<span class="ident">key</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">H::hash</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>)))
+	<span class="doccomment">/// Get keyed storage value hash or None if there is nothing associated.
+	</span><span class="kw">fn </span>storage_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;H::Out&gt;, <span class="self">Self</span>::Error&gt; {
+		<span class="self">self</span>.storage(key).map(|v| v.map(|v| H::hash(<span class="kw-2">&amp;</span>v)))
 	}
 
-	<span class="doccomment">/// Get keyed child storage or None if there is nothing associated.</span>
-	<span class="kw">fn</span> <span class="ident">child_storage</span>(
+	<span class="doccomment">/// Get keyed child storage or None if there is nothing associated.
+	</span><span class="kw">fn </span>child_storage(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+		child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		key: <span class="kw-2">&amp;</span>[u8],
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;StorageValue&gt;, <span class="self">Self</span>::Error&gt;;
 
-	<span class="doccomment">/// Get child keyed storage value hash or None if there is nothing associated.</span>
-	<span class="kw">fn</span> <span class="ident">child_storage_hash</span>(
+	<span class="doccomment">/// Get child keyed storage value hash or None if there is nothing associated.
+	</span><span class="kw">fn </span>child_storage_hash(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">H::Out</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">child_storage</span>(<span class="ident">child_info</span>, <span class="ident">key</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">H::hash</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>)))
+		child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		key: <span class="kw-2">&amp;</span>[u8],
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;H::Out&gt;, <span class="self">Self</span>::Error&gt; {
+		<span class="self">self</span>.child_storage(child_info, key).map(|v| v.map(|v| H::hash(<span class="kw-2">&amp;</span>v)))
 	}
 
-	<span class="doccomment">/// true if a key exists in storage.</span>
-	<span class="kw">fn</span> <span class="ident">exists_storage</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">storage</span>(<span class="ident">key</span>)<span class="question-mark">?</span>.<span class="ident">is_some</span>())
+	<span class="doccomment">/// true if a key exists in storage.
+	</span><span class="kw">fn </span>exists_storage(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;bool, <span class="self">Self</span>::Error&gt; {
+		<span class="prelude-val">Ok</span>(<span class="self">self</span>.storage(key)<span class="question-mark">?</span>.is_some())
 	}
 
-	<span class="doccomment">/// true if a key exists in child storage.</span>
-	<span class="kw">fn</span> <span class="ident">exists_child_storage</span>(
+	<span class="doccomment">/// true if a key exists in child storage.
+	</span><span class="kw">fn </span>exists_child_storage(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">child_storage</span>(<span class="ident">child_info</span>, <span class="ident">key</span>)<span class="question-mark">?</span>.<span class="ident">is_some</span>())
+		child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		key: <span class="kw-2">&amp;</span>[u8],
+	) -&gt; <span class="prelude-ty">Result</span>&lt;bool, <span class="self">Self</span>::Error&gt; {
+		<span class="prelude-val">Ok</span>(<span class="self">self</span>.child_storage(child_info, key)<span class="question-mark">?</span>.is_some())
 	}
 
-	<span class="doccomment">/// Return the next key in storage in lexicographic order or `None` if there is no value.</span>
-	<span class="kw">fn</span> <span class="ident">next_storage_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageKey</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+	<span class="doccomment">/// Return the next key in storage in lexicographic order or `None` if there is no value.
+	</span><span class="kw">fn </span>next_storage_key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;StorageKey&gt;, <span class="self">Self</span>::Error&gt;;
 
-	<span class="doccomment">/// Return the next key in child storage in lexicographic order or `None` if there is no value.</span>
-	<span class="kw">fn</span> <span class="ident">next_child_storage_key</span>(
+	<span class="doccomment">/// Return the next key in child storage in lexicographic order or `None` if there is no value.
+	</span><span class="kw">fn </span>next_child_storage_key(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageKey</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+		child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		key: <span class="kw-2">&amp;</span>[u8],
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;StorageKey&gt;, <span class="self">Self</span>::Error&gt;;
 
-	<span class="doccomment">/// Iterate over storage starting at key, for a given prefix and child trie.</span>
-	<span class="doccomment">/// Aborts as soon as `f` returns false.</span>
-	<span class="doccomment">/// Warning, this fails at first error when usual iteration skips errors.</span>
-	<span class="doccomment">/// If `allow_missing` is true, iteration stops when it reaches a missing trie node.</span>
-	<span class="doccomment">/// Otherwise an error is produced.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns `true` if trie end is reached.</span>
-	<span class="kw">fn</span> <span class="ident">apply_to_key_values_while</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span><span class="op">&gt;</span>(
+	<span class="doccomment">/// Iterate over storage starting at key, for a given prefix and child trie.
+	/// Aborts as soon as `f` returns false.
+	/// Warning, this fails at first error when usual iteration skips errors.
+	/// If `allow_missing` is true, iteration stops when it reaches a missing trie node.
+	/// Otherwise an error is produced.
+	///
+	/// Returns `true` if trie end is reached.
+	</span><span class="kw">fn </span>apply_to_key_values_while&lt;F: FnMut(Vec&lt;u8&gt;, Vec&lt;u8&gt;) -&gt; bool&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>,
-		<span class="ident">prefix</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-		<span class="ident">start_at</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-		<span class="ident">f</span>: <span class="ident">F</span>,
-		<span class="ident">allow_missing</span>: <span class="ident">bool</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+		child_info: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ChildInfo&gt;,
+		prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+		start_at: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+		f: F,
+		allow_missing: bool,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;bool, <span class="self">Self</span>::Error&gt;;
 
-	<span class="doccomment">/// Retrieve all entries keys of storage and call `f` for each of those keys.</span>
-	<span class="doccomment">/// Aborts as soon as `f` returns false.</span>
-	<span class="kw">fn</span> <span class="ident">apply_to_keys_while</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">bool</span><span class="op">&gt;</span>(
+	<span class="doccomment">/// Retrieve all entries keys of storage and call `f` for each of those keys.
+	/// Aborts as soon as `f` returns false.
+	</span><span class="kw">fn </span>apply_to_keys_while&lt;F: FnMut(<span class="kw-2">&amp;</span>[u8]) -&gt; bool&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>,
-		<span class="ident">prefix</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-		<span class="ident">start_at</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-		<span class="ident">f</span>: <span class="ident">F</span>,
+		child_info: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ChildInfo&gt;,
+		prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+		start_at: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+		f: F,
 	);
 
-	<span class="doccomment">/// Retrieve all entries keys which start with the given prefix and</span>
-	<span class="doccomment">/// call `f` for each of those keys.</span>
-	<span class="kw">fn</span> <span class="ident">for_keys_with_prefix</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>])<span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">F</span>) {
-		<span class="self">self</span>.<span class="ident">for_key_values_with_prefix</span>(<span class="ident">prefix</span>, <span class="op">|</span><span class="ident">k</span>, <span class="ident">_v</span><span class="op">|</span> <span class="ident">f</span>(<span class="ident">k</span>))
+	<span class="doccomment">/// Retrieve all entries keys which start with the given prefix and
+	/// call `f` for each of those keys.
+	</span><span class="kw">fn </span>for_keys_with_prefix&lt;F: FnMut(<span class="kw-2">&amp;</span>[u8])&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, prefix: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>f: F) {
+		<span class="self">self</span>.for_key_values_with_prefix(prefix, |k, _v| f(k))
 	}
 
-	<span class="doccomment">/// Retrieve all entries keys and values of which start with the given prefix and</span>
-	<span class="doccomment">/// call `f` for each of those keys.</span>
-	<span class="kw">fn</span> <span class="ident">for_key_values_with_prefix</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>])<span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">f</span>: <span class="ident">F</span>);
+	<span class="doccomment">/// Retrieve all entries keys and values of which start with the given prefix and
+	/// call `f` for each of those keys.
+	</span><span class="kw">fn </span>for_key_values_with_prefix&lt;F: FnMut(<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>[u8])&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, prefix: <span class="kw-2">&amp;</span>[u8], f: F);
 
-	<span class="doccomment">/// Retrieve all child entries keys which start with the given prefix and</span>
-	<span class="doccomment">/// call `f` for each of those keys.</span>
-	<span class="kw">fn</span> <span class="ident">for_child_keys_with_prefix</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>])<span class="op">&gt;</span>(
+	<span class="doccomment">/// Retrieve all child entries keys which start with the given prefix and
+	/// call `f` for each of those keys.
+	</span><span class="kw">fn </span>for_child_keys_with_prefix&lt;F: FnMut(<span class="kw-2">&amp;</span>[u8])&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">f</span>: <span class="ident">F</span>,
+		child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		prefix: <span class="kw-2">&amp;</span>[u8],
+		f: F,
 	);
 
-	<span class="doccomment">/// Calculate the storage root, with given delta over what is already stored in</span>
-	<span class="doccomment">/// the backend, and produce a &quot;transaction&quot; that can be used to commit.</span>
-	<span class="doccomment">/// Does not include child storage updates.</span>
-	<span class="kw">fn</span> <span class="ident">storage_root</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+	<span class="doccomment">/// Calculate the storage root, with given delta over what is already stored in
+	/// the backend, and produce a &quot;transaction&quot; that can be used to commit.
+	/// Does not include child storage updates.
+	</span><span class="kw">fn </span>storage_root&lt;<span class="lifetime">&#39;a</span>&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">delta</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]<span class="op">&gt;</span>)<span class="op">&gt;</span>,
-		<span class="ident">state_version</span>: <span class="ident">StateVersion</span>,
-	) -&gt; (<span class="ident">H::Out</span>, <span class="ident"><span class="self">Self</span>::Transaction</span>)
-	<span class="kw">where</span>
-		<span class="ident">H::Out</span>: <span class="ident">Ord</span>;
+		delta: <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;)&gt;,
+		state_version: StateVersion,
+	) -&gt; (H::Out, <span class="self">Self</span>::Transaction)
+	<span class="kw">where
+		</span>H::Out: Ord;
 
-	<span class="doccomment">/// Calculate the child storage root, with given delta over what is already stored in</span>
-	<span class="doccomment">/// the backend, and produce a &quot;transaction&quot; that can be used to commit. The second argument</span>
-	<span class="doccomment">/// is true if child storage root equals default storage root.</span>
-	<span class="kw">fn</span> <span class="ident">child_storage_root</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+	<span class="doccomment">/// Calculate the child storage root, with given delta over what is already stored in
+	/// the backend, and produce a &quot;transaction&quot; that can be used to commit. The second argument
+	/// is true if child storage root equals default storage root.
+	</span><span class="kw">fn </span>child_storage_root&lt;<span class="lifetime">&#39;a</span>&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
-		<span class="ident">delta</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]<span class="op">&gt;</span>)<span class="op">&gt;</span>,
-		<span class="ident">state_version</span>: <span class="ident">StateVersion</span>,
-	) -&gt; (<span class="ident">H::Out</span>, <span class="ident">bool</span>, <span class="ident"><span class="self">Self</span>::Transaction</span>)
-	<span class="kw">where</span>
-		<span class="ident">H::Out</span>: <span class="ident">Ord</span>;
+		child_info: <span class="kw-2">&amp;</span>ChildInfo,
+		delta: <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;)&gt;,
+		state_version: StateVersion,
+	) -&gt; (H::Out, bool, <span class="self">Self</span>::Transaction)
+	<span class="kw">where
+		</span>H::Out: Ord;
 
-	<span class="doccomment">/// Get all key/value pairs into a Vec.</span>
-	<span class="kw">fn</span> <span class="ident">pairs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">StorageKey</span>, <span class="ident">StorageValue</span>)<span class="op">&gt;</span>;
+	<span class="doccomment">/// Get all key/value pairs into a Vec.
+	</span><span class="kw">fn </span>pairs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(StorageKey, StorageValue)&gt;;
 
-	<span class="doccomment">/// Get all keys with given prefix</span>
-	<span class="kw">fn</span> <span class="ident">keys</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StorageKey</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">all</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-		<span class="self">self</span>.<span class="ident">for_keys_with_prefix</span>(<span class="ident">prefix</span>, <span class="op">|</span><span class="ident">k</span><span class="op">|</span> <span class="ident">all</span>.<span class="ident">push</span>(<span class="ident">k</span>.<span class="ident">to_vec</span>()));
-		<span class="ident">all</span>
+	<span class="doccomment">/// Get all keys with given prefix
+	</span><span class="kw">fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>, prefix: <span class="kw-2">&amp;</span>[u8]) -&gt; Vec&lt;StorageKey&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>all = Vec::new();
+		<span class="self">self</span>.for_keys_with_prefix(prefix, |k| all.push(k.to_vec()));
+		all
 	}
 
-	<span class="doccomment">/// Get all keys of child storage with given prefix</span>
-	<span class="kw">fn</span> <span class="ident">child_keys</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>, <span class="ident">prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StorageKey</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">all</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-		<span class="self">self</span>.<span class="ident">for_child_keys_with_prefix</span>(<span class="ident">child_info</span>, <span class="ident">prefix</span>, <span class="op">|</span><span class="ident">k</span><span class="op">|</span> <span class="ident">all</span>.<span class="ident">push</span>(<span class="ident">k</span>.<span class="ident">to_vec</span>()));
-		<span class="ident">all</span>
+	<span class="doccomment">/// Get all keys of child storage with given prefix
+	</span><span class="kw">fn </span>child_keys(<span class="kw-2">&amp;</span><span class="self">self</span>, child_info: <span class="kw-2">&amp;</span>ChildInfo, prefix: <span class="kw-2">&amp;</span>[u8]) -&gt; Vec&lt;StorageKey&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>all = Vec::new();
+		<span class="self">self</span>.for_child_keys_with_prefix(child_info, prefix, |k| all.push(k.to_vec()));
+		all
 	}
 
-	<span class="doccomment">/// Try convert into trie backend.</span>
-	<span class="kw">fn</span> <span class="ident">as_trie_backend</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::TrieBackendStorage</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="prelude-val">None</span>
-	}
-	<span class="doccomment">/// Calculate the storage root, with given delta over what is already stored</span>
-	<span class="doccomment">/// in the backend, and produce a &quot;transaction&quot; that can be used to commit.</span>
-	<span class="doccomment">/// Does include child storage updates.</span>
-	<span class="kw">fn</span> <span class="ident">full_storage_root</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+	<span class="doccomment">/// Try convert into trie backend.
+	</span><span class="kw">fn </span>as_trie_backend(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>TrieBackend&lt;<span class="self">Self</span>::TrieBackendStorage, H&gt;&gt; {
+		<span class="prelude-val">None
+	</span>}
+	<span class="doccomment">/// Calculate the storage root, with given delta over what is already stored
+	/// in the backend, and produce a &quot;transaction&quot; that can be used to commit.
+	/// Does include child storage updates.
+	</span><span class="kw">fn </span>full_storage_root&lt;<span class="lifetime">&#39;a</span>&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">delta</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]<span class="op">&gt;</span>)<span class="op">&gt;</span>,
-		<span class="ident">child_deltas</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span>
-			<span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ChildInfo</span>, <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]<span class="op">&gt;</span>)<span class="op">&gt;</span>),
-		<span class="op">&gt;</span>,
-		<span class="ident">state_version</span>: <span class="ident">StateVersion</span>,
-	) -&gt; (<span class="ident">H::Out</span>, <span class="ident"><span class="self">Self</span>::Transaction</span>)
-	<span class="kw">where</span>
-		<span class="ident">H::Out</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Encode</span>,
+		delta: <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;)&gt;,
+		child_deltas: <span class="kw">impl </span>Iterator&lt;
+			Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ChildInfo, <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;)&gt;),
+		&gt;,
+		state_version: StateVersion,
+	) -&gt; (H::Out, <span class="self">Self</span>::Transaction)
+	<span class="kw">where
+		</span>H::Out: Ord + Encode,
 	{
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">txs</span>: <span class="ident"><span class="self">Self</span>::Transaction</span> <span class="op">=</span> <span class="ident">Default::default</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">child_roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Default::default</span>();
-		<span class="comment">// child first</span>
-		<span class="kw">for</span> (<span class="ident">child_info</span>, <span class="ident">child_delta</span>) <span class="kw">in</span> <span class="ident">child_deltas</span> {
-			<span class="kw">let</span> (<span class="ident">child_root</span>, <span class="ident">empty</span>, <span class="ident">child_txs</span>) <span class="op">=</span>
-				<span class="self">self</span>.<span class="ident">child_storage_root</span>(<span class="ident">child_info</span>, <span class="ident">child_delta</span>, <span class="ident">state_version</span>);
-			<span class="kw">let</span> <span class="ident">prefixed_storage_key</span> <span class="op">=</span> <span class="ident">child_info</span>.<span class="ident">prefixed_storage_key</span>();
-			<span class="ident">txs</span>.<span class="ident">consolidate</span>(<span class="ident">child_txs</span>);
-			<span class="kw">if</span> <span class="ident">empty</span> {
-				<span class="ident">child_roots</span>.<span class="ident">push</span>((<span class="ident">prefixed_storage_key</span>.<span class="ident">into_inner</span>(), <span class="prelude-val">None</span>));
-			} <span class="kw">else</span> {
-				<span class="ident">child_roots</span>.<span class="ident">push</span>((<span class="ident">prefixed_storage_key</span>.<span class="ident">into_inner</span>(), <span class="prelude-val">Some</span>(<span class="ident">child_root</span>.<span class="ident">encode</span>())));
+		<span class="kw">let </span><span class="kw-2">mut </span>txs: <span class="self">Self</span>::Transaction = Default::default();
+		<span class="kw">let </span><span class="kw-2">mut </span>child_roots: Vec&lt;<span class="kw">_</span>&gt; = Default::default();
+		<span class="comment">// child first
+		</span><span class="kw">for </span>(child_info, child_delta) <span class="kw">in </span>child_deltas {
+			<span class="kw">let </span>(child_root, empty, child_txs) =
+				<span class="self">self</span>.child_storage_root(child_info, child_delta, state_version);
+			<span class="kw">let </span>prefixed_storage_key = child_info.prefixed_storage_key();
+			txs.consolidate(child_txs);
+			<span class="kw">if </span>empty {
+				child_roots.push((prefixed_storage_key.into_inner(), <span class="prelude-val">None</span>));
+			} <span class="kw">else </span>{
+				child_roots.push((prefixed_storage_key.into_inner(), <span class="prelude-val">Some</span>(child_root.encode())));
 			}
 		}
-		<span class="kw">let</span> (<span class="ident">root</span>, <span class="ident">parent_txs</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">storage_root</span>(
-			<span class="ident">delta</span>
-				.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span>, <span class="ident">v</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">v</span>[..])))
-				.<span class="ident">chain</span>(<span class="ident">child_roots</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="kw-2">&amp;</span><span class="ident">k</span>[..], <span class="ident">v</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">v</span>[..])))),
-			<span class="ident">state_version</span>,
+		<span class="kw">let </span>(root, parent_txs) = <span class="self">self</span>.storage_root(
+			delta
+				.map(|(k, v)| (k, v.as_ref().map(|v| <span class="kw-2">&amp;</span>v[..])))
+				.chain(child_roots.iter().map(|(k, v)| (<span class="kw-2">&amp;</span>k[..], v.as_ref().map(|v| <span class="kw-2">&amp;</span>v[..])))),
+			state_version,
 		);
-		<span class="ident">txs</span>.<span class="ident">consolidate</span>(<span class="ident">parent_txs</span>);
-		(<span class="ident">root</span>, <span class="ident">txs</span>)
+		txs.consolidate(parent_txs);
+		(root, txs)
 	}
 
-	<span class="doccomment">/// Register stats from overlay of state machine.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// By default nothing is registered.</span>
-	<span class="kw">fn</span> <span class="ident">register_overlay_stats</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_stats</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="kw">crate</span>::stats::StateMachineStats</span>);
+	<span class="doccomment">/// Register stats from overlay of state machine.
+	///
+	/// By default nothing is registered.
+	</span><span class="kw">fn </span>register_overlay_stats(<span class="kw-2">&amp;</span><span class="self">self</span>, _stats: <span class="kw-2">&amp;</span><span class="kw">crate</span>::stats::StateMachineStats);
 
-	<span class="doccomment">/// Query backend usage statistics (i/o, memory)</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Not all implementations are expected to be able to do this. In the</span>
-	<span class="doccomment">/// case when they don&#39;t, empty statistics is returned.</span>
-	<span class="kw">fn</span> <span class="ident">usage_info</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">UsageInfo</span>;
+	<span class="doccomment">/// Query backend usage statistics (i/o, memory)
+	///
+	/// Not all implementations are expected to be able to do this. In the
+	/// case when they don&#39;t, empty statistics is returned.
+	</span><span class="kw">fn </span>usage_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; UsageInfo;
 
-	<span class="doccomment">/// Wipe the state database.</span>
-	<span class="kw">fn</span> <span class="ident">wipe</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+	<span class="doccomment">/// Wipe the state database.
+	</span><span class="kw">fn </span>wipe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
 		<span class="macro">unimplemented!</span>()
 	}
 
-	<span class="doccomment">/// Commit given transaction to storage.</span>
-	<span class="kw">fn</span> <span class="ident">commit</span>(
+	<span class="doccomment">/// Commit given transaction to storage.
+	</span><span class="kw">fn </span>commit(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="kw">_</span>: <span class="ident">H::Out</span>,
-		<span class="kw">_</span>: <span class="ident"><span class="self">Self</span>::Transaction</span>,
-		<span class="kw">_</span>: <span class="ident">StorageCollection</span>,
-		<span class="kw">_</span>: <span class="ident">ChildStorageCollection</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+		<span class="kw">_</span>: H::Out,
+		<span class="kw">_</span>: <span class="self">Self</span>::Transaction,
+		<span class="kw">_</span>: StorageCollection,
+		<span class="kw">_</span>: ChildStorageCollection,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
 		<span class="macro">unimplemented!</span>()
 	}
 
-	<span class="doccomment">/// Get the read/write count of the db</span>
-	<span class="kw">fn</span> <span class="ident">read_write_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">u32</span>) {
+	<span class="doccomment">/// Get the read/write count of the db
+	</span><span class="kw">fn </span>read_write_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (u32, u32, u32, u32) {
 		<span class="macro">unimplemented!</span>()
 	}
 
-	<span class="doccomment">/// Get the read/write count of the db</span>
-	<span class="kw">fn</span> <span class="ident">reset_read_write_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+	<span class="doccomment">/// Get the read/write count of the db
+	</span><span class="kw">fn </span>reset_read_write_count(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 		<span class="macro">unimplemented!</span>()
 	}
 
-	<span class="doccomment">/// Get the whitelist for tracking db reads/writes</span>
-	<span class="kw">fn</span> <span class="ident">get_whitelist</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TrackedStorageKey</span><span class="op">&gt;</span> {
-		<span class="ident">Default::default</span>()
+	<span class="doccomment">/// Get the whitelist for tracking db reads/writes
+	</span><span class="kw">fn </span>get_whitelist(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;TrackedStorageKey&gt; {
+		Default::default()
 	}
 
-	<span class="doccomment">/// Update the whitelist for tracking db reads/writes</span>
-	<span class="kw">fn</span> <span class="ident">set_whitelist</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TrackedStorageKey</span><span class="op">&gt;</span>) {}
+	<span class="doccomment">/// Update the whitelist for tracking db reads/writes
+	</span><span class="kw">fn </span>set_whitelist(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: Vec&lt;TrackedStorageKey&gt;) {}
 
-	<span class="doccomment">/// Estimate proof size</span>
-	<span class="kw">fn</span> <span class="ident">proof_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
+	<span class="doccomment">/// Estimate proof size
+	</span><span class="kw">fn </span>proof_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;u32&gt; {
 		<span class="macro">unimplemented!</span>()
 	}
 
-	<span class="doccomment">/// Extend storage info for benchmarking db</span>
-	<span class="kw">fn</span> <span class="ident">get_read_and_written_keys</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">bool</span>)<span class="op">&gt;</span> {
+	<span class="doccomment">/// Extend storage info for benchmarking db
+	</span><span class="kw">fn </span>get_read_and_written_keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(Vec&lt;u8&gt;, u32, u32, bool)&gt; {
 		<span class="macro">unimplemented!</span>()
 	}
 }
 
-<span class="doccomment">/// Trait that allows consolidate two transactions together.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Consolidate</span> {
-	<span class="doccomment">/// Consolidate two transactions into one.</span>
-	<span class="kw">fn</span> <span class="ident">consolidate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="self">Self</span>);
+<span class="doccomment">/// Trait that allows consolidate two transactions together.
+</span><span class="kw">pub trait </span>Consolidate {
+	<span class="doccomment">/// Consolidate two transactions into one.
+	</span><span class="kw">fn </span>consolidate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>);
 }
 
-<span class="kw">impl</span> <span class="ident">Consolidate</span> <span class="kw">for</span> () {
-	<span class="kw">fn</span> <span class="ident">consolidate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="self">Self</span>) {
+<span class="kw">impl </span>Consolidate <span class="kw">for </span>() {
+	<span class="kw">fn </span>consolidate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: <span class="self">Self</span>) {
 		()
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">Consolidate</span> <span class="kw">for</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">StorageCollection</span>)<span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">consolidate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">other</span>: <span class="self">Self</span>) {
-		<span class="self">self</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">other</span>);
+<span class="kw">impl </span>Consolidate <span class="kw">for </span>Vec&lt;(<span class="prelude-ty">Option</span>&lt;ChildInfo&gt;, StorageCollection)&gt; {
+	<span class="kw">fn </span>consolidate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>other: <span class="self">Self</span>) {
+		<span class="self">self</span>.append(<span class="kw-2">&amp;mut </span>other);
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span> <span class="ident">Consolidate</span> <span class="kw">for</span> <span class="ident">sp_trie::GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">H</span>: <span class="ident">Hasher</span>,
-	<span class="ident">KF</span>: <span class="ident">sp_trie::KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;H, KF&gt; Consolidate <span class="kw">for </span>sp_trie::GenericMemoryDB&lt;H, KF&gt;
+<span class="kw">where
+	</span>H: Hasher,
+	KF: sp_trie::KeyFunction&lt;H&gt;,
 {
-	<span class="kw">fn</span> <span class="ident">consolidate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="self">Self</span>) {
-		<span class="ident">sp_trie::GenericMemoryDB::consolidate</span>(<span class="self">self</span>, <span class="ident">other</span>)
+	<span class="kw">fn </span>consolidate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
+		sp_trie::GenericMemoryDB::consolidate(<span class="self">self</span>, other)
 	}
 }
 
-<span class="doccomment">/// Wrapper to create a [`RuntimeCode`] from a type that implements [`Backend`].</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BackendRuntimeCode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span> {
-	<span class="ident">backend</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">B</span>,
-	<span class="ident">_marker</span>: <span class="ident">std::marker::PhantomData</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Wrapper to create a [`RuntimeCode`] from a type that implements [`Backend`].
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub struct </span>BackendRuntimeCode&lt;<span class="lifetime">&#39;a</span>, B, H&gt; {
+	backend: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>B,
+	_marker: std::marker::PhantomData&lt;H&gt;,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">Backend</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">sp_core::traits::FetchRuntimeCode</span>
-	<span class="kw">for</span> <span class="ident">BackendRuntimeCode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, B: Backend&lt;H&gt;, H: Hasher&gt; sp_core::traits::FetchRuntimeCode
+	<span class="kw">for </span>BackendRuntimeCode&lt;<span class="lifetime">&#39;a</span>, B, H&gt;
 {
-	<span class="kw">fn</span> <span class="ident">fetch_runtime_code</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">std::borrow::Cow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">backend</span>
-			.<span class="ident">storage</span>(<span class="ident">sp_core::storage::well_known_keys::CODE</span>)
-			.<span class="ident">ok</span>()
-			.<span class="ident">flatten</span>()
-			.<span class="ident">map</span>(<span class="ident">Into::into</span>)
+	<span class="kw">fn </span>fetch_runtime_code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;std::borrow::Cow&lt;[u8]&gt;&gt; {
+		<span class="self">self</span>.backend
+			.storage(sp_core::storage::well_known_keys::CODE)
+			.ok()
+			.flatten()
+			.map(Into::into)
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">Backend</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">BackendRuntimeCode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">H::Out</span>: <span class="ident">Encode</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, B: Backend&lt;H&gt;, H: Hasher&gt; BackendRuntimeCode&lt;<span class="lifetime">&#39;a</span>, B, H&gt;
+<span class="kw">where
+	</span>H::Out: Encode,
 {
-	<span class="doccomment">/// Create a new instance.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">backend</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">B</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">backend</span>, <span class="ident">_marker</span>: <span class="ident">std::marker::PhantomData</span> }
+	<span class="doccomment">/// Create a new instance.
+	</span><span class="kw">pub fn </span>new(backend: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>B) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ backend, _marker: std::marker::PhantomData }
 	}
 
-	<span class="doccomment">/// Return the [`RuntimeCode`] build from the wrapped `backend`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">runtime_code</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RuntimeCode</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">backend</span>
-			.<span class="ident">storage_hash</span>(<span class="ident">sp_core::storage::well_known_keys::CODE</span>)
-			.<span class="ident">ok</span>()
-			.<span class="ident">flatten</span>()
-			.<span class="ident">ok_or</span>(<span class="string">&quot;`:code` hash not found&quot;</span>)<span class="question-mark">?</span>
-			.<span class="ident">encode</span>();
-		<span class="kw">let</span> <span class="ident">heap_pages</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">backend</span>
-			.<span class="ident">storage</span>(<span class="ident">sp_core::storage::well_known_keys::HEAP_PAGES</span>)
-			.<span class="ident">ok</span>()
-			.<span class="ident">flatten</span>()
-			.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> <span class="ident">codec::Decode::decode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span><span class="ident">d</span>[..]).<span class="ident">ok</span>());
+	<span class="doccomment">/// Return the [`RuntimeCode`] build from the wrapped `backend`.
+	</span><span class="kw">pub fn </span>runtime_code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;RuntimeCode, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+		<span class="kw">let </span>hash = <span class="self">self
+			</span>.backend
+			.storage_hash(sp_core::storage::well_known_keys::CODE)
+			.ok()
+			.flatten()
+			.ok_or(<span class="string">&quot;`:code` hash not found&quot;</span>)<span class="question-mark">?
+			</span>.encode();
+		<span class="kw">let </span>heap_pages = <span class="self">self
+			</span>.backend
+			.storage(sp_core::storage::well_known_keys::HEAP_PAGES)
+			.ok()
+			.flatten()
+			.and_then(|d| codec::Decode::decode(<span class="kw-2">&amp;mut &amp;</span>d[..]).ok());
 
-		<span class="prelude-val">Ok</span>(<span class="ident">RuntimeCode</span> { <span class="ident">code_fetcher</span>: <span class="self">self</span>, <span class="ident">hash</span>, <span class="ident">heap_pages</span> })
+		<span class="prelude-val">Ok</span>(RuntimeCode { code_fetcher: <span class="self">self</span>, hash, heap_pages })
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_state_machine" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_state_machine" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

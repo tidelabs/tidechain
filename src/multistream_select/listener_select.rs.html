@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/multistream-select-0.11.0/src/listener_select.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>listener_select.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../multistream_select/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../multistream_select/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../multistream_select/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/multistream-select-0.11.0/src/listener_select.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>listener_select.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../multistream_select/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -314,317 +309,316 @@
 <span id="309">309</span>
 <span id="310">310</span>
 <span id="311">311</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2017 Parity Technologies (UK) Ltd.</span>
-<span class="comment">//</span>
-<span class="comment">// Permission is hereby granted, free of charge, to any person obtaining a</span>
-<span class="comment">// copy of this software and associated documentation files (the &quot;Software&quot;),</span>
-<span class="comment">// to deal in the Software without restriction, including without limitation</span>
-<span class="comment">// the rights to use, copy, modify, merge, publish, distribute, sublicense,</span>
-<span class="comment">// and/or sell copies of the Software, and to permit persons to whom the</span>
-<span class="comment">// Software is furnished to do so, subject to the following conditions:</span>
-<span class="comment">//</span>
-<span class="comment">// The above copyright notice and this permission notice shall be included in</span>
-<span class="comment">// all copies or substantial portions of the Software.</span>
-<span class="comment">//</span>
-<span class="comment">// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS</span>
-<span class="comment">// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
-<span class="comment">// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
-<span class="comment">// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
-<span class="comment">// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING</span>
-<span class="comment">// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER</span>
-<span class="comment">// DEALINGS IN THE SOFTWARE.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2017 Parity Technologies (UK) Ltd.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the &quot;Software&quot;),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
-<span class="doccomment">//! Protocol negotiation strategies for the peer acting as the listener</span>
-<span class="doccomment">//! in a multistream-select protocol negotiation.</span>
+</span><span class="doccomment">//! Protocol negotiation strategies for the peer acting as the listener
+//! in a multistream-select protocol negotiation.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::protocol</span>::{<span class="ident">HeaderLine</span>, <span class="ident">Message</span>, <span class="ident">MessageIO</span>, <span class="ident">Protocol</span>, <span class="ident">ProtocolError</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Negotiated</span>, <span class="ident">NegotiationError</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::protocol::{HeaderLine, Message, MessageIO, Protocol, ProtocolError};
+<span class="kw">use crate</span>::{Negotiated, NegotiationError};
 
-<span class="kw">use</span> <span class="ident">futures::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">smallvec::SmallVec</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">convert::TryFrom</span> <span class="kw">as</span> <span class="kw">_</span>,
-    <span class="ident">iter::FromIterator</span>,
-    <span class="ident">mem</span>,
-    <span class="ident">pin::Pin</span>,
-    <span class="ident">task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>},
+<span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>smallvec::SmallVec;
+<span class="kw">use </span>std::{
+    convert::TryFrom <span class="kw">as _</span>,
+    iter::FromIterator,
+    mem,
+    pin::Pin,
+    task::{Context, Poll},
 };
 
-<span class="doccomment">/// Returns a `Future` that negotiates a protocol on the given I/O stream</span>
-<span class="doccomment">/// for a peer acting as the _listener_ (or _responder_).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function is given an I/O stream and a list of protocols and returns a</span>
-<span class="doccomment">/// computation that performs the protocol negotiation with the remote. The</span>
-<span class="doccomment">/// returned `Future` resolves with the name of the negotiated protocol and</span>
-<span class="doccomment">/// a [`Negotiated`] I/O stream.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">listener_select_proto</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">I</span><span class="op">&gt;</span>(<span class="ident">inner</span>: <span class="ident">R</span>, <span class="ident">protocols</span>: <span class="ident">I</span>) -&gt; <span class="ident">ListenerSelectFuture</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">I::Item</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">R</span>: <span class="ident">AsyncRead</span> <span class="op">+</span> <span class="ident">AsyncWrite</span>,
-    <span class="ident">I</span>: <span class="ident">IntoIterator</span>,
-    <span class="ident">I::Item</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+<span class="doccomment">/// Returns a `Future` that negotiates a protocol on the given I/O stream
+/// for a peer acting as the _listener_ (or _responder_).
+///
+/// This function is given an I/O stream and a list of protocols and returns a
+/// computation that performs the protocol negotiation with the remote. The
+/// returned `Future` resolves with the name of the negotiated protocol and
+/// a [`Negotiated`] I/O stream.
+</span><span class="kw">pub fn </span>listener_select_proto&lt;R, I&gt;(inner: R, protocols: I) -&gt; ListenerSelectFuture&lt;R, I::Item&gt;
+<span class="kw">where
+    </span>R: AsyncRead + AsyncWrite,
+    I: IntoIterator,
+    I::Item: AsRef&lt;[u8]&gt;,
 {
-    <span class="kw">let</span> <span class="ident">protocols</span> <span class="op">=</span> <span class="ident">protocols</span>
-        .<span class="ident">into_iter</span>()
-        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">n</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">Protocol::try_from</span>(<span class="ident">n</span>.<span class="ident">as_ref</span>()) {
-            <span class="prelude-val">Ok</span>(<span class="ident">p</span>) =&gt; <span class="prelude-val">Some</span>((<span class="ident">n</span>, <span class="ident">p</span>)),
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+    <span class="kw">let </span>protocols = protocols
+        .into_iter()
+        .filter_map(|n| <span class="kw">match </span>Protocol::try_from(n.as_ref()) {
+            <span class="prelude-val">Ok</span>(p) =&gt; <span class="prelude-val">Some</span>((n, p)),
+            <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">log::warn!</span>(
                     <span class="string">&quot;Listener: Ignoring invalid protocol: {} due to {}&quot;</span>,
-                    <span class="ident">String::from_utf8_lossy</span>(<span class="ident">n</span>.<span class="ident">as_ref</span>()),
-                    <span class="ident">e</span>
+                    String::from_utf8_lossy(n.as_ref()),
+                    e
                 );
-                <span class="prelude-val">None</span>
-            }
+                <span class="prelude-val">None
+            </span>}
         });
-    <span class="ident">ListenerSelectFuture</span> {
-        <span class="ident">protocols</span>: <span class="ident">SmallVec::from_iter</span>(<span class="ident">protocols</span>),
-        <span class="ident">state</span>: <span class="ident">State::RecvHeader</span> {
-            <span class="ident">io</span>: <span class="ident">MessageIO::new</span>(<span class="ident">inner</span>),
+    ListenerSelectFuture {
+        protocols: SmallVec::from_iter(protocols),
+        state: State::RecvHeader {
+            io: MessageIO::new(inner),
         },
-        <span class="ident">last_sent_na</span>: <span class="bool-val">false</span>,
+        last_sent_na: <span class="bool-val">false</span>,
     }
 }
 
-<span class="doccomment">/// The `Future` returned by [`listener_select_proto`] that performs a</span>
-<span class="doccomment">/// multistream-select protocol negotiation on an underlying I/O stream.</span>
-<span class="attribute">#[<span class="ident">pin_project::pin_project</span>]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ListenerSelectFuture</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-    <span class="comment">// TODO: It would be nice if eventually N = Protocol, which has a</span>
-    <span class="comment">// few more implications on the API.</span>
-    <span class="ident">protocols</span>: <span class="ident">SmallVec</span><span class="op">&lt;</span>[(<span class="ident">N</span>, <span class="ident">Protocol</span>); <span class="number">8</span>]<span class="op">&gt;</span>,
-    <span class="ident">state</span>: <span class="ident">State</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">N</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// Whether the last message sent was a protocol rejection (i.e. `na\n`).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the listener reads garbage or EOF after such a rejection,</span>
-    <span class="doccomment">/// the dialer is likely using `V1Lazy` and negotiation must be</span>
-    <span class="doccomment">/// considered failed, but not with a protocol violation or I/O</span>
-    <span class="doccomment">/// error.</span>
-    <span class="ident">last_sent_na</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// The `Future` returned by [`listener_select_proto`] that performs a
+/// multistream-select protocol negotiation on an underlying I/O stream.
+</span><span class="attribute">#[pin_project::pin_project]
+</span><span class="kw">pub struct </span>ListenerSelectFuture&lt;R, N&gt; {
+    <span class="comment">// TODO: It would be nice if eventually N = Protocol, which has a
+    // few more implications on the API.
+    </span>protocols: SmallVec&lt;[(N, Protocol); <span class="number">8</span>]&gt;,
+    state: State&lt;R, N&gt;,
+    <span class="doccomment">/// Whether the last message sent was a protocol rejection (i.e. `na\n`).
+    ///
+    /// If the listener reads garbage or EOF after such a rejection,
+    /// the dialer is likely using `V1Lazy` and negotiation must be
+    /// considered failed, but not with a protocol violation or I/O
+    /// error.
+    </span>last_sent_na: bool,
 }
 
-<span class="kw">enum</span> <span class="ident">State</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-    <span class="ident">RecvHeader</span> {
-        <span class="ident">io</span>: <span class="ident">MessageIO</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
+<span class="kw">enum </span>State&lt;R, N&gt; {
+    RecvHeader {
+        io: MessageIO&lt;R&gt;,
     },
-    <span class="ident">SendHeader</span> {
-        <span class="ident">io</span>: <span class="ident">MessageIO</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
+    SendHeader {
+        io: MessageIO&lt;R&gt;,
     },
-    <span class="ident">RecvMessage</span> {
-        <span class="ident">io</span>: <span class="ident">MessageIO</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
+    RecvMessage {
+        io: MessageIO&lt;R&gt;,
     },
-    <span class="ident">SendMessage</span> {
-        <span class="ident">io</span>: <span class="ident">MessageIO</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-        <span class="ident">message</span>: <span class="ident">Message</span>,
-        <span class="ident">protocol</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>,
+    SendMessage {
+        io: MessageIO&lt;R&gt;,
+        message: Message,
+        protocol: <span class="prelude-ty">Option</span>&lt;N&gt;,
     },
-    <span class="ident">Flush</span> {
-        <span class="ident">io</span>: <span class="ident">MessageIO</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-        <span class="ident">protocol</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>,
+    Flush {
+        io: MessageIO&lt;R&gt;,
+        protocol: <span class="prelude-ty">Option</span>&lt;N&gt;,
     },
-    <span class="ident">Done</span>,
+    Done,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">N</span><span class="op">&gt;</span> <span class="ident">Future</span> <span class="kw">for</span> <span class="ident">ListenerSelectFuture</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">N</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="comment">// The Unpin bound here is required because we produce a `Negotiated&lt;R&gt;` as the output.</span>
-    <span class="comment">// It also makes the implementation considerably easier to write.</span>
-    <span class="ident">R</span>: <span class="ident">AsyncRead</span> <span class="op">+</span> <span class="ident">AsyncWrite</span> <span class="op">+</span> <span class="ident">Unpin</span>,
-    <span class="ident">N</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span>,
+<span class="kw">impl</span>&lt;R, N&gt; Future <span class="kw">for </span>ListenerSelectFuture&lt;R, N&gt;
+<span class="kw">where
+    </span><span class="comment">// The Unpin bound here is required because we produce a `Negotiated&lt;R&gt;` as the output.
+    // It also makes the implementation considerably easier to write.
+    </span>R: AsyncRead + AsyncWrite + Unpin,
+    N: AsRef&lt;[u8]&gt; + Clone,
 {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">N</span>, <span class="ident">Negotiated</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>), <span class="ident">NegotiationError</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Output = <span class="prelude-ty">Result</span>&lt;(N, Negotiated&lt;R&gt;), NegotiationError&gt;;
 
-    <span class="kw">fn</span> <span class="ident">poll</span>(<span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">project</span>();
+    <span class="kw">fn </span>poll(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="self">Self</span>::Output&gt; {
+        <span class="kw">let </span>this = <span class="self">self</span>.project();
 
-        <span class="kw">loop</span> {
-            <span class="kw">match</span> <span class="ident">mem::replace</span>(<span class="ident">this</span>.<span class="ident">state</span>, <span class="ident">State::Done</span>) {
-                <span class="ident">State::RecvHeader</span> { <span class="kw-2">mut</span> <span class="ident">io</span> } =&gt; {
-                    <span class="kw">match</span> <span class="ident">io</span>.<span class="ident">poll_next_unpin</span>(<span class="ident">cx</span>) {
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">Message::Header</span>(<span class="ident">h</span>)))) =&gt; <span class="kw">match</span> <span class="ident">h</span> {
-                            <span class="ident">HeaderLine::V1</span> =&gt; <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::SendHeader</span> { <span class="ident">io</span> },
+        <span class="kw">loop </span>{
+            <span class="kw">match </span>mem::replace(this.state, State::Done) {
+                State::RecvHeader { <span class="kw-2">mut </span>io } =&gt; {
+                    <span class="kw">match </span>io.poll_next_unpin(cx) {
+                        Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(Message::Header(h)))) =&gt; <span class="kw">match </span>h {
+                            HeaderLine::V1 =&gt; <span class="kw-2">*</span>this.state = State::SendHeader { io },
                         },
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="kw">_</span>))) =&gt; {
-                            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">ProtocolError::InvalidMessage</span>.<span class="ident">into</span>()))
+                        Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="kw">_</span>))) =&gt; {
+                            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(ProtocolError::InvalidMessage.into()))
                         }
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>))) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">From::from</span>(<span class="ident">err</span>))),
-                        <span class="comment">// Treat EOF error as [`NegotiationError::Failed`], not as</span>
-                        <span class="comment">// [`NegotiationError::ProtocolError`], allowing dropping or closing an I/O</span>
-                        <span class="comment">// stream as a permissible way to &quot;gracefully&quot; fail a negotiation.</span>
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">NegotiationError::Failed</span>)),
-                        <span class="ident">Poll::Pending</span> =&gt; {
-                            <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::RecvHeader</span> { <span class="ident">io</span> };
-                            <span class="kw">return</span> <span class="ident">Poll::Pending</span>;
+                        Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err))) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(From::from(err))),
+                        <span class="comment">// Treat EOF error as [`NegotiationError::Failed`], not as
+                        // [`NegotiationError::ProtocolError`], allowing dropping or closing an I/O
+                        // stream as a permissible way to &quot;gracefully&quot; fail a negotiation.
+                        </span>Poll::Ready(<span class="prelude-val">None</span>) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(NegotiationError::Failed)),
+                        Poll::Pending =&gt; {
+                            <span class="kw-2">*</span>this.state = State::RecvHeader { io };
+                            <span class="kw">return </span>Poll::Pending;
                         }
                     }
                 }
 
-                <span class="ident">State::SendHeader</span> { <span class="kw-2">mut</span> <span class="ident">io</span> } =&gt; {
-                    <span class="kw">match</span> <span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">io</span>).<span class="ident">poll_ready</span>(<span class="ident">cx</span>) {
-                        <span class="ident">Poll::Pending</span> =&gt; {
-                            <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::SendHeader</span> { <span class="ident">io</span> };
-                            <span class="kw">return</span> <span class="ident">Poll::Pending</span>;
+                State::SendHeader { <span class="kw-2">mut </span>io } =&gt; {
+                    <span class="kw">match </span>Pin::new(<span class="kw-2">&amp;mut </span>io).poll_ready(cx) {
+                        Poll::Pending =&gt; {
+                            <span class="kw-2">*</span>this.state = State::SendHeader { io };
+                            <span class="kw">return </span>Poll::Pending;
                         }
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(())) =&gt; {}
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">From::from</span>(<span class="ident">err</span>))),
+                        Poll::Ready(<span class="prelude-val">Ok</span>(())) =&gt; {}
+                        Poll::Ready(<span class="prelude-val">Err</span>(err)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(From::from(err))),
                     }
 
-                    <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">Message::Header</span>(<span class="ident">HeaderLine::V1</span>);
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">io</span>).<span class="ident">start_send</span>(<span class="ident">msg</span>) {
-                        <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">From::from</span>(<span class="ident">err</span>)));
+                    <span class="kw">let </span>msg = Message::Header(HeaderLine::V1);
+                    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = Pin::new(<span class="kw-2">&amp;mut </span>io).start_send(msg) {
+                        <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(From::from(err)));
                     }
 
-                    <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::Flush</span> { <span class="ident">io</span>, <span class="ident">protocol</span>: <span class="prelude-val">None</span> };
+                    <span class="kw-2">*</span>this.state = State::Flush { io, protocol: <span class="prelude-val">None </span>};
                 }
 
-                <span class="ident">State::RecvMessage</span> { <span class="kw-2">mut</span> <span class="ident">io</span> } =&gt; {
-                    <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">io</span>).<span class="ident">poll_next</span>(<span class="ident">cx</span>) {
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">msg</span>))) =&gt; <span class="ident">msg</span>,
-                        <span class="comment">// Treat EOF error as [`NegotiationError::Failed`], not as</span>
-                        <span class="comment">// [`NegotiationError::ProtocolError`], allowing dropping or closing an I/O</span>
-                        <span class="comment">// stream as a permissible way to &quot;gracefully&quot; fail a negotiation.</span>
-                        <span class="comment">//</span>
-                        <span class="comment">// This is e.g. important when a listener rejects a protocol with</span>
-                        <span class="comment">// [`Message::NotAvailable`] and the dialer does not have alternative</span>
-                        <span class="comment">// protocols to propose. Then the dialer will stop the negotiation and drop</span>
-                        <span class="comment">// the corresponding stream. As a listener this EOF should be interpreted as</span>
-                        <span class="comment">// a failed negotiation.</span>
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">NegotiationError::Failed</span>)),
-                        <span class="ident">Poll::Pending</span> =&gt; {
-                            <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::RecvMessage</span> { <span class="ident">io</span> };
-                            <span class="kw">return</span> <span class="ident">Poll::Pending</span>;
+                State::RecvMessage { <span class="kw-2">mut </span>io } =&gt; {
+                    <span class="kw">let </span>msg = <span class="kw">match </span>Pin::new(<span class="kw-2">&amp;mut </span>io).poll_next(cx) {
+                        Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(msg))) =&gt; msg,
+                        <span class="comment">// Treat EOF error as [`NegotiationError::Failed`], not as
+                        // [`NegotiationError::ProtocolError`], allowing dropping or closing an I/O
+                        // stream as a permissible way to &quot;gracefully&quot; fail a negotiation.
+                        //
+                        // This is e.g. important when a listener rejects a protocol with
+                        // [`Message::NotAvailable`] and the dialer does not have alternative
+                        // protocols to propose. Then the dialer will stop the negotiation and drop
+                        // the corresponding stream. As a listener this EOF should be interpreted as
+                        // a failed negotiation.
+                        </span>Poll::Ready(<span class="prelude-val">None</span>) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(NegotiationError::Failed)),
+                        Poll::Pending =&gt; {
+                            <span class="kw-2">*</span>this.state = State::RecvMessage { io };
+                            <span class="kw">return </span>Poll::Pending;
                         }
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>))) =&gt; {
-                            <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">last_sent_na</span> {
-                                <span class="comment">// When we read garbage or EOF after having already rejected a</span>
-                                <span class="comment">// protocol, the dialer is most likely using `V1Lazy` and has</span>
-                                <span class="comment">// optimistically settled on this protocol, so this is really a</span>
-                                <span class="comment">// failed negotiation, not a protocol violation. In this case</span>
-                                <span class="comment">// the dialer also raises `NegotiationError::Failed` when finally</span>
-                                <span class="comment">// reading the `N/A` response.</span>
-                                <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ProtocolError::InvalidMessage</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">err</span> {
+                        Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err))) =&gt; {
+                            <span class="kw">if </span><span class="kw-2">*</span>this.last_sent_na {
+                                <span class="comment">// When we read garbage or EOF after having already rejected a
+                                // protocol, the dialer is most likely using `V1Lazy` and has
+                                // optimistically settled on this protocol, so this is really a
+                                // failed negotiation, not a protocol violation. In this case
+                                // the dialer also raises `NegotiationError::Failed` when finally
+                                // reading the `N/A` response.
+                                </span><span class="kw">if let </span>ProtocolError::InvalidMessage = <span class="kw-2">&amp;</span>err {
                                     <span class="macro">log::trace!</span>(
                                         <span class="string">&quot;Listener: Negotiation failed with invalid \
-                                        message after protocol rejection.&quot;</span>
-                                    );
-                                    <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">NegotiationError::Failed</span>));
+                                        message after protocol rejection.&quot;
+                                    </span>);
+                                    <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(NegotiationError::Failed));
                                 }
-                                <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ProtocolError::IoError</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">err</span> {
-                                    <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">kind</span>() <span class="op">==</span> <span class="ident">std::io::ErrorKind::UnexpectedEof</span> {
+                                <span class="kw">if let </span>ProtocolError::IoError(e) = <span class="kw-2">&amp;</span>err {
+                                    <span class="kw">if </span>e.kind() == std::io::ErrorKind::UnexpectedEof {
                                         <span class="macro">log::trace!</span>(
                                             <span class="string">&quot;Listener: Negotiation failed with EOF \
-                                            after protocol rejection.&quot;</span>
-                                        );
-                                        <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">NegotiationError::Failed</span>));
+                                            after protocol rejection.&quot;
+                                        </span>);
+                                        <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(NegotiationError::Failed));
                                     }
                                 }
                             }
 
-                            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">From::from</span>(<span class="ident">err</span>)));
+                            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(From::from(err)));
                         }
                     };
 
-                    <span class="kw">match</span> <span class="ident">msg</span> {
-                        <span class="ident">Message::ListProtocols</span> =&gt; {
-                            <span class="kw">let</span> <span class="ident">supported</span> <span class="op">=</span>
-                                <span class="ident">this</span>.<span class="ident">protocols</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">p</span>)<span class="op">|</span> <span class="ident">p</span>).<span class="ident">cloned</span>().<span class="ident">collect</span>();
-                            <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">Message::Protocols</span>(<span class="ident">supported</span>);
-                            <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::SendMessage</span> {
-                                <span class="ident">io</span>,
-                                <span class="ident">message</span>,
-                                <span class="ident">protocol</span>: <span class="prelude-val">None</span>,
+                    <span class="kw">match </span>msg {
+                        Message::ListProtocols =&gt; {
+                            <span class="kw">let </span>supported =
+                                this.protocols.iter().map(|(<span class="kw">_</span>, p)| p).cloned().collect();
+                            <span class="kw">let </span>message = Message::Protocols(supported);
+                            <span class="kw-2">*</span>this.state = State::SendMessage {
+                                io,
+                                message,
+                                protocol: <span class="prelude-val">None</span>,
                             }
                         }
-                        <span class="ident">Message::Protocol</span>(<span class="ident">p</span>) =&gt; {
-                            <span class="kw">let</span> <span class="ident">protocol</span> <span class="op">=</span> <span class="ident">this</span>.<span class="ident">protocols</span>.<span class="ident">iter</span>().<span class="ident">find_map</span>(<span class="op">|</span>(<span class="ident">name</span>, <span class="ident">proto</span>)<span class="op">|</span> {
-                                <span class="kw">if</span> <span class="kw-2">&amp;</span><span class="ident">p</span> <span class="op">==</span> <span class="ident">proto</span> {
-                                    <span class="prelude-val">Some</span>(<span class="ident">name</span>.<span class="ident">clone</span>())
-                                } <span class="kw">else</span> {
-                                    <span class="prelude-val">None</span>
-                                }
+                        Message::Protocol(p) =&gt; {
+                            <span class="kw">let </span>protocol = this.protocols.iter().find_map(|(name, proto)| {
+                                <span class="kw">if </span><span class="kw-2">&amp;</span>p == proto {
+                                    <span class="prelude-val">Some</span>(name.clone())
+                                } <span class="kw">else </span>{
+                                    <span class="prelude-val">None
+                                </span>}
                             });
 
-                            <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">protocol</span>.<span class="ident">is_some</span>() {
-                                <span class="macro">log::debug!</span>(<span class="string">&quot;Listener: confirming protocol: {}&quot;</span>, <span class="ident">p</span>);
-                                <span class="ident">Message::Protocol</span>(<span class="ident">p</span>.<span class="ident">clone</span>())
-                            } <span class="kw">else</span> {
+                            <span class="kw">let </span>message = <span class="kw">if </span>protocol.is_some() {
+                                <span class="macro">log::debug!</span>(<span class="string">&quot;Listener: confirming protocol: {}&quot;</span>, p);
+                                Message::Protocol(p.clone())
+                            } <span class="kw">else </span>{
                                 <span class="macro">log::debug!</span>(
                                     <span class="string">&quot;Listener: rejecting protocol: {}&quot;</span>,
-                                    <span class="ident">String::from_utf8_lossy</span>(<span class="ident">p</span>.<span class="ident">as_ref</span>())
+                                    String::from_utf8_lossy(p.as_ref())
                                 );
-                                <span class="ident">Message::NotAvailable</span>
+                                Message::NotAvailable
                             };
 
-                            <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::SendMessage</span> {
-                                <span class="ident">io</span>,
-                                <span class="ident">message</span>,
-                                <span class="ident">protocol</span>,
+                            <span class="kw-2">*</span>this.state = State::SendMessage {
+                                io,
+                                message,
+                                protocol,
                             };
                         }
-                        <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">ProtocolError::InvalidMessage</span>.<span class="ident">into</span>())),
+                        <span class="kw">_ </span>=&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(ProtocolError::InvalidMessage.into())),
                     }
                 }
 
-                <span class="ident">State::SendMessage</span> {
-                    <span class="kw-2">mut</span> <span class="ident">io</span>,
-                    <span class="ident">message</span>,
-                    <span class="ident">protocol</span>,
+                State::SendMessage {
+                    <span class="kw-2">mut </span>io,
+                    message,
+                    protocol,
                 } =&gt; {
-                    <span class="kw">match</span> <span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">io</span>).<span class="ident">poll_ready</span>(<span class="ident">cx</span>) {
-                        <span class="ident">Poll::Pending</span> =&gt; {
-                            <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::SendMessage</span> {
-                                <span class="ident">io</span>,
-                                <span class="ident">message</span>,
-                                <span class="ident">protocol</span>,
+                    <span class="kw">match </span>Pin::new(<span class="kw-2">&amp;mut </span>io).poll_ready(cx) {
+                        Poll::Pending =&gt; {
+                            <span class="kw-2">*</span>this.state = State::SendMessage {
+                                io,
+                                message,
+                                protocol,
                             };
-                            <span class="kw">return</span> <span class="ident">Poll::Pending</span>;
+                            <span class="kw">return </span>Poll::Pending;
                         }
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(())) =&gt; {}
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">From::from</span>(<span class="ident">err</span>))),
+                        Poll::Ready(<span class="prelude-val">Ok</span>(())) =&gt; {}
+                        Poll::Ready(<span class="prelude-val">Err</span>(err)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(From::from(err))),
                     }
 
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Message::NotAvailable</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">message</span> {
-                        <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">last_sent_na</span> <span class="op">=</span> <span class="bool-val">true</span>;
-                    } <span class="kw">else</span> {
-                        <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">last_sent_na</span> <span class="op">=</span> <span class="bool-val">false</span>;
+                    <span class="kw">if let </span>Message::NotAvailable = <span class="kw-2">&amp;</span>message {
+                        <span class="kw-2">*</span>this.last_sent_na = <span class="bool-val">true</span>;
+                    } <span class="kw">else </span>{
+                        <span class="kw-2">*</span>this.last_sent_na = <span class="bool-val">false</span>;
                     }
 
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">io</span>).<span class="ident">start_send</span>(<span class="ident">message</span>) {
-                        <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">From::from</span>(<span class="ident">err</span>)));
+                    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = Pin::new(<span class="kw-2">&amp;mut </span>io).start_send(message) {
+                        <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(From::from(err)));
                     }
 
-                    <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::Flush</span> { <span class="ident">io</span>, <span class="ident">protocol</span> };
+                    <span class="kw-2">*</span>this.state = State::Flush { io, protocol };
                 }
 
-                <span class="ident">State::Flush</span> { <span class="kw-2">mut</span> <span class="ident">io</span>, <span class="ident">protocol</span> } =&gt; {
-                    <span class="kw">match</span> <span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">io</span>).<span class="ident">poll_flush</span>(<span class="ident">cx</span>) {
-                        <span class="ident">Poll::Pending</span> =&gt; {
-                            <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::Flush</span> { <span class="ident">io</span>, <span class="ident">protocol</span> };
-                            <span class="kw">return</span> <span class="ident">Poll::Pending</span>;
+                State::Flush { <span class="kw-2">mut </span>io, protocol } =&gt; {
+                    <span class="kw">match </span>Pin::new(<span class="kw-2">&amp;mut </span>io).poll_flush(cx) {
+                        Poll::Pending =&gt; {
+                            <span class="kw-2">*</span>this.state = State::Flush { io, protocol };
+                            <span class="kw">return </span>Poll::Pending;
                         }
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(())) =&gt; {
-                            <span class="comment">// If a protocol has been selected, finish negotiation.</span>
-                            <span class="comment">// Otherwise expect to receive another message.</span>
-                            <span class="kw">match</span> <span class="ident">protocol</span> {
-                                <span class="prelude-val">Some</span>(<span class="ident">protocol</span>) =&gt; {
+                        Poll::Ready(<span class="prelude-val">Ok</span>(())) =&gt; {
+                            <span class="comment">// If a protocol has been selected, finish negotiation.
+                            // Otherwise expect to receive another message.
+                            </span><span class="kw">match </span>protocol {
+                                <span class="prelude-val">Some</span>(protocol) =&gt; {
                                     <span class="macro">log::debug!</span>(
                                         <span class="string">&quot;Listener: sent confirmed protocol: {}&quot;</span>,
-                                        <span class="ident">String::from_utf8_lossy</span>(<span class="ident">protocol</span>.<span class="ident">as_ref</span>())
+                                        String::from_utf8_lossy(protocol.as_ref())
                                     );
-                                    <span class="kw">let</span> <span class="ident">io</span> <span class="op">=</span> <span class="ident">Negotiated::completed</span>(<span class="ident">io</span>.<span class="ident">into_inner</span>());
-                                    <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>((<span class="ident">protocol</span>, <span class="ident">io</span>)));
+                                    <span class="kw">let </span>io = Negotiated::completed(io.into_inner());
+                                    <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>((protocol, io)));
                                 }
-                                <span class="prelude-val">None</span> =&gt; <span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">State::RecvMessage</span> { <span class="ident">io</span> },
+                                <span class="prelude-val">None </span>=&gt; <span class="kw-2">*</span>this.state = State::RecvMessage { io },
                             }
                         }
-                        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">From::from</span>(<span class="ident">err</span>))),
+                        Poll::Ready(<span class="prelude-val">Err</span>(err)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(From::from(err))),
                     }
                 }
 
-                <span class="ident">State::Done</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;State::poll called after completion&quot;</span>),
+                State::Done =&gt; <span class="macro">panic!</span>(<span class="string">&quot;State::poll called after completion&quot;</span>),
             }
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="multistream_select" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="multistream_select" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

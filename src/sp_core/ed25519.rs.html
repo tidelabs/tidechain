@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/core/src/ed25519.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ed25519.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sp_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sp_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/core/src/ed25519.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ed25519.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sp_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -715,718 +710,717 @@
 <span id="710">710</span>
 <span id="711">711</span>
 <span id="712">712</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="comment">// tag::description[]</span>
-<span class="doccomment">//! Simple Ed25519 API.</span>
-<span class="comment">// end::description[]</span>
+// tag::description[]
+</span><span class="doccomment">//! Simple Ed25519 API.
+</span><span class="comment">// end::description[]
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">sp_std::vec::Vec</span>;
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">use </span>sp_std::vec::Vec;
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">crypto::ByteArray</span>,
-	<span class="ident">hash</span>::{<span class="ident">H256</span>, <span class="ident">H512</span>},
+<span class="kw">use crate</span>::{
+	crypto::ByteArray,
+	hash::{H256, H512},
 };
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>, <span class="ident">MaxEncodedLen</span>};
-<span class="kw">use</span> <span class="ident">scale_info::TypeInfo</span>;
+<span class="kw">use </span>codec::{Decode, Encode, MaxEncodedLen};
+<span class="kw">use </span>scale_info::TypeInfo;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto::Ss58Codec</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto</span>::{
-	<span class="ident">CryptoType</span>, <span class="ident">CryptoTypeId</span>, <span class="ident">CryptoTypePublicPair</span>, <span class="ident">Derive</span>, <span class="ident">Public</span> <span class="kw">as</span> <span class="ident">TraitPublic</span>, <span class="ident">UncheckedFrom</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::crypto::Ss58Codec;
+<span class="kw">use </span><span class="kw">crate</span>::crypto::{
+	CryptoType, CryptoTypeId, CryptoTypePublicPair, Derive, Public <span class="kw">as </span>TraitPublic, UncheckedFrom,
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto</span>::{<span class="ident">DeriveJunction</span>, <span class="ident">Pair</span> <span class="kw">as</span> <span class="ident">TraitPair</span>, <span class="ident">SecretStringError</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">bip39</span>::{<span class="ident">Language</span>, <span class="ident">Mnemonic</span>, <span class="ident">MnemonicType</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">ed25519_dalek</span>::{<span class="ident">Signer</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">Verifier</span> <span class="kw">as</span> <span class="kw">_</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">de</span>, <span class="ident">Deserialize</span>, <span class="ident">Deserializer</span>, <span class="ident">Serialize</span>, <span class="ident">Serializer</span>};
-<span class="kw">use</span> <span class="ident">sp_runtime_interface::pass_by::PassByInner</span>;
-<span class="kw">use</span> <span class="ident">sp_std::ops::Deref</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">substrate_bip39::seed_from_entropy</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::crypto::{DeriveJunction, Pair <span class="kw">as </span>TraitPair, SecretStringError};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>bip39::{Language, Mnemonic, MnemonicType};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">use </span>ed25519_dalek::{Signer <span class="kw">as _</span>, Verifier <span class="kw">as _</span>};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+<span class="kw">use </span>sp_runtime_interface::pass_by::PassByInner;
+<span class="kw">use </span>sp_std::ops::Deref;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>substrate_bip39::seed_from_entropy;
 
-<span class="doccomment">/// An identifier used to match public keys against ed25519 keys</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CRYPTO_ID</span>: <span class="ident">CryptoTypeId</span> <span class="op">=</span> <span class="ident">CryptoTypeId</span>(<span class="kw-2">*</span><span class="string">b&quot;ed25&quot;</span>);
+<span class="doccomment">/// An identifier used to match public keys against ed25519 keys
+</span><span class="kw">pub const </span>CRYPTO_ID: CryptoTypeId = CryptoTypeId(<span class="kw-2">*</span><span class="string">b&quot;ed25&quot;</span>);
 
-<span class="doccomment">/// A secret seed. It&#39;s not called a &quot;secret key&quot; because ring doesn&#39;t expose the secret keys</span>
-<span class="doccomment">/// of the key pair (yeah, dumb); as such we&#39;re forced to remember the seed manually if we</span>
-<span class="doccomment">/// will need it later (such as for HDKD).</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">type</span> <span class="ident">Seed</span> <span class="op">=</span> [<span class="ident">u8</span>; <span class="number">32</span>];
+<span class="doccomment">/// A secret seed. It&#39;s not called a &quot;secret key&quot; because ring doesn&#39;t expose the secret keys
+/// of the key pair (yeah, dumb); as such we&#39;re forced to remember the seed manually if we
+/// will need it later (such as for HDKD).
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">type </span>Seed = [u8; <span class="number">32</span>];
 
-<span class="doccomment">/// A public key.</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>, <span class="ident">derive</span>(<span class="ident">Hash</span>))]</span>
-<span class="attribute">#[<span class="ident">derive</span>(
-	<span class="ident">PartialEq</span>,
-	<span class="ident">Eq</span>,
-	<span class="ident">PartialOrd</span>,
-	<span class="ident">Ord</span>,
-	<span class="ident">Clone</span>,
-	<span class="ident">Copy</span>,
-	<span class="ident">Encode</span>,
-	<span class="ident">Decode</span>,
-	<span class="ident">PassByInner</span>,
-	<span class="ident">MaxEncodedLen</span>,
-	<span class="ident">TypeInfo</span>,
-)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Public</span>(<span class="kw">pub</span> [<span class="ident">u8</span>; <span class="number">32</span>]);
+<span class="doccomment">/// A public key.
+</span><span class="attribute">#[cfg_attr(feature = <span class="string">&quot;full_crypto&quot;</span>, derive(Hash))]
+#[derive(
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Clone,
+	Copy,
+	Encode,
+	Decode,
+	PassByInner,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+</span><span class="kw">pub struct </span>Public(<span class="kw">pub </span>[u8; <span class="number">32</span>]);
 
-<span class="doccomment">/// A key pair.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Pair</span>(<span class="ident">ed25519_dalek::Keypair</span>);
+<span class="doccomment">/// A key pair.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">pub struct </span>Pair(ed25519_dalek::Keypair);
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">Pair</span> {
-	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">Pair</span>(<span class="ident">ed25519_dalek::Keypair</span> {
-			<span class="ident">public</span>: <span class="self">self</span>.<span class="number">0</span>.<span class="ident">public</span>,
-			<span class="ident">secret</span>: <span class="ident">ed25519_dalek::SecretKey::from_bytes</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">secret</span>.<span class="ident">as_bytes</span>())
-				.<span class="ident">expect</span>(<span class="string">&quot;key is always the correct size; qed&quot;</span>),
+<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">impl </span>Clone <span class="kw">for </span>Pair {
+	<span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		Pair(ed25519_dalek::Keypair {
+			public: <span class="self">self</span>.<span class="number">0</span>.public,
+			secret: ed25519_dalek::SecretKey::from_bytes(<span class="self">self</span>.<span class="number">0</span>.secret.as_bytes())
+				.expect(<span class="string">&quot;key is always the correct size; qed&quot;</span>),
 		})
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">32</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">32</span>] {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>
-	}
+<span class="kw">impl </span>AsRef&lt;[u8; <span class="number">32</span>]&gt; <span class="kw">for </span>Public {
+	<span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8; <span class="number">32</span>] {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+	</span>}
 }
 
-<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
+<span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Public {
+	<span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
 		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[..]
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">AsMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">as_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>] {
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="number">0</span>[..]
+<span class="kw">impl </span>AsMut&lt;[u8]&gt; <span class="kw">for </span>Public {
+	<span class="kw">fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>[u8] {
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>[..]
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> [<span class="ident">u8</span>];
+<span class="kw">impl </span>Deref <span class="kw">for </span>Public {
+	<span class="kw">type </span>Target = [u8];
 
-	<span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Target</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>
-	}
+	<span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+	</span>}
 }
 
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> ();
+<span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>[u8]&gt; <span class="kw">for </span>Public {
+	<span class="kw">type </span>Error = ();
 
-	<span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">data</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::LEN</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(())
+	<span class="kw">fn </span>try_from(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+		<span class="kw">if </span>data.len() != <span class="self">Self</span>::LEN {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(())
 		}
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident"><span class="self">Self</span>::LEN</span>];
-		<span class="ident">r</span>.<span class="ident">copy_from_slice</span>(<span class="ident">data</span>);
-		<span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::unchecked_from</span>(<span class="ident">r</span>))
+		<span class="kw">let </span><span class="kw-2">mut </span>r = [<span class="number">0u8</span>; <span class="self">Self</span>::LEN];
+		r.copy_from_slice(data);
+		<span class="prelude-val">Ok</span>(<span class="self">Self</span>::unchecked_from(r))
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Public</span><span class="op">&gt;</span> <span class="kw">for</span> [<span class="ident">u8</span>; <span class="number">32</span>] {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">x</span>: <span class="ident">Public</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">x</span>.<span class="number">0</span>
+<span class="kw">impl </span>From&lt;Public&gt; <span class="kw">for </span>[u8; <span class="number">32</span>] {
+	<span class="kw">fn </span>from(x: Public) -&gt; <span class="self">Self </span>{
+		x.<span class="number">0
+	</span>}
+}
+
+<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">impl </span>From&lt;Pair&gt; <span class="kw">for </span>Public {
+	<span class="kw">fn </span>from(x: Pair) -&gt; <span class="self">Self </span>{
+		x.public()
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Pair</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">x</span>: <span class="ident">Pair</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">x</span>.<span class="ident">public</span>()
+<span class="kw">impl </span>From&lt;Public&gt; <span class="kw">for </span>H256 {
+	<span class="kw">fn </span>from(x: Public) -&gt; <span class="self">Self </span>{
+		x.<span class="number">0</span>.into()
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Public</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">H256</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">x</span>: <span class="ident">Public</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">x</span>.<span class="number">0</span>.<span class="ident">into</span>()
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>std::str::FromStr <span class="kw">for </span>Public {
+	<span class="kw">type </span><span class="prelude-val">Err </span>= <span class="kw">crate</span>::crypto::PublicError;
+
+	<span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
+		<span class="self">Self</span>::from_ss58check(s)
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">std::str::FromStr</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::crypto::PublicError</span>;
-
-	<span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Err</span><span class="op">&gt;</span> {
-		<span class="ident"><span class="self">Self</span>::from_ss58check</span>(<span class="ident">s</span>)
+<span class="kw">impl </span>UncheckedFrom&lt;[u8; <span class="number">32</span>]&gt; <span class="kw">for </span>Public {
+	<span class="kw">fn </span>unchecked_from(x: [u8; <span class="number">32</span>]) -&gt; <span class="self">Self </span>{
+		Public::from_raw(x)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">UncheckedFrom</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">32</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">unchecked_from</span>(<span class="ident">x</span>: [<span class="ident">u8</span>; <span class="number">32</span>]) -&gt; <span class="self">Self</span> {
-		<span class="ident">Public::from_raw</span>(<span class="ident">x</span>)
+<span class="kw">impl </span>UncheckedFrom&lt;H256&gt; <span class="kw">for </span>Public {
+	<span class="kw">fn </span>unchecked_from(x: H256) -&gt; <span class="self">Self </span>{
+		Public::from_h256(x)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">UncheckedFrom</span><span class="op">&lt;</span><span class="ident">H256</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">unchecked_from</span>(<span class="ident">x</span>: <span class="ident">H256</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">Public::from_h256</span>(<span class="ident">x</span>)
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Public {
+	<span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
+		<span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.to_ss58check())
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">std::fmt::Display</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">std::fmt::Formatter</span>) -&gt; <span class="ident">std::fmt::Result</span> {
-		<span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">to_ss58check</span>())
-	}
-}
-
-<span class="kw">impl</span> <span class="ident">sp_std::fmt::Debug</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">sp_std::fmt::Formatter</span>) -&gt; <span class="ident">sp_std::fmt::Result</span> {
-		<span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">to_ss58check</span>();
-		<span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{} ({}...)&quot;</span>, <span class="ident"><span class="kw">crate</span>::hexdisplay::HexDisplay::from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>), <span class="kw-2">&amp;</span><span class="ident">s</span>[<span class="number">0</span>..<span class="number">8</span>])
+<span class="kw">impl </span>sp_std::fmt::Debug <span class="kw">for </span>Public {
+	<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+	</span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>sp_std::fmt::Formatter) -&gt; sp_std::fmt::Result {
+		<span class="kw">let </span>s = <span class="self">self</span>.to_ss58check();
+		<span class="macro">write!</span>(f, <span class="string">&quot;{} ({}...)&quot;</span>, <span class="kw">crate</span>::hexdisplay::HexDisplay::from(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>), <span class="kw-2">&amp;</span>s[<span class="number">0</span>..<span class="number">8</span>])
 	}
 
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut</span> <span class="ident">sp_std::fmt::Formatter</span>) -&gt; <span class="ident">sp_std::fmt::Result</span> {
+	<span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+	</span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>sp_std::fmt::Formatter) -&gt; sp_std::fmt::Result {
 		<span class="prelude-val">Ok</span>(())
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">S</span>: <span class="ident">Serializer</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>Serialize <span class="kw">for </span>Public {
+	<span class="kw">fn </span>serialize&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: S) -&gt; <span class="prelude-ty">Result</span>&lt;S::Ok, S::Error&gt;
+	<span class="kw">where
+		</span>S: Serializer,
 	{
-		<span class="ident">serializer</span>.<span class="ident">serialize_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">to_ss58check</span>())
+		serializer.serialize_str(<span class="kw-2">&amp;</span><span class="self">self</span>.to_ss58check())
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="ident">deserializer</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">D</span>: <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Public {
+	<span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+	<span class="kw">where
+		</span>D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
 	{
-		<span class="ident">Public::from_ss58check</span>(<span class="kw-2">&amp;</span><span class="ident">String::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">de::Error::custom</span>(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>)))
+		Public::from_ss58check(<span class="kw-2">&amp;</span>String::deserialize(deserializer)<span class="question-mark">?</span>)
+			.map_err(|e| de::Error::custom(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e)))
 	}
 }
 
-<span class="doccomment">/// A signature (a 512-bit value).</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>, <span class="ident">derive</span>(<span class="ident">Hash</span>))]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Encode</span>, <span class="ident">Decode</span>, <span class="ident">MaxEncodedLen</span>, <span class="ident">PassByInner</span>, <span class="ident">TypeInfo</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Signature</span>(<span class="kw">pub</span> [<span class="ident">u8</span>; <span class="number">64</span>]);
+<span class="doccomment">/// A signature (a 512-bit value).
+</span><span class="attribute">#[cfg_attr(feature = <span class="string">&quot;full_crypto&quot;</span>, derive(Hash))]
+#[derive(Encode, Decode, MaxEncodedLen, PassByInner, TypeInfo, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>Signature(<span class="kw">pub </span>[u8; <span class="number">64</span>]);
 
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> ();
+<span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>[u8]&gt; <span class="kw">for </span>Signature {
+	<span class="kw">type </span>Error = ();
 
-	<span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">data</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">64</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inner</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
-			<span class="ident">inner</span>.<span class="ident">copy_from_slice</span>(<span class="ident">data</span>);
-			<span class="prelude-val">Ok</span>(<span class="ident">Signature</span>(<span class="ident">inner</span>))
-		} <span class="kw">else</span> {
+	<span class="kw">fn </span>try_from(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+		<span class="kw">if </span>data.len() == <span class="number">64 </span>{
+			<span class="kw">let </span><span class="kw-2">mut </span>inner = [<span class="number">0u8</span>; <span class="number">64</span>];
+			inner.copy_from_slice(data);
+			<span class="prelude-val">Ok</span>(Signature(inner))
+		} <span class="kw">else </span>{
 			<span class="prelude-val">Err</span>(())
 		}
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">S</span>: <span class="ident">Serializer</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>Serialize <span class="kw">for </span>Signature {
+	<span class="kw">fn </span>serialize&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: S) -&gt; <span class="prelude-ty">Result</span>&lt;S::Ok, S::Error&gt;
+	<span class="kw">where
+		</span>S: Serializer,
 	{
-		<span class="ident">serializer</span>.<span class="ident">serialize_str</span>(<span class="kw-2">&amp;</span><span class="ident">hex::encode</span>(<span class="self">self</span>))
+		serializer.serialize_str(<span class="kw-2">&amp;</span>hex::encode(<span class="self">self</span>))
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="ident">deserializer</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">D</span>: <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Signature {
+	<span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+	<span class="kw">where
+		</span>D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
 	{
-		<span class="kw">let</span> <span class="ident">signature_hex</span> <span class="op">=</span> <span class="ident">hex::decode</span>(<span class="kw-2">&amp;</span><span class="ident">String::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">de::Error::custom</span>(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
-		<span class="ident">Signature::try_from</span>(<span class="ident">signature_hex</span>.<span class="ident">as_ref</span>())
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">de::Error::custom</span>(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>)))
+		<span class="kw">let </span>signature_hex = hex::decode(<span class="kw-2">&amp;</span>String::deserialize(deserializer)<span class="question-mark">?</span>)
+			.map_err(|e| de::Error::custom(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e)))<span class="question-mark">?</span>;
+		Signature::try_from(signature_hex.as_ref())
+			.map_err(|e| de::Error::custom(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e)))
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
-		<span class="ident">r</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[..]);
-		<span class="ident">Signature</span>(<span class="ident">r</span>)
+<span class="kw">impl </span>Clone <span class="kw">for </span>Signature {
+	<span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span><span class="kw-2">mut </span>r = [<span class="number">0u8</span>; <span class="number">64</span>];
+		r.copy_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[..]);
+		Signature(r)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">H512</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">v</span>: <span class="ident">Signature</span>) -&gt; <span class="ident">H512</span> {
-		<span class="ident">H512::from</span>(<span class="ident">v</span>.<span class="number">0</span>)
+<span class="kw">impl </span>From&lt;Signature&gt; <span class="kw">for </span>H512 {
+	<span class="kw">fn </span>from(v: Signature) -&gt; H512 {
+		H512::from(v.<span class="number">0</span>)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span> <span class="kw">for</span> [<span class="ident">u8</span>; <span class="number">64</span>] {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">v</span>: <span class="ident">Signature</span>) -&gt; [<span class="ident">u8</span>; <span class="number">64</span>] {
-		<span class="ident">v</span>.<span class="number">0</span>
-	}
+<span class="kw">impl </span>From&lt;Signature&gt; <span class="kw">for </span>[u8; <span class="number">64</span>] {
+	<span class="kw">fn </span>from(v: Signature) -&gt; [u8; <span class="number">64</span>] {
+		v.<span class="number">0
+	</span>}
 }
 
-<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">64</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">64</span>] {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>
-	}
+<span class="kw">impl </span>AsRef&lt;[u8; <span class="number">64</span>]&gt; <span class="kw">for </span>Signature {
+	<span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8; <span class="number">64</span>] {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+	</span>}
 }
 
-<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
+<span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Signature {
+	<span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
 		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[..]
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">AsMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">fn</span> <span class="ident">as_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>] {
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="number">0</span>[..]
+<span class="kw">impl </span>AsMut&lt;[u8]&gt; <span class="kw">for </span>Signature {
+	<span class="kw">fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>[u8] {
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>[..]
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">sp_std::fmt::Debug</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">sp_std::fmt::Formatter</span>) -&gt; <span class="ident">sp_std::fmt::Result</span> {
-		<span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident"><span class="kw">crate</span>::hexdisplay::HexDisplay::from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
+<span class="kw">impl </span>sp_std::fmt::Debug <span class="kw">for </span>Signature {
+	<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+	</span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>sp_std::fmt::Formatter) -&gt; sp_std::fmt::Result {
+		<span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="kw">crate</span>::hexdisplay::HexDisplay::from(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
 	}
 
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut</span> <span class="ident">sp_std::fmt::Formatter</span>) -&gt; <span class="ident">sp_std::fmt::Result</span> {
+	<span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+	</span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>sp_std::fmt::Formatter) -&gt; sp_std::fmt::Result {
 		<span class="prelude-val">Ok</span>(())
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">UncheckedFrom</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">64</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="kw">fn</span> <span class="ident">unchecked_from</span>(<span class="ident">data</span>: [<span class="ident">u8</span>; <span class="number">64</span>]) -&gt; <span class="ident">Signature</span> {
-		<span class="ident">Signature</span>(<span class="ident">data</span>)
+<span class="kw">impl </span>UncheckedFrom&lt;[u8; <span class="number">64</span>]&gt; <span class="kw">for </span>Signature {
+	<span class="kw">fn </span>unchecked_from(data: [u8; <span class="number">64</span>]) -&gt; Signature {
+		Signature(data)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">Signature</span> {
-	<span class="doccomment">/// A new instance from the given 64-byte `data`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE: No checking goes on to ensure this is a real signature. Only use it if</span>
-	<span class="doccomment">/// you are certain that the array actually is a signature. GIGO!</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">data</span>: [<span class="ident">u8</span>; <span class="number">64</span>]) -&gt; <span class="ident">Signature</span> {
-		<span class="ident">Signature</span>(<span class="ident">data</span>)
+<span class="kw">impl </span>Signature {
+	<span class="doccomment">/// A new instance from the given 64-byte `data`.
+	///
+	/// NOTE: No checking goes on to ensure this is a real signature. Only use it if
+	/// you are certain that the array actually is a signature. GIGO!
+	</span><span class="kw">pub fn </span>from_raw(data: [u8; <span class="number">64</span>]) -&gt; Signature {
+		Signature(data)
 	}
 
-	<span class="doccomment">/// A new instance from the given slice that should be 64 bytes long.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE: No checking goes on to ensure this is a real signature. Only use it if</span>
-	<span class="doccomment">/// you are certain that the array actually is a signature. GIGO!</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_slice</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">data</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">64</span> {
-			<span class="kw">return</span> <span class="prelude-val">None</span>
-		}
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
-		<span class="ident">r</span>.<span class="ident">copy_from_slice</span>(<span class="ident">data</span>);
-		<span class="prelude-val">Some</span>(<span class="ident">Signature</span>(<span class="ident">r</span>))
+	<span class="doccomment">/// A new instance from the given slice that should be 64 bytes long.
+	///
+	/// NOTE: No checking goes on to ensure this is a real signature. Only use it if
+	/// you are certain that the array actually is a signature. GIGO!
+	</span><span class="kw">pub fn </span>from_slice(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+		<span class="kw">if </span>data.len() != <span class="number">64 </span>{
+			<span class="kw">return </span><span class="prelude-val">None
+		</span>}
+		<span class="kw">let </span><span class="kw-2">mut </span>r = [<span class="number">0u8</span>; <span class="number">64</span>];
+		r.copy_from_slice(data);
+		<span class="prelude-val">Some</span>(Signature(r))
 	}
 
-	<span class="doccomment">/// A new instance from an H512.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE: No checking goes on to ensure this is a real signature. Only use it if</span>
-	<span class="doccomment">/// you are certain that the array actually is a signature. GIGO!</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_h512</span>(<span class="ident">v</span>: <span class="ident">H512</span>) -&gt; <span class="ident">Signature</span> {
-		<span class="ident">Signature</span>(<span class="ident">v</span>.<span class="ident">into</span>())
-	}
-}
-
-<span class="doccomment">/// A localized signature also contains sender information.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Encode</span>, <span class="ident">Decode</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LocalizedSignature</span> {
-	<span class="doccomment">/// The signer of the signature.</span>
-	<span class="kw">pub</span> <span class="ident">signer</span>: <span class="ident">Public</span>,
-	<span class="doccomment">/// The signature itself.</span>
-	<span class="kw">pub</span> <span class="ident">signature</span>: <span class="ident">Signature</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">Public</span> {
-	<span class="doccomment">/// A new instance from the given 32-byte `data`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE: No checking goes on to ensure this is a real public key. Only use it if</span>
-	<span class="doccomment">/// you are certain that the array actually is a pubkey. GIGO!</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">data</span>: [<span class="ident">u8</span>; <span class="number">32</span>]) -&gt; <span class="self">Self</span> {
-		<span class="ident">Public</span>(<span class="ident">data</span>)
-	}
-
-	<span class="doccomment">/// A new instance from an H256.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE: No checking goes on to ensure this is a real public key. Only use it if</span>
-	<span class="doccomment">/// you are certain that the array actually is a pubkey. GIGO!</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_h256</span>(<span class="ident">x</span>: <span class="ident">H256</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">Public</span>(<span class="ident">x</span>.<span class="ident">into</span>())
-	}
-
-	<span class="doccomment">/// Return a slice filled with raw data.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_array_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">32</span>] {
-		<span class="self">self</span>.<span class="ident">as_ref</span>()
+	<span class="doccomment">/// A new instance from an H512.
+	///
+	/// NOTE: No checking goes on to ensure this is a real signature. Only use it if
+	/// you are certain that the array actually is a signature. GIGO!
+	</span><span class="kw">pub fn </span>from_h512(v: H512) -&gt; Signature {
+		Signature(v.into())
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">ByteArray</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">const</span> <span class="ident">LEN</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
+<span class="doccomment">/// A localized signature also contains sender information.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+#[derive(PartialEq, Eq, Clone, Debug, Encode, Decode)]
+</span><span class="kw">pub struct </span>LocalizedSignature {
+	<span class="doccomment">/// The signer of the signature.
+	</span><span class="kw">pub </span>signer: Public,
+	<span class="doccomment">/// The signature itself.
+	</span><span class="kw">pub </span>signature: Signature,
 }
 
-<span class="kw">impl</span> <span class="ident">TraitPublic</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="kw">fn</span> <span class="ident">to_public_crypto_pair</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">CryptoTypePublicPair</span> {
-		<span class="ident">CryptoTypePublicPair</span>(<span class="ident">CRYPTO_ID</span>, <span class="self">self</span>.<span class="ident">to_raw_vec</span>())
+<span class="kw">impl </span>Public {
+	<span class="doccomment">/// A new instance from the given 32-byte `data`.
+	///
+	/// NOTE: No checking goes on to ensure this is a real public key. Only use it if
+	/// you are certain that the array actually is a pubkey. GIGO!
+	</span><span class="kw">pub fn </span>from_raw(data: [u8; <span class="number">32</span>]) -&gt; <span class="self">Self </span>{
+		Public(data)
+	}
+
+	<span class="doccomment">/// A new instance from an H256.
+	///
+	/// NOTE: No checking goes on to ensure this is a real public key. Only use it if
+	/// you are certain that the array actually is a pubkey. GIGO!
+	</span><span class="kw">pub fn </span>from_h256(x: H256) -&gt; <span class="self">Self </span>{
+		Public(x.into())
+	}
+
+	<span class="doccomment">/// Return a slice filled with raw data.
+	</span><span class="kw">pub fn </span>as_array_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8; <span class="number">32</span>] {
+		<span class="self">self</span>.as_ref()
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">Derive</span> <span class="kw">for</span> <span class="ident">Public</span> {}
+<span class="kw">impl </span>ByteArray <span class="kw">for </span>Public {
+	<span class="kw">const </span>LEN: usize = <span class="number">32</span>;
+}
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Public</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">CryptoTypePublicPair</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">key</span>: <span class="ident">Public</span>) -&gt; <span class="self">Self</span> {
-		(<span class="kw-2">&amp;</span><span class="ident">key</span>).<span class="ident">into</span>()
+<span class="kw">impl </span>TraitPublic <span class="kw">for </span>Public {
+	<span class="kw">fn </span>to_public_crypto_pair(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CryptoTypePublicPair {
+		CryptoTypePublicPair(CRYPTO_ID, <span class="self">self</span>.to_raw_vec())
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Public</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">CryptoTypePublicPair</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Public</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">CryptoTypePublicPair</span>(<span class="ident">CRYPTO_ID</span>, <span class="ident">key</span>.<span class="ident">to_raw_vec</span>())
+<span class="kw">impl </span>Derive <span class="kw">for </span>Public {}
+
+<span class="kw">impl </span>From&lt;Public&gt; <span class="kw">for </span>CryptoTypePublicPair {
+	<span class="kw">fn </span>from(key: Public) -&gt; <span class="self">Self </span>{
+		(<span class="kw-2">&amp;</span>key).into()
 	}
 }
 
-<span class="doccomment">/// Derive a single hard junction.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">fn</span> <span class="ident">derive_hard_junction</span>(<span class="ident">secret_seed</span>: <span class="kw-2">&amp;</span><span class="ident">Seed</span>, <span class="ident">cc</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">32</span>]) -&gt; <span class="ident">Seed</span> {
-	(<span class="string">&quot;Ed25519HDKD&quot;</span>, <span class="ident">secret_seed</span>, <span class="ident">cc</span>).<span class="ident">using_encoded</span>(<span class="ident">sp_core_hashing::blake2_256</span>)
+<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>Public&gt; <span class="kw">for </span>CryptoTypePublicPair {
+	<span class="kw">fn </span>from(key: <span class="kw-2">&amp;</span>Public) -&gt; <span class="self">Self </span>{
+		CryptoTypePublicPair(CRYPTO_ID, key.to_raw_vec())
+	}
 }
 
-<span class="doccomment">/// An error when deriving a key.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DeriveError</span> {
-	<span class="doccomment">/// A soft key was found in the path (and is unsupported).</span>
-	<span class="ident">SoftKeyInPath</span>,
+<span class="doccomment">/// Derive a single hard junction.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">fn </span>derive_hard_junction(secret_seed: <span class="kw-2">&amp;</span>Seed, cc: <span class="kw-2">&amp;</span>[u8; <span class="number">32</span>]) -&gt; Seed {
+	(<span class="string">&quot;Ed25519HDKD&quot;</span>, secret_seed, cc).using_encoded(sp_core_hashing::blake2_256)
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">TraitPair</span> <span class="kw">for</span> <span class="ident">Pair</span> {
-	<span class="kw">type</span> <span class="ident">Public</span> <span class="op">=</span> <span class="ident">Public</span>;
-	<span class="kw">type</span> <span class="ident">Seed</span> <span class="op">=</span> <span class="ident">Seed</span>;
-	<span class="kw">type</span> <span class="ident">Signature</span> <span class="op">=</span> <span class="ident">Signature</span>;
-	<span class="kw">type</span> <span class="ident">DeriveError</span> <span class="op">=</span> <span class="ident">DeriveError</span>;
+<span class="doccomment">/// An error when deriving a key.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">pub enum </span>DeriveError {
+	<span class="doccomment">/// A soft key was found in the path (and is unsupported).
+	</span>SoftKeyInPath,
+}
 
-	<span class="doccomment">/// Generate new secure (random) key pair and provide the recovery phrase.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// You can recover the same key later with `from_phrase`.</span>
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-	<span class="kw">fn</span> <span class="ident">generate_with_phrase</span>(<span class="ident">password</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; (<span class="ident">Pair</span>, <span class="ident">String</span>, <span class="ident">Seed</span>) {
-		<span class="kw">let</span> <span class="ident">mnemonic</span> <span class="op">=</span> <span class="ident">Mnemonic::new</span>(<span class="ident">MnemonicType::Words12</span>, <span class="ident">Language::English</span>);
-		<span class="kw">let</span> <span class="ident">phrase</span> <span class="op">=</span> <span class="ident">mnemonic</span>.<span class="ident">phrase</span>();
-		<span class="kw">let</span> (<span class="ident">pair</span>, <span class="ident">seed</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::from_phrase</span>(<span class="ident">phrase</span>, <span class="ident">password</span>)
-			.<span class="ident">expect</span>(<span class="string">&quot;All phrases generated by Mnemonic are valid; qed&quot;</span>);
-		(<span class="ident">pair</span>, <span class="ident">phrase</span>.<span class="ident">to_owned</span>(), <span class="ident">seed</span>)
+<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">impl </span>TraitPair <span class="kw">for </span>Pair {
+	<span class="kw">type </span>Public = Public;
+	<span class="kw">type </span>Seed = Seed;
+	<span class="kw">type </span>Signature = Signature;
+	<span class="kw">type </span>DeriveError = DeriveError;
+
+	<span class="doccomment">/// Generate new secure (random) key pair and provide the recovery phrase.
+	///
+	/// You can recover the same key later with `from_phrase`.
+	</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+	</span><span class="kw">fn </span>generate_with_phrase(password: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; (Pair, String, Seed) {
+		<span class="kw">let </span>mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
+		<span class="kw">let </span>phrase = mnemonic.phrase();
+		<span class="kw">let </span>(pair, seed) = <span class="self">Self</span>::from_phrase(phrase, password)
+			.expect(<span class="string">&quot;All phrases generated by Mnemonic are valid; qed&quot;</span>);
+		(pair, phrase.to_owned(), seed)
 	}
 
-	<span class="doccomment">/// Generate key pair from given recovery phrase and password.</span>
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-	<span class="kw">fn</span> <span class="ident">from_phrase</span>(
-		<span class="ident">phrase</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">password</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Pair</span>, <span class="ident">Seed</span>), <span class="ident">SecretStringError</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">big_seed</span> <span class="op">=</span> <span class="ident">seed_from_entropy</span>(
-			<span class="ident">Mnemonic::from_phrase</span>(<span class="ident">phrase</span>, <span class="ident">Language::English</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">SecretStringError::InvalidPhrase</span>)<span class="question-mark">?</span>
-				.<span class="ident">entropy</span>(),
-			<span class="ident">password</span>.<span class="ident">unwrap_or</span>(<span class="string">&quot;&quot;</span>),
+	<span class="doccomment">/// Generate key pair from given recovery phrase and password.
+	</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+	</span><span class="kw">fn </span>from_phrase(
+		phrase: <span class="kw-2">&amp;</span>str,
+		password: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(Pair, Seed), SecretStringError&gt; {
+		<span class="kw">let </span>big_seed = seed_from_entropy(
+			Mnemonic::from_phrase(phrase, Language::English)
+				.map_err(|<span class="kw">_</span>| SecretStringError::InvalidPhrase)<span class="question-mark">?
+				</span>.entropy(),
+			password.unwrap_or(<span class="string">&quot;&quot;</span>),
 		)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">SecretStringError::InvalidSeed</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">seed</span> <span class="op">=</span> <span class="ident">Seed::default</span>();
-		<span class="ident">seed</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">big_seed</span>[<span class="number">0</span>..<span class="number">32</span>]);
-		<span class="ident"><span class="self">Self</span>::from_seed_slice</span>(<span class="kw-2">&amp;</span><span class="ident">big_seed</span>[<span class="number">0</span>..<span class="number">32</span>]).<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> (<span class="ident">x</span>, <span class="ident">seed</span>))
+		.map_err(|<span class="kw">_</span>| SecretStringError::InvalidSeed)<span class="question-mark">?</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>seed = Seed::default();
+		seed.copy_from_slice(<span class="kw-2">&amp;</span>big_seed[<span class="number">0</span>..<span class="number">32</span>]);
+		<span class="self">Self</span>::from_seed_slice(<span class="kw-2">&amp;</span>big_seed[<span class="number">0</span>..<span class="number">32</span>]).map(|x| (x, seed))
 	}
 
-	<span class="doccomment">/// Make a new key pair from secret seed material.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// You should never need to use this; generate(), generate_with_phrase</span>
-	<span class="kw">fn</span> <span class="ident">from_seed</span>(<span class="ident">seed</span>: <span class="kw-2">&amp;</span><span class="ident">Seed</span>) -&gt; <span class="ident">Pair</span> {
-		<span class="ident"><span class="self">Self</span>::from_seed_slice</span>(<span class="kw-2">&amp;</span><span class="ident">seed</span>[..]).<span class="ident">expect</span>(<span class="string">&quot;seed has valid length; qed&quot;</span>)
+	<span class="doccomment">/// Make a new key pair from secret seed material.
+	///
+	/// You should never need to use this; generate(), generate_with_phrase
+	</span><span class="kw">fn </span>from_seed(seed: <span class="kw-2">&amp;</span>Seed) -&gt; Pair {
+		<span class="self">Self</span>::from_seed_slice(<span class="kw-2">&amp;</span>seed[..]).expect(<span class="string">&quot;seed has valid length; qed&quot;</span>)
 	}
 
-	<span class="doccomment">/// Make a new key pair from secret seed material. The slice must be 32 bytes long or it</span>
-	<span class="doccomment">/// will return `None`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// You should never need to use this; generate(), generate_with_phrase</span>
-	<span class="kw">fn</span> <span class="ident">from_seed_slice</span>(<span class="ident">seed_slice</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Pair</span>, <span class="ident">SecretStringError</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">secret</span> <span class="op">=</span> <span class="ident">ed25519_dalek::SecretKey::from_bytes</span>(<span class="ident">seed_slice</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">SecretStringError::InvalidSeedLength</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">public</span> <span class="op">=</span> <span class="ident">ed25519_dalek::PublicKey::from</span>(<span class="kw-2">&amp;</span><span class="ident">secret</span>);
-		<span class="prelude-val">Ok</span>(<span class="ident">Pair</span>(<span class="ident">ed25519_dalek::Keypair</span> { <span class="ident">secret</span>, <span class="ident">public</span> }))
+	<span class="doccomment">/// Make a new key pair from secret seed material. The slice must be 32 bytes long or it
+	/// will return `None`.
+	///
+	/// You should never need to use this; generate(), generate_with_phrase
+	</span><span class="kw">fn </span>from_seed_slice(seed_slice: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Pair, SecretStringError&gt; {
+		<span class="kw">let </span>secret = ed25519_dalek::SecretKey::from_bytes(seed_slice)
+			.map_err(|<span class="kw">_</span>| SecretStringError::InvalidSeedLength)<span class="question-mark">?</span>;
+		<span class="kw">let </span>public = ed25519_dalek::PublicKey::from(<span class="kw-2">&amp;</span>secret);
+		<span class="prelude-val">Ok</span>(Pair(ed25519_dalek::Keypair { secret, public }))
 	}
 
-	<span class="doccomment">/// Derive a child key from a series of given junctions.</span>
-	<span class="kw">fn</span> <span class="ident">derive</span><span class="op">&lt;</span><span class="ident">Iter</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DeriveJunction</span><span class="op">&gt;</span><span class="op">&gt;</span>(
+	<span class="doccomment">/// Derive a child key from a series of given junctions.
+	</span><span class="kw">fn </span>derive&lt;Iter: Iterator&lt;Item = DeriveJunction&gt;&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">path</span>: <span class="ident">Iter</span>,
-		<span class="ident">_seed</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Seed</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Pair</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Seed</span><span class="op">&gt;</span>), <span class="ident">DeriveError</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">acc</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">secret</span>.<span class="ident">to_bytes</span>();
-		<span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="ident">path</span> {
-			<span class="kw">match</span> <span class="ident">j</span> {
-				<span class="ident">DeriveJunction::Soft</span>(<span class="ident">_cc</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">DeriveError::SoftKeyInPath</span>),
-				<span class="ident">DeriveJunction::Hard</span>(<span class="ident">cc</span>) =&gt; <span class="ident">acc</span> <span class="op">=</span> <span class="ident">derive_hard_junction</span>(<span class="kw-2">&amp;</span><span class="ident">acc</span>, <span class="kw-2">&amp;</span><span class="ident">cc</span>),
+		path: Iter,
+		_seed: <span class="prelude-ty">Option</span>&lt;Seed&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(Pair, <span class="prelude-ty">Option</span>&lt;Seed&gt;), DeriveError&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>acc = <span class="self">self</span>.<span class="number">0</span>.secret.to_bytes();
+		<span class="kw">for </span>j <span class="kw">in </span>path {
+			<span class="kw">match </span>j {
+				DeriveJunction::Soft(_cc) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeriveError::SoftKeyInPath),
+				DeriveJunction::Hard(cc) =&gt; acc = derive_hard_junction(<span class="kw-2">&amp;</span>acc, <span class="kw-2">&amp;</span>cc),
 			}
 		}
-		<span class="prelude-val">Ok</span>((<span class="ident"><span class="self">Self</span>::from_seed</span>(<span class="kw-2">&amp;</span><span class="ident">acc</span>), <span class="prelude-val">Some</span>(<span class="ident">acc</span>)))
+		<span class="prelude-val">Ok</span>((<span class="self">Self</span>::from_seed(<span class="kw-2">&amp;</span>acc), <span class="prelude-val">Some</span>(acc)))
 	}
 
-	<span class="doccomment">/// Get the public key.</span>
-	<span class="kw">fn</span> <span class="ident">public</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Public</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-		<span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">public</span>.<span class="ident">as_bytes</span>();
-		<span class="ident">r</span>.<span class="ident">copy_from_slice</span>(<span class="ident">pk</span>);
-		<span class="ident">Public</span>(<span class="ident">r</span>)
+	<span class="doccomment">/// Get the public key.
+	</span><span class="kw">fn </span>public(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Public {
+		<span class="kw">let </span><span class="kw-2">mut </span>r = [<span class="number">0u8</span>; <span class="number">32</span>];
+		<span class="kw">let </span>pk = <span class="self">self</span>.<span class="number">0</span>.public.as_bytes();
+		r.copy_from_slice(pk);
+		Public(r)
 	}
 
-	<span class="doccomment">/// Sign a message.</span>
-	<span class="kw">fn</span> <span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">message</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Signature</span> {
-		<span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">sign</span>(<span class="ident">message</span>).<span class="ident">to_bytes</span>();
-		<span class="ident">Signature::from_raw</span>(<span class="ident">r</span>)
+	<span class="doccomment">/// Sign a message.
+	</span><span class="kw">fn </span>sign(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>[u8]) -&gt; Signature {
+		<span class="kw">let </span>r = <span class="self">self</span>.<span class="number">0</span>.sign(message).to_bytes();
+		Signature::from_raw(r)
 	}
 
-	<span class="doccomment">/// Verify a signature on a message. Returns true if the signature is good.</span>
-	<span class="kw">fn</span> <span class="ident">verify</span><span class="op">&lt;</span><span class="ident">M</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Signature</span>, <span class="ident">message</span>: <span class="ident">M</span>, <span class="ident">pubkey</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Public</span>) -&gt; <span class="ident">bool</span> {
-		<span class="ident"><span class="self">Self</span>::verify_weak</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="number">0</span>[..], <span class="ident">message</span>.<span class="ident">as_ref</span>(), <span class="ident">pubkey</span>)
+	<span class="doccomment">/// Verify a signature on a message. Returns true if the signature is good.
+	</span><span class="kw">fn </span>verify&lt;M: AsRef&lt;[u8]&gt;&gt;(sig: <span class="kw-2">&amp;</span><span class="self">Self</span>::Signature, message: M, pubkey: <span class="kw-2">&amp;</span><span class="self">Self</span>::Public) -&gt; bool {
+		<span class="self">Self</span>::verify_weak(<span class="kw-2">&amp;</span>sig.<span class="number">0</span>[..], message.as_ref(), pubkey)
 	}
 
-	<span class="doccomment">/// Verify a signature on a message. Returns true if the signature is good.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This doesn&#39;t use the type system to ensure that `sig` and `pubkey` are the correct</span>
-	<span class="doccomment">/// size. Use it only if you&#39;re coming from byte buffers and need the speed.</span>
-	<span class="kw">fn</span> <span class="ident">verify_weak</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="ident">M</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">sig</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">message</span>: <span class="ident">M</span>, <span class="ident">pubkey</span>: <span class="ident">P</span>) -&gt; <span class="ident">bool</span> {
-		<span class="kw">let</span> <span class="ident">public_key</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ed25519_dalek::PublicKey::from_bytes</span>(<span class="ident">pubkey</span>.<span class="ident">as_ref</span>()) {
-			<span class="prelude-val">Ok</span>(<span class="ident">pk</span>) =&gt; <span class="ident">pk</span>,
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="bool-val">false</span>,
+	<span class="doccomment">/// Verify a signature on a message. Returns true if the signature is good.
+	///
+	/// This doesn&#39;t use the type system to ensure that `sig` and `pubkey` are the correct
+	/// size. Use it only if you&#39;re coming from byte buffers and need the speed.
+	</span><span class="kw">fn </span>verify_weak&lt;P: AsRef&lt;[u8]&gt;, M: AsRef&lt;[u8]&gt;&gt;(sig: <span class="kw-2">&amp;</span>[u8], message: M, pubkey: P) -&gt; bool {
+		<span class="kw">let </span>public_key = <span class="kw">match </span>ed25519_dalek::PublicKey::from_bytes(pubkey.as_ref()) {
+			<span class="prelude-val">Ok</span>(pk) =&gt; pk,
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="bool-val">false</span>,
 		};
 
-		<span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ed25519_dalek::Signature::try_from</span>(<span class="ident">sig</span>) {
-			<span class="prelude-val">Ok</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span>,
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="bool-val">false</span>,
+		<span class="kw">let </span>sig = <span class="kw">match </span>ed25519_dalek::Signature::try_from(sig) {
+			<span class="prelude-val">Ok</span>(s) =&gt; s,
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="bool-val">false</span>,
 		};
 
-		<span class="ident">public_key</span>.<span class="ident">verify</span>(<span class="ident">message</span>.<span class="ident">as_ref</span>(), <span class="kw-2">&amp;</span><span class="ident">sig</span>).<span class="ident">is_ok</span>()
+		public_key.verify(message.as_ref(), <span class="kw-2">&amp;</span>sig).is_ok()
 	}
 
-	<span class="doccomment">/// Return a vec filled with raw data.</span>
-	<span class="kw">fn</span> <span class="ident">to_raw_vec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">seed</span>().<span class="ident">to_vec</span>()
+	<span class="doccomment">/// Return a vec filled with raw data.
+	</span><span class="kw">fn </span>to_raw_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
+		<span class="self">self</span>.seed().to_vec()
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">Pair</span> {
-	<span class="doccomment">/// Get the seed for this key.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">seed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Seed</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">secret</span>.<span class="ident">as_bytes</span>()
+<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">impl </span>Pair {
+	<span class="doccomment">/// Get the seed for this key.
+	</span><span class="kw">pub fn </span>seed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Seed {
+		<span class="self">self</span>.<span class="number">0</span>.secret.as_bytes()
 	}
 
-	<span class="doccomment">/// Exactly as `from_string` except that if no matches are found then, the the first 32</span>
-	<span class="doccomment">/// characters are taken (padded with spaces as necessary) and used as the MiniSecretKey.</span>
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_legacy_string</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">password_override</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="ident">Pair</span> {
-		<span class="ident"><span class="self">Self</span>::from_string</span>(<span class="ident">s</span>, <span class="ident">password_override</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">padded_seed</span>: <span class="ident">Seed</span> <span class="op">=</span> [<span class="string">b&#39; &#39;</span>; <span class="number">32</span>];
-			<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">s</span>.<span class="ident">len</span>().<span class="ident">min</span>(<span class="number">32</span>);
-			<span class="ident">padded_seed</span>[..<span class="ident">len</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">s</span>.<span class="ident">as_bytes</span>()[..<span class="ident">len</span>]);
-			<span class="ident"><span class="self">Self</span>::from_seed</span>(<span class="kw-2">&amp;</span><span class="ident">padded_seed</span>)
+	<span class="doccomment">/// Exactly as `from_string` except that if no matches are found then, the the first 32
+	/// characters are taken (padded with spaces as necessary) and used as the MiniSecretKey.
+	</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+	</span><span class="kw">pub fn </span>from_legacy_string(s: <span class="kw-2">&amp;</span>str, password_override: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; Pair {
+		<span class="self">Self</span>::from_string(s, password_override).unwrap_or_else(|<span class="kw">_</span>| {
+			<span class="kw">let </span><span class="kw-2">mut </span>padded_seed: Seed = [<span class="string">b&#39; &#39;</span>; <span class="number">32</span>];
+			<span class="kw">let </span>len = s.len().min(<span class="number">32</span>);
+			padded_seed[..len].copy_from_slice(<span class="kw-2">&amp;</span>s.as_bytes()[..len]);
+			<span class="self">Self</span>::from_seed(<span class="kw-2">&amp;</span>padded_seed)
 		})
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">CryptoType</span> <span class="kw">for</span> <span class="ident">Public</span> {
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-	<span class="kw">type</span> <span class="ident">Pair</span> <span class="op">=</span> <span class="ident">Pair</span>;
+<span class="kw">impl </span>CryptoType <span class="kw">for </span>Public {
+	<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+	</span><span class="kw">type </span>Pair = Pair;
 }
 
-<span class="kw">impl</span> <span class="ident">CryptoType</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-	<span class="kw">type</span> <span class="ident">Pair</span> <span class="op">=</span> <span class="ident">Pair</span>;
+<span class="kw">impl </span>CryptoType <span class="kw">for </span>Signature {
+	<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+	</span><span class="kw">type </span>Pair = Pair;
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full_crypto&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">CryptoType</span> <span class="kw">for</span> <span class="ident">Pair</span> {
-	<span class="kw">type</span> <span class="ident">Pair</span> <span class="op">=</span> <span class="ident">Pair</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;full_crypto&quot;</span>)]
+</span><span class="kw">impl </span>CryptoType <span class="kw">for </span>Pair {
+	<span class="kw">type </span>Pair = Pair;
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto::DEV_PHRASE</span>;
-	<span class="kw">use</span> <span class="ident">hex_literal::hex</span>;
-	<span class="kw">use</span> <span class="ident">serde_json</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use </span><span class="kw">crate</span>::crypto::DEV_PHRASE;
+	<span class="kw">use </span>hex_literal::hex;
+	<span class="kw">use </span>serde_json;
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">default_phrase_should_be_used</span>() {
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>default_phrase_should_be_used() {
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">Pair::from_string</span>(<span class="string">&quot;//Alice///password&quot;</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>().<span class="ident">public</span>(),
-			<span class="ident">Pair::from_string</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}//Alice&quot;</span>, <span class="ident">DEV_PHRASE</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>))
-				.<span class="ident">unwrap</span>()
-				.<span class="ident">public</span>(),
+			Pair::from_string(<span class="string">&quot;//Alice///password&quot;</span>, <span class="prelude-val">None</span>).unwrap().public(),
+			Pair::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}//Alice&quot;</span>, DEV_PHRASE), <span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>))
+				.unwrap()
+				.public(),
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">seed_and_derive_should_work</span>() {
-		<span class="kw">let</span> <span class="ident">seed</span> <span class="op">=</span> <span class="macro">hex!</span>(<span class="string">&quot;9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60&quot;</span>);
-		<span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="ident">Pair::from_seed</span>(<span class="kw-2">&amp;</span><span class="ident">seed</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pair</span>.<span class="ident">seed</span>(), <span class="kw-2">&amp;</span><span class="ident">seed</span>);
-		<span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">DeriveJunction::Hard</span>([<span class="number">0u8</span>; <span class="number">32</span>])];
-		<span class="kw">let</span> <span class="ident">derived</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">derive</span>(<span class="ident">path</span>.<span class="ident">into_iter</span>(), <span class="prelude-val">None</span>).<span class="ident">ok</span>().<span class="ident">unwrap</span>().<span class="number">0</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>seed_and_derive_should_work() {
+		<span class="kw">let </span>seed = <span class="macro">hex!</span>(<span class="string">&quot;9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60&quot;</span>);
+		<span class="kw">let </span>pair = Pair::from_seed(<span class="kw-2">&amp;</span>seed);
+		<span class="macro">assert_eq!</span>(pair.seed(), <span class="kw-2">&amp;</span>seed);
+		<span class="kw">let </span>path = <span class="macro">vec!</span>[DeriveJunction::Hard([<span class="number">0u8</span>; <span class="number">32</span>])];
+		<span class="kw">let </span>derived = pair.derive(path.into_iter(), <span class="prelude-val">None</span>).ok().unwrap().<span class="number">0</span>;
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">derived</span>.<span class="ident">seed</span>(),
+			derived.seed(),
 			<span class="kw-2">&amp;</span><span class="macro">hex!</span>(<span class="string">&quot;ede3354e133f9c8e337ddd6ee5415ed4b4ffe5fc7d21e933f4930a3730e5b21c&quot;</span>)
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">test_vector_should_work</span>() {
-		<span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="ident">Pair::from_seed</span>(<span class="kw-2">&amp;</span><span class="macro">hex!</span>(
-			<span class="string">&quot;9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60&quot;</span>
-		));
-		<span class="kw">let</span> <span class="ident">public</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">public</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>test_vector_should_work() {
+		<span class="kw">let </span>pair = Pair::from_seed(<span class="kw-2">&amp;</span><span class="macro">hex!</span>(
+			<span class="string">&quot;9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60&quot;
+		</span>));
+		<span class="kw">let </span>public = pair.public();
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">public</span>,
-			<span class="ident">Public::from_raw</span>(<span class="macro">hex!</span>(
-				<span class="string">&quot;d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a&quot;</span>
-			))
+			public,
+			Public::from_raw(<span class="macro">hex!</span>(
+				<span class="string">&quot;d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a&quot;
+			</span>))
 		);
-		<span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="string">b&quot;&quot;</span>;
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="macro">hex!</span>(<span class="string">&quot;e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b&quot;</span>);
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">Signature::from_raw</span>(<span class="ident">signature</span>);
-		<span class="macro">assert!</span>(<span class="ident">pair</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>[..]) <span class="op">==</span> <span class="ident">signature</span>);
-		<span class="macro">assert!</span>(<span class="ident">Pair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>[..], <span class="kw-2">&amp;</span><span class="ident">public</span>));
+		<span class="kw">let </span>message = <span class="string">b&quot;&quot;</span>;
+		<span class="kw">let </span>signature = <span class="macro">hex!</span>(<span class="string">&quot;e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b&quot;</span>);
+		<span class="kw">let </span>signature = Signature::from_raw(signature);
+		<span class="macro">assert!</span>(pair.sign(<span class="kw-2">&amp;</span>message[..]) == signature);
+		<span class="macro">assert!</span>(Pair::verify(<span class="kw-2">&amp;</span>signature, <span class="kw-2">&amp;</span>message[..], <span class="kw-2">&amp;</span>public));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">test_vector_by_string_should_work</span>() {
-		<span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="ident">Pair::from_string</span>(
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>test_vector_by_string_should_work() {
+		<span class="kw">let </span>pair = Pair::from_string(
 			<span class="string">&quot;0x9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60&quot;</span>,
 			<span class="prelude-val">None</span>,
 		)
-		.<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">public</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">public</span>();
+		.unwrap();
+		<span class="kw">let </span>public = pair.public();
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">public</span>,
-			<span class="ident">Public::from_raw</span>(<span class="macro">hex!</span>(
-				<span class="string">&quot;d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a&quot;</span>
-			))
+			public,
+			Public::from_raw(<span class="macro">hex!</span>(
+				<span class="string">&quot;d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a&quot;
+			</span>))
 		);
-		<span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="string">b&quot;&quot;</span>;
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="macro">hex!</span>(<span class="string">&quot;e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b&quot;</span>);
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">Signature::from_raw</span>(<span class="ident">signature</span>);
-		<span class="macro">assert!</span>(<span class="ident">pair</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>[..]) <span class="op">==</span> <span class="ident">signature</span>);
-		<span class="macro">assert!</span>(<span class="ident">Pair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>[..], <span class="kw-2">&amp;</span><span class="ident">public</span>));
+		<span class="kw">let </span>message = <span class="string">b&quot;&quot;</span>;
+		<span class="kw">let </span>signature = <span class="macro">hex!</span>(<span class="string">&quot;e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b&quot;</span>);
+		<span class="kw">let </span>signature = Signature::from_raw(signature);
+		<span class="macro">assert!</span>(pair.sign(<span class="kw-2">&amp;</span>message[..]) == signature);
+		<span class="macro">assert!</span>(Pair::verify(<span class="kw-2">&amp;</span>signature, <span class="kw-2">&amp;</span>message[..], <span class="kw-2">&amp;</span>public));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">generated_pair_should_work</span>() {
-		<span class="kw">let</span> (<span class="ident">pair</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Pair::generate</span>();
-		<span class="kw">let</span> <span class="ident">public</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">public</span>();
-		<span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="string">b&quot;Something important&quot;</span>;
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>[..]);
-		<span class="macro">assert!</span>(<span class="ident">Pair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>[..], <span class="kw-2">&amp;</span><span class="ident">public</span>));
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">Pair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="string">b&quot;Something else&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">public</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>generated_pair_should_work() {
+		<span class="kw">let </span>(pair, <span class="kw">_</span>) = Pair::generate();
+		<span class="kw">let </span>public = pair.public();
+		<span class="kw">let </span>message = <span class="string">b&quot;Something important&quot;</span>;
+		<span class="kw">let </span>signature = pair.sign(<span class="kw-2">&amp;</span>message[..]);
+		<span class="macro">assert!</span>(Pair::verify(<span class="kw-2">&amp;</span>signature, <span class="kw-2">&amp;</span>message[..], <span class="kw-2">&amp;</span>public));
+		<span class="macro">assert!</span>(!Pair::verify(<span class="kw-2">&amp;</span>signature, <span class="string">b&quot;Something else&quot;</span>, <span class="kw-2">&amp;</span>public));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">seeded_pair_should_work</span>() {
-		<span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="ident">Pair::from_seed</span>(<span class="string">b&quot;12345678901234567890123456789012&quot;</span>);
-		<span class="kw">let</span> <span class="ident">public</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">public</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>seeded_pair_should_work() {
+		<span class="kw">let </span>pair = Pair::from_seed(<span class="string">b&quot;12345678901234567890123456789012&quot;</span>);
+		<span class="kw">let </span>public = pair.public();
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">public</span>,
-			<span class="ident">Public::from_raw</span>(<span class="macro">hex!</span>(
-				<span class="string">&quot;2f8c6129d816cf51c374bc7f08c3e63ed156cf78aefb4a6550d97b87997977ee&quot;</span>
-			))
+			public,
+			Public::from_raw(<span class="macro">hex!</span>(
+				<span class="string">&quot;2f8c6129d816cf51c374bc7f08c3e63ed156cf78aefb4a6550d97b87997977ee&quot;
+			</span>))
 		);
-		<span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="macro">hex!</span>(<span class="string">&quot;2f8c6129d816cf51c374bc7f08c3e63ed156cf78aefb4a6550d97b87997977ee00000000000000000200d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a4500000000000000&quot;</span>);
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>[..]);
-		<span class="macro">println!</span>(<span class="string">&quot;Correct signature: {:?}&quot;</span>, <span class="ident">signature</span>);
-		<span class="macro">assert!</span>(<span class="ident">Pair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>[..], <span class="kw-2">&amp;</span><span class="ident">public</span>));
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">Pair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="string">&quot;Other message&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">public</span>));
+		<span class="kw">let </span>message = <span class="macro">hex!</span>(<span class="string">&quot;2f8c6129d816cf51c374bc7f08c3e63ed156cf78aefb4a6550d97b87997977ee00000000000000000200d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a4500000000000000&quot;</span>);
+		<span class="kw">let </span>signature = pair.sign(<span class="kw-2">&amp;</span>message[..]);
+		<span class="macro">println!</span>(<span class="string">&quot;Correct signature: {:?}&quot;</span>, signature);
+		<span class="macro">assert!</span>(Pair::verify(<span class="kw-2">&amp;</span>signature, <span class="kw-2">&amp;</span>message[..], <span class="kw-2">&amp;</span>public));
+		<span class="macro">assert!</span>(!Pair::verify(<span class="kw-2">&amp;</span>signature, <span class="string">&quot;Other message&quot;</span>, <span class="kw-2">&amp;</span>public));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">generate_with_phrase_recovery_possible</span>() {
-		<span class="kw">let</span> (<span class="ident">pair1</span>, <span class="ident">phrase</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Pair::generate_with_phrase</span>(<span class="prelude-val">None</span>);
-		<span class="kw">let</span> (<span class="ident">pair2</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Pair::from_phrase</span>(<span class="kw-2">&amp;</span><span class="ident">phrase</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>generate_with_phrase_recovery_possible() {
+		<span class="kw">let </span>(pair1, phrase, <span class="kw">_</span>) = Pair::generate_with_phrase(<span class="prelude-val">None</span>);
+		<span class="kw">let </span>(pair2, <span class="kw">_</span>) = Pair::from_phrase(<span class="kw-2">&amp;</span>phrase, <span class="prelude-val">None</span>).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">pair1</span>.<span class="ident">public</span>(), <span class="ident">pair2</span>.<span class="ident">public</span>());
+		<span class="macro">assert_eq!</span>(pair1.public(), pair2.public());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">generate_with_password_phrase_recovery_possible</span>() {
-		<span class="kw">let</span> (<span class="ident">pair1</span>, <span class="ident">phrase</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Pair::generate_with_phrase</span>(<span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>));
-		<span class="kw">let</span> (<span class="ident">pair2</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Pair::from_phrase</span>(<span class="kw-2">&amp;</span><span class="ident">phrase</span>, <span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>)).<span class="ident">unwrap</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>generate_with_password_phrase_recovery_possible() {
+		<span class="kw">let </span>(pair1, phrase, <span class="kw">_</span>) = Pair::generate_with_phrase(<span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>));
+		<span class="kw">let </span>(pair2, <span class="kw">_</span>) = Pair::from_phrase(<span class="kw-2">&amp;</span>phrase, <span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>)).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">pair1</span>.<span class="ident">public</span>(), <span class="ident">pair2</span>.<span class="ident">public</span>());
+		<span class="macro">assert_eq!</span>(pair1.public(), pair2.public());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">password_does_something</span>() {
-		<span class="kw">let</span> (<span class="ident">pair1</span>, <span class="ident">phrase</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Pair::generate_with_phrase</span>(<span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>));
-		<span class="kw">let</span> (<span class="ident">pair2</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Pair::from_phrase</span>(<span class="kw-2">&amp;</span><span class="ident">phrase</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>password_does_something() {
+		<span class="kw">let </span>(pair1, phrase, <span class="kw">_</span>) = Pair::generate_with_phrase(<span class="prelude-val">Some</span>(<span class="string">&quot;password&quot;</span>));
+		<span class="kw">let </span>(pair2, <span class="kw">_</span>) = Pair::from_phrase(<span class="kw-2">&amp;</span>phrase, <span class="prelude-val">None</span>).unwrap();
 
-		<span class="macro">assert_ne!</span>(<span class="ident">pair1</span>.<span class="ident">public</span>(), <span class="ident">pair2</span>.<span class="ident">public</span>());
+		<span class="macro">assert_ne!</span>(pair1.public(), pair2.public());
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">ss58check_roundtrip_works</span>() {
-		<span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="ident">Pair::from_seed</span>(<span class="string">b&quot;12345678901234567890123456789012&quot;</span>);
-		<span class="kw">let</span> <span class="ident">public</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">public</span>();
-		<span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">public</span>.<span class="ident">to_ss58check</span>();
-		<span class="macro">println!</span>(<span class="string">&quot;Correct: {}&quot;</span>, <span class="ident">s</span>);
-		<span class="kw">let</span> <span class="ident">cmp</span> <span class="op">=</span> <span class="ident">Public::from_ss58check</span>(<span class="kw-2">&amp;</span><span class="ident">s</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">cmp</span>, <span class="ident">public</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>ss58check_roundtrip_works() {
+		<span class="kw">let </span>pair = Pair::from_seed(<span class="string">b&quot;12345678901234567890123456789012&quot;</span>);
+		<span class="kw">let </span>public = pair.public();
+		<span class="kw">let </span>s = public.to_ss58check();
+		<span class="macro">println!</span>(<span class="string">&quot;Correct: {}&quot;</span>, s);
+		<span class="kw">let </span>cmp = Public::from_ss58check(<span class="kw-2">&amp;</span>s).unwrap();
+		<span class="macro">assert_eq!</span>(cmp, public);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">signature_serialization_works</span>() {
-		<span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="ident">Pair::from_seed</span>(<span class="string">b&quot;12345678901234567890123456789012&quot;</span>);
-		<span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="string">b&quot;Something important&quot;</span>;
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">pair</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>[..]);
-		<span class="kw">let</span> <span class="ident">serialized_signature</span> <span class="op">=</span> <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>).<span class="ident">unwrap</span>();
-		<span class="comment">// Signature is 64 bytes, so 128 chars + 2 quote chars</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">serialized_signature</span>.<span class="ident">len</span>(), <span class="number">130</span>);
-		<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">serde_json::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">serialized_signature</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert!</span>(<span class="ident">Pair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>[..], <span class="kw-2">&amp;</span><span class="ident">pair</span>.<span class="ident">public</span>()));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>signature_serialization_works() {
+		<span class="kw">let </span>pair = Pair::from_seed(<span class="string">b&quot;12345678901234567890123456789012&quot;</span>);
+		<span class="kw">let </span>message = <span class="string">b&quot;Something important&quot;</span>;
+		<span class="kw">let </span>signature = pair.sign(<span class="kw-2">&amp;</span>message[..]);
+		<span class="kw">let </span>serialized_signature = serde_json::to_string(<span class="kw-2">&amp;</span>signature).unwrap();
+		<span class="comment">// Signature is 64 bytes, so 128 chars + 2 quote chars
+		</span><span class="macro">assert_eq!</span>(serialized_signature.len(), <span class="number">130</span>);
+		<span class="kw">let </span>signature = serde_json::from_str(<span class="kw-2">&amp;</span>serialized_signature).unwrap();
+		<span class="macro">assert!</span>(Pair::verify(<span class="kw-2">&amp;</span>signature, <span class="kw-2">&amp;</span>message[..], <span class="kw-2">&amp;</span>pair.public()));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">signature_serialization_doesnt_panic</span>() {
-		<span class="kw">fn</span> <span class="ident">deserialize_signature</span>(<span class="ident">text</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Signature</span>, <span class="ident">serde_json::error::Error</span><span class="op">&gt;</span> {
-			<span class="ident">serde_json::from_str</span>(<span class="ident">text</span>)
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>signature_serialization_doesnt_panic() {
+		<span class="kw">fn </span>deserialize_signature(text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Signature, serde_json::error::Error&gt; {
+			serde_json::from_str(text)
 		}
-		<span class="macro">assert!</span>(<span class="ident">deserialize_signature</span>(<span class="string">&quot;Not valid json.&quot;</span>).<span class="ident">is_err</span>());
-		<span class="macro">assert!</span>(<span class="ident">deserialize_signature</span>(<span class="string">&quot;\&quot;Not an actual signature.\&quot;&quot;</span>).<span class="ident">is_err</span>());
-		<span class="comment">// Poorly-sized</span>
-		<span class="macro">assert!</span>(<span class="ident">deserialize_signature</span>(<span class="string">&quot;\&quot;abc123\&quot;&quot;</span>).<span class="ident">is_err</span>());
+		<span class="macro">assert!</span>(deserialize_signature(<span class="string">&quot;Not valid json.&quot;</span>).is_err());
+		<span class="macro">assert!</span>(deserialize_signature(<span class="string">&quot;\&quot;Not an actual signature.\&quot;&quot;</span>).is_err());
+		<span class="comment">// Poorly-sized
+		</span><span class="macro">assert!</span>(deserialize_signature(<span class="string">&quot;\&quot;abc123\&quot;&quot;</span>).is_err());
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

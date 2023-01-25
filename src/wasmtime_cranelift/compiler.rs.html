@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-cranelift-0.35.3/src/compiler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compiler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime_cranelift/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime_cranelift/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime_cranelift/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-cranelift-0.35.3/src/compiler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compiler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime_cranelift/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -737,740 +732,739 @@
 <span id="732">732</span>
 <span id="733">733</span>
 <span id="734">734</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::builder::LinkOptions</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::debug::ModuleMemoryOffset</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::func_environ</span>::{<span class="ident">get_func_name</span>, <span class="ident">FuncEnvironment</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::obj::ObjectBuilder</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">blank_sig</span>, <span class="ident">func_signature</span>, <span class="ident">indirect_signature</span>, <span class="ident">value_type</span>, <span class="ident">wasmtime_call_conv</span>,
-    <span class="ident">CompiledFunction</span>, <span class="ident">FunctionAddressMap</span>, <span class="ident">Relocation</span>, <span class="ident">RelocationTarget</span>,
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::builder::LinkOptions;
+<span class="kw">use </span><span class="kw">crate</span>::debug::ModuleMemoryOffset;
+<span class="kw">use </span><span class="kw">crate</span>::func_environ::{get_func_name, FuncEnvironment};
+<span class="kw">use </span><span class="kw">crate</span>::obj::ObjectBuilder;
+<span class="kw">use crate</span>::{
+    blank_sig, func_signature, indirect_signature, value_type, wasmtime_call_conv,
+    CompiledFunction, FunctionAddressMap, Relocation, RelocationTarget,
 };
-<span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">Context</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">cranelift_codegen::ir</span>::{<span class="self">self</span>, <span class="ident">ExternalName</span>, <span class="ident">InstBuilder</span>, <span class="ident">MemFlags</span>};
-<span class="kw">use</span> <span class="ident">cranelift_codegen::isa::TargetIsa</span>;
-<span class="kw">use</span> <span class="ident">cranelift_codegen::print_errors::pretty_error</span>;
-<span class="kw">use</span> <span class="ident">cranelift_codegen::Context</span>;
-<span class="kw">use</span> <span class="ident">cranelift_codegen</span>::{<span class="ident">settings</span>, <span class="ident">MachReloc</span>, <span class="ident">MachTrap</span>};
-<span class="kw">use</span> <span class="ident">cranelift_codegen</span>::{<span class="ident">MachSrcLoc</span>, <span class="ident">MachStackMap</span>};
-<span class="kw">use</span> <span class="ident">cranelift_entity</span>::{<span class="ident">EntityRef</span>, <span class="ident">PrimaryMap</span>};
-<span class="kw">use</span> <span class="ident">cranelift_frontend::FunctionBuilder</span>;
-<span class="kw">use</span> <span class="ident">cranelift_wasm</span>::{
-    <span class="ident">DefinedFuncIndex</span>, <span class="ident">DefinedMemoryIndex</span>, <span class="ident">FuncIndex</span>, <span class="ident">FuncTranslator</span>, <span class="ident">MemoryIndex</span>, <span class="ident">SignatureIndex</span>,
-    <span class="ident">WasmFuncType</span>,
+<span class="kw">use </span>anyhow::{Context <span class="kw">as _</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>cranelift_codegen::ir::{<span class="self">self</span>, ExternalName, InstBuilder, MemFlags};
+<span class="kw">use </span>cranelift_codegen::isa::TargetIsa;
+<span class="kw">use </span>cranelift_codegen::print_errors::pretty_error;
+<span class="kw">use </span>cranelift_codegen::Context;
+<span class="kw">use </span>cranelift_codegen::{settings, MachReloc, MachTrap};
+<span class="kw">use </span>cranelift_codegen::{MachSrcLoc, MachStackMap};
+<span class="kw">use </span>cranelift_entity::{EntityRef, PrimaryMap};
+<span class="kw">use </span>cranelift_frontend::FunctionBuilder;
+<span class="kw">use </span>cranelift_wasm::{
+    DefinedFuncIndex, DefinedMemoryIndex, FuncIndex, FuncTranslator, MemoryIndex, SignatureIndex,
+    WasmFuncType,
 };
-<span class="kw">use</span> <span class="ident">object::write::Object</span>;
-<span class="kw">use</span> <span class="ident">std::any::Any</span>;
-<span class="kw">use</span> <span class="ident">std::cmp</span>;
-<span class="kw">use</span> <span class="ident">std::collections::BTreeMap</span>;
-<span class="kw">use</span> <span class="ident">std::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Mutex</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_environ</span>::{
-    <span class="ident">AddressMapSection</span>, <span class="ident">CompileError</span>, <span class="ident">FilePos</span>, <span class="ident">FlagValue</span>, <span class="ident">FunctionBodyData</span>, <span class="ident">FunctionInfo</span>,
-    <span class="ident">InstructionAddressMap</span>, <span class="ident">Module</span>, <span class="ident">ModuleTranslation</span>, <span class="ident">StackMapInformation</span>, <span class="ident">Trampoline</span>, <span class="ident">TrapCode</span>,
-    <span class="ident">TrapEncodingBuilder</span>, <span class="ident">TrapInformation</span>, <span class="ident">Tunables</span>, <span class="ident">TypeTables</span>, <span class="ident">VMOffsets</span>,
+<span class="kw">use </span>object::write::Object;
+<span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::cmp;
+<span class="kw">use </span>std::collections::BTreeMap;
+<span class="kw">use </span>std::convert::TryFrom;
+<span class="kw">use </span>std::mem;
+<span class="kw">use </span>std::sync::Mutex;
+<span class="kw">use </span>wasmtime_environ::{
+    AddressMapSection, CompileError, FilePos, FlagValue, FunctionBodyData, FunctionInfo,
+    InstructionAddressMap, Module, ModuleTranslation, StackMapInformation, Trampoline, TrapCode,
+    TrapEncodingBuilder, TrapInformation, Tunables, TypeTables, VMOffsets,
 };
 
-<span class="doccomment">/// A compiler that compiles a WebAssembly module with Compiler, translating</span>
-<span class="doccomment">/// the Wasm to Compiler IR, optimizing it and then translating to assembly.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Compiler</span> {
-    <span class="ident">translators</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FuncTranslator</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">isa</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span><span class="op">&gt;</span>,
-    <span class="ident">linkopts</span>: <span class="ident">LinkOptions</span>,
+<span class="doccomment">/// A compiler that compiles a WebAssembly module with Compiler, translating
+/// the Wasm to Compiler IR, optimizing it and then translating to assembly.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Compiler {
+    translators: Mutex&lt;Vec&lt;FuncTranslator&gt;&gt;,
+    isa: Box&lt;<span class="kw">dyn </span>TargetIsa&gt;,
+    linkopts: LinkOptions,
 }
 
-<span class="kw">impl</span> <span class="ident">Compiler</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">isa</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span><span class="op">&gt;</span>, <span class="ident">linkopts</span>: <span class="ident">LinkOptions</span>) -&gt; <span class="ident">Compiler</span> {
-        <span class="ident">Compiler</span> {
-            <span class="ident">translators</span>: <span class="ident">Default::default</span>(),
-            <span class="ident">isa</span>,
-            <span class="ident">linkopts</span>,
+<span class="kw">impl </span>Compiler {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(isa: Box&lt;<span class="kw">dyn </span>TargetIsa&gt;, linkopts: LinkOptions) -&gt; Compiler {
+        Compiler {
+            translators: Default::default(),
+            isa,
+            linkopts,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">take_translator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">FuncTranslator</span> {
-        <span class="kw">let</span> <span class="ident">candidate</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">translators</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">pop</span>();
-        <span class="ident">candidate</span>.<span class="ident">unwrap_or_else</span>(<span class="ident">FuncTranslator::new</span>)
+    <span class="kw">fn </span>take_translator(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FuncTranslator {
+        <span class="kw">let </span>candidate = <span class="self">self</span>.translators.lock().unwrap().pop();
+        candidate.unwrap_or_else(FuncTranslator::new)
     }
 
-    <span class="kw">fn</span> <span class="ident">save_translator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">translator</span>: <span class="ident">FuncTranslator</span>) {
-        <span class="self">self</span>.<span class="ident">translators</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">push</span>(<span class="ident">translator</span>);
+    <span class="kw">fn </span>save_translator(<span class="kw-2">&amp;</span><span class="self">self</span>, translator: FuncTranslator) {
+        <span class="self">self</span>.translators.lock().unwrap().push(translator);
     }
 
-    <span class="kw">fn</span> <span class="ident">get_function_address_map</span>(
+    <span class="kw">fn </span>get_function_address_map(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">context</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span>,
-        <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="ident">FunctionBodyData</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-        <span class="ident">body_len</span>: <span class="ident">u32</span>,
-        <span class="ident">tunables</span>: <span class="kw-2">&amp;</span><span class="ident">Tunables</span>,
-    ) -&gt; <span class="ident">FunctionAddressMap</span> {
-        <span class="comment">// Generate artificial srcloc for function start/end to identify boundary</span>
-        <span class="comment">// within module.</span>
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">body</span>.<span class="ident">get_binary_reader</span>();
-        <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">original_position</span>();
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">bytes_remaining</span>();
-        <span class="macro">assert!</span>((<span class="ident">offset</span> <span class="op">+</span> <span class="ident">len</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="ident">u32::max_value</span>() <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="kw">let</span> <span class="ident">start_srcloc</span> <span class="op">=</span> <span class="ident">FilePos::new</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u32</span>);
-        <span class="kw">let</span> <span class="ident">end_srcloc</span> <span class="op">=</span> <span class="ident">FilePos::new</span>((<span class="ident">offset</span> <span class="op">+</span> <span class="ident">len</span>) <span class="kw">as</span> <span class="ident">u32</span>);
+        context: <span class="kw-2">&amp;</span>Context,
+        data: <span class="kw-2">&amp;</span>FunctionBodyData&lt;<span class="lifetime">&#39;_</span>&gt;,
+        body_len: u32,
+        tunables: <span class="kw-2">&amp;</span>Tunables,
+    ) -&gt; FunctionAddressMap {
+        <span class="comment">// Generate artificial srcloc for function start/end to identify boundary
+        // within module.
+        </span><span class="kw">let </span>data = data.body.get_binary_reader();
+        <span class="kw">let </span>offset = data.original_position();
+        <span class="kw">let </span>len = data.bytes_remaining();
+        <span class="macro">assert!</span>((offset + len) &lt;= u32::max_value() <span class="kw">as </span>usize);
+        <span class="kw">let </span>start_srcloc = FilePos::new(offset <span class="kw">as </span>u32);
+        <span class="kw">let </span>end_srcloc = FilePos::new((offset + len) <span class="kw">as </span>u32);
 
-        <span class="comment">// New-style backend: we have a `MachCompileResult` that will give us `MachSrcLoc` mapping</span>
-        <span class="comment">// tuples.</span>
-        <span class="kw">let</span> <span class="ident">instructions</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">tunables</span>.<span class="ident">generate_address_map</span> {
-            <span class="ident">collect_address_maps</span>(
-                <span class="ident">body_len</span>,
-                <span class="ident">context</span>
-                    .<span class="ident">mach_compile_result</span>
-                    .<span class="ident">as_ref</span>()
-                    .<span class="ident">unwrap</span>()
-                    .<span class="ident">buffer</span>
-                    .<span class="ident">get_srclocs_sorted</span>()
-                    .<span class="ident">into_iter</span>()
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">MachSrcLoc</span> { <span class="ident">start</span>, <span class="ident">end</span>, <span class="ident">loc</span> }<span class="op">|</span> (<span class="ident">loc</span>, <span class="ident">start</span>, (<span class="ident">end</span> <span class="op">-</span> <span class="ident">start</span>))),
+        <span class="comment">// New-style backend: we have a `MachCompileResult` that will give us `MachSrcLoc` mapping
+        // tuples.
+        </span><span class="kw">let </span>instructions = <span class="kw">if </span>tunables.generate_address_map {
+            collect_address_maps(
+                body_len,
+                context
+                    .mach_compile_result
+                    .as_ref()
+                    .unwrap()
+                    .buffer
+                    .get_srclocs_sorted()
+                    .into_iter()
+                    .map(|<span class="kw-2">&amp;</span>MachSrcLoc { start, end, loc }| (loc, start, (end - start))),
             )
-        } <span class="kw">else</span> {
-            <span class="ident">Vec::new</span>()
+        } <span class="kw">else </span>{
+            Vec::new()
         };
 
-        <span class="ident">FunctionAddressMap</span> {
-            <span class="ident">instructions</span>: <span class="ident">instructions</span>.<span class="ident">into</span>(),
-            <span class="ident">start_srcloc</span>,
-            <span class="ident">end_srcloc</span>,
-            <span class="ident">body_offset</span>: <span class="number">0</span>,
-            <span class="ident">body_len</span>,
+        FunctionAddressMap {
+            instructions: instructions.into(),
+            start_srcloc,
+            end_srcloc,
+            body_offset: <span class="number">0</span>,
+            body_len,
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">wasmtime_environ::Compiler</span> <span class="kw">for</span> <span class="ident">Compiler</span> {
-    <span class="kw">fn</span> <span class="ident">compile_function</span>(
+<span class="kw">impl </span>wasmtime_environ::Compiler <span class="kw">for </span>Compiler {
+    <span class="kw">fn </span>compile_function(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">translation</span>: <span class="kw-2">&amp;</span><span class="ident">ModuleTranslation</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-        <span class="ident">func_index</span>: <span class="ident">DefinedFuncIndex</span>,
-        <span class="kw-2">mut</span> <span class="ident">input</span>: <span class="ident">FunctionBodyData</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-        <span class="ident">tunables</span>: <span class="kw-2">&amp;</span><span class="ident">Tunables</span>,
-        <span class="ident">types</span>: <span class="kw-2">&amp;</span><span class="ident">TypeTables</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>, <span class="ident">CompileError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">isa</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">isa</span>;
-        <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">translation</span>.<span class="ident">module</span>;
-        <span class="kw">let</span> <span class="ident">func_index</span> <span class="op">=</span> <span class="ident">module</span>.<span class="ident">func_index</span>(<span class="ident">func_index</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">Context::new</span>();
-        <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">name</span> <span class="op">=</span> <span class="ident">get_func_name</span>(<span class="ident">func_index</span>);
-        <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">signature</span> <span class="op">=</span> <span class="ident">func_signature</span>(<span class="ident">isa</span>, <span class="ident">translation</span>, <span class="ident">types</span>, <span class="ident">func_index</span>);
-        <span class="kw">if</span> <span class="ident">tunables</span>.<span class="ident">generate_native_debuginfo</span> {
-            <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">collect_debug_info</span>();
+        translation: <span class="kw-2">&amp;</span>ModuleTranslation&lt;<span class="lifetime">&#39;_</span>&gt;,
+        func_index: DefinedFuncIndex,
+        <span class="kw-2">mut </span>input: FunctionBodyData&lt;<span class="lifetime">&#39;_</span>&gt;,
+        tunables: <span class="kw-2">&amp;</span>Tunables,
+        types: <span class="kw-2">&amp;</span>TypeTables,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>Any + Send&gt;, CompileError&gt; {
+        <span class="kw">let </span>isa = <span class="kw-2">&amp;*</span><span class="self">self</span>.isa;
+        <span class="kw">let </span>module = <span class="kw-2">&amp;</span>translation.module;
+        <span class="kw">let </span>func_index = module.func_index(func_index);
+        <span class="kw">let </span><span class="kw-2">mut </span>context = Context::new();
+        context.func.name = get_func_name(func_index);
+        context.func.signature = func_signature(isa, translation, types, func_index);
+        <span class="kw">if </span>tunables.generate_native_debuginfo {
+            context.func.collect_debug_info();
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func_env</span> <span class="op">=</span> <span class="ident">FuncEnvironment::new</span>(<span class="ident">isa</span>, <span class="ident">translation</span>, <span class="ident">types</span>, <span class="ident">tunables</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>func_env = FuncEnvironment::new(isa, translation, types, tunables);
 
-        <span class="comment">// We use these as constant offsets below in</span>
-        <span class="comment">// `stack_limit_from_arguments`, so assert their values here. This</span>
-        <span class="comment">// allows the closure below to get coerced to a function pointer, as</span>
-        <span class="comment">// needed by `ir::Function`.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Otherwise our stack limit is specially calculated from the vmctx</span>
-        <span class="comment">// argument, where we need to load the `*const VMInterrupts`</span>
-        <span class="comment">// pointer, and then from that pointer we need to load the stack</span>
-        <span class="comment">// limit itself. Note that manual register allocation is needed here</span>
-        <span class="comment">// too due to how late in the process this codegen happens.</span>
-        <span class="comment">//</span>
-        <span class="comment">// For more information about interrupts and stack checks, see the</span>
-        <span class="comment">// top of this file.</span>
-        <span class="kw">let</span> <span class="ident">vmctx</span> <span class="op">=</span> <span class="ident">context</span>
-            .<span class="ident">func</span>
-            .<span class="ident">create_global_value</span>(<span class="ident">ir::GlobalValueData::VMContext</span>);
-        <span class="kw">let</span> <span class="ident">interrupts_ptr</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">create_global_value</span>(<span class="ident">ir::GlobalValueData::Load</span> {
-            <span class="ident">base</span>: <span class="ident">vmctx</span>,
-            <span class="ident">offset</span>: <span class="ident">i32::try_from</span>(<span class="ident">func_env</span>.<span class="ident">offsets</span>.<span class="ident">vmctx_interrupts</span>())
-                .<span class="ident">unwrap</span>()
-                .<span class="ident">into</span>(),
-            <span class="ident">global_type</span>: <span class="ident">isa</span>.<span class="ident">pointer_type</span>(),
-            <span class="ident">readonly</span>: <span class="bool-val">true</span>,
+        <span class="comment">// We use these as constant offsets below in
+        // `stack_limit_from_arguments`, so assert their values here. This
+        // allows the closure below to get coerced to a function pointer, as
+        // needed by `ir::Function`.
+        //
+        // Otherwise our stack limit is specially calculated from the vmctx
+        // argument, where we need to load the `*const VMInterrupts`
+        // pointer, and then from that pointer we need to load the stack
+        // limit itself. Note that manual register allocation is needed here
+        // too due to how late in the process this codegen happens.
+        //
+        // For more information about interrupts and stack checks, see the
+        // top of this file.
+        </span><span class="kw">let </span>vmctx = context
+            .func
+            .create_global_value(ir::GlobalValueData::VMContext);
+        <span class="kw">let </span>interrupts_ptr = context.func.create_global_value(ir::GlobalValueData::Load {
+            base: vmctx,
+            offset: i32::try_from(func_env.offsets.vmctx_interrupts())
+                .unwrap()
+                .into(),
+            global_type: isa.pointer_type(),
+            readonly: <span class="bool-val">true</span>,
         });
-        <span class="kw">let</span> <span class="ident">stack_limit</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">create_global_value</span>(<span class="ident">ir::GlobalValueData::Load</span> {
-            <span class="ident">base</span>: <span class="ident">interrupts_ptr</span>,
-            <span class="ident">offset</span>: <span class="ident">i32::try_from</span>(<span class="ident">func_env</span>.<span class="ident">offsets</span>.<span class="ident">vminterrupts_stack_limit</span>())
-                .<span class="ident">unwrap</span>()
-                .<span class="ident">into</span>(),
-            <span class="ident">global_type</span>: <span class="ident">isa</span>.<span class="ident">pointer_type</span>(),
-            <span class="ident">readonly</span>: <span class="bool-val">false</span>,
+        <span class="kw">let </span>stack_limit = context.func.create_global_value(ir::GlobalValueData::Load {
+            base: interrupts_ptr,
+            offset: i32::try_from(func_env.offsets.vminterrupts_stack_limit())
+                .unwrap()
+                .into(),
+            global_type: isa.pointer_type(),
+            readonly: <span class="bool-val">false</span>,
         });
-        <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">stack_limit</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">stack_limit</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func_translator</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">take_translator</span>();
-        <span class="ident">func_translator</span>.<span class="ident">translate_body</span>(
-            <span class="kw-2">&amp;mut</span> <span class="ident">input</span>.<span class="ident">validator</span>,
-            <span class="ident">input</span>.<span class="ident">body</span>.<span class="ident">clone</span>(),
-            <span class="kw-2">&amp;mut</span> <span class="ident">context</span>.<span class="ident">func</span>,
-            <span class="kw-2">&amp;mut</span> <span class="ident">func_env</span>,
+        context.func.stack_limit = <span class="prelude-val">Some</span>(stack_limit);
+        <span class="kw">let </span><span class="kw-2">mut </span>func_translator = <span class="self">self</span>.take_translator();
+        func_translator.translate_body(
+            <span class="kw-2">&amp;mut </span>input.validator,
+            input.body.clone(),
+            <span class="kw-2">&amp;mut </span>context.func,
+            <span class="kw-2">&amp;mut </span>func_env,
         )<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">save_translator</span>(<span class="ident">func_translator</span>);
+        <span class="self">self</span>.save_translator(func_translator);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">code_buf</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="ident">context</span>
-            .<span class="ident">compile_and_emit</span>(<span class="ident">isa</span>, <span class="kw-2">&amp;mut</span> <span class="ident">code_buf</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">error</span><span class="op">|</span> <span class="ident">CompileError::Codegen</span>(<span class="ident">pretty_error</span>(<span class="kw-2">&amp;</span><span class="ident">context</span>.<span class="ident">func</span>, <span class="ident">error</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>code_buf: Vec&lt;u8&gt; = Vec::new();
+        context
+            .compile_and_emit(isa, <span class="kw-2">&amp;mut </span>code_buf)
+            .map_err(|error| CompileError::Codegen(pretty_error(<span class="kw-2">&amp;</span>context.func, error)))<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">mach_compile_result</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let </span>result = context.mach_compile_result.as_ref().unwrap();
 
-        <span class="kw">let</span> <span class="ident">func_relocs</span> <span class="op">=</span> <span class="ident">result</span>
-            .<span class="ident">buffer</span>
-            .<span class="ident">relocs</span>()
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="ident">mach_reloc_to_reloc</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="kw">let </span>func_relocs = result
+            .buffer
+            .relocs()
+            .into_iter()
+            .map(mach_reloc_to_reloc)
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="kw">let</span> <span class="ident">traps</span> <span class="op">=</span> <span class="ident">result</span>
-            .<span class="ident">buffer</span>
-            .<span class="ident">traps</span>()
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="ident">mach_trap_to_trap</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="kw">let </span>traps = result
+            .buffer
+            .traps()
+            .into_iter()
+            .map(mach_trap_to_trap)
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="kw">let</span> <span class="ident">stack_maps</span> <span class="op">=</span> <span class="ident">mach_stack_maps_to_stack_maps</span>(<span class="ident">result</span>.<span class="ident">buffer</span>.<span class="ident">stack_maps</span>());
+        <span class="kw">let </span>stack_maps = mach_stack_maps_to_stack_maps(result.buffer.stack_maps());
 
-        <span class="kw">let</span> <span class="ident">unwind_info</span> <span class="op">=</span> <span class="ident">context</span>
-            .<span class="ident">create_unwind_info</span>(<span class="ident">isa</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">error</span><span class="op">|</span> <span class="ident">CompileError::Codegen</span>(<span class="ident">pretty_error</span>(<span class="kw-2">&amp;</span><span class="ident">context</span>.<span class="ident">func</span>, <span class="ident">error</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>unwind_info = context
+            .create_unwind_info(isa)
+            .map_err(|error| CompileError::Codegen(pretty_error(<span class="kw-2">&amp;</span>context.func, error)))<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">address_transform</span> <span class="op">=</span>
-            <span class="self">self</span>.<span class="ident">get_function_address_map</span>(<span class="kw-2">&amp;</span><span class="ident">context</span>, <span class="kw-2">&amp;</span><span class="ident">input</span>, <span class="ident">code_buf</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>, <span class="ident">tunables</span>);
+        <span class="kw">let </span>address_transform =
+            <span class="self">self</span>.get_function_address_map(<span class="kw-2">&amp;</span>context, <span class="kw-2">&amp;</span>input, code_buf.len() <span class="kw">as </span>u32, tunables);
 
-        <span class="kw">let</span> <span class="ident">ranges</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">tunables</span>.<span class="ident">generate_native_debuginfo</span> {
+        <span class="kw">let </span>ranges = <span class="kw">if </span>tunables.generate_native_debuginfo {
             <span class="prelude-val">Some</span>(
-                <span class="ident">context</span>
-                    .<span class="ident">mach_compile_result</span>
-                    .<span class="ident">as_ref</span>()
-                    .<span class="ident">unwrap</span>()
-                    .<span class="ident">value_labels_ranges</span>
-                    .<span class="ident">clone</span>(),
+                context
+                    .mach_compile_result
+                    .as_ref()
+                    .unwrap()
+                    .value_labels_ranges
+                    .clone(),
             )
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        };
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
 
-        <span class="kw">let</span> <span class="ident">timing</span> <span class="op">=</span> <span class="ident">cranelift_codegen::timing::take_current</span>();
-        <span class="macro">log::debug!</span>(<span class="string">&quot;{:?} translated in {:?}&quot;</span>, <span class="ident">func_index</span>, <span class="ident">timing</span>.<span class="ident">total</span>());
-        <span class="macro">log::trace!</span>(<span class="string">&quot;{:?} timing info\n{}&quot;</span>, <span class="ident">func_index</span>, <span class="ident">timing</span>);
+        <span class="kw">let </span>timing = cranelift_codegen::timing::take_current();
+        <span class="macro">log::debug!</span>(<span class="string">&quot;{:?} translated in {:?}&quot;</span>, func_index, timing.total());
+        <span class="macro">log::trace!</span>(<span class="string">&quot;{:?} timing info\n{}&quot;</span>, func_index, timing);
 
-        <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> <span class="ident">u32::try_from</span>(<span class="ident">code_buf</span>.<span class="ident">len</span>()).<span class="ident">unwrap</span>();
-        <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">CompiledFunction</span> {
-            <span class="ident">body</span>: <span class="ident">code_buf</span>,
-            <span class="ident">relocations</span>: <span class="ident">func_relocs</span>,
-            <span class="ident">value_labels_ranges</span>: <span class="ident">ranges</span>.<span class="ident">unwrap_or</span>(<span class="ident">Default::default</span>()),
-            <span class="ident">stack_slots</span>: <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">stack_slots</span>,
-            <span class="ident">unwind_info</span>,
-            <span class="ident">traps</span>,
-            <span class="ident">info</span>: <span class="ident">FunctionInfo</span> {
-                <span class="ident">start_srcloc</span>: <span class="ident">address_transform</span>.<span class="ident">start_srcloc</span>,
-                <span class="ident">stack_maps</span>,
-                <span class="ident">start</span>: <span class="number">0</span>,
-                <span class="ident">length</span>,
+        <span class="kw">let </span>length = u32::try_from(code_buf.len()).unwrap();
+        <span class="prelude-val">Ok</span>(Box::new(CompiledFunction {
+            body: code_buf,
+            relocations: func_relocs,
+            value_labels_ranges: ranges.unwrap_or(Default::default()),
+            stack_slots: context.func.stack_slots,
+            unwind_info,
+            traps,
+            info: FunctionInfo {
+                start_srcloc: address_transform.start_srcloc,
+                stack_maps,
+                start: <span class="number">0</span>,
+                length,
             },
-            <span class="ident">address_map</span>: <span class="ident">address_transform</span>,
+            address_map: address_transform,
         }))
     }
 
-    <span class="kw">fn</span> <span class="ident">emit_obj</span>(
+    <span class="kw">fn </span>emit_obj(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">translation</span>: <span class="kw-2">&amp;</span><span class="ident">ModuleTranslation</span>,
-        <span class="ident">types</span>: <span class="kw-2">&amp;</span><span class="ident">TypeTables</span>,
-        <span class="ident">funcs</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedFuncIndex</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">tunables</span>: <span class="kw-2">&amp;</span><span class="ident">Tunables</span>,
-        <span class="ident">obj</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Object</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedFuncIndex</span>, <span class="ident">FunctionInfo</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Trampoline</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">funcs</span>: <span class="ident"><span class="kw">crate</span>::CompiledFunctions</span> <span class="op">=</span> <span class="ident">funcs</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_i</span>, <span class="ident">f</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">f</span>.<span class="ident">downcast</span>().<span class="ident">unwrap</span>())
-            .<span class="ident">collect</span>();
+        translation: <span class="kw-2">&amp;</span>ModuleTranslation,
+        types: <span class="kw-2">&amp;</span>TypeTables,
+        funcs: PrimaryMap&lt;DefinedFuncIndex, Box&lt;<span class="kw">dyn </span>Any + Send&gt;&gt;,
+        tunables: <span class="kw-2">&amp;</span>Tunables,
+        obj: <span class="kw-2">&amp;mut </span>Object&lt;<span class="lifetime">&#39;static</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(PrimaryMap&lt;DefinedFuncIndex, FunctionInfo&gt;, Vec&lt;Trampoline&gt;)&gt; {
+        <span class="kw">let </span>funcs: <span class="kw">crate</span>::CompiledFunctions = funcs
+            .into_iter()
+            .map(|(_i, f)| <span class="kw-2">*</span>f.downcast().unwrap())
+            .collect();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">ObjectBuilder::new</span>(<span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">translation</span>.<span class="ident">module</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">isa</span>);
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">linkopts</span>.<span class="ident">force_jump_veneers</span> {
-            <span class="ident">builder</span>.<span class="ident">text</span>.<span class="ident">force_veneers</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = ObjectBuilder::new(obj, <span class="kw-2">&amp;</span>translation.module, <span class="kw-2">&amp;*</span><span class="self">self</span>.isa);
+        <span class="kw">if </span><span class="self">self</span>.linkopts.force_jump_veneers {
+            builder.text.force_veneers();
         }
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">addrs</span> <span class="op">=</span> <span class="ident">AddressMapSection::default</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">traps</span> <span class="op">=</span> <span class="ident">TrapEncodingBuilder::default</span>();
-        <span class="kw">let</span> <span class="ident">compiled_trampolines</span> <span class="op">=</span> <span class="ident">translation</span>
-            .<span class="ident">exported_signatures</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">host_to_wasm_trampoline</span>(<span class="kw-2">&amp;</span><span class="ident">types</span>.<span class="ident">wasm_signatures</span>[<span class="kw-2">*</span><span class="ident">i</span>]))
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>addrs = AddressMapSection::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>traps = TrapEncodingBuilder::default();
+        <span class="kw">let </span>compiled_trampolines = translation
+            .exported_signatures
+            .iter()
+            .map(|i| <span class="self">self</span>.host_to_wasm_trampoline(<span class="kw-2">&amp;</span>types.wasm_signatures[<span class="kw-2">*</span>i]))
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func_starts</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">funcs</span>.<span class="ident">len</span>());
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">func</span>) <span class="kw">in</span> <span class="ident">funcs</span>.<span class="ident">iter</span>() {
-            <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">func</span>(<span class="ident">i</span>, <span class="ident">func</span>);
-            <span class="kw">if</span> <span class="ident">tunables</span>.<span class="ident">generate_address_map</span> {
-                <span class="ident">addrs</span>.<span class="ident">push</span>(<span class="ident">range</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="ident">func</span>.<span class="ident">address_map</span>.<span class="ident">instructions</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>func_starts = Vec::with_capacity(funcs.len());
+        <span class="kw">for </span>(i, func) <span class="kw">in </span>funcs.iter() {
+            <span class="kw">let </span>range = builder.func(i, func);
+            <span class="kw">if </span>tunables.generate_address_map {
+                addrs.push(range.clone(), <span class="kw-2">&amp;</span>func.address_map.instructions);
             }
-            <span class="ident">traps</span>.<span class="ident">push</span>(<span class="ident">range</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="ident">func</span>.<span class="ident">traps</span>);
-            <span class="ident">func_starts</span>.<span class="ident">push</span>(<span class="ident">range</span>.<span class="ident">start</span>);
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">linkopts</span>.<span class="ident">padding_between_functions</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                <span class="ident">builder</span>
-                    .<span class="ident">text</span>
-                    .<span class="ident">append</span>(<span class="bool-val">false</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>; <span class="self">self</span>.<span class="ident">linkopts</span>.<span class="ident">padding_between_functions</span>], <span class="number">1</span>);
+            traps.push(range.clone(), <span class="kw-2">&amp;</span>func.traps);
+            func_starts.push(range.start);
+            <span class="kw">if </span><span class="self">self</span>.linkopts.padding_between_functions &gt; <span class="number">0 </span>{
+                builder
+                    .text
+                    .append(<span class="bool-val">false</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>; <span class="self">self</span>.linkopts.padding_between_functions], <span class="number">1</span>);
             }
         }
 
-        <span class="comment">// Build trampolines for every signature that can be used by this module.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">trampolines</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">translation</span>.<span class="ident">exported_signatures</span>.<span class="ident">len</span>());
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">func</span>) <span class="kw">in</span> <span class="ident">translation</span>
-            .<span class="ident">exported_signatures</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">zip</span>(<span class="kw-2">&amp;</span><span class="ident">compiled_trampolines</span>)
+        <span class="comment">// Build trampolines for every signature that can be used by this module.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>trampolines = Vec::with_capacity(translation.exported_signatures.len());
+        <span class="kw">for </span>(i, func) <span class="kw">in </span>translation
+            .exported_signatures
+            .iter()
+            .zip(<span class="kw-2">&amp;</span>compiled_trampolines)
         {
-            <span class="ident">trampolines</span>.<span class="ident">push</span>(<span class="ident">builder</span>.<span class="ident">trampoline</span>(<span class="kw-2">*</span><span class="ident">i</span>, <span class="kw-2">&amp;</span><span class="ident">func</span>));
+            trampolines.push(builder.trampoline(<span class="kw-2">*</span>i, <span class="kw-2">&amp;</span>func));
         }
 
-        <span class="ident">builder</span>.<span class="ident">unwind_info</span>();
+        builder.unwind_info();
 
-        <span class="kw">if</span> <span class="ident">tunables</span>.<span class="ident">generate_native_debuginfo</span> <span class="op">&amp;&amp;</span> <span class="ident">funcs</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="kw">let</span> <span class="ident">ofs</span> <span class="op">=</span> <span class="ident">VMOffsets::new</span>(
-                <span class="self">self</span>.<span class="ident">isa</span>
-                    .<span class="ident">triple</span>()
-                    .<span class="ident">architecture</span>
-                    .<span class="ident">pointer_width</span>()
-                    .<span class="ident">unwrap</span>()
-                    .<span class="ident">bytes</span>(),
-                <span class="kw-2">&amp;</span><span class="ident">translation</span>.<span class="ident">module</span>,
+        <span class="kw">if </span>tunables.generate_native_debuginfo &amp;&amp; funcs.len() &gt; <span class="number">0 </span>{
+            <span class="kw">let </span>ofs = VMOffsets::new(
+                <span class="self">self</span>.isa
+                    .triple()
+                    .architecture
+                    .pointer_width()
+                    .unwrap()
+                    .bytes(),
+                <span class="kw-2">&amp;</span>translation.module,
             );
 
-            <span class="kw">let</span> <span class="ident">memory_offset</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">ofs</span>.<span class="ident">num_imported_memories</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                <span class="ident">ModuleMemoryOffset::Imported</span>(<span class="ident">ofs</span>.<span class="ident">vmctx_vmmemory_import</span>(<span class="ident">MemoryIndex::new</span>(<span class="number">0</span>)))
-            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">ofs</span>.<span class="ident">num_defined_memories</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                <span class="ident">ModuleMemoryOffset::Defined</span>(
-                    <span class="ident">ofs</span>.<span class="ident">vmctx_vmmemory_definition_base</span>(<span class="ident">DefinedMemoryIndex::new</span>(<span class="number">0</span>)),
+            <span class="kw">let </span>memory_offset = <span class="kw">if </span>ofs.num_imported_memories &gt; <span class="number">0 </span>{
+                ModuleMemoryOffset::Imported(ofs.vmctx_vmmemory_import(MemoryIndex::new(<span class="number">0</span>)))
+            } <span class="kw">else if </span>ofs.num_defined_memories &gt; <span class="number">0 </span>{
+                ModuleMemoryOffset::Defined(
+                    ofs.vmctx_vmmemory_definition_base(DefinedMemoryIndex::new(<span class="number">0</span>)),
                 )
-            } <span class="kw">else</span> {
-                <span class="ident">ModuleMemoryOffset::None</span>
+            } <span class="kw">else </span>{
+                ModuleMemoryOffset::None
             };
-            <span class="kw">let</span> <span class="ident">dwarf_sections</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::debug::emit_dwarf</span>(
-                <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">isa</span>,
-                <span class="kw-2">&amp;</span><span class="ident">translation</span>.<span class="ident">debuginfo</span>,
-                <span class="kw-2">&amp;</span><span class="ident">funcs</span>,
-                <span class="kw-2">&amp;</span><span class="ident">memory_offset</span>,
+            <span class="kw">let </span>dwarf_sections = <span class="kw">crate</span>::debug::emit_dwarf(
+                <span class="kw-2">&amp;*</span><span class="self">self</span>.isa,
+                <span class="kw-2">&amp;</span>translation.debuginfo,
+                <span class="kw-2">&amp;</span>funcs,
+                <span class="kw-2">&amp;</span>memory_offset,
             )
-            .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;failed to emit DWARF debug information&quot;</span>)<span class="question-mark">?</span>;
-            <span class="ident">builder</span>.<span class="ident">dwarf_sections</span>(<span class="kw-2">&amp;</span><span class="ident">dwarf_sections</span>)<span class="question-mark">?</span>;
+            .with_context(|| <span class="string">&quot;failed to emit DWARF debug information&quot;</span>)<span class="question-mark">?</span>;
+            builder.dwarf_sections(<span class="kw-2">&amp;</span>dwarf_sections)<span class="question-mark">?</span>;
         }
 
-        <span class="ident">builder</span>.<span class="ident">finish</span>()<span class="question-mark">?</span>;
+        builder.finish()<span class="question-mark">?</span>;
 
-        <span class="kw">if</span> <span class="ident">tunables</span>.<span class="ident">generate_address_map</span> {
-            <span class="ident">addrs</span>.<span class="ident">append_to</span>(<span class="ident">obj</span>);
+        <span class="kw">if </span>tunables.generate_address_map {
+            addrs.append_to(obj);
         }
-        <span class="ident">traps</span>.<span class="ident">append_to</span>(<span class="ident">obj</span>);
+        traps.append_to(obj);
 
         <span class="prelude-val">Ok</span>((
-            <span class="ident">funcs</span>
-                .<span class="ident">into_iter</span>()
-                .<span class="ident">zip</span>(<span class="ident">func_starts</span>)
-                .<span class="ident">map</span>(<span class="op">|</span>((<span class="kw">_</span>, <span class="kw-2">mut</span> <span class="ident">f</span>), <span class="ident">start</span>)<span class="op">|</span> {
-                    <span class="ident">f</span>.<span class="ident">info</span>.<span class="ident">start</span> <span class="op">=</span> <span class="ident">start</span>;
-                    <span class="ident">f</span>.<span class="ident">info</span>
+            funcs
+                .into_iter()
+                .zip(func_starts)
+                .map(|((<span class="kw">_</span>, <span class="kw-2">mut </span>f), start)| {
+                    f.info.start = start;
+                    f.info
                 })
-                .<span class="ident">collect</span>(),
-            <span class="ident">trampolines</span>,
+                .collect(),
+            trampolines,
         ))
     }
 
-    <span class="kw">fn</span> <span class="ident">emit_trampoline_obj</span>(
+    <span class="kw">fn </span>emit_trampoline_obj(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">ty</span>: <span class="kw-2">&amp;</span><span class="ident">WasmFuncType</span>,
-        <span class="ident">host_fn</span>: <span class="ident">usize</span>,
-        <span class="ident">obj</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Object</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Trampoline</span>, <span class="ident">Trampoline</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">host_to_wasm</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">host_to_wasm_trampoline</span>(<span class="ident">ty</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">wasm_to_host</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">wasm_to_host_trampoline</span>(<span class="ident">ty</span>, <span class="ident">host_fn</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">Module::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">ObjectBuilder::new</span>(<span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="ident">module</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">isa</span>);
-        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">trampoline</span>(<span class="ident">SignatureIndex::new</span>(<span class="number">0</span>), <span class="kw-2">&amp;</span><span class="ident">host_to_wasm</span>);
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">trampoline</span>(<span class="ident">SignatureIndex::new</span>(<span class="number">1</span>), <span class="kw-2">&amp;</span><span class="ident">wasm_to_host</span>);
-        <span class="ident">builder</span>.<span class="ident">unwind_info</span>();
-        <span class="ident">builder</span>.<span class="ident">finish</span>()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>((<span class="ident">a</span>, <span class="ident">b</span>))
+        ty: <span class="kw-2">&amp;</span>WasmFuncType,
+        host_fn: usize,
+        obj: <span class="kw-2">&amp;mut </span>Object&lt;<span class="lifetime">&#39;static</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(Trampoline, Trampoline)&gt; {
+        <span class="kw">let </span>host_to_wasm = <span class="self">self</span>.host_to_wasm_trampoline(ty)<span class="question-mark">?</span>;
+        <span class="kw">let </span>wasm_to_host = <span class="self">self</span>.wasm_to_host_trampoline(ty, host_fn)<span class="question-mark">?</span>;
+        <span class="kw">let </span>module = Module::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = ObjectBuilder::new(obj, <span class="kw-2">&amp;</span>module, <span class="kw-2">&amp;*</span><span class="self">self</span>.isa);
+        <span class="kw">let </span>a = builder.trampoline(SignatureIndex::new(<span class="number">0</span>), <span class="kw-2">&amp;</span>host_to_wasm);
+        <span class="kw">let </span>b = builder.trampoline(SignatureIndex::new(<span class="number">1</span>), <span class="kw-2">&amp;</span>wasm_to_host);
+        builder.unwind_info();
+        builder.finish()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>((a, b))
     }
 
-    <span class="kw">fn</span> <span class="ident">triple</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">target_lexicon::Triple</span> {
-        <span class="self">self</span>.<span class="ident">isa</span>.<span class="ident">triple</span>()
+    <span class="kw">fn </span>triple(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>target_lexicon::Triple {
+        <span class="self">self</span>.isa.triple()
     }
 
-    <span class="kw">fn</span> <span class="ident">page_size_align</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="self">self</span>.<span class="ident">isa</span>.<span class="ident">code_section_alignment</span>()
+    <span class="kw">fn </span>page_size_align(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="self">self</span>.isa.code_section_alignment()
     }
 
-    <span class="kw">fn</span> <span class="ident">flags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">FlagValue</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">isa</span>
-            .<span class="ident">flags</span>()
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> (<span class="ident">val</span>.<span class="ident">name</span>.<span class="ident">to_string</span>(), <span class="ident">to_flag_value</span>(<span class="kw-2">&amp;</span><span class="ident">val</span>)))
-            .<span class="ident">collect</span>()
+    <span class="kw">fn </span>flags(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;String, FlagValue&gt; {
+        <span class="self">self</span>.isa
+            .flags()
+            .iter()
+            .map(|val| (val.name.to_string(), to_flag_value(<span class="kw-2">&amp;</span>val)))
+            .collect()
     }
 
-    <span class="kw">fn</span> <span class="ident">isa_flags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">FlagValue</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">isa</span>
-            .<span class="ident">isa_flags</span>()
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> (<span class="ident">val</span>.<span class="ident">name</span>.<span class="ident">to_string</span>(), <span class="ident">to_flag_value</span>(<span class="ident">val</span>)))
-            .<span class="ident">collect</span>()
-    }
-}
-
-<span class="kw">fn</span> <span class="ident">to_flag_value</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="ident">settings::Value</span>) -&gt; <span class="ident">FlagValue</span> {
-    <span class="kw">match</span> <span class="ident">v</span>.<span class="ident">kind</span>() {
-        <span class="ident">settings::SettingKind::Enum</span> =&gt; <span class="ident">FlagValue::Enum</span>(<span class="ident">v</span>.<span class="ident">as_enum</span>().<span class="ident">unwrap</span>().<span class="ident">into</span>()),
-        <span class="ident">settings::SettingKind::Num</span> =&gt; <span class="ident">FlagValue::Num</span>(<span class="ident">v</span>.<span class="ident">as_num</span>().<span class="ident">unwrap</span>()),
-        <span class="ident">settings::SettingKind::Bool</span> =&gt; <span class="ident">FlagValue::Bool</span>(<span class="ident">v</span>.<span class="ident">as_bool</span>().<span class="ident">unwrap</span>()),
-        <span class="ident">settings::SettingKind::Preset</span> =&gt; <span class="macro">unreachable!</span>(),
+    <span class="kw">fn </span>isa_flags(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;String, FlagValue&gt; {
+        <span class="self">self</span>.isa
+            .isa_flags()
+            .iter()
+            .map(|val| (val.name.to_string(), to_flag_value(val)))
+            .collect()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Compiler</span> {
-    <span class="kw">fn</span> <span class="ident">host_to_wasm_trampoline</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ty</span>: <span class="kw-2">&amp;</span><span class="ident">WasmFuncType</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CompiledFunction</span>, <span class="ident">CompileError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">isa</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">isa</span>;
-        <span class="kw">let</span> <span class="ident">value_size</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">pointer_type</span> <span class="op">=</span> <span class="ident">isa</span>.<span class="ident">pointer_type</span>();
+<span class="kw">fn </span>to_flag_value(v: <span class="kw-2">&amp;</span>settings::Value) -&gt; FlagValue {
+    <span class="kw">match </span>v.kind() {
+        settings::SettingKind::Enum =&gt; FlagValue::Enum(v.as_enum().unwrap().into()),
+        settings::SettingKind::Num =&gt; FlagValue::Num(v.as_num().unwrap()),
+        settings::SettingKind::Bool =&gt; FlagValue::Bool(v.as_bool().unwrap()),
+        settings::SettingKind::Preset =&gt; <span class="macro">unreachable!</span>(),
+    }
+}
 
-        <span class="comment">// The wasm signature we&#39;re calling in this trampoline has the actual</span>
-        <span class="comment">// ABI of the function signature described by `ty`</span>
-        <span class="kw">let</span> <span class="ident">wasm_signature</span> <span class="op">=</span> <span class="ident">indirect_signature</span>(<span class="ident">isa</span>, <span class="ident">ty</span>);
+<span class="kw">impl </span>Compiler {
+    <span class="kw">fn </span>host_to_wasm_trampoline(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>WasmFuncType) -&gt; <span class="prelude-ty">Result</span>&lt;CompiledFunction, CompileError&gt; {
+        <span class="kw">let </span>isa = <span class="kw-2">&amp;*</span><span class="self">self</span>.isa;
+        <span class="kw">let </span>value_size = mem::size_of::&lt;u128&gt;();
+        <span class="kw">let </span>pointer_type = isa.pointer_type();
 
-        <span class="comment">// The host signature has the `VMTrampoline` signature where the ABI is</span>
-        <span class="comment">// fixed.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">host_signature</span> <span class="op">=</span> <span class="ident">blank_sig</span>(<span class="ident">isa</span>, <span class="ident">wasmtime_call_conv</span>(<span class="ident">isa</span>));
-        <span class="ident">host_signature</span>.<span class="ident">params</span>.<span class="ident">push</span>(<span class="ident">ir::AbiParam::new</span>(<span class="ident">pointer_type</span>));
-        <span class="ident">host_signature</span>.<span class="ident">params</span>.<span class="ident">push</span>(<span class="ident">ir::AbiParam::new</span>(<span class="ident">pointer_type</span>));
+        <span class="comment">// The wasm signature we&#39;re calling in this trampoline has the actual
+        // ABI of the function signature described by `ty`
+        </span><span class="kw">let </span>wasm_signature = indirect_signature(isa, ty);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func_translator</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">take_translator</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">Context::new</span>();
-        <span class="ident">context</span>.<span class="ident">func</span> <span class="op">=</span> <span class="ident">ir::Function::with_name_signature</span>(<span class="ident">ExternalName::user</span>(<span class="number">0</span>, <span class="number">0</span>), <span class="ident">host_signature</span>);
+        <span class="comment">// The host signature has the `VMTrampoline` signature where the ABI is
+        // fixed.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>host_signature = blank_sig(isa, wasmtime_call_conv(isa));
+        host_signature.params.push(ir::AbiParam::new(pointer_type));
+        host_signature.params.push(ir::AbiParam::new(pointer_type));
 
-        <span class="comment">// This trampoline will load all the parameters from the `values_vec`</span>
-        <span class="comment">// that is passed in and then call the real function (also passed</span>
-        <span class="comment">// indirectly) with the specified ABI.</span>
-        <span class="comment">//</span>
-        <span class="comment">// All the results are then stored into the same `values_vec`.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">FunctionBuilder::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">context</span>.<span class="ident">func</span>, <span class="ident">func_translator</span>.<span class="ident">context</span>());
-        <span class="kw">let</span> <span class="ident">block0</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">create_block</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>func_translator = <span class="self">self</span>.take_translator();
+        <span class="kw">let </span><span class="kw-2">mut </span>context = Context::new();
+        context.func = ir::Function::with_name_signature(ExternalName::user(<span class="number">0</span>, <span class="number">0</span>), host_signature);
 
-        <span class="ident">builder</span>.<span class="ident">append_block_params_for_function_params</span>(<span class="ident">block0</span>);
-        <span class="ident">builder</span>.<span class="ident">switch_to_block</span>(<span class="ident">block0</span>);
-        <span class="ident">builder</span>.<span class="ident">seal_block</span>(<span class="ident">block0</span>);
+        <span class="comment">// This trampoline will load all the parameters from the `values_vec`
+        // that is passed in and then call the real function (also passed
+        // indirectly) with the specified ABI.
+        //
+        // All the results are then stored into the same `values_vec`.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>builder = FunctionBuilder::new(<span class="kw-2">&amp;mut </span>context.func, func_translator.context());
+        <span class="kw">let </span>block0 = builder.create_block();
 
-        <span class="kw">let</span> (<span class="ident">vmctx_ptr_val</span>, <span class="ident">caller_vmctx_ptr_val</span>, <span class="ident">callee_value</span>, <span class="ident">values_vec_ptr_val</span>) <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">block_params</span>(<span class="ident">block0</span>);
-            (<span class="ident">params</span>[<span class="number">0</span>], <span class="ident">params</span>[<span class="number">1</span>], <span class="ident">params</span>[<span class="number">2</span>], <span class="ident">params</span>[<span class="number">3</span>])
+        builder.append_block_params_for_function_params(block0);
+        builder.switch_to_block(block0);
+        builder.seal_block(block0);
+
+        <span class="kw">let </span>(vmctx_ptr_val, caller_vmctx_ptr_val, callee_value, values_vec_ptr_val) = {
+            <span class="kw">let </span>params = builder.func.dfg.block_params(block0);
+            (params[<span class="number">0</span>], params[<span class="number">1</span>], params[<span class="number">2</span>], params[<span class="number">3</span>])
         };
 
-        <span class="comment">// Load the argument values out of `values_vec`.</span>
-        <span class="kw">let</span> <span class="ident">mflags</span> <span class="op">=</span> <span class="ident">ir::MemFlags::trusted</span>();
-        <span class="kw">let</span> <span class="ident">callee_args</span> <span class="op">=</span> <span class="ident">wasm_signature</span>
-            .<span class="ident">params</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">enumerate</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">r</span>)<span class="op">|</span> {
-                <span class="kw">match</span> <span class="ident">i</span> {
-                    <span class="number">0</span> =&gt; <span class="ident">vmctx_ptr_val</span>,
-                    <span class="number">1</span> =&gt; <span class="ident">caller_vmctx_ptr_val</span>,
-                    <span class="kw">_</span> =&gt;
-                    <span class="comment">// i - 2 because vmctx and caller vmctx aren&#39;t passed through `values_vec`.</span>
-                    {
-                        <span class="ident">builder</span>.<span class="ident">ins</span>().<span class="ident">load</span>(
-                            <span class="ident">r</span>.<span class="ident">value_type</span>,
-                            <span class="ident">mflags</span>,
-                            <span class="ident">values_vec_ptr_val</span>,
-                            ((<span class="ident">i</span> <span class="op">-</span> <span class="number">2</span>) <span class="op">*</span> <span class="ident">value_size</span>) <span class="kw">as</span> <span class="ident">i32</span>,
+        <span class="comment">// Load the argument values out of `values_vec`.
+        </span><span class="kw">let </span>mflags = ir::MemFlags::trusted();
+        <span class="kw">let </span>callee_args = wasm_signature
+            .params
+            .iter()
+            .enumerate()
+            .map(|(i, r)| {
+                <span class="kw">match </span>i {
+                    <span class="number">0 </span>=&gt; vmctx_ptr_val,
+                    <span class="number">1 </span>=&gt; caller_vmctx_ptr_val,
+                    <span class="kw">_ </span>=&gt;
+                    <span class="comment">// i - 2 because vmctx and caller vmctx aren&#39;t passed through `values_vec`.
+                    </span>{
+                        builder.ins().load(
+                            r.value_type,
+                            mflags,
+                            values_vec_ptr_val,
+                            ((i - <span class="number">2</span>) * value_size) <span class="kw">as </span>i32,
                         )
                     }
                 }
             })
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="comment">// Call the indirect function pointer we were given</span>
-        <span class="kw">let</span> <span class="ident">new_sig</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">import_signature</span>(<span class="ident">wasm_signature</span>);
-        <span class="kw">let</span> <span class="ident">call</span> <span class="op">=</span> <span class="ident">builder</span>
-            .<span class="ident">ins</span>()
-            .<span class="ident">call_indirect</span>(<span class="ident">new_sig</span>, <span class="ident">callee_value</span>, <span class="kw-2">&amp;</span><span class="ident">callee_args</span>);
-        <span class="kw">let</span> <span class="ident">results</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">inst_results</span>(<span class="ident">call</span>).<span class="ident">to_vec</span>();
+        <span class="comment">// Call the indirect function pointer we were given
+        </span><span class="kw">let </span>new_sig = builder.import_signature(wasm_signature);
+        <span class="kw">let </span>call = builder
+            .ins()
+            .call_indirect(new_sig, callee_value, <span class="kw-2">&amp;</span>callee_args);
+        <span class="kw">let </span>results = builder.func.dfg.inst_results(call).to_vec();
 
-        <span class="comment">// Store the return values into `values_vec`.</span>
-        <span class="kw">let</span> <span class="ident">mflags</span> <span class="op">=</span> <span class="ident">ir::MemFlags::trusted</span>();
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">r</span>) <span class="kw">in</span> <span class="ident">results</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-            <span class="ident">builder</span>
-                .<span class="ident">ins</span>()
-                .<span class="ident">store</span>(<span class="ident">mflags</span>, <span class="kw-2">*</span><span class="ident">r</span>, <span class="ident">values_vec_ptr_val</span>, (<span class="ident">i</span> <span class="op">*</span> <span class="ident">value_size</span>) <span class="kw">as</span> <span class="ident">i32</span>);
+        <span class="comment">// Store the return values into `values_vec`.
+        </span><span class="kw">let </span>mflags = ir::MemFlags::trusted();
+        <span class="kw">for </span>(i, r) <span class="kw">in </span>results.iter().enumerate() {
+            builder
+                .ins()
+                .store(mflags, <span class="kw-2">*</span>r, values_vec_ptr_val, (i * value_size) <span class="kw">as </span>i32);
         }
-        <span class="ident">builder</span>.<span class="ident">ins</span>().<span class="ident">return_</span>(<span class="kw-2">&amp;</span>[]);
-        <span class="ident">builder</span>.<span class="ident">finalize</span>();
+        builder.ins().return_(<span class="kw-2">&amp;</span>[]);
+        builder.finalize();
 
-        <span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">finish_trampoline</span>(<span class="ident">context</span>, <span class="ident">isa</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">save_translator</span>(<span class="ident">func_translator</span>);
-        <span class="prelude-val">Ok</span>(<span class="ident">func</span>)
+        <span class="kw">let </span>func = <span class="self">self</span>.finish_trampoline(context, isa)<span class="question-mark">?</span>;
+        <span class="self">self</span>.save_translator(func_translator);
+        <span class="prelude-val">Ok</span>(func)
     }
 
-    <span class="kw">fn</span> <span class="ident">wasm_to_host_trampoline</span>(
+    <span class="kw">fn </span>wasm_to_host_trampoline(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">ty</span>: <span class="kw-2">&amp;</span><span class="ident">WasmFuncType</span>,
-        <span class="ident">host_fn</span>: <span class="ident">usize</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CompiledFunction</span>, <span class="ident">CompileError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">isa</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">isa</span>;
-        <span class="kw">let</span> <span class="ident">pointer_type</span> <span class="op">=</span> <span class="ident">isa</span>.<span class="ident">pointer_type</span>();
-        <span class="kw">let</span> <span class="ident">wasm_signature</span> <span class="op">=</span> <span class="ident">indirect_signature</span>(<span class="ident">isa</span>, <span class="ident">ty</span>);
-        <span class="comment">// The host signature has an added parameter for the `values_vec` input</span>
-        <span class="comment">// and output.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">host_signature</span> <span class="op">=</span> <span class="ident">blank_sig</span>(<span class="ident">isa</span>, <span class="ident">wasmtime_call_conv</span>(<span class="ident">isa</span>));
-        <span class="ident">host_signature</span>.<span class="ident">params</span>.<span class="ident">push</span>(<span class="ident">ir::AbiParam::new</span>(<span class="ident">pointer_type</span>));
+        ty: <span class="kw-2">&amp;</span>WasmFuncType,
+        host_fn: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;CompiledFunction, CompileError&gt; {
+        <span class="kw">let </span>isa = <span class="kw-2">&amp;*</span><span class="self">self</span>.isa;
+        <span class="kw">let </span>pointer_type = isa.pointer_type();
+        <span class="kw">let </span>wasm_signature = indirect_signature(isa, ty);
+        <span class="comment">// The host signature has an added parameter for the `values_vec` input
+        // and output.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>host_signature = blank_sig(isa, wasmtime_call_conv(isa));
+        host_signature.params.push(ir::AbiParam::new(pointer_type));
 
-        <span class="comment">// Compute the size of the values vector. The vmctx and caller vmctx are passed separately.</span>
-        <span class="kw">let</span> <span class="ident">value_size</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">values_vec_len</span> <span class="op">=</span> (<span class="ident">value_size</span> <span class="op">*</span> <span class="ident">cmp::max</span>(<span class="ident">ty</span>.<span class="ident">params</span>().<span class="ident">len</span>(), <span class="ident">ty</span>.<span class="ident">returns</span>().<span class="ident">len</span>())) <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="comment">// Compute the size of the values vector. The vmctx and caller vmctx are passed separately.
+        </span><span class="kw">let </span>value_size = mem::size_of::&lt;u128&gt;();
+        <span class="kw">let </span>values_vec_len = (value_size * cmp::max(ty.params().len(), ty.returns().len())) <span class="kw">as </span>u32;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">Context::new</span>();
-        <span class="ident">context</span>.<span class="ident">func</span> <span class="op">=</span>
-            <span class="ident">ir::Function::with_name_signature</span>(<span class="ident">ir::ExternalName::user</span>(<span class="number">0</span>, <span class="number">0</span>), <span class="ident">wasm_signature</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>context = Context::new();
+        context.func =
+            ir::Function::with_name_signature(ir::ExternalName::user(<span class="number">0</span>, <span class="number">0</span>), wasm_signature);
 
-        <span class="kw">let</span> <span class="ident">ss</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">func</span>.<span class="ident">create_stack_slot</span>(<span class="ident">ir::StackSlotData::new</span>(
-            <span class="ident">ir::StackSlotKind::ExplicitSlot</span>,
-            <span class="ident">values_vec_len</span>,
+        <span class="kw">let </span>ss = context.func.create_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            values_vec_len,
         ));
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func_translator</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">take_translator</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">FunctionBuilder::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">context</span>.<span class="ident">func</span>, <span class="ident">func_translator</span>.<span class="ident">context</span>());
-        <span class="kw">let</span> <span class="ident">block0</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">create_block</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>func_translator = <span class="self">self</span>.take_translator();
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = FunctionBuilder::new(<span class="kw-2">&amp;mut </span>context.func, func_translator.context());
+        <span class="kw">let </span>block0 = builder.create_block();
 
-        <span class="ident">builder</span>.<span class="ident">append_block_params_for_function_params</span>(<span class="ident">block0</span>);
-        <span class="ident">builder</span>.<span class="ident">switch_to_block</span>(<span class="ident">block0</span>);
-        <span class="ident">builder</span>.<span class="ident">seal_block</span>(<span class="ident">block0</span>);
+        builder.append_block_params_for_function_params(block0);
+        builder.switch_to_block(block0);
+        builder.seal_block(block0);
 
-        <span class="kw">let</span> <span class="ident">values_vec_ptr_val</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">ins</span>().<span class="ident">stack_addr</span>(<span class="ident">pointer_type</span>, <span class="ident">ss</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">mflags</span> <span class="op">=</span> <span class="ident">MemFlags::trusted</span>();
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">ty</span>.<span class="ident">params</span>().<span class="ident">len</span>() {
-            <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">block_params</span>(<span class="ident">block0</span>)[<span class="ident">i</span> <span class="op">+</span> <span class="number">2</span>];
-            <span class="ident">builder</span>
-                .<span class="ident">ins</span>()
-                .<span class="ident">store</span>(<span class="ident">mflags</span>, <span class="ident">val</span>, <span class="ident">values_vec_ptr_val</span>, (<span class="ident">i</span> <span class="op">*</span> <span class="ident">value_size</span>) <span class="kw">as</span> <span class="ident">i32</span>);
+        <span class="kw">let </span>values_vec_ptr_val = builder.ins().stack_addr(pointer_type, ss, <span class="number">0</span>);
+        <span class="kw">let </span>mflags = MemFlags::trusted();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..ty.params().len() {
+            <span class="kw">let </span>val = builder.func.dfg.block_params(block0)[i + <span class="number">2</span>];
+            builder
+                .ins()
+                .store(mflags, val, values_vec_ptr_val, (i * value_size) <span class="kw">as </span>i32);
         }
 
-        <span class="kw">let</span> <span class="ident">block_params</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">block_params</span>(<span class="ident">block0</span>);
-        <span class="kw">let</span> <span class="ident">vmctx_ptr_val</span> <span class="op">=</span> <span class="ident">block_params</span>[<span class="number">0</span>];
-        <span class="kw">let</span> <span class="ident">caller_vmctx_ptr_val</span> <span class="op">=</span> <span class="ident">block_params</span>[<span class="number">1</span>];
+        <span class="kw">let </span>block_params = builder.func.dfg.block_params(block0);
+        <span class="kw">let </span>vmctx_ptr_val = block_params[<span class="number">0</span>];
+        <span class="kw">let </span>caller_vmctx_ptr_val = block_params[<span class="number">1</span>];
 
-        <span class="kw">let</span> <span class="ident">callee_args</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">vmctx_ptr_val</span>, <span class="ident">caller_vmctx_ptr_val</span>, <span class="ident">values_vec_ptr_val</span>];
+        <span class="kw">let </span>callee_args = <span class="macro">vec!</span>[vmctx_ptr_val, caller_vmctx_ptr_val, values_vec_ptr_val];
 
-        <span class="kw">let</span> <span class="ident">new_sig</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">import_signature</span>(<span class="ident">host_signature</span>);
+        <span class="kw">let </span>new_sig = builder.import_signature(host_signature);
 
-        <span class="kw">let</span> <span class="ident">callee_value</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">pointer_type</span>, <span class="ident">host_fn</span> <span class="kw">as</span> <span class="ident">i64</span>);
-        <span class="ident">builder</span>
-            .<span class="ident">ins</span>()
-            .<span class="ident">call_indirect</span>(<span class="ident">new_sig</span>, <span class="ident">callee_value</span>, <span class="kw-2">&amp;</span><span class="ident">callee_args</span>);
+        <span class="kw">let </span>callee_value = builder.ins().iconst(pointer_type, host_fn <span class="kw">as </span>i64);
+        builder
+            .ins()
+            .call_indirect(new_sig, callee_value, <span class="kw-2">&amp;</span>callee_args);
 
-        <span class="kw">let</span> <span class="ident">mflags</span> <span class="op">=</span> <span class="ident">MemFlags::trusted</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">results</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">r</span>) <span class="kw">in</span> <span class="ident">ty</span>.<span class="ident">returns</span>().<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-            <span class="kw">let</span> <span class="ident">load</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">ins</span>().<span class="ident">load</span>(
-                <span class="ident">value_type</span>(<span class="ident">isa</span>, <span class="kw-2">*</span><span class="ident">r</span>),
-                <span class="ident">mflags</span>,
-                <span class="ident">values_vec_ptr_val</span>,
-                (<span class="ident">i</span> <span class="op">*</span> <span class="ident">value_size</span>) <span class="kw">as</span> <span class="ident">i32</span>,
+        <span class="kw">let </span>mflags = MemFlags::trusted();
+        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
+        <span class="kw">for </span>(i, r) <span class="kw">in </span>ty.returns().iter().enumerate() {
+            <span class="kw">let </span>load = builder.ins().load(
+                value_type(isa, <span class="kw-2">*</span>r),
+                mflags,
+                values_vec_ptr_val,
+                (i * value_size) <span class="kw">as </span>i32,
             );
-            <span class="ident">results</span>.<span class="ident">push</span>(<span class="ident">load</span>);
+            results.push(load);
         }
-        <span class="ident">builder</span>.<span class="ident">ins</span>().<span class="ident">return_</span>(<span class="kw-2">&amp;</span><span class="ident">results</span>);
-        <span class="ident">builder</span>.<span class="ident">finalize</span>();
+        builder.ins().return_(<span class="kw-2">&amp;</span>results);
+        builder.finalize();
 
-        <span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">finish_trampoline</span>(<span class="ident">context</span>, <span class="ident">isa</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">save_translator</span>(<span class="ident">func_translator</span>);
-        <span class="prelude-val">Ok</span>(<span class="ident">func</span>)
+        <span class="kw">let </span>func = <span class="self">self</span>.finish_trampoline(context, isa)<span class="question-mark">?</span>;
+        <span class="self">self</span>.save_translator(func_translator);
+        <span class="prelude-val">Ok</span>(func)
     }
 
-    <span class="kw">fn</span> <span class="ident">finish_trampoline</span>(
+    <span class="kw">fn </span>finish_trampoline(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">context</span>: <span class="ident">Context</span>,
-        <span class="ident">isa</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">TargetIsa</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CompiledFunction</span>, <span class="ident">CompileError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">code_buf</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">relocs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="ident">context</span>
-            .<span class="ident">compile_and_emit</span>(<span class="ident">isa</span>, <span class="kw-2">&amp;mut</span> <span class="ident">code_buf</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">error</span><span class="op">|</span> <span class="ident">CompileError::Codegen</span>(<span class="ident">pretty_error</span>(<span class="kw-2">&amp;</span><span class="ident">context</span>.<span class="ident">func</span>, <span class="ident">error</span>)))<span class="question-mark">?</span>;
+        <span class="kw-2">mut </span>context: Context,
+        isa: <span class="kw-2">&amp;</span><span class="kw">dyn </span>TargetIsa,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;CompiledFunction, CompileError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>code_buf = Vec::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>relocs = Vec::new();
+        context
+            .compile_and_emit(isa, <span class="kw-2">&amp;mut </span>code_buf)
+            .map_err(|error| CompileError::Codegen(pretty_error(<span class="kw-2">&amp;</span>context.func, error)))<span class="question-mark">?</span>;
 
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">MachReloc</span> {
-            <span class="ident">offset</span>,
-            <span class="ident">srcloc</span>: <span class="kw">_</span>,
-            <span class="ident">kind</span>,
-            <span class="kw-2">ref</span> <span class="ident">name</span>,
-            <span class="ident">addend</span>,
-        } <span class="kw">in</span> <span class="ident">context</span>
-            .<span class="ident">mach_compile_result</span>
-            .<span class="ident">as_ref</span>()
-            .<span class="ident">unwrap</span>()
-            .<span class="ident">buffer</span>
-            .<span class="ident">relocs</span>()
+        <span class="kw">for </span><span class="kw-2">&amp;</span>MachReloc {
+            offset,
+            srcloc: <span class="kw">_</span>,
+            kind,
+            <span class="kw-2">ref </span>name,
+            addend,
+        } <span class="kw">in </span>context
+            .mach_compile_result
+            .as_ref()
+            .unwrap()
+            .buffer
+            .relocs()
         {
-            <span class="kw">let</span> <span class="ident">reloc_target</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ir::ExternalName::LibCall</span>(<span class="ident">libcall</span>) <span class="op">=</span> <span class="kw-2">*</span><span class="ident">name</span> {
-                <span class="ident">RelocationTarget::LibCall</span>(<span class="ident">libcall</span>)
-            } <span class="kw">else</span> {
+            <span class="kw">let </span>reloc_target = <span class="kw">if let </span>ir::ExternalName::LibCall(libcall) = <span class="kw-2">*</span>name {
+                RelocationTarget::LibCall(libcall)
+            } <span class="kw">else </span>{
                 <span class="macro">panic!</span>(<span class="string">&quot;unrecognized external name&quot;</span>)
             };
-            <span class="ident">relocs</span>.<span class="ident">push</span>(<span class="ident">Relocation</span> {
-                <span class="ident">reloc</span>: <span class="ident">kind</span>,
-                <span class="ident">reloc_target</span>,
-                <span class="ident">offset</span>,
-                <span class="ident">addend</span>,
+            relocs.push(Relocation {
+                reloc: kind,
+                reloc_target,
+                offset,
+                addend,
             });
         }
 
-        <span class="kw">let</span> <span class="ident">unwind_info</span> <span class="op">=</span> <span class="ident">context</span>
-            .<span class="ident">create_unwind_info</span>(<span class="ident">isa</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">error</span><span class="op">|</span> <span class="ident">CompileError::Codegen</span>(<span class="ident">pretty_error</span>(<span class="kw-2">&amp;</span><span class="ident">context</span>.<span class="ident">func</span>, <span class="ident">error</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>unwind_info = context
+            .create_unwind_info(isa)
+            .map_err(|error| CompileError::Codegen(pretty_error(<span class="kw-2">&amp;</span>context.func, error)))<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">CompiledFunction</span> {
-            <span class="ident">body</span>: <span class="ident">code_buf</span>,
-            <span class="ident">unwind_info</span>,
-            <span class="ident">relocations</span>: <span class="ident">relocs</span>,
-            <span class="ident">stack_slots</span>: <span class="ident">Default::default</span>(),
-            <span class="ident">value_labels_ranges</span>: <span class="ident">Default::default</span>(),
-            <span class="ident">info</span>: <span class="ident">Default::default</span>(),
-            <span class="ident">address_map</span>: <span class="ident">Default::default</span>(),
-            <span class="ident">traps</span>: <span class="ident">Vec::new</span>(),
+        <span class="prelude-val">Ok</span>(CompiledFunction {
+            body: code_buf,
+            unwind_info,
+            relocations: relocs,
+            stack_slots: Default::default(),
+            value_labels_ranges: Default::default(),
+            info: Default::default(),
+            address_map: Default::default(),
+            traps: Vec::new(),
         })
     }
 }
 
-<span class="comment">// Collects an iterator of `InstructionAddressMap` into a `Vec` for insertion</span>
-<span class="comment">// into a `FunctionAddressMap`. This will automatically coalesce adjacent</span>
-<span class="comment">// instructions which map to the same original source position.</span>
-<span class="kw">fn</span> <span class="ident">collect_address_maps</span>(
-    <span class="ident">code_size</span>: <span class="ident">u32</span>,
-    <span class="ident">iter</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">ir::SourceLoc</span>, <span class="ident">u32</span>, <span class="ident">u32</span>)<span class="op">&gt;</span>,
-) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InstructionAddressMap</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">iter</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">into_iter</span>();
-    <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">cur_loc</span>, <span class="kw-2">mut</span> <span class="ident">cur_offset</span>, <span class="kw-2">mut</span> <span class="ident">cur_len</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">iter</span>.<span class="ident">next</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">i</span>) =&gt; <span class="ident">i</span>,
-        <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="ident">Vec::new</span>(),
+<span class="comment">// Collects an iterator of `InstructionAddressMap` into a `Vec` for insertion
+// into a `FunctionAddressMap`. This will automatically coalesce adjacent
+// instructions which map to the same original source position.
+</span><span class="kw">fn </span>collect_address_maps(
+    code_size: u32,
+    iter: <span class="kw">impl </span>IntoIterator&lt;Item = (ir::SourceLoc, u32, u32)&gt;,
+) -&gt; Vec&lt;InstructionAddressMap&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>iter = iter.into_iter();
+    <span class="kw">let </span>(<span class="kw-2">mut </span>cur_loc, <span class="kw-2">mut </span>cur_offset, <span class="kw-2">mut </span>cur_len) = <span class="kw">match </span>iter.next() {
+        <span class="prelude-val">Some</span>(i) =&gt; i,
+        <span class="prelude-val">None </span>=&gt; <span class="kw">return </span>Vec::new(),
     };
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-    <span class="kw">for</span> (<span class="ident">loc</span>, <span class="ident">offset</span>, <span class="ident">len</span>) <span class="kw">in</span> <span class="ident">iter</span> {
-        <span class="comment">// If this instruction is adjacent to the previous and has the same</span>
-        <span class="comment">// source location then we can &quot;coalesce&quot; it with the current</span>
-        <span class="comment">// instruction.</span>
-        <span class="kw">if</span> <span class="ident">cur_offset</span> <span class="op">+</span> <span class="ident">cur_len</span> <span class="op">==</span> <span class="ident">offset</span> <span class="op">&amp;&amp;</span> <span class="ident">loc</span> <span class="op">==</span> <span class="ident">cur_loc</span> {
-            <span class="ident">cur_len</span> <span class="op">+</span><span class="op">=</span> <span class="ident">len</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>ret = Vec::new();
+    <span class="kw">for </span>(loc, offset, len) <span class="kw">in </span>iter {
+        <span class="comment">// If this instruction is adjacent to the previous and has the same
+        // source location then we can &quot;coalesce&quot; it with the current
+        // instruction.
+        </span><span class="kw">if </span>cur_offset + cur_len == offset &amp;&amp; loc == cur_loc {
+            cur_len += len;
             <span class="kw">continue</span>;
         }
 
-        <span class="comment">// Push an entry for the previous source item.</span>
-        <span class="ident">ret</span>.<span class="ident">push</span>(<span class="ident">InstructionAddressMap</span> {
-            <span class="ident">srcloc</span>: <span class="ident">cvt</span>(<span class="ident">cur_loc</span>),
-            <span class="ident">code_offset</span>: <span class="ident">cur_offset</span>,
+        <span class="comment">// Push an entry for the previous source item.
+        </span>ret.push(InstructionAddressMap {
+            srcloc: cvt(cur_loc),
+            code_offset: cur_offset,
         });
-        <span class="comment">// And push a &quot;dummy&quot; entry if necessary to cover the span of ranges,</span>
-        <span class="comment">// if any, between the previous source offset and this one.</span>
-        <span class="kw">if</span> <span class="ident">cur_offset</span> <span class="op">+</span> <span class="ident">cur_len</span> <span class="op">!</span><span class="op">=</span> <span class="ident">offset</span> {
-            <span class="ident">ret</span>.<span class="ident">push</span>(<span class="ident">InstructionAddressMap</span> {
-                <span class="ident">srcloc</span>: <span class="ident">FilePos::default</span>(),
-                <span class="ident">code_offset</span>: <span class="ident">cur_offset</span> <span class="op">+</span> <span class="ident">cur_len</span>,
+        <span class="comment">// And push a &quot;dummy&quot; entry if necessary to cover the span of ranges,
+        // if any, between the previous source offset and this one.
+        </span><span class="kw">if </span>cur_offset + cur_len != offset {
+            ret.push(InstructionAddressMap {
+                srcloc: FilePos::default(),
+                code_offset: cur_offset + cur_len,
             });
         }
-        <span class="comment">// Update our current location to get extended later or pushed on at</span>
-        <span class="comment">// the end.</span>
-        <span class="ident">cur_loc</span> <span class="op">=</span> <span class="ident">loc</span>;
-        <span class="ident">cur_offset</span> <span class="op">=</span> <span class="ident">offset</span>;
-        <span class="ident">cur_len</span> <span class="op">=</span> <span class="ident">len</span>;
+        <span class="comment">// Update our current location to get extended later or pushed on at
+        // the end.
+        </span>cur_loc = loc;
+        cur_offset = offset;
+        cur_len = len;
     }
-    <span class="ident">ret</span>.<span class="ident">push</span>(<span class="ident">InstructionAddressMap</span> {
-        <span class="ident">srcloc</span>: <span class="ident">cvt</span>(<span class="ident">cur_loc</span>),
-        <span class="ident">code_offset</span>: <span class="ident">cur_offset</span>,
+    ret.push(InstructionAddressMap {
+        srcloc: cvt(cur_loc),
+        code_offset: cur_offset,
     });
-    <span class="kw">if</span> <span class="ident">cur_offset</span> <span class="op">+</span> <span class="ident">cur_len</span> <span class="op">!</span><span class="op">=</span> <span class="ident">code_size</span> {
-        <span class="ident">ret</span>.<span class="ident">push</span>(<span class="ident">InstructionAddressMap</span> {
-            <span class="ident">srcloc</span>: <span class="ident">FilePos::default</span>(),
-            <span class="ident">code_offset</span>: <span class="ident">cur_offset</span> <span class="op">+</span> <span class="ident">cur_len</span>,
+    <span class="kw">if </span>cur_offset + cur_len != code_size {
+        ret.push(InstructionAddressMap {
+            srcloc: FilePos::default(),
+            code_offset: cur_offset + cur_len,
         });
     }
 
-    <span class="kw">return</span> <span class="ident">ret</span>;
+    <span class="kw">return </span>ret;
 
-    <span class="kw">fn</span> <span class="ident">cvt</span>(<span class="ident">loc</span>: <span class="ident">ir::SourceLoc</span>) -&gt; <span class="ident">FilePos</span> {
-        <span class="kw">if</span> <span class="ident">loc</span>.<span class="ident">is_default</span>() {
-            <span class="ident">FilePos::default</span>()
-        } <span class="kw">else</span> {
-            <span class="ident">FilePos::new</span>(<span class="ident">loc</span>.<span class="ident">bits</span>())
+    <span class="kw">fn </span>cvt(loc: ir::SourceLoc) -&gt; FilePos {
+        <span class="kw">if </span>loc.is_default() {
+            FilePos::default()
+        } <span class="kw">else </span>{
+            FilePos::new(loc.bits())
         }
     }
 }
 
-<span class="kw">fn</span> <span class="ident">mach_reloc_to_reloc</span>(<span class="ident">reloc</span>: <span class="kw-2">&amp;</span><span class="ident">MachReloc</span>) -&gt; <span class="ident">Relocation</span> {
-    <span class="kw">let</span> <span class="kw-2">&amp;</span><span class="ident">MachReloc</span> {
-        <span class="ident">offset</span>,
-        <span class="ident">srcloc</span>: <span class="kw">_</span>,
-        <span class="ident">kind</span>,
-        <span class="kw-2">ref</span> <span class="ident">name</span>,
-        <span class="ident">addend</span>,
-    } <span class="op">=</span> <span class="ident">reloc</span>;
-    <span class="kw">let</span> <span class="ident">reloc_target</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ExternalName::User</span> { <span class="ident">namespace</span>, <span class="ident">index</span> } <span class="op">=</span> <span class="kw-2">*</span><span class="ident">name</span> {
-        <span class="macro">debug_assert_eq!</span>(<span class="ident">namespace</span>, <span class="number">0</span>);
-        <span class="ident">RelocationTarget::UserFunc</span>(<span class="ident">FuncIndex::from_u32</span>(<span class="ident">index</span>))
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ExternalName::LibCall</span>(<span class="ident">libcall</span>) <span class="op">=</span> <span class="kw-2">*</span><span class="ident">name</span> {
-        <span class="ident">RelocationTarget::LibCall</span>(<span class="ident">libcall</span>)
-    } <span class="kw">else</span> {
+<span class="kw">fn </span>mach_reloc_to_reloc(reloc: <span class="kw-2">&amp;</span>MachReloc) -&gt; Relocation {
+    <span class="kw">let </span><span class="kw-2">&amp;</span>MachReloc {
+        offset,
+        srcloc: <span class="kw">_</span>,
+        kind,
+        <span class="kw-2">ref </span>name,
+        addend,
+    } = reloc;
+    <span class="kw">let </span>reloc_target = <span class="kw">if let </span>ExternalName::User { namespace, index } = <span class="kw-2">*</span>name {
+        <span class="macro">debug_assert_eq!</span>(namespace, <span class="number">0</span>);
+        RelocationTarget::UserFunc(FuncIndex::from_u32(index))
+    } <span class="kw">else if let </span>ExternalName::LibCall(libcall) = <span class="kw-2">*</span>name {
+        RelocationTarget::LibCall(libcall)
+    } <span class="kw">else </span>{
         <span class="macro">panic!</span>(<span class="string">&quot;unrecognized external name&quot;</span>)
     };
-    <span class="ident">Relocation</span> {
-        <span class="ident">reloc</span>: <span class="ident">kind</span>,
-        <span class="ident">reloc_target</span>,
-        <span class="ident">offset</span>,
-        <span class="ident">addend</span>,
+    Relocation {
+        reloc: kind,
+        reloc_target,
+        offset,
+        addend,
     }
 }
 
-<span class="kw">fn</span> <span class="ident">mach_trap_to_trap</span>(<span class="ident">trap</span>: <span class="kw-2">&amp;</span><span class="ident">MachTrap</span>) -&gt; <span class="ident">TrapInformation</span> {
-    <span class="kw">let</span> <span class="kw-2">&amp;</span><span class="ident">MachTrap</span> {
-        <span class="ident">offset</span>,
-        <span class="ident">srcloc</span>: <span class="kw">_</span>,
-        <span class="ident">code</span>,
-    } <span class="op">=</span> <span class="ident">trap</span>;
-    <span class="ident">TrapInformation</span> {
-        <span class="ident">code_offset</span>: <span class="ident">offset</span>,
-        <span class="ident">trap_code</span>: <span class="kw">match</span> <span class="ident">code</span> {
-            <span class="ident">ir::TrapCode::StackOverflow</span> =&gt; <span class="ident">TrapCode::StackOverflow</span>,
-            <span class="ident">ir::TrapCode::HeapOutOfBounds</span> =&gt; <span class="ident">TrapCode::HeapOutOfBounds</span>,
-            <span class="ident">ir::TrapCode::HeapMisaligned</span> =&gt; <span class="ident">TrapCode::HeapMisaligned</span>,
-            <span class="ident">ir::TrapCode::TableOutOfBounds</span> =&gt; <span class="ident">TrapCode::TableOutOfBounds</span>,
-            <span class="ident">ir::TrapCode::IndirectCallToNull</span> =&gt; <span class="ident">TrapCode::IndirectCallToNull</span>,
-            <span class="ident">ir::TrapCode::BadSignature</span> =&gt; <span class="ident">TrapCode::BadSignature</span>,
-            <span class="ident">ir::TrapCode::IntegerOverflow</span> =&gt; <span class="ident">TrapCode::IntegerOverflow</span>,
-            <span class="ident">ir::TrapCode::IntegerDivisionByZero</span> =&gt; <span class="ident">TrapCode::IntegerDivisionByZero</span>,
-            <span class="ident">ir::TrapCode::BadConversionToInteger</span> =&gt; <span class="ident">TrapCode::BadConversionToInteger</span>,
-            <span class="ident">ir::TrapCode::UnreachableCodeReached</span> =&gt; <span class="ident">TrapCode::UnreachableCodeReached</span>,
-            <span class="ident">ir::TrapCode::Interrupt</span> =&gt; <span class="ident">TrapCode::Interrupt</span>,
+<span class="kw">fn </span>mach_trap_to_trap(trap: <span class="kw-2">&amp;</span>MachTrap) -&gt; TrapInformation {
+    <span class="kw">let </span><span class="kw-2">&amp;</span>MachTrap {
+        offset,
+        srcloc: <span class="kw">_</span>,
+        code,
+    } = trap;
+    TrapInformation {
+        code_offset: offset,
+        trap_code: <span class="kw">match </span>code {
+            ir::TrapCode::StackOverflow =&gt; TrapCode::StackOverflow,
+            ir::TrapCode::HeapOutOfBounds =&gt; TrapCode::HeapOutOfBounds,
+            ir::TrapCode::HeapMisaligned =&gt; TrapCode::HeapMisaligned,
+            ir::TrapCode::TableOutOfBounds =&gt; TrapCode::TableOutOfBounds,
+            ir::TrapCode::IndirectCallToNull =&gt; TrapCode::IndirectCallToNull,
+            ir::TrapCode::BadSignature =&gt; TrapCode::BadSignature,
+            ir::TrapCode::IntegerOverflow =&gt; TrapCode::IntegerOverflow,
+            ir::TrapCode::IntegerDivisionByZero =&gt; TrapCode::IntegerDivisionByZero,
+            ir::TrapCode::BadConversionToInteger =&gt; TrapCode::BadConversionToInteger,
+            ir::TrapCode::UnreachableCodeReached =&gt; TrapCode::UnreachableCodeReached,
+            ir::TrapCode::Interrupt =&gt; TrapCode::Interrupt,
 
-            <span class="comment">// these should never be emitted by wasmtime-cranelift</span>
-            <span class="ident">ir::TrapCode::User</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+            <span class="comment">// these should never be emitted by wasmtime-cranelift
+            </span>ir::TrapCode::User(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
         },
     }
 }
 
-<span class="kw">fn</span> <span class="ident">mach_stack_maps_to_stack_maps</span>(<span class="ident">mach_stack_maps</span>: <span class="kw-2">&amp;</span>[<span class="ident">MachStackMap</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StackMapInformation</span><span class="op">&gt;</span> {
-    <span class="comment">// This is converting from Cranelift&#39;s representation of a stack map to</span>
-    <span class="comment">// Wasmtime&#39;s representation. They happen to align today but that may</span>
-    <span class="comment">// not always be true in the future.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stack_maps</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-    <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">MachStackMap</span> {
-        <span class="ident">offset_end</span>,
-        <span class="kw-2">ref</span> <span class="ident">stack_map</span>,
+<span class="kw">fn </span>mach_stack_maps_to_stack_maps(mach_stack_maps: <span class="kw-2">&amp;</span>[MachStackMap]) -&gt; Vec&lt;StackMapInformation&gt; {
+    <span class="comment">// This is converting from Cranelift&#39;s representation of a stack map to
+    // Wasmtime&#39;s representation. They happen to align today but that may
+    // not always be true in the future.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>stack_maps = Vec::new();
+    <span class="kw">for </span><span class="kw-2">&amp;</span>MachStackMap {
+        offset_end,
+        <span class="kw-2">ref </span>stack_map,
         ..
-    } <span class="kw">in</span> <span class="ident">mach_stack_maps</span>
+    } <span class="kw">in </span>mach_stack_maps
     {
-        <span class="kw">let</span> <span class="ident">stack_map</span> <span class="op">=</span> <span class="ident">wasmtime_environ::StackMap::new</span>(
-            <span class="ident">stack_map</span>.<span class="ident">mapped_words</span>(),
-            <span class="ident">stack_map</span>.<span class="ident">as_slice</span>().<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">a</span><span class="op">|</span> <span class="ident">a</span>.<span class="number">0</span>),
+        <span class="kw">let </span>stack_map = wasmtime_environ::StackMap::new(
+            stack_map.mapped_words(),
+            stack_map.as_slice().iter().map(|a| a.<span class="number">0</span>),
         );
-        <span class="ident">stack_maps</span>.<span class="ident">push</span>(<span class="ident">StackMapInformation</span> {
-            <span class="ident">code_offset</span>: <span class="ident">offset_end</span>,
-            <span class="ident">stack_map</span>,
+        stack_maps.push(StackMapInformation {
+            code_offset: offset_end,
+            stack_map,
         });
     }
-    <span class="ident">stack_maps</span>.<span class="ident">sort_unstable_by_key</span>(<span class="op">|</span><span class="ident">info</span><span class="op">|</span> <span class="ident">info</span>.<span class="ident">code_offset</span>);
-    <span class="ident">stack_maps</span>
+    stack_maps.sort_unstable_by_key(|info| info.code_offset);
+    stack_maps
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_cranelift" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_cranelift" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

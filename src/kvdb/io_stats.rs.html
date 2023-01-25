@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/kvdb-0.11.0/src/io_stats.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>io_stats.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../kvdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../kvdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../kvdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/kvdb-0.11.0/src/io_stats.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>io_stats.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../kvdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -136,139 +131,138 @@
 <span id="131">131</span>
 <span id="132">132</span>
 <span id="133">133</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license</span>
-<span class="comment">// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your</span>
-<span class="comment">// option. This file may not be copied, modified, or distributed</span>
-<span class="comment">// except according to those terms.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies
+//
+// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license
+// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
 
-<span class="doccomment">//! Generic statistics for key-value databases</span>
+</span><span class="doccomment">//! Generic statistics for key-value databases
 
-<span class="doccomment">/// Statistic kind to query.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Kind</span> {
-	<span class="doccomment">/// Overall statistics since start.</span>
-	<span class="ident">Overall</span>,
-	<span class="doccomment">/// Statistics since previous query.</span>
-	<span class="ident">SincePrevious</span>,
+/// Statistic kind to query.
+</span><span class="kw">pub enum </span>Kind {
+	<span class="doccomment">/// Overall statistics since start.
+	</span>Overall,
+	<span class="doccomment">/// Statistics since previous query.
+	</span>SincePrevious,
 }
 
-<span class="doccomment">/// Statistic for the `span` period</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IoStats</span> {
-	<span class="doccomment">/// Number of transaction.</span>
-	<span class="kw">pub</span> <span class="ident">transactions</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Number of read operations.</span>
-	<span class="kw">pub</span> <span class="ident">reads</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Number of reads resulted in a read from cache.</span>
-	<span class="kw">pub</span> <span class="ident">cache_reads</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Number of write operations.</span>
-	<span class="kw">pub</span> <span class="ident">writes</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Number of bytes read</span>
-	<span class="kw">pub</span> <span class="ident">bytes_read</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Number of bytes read from cache</span>
-	<span class="kw">pub</span> <span class="ident">cache_read_bytes</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Number of bytes write</span>
-	<span class="kw">pub</span> <span class="ident">bytes_written</span>: <span class="ident">u64</span>,
-	<span class="doccomment">/// Start of the statistic period.</span>
-	<span class="kw">pub</span> <span class="ident">started</span>: <span class="ident">std::time::Instant</span>,
-	<span class="doccomment">/// Total duration of the statistic period.</span>
-	<span class="kw">pub</span> <span class="ident">span</span>: <span class="ident">std::time::Duration</span>,
+<span class="doccomment">/// Statistic for the `span` period
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>IoStats {
+	<span class="doccomment">/// Number of transaction.
+	</span><span class="kw">pub </span>transactions: u64,
+	<span class="doccomment">/// Number of read operations.
+	</span><span class="kw">pub </span>reads: u64,
+	<span class="doccomment">/// Number of reads resulted in a read from cache.
+	</span><span class="kw">pub </span>cache_reads: u64,
+	<span class="doccomment">/// Number of write operations.
+	</span><span class="kw">pub </span>writes: u64,
+	<span class="doccomment">/// Number of bytes read
+	</span><span class="kw">pub </span>bytes_read: u64,
+	<span class="doccomment">/// Number of bytes read from cache
+	</span><span class="kw">pub </span>cache_read_bytes: u64,
+	<span class="doccomment">/// Number of bytes write
+	</span><span class="kw">pub </span>bytes_written: u64,
+	<span class="doccomment">/// Start of the statistic period.
+	</span><span class="kw">pub </span>started: std::time::Instant,
+	<span class="doccomment">/// Total duration of the statistic period.
+	</span><span class="kw">pub </span>span: std::time::Duration,
 }
 
-<span class="kw">impl</span> <span class="ident">IoStats</span> {
-	<span class="doccomment">/// Empty statistic report.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">empty</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">transactions</span>: <span class="number">0</span>,
-			<span class="ident">reads</span>: <span class="number">0</span>,
-			<span class="ident">cache_reads</span>: <span class="number">0</span>,
-			<span class="ident">writes</span>: <span class="number">0</span>,
-			<span class="ident">bytes_read</span>: <span class="number">0</span>,
-			<span class="ident">cache_read_bytes</span>: <span class="number">0</span>,
-			<span class="ident">bytes_written</span>: <span class="number">0</span>,
-			<span class="ident">started</span>: <span class="ident">std::time::Instant::now</span>(),
-			<span class="ident">span</span>: <span class="ident">std::time::Duration::default</span>(),
+<span class="kw">impl </span>IoStats {
+	<span class="doccomment">/// Empty statistic report.
+	</span><span class="kw">pub fn </span>empty() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			transactions: <span class="number">0</span>,
+			reads: <span class="number">0</span>,
+			cache_reads: <span class="number">0</span>,
+			writes: <span class="number">0</span>,
+			bytes_read: <span class="number">0</span>,
+			cache_read_bytes: <span class="number">0</span>,
+			bytes_written: <span class="number">0</span>,
+			started: std::time::Instant::now(),
+			span: std::time::Duration::default(),
 		}
 	}
 
-	<span class="doccomment">/// Average batch (transaction) size (writes per transaction)</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">avg_batch_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">writes</span> <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
-		<span class="self">self</span>.<span class="ident">transactions</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">writes</span> <span class="kw">as</span> <span class="ident">f64</span>
+	<span class="doccomment">/// Average batch (transaction) size (writes per transaction)
+	</span><span class="kw">pub fn </span>avg_batch_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.writes == <span class="number">0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
+		<span class="self">self</span>.transactions <span class="kw">as </span>f64 / <span class="self">self</span>.writes <span class="kw">as </span>f64
 	}
 
-	<span class="doccomment">/// Read operations per second.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reads_per_sec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>() <span class="op">==</span> <span class="number">0.0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="doccomment">/// Read operations per second.
+	</span><span class="kw">pub fn </span>reads_per_sec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.span.as_secs_f64() == <span class="number">0.0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		<span class="self">self</span>.<span class="ident">reads</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>()
+		<span class="self">self</span>.reads <span class="kw">as </span>f64 / <span class="self">self</span>.span.as_secs_f64()
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">byte_reads_per_sec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>() <span class="op">==</span> <span class="number">0.0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="kw">pub fn </span>byte_reads_per_sec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.span.as_secs_f64() == <span class="number">0.0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		<span class="self">self</span>.<span class="ident">bytes_read</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>()
+		<span class="self">self</span>.bytes_read <span class="kw">as </span>f64 / <span class="self">self</span>.span.as_secs_f64()
 	}
 
-	<span class="doccomment">/// Write operations per second.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">writes_per_sec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>() <span class="op">==</span> <span class="number">0.0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="doccomment">/// Write operations per second.
+	</span><span class="kw">pub fn </span>writes_per_sec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.span.as_secs_f64() == <span class="number">0.0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		<span class="self">self</span>.<span class="ident">writes</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>()
+		<span class="self">self</span>.writes <span class="kw">as </span>f64 / <span class="self">self</span>.span.as_secs_f64()
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">byte_writes_per_sec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>() <span class="op">==</span> <span class="number">0.0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="kw">pub fn </span>byte_writes_per_sec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.span.as_secs_f64() == <span class="number">0.0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		<span class="self">self</span>.<span class="ident">bytes_written</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>()
+		<span class="self">self</span>.bytes_written <span class="kw">as </span>f64 / <span class="self">self</span>.span.as_secs_f64()
 	}
 
-	<span class="doccomment">/// Total number of operations per second.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ops_per_sec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>() <span class="op">==</span> <span class="number">0.0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="doccomment">/// Total number of operations per second.
+	</span><span class="kw">pub fn </span>ops_per_sec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.span.as_secs_f64() == <span class="number">0.0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		(<span class="self">self</span>.<span class="ident">writes</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">reads</span> <span class="kw">as</span> <span class="ident">f64</span>) <span class="op">/</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>()
+		(<span class="self">self</span>.writes <span class="kw">as </span>f64 + <span class="self">self</span>.reads <span class="kw">as </span>f64) / <span class="self">self</span>.span.as_secs_f64()
 	}
 
-	<span class="doccomment">/// Transactions per second.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">transactions_per_sec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>() <span class="op">==</span> <span class="number">0.0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="doccomment">/// Transactions per second.
+	</span><span class="kw">pub fn </span>transactions_per_sec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.span.as_secs_f64() == <span class="number">0.0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		(<span class="self">self</span>.<span class="ident">transactions</span> <span class="kw">as</span> <span class="ident">f64</span>) <span class="op">/</span> <span class="self">self</span>.<span class="ident">span</span>.<span class="ident">as_secs_f64</span>()
+		(<span class="self">self</span>.transactions <span class="kw">as </span>f64) / <span class="self">self</span>.span.as_secs_f64()
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">avg_transaction_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">transactions</span> <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="kw">pub fn </span>avg_transaction_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.transactions == <span class="number">0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		<span class="self">self</span>.<span class="ident">bytes_written</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">transactions</span> <span class="kw">as</span> <span class="ident">f64</span>
+		<span class="self">self</span>.bytes_written <span class="kw">as </span>f64 / <span class="self">self</span>.transactions <span class="kw">as </span>f64
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cache_hit_ratio</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">reads</span> <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">return</span> <span class="number">0.0</span>
-		}
+	<span class="kw">pub fn </span>cache_hit_ratio(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+		<span class="kw">if </span><span class="self">self</span>.reads == <span class="number">0 </span>{
+			<span class="kw">return </span><span class="number">0.0
+		</span>}
 
-		<span class="self">self</span>.<span class="ident">cache_reads</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">reads</span> <span class="kw">as</span> <span class="ident">f64</span>
+		<span class="self">self</span>.cache_reads <span class="kw">as </span>f64 / <span class="self">self</span>.reads <span class="kw">as </span>f64
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="kvdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="kvdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

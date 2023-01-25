@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ECQVCertPublic","ECQV Implicit Certificate Public Key Reconstruction Data"],["ECQVCertSecret","ECQV Implicit Certificate Secret"]]});
+window.SIDEBAR_ITEMS = {"struct":[["ECQVCertPublic","ECQV Implicit Certificate Public Key Reconstruction Data"],["ECQVCertSecret","ECQV Implicit Certificate Secret"]]};

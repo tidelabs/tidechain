@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["v4","Version 4."]]});
+window.SIDEBAR_ITEMS = {"mod":[["v4","Version 4."]]};

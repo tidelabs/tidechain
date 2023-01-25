@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Event",""],["RegisterError",""]],"struct":[["Behaviour",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["Event",""],["RegisterError",""]],"struct":[["Behaviour",""]]};

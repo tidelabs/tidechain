@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["CallExecutor","Method call executor."],["ExecutorProvider","Executor Provider"]]});
+window.SIDEBAR_ITEMS = {"trait":[["CallExecutor","Method call executor."],["ExecutorProvider","Executor Provider"]]};

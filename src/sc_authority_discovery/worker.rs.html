@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/authority-discovery/src/worker.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>worker.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_authority_discovery/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_authority_discovery/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_authority_discovery/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/authority-discovery/src/worker.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>worker.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_authority_discovery/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -797,259 +792,259 @@
 <span id="792">792</span>
 <span id="793">793</span>
 <span id="794">794</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">error</span>::{<span class="ident">Error</span>, <span class="prelude-ty">Result</span>},
-	<span class="ident">interval::ExpIncInterval</span>,
-	<span class="ident">ServicetoWorkerMsg</span>, <span class="ident">WorkerConfig</span>,
+</span><span class="kw">use crate</span>::{
+	error::{Error, <span class="prelude-ty">Result</span>},
+	interval::ExpIncInterval,
+	ServicetoWorkerMsg, WorkerConfig,
 };
 
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>},
-	<span class="ident">marker::PhantomData</span>,
-	<span class="ident">sync::Arc</span>,
-	<span class="ident">time::Duration</span>,
+<span class="kw">use </span>std::{
+	collections::{HashMap, HashSet},
+	marker::PhantomData,
+	sync::Arc,
+	time::Duration,
 };
 
-<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">channel::mpsc</span>, <span class="ident">future</span>, <span class="ident">stream::Fuse</span>, <span class="ident">FutureExt</span>, <span class="ident">Stream</span>, <span class="ident">StreamExt</span>};
+<span class="kw">use </span>futures::{channel::mpsc, future, stream::Fuse, FutureExt, Stream, StreamExt};
 
-<span class="kw">use</span> <span class="ident">addr_cache::AddrCache</span>;
-<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">codec::Decode</span>;
-<span class="kw">use</span> <span class="ident">ip_network::IpNetwork</span>;
-<span class="kw">use</span> <span class="ident">libp2p</span>::{
-	<span class="ident">core::multiaddr</span>,
-	<span class="ident">multihash</span>::{<span class="ident">Multihash</span>, <span class="ident">MultihashDigest</span>},
+<span class="kw">use </span>addr_cache::AddrCache;
+<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>codec::Decode;
+<span class="kw">use </span>ip_network::IpNetwork;
+<span class="kw">use </span>libp2p::{
+	core::multiaddr,
+	multihash::{Multihash, MultihashDigest},
 };
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">log_enabled</span>};
-<span class="kw">use</span> <span class="ident">prometheus_endpoint</span>::{<span class="ident">register</span>, <span class="ident">Counter</span>, <span class="ident">CounterVec</span>, <span class="ident">Gauge</span>, <span class="ident">Opts</span>, <span class="ident">U64</span>};
-<span class="kw">use</span> <span class="ident">prost::Message</span>;
-<span class="kw">use</span> <span class="ident">rand</span>::{<span class="ident">seq::SliceRandom</span>, <span class="ident">thread_rng</span>};
-<span class="kw">use</span> <span class="ident">sc_client_api::blockchain::HeaderBackend</span>;
-<span class="kw">use</span> <span class="ident">sc_network</span>::{<span class="ident">DhtEvent</span>, <span class="ident">ExHashT</span>, <span class="ident">Multiaddr</span>, <span class="ident">NetworkStateInfo</span>, <span class="ident">PeerId</span>};
-<span class="kw">use</span> <span class="ident">sp_api::ProvideRuntimeApi</span>;
-<span class="kw">use</span> <span class="ident">sp_authority_discovery</span>::{
-	<span class="ident">AuthorityDiscoveryApi</span>, <span class="ident">AuthorityId</span>, <span class="ident">AuthorityPair</span>, <span class="ident">AuthoritySignature</span>,
+<span class="kw">use </span>log::{debug, error, log_enabled};
+<span class="kw">use </span>prometheus_endpoint::{register, Counter, CounterVec, Gauge, Opts, U64};
+<span class="kw">use </span>prost::Message;
+<span class="kw">use </span>rand::{seq::SliceRandom, thread_rng};
+<span class="kw">use </span>sc_client_api::blockchain::HeaderBackend;
+<span class="kw">use </span>sc_network::{DhtEvent, ExHashT, Multiaddr, NetworkStateInfo, PeerId};
+<span class="kw">use </span>sp_api::ProvideRuntimeApi;
+<span class="kw">use </span>sp_authority_discovery::{
+	AuthorityDiscoveryApi, AuthorityId, AuthorityPair, AuthoritySignature,
 };
-<span class="kw">use</span> <span class="ident">sp_core::crypto</span>::{<span class="ident">key_types</span>, <span class="ident">CryptoTypePublicPair</span>, <span class="ident">Pair</span>};
-<span class="kw">use</span> <span class="ident">sp_keystore::CryptoStore</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{<span class="ident">generic::BlockId</span>, <span class="ident">traits::Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>};
+<span class="kw">use </span>sp_core::crypto::{key_types, CryptoTypePublicPair, Pair};
+<span class="kw">use </span>sp_keystore::CryptoStore;
+<span class="kw">use </span>sp_runtime::{generic::BlockId, traits::Block <span class="kw">as </span>BlockT};
 
-<span class="kw">mod</span> <span class="ident">addr_cache</span>;
-<span class="doccomment">/// Dht payload schemas generated from Protobuf definitions via Prost crate in build.rs.</span>
-<span class="kw">mod</span> <span class="ident">schema</span> {
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-	<span class="kw">mod</span> <span class="ident">tests</span>;
+<span class="kw">mod </span>addr_cache;
+<span class="doccomment">/// Dht payload schemas generated from Protobuf definitions via Prost crate in build.rs.
+</span><span class="kw">mod </span>schema {
+	<span class="attribute">#[cfg(test)]
+	</span><span class="kw">mod </span>tests;
 
 	<span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">&quot;OUT_DIR&quot;</span>), <span class="string">&quot;/authority_discovery_v2.rs&quot;</span>));
 }
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">tests</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">pub mod </span>tests;
 
-<span class="kw">const</span> <span class="ident">LOG_TARGET</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;sub-authority-discovery&quot;</span>;
+<span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;sub-authority-discovery&quot;</span>;
 
-<span class="doccomment">/// Maximum number of addresses cached per authority. Additional addresses are discarded.</span>
-<span class="kw">const</span> <span class="ident">MAX_ADDRESSES_PER_AUTHORITY</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
+<span class="doccomment">/// Maximum number of addresses cached per authority. Additional addresses are discarded.
+</span><span class="kw">const </span>MAX_ADDRESSES_PER_AUTHORITY: usize = <span class="number">10</span>;
 
-<span class="doccomment">/// Maximum number of in-flight DHT lookups at any given point in time.</span>
-<span class="kw">const</span> <span class="ident">MAX_IN_FLIGHT_LOOKUPS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span>;
+<span class="doccomment">/// Maximum number of in-flight DHT lookups at any given point in time.
+</span><span class="kw">const </span>MAX_IN_FLIGHT_LOOKUPS: usize = <span class="number">8</span>;
 
-<span class="doccomment">/// Role an authority discovery [`Worker`] can run as.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Role</span> {
-	<span class="doccomment">/// Publish own addresses and discover addresses of others.</span>
-	<span class="ident">PublishAndDiscover</span>(<span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">CryptoStore</span><span class="op">&gt;</span>),
-	<span class="doccomment">/// Discover addresses of others.</span>
-	<span class="ident">Discover</span>,
+<span class="doccomment">/// Role an authority discovery [`Worker`] can run as.
+</span><span class="kw">pub enum </span>Role {
+	<span class="doccomment">/// Publish own addresses and discover addresses of others.
+	</span>PublishAndDiscover(Arc&lt;<span class="kw">dyn </span>CryptoStore&gt;),
+	<span class="doccomment">/// Discover addresses of others.
+	</span>Discover,
 }
 
-<span class="doccomment">/// An authority discovery [`Worker`] can publish the local node&#39;s addresses as well as discover</span>
-<span class="doccomment">/// those of other nodes via a Kademlia DHT.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// When constructed with [`Role::PublishAndDiscover`] a [`Worker`] will</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    1. Retrieve its external addresses (including peer id).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    2. Get the list of keys owned by the local node participating in the current authority set.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    3. Sign the addresses with the keys.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    4. Put addresses and signature as a record with the authority id as a key on a Kademlia DHT.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// When constructed with either [`Role::PublishAndDiscover`] or [`Role::Discover`] a [`Worker`]</span>
-<span class="doccomment">/// will</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    1. Retrieve the current and next set of authorities.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    2. Start DHT queries for the ids of the authorities.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    3. Validate the signatures of the retrieved key value pairs.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    4. Add the retrieved external addresses as priority nodes to the</span>
-<span class="doccomment">///    network peerset.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///    5. Allow querying of the collected addresses via the [`crate::Service`].</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Network</span>, <span class="ident">Block</span>, <span class="ident">DhtEventStream</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Channel receiver for messages send by a [`crate::Service`].</span>
-	<span class="ident">from_service</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="ident">mpsc::Receiver</span><span class="op">&lt;</span><span class="ident">ServicetoWorkerMsg</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// An authority discovery [`Worker`] can publish the local node&#39;s addresses as well as discover
+/// those of other nodes via a Kademlia DHT.
+///
+/// When constructed with [`Role::PublishAndDiscover`] a [`Worker`] will
+///
+///    1. Retrieve its external addresses (including peer id).
+///
+///    2. Get the list of keys owned by the local node participating in the current authority set.
+///
+///    3. Sign the addresses with the keys.
+///
+///    4. Put addresses and signature as a record with the authority id as a key on a Kademlia DHT.
+///
+/// When constructed with either [`Role::PublishAndDiscover`] or [`Role::Discover`] a [`Worker`]
+/// will
+///
+///    1. Retrieve the current and next set of authorities.
+///
+///    2. Start DHT queries for the ids of the authorities.
+///
+///    3. Validate the signatures of the retrieved key value pairs.
+///
+///    4. Add the retrieved external addresses as priority nodes to the
+///    network peerset.
+///
+///    5. Allow querying of the collected addresses via the [`crate::Service`].
+</span><span class="kw">pub struct </span>Worker&lt;Client, Network, Block, DhtEventStream&gt; {
+	<span class="doccomment">/// Channel receiver for messages send by a [`crate::Service`].
+	</span>from_service: Fuse&lt;mpsc::Receiver&lt;ServicetoWorkerMsg&gt;&gt;,
 
-	<span class="ident">client</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span>,
+	client: Arc&lt;Client&gt;,
 
-	<span class="ident">network</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Network</span><span class="op">&gt;</span>,
+	network: Arc&lt;Network&gt;,
 
-	<span class="doccomment">/// Channel we receive Dht events on.</span>
-	<span class="ident">dht_event_rx</span>: <span class="ident">DhtEventStream</span>,
+	<span class="doccomment">/// Channel we receive Dht events on.
+	</span>dht_event_rx: DhtEventStream,
 
-	<span class="doccomment">/// Interval to be proactive, publishing own addresses.</span>
-	<span class="ident">publish_interval</span>: <span class="ident">ExpIncInterval</span>,
-	<span class="doccomment">/// Pro-actively publish our own addresses at this interval, if the keys in the keystore</span>
-	<span class="doccomment">/// have changed.</span>
-	<span class="ident">publish_if_changed_interval</span>: <span class="ident">ExpIncInterval</span>,
-	<span class="doccomment">/// List of keys onto which addresses have been published at the latest publication.</span>
-	<span class="doccomment">/// Used to check whether they have changed.</span>
-	<span class="ident">latest_published_keys</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">CryptoTypePublicPair</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Same value as in the configuration.</span>
-	<span class="ident">publish_non_global_ips</span>: <span class="ident">bool</span>,
-	<span class="doccomment">/// Same value as in the configuration.</span>
-	<span class="ident">strict_record_validation</span>: <span class="ident">bool</span>,
+	<span class="doccomment">/// Interval to be proactive, publishing own addresses.
+	</span>publish_interval: ExpIncInterval,
+	<span class="doccomment">/// Pro-actively publish our own addresses at this interval, if the keys in the keystore
+	/// have changed.
+	</span>publish_if_changed_interval: ExpIncInterval,
+	<span class="doccomment">/// List of keys onto which addresses have been published at the latest publication.
+	/// Used to check whether they have changed.
+	</span>latest_published_keys: HashSet&lt;CryptoTypePublicPair&gt;,
+	<span class="doccomment">/// Same value as in the configuration.
+	</span>publish_non_global_ips: bool,
+	<span class="doccomment">/// Same value as in the configuration.
+	</span>strict_record_validation: bool,
 
-	<span class="doccomment">/// Interval at which to request addresses of authorities, refilling the pending lookups queue.</span>
-	<span class="ident">query_interval</span>: <span class="ident">ExpIncInterval</span>,
+	<span class="doccomment">/// Interval at which to request addresses of authorities, refilling the pending lookups queue.
+	</span>query_interval: ExpIncInterval,
 
-	<span class="doccomment">/// Queue of throttled lookups pending to be passed to the network.</span>
-	<span class="ident">pending_lookups</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">AuthorityId</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Set of in-flight lookups.</span>
-	<span class="ident">in_flight_lookups</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">sc_network::KademliaKey</span>, <span class="ident">AuthorityId</span><span class="op">&gt;</span>,
+	<span class="doccomment">/// Queue of throttled lookups pending to be passed to the network.
+	</span>pending_lookups: Vec&lt;AuthorityId&gt;,
+	<span class="doccomment">/// Set of in-flight lookups.
+	</span>in_flight_lookups: HashMap&lt;sc_network::KademliaKey, AuthorityId&gt;,
 
-	<span class="ident">addr_cache</span>: <span class="ident">addr_cache::AddrCache</span>,
+	addr_cache: addr_cache::AddrCache,
 
-	<span class="ident">metrics</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Metrics</span><span class="op">&gt;</span>,
+	metrics: <span class="prelude-ty">Option</span>&lt;Metrics&gt;,
 
-	<span class="ident">role</span>: <span class="ident">Role</span>,
+	role: Role,
 
-	<span class="ident">phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+	phantom: PhantomData&lt;Block&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Network</span>, <span class="ident">Block</span>, <span class="ident">DhtEventStream</span><span class="op">&gt;</span> <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Network</span>, <span class="ident">Block</span>, <span class="ident">DhtEventStream</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">Block</span>: <span class="ident">BlockT</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-	<span class="ident">Network</span>: <span class="ident">NetworkProvider</span>,
-	<span class="ident">Client</span>: <span class="ident">ProvideRuntimeApi</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">HeaderBackend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="op">&lt;</span><span class="ident">Client</span> <span class="kw">as</span> <span class="ident">ProvideRuntimeApi</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Api</span>: <span class="ident">AuthorityDiscoveryApi</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">DhtEventStream</span>: <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DhtEvent</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span>,
+<span class="kw">impl</span>&lt;Client, Network, Block, DhtEventStream&gt; Worker&lt;Client, Network, Block, DhtEventStream&gt;
+<span class="kw">where
+	</span>Block: BlockT + Unpin + <span class="lifetime">&#39;static</span>,
+	Network: NetworkProvider,
+	Client: ProvideRuntimeApi&lt;Block&gt; + Send + Sync + <span class="lifetime">&#39;static </span>+ HeaderBackend&lt;Block&gt;,
+	&lt;Client <span class="kw">as </span>ProvideRuntimeApi&lt;Block&gt;&gt;::Api: AuthorityDiscoveryApi&lt;Block&gt;,
+	DhtEventStream: Stream&lt;Item = DhtEvent&gt; + Unpin,
 {
-	<span class="doccomment">/// Construct a [`Worker`].</span>
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(
-		<span class="ident">from_service</span>: <span class="ident">mpsc::Receiver</span><span class="op">&lt;</span><span class="ident">ServicetoWorkerMsg</span><span class="op">&gt;</span>,
-		<span class="ident">client</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span>,
-		<span class="ident">network</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Network</span><span class="op">&gt;</span>,
-		<span class="ident">dht_event_rx</span>: <span class="ident">DhtEventStream</span>,
-		<span class="ident">role</span>: <span class="ident">Role</span>,
-		<span class="ident">prometheus_registry</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">prometheus_endpoint::Registry</span><span class="op">&gt;</span>,
-		<span class="ident">config</span>: <span class="ident">WorkerConfig</span>,
-	) -&gt; <span class="self">Self</span> {
-		<span class="comment">// When a node starts up publishing and querying might fail due to various reasons, for</span>
-		<span class="comment">// example due to being not yet fully bootstrapped on the DHT. Thus one should retry rather</span>
-		<span class="comment">// sooner than later. On the other hand, a long running node is likely well connected and</span>
-		<span class="comment">// thus timely retries are not needed. For this reasoning use an exponentially increasing</span>
-		<span class="comment">// interval for `publish_interval`, `query_interval` and `priority_group_set_interval`</span>
-		<span class="comment">// instead of a constant interval.</span>
-		<span class="kw">let</span> <span class="ident">publish_interval</span> <span class="op">=</span>
-			<span class="ident">ExpIncInterval::new</span>(<span class="ident">Duration::from_secs</span>(<span class="number">2</span>), <span class="ident">config</span>.<span class="ident">max_publish_interval</span>);
-		<span class="kw">let</span> <span class="ident">query_interval</span> <span class="op">=</span> <span class="ident">ExpIncInterval::new</span>(<span class="ident">Duration::from_secs</span>(<span class="number">2</span>), <span class="ident">config</span>.<span class="ident">max_query_interval</span>);
+	<span class="doccomment">/// Construct a [`Worker`].
+	</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
+		from_service: mpsc::Receiver&lt;ServicetoWorkerMsg&gt;,
+		client: Arc&lt;Client&gt;,
+		network: Arc&lt;Network&gt;,
+		dht_event_rx: DhtEventStream,
+		role: Role,
+		prometheus_registry: <span class="prelude-ty">Option</span>&lt;prometheus_endpoint::Registry&gt;,
+		config: WorkerConfig,
+	) -&gt; <span class="self">Self </span>{
+		<span class="comment">// When a node starts up publishing and querying might fail due to various reasons, for
+		// example due to being not yet fully bootstrapped on the DHT. Thus one should retry rather
+		// sooner than later. On the other hand, a long running node is likely well connected and
+		// thus timely retries are not needed. For this reasoning use an exponentially increasing
+		// interval for `publish_interval`, `query_interval` and `priority_group_set_interval`
+		// instead of a constant interval.
+		</span><span class="kw">let </span>publish_interval =
+			ExpIncInterval::new(Duration::from_secs(<span class="number">2</span>), config.max_publish_interval);
+		<span class="kw">let </span>query_interval = ExpIncInterval::new(Duration::from_secs(<span class="number">2</span>), config.max_query_interval);
 
-		<span class="comment">// An `ExpIncInterval` is overkill here because the interval is constant, but consistency</span>
-		<span class="comment">// is more simple.</span>
-		<span class="kw">let</span> <span class="ident">publish_if_changed_interval</span> <span class="op">=</span>
-			<span class="ident">ExpIncInterval::new</span>(<span class="ident">config</span>.<span class="ident">keystore_refresh_interval</span>, <span class="ident">config</span>.<span class="ident">keystore_refresh_interval</span>);
+		<span class="comment">// An `ExpIncInterval` is overkill here because the interval is constant, but consistency
+		// is more simple.
+		</span><span class="kw">let </span>publish_if_changed_interval =
+			ExpIncInterval::new(config.keystore_refresh_interval, config.keystore_refresh_interval);
 
-		<span class="kw">let</span> <span class="ident">addr_cache</span> <span class="op">=</span> <span class="ident">AddrCache::new</span>();
+		<span class="kw">let </span>addr_cache = AddrCache::new();
 
-		<span class="kw">let</span> <span class="ident">metrics</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">prometheus_registry</span> {
-			<span class="prelude-val">Some</span>(<span class="ident">registry</span>) =&gt; <span class="kw">match</span> <span class="ident">Metrics::register</span>(<span class="kw-2">&amp;</span><span class="ident">registry</span>) {
-				<span class="prelude-val">Ok</span>(<span class="ident">metrics</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">metrics</span>),
-				<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-					<span class="macro">error!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Failed to register metrics: {}&quot;</span>, <span class="ident">e</span>);
-					<span class="prelude-val">None</span>
-				},
+		<span class="kw">let </span>metrics = <span class="kw">match </span>prometheus_registry {
+			<span class="prelude-val">Some</span>(registry) =&gt; <span class="kw">match </span>Metrics::register(<span class="kw-2">&amp;</span>registry) {
+				<span class="prelude-val">Ok</span>(metrics) =&gt; <span class="prelude-val">Some</span>(metrics),
+				<span class="prelude-val">Err</span>(e) =&gt; {
+					<span class="macro">error!</span>(target: LOG_TARGET, <span class="string">&quot;Failed to register metrics: {}&quot;</span>, e);
+					<span class="prelude-val">None
+				</span>},
 			},
-			<span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
+			<span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
 		};
 
-		<span class="ident">Worker</span> {
-			<span class="ident">from_service</span>: <span class="ident">from_service</span>.<span class="ident">fuse</span>(),
-			<span class="ident">client</span>,
-			<span class="ident">network</span>,
-			<span class="ident">dht_event_rx</span>,
-			<span class="ident">publish_interval</span>,
-			<span class="ident">publish_if_changed_interval</span>,
-			<span class="ident">latest_published_keys</span>: <span class="ident">HashSet::new</span>(),
-			<span class="ident">publish_non_global_ips</span>: <span class="ident">config</span>.<span class="ident">publish_non_global_ips</span>,
-			<span class="ident">strict_record_validation</span>: <span class="ident">config</span>.<span class="ident">strict_record_validation</span>,
-			<span class="ident">query_interval</span>,
-			<span class="ident">pending_lookups</span>: <span class="ident">Vec::new</span>(),
-			<span class="ident">in_flight_lookups</span>: <span class="ident">HashMap::new</span>(),
-			<span class="ident">addr_cache</span>,
-			<span class="ident">role</span>,
-			<span class="ident">metrics</span>,
-			<span class="ident">phantom</span>: <span class="ident">PhantomData</span>,
+		Worker {
+			from_service: from_service.fuse(),
+			client,
+			network,
+			dht_event_rx,
+			publish_interval,
+			publish_if_changed_interval,
+			latest_published_keys: HashSet::new(),
+			publish_non_global_ips: config.publish_non_global_ips,
+			strict_record_validation: config.strict_record_validation,
+			query_interval,
+			pending_lookups: Vec::new(),
+			in_flight_lookups: HashMap::new(),
+			addr_cache,
+			role,
+			metrics,
+			phantom: PhantomData,
 		}
 	}
 
-	<span class="doccomment">/// Start the worker</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">mut</span> <span class="self">self</span>) {
-		<span class="kw">loop</span> {
-			<span class="self">self</span>.<span class="ident">start_new_lookups</span>();
+	<span class="doccomment">/// Start the worker
+	</span><span class="kw">pub async fn </span>run(<span class="kw-2">mut </span><span class="self">self</span>) {
+		<span class="kw">loop </span>{
+			<span class="self">self</span>.start_new_lookups();
 
-			<span class="macro">futures::select!</span> {
-				<span class="comment">// Process incoming events.</span>
-				<span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dht_event_rx</span>.<span class="ident">next</span>().<span class="ident">fuse</span>() =&gt; {
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">event</span>) <span class="op">=</span> <span class="ident">event</span> {
-						<span class="self">self</span>.<span class="ident">handle_dht_event</span>(<span class="ident">event</span>).<span class="kw">await</span>;
-					} <span class="kw">else</span> {
-						<span class="comment">// This point is reached if the network has shut down, at which point there is not</span>
-						<span class="comment">// much else to do than to shut down the authority discovery as well.</span>
-						<span class="kw">return</span>;
+			<span class="macro">futures::select! </span>{
+				<span class="comment">// Process incoming events.
+				</span>event = <span class="self">self</span>.dht_event_rx.next().fuse() =&gt; {
+					<span class="kw">if let </span><span class="prelude-val">Some</span>(event) = event {
+						<span class="self">self</span>.handle_dht_event(event).<span class="kw">await</span>;
+					} <span class="kw">else </span>{
+						<span class="comment">// This point is reached if the network has shut down, at which point there is not
+						// much else to do than to shut down the authority discovery as well.
+						</span><span class="kw">return</span>;
 					}
 				},
-				<span class="comment">// Handle messages from [`Service`]. Ignore if sender side is closed.</span>
-				<span class="ident">msg</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">from_service</span>.<span class="ident">select_next_some</span>() =&gt; {
-					<span class="self">self</span>.<span class="ident">process_message_from_service</span>(<span class="ident">msg</span>);
+				<span class="comment">// Handle messages from [`Service`]. Ignore if sender side is closed.
+				</span>msg = <span class="self">self</span>.from_service.select_next_some() =&gt; {
+					<span class="self">self</span>.process_message_from_service(msg);
 				},
-				<span class="comment">// Publish own addresses.</span>
-				<span class="ident">only_if_changed</span> <span class="op">=</span> <span class="ident">future::select</span>(
-					<span class="self">self</span>.<span class="ident">publish_interval</span>.<span class="ident">next</span>().<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="bool-val">false</span>),
-					<span class="self">self</span>.<span class="ident">publish_if_changed_interval</span>.<span class="ident">next</span>().<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="bool-val">true</span>)
-				).<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">factor_first</span>().<span class="number">0</span>).<span class="ident">fuse</span>() =&gt; {
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">publish_ext_addresses</span>(<span class="ident">only_if_changed</span>).<span class="kw">await</span> {
+				<span class="comment">// Publish own addresses.
+				</span>only_if_changed = future::select(
+					<span class="self">self</span>.publish_interval.next().map(|<span class="kw">_</span>| <span class="bool-val">false</span>),
+					<span class="self">self</span>.publish_if_changed_interval.next().map(|<span class="kw">_</span>| <span class="bool-val">true</span>)
+				).map(|e| e.factor_first().<span class="number">0</span>).fuse() =&gt; {
+					<span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.publish_ext_addresses(only_if_changed).<span class="kw">await </span>{
 						<span class="macro">error!</span>(
-							<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
-							<span class="string">&quot;Failed to publish external addresses: {}&quot;</span>, <span class="ident">e</span>,
+							target: LOG_TARGET,
+							<span class="string">&quot;Failed to publish external addresses: {}&quot;</span>, e,
 						);
 					}
 				},
-				<span class="comment">// Request addresses of authorities.</span>
-				<span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query_interval</span>.<span class="ident">next</span>().<span class="ident">fuse</span>() =&gt; {
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">refill_pending_lookups_queue</span>().<span class="kw">await</span> {
+				<span class="comment">// Request addresses of authorities.
+				</span><span class="kw">_ </span>= <span class="self">self</span>.query_interval.next().fuse() =&gt; {
+					<span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.refill_pending_lookups_queue().<span class="kw">await </span>{
 						<span class="macro">error!</span>(
-							<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
-							<span class="string">&quot;Failed to request addresses of authorities: {}&quot;</span>, <span class="ident">e</span>,
+							target: LOG_TARGET,
+							<span class="string">&quot;Failed to request addresses of authorities: {}&quot;</span>, e,
 						);
 					}
 				},
@@ -1057,540 +1052,539 @@
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">process_message_from_service</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">ServicetoWorkerMsg</span>) {
-		<span class="kw">match</span> <span class="ident">msg</span> {
-			<span class="ident">ServicetoWorkerMsg::GetAddressesByAuthorityId</span>(<span class="ident">authority</span>, <span class="ident">sender</span>) =&gt; {
-				<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">sender</span>.<span class="ident">send</span>(
-					<span class="self">self</span>.<span class="ident">addr_cache</span>.<span class="ident">get_addresses_by_authority_id</span>(<span class="kw-2">&amp;</span><span class="ident">authority</span>).<span class="ident">map</span>(<span class="ident">Clone::clone</span>),
+	<span class="kw">fn </span>process_message_from_service(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: ServicetoWorkerMsg) {
+		<span class="kw">match </span>msg {
+			ServicetoWorkerMsg::GetAddressesByAuthorityId(authority, sender) =&gt; {
+				<span class="kw">let _ </span>= sender.send(
+					<span class="self">self</span>.addr_cache.get_addresses_by_authority_id(<span class="kw-2">&amp;</span>authority).map(Clone::clone),
 				);
 			},
-			<span class="ident">ServicetoWorkerMsg::GetAuthorityIdsByPeerId</span>(<span class="ident">peer_id</span>, <span class="ident">sender</span>) =&gt; {
-				<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">sender</span>
-					.<span class="ident">send</span>(<span class="self">self</span>.<span class="ident">addr_cache</span>.<span class="ident">get_authority_ids_by_peer_id</span>(<span class="kw-2">&amp;</span><span class="ident">peer_id</span>).<span class="ident">map</span>(<span class="ident">Clone::clone</span>));
+			ServicetoWorkerMsg::GetAuthorityIdsByPeerId(peer_id, sender) =&gt; {
+				<span class="kw">let _ </span>= sender
+					.send(<span class="self">self</span>.addr_cache.get_authority_ids_by_peer_id(<span class="kw-2">&amp;</span>peer_id).map(Clone::clone));
 			},
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">addresses_to_publish</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Multiaddr</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">peer_id</span>: <span class="ident">Multihash</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">local_peer_id</span>().<span class="ident">into</span>();
-		<span class="kw">let</span> <span class="ident">publish_non_global_ips</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">publish_non_global_ips</span>;
-		<span class="self">self</span>.<span class="ident">network</span>
-			.<span class="ident">external_addresses</span>()
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">filter</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">a</span><span class="op">|</span> {
-				<span class="kw">if</span> <span class="ident">publish_non_global_ips</span> {
-					<span class="kw">return</span> <span class="bool-val">true</span>
-				}
+	<span class="kw">fn </span>addresses_to_publish(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Multiaddr&gt; {
+		<span class="kw">let </span>peer_id: Multihash = <span class="self">self</span>.network.local_peer_id().into();
+		<span class="kw">let </span>publish_non_global_ips = <span class="self">self</span>.publish_non_global_ips;
+		<span class="self">self</span>.network
+			.external_addresses()
+			.into_iter()
+			.filter(<span class="kw">move </span>|a| {
+				<span class="kw">if </span>publish_non_global_ips {
+					<span class="kw">return </span><span class="bool-val">true
+				</span>}
 
-				<span class="ident">a</span>.<span class="ident">iter</span>().<span class="ident">all</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">p</span> {
-					<span class="comment">// The `ip_network` library is used because its `is_global()` method is stable,</span>
-					<span class="comment">// while `is_global()` in the standard library currently isn&#39;t.</span>
-					<span class="ident">multiaddr::Protocol::Ip4</span>(<span class="ident">ip</span>) <span class="kw">if</span> <span class="op">!</span><span class="ident">IpNetwork::from</span>(<span class="ident">ip</span>).<span class="ident">is_global</span>() =&gt; <span class="bool-val">false</span>,
-					<span class="ident">multiaddr::Protocol::Ip6</span>(<span class="ident">ip</span>) <span class="kw">if</span> <span class="op">!</span><span class="ident">IpNetwork::from</span>(<span class="ident">ip</span>).<span class="ident">is_global</span>() =&gt; <span class="bool-val">false</span>,
-					<span class="kw">_</span> =&gt; <span class="bool-val">true</span>,
+				a.iter().all(|p| <span class="kw">match </span>p {
+					<span class="comment">// The `ip_network` library is used because its `is_global()` method is stable,
+					// while `is_global()` in the standard library currently isn&#39;t.
+					</span>multiaddr::Protocol::Ip4(ip) <span class="kw">if </span>!IpNetwork::from(ip).is_global() =&gt; <span class="bool-val">false</span>,
+					multiaddr::Protocol::Ip6(ip) <span class="kw">if </span>!IpNetwork::from(ip).is_global() =&gt; <span class="bool-val">false</span>,
+					<span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
 				})
 			})
-			.<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">a</span><span class="op">|</span> {
-				<span class="kw">if</span> <span class="ident">a</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">p</span>, <span class="ident">multiaddr::Protocol::P2p</span>(<span class="kw">_</span>))) {
-					<span class="ident">a</span>
-				} <span class="kw">else</span> {
-					<span class="ident">a</span>.<span class="ident">with</span>(<span class="ident">multiaddr::Protocol::P2p</span>(<span class="ident">peer_id</span>))
+			.map(<span class="kw">move </span>|a| {
+				<span class="kw">if </span>a.iter().any(|p| <span class="macro">matches!</span>(p, multiaddr::Protocol::P2p(<span class="kw">_</span>))) {
+					a
+				} <span class="kw">else </span>{
+					a.with(multiaddr::Protocol::P2p(peer_id))
 				}
 			})
 	}
 
-	<span class="doccomment">/// Publish own public addresses.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If `only_if_changed` is true, the function has no effect if the list of keys to publish</span>
-	<span class="doccomment">/// is equal to `self.latest_published_keys`.</span>
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">publish_ext_addresses</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">only_if_changed</span>: <span class="ident">bool</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">key_store</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">role</span> {
-			<span class="ident">Role::PublishAndDiscover</span>(<span class="ident">key_store</span>) =&gt; <span class="ident">key_store</span>,
-			<span class="ident">Role::Discover</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(()),
+	<span class="doccomment">/// Publish own public addresses.
+	///
+	/// If `only_if_changed` is true, the function has no effect if the list of keys to publish
+	/// is equal to `self.latest_published_keys`.
+	</span><span class="kw">async fn </span>publish_ext_addresses(<span class="kw-2">&amp;mut </span><span class="self">self</span>, only_if_changed: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+		<span class="kw">let </span>key_store = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.role {
+			Role::PublishAndDiscover(key_store) =&gt; key_store,
+			Role::Discover =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
 		};
 
-		<span class="kw">let</span> <span class="ident">keys</span> <span class="op">=</span> <span class="ident">Worker</span>::<span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Network</span>, <span class="ident">Block</span>, <span class="ident">DhtEventStream</span><span class="op">&gt;</span><span class="ident">::get_own_public_keys_within_authority_set</span>(
-			<span class="ident">key_store</span>.<span class="ident">clone</span>(),
-			<span class="self">self</span>.<span class="ident">client</span>.<span class="ident">as_ref</span>(),
-		).<span class="kw">await</span><span class="question-mark">?</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		<span class="kw">let </span>keys = Worker::&lt;Client, Network, Block, DhtEventStream&gt;::get_own_public_keys_within_authority_set(
+			key_store.clone(),
+			<span class="self">self</span>.client.as_ref(),
+		).<span class="kw">await</span><span class="question-mark">?</span>.into_iter().map(Into::into).collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="kw">if</span> <span class="ident">only_if_changed</span> <span class="op">&amp;&amp;</span> <span class="ident">keys</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">latest_published_keys</span> {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(())
+		<span class="kw">if </span>only_if_changed &amp;&amp; keys == <span class="self">self</span>.latest_published_keys {
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(())
 		}
 
-		<span class="kw">let</span> <span class="ident">addresses</span> <span class="op">=</span> <span class="ident">serialize_addresses</span>(<span class="self">self</span>.<span class="ident">addresses_to_publish</span>());
+		<span class="kw">let </span>addresses = serialize_addresses(<span class="self">self</span>.addresses_to_publish());
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-			<span class="ident">metrics</span>.<span class="ident">publish</span>.<span class="ident">inc</span>();
-			<span class="ident">metrics</span>
-				.<span class="ident">amount_addresses_last_published</span>
-				.<span class="ident">set</span>(<span class="ident">addresses</span>.<span class="ident">len</span>().<span class="ident">try_into</span>().<span class="ident">unwrap_or</span>(<span class="ident">std::u64::MAX</span>));
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+			metrics.publish.inc();
+			metrics
+				.amount_addresses_last_published
+				.set(addresses.len().try_into().unwrap_or(std::u64::MAX));
 		}
 
-		<span class="kw">let</span> <span class="ident">serialized_record</span> <span class="op">=</span> <span class="ident">serialize_authority_record</span>(<span class="ident">addresses</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">peer_signature</span> <span class="op">=</span> <span class="ident">sign_record_with_peer_id</span>(<span class="kw-2">&amp;</span><span class="ident">serialized_record</span>, <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">as_ref</span>())<span class="question-mark">?</span>;
+		<span class="kw">let </span>serialized_record = serialize_authority_record(addresses)<span class="question-mark">?</span>;
+		<span class="kw">let </span>peer_signature = sign_record_with_peer_id(<span class="kw-2">&amp;</span>serialized_record, <span class="self">self</span>.network.as_ref())<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">keys_vec</span> <span class="op">=</span> <span class="ident">keys</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		<span class="kw">let </span>keys_vec = keys.iter().cloned().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="kw">let</span> <span class="ident">kv_pairs</span> <span class="op">=</span> <span class="ident">sign_record_with_authority_ids</span>(
-			<span class="ident">serialized_record</span>,
-			<span class="prelude-val">Some</span>(<span class="ident">peer_signature</span>),
-			<span class="ident">key_store</span>.<span class="ident">as_ref</span>(),
-			<span class="ident">keys_vec</span>,
+		<span class="kw">let </span>kv_pairs = sign_record_with_authority_ids(
+			serialized_record,
+			<span class="prelude-val">Some</span>(peer_signature),
+			key_store.as_ref(),
+			keys_vec,
 		)
 		.<span class="kw">await</span><span class="question-mark">?</span>;
 
-		<span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">value</span>) <span class="kw">in</span> <span class="ident">kv_pairs</span>.<span class="ident">into_iter</span>() {
-			<span class="self">self</span>.<span class="ident">network</span>.<span class="ident">put_value</span>(<span class="ident">key</span>, <span class="ident">value</span>);
+		<span class="kw">for </span>(key, value) <span class="kw">in </span>kv_pairs.into_iter() {
+			<span class="self">self</span>.network.put_value(key, value);
 		}
 
-		<span class="self">self</span>.<span class="ident">latest_published_keys</span> <span class="op">=</span> <span class="ident">keys</span>;
+		<span class="self">self</span>.latest_published_keys = keys;
 
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">refill_pending_lookups_queue</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">BlockId::hash</span>(<span class="self">self</span>.<span class="ident">client</span>.<span class="ident">info</span>().<span class="ident">best_hash</span>);
+	<span class="kw">async fn </span>refill_pending_lookups_queue(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+		<span class="kw">let </span>id = BlockId::hash(<span class="self">self</span>.client.info().best_hash);
 
-		<span class="kw">let</span> <span class="ident">local_keys</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">role</span> {
-			<span class="ident">Role::PublishAndDiscover</span>(<span class="ident">key_store</span>) =&gt; <span class="ident">key_store</span>
-				.<span class="ident">sr25519_public_keys</span>(<span class="ident">key_types::AUTHORITY_DISCOVERY</span>)
-				.<span class="kw">await</span>
-				.<span class="ident">into_iter</span>()
-				.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
-			<span class="ident">Role::Discover</span> =&gt; <span class="ident">HashSet::new</span>(),
+		<span class="kw">let </span>local_keys = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.role {
+			Role::PublishAndDiscover(key_store) =&gt; key_store
+				.sr25519_public_keys(key_types::AUTHORITY_DISCOVERY)
+				.<span class="kw">await
+				</span>.into_iter()
+				.collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;(),
+			Role::Discover =&gt; HashSet::new(),
 		};
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">authorities</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">client</span>
-			.<span class="ident">runtime_api</span>()
-			.<span class="ident">authorities</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::CallingRuntime</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">filter</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> <span class="op">!</span><span class="ident">local_keys</span>.<span class="ident">contains</span>(<span class="ident">id</span>.<span class="ident">as_ref</span>()))
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		<span class="kw">let </span><span class="kw-2">mut </span>authorities = <span class="self">self
+			</span>.client
+			.runtime_api()
+			.authorities(<span class="kw-2">&amp;</span>id)
+			.map_err(|e| Error::CallingRuntime(e.into()))<span class="question-mark">?
+			</span>.into_iter()
+			.filter(|id| !local_keys.contains(id.as_ref()))
+			.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="self">self</span>.<span class="ident">addr_cache</span>.<span class="ident">retain_ids</span>(<span class="kw-2">&amp;</span><span class="ident">authorities</span>);
+		<span class="self">self</span>.addr_cache.retain_ids(<span class="kw-2">&amp;</span>authorities);
 
-		<span class="ident">authorities</span>.<span class="ident">shuffle</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
-		<span class="self">self</span>.<span class="ident">pending_lookups</span> <span class="op">=</span> <span class="ident">authorities</span>;
-		<span class="comment">// Ignore all still in-flight lookups. Those that are still in-flight are likely stalled as</span>
-		<span class="comment">// query interval ticks are far enough apart for all lookups to succeed.</span>
-		<span class="self">self</span>.<span class="ident">in_flight_lookups</span>.<span class="ident">clear</span>();
+		authorities.shuffle(<span class="kw-2">&amp;mut </span>thread_rng());
+		<span class="self">self</span>.pending_lookups = authorities;
+		<span class="comment">// Ignore all still in-flight lookups. Those that are still in-flight are likely stalled as
+		// query interval ticks are far enough apart for all lookups to succeed.
+		</span><span class="self">self</span>.in_flight_lookups.clear();
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-			<span class="ident">metrics</span>
-				.<span class="ident">requests_pending</span>
-				.<span class="ident">set</span>(<span class="self">self</span>.<span class="ident">pending_lookups</span>.<span class="ident">len</span>().<span class="ident">try_into</span>().<span class="ident">unwrap_or</span>(<span class="ident">std::u64::MAX</span>));
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+			metrics
+				.requests_pending
+				.set(<span class="self">self</span>.pending_lookups.len().try_into().unwrap_or(std::u64::MAX));
 		}
 
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="kw">fn</span> <span class="ident">start_new_lookups</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="kw">while</span> <span class="self">self</span>.<span class="ident">in_flight_lookups</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">MAX_IN_FLIGHT_LOOKUPS</span> {
-			<span class="kw">let</span> <span class="ident">authority_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">pending_lookups</span>.<span class="ident">pop</span>() {
-				<span class="prelude-val">Some</span>(<span class="ident">authority</span>) =&gt; <span class="ident">authority</span>,
-				<span class="prelude-val">None</span> =&gt; <span class="kw">return</span>,
+	<span class="kw">fn </span>start_new_lookups(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="kw">while </span><span class="self">self</span>.in_flight_lookups.len() &lt; MAX_IN_FLIGHT_LOOKUPS {
+			<span class="kw">let </span>authority_id = <span class="kw">match </span><span class="self">self</span>.pending_lookups.pop() {
+				<span class="prelude-val">Some</span>(authority) =&gt; authority,
+				<span class="prelude-val">None </span>=&gt; <span class="kw">return</span>,
 			};
-			<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">hash_authority_id</span>(<span class="ident">authority_id</span>.<span class="ident">as_ref</span>());
-			<span class="self">self</span>.<span class="ident">network</span>.<span class="ident">get_value</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>);
-			<span class="self">self</span>.<span class="ident">in_flight_lookups</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="ident">authority_id</span>);
+			<span class="kw">let </span>hash = hash_authority_id(authority_id.as_ref());
+			<span class="self">self</span>.network.get_value(<span class="kw-2">&amp;</span>hash);
+			<span class="self">self</span>.in_flight_lookups.insert(hash, authority_id);
 
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-				<span class="ident">metrics</span>.<span class="ident">requests</span>.<span class="ident">inc</span>();
-				<span class="ident">metrics</span>
-					.<span class="ident">requests_pending</span>
-					.<span class="ident">set</span>(<span class="self">self</span>.<span class="ident">pending_lookups</span>.<span class="ident">len</span>().<span class="ident">try_into</span>().<span class="ident">unwrap_or</span>(<span class="ident">std::u64::MAX</span>));
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+				metrics.requests.inc();
+				metrics
+					.requests_pending
+					.set(<span class="self">self</span>.pending_lookups.len().try_into().unwrap_or(std::u64::MAX));
 			}
 		}
 	}
 
-	<span class="doccomment">/// Handle incoming Dht events.</span>
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle_dht_event</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">DhtEvent</span>) {
-		<span class="kw">match</span> <span class="ident">event</span> {
-			<span class="ident">DhtEvent::ValueFound</span>(<span class="ident">v</span>) =&gt; {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-					<span class="ident">metrics</span>.<span class="ident">dht_event_received</span>.<span class="ident">with_label_values</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_found&quot;</span>]).<span class="ident">inc</span>();
+	<span class="doccomment">/// Handle incoming Dht events.
+	</span><span class="kw">async fn </span>handle_dht_event(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: DhtEvent) {
+		<span class="kw">match </span>event {
+			DhtEvent::ValueFound(v) =&gt; {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+					metrics.dht_event_received.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_found&quot;</span>]).inc();
 				}
 
-				<span class="kw">if</span> <span class="macro">log_enabled!</span>(<span class="ident">log::Level::Debug</span>) {
-					<span class="kw">let</span> <span class="ident">hashes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">hash</span>, <span class="ident">_value</span>)<span class="op">|</span> <span class="ident">hash</span>.<span class="ident">clone</span>()).<span class="ident">collect</span>();
-					<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Value for hash &#39;{:?}&#39; found on Dht.&quot;</span>, <span class="ident">hashes</span>);
+				<span class="kw">if </span><span class="macro">log_enabled!</span>(log::Level::Debug) {
+					<span class="kw">let </span>hashes: Vec&lt;<span class="kw">_</span>&gt; = v.iter().map(|(hash, _value)| hash.clone()).collect();
+					<span class="macro">debug!</span>(target: LOG_TARGET, <span class="string">&quot;Value for hash &#39;{:?}&#39; found on Dht.&quot;</span>, hashes);
 				}
 
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">handle_dht_value_found_event</span>(<span class="ident">v</span>) {
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-						<span class="ident">metrics</span>.<span class="ident">handle_value_found_event_failure</span>.<span class="ident">inc</span>();
+				<span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.handle_dht_value_found_event(v) {
+					<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+						metrics.handle_value_found_event_failure.inc();
 					}
 
-					<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Failed to handle Dht value found event: {}&quot;</span>, <span class="ident">e</span>);
+					<span class="macro">debug!</span>(target: LOG_TARGET, <span class="string">&quot;Failed to handle Dht value found event: {}&quot;</span>, e);
 				}
 			},
-			<span class="ident">DhtEvent::ValueNotFound</span>(<span class="ident">hash</span>) =&gt; {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-					<span class="ident">metrics</span>.<span class="ident">dht_event_received</span>.<span class="ident">with_label_values</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_not_found&quot;</span>]).<span class="ident">inc</span>();
+			DhtEvent::ValueNotFound(hash) =&gt; {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+					metrics.dht_event_received.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_not_found&quot;</span>]).inc();
 				}
 
-				<span class="kw">if</span> <span class="self">self</span>.<span class="ident">in_flight_lookups</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>).<span class="ident">is_some</span>() {
-					<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Value for hash &#39;{:?}&#39; not found on Dht.&quot;</span>, <span class="ident">hash</span>)
-				} <span class="kw">else</span> {
+				<span class="kw">if </span><span class="self">self</span>.in_flight_lookups.remove(<span class="kw-2">&amp;</span>hash).is_some() {
+					<span class="macro">debug!</span>(target: LOG_TARGET, <span class="string">&quot;Value for hash &#39;{:?}&#39; not found on Dht.&quot;</span>, hash)
+				} <span class="kw">else </span>{
 					<span class="macro">debug!</span>(
-						<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
-						<span class="string">&quot;Received &#39;ValueNotFound&#39; for unexpected hash &#39;{:?}&#39;.&quot;</span>, <span class="ident">hash</span>
+						target: LOG_TARGET,
+						<span class="string">&quot;Received &#39;ValueNotFound&#39; for unexpected hash &#39;{:?}&#39;.&quot;</span>, hash
 					)
 				}
 			},
-			<span class="ident">DhtEvent::ValuePut</span>(<span class="ident">hash</span>) =&gt; {
-				<span class="comment">// Fast forward the exponentially increasing interval to the configured maximum. In</span>
-				<span class="comment">// case this was the first successful address publishing there is no need for a</span>
-				<span class="comment">// timely retry.</span>
-				<span class="self">self</span>.<span class="ident">publish_interval</span>.<span class="ident">set_to_max</span>();
+			DhtEvent::ValuePut(hash) =&gt; {
+				<span class="comment">// Fast forward the exponentially increasing interval to the configured maximum. In
+				// case this was the first successful address publishing there is no need for a
+				// timely retry.
+				</span><span class="self">self</span>.publish_interval.set_to_max();
 
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-					<span class="ident">metrics</span>.<span class="ident">dht_event_received</span>.<span class="ident">with_label_values</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_put&quot;</span>]).<span class="ident">inc</span>();
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+					metrics.dht_event_received.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_put&quot;</span>]).inc();
 				}
 
-				<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Successfully put hash &#39;{:?}&#39; on Dht.&quot;</span>, <span class="ident">hash</span>)
+				<span class="macro">debug!</span>(target: LOG_TARGET, <span class="string">&quot;Successfully put hash &#39;{:?}&#39; on Dht.&quot;</span>, hash)
 			},
-			<span class="ident">DhtEvent::ValuePutFailed</span>(<span class="ident">hash</span>) =&gt; {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-					<span class="ident">metrics</span>.<span class="ident">dht_event_received</span>.<span class="ident">with_label_values</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_put_failed&quot;</span>]).<span class="ident">inc</span>();
+			DhtEvent::ValuePutFailed(hash) =&gt; {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+					metrics.dht_event_received.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;value_put_failed&quot;</span>]).inc();
 				}
 
-				<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>, <span class="string">&quot;Failed to put hash &#39;{:?}&#39; on Dht.&quot;</span>, <span class="ident">hash</span>)
+				<span class="macro">debug!</span>(target: LOG_TARGET, <span class="string">&quot;Failed to put hash &#39;{:?}&#39; on Dht.&quot;</span>, hash)
 			},
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">handle_dht_value_found_event</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">values</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">sc_network::KademliaKey</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="comment">// Ensure `values` is not empty and all its keys equal.</span>
-		<span class="kw">let</span> <span class="ident">remote_key</span> <span class="op">=</span> <span class="ident">single</span>(<span class="ident">values</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">key</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">key</span>.<span class="ident">clone</span>()))
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::ReceivingDhtValueFoundEventWithDifferentKeys</span>)<span class="question-mark">?</span>
-			.<span class="ident">ok_or</span>(<span class="ident">Error::ReceivingDhtValueFoundEventWithNoRecords</span>)<span class="question-mark">?</span>;
+	<span class="kw">fn </span>handle_dht_value_found_event(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		values: Vec&lt;(sc_network::KademliaKey, Vec&lt;u8&gt;)&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+		<span class="comment">// Ensure `values` is not empty and all its keys equal.
+		</span><span class="kw">let </span>remote_key = single(values.iter().map(|(key, <span class="kw">_</span>)| key.clone()))
+			.map_err(|<span class="kw">_</span>| Error::ReceivingDhtValueFoundEventWithDifferentKeys)<span class="question-mark">?
+			</span>.ok_or(Error::ReceivingDhtValueFoundEventWithNoRecords)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">authority_id</span>: <span class="ident">AuthorityId</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">in_flight_lookups</span>
-			.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">remote_key</span>)
-			.<span class="ident">ok_or</span>(<span class="ident">Error::ReceivingUnexpectedRecord</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>authority_id: AuthorityId = <span class="self">self
+			</span>.in_flight_lookups
+			.remove(<span class="kw-2">&amp;</span>remote_key)
+			.ok_or(Error::ReceivingUnexpectedRecord)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">local_peer_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">local_peer_id</span>();
+		<span class="kw">let </span>local_peer_id = <span class="self">self</span>.network.local_peer_id();
 
-		<span class="kw">let</span> <span class="ident">remote_addresses</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Multiaddr</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">values</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_k</span>, <span class="ident">v</span>)<span class="op">|</span> {
-				<span class="kw">let</span> <span class="ident">schema::SignedAuthorityRecord</span> { <span class="ident">record</span>, <span class="ident">auth_signature</span>, <span class="ident">peer_signature</span> } <span class="op">=</span>
-					<span class="ident">schema::SignedAuthorityRecord::decode</span>(<span class="ident">v</span>.<span class="ident">as_slice</span>())
-						.<span class="ident">map_err</span>(<span class="ident">Error::DecodingProto</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>remote_addresses: Vec&lt;Multiaddr&gt; = values
+			.into_iter()
+			.map(|(_k, v)| {
+				<span class="kw">let </span>schema::SignedAuthorityRecord { record, auth_signature, peer_signature } =
+					schema::SignedAuthorityRecord::decode(v.as_slice())
+						.map_err(Error::DecodingProto)<span class="question-mark">?</span>;
 
-				<span class="kw">let</span> <span class="ident">auth_signature</span> <span class="op">=</span> <span class="ident">AuthoritySignature::decode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span><span class="ident">auth_signature</span>[..])
-					.<span class="ident">map_err</span>(<span class="ident">Error::EncodingDecodingScale</span>)<span class="question-mark">?</span>;
+				<span class="kw">let </span>auth_signature = AuthoritySignature::decode(<span class="kw-2">&amp;mut &amp;</span>auth_signature[..])
+					.map_err(Error::EncodingDecodingScale)<span class="question-mark">?</span>;
 
-				<span class="kw">if</span> <span class="op">!</span><span class="ident">AuthorityPair::verify</span>(<span class="kw-2">&amp;</span><span class="ident">auth_signature</span>, <span class="kw-2">&amp;</span><span class="ident">record</span>, <span class="kw-2">&amp;</span><span class="ident">authority_id</span>) {
-					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::VerifyingDhtPayload</span>)
+				<span class="kw">if </span>!AuthorityPair::verify(<span class="kw-2">&amp;</span>auth_signature, <span class="kw-2">&amp;</span>record, <span class="kw-2">&amp;</span>authority_id) {
+					<span class="kw">return </span><span class="prelude-val">Err</span>(Error::VerifyingDhtPayload)
 				}
 
-				<span class="kw">let</span> <span class="ident">addresses</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Multiaddr</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">schema::AuthorityRecord::decode</span>(<span class="ident">record</span>.<span class="ident">as_slice</span>())
-					.<span class="ident">map</span>(<span class="op">|</span><span class="ident">a</span><span class="op">|</span> <span class="ident">a</span>.<span class="ident">addresses</span>)
-					.<span class="ident">map_err</span>(<span class="ident">Error::DecodingProto</span>)<span class="question-mark">?</span>
-					.<span class="ident">into_iter</span>()
-					.<span class="ident">map</span>(<span class="op">|</span><span class="ident">a</span><span class="op">|</span> <span class="ident">a</span>.<span class="ident">try_into</span>())
-					.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-					.<span class="ident">map_err</span>(<span class="ident">Error::ParsingMultiaddress</span>)<span class="question-mark">?</span>;
+				<span class="kw">let </span>addresses: Vec&lt;Multiaddr&gt; = schema::AuthorityRecord::decode(record.as_slice())
+					.map(|a| a.addresses)
+					.map_err(Error::DecodingProto)<span class="question-mark">?
+					</span>.into_iter()
+					.map(|a| a.try_into())
+					.collect::&lt;std::result::Result&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()
+					.map_err(Error::ParsingMultiaddress)<span class="question-mark">?</span>;
 
-				<span class="kw">let</span> <span class="ident">get_peer_id</span> <span class="op">=</span> <span class="op">|</span><span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="ident">Multiaddr</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">a</span>.<span class="ident">iter</span>().<span class="ident">last</span>() {
-					<span class="prelude-val">Some</span>(<span class="ident">multiaddr::Protocol::P2p</span>(<span class="ident">key</span>)) =&gt; <span class="ident">PeerId::from_multihash</span>(<span class="ident">key</span>).<span class="ident">ok</span>(),
-					<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+				<span class="kw">let </span>get_peer_id = |a: <span class="kw-2">&amp;</span>Multiaddr| <span class="kw">match </span>a.iter().last() {
+					<span class="prelude-val">Some</span>(multiaddr::Protocol::P2p(key)) =&gt; PeerId::from_multihash(key).ok(),
+					<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 				};
 
-				<span class="comment">// Ignore [`Multiaddr`]s without [`PeerId`] or with own addresses.</span>
-				<span class="kw">let</span> <span class="ident">addresses</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Multiaddr</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">addresses</span>
-					.<span class="ident">into_iter</span>()
-					.<span class="ident">filter</span>(<span class="op">|</span><span class="ident">a</span><span class="op">|</span> <span class="ident">get_peer_id</span>(<span class="ident">a</span>).<span class="ident">filter</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">p</span> <span class="op">!</span><span class="op">=</span> <span class="ident">local_peer_id</span>).<span class="ident">is_some</span>())
-					.<span class="ident">collect</span>();
+				<span class="comment">// Ignore [`Multiaddr`]s without [`PeerId`] or with own addresses.
+				</span><span class="kw">let </span>addresses: Vec&lt;Multiaddr&gt; = addresses
+					.into_iter()
+					.filter(|a| get_peer_id(a).filter(|p| <span class="kw-2">*</span>p != local_peer_id).is_some())
+					.collect();
 
-				<span class="kw">let</span> <span class="ident">remote_peer_id</span> <span class="op">=</span> <span class="ident">single</span>(<span class="ident">addresses</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">get_peer_id</span>))
-					.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::ReceivingDhtValueFoundEventWithDifferentPeerIds</span>)<span class="question-mark">?</span> <span class="comment">// different peer_id in records</span>
-					.<span class="ident">flatten</span>()
-					.<span class="ident">ok_or</span>(<span class="ident">Error::ReceivingDhtValueFoundEventWithNoPeerIds</span>)<span class="question-mark">?</span>; <span class="comment">// no records with peer_id in them</span>
+				<span class="kw">let </span>remote_peer_id = single(addresses.iter().map(get_peer_id))
+					.map_err(|<span class="kw">_</span>| Error::ReceivingDhtValueFoundEventWithDifferentPeerIds)<span class="question-mark">? </span><span class="comment">// different peer_id in records
+					</span>.flatten()
+					.ok_or(Error::ReceivingDhtValueFoundEventWithNoPeerIds)<span class="question-mark">?</span>; <span class="comment">// no records with peer_id in them
 
-				<span class="comment">// At this point we know all the valid multiaddresses from the record, know that</span>
-				<span class="comment">// each of them belong to the same PeerId, we just need to check if the record is</span>
-				<span class="comment">// properly signed by the owner of the PeerId</span>
+				// At this point we know all the valid multiaddresses from the record, know that
+				// each of them belong to the same PeerId, we just need to check if the record is
+				// properly signed by the owner of the PeerId
 
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">peer_signature</span>) <span class="op">=</span> <span class="ident">peer_signature</span> {
-					<span class="kw">let</span> <span class="ident">public_key</span> <span class="op">=</span>
-						<span class="ident">sc_network::PublicKey::from_protobuf_encoding</span>(<span class="kw-2">&amp;</span><span class="ident">peer_signature</span>.<span class="ident">public_key</span>)
-							.<span class="ident">map_err</span>(<span class="ident">Error::ParsingLibp2pIdentity</span>)<span class="question-mark">?</span>;
-					<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span>
-						<span class="ident">sc_network::Signature</span> { <span class="ident">public_key</span>, <span class="ident">bytes</span>: <span class="ident">peer_signature</span>.<span class="ident">signature</span> };
+				</span><span class="kw">if let </span><span class="prelude-val">Some</span>(peer_signature) = peer_signature {
+					<span class="kw">let </span>public_key =
+						sc_network::PublicKey::from_protobuf_encoding(<span class="kw-2">&amp;</span>peer_signature.public_key)
+							.map_err(Error::ParsingLibp2pIdentity)<span class="question-mark">?</span>;
+					<span class="kw">let </span>signature =
+						sc_network::Signature { public_key, bytes: peer_signature.signature };
 
-					<span class="kw">if</span> <span class="op">!</span><span class="ident">signature</span>.<span class="ident">verify</span>(<span class="ident">record</span>, <span class="kw-2">&amp;</span><span class="ident">remote_peer_id</span>) {
-						<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::VerifyingDhtPayload</span>)
+					<span class="kw">if </span>!signature.verify(record, <span class="kw-2">&amp;</span>remote_peer_id) {
+						<span class="kw">return </span><span class="prelude-val">Err</span>(Error::VerifyingDhtPayload)
 					}
-				} <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">strict_record_validation</span> {
-					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::MissingPeerIdSignature</span>)
-				} <span class="kw">else</span> {
+				} <span class="kw">else if </span><span class="self">self</span>.strict_record_validation {
+					<span class="kw">return </span><span class="prelude-val">Err</span>(Error::MissingPeerIdSignature)
+				} <span class="kw">else </span>{
 					<span class="macro">debug!</span>(
-						<span class="ident">target</span>: <span class="ident">LOG_TARGET</span>,
-						<span class="string">&quot;Received unsigned authority discovery record from {}&quot;</span>, <span class="ident">authority_id</span>
+						target: LOG_TARGET,
+						<span class="string">&quot;Received unsigned authority discovery record from {}&quot;</span>, authority_id
 					);
 				}
-				<span class="prelude-val">Ok</span>(<span class="ident">addresses</span>)
+				<span class="prelude-val">Ok</span>(addresses)
 			})
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Multiaddr</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">flatten</span>()
-			.<span class="ident">take</span>(<span class="ident">MAX_ADDRESSES_PER_AUTHORITY</span>)
-			.<span class="ident">collect</span>();
+			.collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Vec&lt;Multiaddr&gt;&gt;&gt;&gt;()<span class="question-mark">?
+			</span>.into_iter()
+			.flatten()
+			.take(MAX_ADDRESSES_PER_AUTHORITY)
+			.collect();
 
-		<span class="kw">if</span> <span class="op">!</span><span class="ident">remote_addresses</span>.<span class="ident">is_empty</span>() {
-			<span class="self">self</span>.<span class="ident">addr_cache</span>.<span class="ident">insert</span>(<span class="ident">authority_id</span>, <span class="ident">remote_addresses</span>);
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">metrics</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">metrics</span> {
-				<span class="ident">metrics</span>
-					.<span class="ident">known_authorities_count</span>
-					.<span class="ident">set</span>(<span class="self">self</span>.<span class="ident">addr_cache</span>.<span class="ident">num_authority_ids</span>().<span class="ident">try_into</span>().<span class="ident">unwrap_or</span>(<span class="ident">std::u64::MAX</span>));
+		<span class="kw">if </span>!remote_addresses.is_empty() {
+			<span class="self">self</span>.addr_cache.insert(authority_id, remote_addresses);
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(metrics) = <span class="kw-2">&amp;</span><span class="self">self</span>.metrics {
+				metrics
+					.known_authorities_count
+					.set(<span class="self">self</span>.addr_cache.num_authority_ids().try_into().unwrap_or(std::u64::MAX));
 			}
 		}
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Retrieve our public keys within the current and next authority set.</span>
-	<span class="comment">// A node might have multiple authority discovery keys within its keystore, e.g. an old one and</span>
-	<span class="comment">// one for the upcoming session. In addition it could be participating in the current and (/ or)</span>
-	<span class="comment">// next authority set with two keys. The function does not return all of the local authority</span>
-	<span class="comment">// discovery public keys, but only the ones intersecting with the current or next authority set.</span>
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_own_public_keys_within_authority_set</span>(
-		<span class="ident">key_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">CryptoStore</span><span class="op">&gt;</span>,
-		<span class="ident">client</span>: <span class="kw-2">&amp;</span><span class="ident">Client</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">AuthorityId</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">local_pub_keys</span> <span class="op">=</span> <span class="ident">key_store</span>
-			.<span class="ident">sr25519_public_keys</span>(<span class="ident">key_types::AUTHORITY_DISCOVERY</span>)
-			.<span class="kw">await</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+	<span class="doccomment">/// Retrieve our public keys within the current and next authority set.
+	</span><span class="comment">// A node might have multiple authority discovery keys within its keystore, e.g. an old one and
+	// one for the upcoming session. In addition it could be participating in the current and (/ or)
+	// next authority set with two keys. The function does not return all of the local authority
+	// discovery public keys, but only the ones intersecting with the current or next authority set.
+	</span><span class="kw">async fn </span>get_own_public_keys_within_authority_set(
+		key_store: Arc&lt;<span class="kw">dyn </span>CryptoStore&gt;,
+		client: <span class="kw-2">&amp;</span>Client,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;HashSet&lt;AuthorityId&gt;&gt; {
+		<span class="kw">let </span>local_pub_keys = key_store
+			.sr25519_public_keys(key_types::AUTHORITY_DISCOVERY)
+			.<span class="kw">await
+			</span>.into_iter()
+			.collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">BlockId::hash</span>(<span class="ident">client</span>.<span class="ident">info</span>().<span class="ident">best_hash</span>);
-		<span class="kw">let</span> <span class="ident">authorities</span> <span class="op">=</span> <span class="ident">client</span>
-			.<span class="ident">runtime_api</span>()
-			.<span class="ident">authorities</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::CallingRuntime</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">map</span>(<span class="ident">Into::into</span>)
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		<span class="kw">let </span>id = BlockId::hash(client.info().best_hash);
+		<span class="kw">let </span>authorities = client
+			.runtime_api()
+			.authorities(<span class="kw-2">&amp;</span>id)
+			.map_err(|e| Error::CallingRuntime(e.into()))<span class="question-mark">?
+			</span>.into_iter()
+			.map(Into::into)
+			.collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="kw">let</span> <span class="ident">intersection</span> <span class="op">=</span>
-			<span class="ident">local_pub_keys</span>.<span class="ident">intersection</span>(<span class="kw-2">&amp;</span><span class="ident">authorities</span>).<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">collect</span>();
+		<span class="kw">let </span>intersection =
+			local_pub_keys.intersection(<span class="kw-2">&amp;</span>authorities).cloned().map(Into::into).collect();
 
-		<span class="prelude-val">Ok</span>(<span class="ident">intersection</span>)
+		<span class="prelude-val">Ok</span>(intersection)
 	}
 }
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">NetworkSigner</span> {
-	<span class="doccomment">/// Sign a message in the name of `self.local_peer_id()`</span>
-	<span class="kw">fn</span> <span class="ident">sign_with_local_identity</span>(
+<span class="kw">pub trait </span>NetworkSigner {
+	<span class="doccomment">/// Sign a message in the name of `self.local_peer_id()`
+	</span><span class="kw">fn </span>sign_with_local_identity(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">msg</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">sc_network::Signature</span>, <span class="ident">sc_network::SigningError</span><span class="op">&gt;</span>;
+		msg: <span class="kw">impl </span>AsRef&lt;[u8]&gt;,
+	) -&gt; std::result::Result&lt;sc_network::Signature, sc_network::SigningError&gt;;
 }
 
-<span class="doccomment">/// NetworkProvider provides [`Worker`] with all necessary hooks into the</span>
-<span class="doccomment">/// underlying Substrate networking. Using this trait abstraction instead of</span>
-<span class="doccomment">/// [`sc_network::NetworkService`] directly is necessary to unit test [`Worker`].</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">NetworkProvider</span>: <span class="ident">NetworkStateInfo</span> <span class="op">+</span> <span class="ident">NetworkSigner</span> {
-	<span class="doccomment">/// Start putting a value in the Dht.</span>
-	<span class="kw">fn</span> <span class="ident">put_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="ident">sc_network::KademliaKey</span>, <span class="ident">value</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>);
+<span class="doccomment">/// NetworkProvider provides [`Worker`] with all necessary hooks into the
+/// underlying Substrate networking. Using this trait abstraction instead of
+/// [`sc_network::NetworkService`] directly is necessary to unit test [`Worker`].
+</span><span class="attribute">#[async_trait]
+</span><span class="kw">pub trait </span>NetworkProvider: NetworkStateInfo + NetworkSigner {
+	<span class="doccomment">/// Start putting a value in the Dht.
+	</span><span class="kw">fn </span>put_value(<span class="kw-2">&amp;</span><span class="self">self</span>, key: sc_network::KademliaKey, value: Vec&lt;u8&gt;);
 
-	<span class="doccomment">/// Start getting a value from the Dht.</span>
-	<span class="kw">fn</span> <span class="ident">get_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">sc_network::KademliaKey</span>);
+	<span class="doccomment">/// Start getting a value from the Dht.
+	</span><span class="kw">fn </span>get_value(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>sc_network::KademliaKey);
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="ident">NetworkSigner</span> <span class="kw">for</span> <span class="ident">sc_network::NetworkService</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">B</span>: <span class="ident">BlockT</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-	<span class="ident">H</span>: <span class="ident">ExHashT</span>,
+<span class="kw">impl</span>&lt;B, H&gt; NetworkSigner <span class="kw">for </span>sc_network::NetworkService&lt;B, H&gt;
+<span class="kw">where
+	</span>B: BlockT + <span class="lifetime">&#39;static</span>,
+	H: ExHashT,
 {
-	<span class="kw">fn</span> <span class="ident">sign_with_local_identity</span>(
+	<span class="kw">fn </span>sign_with_local_identity(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">msg</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">sc_network::Signature</span>, <span class="ident">sc_network::SigningError</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">sign_with_local_identity</span>(<span class="ident">msg</span>)
+		msg: <span class="kw">impl </span>AsRef&lt;[u8]&gt;,
+	) -&gt; std::result::Result&lt;sc_network::Signature, sc_network::SigningError&gt; {
+		<span class="self">self</span>.sign_with_local_identity(msg)
 	}
 }
 
-<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="ident">NetworkProvider</span> <span class="kw">for</span> <span class="ident">sc_network::NetworkService</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">B</span>: <span class="ident">BlockT</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-	<span class="ident">H</span>: <span class="ident">ExHashT</span>,
+<span class="attribute">#[async_trait::async_trait]
+</span><span class="kw">impl</span>&lt;B, H&gt; NetworkProvider <span class="kw">for </span>sc_network::NetworkService&lt;B, H&gt;
+<span class="kw">where
+	</span>B: BlockT + <span class="lifetime">&#39;static</span>,
+	H: ExHashT,
 {
-	<span class="kw">fn</span> <span class="ident">put_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="ident">sc_network::KademliaKey</span>, <span class="ident">value</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) {
-		<span class="self">self</span>.<span class="ident">put_value</span>(<span class="ident">key</span>, <span class="ident">value</span>)
+	<span class="kw">fn </span>put_value(<span class="kw-2">&amp;</span><span class="self">self</span>, key: sc_network::KademliaKey, value: Vec&lt;u8&gt;) {
+		<span class="self">self</span>.put_value(key, value)
 	}
-	<span class="kw">fn</span> <span class="ident">get_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">sc_network::KademliaKey</span>) {
-		<span class="self">self</span>.<span class="ident">get_value</span>(<span class="ident">key</span>)
+	<span class="kw">fn </span>get_value(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>sc_network::KademliaKey) {
+		<span class="self">self</span>.get_value(key)
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">hash_authority_id</span>(<span class="ident">id</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">sc_network::KademliaKey</span> {
-	<span class="ident">sc_network::KademliaKey::new</span>(<span class="kw-2">&amp;</span><span class="ident">libp2p::multihash::Code::Sha2_256</span>.<span class="ident">digest</span>(<span class="ident">id</span>).<span class="ident">digest</span>())
+<span class="kw">fn </span>hash_authority_id(id: <span class="kw-2">&amp;</span>[u8]) -&gt; sc_network::KademliaKey {
+	sc_network::KademliaKey::new(<span class="kw-2">&amp;</span>libp2p::multihash::Code::Sha2_256.digest(id).digest())
 }
 
-<span class="comment">// Makes sure all values are the same and returns it</span>
-<span class="comment">//</span>
-<span class="comment">// Returns Err(_) if not all values are equal. Returns Ok(None) if there are</span>
-<span class="comment">// no values.</span>
-<span class="kw">fn</span> <span class="ident">single</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">values</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, ()<span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">T</span>: <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="comment">// Makes sure all values are the same and returns it
+//
+// Returns Err(_) if not all values are equal. Returns Ok(None) if there are
+// no values.
+</span><span class="kw">fn </span>single&lt;T&gt;(values: <span class="kw">impl </span>IntoIterator&lt;Item = T&gt;) -&gt; std::result::Result&lt;<span class="prelude-ty">Option</span>&lt;T&gt;, ()&gt;
+<span class="kw">where
+	</span>T: PartialEq&lt;T&gt;,
 {
-	<span class="ident">values</span>.<span class="ident">into_iter</span>().<span class="ident">try_fold</span>(<span class="prelude-val">None</span>, <span class="op">|</span><span class="ident">acc</span>, <span class="ident">item</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">acc</span> {
-		<span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">item</span>)),
-		<span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">prev</span>) <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">prev</span> <span class="op">!</span><span class="op">=</span> <span class="ident">item</span> =&gt; <span class="prelude-val">Err</span>(()),
-		<span class="prelude-val">Some</span>(<span class="ident">x</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">x</span>)),
+	values.into_iter().try_fold(<span class="prelude-val">None</span>, |acc, item| <span class="kw">match </span>acc {
+		<span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(item)),
+		<span class="prelude-val">Some</span>(<span class="kw-2">ref </span>prev) <span class="kw">if </span><span class="kw-2">*</span>prev != item =&gt; <span class="prelude-val">Err</span>(()),
+		<span class="prelude-val">Some</span>(x) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(x)),
 	})
 }
 
-<span class="kw">fn</span> <span class="ident">serialize_addresses</span>(<span class="ident">addresses</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Multiaddr</span><span class="op">&gt;</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="ident">addresses</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">a</span><span class="op">|</span> <span class="ident">a</span>.<span class="ident">to_vec</span>()).<span class="ident">collect</span>()
+<span class="kw">fn </span>serialize_addresses(addresses: <span class="kw">impl </span>Iterator&lt;Item = Multiaddr&gt;) -&gt; Vec&lt;Vec&lt;u8&gt;&gt; {
+	addresses.map(|a| a.to_vec()).collect()
 }
 
-<span class="kw">fn</span> <span class="ident">serialize_authority_record</span>(<span class="ident">addresses</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serialized_record</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-	<span class="ident">schema::AuthorityRecord</span> { <span class="ident">addresses</span> }
-		.<span class="ident">encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">serialized_record</span>)
-		.<span class="ident">map_err</span>(<span class="ident">Error::EncodingProto</span>)<span class="question-mark">?</span>;
-	<span class="prelude-val">Ok</span>(<span class="ident">serialized_record</span>)
+<span class="kw">fn </span>serialize_authority_record(addresses: Vec&lt;Vec&lt;u8&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>serialized_record = <span class="macro">vec!</span>[];
+	schema::AuthorityRecord { addresses }
+		.encode(<span class="kw-2">&amp;mut </span>serialized_record)
+		.map_err(Error::EncodingProto)<span class="question-mark">?</span>;
+	<span class="prelude-val">Ok</span>(serialized_record)
 }
 
-<span class="kw">fn</span> <span class="ident">sign_record_with_peer_id</span>(
-	<span class="ident">serialized_record</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	<span class="ident">network</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">NetworkSigner</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">schema::PeerSignature</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">network</span>
-		.<span class="ident">sign_with_local_identity</span>(<span class="ident">serialized_record</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Signing</span>)<span class="question-mark">?</span>;
-	<span class="kw">let</span> <span class="ident">public_key</span> <span class="op">=</span> <span class="ident">signature</span>.<span class="ident">public_key</span>.<span class="ident">to_protobuf_encoding</span>();
-	<span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="ident">signature</span>.<span class="ident">bytes</span>;
-	<span class="prelude-val">Ok</span>(<span class="ident">schema::PeerSignature</span> { <span class="ident">signature</span>, <span class="ident">public_key</span> })
+<span class="kw">fn </span>sign_record_with_peer_id(
+	serialized_record: <span class="kw-2">&amp;</span>[u8],
+	network: <span class="kw-2">&amp;</span><span class="kw">impl </span>NetworkSigner,
+) -&gt; <span class="prelude-ty">Result</span>&lt;schema::PeerSignature&gt; {
+	<span class="kw">let </span>signature = network
+		.sign_with_local_identity(serialized_record)
+		.map_err(|<span class="kw">_</span>| Error::Signing)<span class="question-mark">?</span>;
+	<span class="kw">let </span>public_key = signature.public_key.to_protobuf_encoding();
+	<span class="kw">let </span>signature = signature.bytes;
+	<span class="prelude-val">Ok</span>(schema::PeerSignature { signature, public_key })
 }
 
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">sign_record_with_authority_ids</span>(
-	<span class="ident">serialized_record</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-	<span class="ident">peer_signature</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">schema::PeerSignature</span><span class="op">&gt;</span>,
-	<span class="ident">key_store</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">CryptoStore</span>,
-	<span class="ident">keys</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">CryptoTypePublicPair</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">sc_network::KademliaKey</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="ident">key_store</span>
-		.<span class="ident">sign_with_all</span>(<span class="ident">key_types::AUTHORITY_DISCOVERY</span>, <span class="ident">keys</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="ident">serialized_record</span>)
-		.<span class="kw">await</span>
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Signing</span>)<span class="question-mark">?</span>;
+<span class="kw">async fn </span>sign_record_with_authority_ids(
+	serialized_record: Vec&lt;u8&gt;,
+	peer_signature: <span class="prelude-ty">Option</span>&lt;schema::PeerSignature&gt;,
+	key_store: <span class="kw-2">&amp;</span><span class="kw">dyn </span>CryptoStore,
+	keys: Vec&lt;CryptoTypePublicPair&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(sc_network::KademliaKey, Vec&lt;u8&gt;)&gt;&gt; {
+	<span class="kw">let </span>signatures = key_store
+		.sign_with_all(key_types::AUTHORITY_DISCOVERY, keys.clone(), <span class="kw-2">&amp;</span>serialized_record)
+		.<span class="kw">await
+		</span>.map_err(|<span class="kw">_</span>| Error::Signing)<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-	<span class="kw">for</span> (<span class="ident">sign_result</span>, <span class="ident">key</span>) <span class="kw">in</span> <span class="ident">signatures</span>.<span class="ident">into_iter</span>().<span class="ident">zip</span>(<span class="ident">keys</span>.<span class="ident">iter</span>()) {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signed_record</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+	<span class="kw">let </span><span class="kw-2">mut </span>result = <span class="macro">vec!</span>[];
+	<span class="kw">for </span>(sign_result, key) <span class="kw">in </span>signatures.into_iter().zip(keys.iter()) {
+		<span class="kw">let </span><span class="kw-2">mut </span>signed_record = <span class="macro">vec!</span>[];
 
-		<span class="comment">// Verify that all signatures exist for all provided keys.</span>
-		<span class="kw">let</span> <span class="ident">auth_signature</span> <span class="op">=</span>
-			<span class="ident">sign_result</span>.<span class="ident">ok</span>().<span class="ident">flatten</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::MissingSignature</span>(<span class="ident">key</span>.<span class="ident">clone</span>()))<span class="question-mark">?</span>;
-		<span class="ident">schema::SignedAuthorityRecord</span> {
-			<span class="ident">record</span>: <span class="ident">serialized_record</span>.<span class="ident">clone</span>(),
-			<span class="ident">auth_signature</span>,
-			<span class="ident">peer_signature</span>: <span class="ident">peer_signature</span>.<span class="ident">clone</span>(),
+		<span class="comment">// Verify that all signatures exist for all provided keys.
+		</span><span class="kw">let </span>auth_signature =
+			sign_result.ok().flatten().ok_or_else(|| Error::MissingSignature(key.clone()))<span class="question-mark">?</span>;
+		schema::SignedAuthorityRecord {
+			record: serialized_record.clone(),
+			auth_signature,
+			peer_signature: peer_signature.clone(),
 		}
-		.<span class="ident">encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">signed_record</span>)
-		.<span class="ident">map_err</span>(<span class="ident">Error::EncodingProto</span>)<span class="question-mark">?</span>;
+		.encode(<span class="kw-2">&amp;mut </span>signed_record)
+		.map_err(Error::EncodingProto)<span class="question-mark">?</span>;
 
-		<span class="ident">result</span>.<span class="ident">push</span>((<span class="ident">hash_authority_id</span>(<span class="ident">key</span>.<span class="number">1</span>.<span class="ident">as_ref</span>()), <span class="ident">signed_record</span>));
+		result.push((hash_authority_id(key.<span class="number">1</span>.as_ref()), signed_record));
 	}
 
-	<span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+	<span class="prelude-val">Ok</span>(result)
 }
 
-<span class="doccomment">/// Prometheus metrics for a [`Worker`].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Metrics</span> {
-	<span class="ident">publish</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">U64</span><span class="op">&gt;</span>,
-	<span class="ident">amount_addresses_last_published</span>: <span class="ident">Gauge</span><span class="op">&lt;</span><span class="ident">U64</span><span class="op">&gt;</span>,
-	<span class="ident">requests</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">U64</span><span class="op">&gt;</span>,
-	<span class="ident">requests_pending</span>: <span class="ident">Gauge</span><span class="op">&lt;</span><span class="ident">U64</span><span class="op">&gt;</span>,
-	<span class="ident">dht_event_received</span>: <span class="ident">CounterVec</span><span class="op">&lt;</span><span class="ident">U64</span><span class="op">&gt;</span>,
-	<span class="ident">handle_value_found_event_failure</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">U64</span><span class="op">&gt;</span>,
-	<span class="ident">known_authorities_count</span>: <span class="ident">Gauge</span><span class="op">&lt;</span><span class="ident">U64</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Prometheus metrics for a [`Worker`].
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Metrics {
+	publish: Counter&lt;U64&gt;,
+	amount_addresses_last_published: Gauge&lt;U64&gt;,
+	requests: Counter&lt;U64&gt;,
+	requests_pending: Gauge&lt;U64&gt;,
+	dht_event_received: CounterVec&lt;U64&gt;,
+	handle_value_found_event_failure: Counter&lt;U64&gt;,
+	known_authorities_count: Gauge&lt;U64&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Metrics</span> {
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">register</span>(<span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="ident">prometheus_endpoint::Registry</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-		<span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-			<span class="ident">publish</span>: <span class="ident">register</span>(
-				<span class="ident">Counter::new</span>(
+<span class="kw">impl </span>Metrics {
+	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>register(registry: <span class="kw-2">&amp;</span>prometheus_endpoint::Registry) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+		<span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+			publish: register(
+				Counter::new(
 					<span class="string">&quot;substrate_authority_discovery_times_published_total&quot;</span>,
 					<span class="string">&quot;Number of times authority discovery has published external addresses.&quot;</span>,
 				)<span class="question-mark">?</span>,
-				<span class="ident">registry</span>,
+				registry,
 			)<span class="question-mark">?</span>,
-			<span class="ident">amount_addresses_last_published</span>: <span class="ident">register</span>(
-				<span class="ident">Gauge::new</span>(
+			amount_addresses_last_published: register(
+				Gauge::new(
 					<span class="string">&quot;substrate_authority_discovery_amount_external_addresses_last_published&quot;</span>,
 					<span class="string">&quot;Number of external addresses published when authority discovery last \
 					 published addresses.&quot;</span>,
 				)<span class="question-mark">?</span>,
-				<span class="ident">registry</span>,
+				registry,
 			)<span class="question-mark">?</span>,
-			<span class="ident">requests</span>: <span class="ident">register</span>(
-				<span class="ident">Counter::new</span>(
+			requests: register(
+				Counter::new(
 					<span class="string">&quot;substrate_authority_discovery_authority_addresses_requested_total&quot;</span>,
 					<span class="string">&quot;Number of times authority discovery has requested external addresses of a \
 					 single authority.&quot;</span>,
 				)<span class="question-mark">?</span>,
-				<span class="ident">registry</span>,
+				registry,
 			)<span class="question-mark">?</span>,
-			<span class="ident">requests_pending</span>: <span class="ident">register</span>(
-				<span class="ident">Gauge::new</span>(
+			requests_pending: register(
+				Gauge::new(
 					<span class="string">&quot;substrate_authority_discovery_authority_address_requests_pending&quot;</span>,
 					<span class="string">&quot;Number of pending authority address requests.&quot;</span>,
 				)<span class="question-mark">?</span>,
-				<span class="ident">registry</span>,
+				registry,
 			)<span class="question-mark">?</span>,
-			<span class="ident">dht_event_received</span>: <span class="ident">register</span>(
-				<span class="ident">CounterVec::new</span>(
-					<span class="ident">Opts::new</span>(
+			dht_event_received: register(
+				CounterVec::new(
+					Opts::new(
 						<span class="string">&quot;substrate_authority_discovery_dht_event_received&quot;</span>,
 						<span class="string">&quot;Number of dht events received by authority discovery.&quot;</span>,
 					),
 					<span class="kw-2">&amp;</span>[<span class="string">&quot;name&quot;</span>],
 				)<span class="question-mark">?</span>,
-				<span class="ident">registry</span>,
+				registry,
 			)<span class="question-mark">?</span>,
-			<span class="ident">handle_value_found_event_failure</span>: <span class="ident">register</span>(
-				<span class="ident">Counter::new</span>(
+			handle_value_found_event_failure: register(
+				Counter::new(
 					<span class="string">&quot;substrate_authority_discovery_handle_value_found_event_failure&quot;</span>,
 					<span class="string">&quot;Number of times handling a dht value found event failed.&quot;</span>,
 				)<span class="question-mark">?</span>,
-				<span class="ident">registry</span>,
+				registry,
 			)<span class="question-mark">?</span>,
-			<span class="ident">known_authorities_count</span>: <span class="ident">register</span>(
-				<span class="ident">Gauge::new</span>(
+			known_authorities_count: register(
+				Gauge::new(
 					<span class="string">&quot;substrate_authority_discovery_known_authorities_count&quot;</span>,
 					<span class="string">&quot;Number of authorities known by authority discovery.&quot;</span>,
 				)<span class="question-mark">?</span>,
-				<span class="ident">registry</span>,
+				registry,
 			)<span class="question-mark">?</span>,
 		})
 	}
 }
 
-<span class="comment">// Helper functions for unit testing.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">Client</span>, <span class="ident">Network</span>, <span class="ident">DhtEventStream</span><span class="op">&gt;</span> <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">Client</span>, <span class="ident">Network</span>, <span class="ident">Block</span>, <span class="ident">DhtEventStream</span><span class="op">&gt;</span> {
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">inject_addresses</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">authority</span>: <span class="ident">AuthorityId</span>, <span class="ident">addresses</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Multiaddr</span><span class="op">&gt;</span>) {
-		<span class="self">self</span>.<span class="ident">addr_cache</span>.<span class="ident">insert</span>(<span class="ident">authority</span>, <span class="ident">addresses</span>);
+<span class="comment">// Helper functions for unit testing.
+</span><span class="attribute">#[cfg(test)]
+</span><span class="kw">impl</span>&lt;Block, Client, Network, DhtEventStream&gt; Worker&lt;Client, Network, Block, DhtEventStream&gt; {
+	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>inject_addresses(<span class="kw-2">&amp;mut </span><span class="self">self</span>, authority: AuthorityId, addresses: Vec&lt;Multiaddr&gt;) {
+		<span class="self">self</span>.addr_cache.insert(authority, addresses);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_authority_discovery" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_authority_discovery" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

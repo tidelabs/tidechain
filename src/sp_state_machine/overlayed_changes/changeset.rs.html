@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/state-machine/src/overlayed_changes/changeset.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>changeset.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sp_state_machine/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sp_state_machine/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sp_state_machine/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/state-machine/src/overlayed_changes/changeset.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>changeset.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sp_state_machine/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -833,338 +828,338 @@
 <span id="828">828</span>
 <span id="829">829</span>
 <span id="830">830</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License
 
-<span class="doccomment">//! Houses the code that implements the transactional overlay storage.</span>
+</span><span class="doccomment">//! Houses the code that implements the transactional overlay storage.
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Extrinsics</span>, <span class="ident">StorageKey</span>, <span class="ident">StorageValue</span>};
+</span><span class="kw">use super</span>::{Extrinsics, StorageKey, StorageValue};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident">sp_std::collections::btree_set::BTreeSet</span> <span class="kw">as</span> <span class="ident">Set</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">std::collections::HashSet</span> <span class="kw">as</span> <span class="ident">Set</span>;
+<span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">use </span>sp_std::collections::btree_set::BTreeSet <span class="kw">as </span>Set;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>std::collections::HashSet <span class="kw">as </span>Set;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::warn</span>;
-<span class="kw">use</span> <span class="ident">smallvec::SmallVec</span>;
-<span class="kw">use</span> <span class="ident">sp_std</span>::{
-	<span class="ident">collections</span>::{<span class="ident">btree_map::BTreeMap</span>, <span class="ident">btree_set::BTreeSet</span>},
-	<span class="ident">hash::Hash</span>,
+<span class="kw">use </span><span class="kw">crate</span>::warn;
+<span class="kw">use </span>smallvec::SmallVec;
+<span class="kw">use </span>sp_std::{
+	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+	hash::Hash,
 };
 
-<span class="kw">const</span> <span class="ident">PROOF_OVERLAY_NON_EMPTY</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;\
+<span class="kw">const </span>PROOF_OVERLAY_NON_EMPTY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;\
 	An OverlayValue is always created with at least one transaction and dropped as soon
 	as the last transaction is removed; qed&quot;</span>;
 
-<span class="kw">type</span> <span class="ident">DirtyKeysSets</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SmallVec</span><span class="op">&lt;</span>[<span class="ident">Set</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>; <span class="number">5</span>]<span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">Transactions</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SmallVec</span><span class="op">&lt;</span>[<span class="ident">InnerValue</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>; <span class="number">5</span>]<span class="op">&gt;</span>;
+<span class="kw">type </span>DirtyKeysSets&lt;K&gt; = SmallVec&lt;[Set&lt;K&gt;; <span class="number">5</span>]&gt;;
+<span class="kw">type </span>Transactions&lt;V&gt; = SmallVec&lt;[InnerValue&lt;V&gt;; <span class="number">5</span>]&gt;;
 
-<span class="doccomment">/// Error returned when trying to commit or rollback while no transaction is open or</span>
-<span class="doccomment">/// when the runtime is trying to close a transaction started by the client.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">derive</span>(<span class="ident">PartialEq</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NoOpenTransaction</span>;
+<span class="doccomment">/// Error returned when trying to commit or rollback while no transaction is open or
+/// when the runtime is trying to close a transaction started by the client.
+</span><span class="attribute">#[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
+</span><span class="kw">pub struct </span>NoOpenTransaction;
 
-<span class="doccomment">/// Error when calling `enter_runtime` when already being in runtime execution mode.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">derive</span>(<span class="ident">PartialEq</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AlreadyInRuntime</span>;
+<span class="doccomment">/// Error when calling `enter_runtime` when already being in runtime execution mode.
+</span><span class="attribute">#[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
+</span><span class="kw">pub struct </span>AlreadyInRuntime;
 
-<span class="doccomment">/// Error when calling `exit_runtime` when not being in runtime exection mdde.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">derive</span>(<span class="ident">PartialEq</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NotInRuntime</span>;
+<span class="doccomment">/// Error when calling `exit_runtime` when not being in runtime exection mdde.
+</span><span class="attribute">#[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
+</span><span class="kw">pub struct </span>NotInRuntime;
 
-<span class="doccomment">/// Describes in which mode the node is currently executing.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExecutionMode</span> {
-	<span class="doccomment">/// Exeuting in client mode: Removal of all transactions possible.</span>
-	<span class="ident">Client</span>,
-	<span class="doccomment">/// Executing in runtime mode: Transactions started by the client are protected.</span>
-	<span class="ident">Runtime</span>,
+<span class="doccomment">/// Describes in which mode the node is currently executing.
+</span><span class="attribute">#[derive(Debug, Clone, Copy)]
+</span><span class="kw">pub enum </span>ExecutionMode {
+	<span class="doccomment">/// Exeuting in client mode: Removal of all transactions possible.
+	</span>Client,
+	<span class="doccomment">/// Executing in runtime mode: Transactions started by the client are protected.
+	</span>Runtime,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">derive</span>(<span class="ident">PartialEq</span>))]</span>
-<span class="kw">struct</span> <span class="ident">InnerValue</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Current value. None if value has been deleted.</span>
-	<span class="ident">value</span>: <span class="ident">V</span>,
-	<span class="doccomment">/// The set of extrinsic indices where the values has been changed.</span>
-	<span class="ident">extrinsics</span>: <span class="ident">Extrinsics</span>,
+<span class="attribute">#[derive(Debug, Default, Clone)]
+#[cfg_attr(test, derive(PartialEq))]
+</span><span class="kw">struct </span>InnerValue&lt;V&gt; {
+	<span class="doccomment">/// Current value. None if value has been deleted.
+	</span>value: V,
+	<span class="doccomment">/// The set of extrinsic indices where the values has been changed.
+	</span>extrinsics: Extrinsics,
 }
 
-<span class="doccomment">/// An overlay that contains all versions of a value for a specific key.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">derive</span>(<span class="ident">PartialEq</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// The individual versions of that value.</span>
-	<span class="doccomment">/// One entry per transactions during that the value was actually written.</span>
-	<span class="ident">transactions</span>: <span class="ident">Transactions</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>,
+<span class="doccomment">/// An overlay that contains all versions of a value for a specific key.
+</span><span class="attribute">#[derive(Debug, Clone)]
+#[cfg_attr(test, derive(PartialEq))]
+</span><span class="kw">pub struct </span>OverlayedEntry&lt;V&gt; {
+	<span class="doccomment">/// The individual versions of that value.
+	/// One entry per transactions during that the value was actually written.
+	</span>transactions: Transactions&lt;V&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">transactions</span>: <span class="ident">SmallVec::new</span>() }
+<span class="kw">impl</span>&lt;V&gt; Default <span class="kw">for </span>OverlayedEntry&lt;V&gt; {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ transactions: SmallVec::new() }
 	}
 }
 
-<span class="doccomment">/// History of value, with removal support.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">OverlayedValue</span> <span class="op">=</span> <span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">/// History of value, with removal support.
+</span><span class="kw">pub type </span>OverlayedValue = OverlayedEntry&lt;<span class="prelude-ty">Option</span>&lt;StorageValue&gt;&gt;;
 
-<span class="doccomment">/// Change set for basic key value with extrinsics index recording and removal support.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">OverlayedChangeSet</span> <span class="op">=</span> <span class="ident">OverlayedMap</span><span class="op">&lt;</span><span class="ident">StorageKey</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Change set for basic key value with extrinsics index recording and removal support.
+</span><span class="kw">pub type </span>OverlayedChangeSet = OverlayedMap&lt;StorageKey, <span class="prelude-ty">Option</span>&lt;StorageValue&gt;&gt;;
 
-<span class="doccomment">/// Holds a set of changes with the ability modify them using nested transactions.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OverlayedMap</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Hash</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Stores the changes that this overlay constitutes.</span>
-	<span class="ident">changes</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Stores which keys are dirty per transaction. Needed in order to determine which</span>
-	<span class="doccomment">/// values to merge into the parent transaction on commit. The length of this vector</span>
-	<span class="doccomment">/// therefore determines how many nested transactions are currently open (depth).</span>
-	<span class="ident">dirty_keys</span>: <span class="ident">DirtyKeysSets</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// The number of how many transactions beginning from the first transactions are started</span>
-	<span class="doccomment">/// by the client. Those transactions are protected against close (commit, rollback)</span>
-	<span class="doccomment">/// when in runtime mode.</span>
-	<span class="ident">num_client_transactions</span>: <span class="ident">usize</span>,
-	<span class="doccomment">/// Determines whether the node is using the overlay from the client or the runtime.</span>
-	<span class="ident">execution_mode</span>: <span class="ident">ExecutionMode</span>,
+<span class="doccomment">/// Holds a set of changes with the ability modify them using nested transactions.
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>OverlayedMap&lt;K: Ord + Hash, V&gt; {
+	<span class="doccomment">/// Stores the changes that this overlay constitutes.
+	</span>changes: BTreeMap&lt;K, OverlayedEntry&lt;V&gt;&gt;,
+	<span class="doccomment">/// Stores which keys are dirty per transaction. Needed in order to determine which
+	/// values to merge into the parent transaction on commit. The length of this vector
+	/// therefore determines how many nested transactions are currently open (depth).
+	</span>dirty_keys: DirtyKeysSets&lt;K&gt;,
+	<span class="doccomment">/// The number of how many transactions beginning from the first transactions are started
+	/// by the client. Those transactions are protected against close (commit, rollback)
+	/// when in runtime mode.
+	</span>num_client_transactions: usize,
+	<span class="doccomment">/// Determines whether the node is using the overlay from the client or the runtime.
+	</span>execution_mode: ExecutionMode,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Hash</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">OverlayedMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">changes</span>: <span class="ident">BTreeMap::new</span>(),
-			<span class="ident">dirty_keys</span>: <span class="ident">SmallVec::new</span>(),
-			<span class="ident">num_client_transactions</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">execution_mode</span>: <span class="ident">Default::default</span>(),
+<span class="kw">impl</span>&lt;K: Ord + Hash, V&gt; Default <span class="kw">for </span>OverlayedMap&lt;K, V&gt; {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			changes: BTreeMap::new(),
+			dirty_keys: SmallVec::new(),
+			num_client_transactions: Default::default(),
+			execution_mode: Default::default(),
 		}
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ExecutionMode</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="ident"><span class="self">Self</span>::Client</span>
+<span class="kw">impl </span>Default <span class="kw">for </span>ExecutionMode {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>::Client
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> <span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// The value as seen by the current transaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">value_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">V</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">transactions</span>.<span class="ident">last</span>().<span class="ident">expect</span>(<span class="ident">PROOF_OVERLAY_NON_EMPTY</span>).<span class="ident">value</span>
+<span class="kw">impl</span>&lt;V&gt; OverlayedEntry&lt;V&gt; {
+	<span class="doccomment">/// The value as seen by the current transaction.
+	</span><span class="kw">pub fn </span>value_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>V {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.transactions.last().expect(PROOF_OVERLAY_NON_EMPTY).value
 	}
 
-	<span class="doccomment">/// The value as seen by the current transaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_value</span>(<span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="ident">V</span> {
-		<span class="self">self</span>.<span class="ident">transactions</span>.<span class="ident">pop</span>().<span class="ident">expect</span>(<span class="ident">PROOF_OVERLAY_NON_EMPTY</span>).<span class="ident">value</span>
+	<span class="doccomment">/// The value as seen by the current transaction.
+	</span><span class="kw">pub fn </span>into_value(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; V {
+		<span class="self">self</span>.transactions.pop().expect(PROOF_OVERLAY_NON_EMPTY).value
 	}
 
-	<span class="doccomment">/// Unique list of extrinsic indices which modified the value.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">extrinsics</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">set</span> <span class="op">=</span> <span class="ident">BTreeSet::new</span>();
-		<span class="self">self</span>.<span class="ident">transactions</span>
-			.<span class="ident">iter</span>()
-			.<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">extrinsics</span>.<span class="ident">copy_extrinsics_into</span>(<span class="kw-2">&amp;mut</span> <span class="ident">set</span>));
-		<span class="ident">set</span>
+	<span class="doccomment">/// Unique list of extrinsic indices which modified the value.
+	</span><span class="kw">pub fn </span>extrinsics(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeSet&lt;u32&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>set = BTreeSet::new();
+		<span class="self">self</span>.transactions
+			.iter()
+			.for_each(|t| t.extrinsics.copy_extrinsics_into(<span class="kw-2">&amp;mut </span>set));
+		set
 	}
 
-	<span class="doccomment">/// Mutable reference to the most recent version.</span>
-	<span class="kw">fn</span> <span class="ident">value_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">V</span> {
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">transactions</span>.<span class="ident">last_mut</span>().<span class="ident">expect</span>(<span class="ident">PROOF_OVERLAY_NON_EMPTY</span>).<span class="ident">value</span>
+	<span class="doccomment">/// Mutable reference to the most recent version.
+	</span><span class="kw">fn </span>value_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>V {
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>.transactions.last_mut().expect(PROOF_OVERLAY_NON_EMPTY).value
 	}
 
-	<span class="doccomment">/// Remove the last version and return it.</span>
-	<span class="kw">fn</span> <span class="ident">pop_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">InnerValue</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">transactions</span>.<span class="ident">pop</span>().<span class="ident">expect</span>(<span class="ident">PROOF_OVERLAY_NON_EMPTY</span>)
+	<span class="doccomment">/// Remove the last version and return it.
+	</span><span class="kw">fn </span>pop_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; InnerValue&lt;V&gt; {
+		<span class="self">self</span>.transactions.pop().expect(PROOF_OVERLAY_NON_EMPTY)
 	}
 
-	<span class="doccomment">/// Mutable reference to the set which holds the indices for the **current transaction only**.</span>
-	<span class="kw">fn</span> <span class="ident">transaction_extrinsics_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">Extrinsics</span> {
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">transactions</span>.<span class="ident">last_mut</span>().<span class="ident">expect</span>(<span class="ident">PROOF_OVERLAY_NON_EMPTY</span>).<span class="ident">extrinsics</span>
+	<span class="doccomment">/// Mutable reference to the set which holds the indices for the **current transaction only**.
+	</span><span class="kw">fn </span>transaction_extrinsics_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Extrinsics {
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>.transactions.last_mut().expect(PROOF_OVERLAY_NON_EMPTY).extrinsics
 	}
 
-	<span class="doccomment">/// Writes a new version of a value.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This makes sure that the old version is not overwritten and can be properly</span>
-	<span class="doccomment">/// rolled back when required.</span>
-	<span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">V</span>, <span class="ident">first_write_in_tx</span>: <span class="ident">bool</span>, <span class="ident">at_extrinsic</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) {
-		<span class="kw">if</span> <span class="ident">first_write_in_tx</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">transactions</span>.<span class="ident">is_empty</span>() {
-			<span class="self">self</span>.<span class="ident">transactions</span>.<span class="ident">push</span>(<span class="ident">InnerValue</span> { <span class="ident">value</span>, <span class="ident">extrinsics</span>: <span class="ident">Default::default</span>() });
-		} <span class="kw">else</span> {
-			<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">value_mut</span>() <span class="op">=</span> <span class="ident">value</span>;
+	<span class="doccomment">/// Writes a new version of a value.
+	///
+	/// This makes sure that the old version is not overwritten and can be properly
+	/// rolled back when required.
+	</span><span class="kw">fn </span>set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: V, first_write_in_tx: bool, at_extrinsic: <span class="prelude-ty">Option</span>&lt;u32&gt;) {
+		<span class="kw">if </span>first_write_in_tx || <span class="self">self</span>.transactions.is_empty() {
+			<span class="self">self</span>.transactions.push(InnerValue { value, extrinsics: Default::default() });
+		} <span class="kw">else </span>{
+			<span class="kw-2">*</span><span class="self">self</span>.value_mut() = value;
 		}
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">extrinsic</span>) <span class="op">=</span> <span class="ident">at_extrinsic</span> {
-			<span class="self">self</span>.<span class="ident">transaction_extrinsics_mut</span>().<span class="ident">insert</span>(<span class="ident">extrinsic</span>);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(extrinsic) = at_extrinsic {
+			<span class="self">self</span>.transaction_extrinsics_mut().insert(extrinsic);
 		}
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// The value as seen by the current transaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">StorageValue</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">value_ref</span>().<span class="ident">as_ref</span>()
+<span class="kw">impl </span>OverlayedEntry&lt;<span class="prelude-ty">Option</span>&lt;StorageValue&gt;&gt; {
+	<span class="doccomment">/// The value as seen by the current transaction.
+	</span><span class="kw">pub fn </span>value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>StorageValue&gt; {
+		<span class="self">self</span>.value_ref().as_ref()
 	}
 }
 
-<span class="doccomment">/// Inserts a key into the dirty set.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns true iff we are currently have at least one open transaction and if this</span>
-<span class="doccomment">/// is the first write to the given key that transaction.</span>
-<span class="kw">fn</span> <span class="ident">insert_dirty</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Hash</span><span class="op">&gt;</span>(<span class="ident">set</span>: <span class="kw-2">&amp;mut</span> <span class="ident">DirtyKeysSets</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>, <span class="ident">key</span>: <span class="ident">K</span>) -&gt; <span class="ident">bool</span> {
-	<span class="ident">set</span>.<span class="ident">last_mut</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">dk</span><span class="op">|</span> <span class="ident">dk</span>.<span class="ident">insert</span>(<span class="ident">key</span>)).<span class="ident">unwrap_or_default</span>()
+<span class="doccomment">/// Inserts a key into the dirty set.
+///
+/// Returns true iff we are currently have at least one open transaction and if this
+/// is the first write to the given key that transaction.
+</span><span class="kw">fn </span>insert_dirty&lt;K: Ord + Hash&gt;(set: <span class="kw-2">&amp;mut </span>DirtyKeysSets&lt;K&gt;, key: K) -&gt; bool {
+	set.last_mut().map(|dk| dk.insert(key)).unwrap_or_default()
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Clone</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">OverlayedMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Create a new changeset at the same transaction state but without any contents.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This changeset might be created when there are already open transactions.</span>
-	<span class="doccomment">/// We need to catch up here so that the child is at the same transaction depth.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_child</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="kw">use</span> <span class="ident">sp_std::iter::repeat</span>;
-		<span class="self">Self</span> {
-			<span class="ident">changes</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">dirty_keys</span>: <span class="ident">repeat</span>(<span class="ident">Set::new</span>()).<span class="ident">take</span>(<span class="self">self</span>.<span class="ident">transaction_depth</span>()).<span class="ident">collect</span>(),
-			<span class="ident">num_client_transactions</span>: <span class="self">self</span>.<span class="ident">num_client_transactions</span>,
-			<span class="ident">execution_mode</span>: <span class="self">self</span>.<span class="ident">execution_mode</span>,
+<span class="kw">impl</span>&lt;K: Ord + Hash + Clone, V&gt; OverlayedMap&lt;K, V&gt; {
+	<span class="doccomment">/// Create a new changeset at the same transaction state but without any contents.
+	///
+	/// This changeset might be created when there are already open transactions.
+	/// We need to catch up here so that the child is at the same transaction depth.
+	</span><span class="kw">pub fn </span>spawn_child(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		<span class="kw">use </span>sp_std::iter::repeat;
+		<span class="self">Self </span>{
+			changes: Default::default(),
+			dirty_keys: repeat(Set::new()).take(<span class="self">self</span>.transaction_depth()).collect(),
+			num_client_transactions: <span class="self">self</span>.num_client_transactions,
+			execution_mode: <span class="self">self</span>.execution_mode,
 		}
 	}
 
-	<span class="doccomment">/// True if no changes at all are contained in the change set.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">is_empty</span>()
+	<span class="doccomment">/// True if no changes at all are contained in the change set.
+	</span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="self">self</span>.changes.is_empty()
 	}
 
-	<span class="doccomment">/// Get an optional reference to the value stored for the specified key.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Q</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">K</span>: <span class="ident">sp_std::borrow::Borrow</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>,
-		<span class="ident">Q</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
+	<span class="doccomment">/// Get an optional reference to the value stored for the specified key.
+	</span><span class="kw">pub fn </span>get&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>OverlayedEntry&lt;V&gt;&gt;
+	<span class="kw">where
+		</span>K: sp_std::borrow::Borrow&lt;Q&gt;,
+		Q: Ord + <span class="question-mark">?</span>Sized,
 	{
-		<span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">get</span>(<span class="ident">key</span>)
+		<span class="self">self</span>.changes.get(key)
 	}
 
-	<span class="doccomment">/// Set a new value for the specified key.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Can be rolled back or committed when called inside a transaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">K</span>, <span class="ident">value</span>: <span class="ident">V</span>, <span class="ident">at_extrinsic</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> <span class="ident">overlayed</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">entry</span>(<span class="ident">key</span>.<span class="ident">clone</span>()).<span class="ident">or_default</span>();
-		<span class="ident">overlayed</span>.<span class="ident">set</span>(<span class="ident">value</span>, <span class="ident">insert_dirty</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">dirty_keys</span>, <span class="ident">key</span>), <span class="ident">at_extrinsic</span>);
+	<span class="doccomment">/// Set a new value for the specified key.
+	///
+	/// Can be rolled back or committed when called inside a transaction.
+	</span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K, value: V, at_extrinsic: <span class="prelude-ty">Option</span>&lt;u32&gt;) {
+		<span class="kw">let </span>overlayed = <span class="self">self</span>.changes.entry(key.clone()).or_default();
+		overlayed.set(value, insert_dirty(<span class="kw-2">&amp;mut </span><span class="self">self</span>.dirty_keys, key), at_extrinsic);
 	}
 
-	<span class="doccomment">/// Get a list of all changes as seen by current transaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">changes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">iter</span>()
+	<span class="doccomment">/// Get a list of all changes as seen by current transaction.
+	</span><span class="kw">pub fn </span>changes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>OverlayedEntry&lt;V&gt;)&gt; {
+		<span class="self">self</span>.changes.iter()
 	}
 
-	<span class="doccomment">/// Get a list of all changes as seen by current transaction, consumes</span>
-	<span class="doccomment">/// the overlay.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_changes</span>(<span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">OverlayedEntry</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">into_iter</span>()
+	<span class="doccomment">/// Get a list of all changes as seen by current transaction, consumes
+	/// the overlay.
+	</span><span class="kw">pub fn </span>into_changes(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (K, OverlayedEntry&lt;V&gt;)&gt; {
+		<span class="self">self</span>.changes.into_iter()
 	}
 
-	<span class="doccomment">/// Consume this changeset and return all committed changes.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Panics:</span>
-	<span class="doccomment">/// Panics if there are open transactions: `transaction_depth() &gt; 0`</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">drain_commited</span>(<span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span> {
-		<span class="macro">assert!</span>(<span class="self">self</span>.<span class="ident">transaction_depth</span>() <span class="op">==</span> <span class="number">0</span>, <span class="string">&quot;Drain is not allowed with open transactions.&quot;</span>);
-		<span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="kw-2">mut</span> <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span>, <span class="ident">v</span>.<span class="ident">pop_transaction</span>().<span class="ident">value</span>))
+	<span class="doccomment">/// Consume this changeset and return all committed changes.
+	///
+	/// Panics:
+	/// Panics if there are open transactions: `transaction_depth() &gt; 0`
+	</span><span class="kw">pub fn </span>drain_commited(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (K, V)&gt; {
+		<span class="macro">assert!</span>(<span class="self">self</span>.transaction_depth() == <span class="number">0</span>, <span class="string">&quot;Drain is not allowed with open transactions.&quot;</span>);
+		<span class="self">self</span>.changes.into_iter().map(|(k, <span class="kw-2">mut </span>v)| (k, v.pop_transaction().value))
 	}
 
-	<span class="doccomment">/// Returns the current nesting depth of the transaction stack.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// A value of zero means that no transaction is open and changes are committed on write.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">transaction_depth</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-		<span class="self">self</span>.<span class="ident">dirty_keys</span>.<span class="ident">len</span>()
+	<span class="doccomment">/// Returns the current nesting depth of the transaction stack.
+	///
+	/// A value of zero means that no transaction is open and changes are committed on write.
+	</span><span class="kw">pub fn </span>transaction_depth(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+		<span class="self">self</span>.dirty_keys.len()
 	}
 
-	<span class="doccomment">/// Call this before transfering control to the runtime.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This protects all existing transactions from being removed by the runtime.</span>
-	<span class="doccomment">/// Calling this while already inside the runtime will return an error.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enter_runtime</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">AlreadyInRuntime</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="ident">ExecutionMode::Runtime</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">execution_mode</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AlreadyInRuntime</span>)
+	<span class="doccomment">/// Call this before transfering control to the runtime.
+	///
+	/// This protects all existing transactions from being removed by the runtime.
+	/// Calling this while already inside the runtime will return an error.
+	</span><span class="kw">pub fn </span>enter_runtime(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), AlreadyInRuntime&gt; {
+		<span class="kw">if let </span>ExecutionMode::Runtime = <span class="self">self</span>.execution_mode {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(AlreadyInRuntime)
 		}
-		<span class="self">self</span>.<span class="ident">execution_mode</span> <span class="op">=</span> <span class="ident">ExecutionMode::Runtime</span>;
-		<span class="self">self</span>.<span class="ident">num_client_transactions</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">transaction_depth</span>();
+		<span class="self">self</span>.execution_mode = ExecutionMode::Runtime;
+		<span class="self">self</span>.num_client_transactions = <span class="self">self</span>.transaction_depth();
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Call this when control returns from the runtime.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This commits all dangling transaction left open by the runtime.</span>
-	<span class="doccomment">/// Calling this while already outside the runtime will return an error.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exit_runtime</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">NotInRuntime</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="ident">ExecutionMode::Client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">execution_mode</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">NotInRuntime</span>)
+	<span class="doccomment">/// Call this when control returns from the runtime.
+	///
+	/// This commits all dangling transaction left open by the runtime.
+	/// Calling this while already outside the runtime will return an error.
+	</span><span class="kw">pub fn </span>exit_runtime(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), NotInRuntime&gt; {
+		<span class="kw">if let </span>ExecutionMode::Client = <span class="self">self</span>.execution_mode {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(NotInRuntime)
 		}
-		<span class="self">self</span>.<span class="ident">execution_mode</span> <span class="op">=</span> <span class="ident">ExecutionMode::Client</span>;
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">has_open_runtime_transactions</span>() {
+		<span class="self">self</span>.execution_mode = ExecutionMode::Client;
+		<span class="kw">if </span><span class="self">self</span>.has_open_runtime_transactions() {
 			<span class="macro">warn!</span>(
 				<span class="string">&quot;{} storage transactions are left open by the runtime. Those will be rolled back.&quot;</span>,
-				<span class="self">self</span>.<span class="ident">transaction_depth</span>() <span class="op">-</span> <span class="self">self</span>.<span class="ident">num_client_transactions</span>,
+				<span class="self">self</span>.transaction_depth() - <span class="self">self</span>.num_client_transactions,
 			);
 		}
-		<span class="kw">while</span> <span class="self">self</span>.<span class="ident">has_open_runtime_transactions</span>() {
-			<span class="self">self</span>.<span class="ident">rollback_transaction</span>()
-				.<span class="ident">expect</span>(<span class="string">&quot;The loop condition checks that the transaction depth is &gt; 0; qed&quot;</span>);
+		<span class="kw">while </span><span class="self">self</span>.has_open_runtime_transactions() {
+			<span class="self">self</span>.rollback_transaction()
+				.expect(<span class="string">&quot;The loop condition checks that the transaction depth is &gt; 0; qed&quot;</span>);
 		}
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Start a new nested transaction.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This allows to either commit or roll back all changes that were made while this</span>
-	<span class="doccomment">/// transaction was open. Any transaction must be closed by either `commit_transaction`</span>
-	<span class="doccomment">/// or `rollback_transaction` before this overlay can be converted into storage changes.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Changes made without any open transaction are committed immediately.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">start_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">dirty_keys</span>.<span class="ident">push</span>(<span class="ident">Default::default</span>());
+	<span class="doccomment">/// Start a new nested transaction.
+	///
+	/// This allows to either commit or roll back all changes that were made while this
+	/// transaction was open. Any transaction must be closed by either `commit_transaction`
+	/// or `rollback_transaction` before this overlay can be converted into storage changes.
+	///
+	/// Changes made without any open transaction are committed immediately.
+	</span><span class="kw">pub fn </span>start_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.dirty_keys.push(Default::default());
 	}
 
-	<span class="doccomment">/// Rollback the last transaction started by `start_transaction`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Any changes made during that transaction are discarded. Returns an error if</span>
-	<span class="doccomment">/// there is no open transaction that can be rolled back.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rollback_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">NoOpenTransaction</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">close_transaction</span>(<span class="bool-val">true</span>)
+	<span class="doccomment">/// Rollback the last transaction started by `start_transaction`.
+	///
+	/// Any changes made during that transaction are discarded. Returns an error if
+	/// there is no open transaction that can be rolled back.
+	</span><span class="kw">pub fn </span>rollback_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), NoOpenTransaction&gt; {
+		<span class="self">self</span>.close_transaction(<span class="bool-val">true</span>)
 	}
 
-	<span class="doccomment">/// Commit the last transaction started by `start_transaction`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Any changes made during that transaction are committed. Returns an error if</span>
-	<span class="doccomment">/// there is no open transaction that can be committed.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">commit_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">NoOpenTransaction</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">close_transaction</span>(<span class="bool-val">false</span>)
+	<span class="doccomment">/// Commit the last transaction started by `start_transaction`.
+	///
+	/// Any changes made during that transaction are committed. Returns an error if
+	/// there is no open transaction that can be committed.
+	</span><span class="kw">pub fn </span>commit_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), NoOpenTransaction&gt; {
+		<span class="self">self</span>.close_transaction(<span class="bool-val">false</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">close_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">rollback</span>: <span class="ident">bool</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">NoOpenTransaction</span><span class="op">&gt;</span> {
-		<span class="comment">// runtime is not allowed to close transactions started by the client</span>
-		<span class="kw">if</span> <span class="kw">let</span> <span class="ident">ExecutionMode::Runtime</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">execution_mode</span> {
-			<span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">has_open_runtime_transactions</span>() {
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">NoOpenTransaction</span>)
+	<span class="kw">fn </span>close_transaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rollback: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(), NoOpenTransaction&gt; {
+		<span class="comment">// runtime is not allowed to close transactions started by the client
+		</span><span class="kw">if let </span>ExecutionMode::Runtime = <span class="self">self</span>.execution_mode {
+			<span class="kw">if </span>!<span class="self">self</span>.has_open_runtime_transactions() {
+				<span class="kw">return </span><span class="prelude-val">Err</span>(NoOpenTransaction)
 			}
 		}
 
-		<span class="kw">for</span> <span class="ident">key</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">dirty_keys</span>.<span class="ident">pop</span>().<span class="ident">ok_or</span>(<span class="ident">NoOpenTransaction</span>)<span class="question-mark">?</span> {
-			<span class="kw">let</span> <span class="ident">overlayed</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>).<span class="ident">expect</span>(
+		<span class="kw">for </span>key <span class="kw">in </span><span class="self">self</span>.dirty_keys.pop().ok_or(NoOpenTransaction)<span class="question-mark">? </span>{
+			<span class="kw">let </span>overlayed = <span class="self">self</span>.changes.get_mut(<span class="kw-2">&amp;</span>key).expect(
 				<span class="string">&quot;\
 				A write to an OverlayedValue is recorded in the dirty key set. Before an
 				OverlayedValue is removed, its containing dirty set is removed. This
@@ -1172,31 +1167,31 @@
 			&quot;</span>,
 			);
 
-			<span class="kw">if</span> <span class="ident">rollback</span> {
-				<span class="ident">overlayed</span>.<span class="ident">pop_transaction</span>();
+			<span class="kw">if </span>rollback {
+				overlayed.pop_transaction();
 
-				<span class="comment">// We need to remove the key as an `OverlayValue` with no transactions</span>
-				<span class="comment">// violates its invariant of always having at least one transaction.</span>
-				<span class="kw">if</span> <span class="ident">overlayed</span>.<span class="ident">transactions</span>.<span class="ident">is_empty</span>() {
-					<span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>);
+				<span class="comment">// We need to remove the key as an `OverlayValue` with no transactions
+				// violates its invariant of always having at least one transaction.
+				</span><span class="kw">if </span>overlayed.transactions.is_empty() {
+					<span class="self">self</span>.changes.remove(<span class="kw-2">&amp;</span>key);
 				}
-			} <span class="kw">else</span> {
-				<span class="kw">let</span> <span class="ident">has_predecessor</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dirty_keys</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">dirty_keys</span>.<span class="ident">last_mut</span>() {
-					<span class="comment">// Not the last tx: Did the previous tx write to this key?</span>
-					<span class="op">!</span><span class="ident">dirty_keys</span>.<span class="ident">insert</span>(<span class="ident">key</span>)
-				} <span class="kw">else</span> {
-					<span class="comment">// Last tx: Is there already a value in the committed set?</span>
-					<span class="comment">// Check against one rather than empty because the current tx is still</span>
-					<span class="comment">// in the list as it is popped later in this function.</span>
-					<span class="ident">overlayed</span>.<span class="ident">transactions</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span>
-				};
+			} <span class="kw">else </span>{
+				<span class="kw">let </span>has_predecessor = <span class="kw">if let </span><span class="prelude-val">Some</span>(dirty_keys) = <span class="self">self</span>.dirty_keys.last_mut() {
+					<span class="comment">// Not the last tx: Did the previous tx write to this key?
+					</span>!dirty_keys.insert(key)
+				} <span class="kw">else </span>{
+					<span class="comment">// Last tx: Is there already a value in the committed set?
+					// Check against one rather than empty because the current tx is still
+					// in the list as it is popped later in this function.
+					</span>overlayed.transactions.len() &gt; <span class="number">1
+				</span>};
 
-				<span class="comment">// We only need to merge if there is an pre-existing value. It may be a value from</span>
-				<span class="comment">// the previous transaction or a value committed without any open transaction.</span>
-				<span class="kw">if</span> <span class="ident">has_predecessor</span> {
-					<span class="kw">let</span> <span class="ident">dropped_tx</span> <span class="op">=</span> <span class="ident">overlayed</span>.<span class="ident">pop_transaction</span>();
-					<span class="kw-2">*</span><span class="ident">overlayed</span>.<span class="ident">value_mut</span>() <span class="op">=</span> <span class="ident">dropped_tx</span>.<span class="ident">value</span>;
-					<span class="ident">overlayed</span>.<span class="ident">transaction_extrinsics_mut</span>().<span class="ident">extend</span>(<span class="ident">dropped_tx</span>.<span class="ident">extrinsics</span>);
+				<span class="comment">// We only need to merge if there is an pre-existing value. It may be a value from
+				// the previous transaction or a value committed without any open transaction.
+				</span><span class="kw">if </span>has_predecessor {
+					<span class="kw">let </span>dropped_tx = overlayed.pop_transaction();
+					<span class="kw-2">*</span>overlayed.value_mut() = dropped_tx.value;
+					overlayed.transaction_extrinsics_mut().extend(dropped_tx.extrinsics);
 				}
 			}
 		}
@@ -1204,142 +1199,142 @@
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="kw">fn</span> <span class="ident">has_open_runtime_transactions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">transaction_depth</span>() <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">num_client_transactions</span>
+	<span class="kw">fn </span>has_open_runtime_transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="self">self</span>.transaction_depth() &gt; <span class="self">self</span>.num_client_transactions
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">OverlayedChangeSet</span> {
-	<span class="doccomment">/// Get a mutable reference for a value.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Can be rolled back or committed when called inside a transaction.</span>
-	<span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;A change was registered, so this value MUST be modified.&quot;</span>]</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">modify</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">key</span>: <span class="ident">StorageKey</span>,
-		<span class="ident">init</span>: <span class="kw">impl</span> <span class="ident">Fn</span>() -&gt; <span class="ident">StorageValue</span>,
-		<span class="ident">at_extrinsic</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-	) -&gt; <span class="kw-2">&amp;mut</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StorageValue</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">overlayed</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">entry</span>(<span class="ident">key</span>.<span class="ident">clone</span>()).<span class="ident">or_default</span>();
-		<span class="kw">let</span> <span class="ident">first_write_in_tx</span> <span class="op">=</span> <span class="ident">insert_dirty</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">dirty_keys</span>, <span class="ident">key</span>);
-		<span class="kw">let</span> <span class="ident">clone_into_new_tx</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">tx</span>) <span class="op">=</span> <span class="ident">overlayed</span>.<span class="ident">transactions</span>.<span class="ident">last</span>() {
-			<span class="kw">if</span> <span class="ident">first_write_in_tx</span> {
-				<span class="prelude-val">Some</span>(<span class="ident">tx</span>.<span class="ident">value</span>.<span class="ident">clone</span>())
-			} <span class="kw">else</span> {
-				<span class="prelude-val">None</span>
-			}
-		} <span class="kw">else</span> {
-			<span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(<span class="ident">init</span>()))
+<span class="kw">impl </span>OverlayedChangeSet {
+	<span class="doccomment">/// Get a mutable reference for a value.
+	///
+	/// Can be rolled back or committed when called inside a transaction.
+	</span><span class="attribute">#[must_use = <span class="string">&quot;A change was registered, so this value MUST be modified.&quot;</span>]
+	</span><span class="kw">pub fn </span>modify(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		key: StorageKey,
+		init: <span class="kw">impl </span>Fn() -&gt; StorageValue,
+		at_extrinsic: <span class="prelude-ty">Option</span>&lt;u32&gt;,
+	) -&gt; <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;StorageValue&gt; {
+		<span class="kw">let </span>overlayed = <span class="self">self</span>.changes.entry(key.clone()).or_default();
+		<span class="kw">let </span>first_write_in_tx = insert_dirty(<span class="kw-2">&amp;mut </span><span class="self">self</span>.dirty_keys, key);
+		<span class="kw">let </span>clone_into_new_tx = <span class="kw">if let </span><span class="prelude-val">Some</span>(tx) = overlayed.transactions.last() {
+			<span class="kw">if </span>first_write_in_tx {
+				<span class="prelude-val">Some</span>(tx.value.clone())
+			} <span class="kw">else </span>{
+				<span class="prelude-val">None
+			</span>}
+		} <span class="kw">else </span>{
+			<span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(init()))
 		};
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cloned</span>) <span class="op">=</span> <span class="ident">clone_into_new_tx</span> {
-			<span class="ident">overlayed</span>.<span class="ident">set</span>(<span class="ident">cloned</span>, <span class="ident">first_write_in_tx</span>, <span class="ident">at_extrinsic</span>);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(cloned) = clone_into_new_tx {
+			overlayed.set(cloned, first_write_in_tx, at_extrinsic);
 		}
-		<span class="ident">overlayed</span>.<span class="ident">value_mut</span>()
+		overlayed.value_mut()
 	}
 
-	<span class="doccomment">/// Set all values to deleted which are matched by the predicate.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Can be rolled back or committed when called inside a transaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_where</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">predicate</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span><span class="ident">OverlayedValue</span>) -&gt; <span class="ident">bool</span>,
-		<span class="ident">at_extrinsic</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">u32</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">count</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">val</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">iter_mut</span>().<span class="ident">filter</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> <span class="ident">predicate</span>(<span class="ident">k</span>, <span class="ident">v</span>)) {
-			<span class="kw">if</span> <span class="ident">val</span>.<span class="ident">value_ref</span>().<span class="ident">is_some</span>() {
-				<span class="ident">count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+	<span class="doccomment">/// Set all values to deleted which are matched by the predicate.
+	///
+	/// Can be rolled back or committed when called inside a transaction.
+	</span><span class="kw">pub fn </span>clear_where(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		predicate: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>OverlayedValue) -&gt; bool,
+		at_extrinsic: <span class="prelude-ty">Option</span>&lt;u32&gt;,
+	) -&gt; u32 {
+		<span class="kw">let </span><span class="kw-2">mut </span>count = <span class="number">0</span>;
+		<span class="kw">for </span>(key, val) <span class="kw">in </span><span class="self">self</span>.changes.iter_mut().filter(|(k, v)| predicate(k, v)) {
+			<span class="kw">if </span>val.value_ref().is_some() {
+				count += <span class="number">1</span>;
 			}
-			<span class="ident">val</span>.<span class="ident">set</span>(<span class="prelude-val">None</span>, <span class="ident">insert_dirty</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">dirty_keys</span>, <span class="ident">key</span>.<span class="ident">clone</span>()), <span class="ident">at_extrinsic</span>);
+			val.set(<span class="prelude-val">None</span>, insert_dirty(<span class="kw-2">&amp;mut </span><span class="self">self</span>.dirty_keys, key.clone()), at_extrinsic);
 		}
-		<span class="ident">count</span>
+		count
 	}
 
-	<span class="doccomment">/// Get the iterator over all changes that follow the supplied `key`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">changes_after</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span><span class="ident">OverlayedValue</span>)<span class="op">&gt;</span> {
-		<span class="kw">use</span> <span class="ident">sp_std::ops::Bound</span>;
-		<span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> (<span class="ident">Bound::Excluded</span>(<span class="ident">key</span>), <span class="ident">Bound::Unbounded</span>);
-		<span class="self">self</span>.<span class="ident">changes</span>.<span class="ident">range</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>], <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">range</span>).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span>.<span class="ident">as_slice</span>(), <span class="ident">v</span>))
+	<span class="doccomment">/// Get the iterator over all changes that follow the supplied `key`.
+	</span><span class="kw">pub fn </span>changes_after(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>[u8], <span class="kw-2">&amp;</span>OverlayedValue)&gt; {
+		<span class="kw">use </span>sp_std::ops::Bound;
+		<span class="kw">let </span>range = (Bound::Excluded(key), Bound::Unbounded);
+		<span class="self">self</span>.changes.range::&lt;[u8], <span class="kw">_</span>&gt;(range).map(|(k, v)| (k.as_slice(), v))
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="ident">pretty_assertions::assert_eq</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use </span>pretty_assertions::assert_eq;
 
-	<span class="kw">type</span> <span class="ident">Changes</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>))<span class="op">&gt;</span>;
-	<span class="kw">type</span> <span class="ident">Drained</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]<span class="op">&gt;</span>)<span class="op">&gt;</span>;
+	<span class="kw">type </span>Changes&lt;<span class="lifetime">&#39;a</span>&gt; = Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], (<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;, Vec&lt;u32&gt;))&gt;;
+	<span class="kw">type </span>Drained&lt;<span class="lifetime">&#39;a</span>&gt; = Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt;)&gt;;
 
-	<span class="kw">fn</span> <span class="ident">assert_changes</span>(<span class="ident">is</span>: <span class="kw-2">&amp;</span><span class="ident">OverlayedChangeSet</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span><span class="ident">Changes</span>) {
-		<span class="kw">let</span> <span class="ident">is</span>: <span class="ident">Changes</span> <span class="op">=</span> <span class="ident">is</span>
-			.<span class="ident">changes</span>()
-			.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> {
-				(<span class="ident">k</span>.<span class="ident">as_ref</span>(), (<span class="ident">v</span>.<span class="ident">value</span>().<span class="ident">map</span>(<span class="ident">AsRef::as_ref</span>), <span class="ident">v</span>.<span class="ident">extrinsics</span>().<span class="ident">into_iter</span>().<span class="ident">collect</span>()))
+	<span class="kw">fn </span>assert_changes(is: <span class="kw-2">&amp;</span>OverlayedChangeSet, expected: <span class="kw-2">&amp;</span>Changes) {
+		<span class="kw">let </span>is: Changes = is
+			.changes()
+			.map(|(k, v)| {
+				(k.as_ref(), (v.value().map(AsRef::as_ref), v.extrinsics().into_iter().collect()))
 			})
-			.<span class="ident">collect</span>();
-		<span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="ident">is</span>, <span class="ident">expected</span>);
+			.collect();
+		<span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>is, expected);
 	}
 
-	<span class="kw">fn</span> <span class="ident">assert_drained_changes</span>(<span class="ident">is</span>: <span class="ident">OverlayedChangeSet</span>, <span class="ident">expected</span>: <span class="ident">Changes</span>) {
-		<span class="kw">let</span> <span class="ident">is</span> <span class="op">=</span> <span class="ident">is</span>.<span class="ident">drain_commited</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-		<span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">expected</span>
-			.<span class="ident">iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span>.<span class="ident">to_vec</span>(), <span class="ident">v</span>.<span class="number">0</span>.<span class="ident">map</span>(<span class="ident">From::from</span>)))
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">is</span>, <span class="ident">expected</span>);
+	<span class="kw">fn </span>assert_drained_changes(is: OverlayedChangeSet, expected: Changes) {
+		<span class="kw">let </span>is = is.drain_commited().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+		<span class="kw">let </span>expected = expected
+			.iter()
+			.map(|(k, v)| (k.to_vec(), v.<span class="number">0</span>.map(From::from)))
+			.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+		<span class="macro">assert_eq!</span>(is, expected);
 	}
 
-	<span class="kw">fn</span> <span class="ident">assert_drained</span>(<span class="ident">is</span>: <span class="ident">OverlayedChangeSet</span>, <span class="ident">expected</span>: <span class="ident">Drained</span>) {
-		<span class="kw">let</span> <span class="ident">is</span> <span class="op">=</span> <span class="ident">is</span>.<span class="ident">drain_commited</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-		<span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">expected</span>
-			.<span class="ident">iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">k</span>.<span class="ident">to_vec</span>(), <span class="ident">v</span>.<span class="ident">map</span>(<span class="ident">From::from</span>)))
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">is</span>, <span class="ident">expected</span>);
+	<span class="kw">fn </span>assert_drained(is: OverlayedChangeSet, expected: Drained) {
+		<span class="kw">let </span>is = is.drain_commited().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+		<span class="kw">let </span>expected = expected
+			.iter()
+			.map(|(k, v)| (k.to_vec(), v.map(From::from)))
+			.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+		<span class="macro">assert_eq!</span>(is, expected);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">no_transaction_works</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>no_transaction_works() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">9</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">9</span>));
 
-		<span class="ident">assert_drained</span>(<span class="ident">changeset</span>, <span class="macro">vec!</span>[(<span class="string">b&quot;key0&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>)), (<span class="string">b&quot;key1&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>))]);
+		assert_drained(changeset, <span class="macro">vec!</span>[(<span class="string">b&quot;key0&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>)), (<span class="string">b&quot;key1&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>))]);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">transaction_works</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>transaction_works() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
 
-		<span class="comment">// no transaction: committed on set</span>
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">10</span>));
+		<span class="comment">// no transaction: committed on set
+		</span>changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">10</span>));
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">1</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">1</span>);
 
-		<span class="comment">// we will commit that later</span>
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key42&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">42</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key99&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val99&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">99</span>));
+		<span class="comment">// we will commit that later
+		</span>changeset.set(<span class="string">b&quot;key42&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">42</span>));
+		changeset.set(<span class="string">b&quot;key99&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val99&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">99</span>));
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">2</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">2</span>);
 
-		<span class="comment">// we will roll that back</span>
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key42&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">421</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key7&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val7-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">77</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1000</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key5&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val5-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">None</span>);
+		<span class="comment">// we will roll that back
+		</span>changeset.set(<span class="string">b&quot;key42&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42-rolled&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">421</span>));
+		changeset.set(<span class="string">b&quot;key7&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val7-rolled&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">77</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-rolled&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1000</span>));
+		changeset.set(<span class="string">b&quot;key5&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val5-rolled&quot;</span>.to_vec()), <span class="prelude-val">None</span>);
 
-		<span class="comment">// changes contain all changes not only the commmited ones.</span>
-		<span class="kw">let</span> <span class="ident">all_changes</span>: <span class="ident">Changes</span> <span class="op">=</span> <span class="macro">vec!</span>[
+		<span class="comment">// changes contain all changes not only the commmited ones.
+		</span><span class="kw">let </span>all_changes: Changes = <span class="macro">vec!</span>[
 			(<span class="string">b&quot;key0&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val0-rolled&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">10</span>, <span class="number">1000</span>])),
 			(<span class="string">b&quot;key1&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>])),
 			(<span class="string">b&quot;key42&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val42-rolled&quot;</span>), <span class="macro">vec!</span>[<span class="number">42</span>, <span class="number">421</span>])),
@@ -1347,62 +1342,62 @@
 			(<span class="string">b&quot;key7&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val7-rolled&quot;</span>), <span class="macro">vec!</span>[<span class="number">77</span>])),
 			(<span class="string">b&quot;key99&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val99&quot;</span>), <span class="macro">vec!</span>[<span class="number">99</span>])),
 		];
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">all_changes</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>all_changes);
 
-		<span class="comment">// this should be no-op</span>
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">3</span>);
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">4</span>);
-		<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">3</span>);
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">2</span>);
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">all_changes</span>);
+		<span class="comment">// this should be no-op
+		</span>changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">3</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">4</span>);
+		changeset.rollback_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">3</span>);
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">2</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>all_changes);
 
-		<span class="comment">// roll back our first transactions that actually contains something</span>
-		<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">1</span>);
+		<span class="comment">// roll back our first transactions that actually contains something
+		</span>changeset.rollback_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">1</span>);
 
-		<span class="kw">let</span> <span class="ident">rolled_back</span>: <span class="ident">Changes</span> <span class="op">=</span> <span class="macro">vec!</span>[
+		<span class="kw">let </span>rolled_back: Changes = <span class="macro">vec!</span>[
 			(<span class="string">b&quot;key0&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">10</span>])),
 			(<span class="string">b&quot;key1&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>])),
 			(<span class="string">b&quot;key42&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val42&quot;</span>), <span class="macro">vec!</span>[<span class="number">42</span>])),
 			(<span class="string">b&quot;key99&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val99&quot;</span>), <span class="macro">vec!</span>[<span class="number">99</span>])),
 		];
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">rolled_back</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>rolled_back);
 
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">rolled_back</span>);
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>rolled_back);
 
-		<span class="ident">assert_drained_changes</span>(<span class="ident">changeset</span>, <span class="ident">rolled_back</span>);
+		assert_drained_changes(changeset, rolled_back);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">transaction_commit_then_rollback_works</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>transaction_commit_then_rollback_works() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">10</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">10</span>));
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">1</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">1</span>);
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key42&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">42</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key99&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val99&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">99</span>));
+		changeset.set(<span class="string">b&quot;key42&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">42</span>));
+		changeset.set(<span class="string">b&quot;key99&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val99&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">99</span>));
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">2</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">2</span>);
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key42&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">421</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key7&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val7-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">77</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1000</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key5&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val5-rolled&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">None</span>);
+		changeset.set(<span class="string">b&quot;key42&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val42-rolled&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">421</span>));
+		changeset.set(<span class="string">b&quot;key7&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val7-rolled&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">77</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0-rolled&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1000</span>));
+		changeset.set(<span class="string">b&quot;key5&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val5-rolled&quot;</span>.to_vec()), <span class="prelude-val">None</span>);
 
-		<span class="kw">let</span> <span class="ident">all_changes</span>: <span class="ident">Changes</span> <span class="op">=</span> <span class="macro">vec!</span>[
+		<span class="kw">let </span>all_changes: Changes = <span class="macro">vec!</span>[
 			(<span class="string">b&quot;key0&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val0-rolled&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">10</span>, <span class="number">1000</span>])),
 			(<span class="string">b&quot;key1&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>])),
 			(<span class="string">b&quot;key42&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val42-rolled&quot;</span>), <span class="macro">vec!</span>[<span class="number">42</span>, <span class="number">421</span>])),
@@ -1410,104 +1405,104 @@
 			(<span class="string">b&quot;key7&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val7-rolled&quot;</span>), <span class="macro">vec!</span>[<span class="number">77</span>])),
 			(<span class="string">b&quot;key99&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val99&quot;</span>), <span class="macro">vec!</span>[<span class="number">99</span>])),
 		];
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">all_changes</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>all_changes);
 
-		<span class="comment">// this should be no-op</span>
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">3</span>);
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">4</span>);
-		<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">3</span>);
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">2</span>);
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">all_changes</span>);
+		<span class="comment">// this should be no-op
+		</span>changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">3</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">4</span>);
+		changeset.rollback_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">3</span>);
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">2</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>all_changes);
 
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">1</span>);
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">1</span>);
 
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">all_changes</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>all_changes);
 
-		<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
+		changeset.rollback_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
 
-		<span class="kw">let</span> <span class="ident">rolled_back</span>: <span class="ident">Changes</span> <span class="op">=</span>
+		<span class="kw">let </span>rolled_back: Changes =
 			<span class="macro">vec!</span>[(<span class="string">b&quot;key0&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val0-1&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">10</span>])), (<span class="string">b&quot;key1&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>]))];
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">rolled_back</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>rolled_back);
 
-		<span class="ident">assert_drained_changes</span>(<span class="ident">changeset</span>, <span class="ident">rolled_back</span>);
+		assert_drained_changes(changeset, rolled_back);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">modify_works</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
-		<span class="kw">let</span> <span class="ident">init</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> <span class="string">b&quot;valinit&quot;</span>.<span class="ident">to_vec</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>modify_works() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
+		<span class="kw">let </span>init = || <span class="string">b&quot;valinit&quot;</span>.to_vec();
 
-		<span class="comment">// committed set</span>
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">0</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">changeset</span>.<span class="ident">modify</span>(<span class="string">b&quot;key3&quot;</span>.<span class="ident">to_vec</span>(), <span class="ident">init</span>, <span class="prelude-val">Some</span>(<span class="number">3</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">val</span>, <span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="string">b&quot;valinit&quot;</span>.<span class="ident">to_vec</span>()));
-		<span class="ident">val</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">extend_from_slice</span>(<span class="string">b&quot;-modified&quot;</span>);
+		<span class="comment">// committed set
+		</span>changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">0</span>));
+		changeset.set(<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		<span class="kw">let </span>val = changeset.modify(<span class="string">b&quot;key3&quot;</span>.to_vec(), init, <span class="prelude-val">Some</span>(<span class="number">3</span>));
+		<span class="macro">assert_eq!</span>(val, <span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="string">b&quot;valinit&quot;</span>.to_vec()));
+		val.as_mut().unwrap().extend_from_slice(<span class="string">b&quot;-modified&quot;</span>);
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">1</span>);
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">2</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">1</span>);
+		changeset.start_transaction();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">2</span>);
 
-		<span class="comment">// non existing value -&gt; init value should be returned</span>
-		<span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">changeset</span>.<span class="ident">modify</span>(<span class="string">b&quot;key2&quot;</span>.<span class="ident">to_vec</span>(), <span class="ident">init</span>, <span class="prelude-val">Some</span>(<span class="number">2</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">val</span>, <span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="string">b&quot;valinit&quot;</span>.<span class="ident">to_vec</span>()));
-		<span class="ident">val</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">extend_from_slice</span>(<span class="string">b&quot;-modified&quot;</span>);
+		<span class="comment">// non existing value -&gt; init value should be returned
+		</span><span class="kw">let </span>val = changeset.modify(<span class="string">b&quot;key2&quot;</span>.to_vec(), init, <span class="prelude-val">Some</span>(<span class="number">2</span>));
+		<span class="macro">assert_eq!</span>(val, <span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="string">b&quot;valinit&quot;</span>.to_vec()));
+		val.as_mut().unwrap().extend_from_slice(<span class="string">b&quot;-modified&quot;</span>);
 
-		<span class="comment">// existing value should be returned by modify</span>
-		<span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">changeset</span>.<span class="ident">modify</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="ident">init</span>, <span class="prelude-val">Some</span>(<span class="number">10</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">val</span>, <span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()));
-		<span class="ident">val</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">extend_from_slice</span>(<span class="string">b&quot;-modified&quot;</span>);
+		<span class="comment">// existing value should be returned by modify
+		</span><span class="kw">let </span>val = changeset.modify(<span class="string">b&quot;key0&quot;</span>.to_vec(), init, <span class="prelude-val">Some</span>(<span class="number">10</span>));
+		<span class="macro">assert_eq!</span>(val, <span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()));
+		val.as_mut().unwrap().extend_from_slice(<span class="string">b&quot;-modified&quot;</span>);
 
-		<span class="comment">// should work for deleted keys</span>
-		<span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">changeset</span>.<span class="ident">modify</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="ident">init</span>, <span class="prelude-val">Some</span>(<span class="number">20</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">val</span>, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>);
-		<span class="kw-2">*</span><span class="ident">val</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="string">b&quot;deleted-modified&quot;</span>.<span class="ident">to_vec</span>());
+		<span class="comment">// should work for deleted keys
+		</span><span class="kw">let </span>val = changeset.modify(<span class="string">b&quot;key1&quot;</span>.to_vec(), init, <span class="prelude-val">Some</span>(<span class="number">20</span>));
+		<span class="macro">assert_eq!</span>(val, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>);
+		<span class="kw-2">*</span>val = <span class="prelude-val">Some</span>(<span class="string">b&quot;deleted-modified&quot;</span>.to_vec());
 
-		<span class="kw">let</span> <span class="ident">all_changes</span>: <span class="ident">Changes</span> <span class="op">=</span> <span class="macro">vec!</span>[
+		<span class="kw">let </span>all_changes: Changes = <span class="macro">vec!</span>[
 			(<span class="string">b&quot;key0&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val0-modified&quot;</span>), <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">10</span>])),
 			(<span class="string">b&quot;key1&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;deleted-modified&quot;</span>), <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">20</span>])),
 			(<span class="string">b&quot;key2&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;valinit-modified&quot;</span>), <span class="macro">vec!</span>[<span class="number">2</span>])),
 			(<span class="string">b&quot;key3&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;valinit-modified&quot;</span>), <span class="macro">vec!</span>[<span class="number">3</span>])),
 		];
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">all_changes</span>);
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">1</span>);
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">all_changes</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>all_changes);
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">1</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>all_changes);
 
-		<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
-		<span class="kw">let</span> <span class="ident">rolled_back</span>: <span class="ident">Changes</span> <span class="op">=</span> <span class="macro">vec!</span>[
+		changeset.rollback_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
+		<span class="kw">let </span>rolled_back: Changes = <span class="macro">vec!</span>[
 			(<span class="string">b&quot;key0&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>), <span class="macro">vec!</span>[<span class="number">0</span>])),
 			(<span class="string">b&quot;key1&quot;</span>, (<span class="prelude-val">None</span>, <span class="macro">vec!</span>[<span class="number">1</span>])),
 			(<span class="string">b&quot;key3&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;valinit-modified&quot;</span>), <span class="macro">vec!</span>[<span class="number">3</span>])),
 		];
-		<span class="ident">assert_changes</span>(<span class="kw-2">&amp;</span><span class="ident">changeset</span>, <span class="kw-2">&amp;</span><span class="ident">rolled_back</span>);
-		<span class="ident">assert_drained_changes</span>(<span class="ident">changeset</span>, <span class="ident">rolled_back</span>);
+		assert_changes(<span class="kw-2">&amp;</span>changeset, <span class="kw-2">&amp;</span>rolled_back);
+		assert_drained_changes(changeset, rolled_back);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">clear_works</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>clear_works() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;del1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;delval1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">3</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;del2&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;delval2&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">4</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
+		changeset.set(<span class="string">b&quot;del1&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;delval1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+		changeset.set(<span class="string">b&quot;del2&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;delval2&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">4</span>));
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
+		changeset.start_transaction();
 
-		<span class="ident">changeset</span>.<span class="ident">clear_where</span>(<span class="op">|</span><span class="ident">k</span>, <span class="kw">_</span><span class="op">|</span> <span class="ident">k</span>.<span class="ident">starts_with</span>(<span class="string">b&quot;del&quot;</span>), <span class="prelude-val">Some</span>(<span class="number">5</span>));
+		changeset.clear_where(|k, <span class="kw">_</span>| k.starts_with(<span class="string">b&quot;del&quot;</span>), <span class="prelude-val">Some</span>(<span class="number">5</span>));
 
-		<span class="ident">assert_changes</span>(
-			<span class="kw-2">&amp;</span><span class="ident">changeset</span>,
+		assert_changes(
+			<span class="kw-2">&amp;</span>changeset,
 			<span class="kw-2">&amp;</span><span class="macro">vec!</span>[
 				(<span class="string">b&quot;del1&quot;</span>, (<span class="prelude-val">None</span>, <span class="macro">vec!</span>[<span class="number">3</span>, <span class="number">5</span>])),
 				(<span class="string">b&quot;del2&quot;</span>, (<span class="prelude-val">None</span>, <span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>])),
@@ -1516,10 +1511,10 @@
 			],
 		);
 
-		<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>().<span class="ident">unwrap</span>();
+		changeset.rollback_transaction().unwrap();
 
-		<span class="ident">assert_changes</span>(
-			<span class="kw-2">&amp;</span><span class="ident">changeset</span>,
+		assert_changes(
+			<span class="kw-2">&amp;</span>changeset,
 			<span class="kw-2">&amp;</span><span class="macro">vec!</span>[
 				(<span class="string">b&quot;del1&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;delval1&quot;</span>), <span class="macro">vec!</span>[<span class="number">3</span>])),
 				(<span class="string">b&quot;del2&quot;</span>, (<span class="prelude-val">Some</span>(<span class="string">b&quot;delval2&quot;</span>), <span class="macro">vec!</span>[<span class="number">4</span>])),
@@ -1529,140 +1524,139 @@
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">next_change_works</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>next_change_works() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">0</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key2&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val2&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">0</span>));
+		changeset.set(<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key2&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val2&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
+		changeset.start_transaction();
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key3&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val3&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">3</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key4&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val4&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">4</span>));
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key11&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val11&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">11</span>));
+		changeset.set(<span class="string">b&quot;key3&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val3&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+		changeset.set(<span class="string">b&quot;key4&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val4&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">4</span>));
+		changeset.set(<span class="string">b&quot;key11&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val11&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">11</span>));
 
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key0&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key1&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key0&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key1&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key0&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key0&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val1&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key1&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key11&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key1&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key11&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key1&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val11&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key1&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val11&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key11&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key2&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key11&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key2&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key11&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val2&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key11&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val2&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key2&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key3&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key2&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key3&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key2&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val3&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key2&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val3&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key3&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key4&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key3&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key4&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key3&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val4&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key3&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val4&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key4&quot;</span>).<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key4&quot;</span>).next(), <span class="prelude-val">None</span>);
 
-		<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>().<span class="ident">unwrap</span>();
+		changeset.rollback_transaction().unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key0&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key1&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key0&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key1&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key0&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key0&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val1&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key1&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key2&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key1&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key2&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key1&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val2&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key1&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val2&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key11&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">0</span>, <span class="string">b&quot;key2&quot;</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key11&quot;</span>).next().unwrap().<span class="number">0</span>, <span class="string">b&quot;key2&quot;</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key11&quot;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>().<span class="number">1</span>.<span class="ident">value</span>(),
-			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val2&quot;</span>.<span class="ident">to_vec</span>())
+			changeset.changes_after(<span class="string">b&quot;key11&quot;</span>).next().unwrap().<span class="number">1</span>.value(),
+			<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&quot;val2&quot;</span>.to_vec())
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key2&quot;</span>).<span class="ident">next</span>(), <span class="prelude-val">None</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key3&quot;</span>).<span class="ident">next</span>(), <span class="prelude-val">None</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">changes_after</span>(<span class="string">b&quot;key4&quot;</span>).<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key2&quot;</span>).next(), <span class="prelude-val">None</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key3&quot;</span>).next(), <span class="prelude-val">None</span>);
+		<span class="macro">assert_eq!</span>(changeset.changes_after(<span class="string">b&quot;key4&quot;</span>).next(), <span class="prelude-val">None</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">no_open_tx_commit_errors</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>(), <span class="prelude-val">Err</span>(<span class="ident">NoOpenTransaction</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>no_open_tx_commit_errors() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(changeset.commit_transaction(), <span class="prelude-val">Err</span>(NoOpenTransaction));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">no_open_tx_rollback_errors</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>(), <span class="prelude-val">Err</span>(<span class="ident">NoOpenTransaction</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>no_open_tx_rollback_errors() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(changeset.rollback_transaction(), <span class="prelude-val">Err</span>(NoOpenTransaction));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">unbalanced_transactions_errors</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>(), <span class="prelude-val">Err</span>(<span class="ident">NoOpenTransaction</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>unbalanced_transactions_errors() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		changeset.start_transaction();
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.commit_transaction(), <span class="prelude-val">Err</span>(NoOpenTransaction));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="attribute">#[<span class="ident">should_panic</span>]</span>
-	<span class="kw">fn</span> <span class="ident">drain_with_open_transaction_panics</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">changeset</span>.<span class="ident">drain_commited</span>();
+	<span class="attribute">#[test]
+	#[should_panic]
+	</span><span class="kw">fn </span>drain_with_open_transaction_panics() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		changeset.start_transaction();
+		<span class="kw">let _ </span>= changeset.drain_commited();
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">runtime_cannot_close_client_tx</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="ident">changeset</span>.<span class="ident">enter_runtime</span>().<span class="ident">unwrap</span>();
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>(), <span class="prelude-val">Err</span>(<span class="ident">NoOpenTransaction</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">rollback_transaction</span>(), <span class="prelude-val">Err</span>(<span class="ident">NoOpenTransaction</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>runtime_cannot_close_client_tx() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
+		changeset.start_transaction();
+		changeset.enter_runtime().unwrap();
+		changeset.start_transaction();
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.commit_transaction(), <span class="prelude-val">Err</span>(NoOpenTransaction));
+		<span class="macro">assert_eq!</span>(changeset.rollback_transaction(), <span class="prelude-val">Err</span>(NoOpenTransaction));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">exit_runtime_closes_runtime_tx</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>exit_runtime_closes_runtime_tx() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
 
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
+		changeset.start_transaction();
 
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key0&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		changeset.set(<span class="string">b&quot;key0&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">1</span>));
 
-		<span class="ident">changeset</span>.<span class="ident">enter_runtime</span>().<span class="ident">unwrap</span>();
-		<span class="ident">changeset</span>.<span class="ident">start_transaction</span>();
-		<span class="ident">changeset</span>.<span class="ident">set</span>(<span class="string">b&quot;key1&quot;</span>.<span class="ident">to_vec</span>(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.<span class="ident">to_vec</span>()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
-		<span class="ident">changeset</span>.<span class="ident">exit_runtime</span>().<span class="ident">unwrap</span>();
+		changeset.enter_runtime().unwrap();
+		changeset.start_transaction();
+		changeset.set(<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="prelude-val">Some</span>(<span class="string">b&quot;val1&quot;</span>.to_vec()), <span class="prelude-val">Some</span>(<span class="number">2</span>));
+		changeset.exit_runtime().unwrap();
 
-		<span class="ident">changeset</span>.<span class="ident">commit_transaction</span>().<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">transaction_depth</span>(), <span class="number">0</span>);
+		changeset.commit_transaction().unwrap();
+		<span class="macro">assert_eq!</span>(changeset.transaction_depth(), <span class="number">0</span>);
 
-		<span class="ident">assert_drained</span>(<span class="ident">changeset</span>, <span class="macro">vec!</span>[(<span class="string">b&quot;key0&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>))]);
+		assert_drained(changeset, <span class="macro">vec!</span>[(<span class="string">b&quot;key0&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">b&quot;val0&quot;</span>))]);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">enter_exit_runtime_fails_when_already_in_requested_mode</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changeset</span> <span class="op">=</span> <span class="ident">OverlayedChangeSet::default</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>enter_exit_runtime_fails_when_already_in_requested_mode() {
+		<span class="kw">let </span><span class="kw-2">mut </span>changeset = OverlayedChangeSet::default();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">exit_runtime</span>(), <span class="prelude-val">Err</span>(<span class="ident">NotInRuntime</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">enter_runtime</span>(), <span class="prelude-val">Ok</span>(()));
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">enter_runtime</span>(), <span class="prelude-val">Err</span>(<span class="ident">AlreadyInRuntime</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">exit_runtime</span>(), <span class="prelude-val">Ok</span>(()));
-		<span class="macro">assert_eq!</span>(<span class="ident">changeset</span>.<span class="ident">exit_runtime</span>(), <span class="prelude-val">Err</span>(<span class="ident">NotInRuntime</span>));
+		<span class="macro">assert_eq!</span>(changeset.exit_runtime(), <span class="prelude-val">Err</span>(NotInRuntime));
+		<span class="macro">assert_eq!</span>(changeset.enter_runtime(), <span class="prelude-val">Ok</span>(()));
+		<span class="macro">assert_eq!</span>(changeset.enter_runtime(), <span class="prelude-val">Err</span>(AlreadyInRuntime));
+		<span class="macro">assert_eq!</span>(changeset.exit_runtime(), <span class="prelude-val">Ok</span>(()));
+		<span class="macro">assert_eq!</span>(changeset.exit_runtime(), <span class="prelude-val">Err</span>(NotInRuntime));
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sp_state_machine" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sp_state_machine" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

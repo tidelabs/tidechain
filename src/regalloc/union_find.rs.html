@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/regalloc-0.0.34/src/union_find.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>union_find.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../regalloc/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../regalloc/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../regalloc/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/regalloc-0.0.34/src/union_find.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>union_find.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../regalloc/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -752,755 +747,754 @@
 <span id="747">747</span>
 <span id="748">748</span>
 <span id="749">749</span>
-</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_snake_case</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
+</pre><pre class="rust"><code><span class="attribute">#![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
 
-<span class="doccomment">//! An implementation of a fast union-find implementation for &quot;T: ToFromU32&quot; items</span>
-<span class="doccomment">//! in some dense range [0, N-1].</span>
+</span><span class="doccomment">//! An implementation of a fast union-find implementation for &quot;T: ToFromU32&quot; items
+//! in some dense range [0, N-1].
 
-<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
+</span><span class="kw">use </span>std::marker::PhantomData;
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">// ToFromU32</span>
+<span class="comment">//=============================================================================
+// ToFromU32
 
-<span class="comment">// First, we need this.  You can store anything you like in this union-find</span>
-<span class="comment">// mechanism, so long as it is really a u32.  Reminds me of that old joke</span>
-<span class="comment">// about the Model T Ford being available in any colour you want, so long as</span>
-<span class="comment">// it is black.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ToFromU32</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Sized</span> <span class="op">=</span> <span class="self">Self</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">to_u32</span>(<span class="ident">x</span>: <span class="self">Self</span>) -&gt; <span class="ident">u32</span>;
-    <span class="kw">fn</span> <span class="ident">from_u32</span>(<span class="ident">x</span>: <span class="ident">u32</span>) -&gt; <span class="self">Self</span>;
+// First, we need this.  You can store anything you like in this union-find
+// mechanism, so long as it is really a u32.  Reminds me of that old joke
+// about the Model T Ford being available in any colour you want, so long as
+// it is black.
+</span><span class="kw">pub trait </span>ToFromU32&lt;T: Sized = <span class="self">Self</span>&gt; {
+    <span class="kw">fn </span>to_u32(x: <span class="self">Self</span>) -&gt; u32;
+    <span class="kw">fn </span>from_u32(x: u32) -&gt; <span class="self">Self</span>;
 }
-<span class="comment">//impl ToFromU32 for i32 {</span>
-<span class="comment">//  fn to_u32(x: i32) -&gt; u32 {</span>
-<span class="comment">//    x as u32</span>
-<span class="comment">//  }</span>
-<span class="comment">//  fn from_u32(x: u32) -&gt; i32 {</span>
-<span class="comment">//    x as i32</span>
-<span class="comment">//  }</span>
-<span class="comment">//}</span>
-<span class="kw">impl</span> <span class="ident">ToFromU32</span> <span class="kw">for</span> <span class="ident">u32</span> {
-    <span class="kw">fn</span> <span class="ident">to_u32</span>(<span class="ident">x</span>: <span class="ident">u32</span>) -&gt; <span class="ident">u32</span> {
-        <span class="ident">x</span>
+<span class="comment">//impl ToFromU32 for i32 {
+//  fn to_u32(x: i32) -&gt; u32 {
+//    x as u32
+//  }
+//  fn from_u32(x: u32) -&gt; i32 {
+//    x as i32
+//  }
+//}
+</span><span class="kw">impl </span>ToFromU32 <span class="kw">for </span>u32 {
+    <span class="kw">fn </span>to_u32(x: u32) -&gt; u32 {
+        x
     }
-    <span class="kw">fn</span> <span class="ident">from_u32</span>(<span class="ident">x</span>: <span class="ident">u32</span>) -&gt; <span class="ident">u32</span> {
-        <span class="ident">x</span>
+    <span class="kw">fn </span>from_u32(x: u32) -&gt; u32 {
+        x
     }
 }
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">// UnionFind</span>
+<span class="comment">//=============================================================================
+// UnionFind
 
-<span class="comment">// This is a fast union-find implementation for &quot;T: ToFromU32&quot; items in some</span>
-<span class="comment">// dense range [0, N-1].  The allowed operations are:</span>
-<span class="comment">//</span>
-<span class="comment">// (1) create a new `UnionFind`er</span>
-<span class="comment">//</span>
-<span class="comment">// (2) mark two elements as being in the same equivalence class</span>
-<span class="comment">//</span>
-<span class="comment">// (3) get the equivalence classes wrapped up in an opaque structure</span>
-<span class="comment">//     `UnionFindEquivClasses`, which makes it possible to cheaply find and</span>
-<span class="comment">//     iterate through the equivalence class of any item.</span>
-<span class="comment">//</span>
-<span class="comment">// (4) get an iterator over the &quot;equivalence class leaders&quot;.  Iterating this</span>
-<span class="comment">//     produces one value from each equivalence class.  By presenting each of</span>
-<span class="comment">//     these to (3), it is possible to enumerate all the equivalence classes</span>
-<span class="comment">//     exactly once.</span>
-<span class="comment">//</span>
-<span class="comment">// `UnionFind` and the operations `union` and `find` are loosely based on the</span>
-<span class="comment">// discussion in Chapter 8 of &quot;Data Structures and Algorithm Analysis in C&quot;</span>
-<span class="comment">// (Mark Allen Weiss, 1993).  `UnionFindEquivClasses` and the algorithm to</span>
-<span class="comment">// construct it is home-grown; although I&#39;m sure the same idea has been</span>
-<span class="comment">// implemented many times before.</span>
+// This is a fast union-find implementation for &quot;T: ToFromU32&quot; items in some
+// dense range [0, N-1].  The allowed operations are:
+//
+// (1) create a new `UnionFind`er
+//
+// (2) mark two elements as being in the same equivalence class
+//
+// (3) get the equivalence classes wrapped up in an opaque structure
+//     `UnionFindEquivClasses`, which makes it possible to cheaply find and
+//     iterate through the equivalence class of any item.
+//
+// (4) get an iterator over the &quot;equivalence class leaders&quot;.  Iterating this
+//     produces one value from each equivalence class.  By presenting each of
+//     these to (3), it is possible to enumerate all the equivalence classes
+//     exactly once.
+//
+// `UnionFind` and the operations `union` and `find` are loosely based on the
+// discussion in Chapter 8 of &quot;Data Structures and Algorithm Analysis in C&quot;
+// (Mark Allen Weiss, 1993).  `UnionFindEquivClasses` and the algorithm to
+// construct it is home-grown; although I&#39;m sure the same idea has been
+// implemented many times before.
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnionFind</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> {
-    <span class="comment">// These are the trees that we are building.  A value that is negative means</span>
-    <span class="comment">// that this node is a tree root, and the negation of its value is the size</span>
-    <span class="comment">// of the tree.  A value that is positive (which must be in the range [0,</span>
-    <span class="comment">// N-1]) indicates that this tree is a subtree and that its parent has the</span>
-    <span class="comment">// given index.</span>
-    <span class="comment">//</span>
-    <span class="comment">// One consequence of this representation is that at most 2^31-1 values can</span>
-    <span class="comment">// be supported.  Doesn&#39;t seem like much of a limitation in practice, given</span>
-    <span class="comment">// that all of this allocator&#39;s data structures are limited to 2^32 entries.</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">parent_or_size</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>,
+</span><span class="kw">pub struct </span>UnionFind&lt;T: ToFromU32&gt; {
+    <span class="comment">// These are the trees that we are building.  A value that is negative means
+    // that this node is a tree root, and the negation of its value is the size
+    // of the tree.  A value that is positive (which must be in the range [0,
+    // N-1]) indicates that this tree is a subtree and that its parent has the
+    // given index.
+    //
+    // One consequence of this representation is that at most 2^31-1 values can
+    // be supported.  Doesn&#39;t seem like much of a limitation in practice, given
+    // that all of this allocator&#39;s data structures are limited to 2^32 entries.
+    /*priv*/
+    </span>parent_or_size: Vec&lt;i32&gt;,
 
-    <span class="comment">// Keep the typechecker happy</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">anchor</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+    <span class="comment">// Keep the typechecker happy
+    /*priv*/
+    </span>anchor: PhantomData&lt;T&gt;,
 }
 
-<span class="comment">/*priv*/</span>
-<span class="kw">const</span> <span class="ident">UF_MAX_SIZE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0x7FFF_FFF0</span>;
+<span class="comment">/*priv*/
+</span><span class="kw">const </span>UF_MAX_SIZE: u32 = <span class="number">0x7FFF_FFF0</span>;
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> <span class="ident">UnionFind</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="comment">// Test a slightly conservative limit to avoid any off-by-one errors.</span>
-        <span class="kw">if</span> <span class="ident">size</span> <span class="op">&gt;</span> <span class="ident">UF_MAX_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span> {
+<span class="kw">impl</span>&lt;T: ToFromU32&gt; UnionFind&lt;T&gt; {
+    <span class="kw">pub fn </span>new(size: usize) -&gt; <span class="self">Self </span>{
+        <span class="comment">// Test a slightly conservative limit to avoid any off-by-one errors.
+        </span><span class="kw">if </span>size &gt; UF_MAX_SIZE <span class="kw">as </span>usize {
             <span class="macro">panic!</span>(<span class="string">&quot;UnionFind::new: too many elements; max = 2^31 - 16.&quot;</span>);
         }
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">parent_or_size</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span><span class="ident">::new</span>();
-        <span class="ident">parent_or_size</span>.<span class="ident">resize</span>(<span class="ident">size</span>, <span class="op">-</span><span class="number">1</span>);
-        <span class="self">Self</span> {
-            <span class="ident">parent_or_size</span>,
-            <span class="ident">anchor</span>: <span class="ident">PhantomData</span>,
+        <span class="kw">let </span><span class="kw-2">mut </span>parent_or_size = Vec::&lt;i32&gt;::new();
+        parent_or_size.resize(size, -<span class="number">1</span>);
+        <span class="self">Self </span>{
+            parent_or_size,
+            anchor: PhantomData,
         }
     }
 
-    <span class="comment">// Find, with path compression.  Returns the index of tree root for the</span>
-    <span class="comment">// given element.  This is not for external use.  There&#39;s no boundary</span>
-    <span class="comment">// checking since Rust will do that anyway.</span>
-    <span class="comment">//</span>
-    <span class="comment">// This was initially implemented using a recursive function.  However,</span>
-    <span class="comment">// this function gets called a lot, and the recursion led to significant</span>
-    <span class="comment">// expense.  Attempts to replace the recursion with an explicit stack</span>
-    <span class="comment">// didn&#39;t give much speedup.  Hence the following scheme, which retains</span>
-    <span class="comment">// the recursion but unrolls the function.  To avoid performance problems</span>
-    <span class="comment">// caused by the interaction of inlining and recursion, it is split into</span>
-    <span class="comment">// two functions: `find` and `find_slow`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// This is the main function.  It is hot, so it is unrolled 4 times.  If</span>
-    <span class="comment">// those 4 iterations don&#39;t complete the traversal back to the root, it</span>
-    <span class="comment">// calls onwards to `find_slow`, which recurses.  The idea is that `find`</span>
-    <span class="comment">// handles the majority of the cases and can always be inlined, and we</span>
-    <span class="comment">// hand off the remaining cases to `find_slow` which will never be inlined</span>
-    <span class="comment">// (and hence will not interfere with the inlining of this function).</span>
-    <span class="comment">//</span>
-    <span class="comment">// As a reminder of the comments above:</span>
-    <span class="comment">//</span>
-    <span class="comment">// * A `parent_or_size` value that is negative means that this node is a</span>
-    <span class="comment">//   tree root.</span>
-    <span class="comment">//</span>
-    <span class="comment">// * A `parent_or_size` that is non-negative indicates that this tree is a</span>
-    <span class="comment">//   subtree, and its parent has the given index in `parent_or_size`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">find</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">elem0</span>: <span class="ident">u32</span>) -&gt; <span class="ident">u32</span> {
-        <span class="comment">// Handle up to 4 steps up the tree in-line.</span>
-        <span class="kw">let</span> <span class="ident">elem0_parent_or_size</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">if</span> <span class="ident">elem0_parent_or_size</span> <span class="op">&lt;</span> <span class="number">0</span> {
-            <span class="comment">// We&#39;re at a tree root.</span>
-            <span class="kw">return</span> <span class="ident">elem0</span>;
+    <span class="comment">// Find, with path compression.  Returns the index of tree root for the
+    // given element.  This is not for external use.  There&#39;s no boundary
+    // checking since Rust will do that anyway.
+    //
+    // This was initially implemented using a recursive function.  However,
+    // this function gets called a lot, and the recursion led to significant
+    // expense.  Attempts to replace the recursion with an explicit stack
+    // didn&#39;t give much speedup.  Hence the following scheme, which retains
+    // the recursion but unrolls the function.  To avoid performance problems
+    // caused by the interaction of inlining and recursion, it is split into
+    // two functions: `find` and `find_slow`.
+    //
+    // This is the main function.  It is hot, so it is unrolled 4 times.  If
+    // those 4 iterations don&#39;t complete the traversal back to the root, it
+    // calls onwards to `find_slow`, which recurses.  The idea is that `find`
+    // handles the majority of the cases and can always be inlined, and we
+    // hand off the remaining cases to `find_slow` which will never be inlined
+    // (and hence will not interfere with the inlining of this function).
+    //
+    // As a reminder of the comments above:
+    //
+    // * A `parent_or_size` value that is negative means that this node is a
+    //   tree root.
+    //
+    // * A `parent_or_size` that is non-negative indicates that this tree is a
+    //   subtree, and its parent has the given index in `parent_or_size`.
+    </span><span class="attribute">#[inline(always)]
+    </span><span class="kw">fn </span>find(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elem0: u32) -&gt; u32 {
+        <span class="comment">// Handle up to 4 steps up the tree in-line.
+        </span><span class="kw">let </span>elem0_parent_or_size: i32 = <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize];
+        <span class="kw">if </span>elem0_parent_or_size &lt; <span class="number">0 </span>{
+            <span class="comment">// We&#39;re at a tree root.
+            </span><span class="kw">return </span>elem0;
         }
 
-        <span class="kw">let</span> <span class="ident">elem1</span> <span class="op">=</span> <span class="ident">elem0_parent_or_size</span> <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="ident">elem1_parent_or_size</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">if</span> <span class="ident">elem1_parent_or_size</span> <span class="op">&lt;</span> <span class="number">0</span> {
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="kw">return</span> <span class="ident">elem1</span>;
+        <span class="kw">let </span>elem1 = elem0_parent_or_size <span class="kw">as </span>u32;
+        <span class="kw">let </span>elem1_parent_or_size: i32 = <span class="self">self</span>.parent_or_size[elem1 <span class="kw">as </span>usize];
+        <span class="kw">if </span>elem1_parent_or_size &lt; <span class="number">0 </span>{
+            <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize] = elem1 <span class="kw">as </span>i32;
+            <span class="kw">return </span>elem1;
         }
 
-        <span class="kw">let</span> <span class="ident">elem2</span> <span class="op">=</span> <span class="ident">elem1_parent_or_size</span> <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="ident">elem2_parent_or_size</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem2</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">if</span> <span class="ident">elem2_parent_or_size</span> <span class="op">&lt;</span> <span class="number">0</span> {
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">elem2</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">elem2</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="kw">return</span> <span class="ident">elem2</span>;
+        <span class="kw">let </span>elem2 = elem1_parent_or_size <span class="kw">as </span>u32;
+        <span class="kw">let </span>elem2_parent_or_size: i32 = <span class="self">self</span>.parent_or_size[elem2 <span class="kw">as </span>usize];
+        <span class="kw">if </span>elem2_parent_or_size &lt; <span class="number">0 </span>{
+            <span class="self">self</span>.parent_or_size[elem1 <span class="kw">as </span>usize] = elem2 <span class="kw">as </span>i32;
+            <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize] = elem2 <span class="kw">as </span>i32;
+            <span class="kw">return </span>elem2;
         }
 
-        <span class="kw">let</span> <span class="ident">elem3</span> <span class="op">=</span> <span class="ident">elem2_parent_or_size</span> <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="ident">elem3_parent_or_size</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem3</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">if</span> <span class="ident">elem3_parent_or_size</span> <span class="op">&lt;</span> <span class="number">0</span> {
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem2</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">elem3</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">elem3</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">elem3</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="kw">return</span> <span class="ident">elem3</span>;
+        <span class="kw">let </span>elem3 = elem2_parent_or_size <span class="kw">as </span>u32;
+        <span class="kw">let </span>elem3_parent_or_size: i32 = <span class="self">self</span>.parent_or_size[elem3 <span class="kw">as </span>usize];
+        <span class="kw">if </span>elem3_parent_or_size &lt; <span class="number">0 </span>{
+            <span class="self">self</span>.parent_or_size[elem2 <span class="kw">as </span>usize] = elem3 <span class="kw">as </span>i32;
+            <span class="self">self</span>.parent_or_size[elem1 <span class="kw">as </span>usize] = elem3 <span class="kw">as </span>i32;
+            <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize] = elem3 <span class="kw">as </span>i32;
+            <span class="kw">return </span>elem3;
         }
 
-        <span class="comment">// Hand off to `find_slow` to deal with all the remaining steps.</span>
-        <span class="kw">let</span> <span class="ident">elem4</span> <span class="op">=</span> <span class="ident">elem3_parent_or_size</span> <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="ident">root</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">find_slow</span>(<span class="ident">elem4</span>);
-        <span class="macro">assert!</span>(<span class="ident">root</span> <span class="op">&lt;</span> <span class="ident">UF_MAX_SIZE</span>);
-        <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem3</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root</span> <span class="kw">as</span> <span class="ident">i32</span>;
-        <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem2</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root</span> <span class="kw">as</span> <span class="ident">i32</span>;
-        <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root</span> <span class="kw">as</span> <span class="ident">i32</span>;
-        <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root</span> <span class="kw">as</span> <span class="ident">i32</span>;
-        <span class="kw">return</span> <span class="ident">root</span>;
+        <span class="comment">// Hand off to `find_slow` to deal with all the remaining steps.
+        </span><span class="kw">let </span>elem4 = elem3_parent_or_size <span class="kw">as </span>u32;
+        <span class="kw">let </span>root = <span class="self">self</span>.find_slow(elem4);
+        <span class="macro">assert!</span>(root &lt; UF_MAX_SIZE);
+        <span class="self">self</span>.parent_or_size[elem3 <span class="kw">as </span>usize] = root <span class="kw">as </span>i32;
+        <span class="self">self</span>.parent_or_size[elem2 <span class="kw">as </span>usize] = root <span class="kw">as </span>i32;
+        <span class="self">self</span>.parent_or_size[elem1 <span class="kw">as </span>usize] = root <span class="kw">as </span>i32;
+        <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize] = root <span class="kw">as </span>i32;
+        <span class="kw">return </span>root;
     }
 
-    <span class="comment">// This is the same as `find`, except with unroll factor of 2 rather than</span>
-    <span class="comment">// 4, and self-recursive.  Don&#39;t call it directly.  It is intended only as</span>
-    <span class="comment">// a fallback for `find`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">find_slow</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">elem0</span>: <span class="ident">u32</span>) -&gt; <span class="ident">u32</span> {
-        <span class="comment">// Recurse up to the root.  On the way back out, make all nodes point</span>
-        <span class="comment">// directly at the root index.</span>
+    <span class="comment">// This is the same as `find`, except with unroll factor of 2 rather than
+    // 4, and self-recursive.  Don&#39;t call it directly.  It is intended only as
+    // a fallback for `find`.
+    </span><span class="attribute">#[inline(never)]
+    </span><span class="kw">fn </span>find_slow(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elem0: u32) -&gt; u32 {
+        <span class="comment">// Recurse up to the root.  On the way back out, make all nodes point
+        // directly at the root index.
 
-        <span class="kw">let</span> <span class="ident">elem0_parent_or_size</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">if</span> <span class="ident">elem0_parent_or_size</span> <span class="op">&lt;</span> <span class="number">0</span> {
-            <span class="comment">// We&#39;re at a tree root.</span>
-            <span class="kw">return</span> <span class="ident">elem0</span>;
+        </span><span class="kw">let </span>elem0_parent_or_size: i32 = <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize];
+        <span class="kw">if </span>elem0_parent_or_size &lt; <span class="number">0 </span>{
+            <span class="comment">// We&#39;re at a tree root.
+            </span><span class="kw">return </span>elem0;
         }
 
-        <span class="kw">let</span> <span class="ident">elem1</span> <span class="op">=</span> <span class="ident">elem0_parent_or_size</span> <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="ident">elem1_parent_or_size</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">if</span> <span class="ident">elem1_parent_or_size</span> <span class="op">&lt;</span> <span class="number">0</span> {
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="kw">return</span> <span class="ident">elem1</span>;
+        <span class="kw">let </span>elem1 = elem0_parent_or_size <span class="kw">as </span>u32;
+        <span class="kw">let </span>elem1_parent_or_size: i32 = <span class="self">self</span>.parent_or_size[elem1 <span class="kw">as </span>usize];
+        <span class="kw">if </span>elem1_parent_or_size &lt; <span class="number">0 </span>{
+            <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize] = elem1 <span class="kw">as </span>i32;
+            <span class="kw">return </span>elem1;
         }
 
-        <span class="kw">let</span> <span class="ident">elem2</span> <span class="op">=</span> <span class="ident">elem1_parent_or_size</span> <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="ident">root</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">find_slow</span>(<span class="ident">elem2</span>);
-        <span class="macro">assert!</span>(<span class="ident">root</span> <span class="op">&lt;</span> <span class="ident">UF_MAX_SIZE</span>);
-        <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem1</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root</span> <span class="kw">as</span> <span class="ident">i32</span>;
-        <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">elem0</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root</span> <span class="kw">as</span> <span class="ident">i32</span>;
-        <span class="kw">return</span> <span class="ident">root</span>;
+        <span class="kw">let </span>elem2 = elem1_parent_or_size <span class="kw">as </span>u32;
+        <span class="kw">let </span>root = <span class="self">self</span>.find_slow(elem2);
+        <span class="macro">assert!</span>(root &lt; UF_MAX_SIZE);
+        <span class="self">self</span>.parent_or_size[elem1 <span class="kw">as </span>usize] = root <span class="kw">as </span>i32;
+        <span class="self">self</span>.parent_or_size[elem0 <span class="kw">as </span>usize] = root <span class="kw">as </span>i32;
+        <span class="kw">return </span>root;
     }
 
-    <span class="comment">// Union, by size (weight).  This is publicly visible.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">union</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">elem1t</span>: <span class="ident">T</span>, <span class="ident">elem2t</span>: <span class="ident">T</span>) {
-        <span class="kw">let</span> <span class="ident">elem1</span> <span class="op">=</span> <span class="ident">ToFromU32::to_u32</span>(<span class="ident">elem1t</span>);
-        <span class="kw">let</span> <span class="ident">elem2</span> <span class="op">=</span> <span class="ident">ToFromU32::to_u32</span>(<span class="ident">elem2t</span>);
-        <span class="kw">if</span> <span class="ident">elem1</span> <span class="op">==</span> <span class="ident">elem2</span> {
-            <span class="comment">// Ideally, we&#39;d alert the callers they&#39;re mistakenly do `union` on</span>
-            <span class="comment">// identical values repeatedly, but fuzzing hits this repeatedly.</span>
-            <span class="kw">return</span>;
+    <span class="comment">// Union, by size (weight).  This is publicly visible.
+    </span><span class="kw">pub fn </span>union(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elem1t: T, elem2t: T) {
+        <span class="kw">let </span>elem1 = ToFromU32::to_u32(elem1t);
+        <span class="kw">let </span>elem2 = ToFromU32::to_u32(elem2t);
+        <span class="kw">if </span>elem1 == elem2 {
+            <span class="comment">// Ideally, we&#39;d alert the callers they&#39;re mistakenly do `union` on
+            // identical values repeatedly, but fuzzing hits this repeatedly.
+            </span><span class="kw">return</span>;
         }
-        <span class="kw">let</span> <span class="ident">root1</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">find</span>(<span class="ident">elem1</span>);
-        <span class="kw">let</span> <span class="ident">root2</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">find</span>(<span class="ident">elem2</span>);
-        <span class="kw">if</span> <span class="ident">root1</span> <span class="op">==</span> <span class="ident">root2</span> {
-            <span class="comment">// `elem1` and `elem2` are already in the same tree.  Do nothing.</span>
-            <span class="kw">return</span>;
+        <span class="kw">let </span>root1: u32 = <span class="self">self</span>.find(elem1);
+        <span class="kw">let </span>root2: u32 = <span class="self">self</span>.find(elem2);
+        <span class="kw">if </span>root1 == root2 {
+            <span class="comment">// `elem1` and `elem2` are already in the same tree.  Do nothing.
+            </span><span class="kw">return</span>;
         }
-        <span class="kw">let</span> <span class="ident">size1</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">root1</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="kw">let</span> <span class="ident">size2</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">root2</span> <span class="kw">as</span> <span class="ident">usize</span>];
-        <span class="comment">// &quot;They are both roots&quot;</span>
-        <span class="macro">assert!</span>(<span class="ident">size1</span> <span class="op">&lt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">size2</span> <span class="op">&lt;</span> <span class="number">0</span>);
-        <span class="comment">// Make the root of the smaller tree point at the root of the bigger tree.</span>
-        <span class="comment">// Update the root of the bigger tree to reflect its increased size.  That</span>
-        <span class="comment">// only requires adding the two `size` values, since they are both</span>
-        <span class="comment">// negative, so adding them will (correctly) drive it more negative.</span>
-        <span class="kw">if</span> <span class="ident">size1</span> <span class="op">&lt;</span> <span class="ident">size2</span> {
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">root1</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root2</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">root2</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">+</span><span class="op">=</span> <span class="ident">size1</span>;
-        } <span class="kw">else</span> {
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">root2</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root1</span> <span class="kw">as</span> <span class="ident">i32</span>;
-            <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">root1</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">+</span><span class="op">=</span> <span class="ident">size2</span>;
+        <span class="kw">let </span>size1: i32 = <span class="self">self</span>.parent_or_size[root1 <span class="kw">as </span>usize];
+        <span class="kw">let </span>size2: i32 = <span class="self">self</span>.parent_or_size[root2 <span class="kw">as </span>usize];
+        <span class="comment">// &quot;They are both roots&quot;
+        </span><span class="macro">assert!</span>(size1 &lt; <span class="number">0 </span>&amp;&amp; size2 &lt; <span class="number">0</span>);
+        <span class="comment">// Make the root of the smaller tree point at the root of the bigger tree.
+        // Update the root of the bigger tree to reflect its increased size.  That
+        // only requires adding the two `size` values, since they are both
+        // negative, so adding them will (correctly) drive it more negative.
+        </span><span class="kw">if </span>size1 &lt; size2 {
+            <span class="self">self</span>.parent_or_size[root1 <span class="kw">as </span>usize] = root2 <span class="kw">as </span>i32;
+            <span class="self">self</span>.parent_or_size[root2 <span class="kw">as </span>usize] += size1;
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.parent_or_size[root2 <span class="kw">as </span>usize] = root1 <span class="kw">as </span>i32;
+            <span class="self">self</span>.parent_or_size[root1 <span class="kw">as </span>usize] += size2;
         }
     }
 }
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">// UnionFindEquivClasses</span>
+<span class="comment">//=============================================================================
+// UnionFindEquivClasses
 
-<span class="comment">// This is a compact representation for all the equivalence classes in a</span>
-<span class="comment">// `UnionFind`, that can be constructed in more-or-less linear time (meaning,</span>
-<span class="comment">// O(universe size), and allows iteration over the elements of each</span>
-<span class="comment">// equivalence class in time linear in the size of the equivalence class (you</span>
-<span class="comment">// can&#39;t ask for better).  It doesn&#39;t support queries of the form &quot;are these</span>
-<span class="comment">// two elements in the same equivalence class&quot; in linear time, but we don&#39;t</span>
-<span class="comment">// care about that.  What we care about is being able to find and visit the</span>
-<span class="comment">// equivalence class of an element quickly.</span>
-<span class="comment">//</span>
-<span class="comment">// The fields are non-public.  What is publically available is the ability to</span>
-<span class="comment">// get an iterator (for the equivalence class elements), given a starting</span>
-<span class="comment">// element.</span>
+// This is a compact representation for all the equivalence classes in a
+// `UnionFind`, that can be constructed in more-or-less linear time (meaning,
+// O(universe size), and allows iteration over the elements of each
+// equivalence class in time linear in the size of the equivalence class (you
+// can&#39;t ask for better).  It doesn&#39;t support queries of the form &quot;are these
+// two elements in the same equivalence class&quot; in linear time, but we don&#39;t
+// care about that.  What we care about is being able to find and visit the
+// equivalence class of an element quickly.
+//
+// The fields are non-public.  What is publically available is the ability to
+// get an iterator (for the equivalence class elements), given a starting
+// element.
 
-<span class="comment">/*priv*/</span>
-<span class="kw">const</span> <span class="ident">UFEC_NULL</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0xFFFF_FFFF</span>;
+/*priv*/
+</span><span class="kw">const </span>UFEC_NULL: u32 = <span class="number">0xFFFF_FFFF</span>;
 
-<span class="comment">/*priv*/</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">struct</span> <span class="ident">LLElem</span> {
-    <span class="comment">// This list element</span>
-    <span class="ident">elem</span>: <span class="ident">u32</span>,
-    <span class="comment">// Pointer to the rest of the list (index in `llelems`), or UFEC_NULL.</span>
-    <span class="ident">tail</span>: <span class="ident">u32</span>,
+<span class="comment">/*priv*/
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">struct </span>LLElem {
+    <span class="comment">// This list element
+    </span>elem: u32,
+    <span class="comment">// Pointer to the rest of the list (index in `llelems`), or UFEC_NULL.
+    </span>tail: u32,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> {
-    <span class="comment">// Linked list start &quot;pointers&quot;.  Has .len() == universe size.  Entries must</span>
-    <span class="comment">// not be UFEC_NULL since each element is at least a member of its own</span>
-    <span class="comment">// equivalence class.</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">heads</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="kw">pub struct </span>UnionFindEquivClasses&lt;T: ToFromU32&gt; {
+    <span class="comment">// Linked list start &quot;pointers&quot;.  Has .len() == universe size.  Entries must
+    // not be UFEC_NULL since each element is at least a member of its own
+    // equivalence class.
+    /*priv*/
+    </span>heads: Vec&lt;u32&gt;,
 
-    <span class="comment">// Linked list elements.  Has .len() == universe size.</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">lists</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">LLElem</span><span class="op">&gt;</span>,
+    <span class="comment">// Linked list elements.  Has .len() == universe size.
+    /*priv*/
+    </span>lists: Vec&lt;LLElem&gt;,
 
-    <span class="comment">// Keep the typechecker happy</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">anchor</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-    <span class="comment">// This struct doesn&#39;t have a `new` method since construction is done by a</span>
-    <span class="comment">// carefully designed algorithm, `UnionFind::get_equiv_classes`.</span>
-}
+    <span class="comment">// Keep the typechecker happy
+    /*priv*/
+    </span>anchor: PhantomData&lt;T&gt;,
+    <span class="comment">// This struct doesn&#39;t have a `new` method since construction is done by a
+    // carefully designed algorithm, `UnionFind::get_equiv_classes`.
+</span>}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> <span class="ident">UnionFind</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="comment">// This requires mutable `self` because it needs to do a bunch of `find`</span>
-    <span class="comment">// operations, and those modify `self` in order to perform path compression.</span>
-    <span class="comment">// We could avoid this by using a non-path-compressing `find` operation, but</span>
-    <span class="comment">// that could have the serious side effect of making the big-O complexity of</span>
-    <span class="comment">// `get_equiv_classes` worse.  Hence we play safe and accept the mutability</span>
-    <span class="comment">// requirement.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_equiv_classes</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">nElemsUSize</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>.<span class="ident">len</span>();
-        <span class="comment">// The construction algorithm requires that all elements have a value</span>
-        <span class="comment">// strictly less than 2^31.  The union-find machinery, that builds</span>
-        <span class="comment">// `parent_or_size` that we read here, however relies on a slightly</span>
-        <span class="comment">// tighter bound, which which we reiterate here due to general paranoia:</span>
-        <span class="macro">assert!</span>(<span class="ident">nElemsUSize</span> <span class="op">&lt;</span> <span class="ident">UF_MAX_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="kw">let</span> <span class="ident">nElems</span> <span class="op">=</span> <span class="ident">nElemsUSize</span> <span class="kw">as</span> <span class="ident">u32</span>;
+<span class="kw">impl</span>&lt;T: ToFromU32&gt; UnionFind&lt;T&gt; {
+    <span class="comment">// This requires mutable `self` because it needs to do a bunch of `find`
+    // operations, and those modify `self` in order to perform path compression.
+    // We could avoid this by using a non-path-compressing `find` operation, but
+    // that could have the serious side effect of making the big-O complexity of
+    // `get_equiv_classes` worse.  Hence we play safe and accept the mutability
+    // requirement.
+    </span><span class="kw">pub fn </span>get_equiv_classes(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; UnionFindEquivClasses&lt;T&gt; {
+        <span class="kw">let </span>nElemsUSize = <span class="self">self</span>.parent_or_size.len();
+        <span class="comment">// The construction algorithm requires that all elements have a value
+        // strictly less than 2^31.  The union-find machinery, that builds
+        // `parent_or_size` that we read here, however relies on a slightly
+        // tighter bound, which which we reiterate here due to general paranoia:
+        </span><span class="macro">assert!</span>(nElemsUSize &lt; UF_MAX_SIZE <span class="kw">as </span>usize);
+        <span class="kw">let </span>nElems = nElemsUSize <span class="kw">as </span>u32;
 
-        <span class="comment">// Avoid reallocation; we know how big these need to be.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heads</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="ident">::new</span>();
-        <span class="ident">heads</span>.<span class="ident">resize</span>(<span class="ident">nElems</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">UFEC_NULL</span>); <span class="comment">// all invalid</span>
+        <span class="comment">// Avoid reallocation; we know how big these need to be.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>heads = Vec::&lt;u32&gt;::new();
+        heads.resize(nElems <span class="kw">as </span>usize, UFEC_NULL); <span class="comment">// all invalid
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">lists</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">LLElem</span><span class="op">&gt;</span><span class="ident">::new</span>();
-        <span class="ident">lists</span>.<span class="ident">resize</span>(
-            <span class="ident">nElems</span> <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="ident">LLElem</span> {
-                <span class="ident">elem</span>: <span class="number">0</span>,
-                <span class="ident">tail</span>: <span class="ident">UFEC_NULL</span>,
+        </span><span class="kw">let </span><span class="kw-2">mut </span>lists = Vec::&lt;LLElem&gt;::new();
+        lists.resize(
+            nElems <span class="kw">as </span>usize,
+            LLElem {
+                elem: <span class="number">0</span>,
+                tail: UFEC_NULL,
             },
         );
 
-        <span class="comment">// As explanation, let there be N elements (`nElems`) which have been</span>
-        <span class="comment">// partitioned into M &lt;= N equivalence classes by calls to `union`.</span>
-        <span class="comment">//</span>
-        <span class="comment">// When we are finished, `lists` will contain M independent linked lists,</span>
-        <span class="comment">// each of which represents one equivalence class, and which is terminated</span>
-        <span class="comment">// by UFEC_NULL.  And `heads` is used to point to the starting point of</span>
-        <span class="comment">// each elem&#39;s equivalence class, as follows:</span>
-        <span class="comment">//</span>
-        <span class="comment">// * if heads[elem][bit 31] == 1, then heads[i][bits 30:0] contain the</span>
-        <span class="comment">//   index in lists[] of the first element in `elem`s equivalence class.</span>
-        <span class="comment">//</span>
-        <span class="comment">// * if heads[elem][bit 31] == 0, then heads[i][bits 30:0] contain tell us</span>
-        <span class="comment">//   what `elem`s equivalence class leader is.  That is, heads[i][bits</span>
-        <span class="comment">//   30:0] tells us the index in `heads` of the entry that contains the</span>
-        <span class="comment">//   first element in `elem`s equivalence class.</span>
-        <span class="comment">//</span>
-        <span class="comment">// With this arrangement, we can:</span>
-        <span class="comment">//</span>
-        <span class="comment">// * detect whether `elem` is an equivalence class leader, by inspecting</span>
-        <span class="comment">//   heads[elem][bit 31]</span>
-        <span class="comment">//</span>
-        <span class="comment">// * find the start of `elem`s equivalence class list, either by using</span>
-        <span class="comment">//   heads[elem][bits 30:0] directly if heads[elem][bit 31] == 1, or</span>
-        <span class="comment">//   using a single indirection if heads[elem][bit 31] == 0.</span>
-        <span class="comment">//</span>
-        <span class="comment">// For a universe of size N, this makes it possible to:</span>
-        <span class="comment">//</span>
-        <span class="comment">// * find the equivalence class list of any elem in O(1) time.</span>
-        <span class="comment">//</span>
-        <span class="comment">// * find and iterate through any single equivalence class in time O(1) +</span>
-        <span class="comment">//   O(size of the equivalence class).</span>
-        <span class="comment">//</span>
-        <span class="comment">// * find all the equivalence class headers in O(N) time.</span>
-        <span class="comment">//</span>
-        <span class="comment">// * find all the equivalence class headers, and then iterate through each</span>
-        <span class="comment">//   equivalence class exactly once, in time k1.O(N) + k2.O(N).  The first</span>
-        <span class="comment">//   term is the cost of finding all the headers.  The second term is the</span>
-        <span class="comment">//   cost of visiting all elements of each equivalence class exactly once.</span>
-        <span class="comment">//</span>
-        <span class="comment">// The construction algorithm requires two forward passes over</span>
-        <span class="comment">// `parent_or_size`.</span>
-        <span class="comment">//</span>
-        <span class="comment">// In the first pass, we visit each element.  If a element is a tree root,</span>
-        <span class="comment">// its `heads` entry is left at UFEC_NULL.  If a element isn&#39;t a tree</span>
-        <span class="comment">// root, we use `find` to find the root element, and set</span>
-        <span class="comment">// `heads[elem][30:0]` to be the tree root, and heads[elem][31] to 0.</span>
-        <span class="comment">// Hence, after the first pass, `heads` maps each non-root element to its</span>
-        <span class="comment">// equivalence class leader.</span>
-        <span class="comment">//</span>
-        <span class="comment">// The second pass builds the lists.  We again visit each element.  If a</span>
-        <span class="comment">// element is a tree root, it is added as a list element, and its `heads`</span>
-        <span class="comment">// entry is updated to point at the list element.  If a element isn&#39;t a</span>
-        <span class="comment">// tree root, we find its root in constant time by inspecting its `head`</span>
-        <span class="comment">// entry.  The element is added to the the root element&#39;s list, and the</span>
-        <span class="comment">// root element&#39;s `head` entry is accordingly updated.  Hence, after the</span>
-        <span class="comment">// second pass, the `head` entry for root elements points to a linked list</span>
-        <span class="comment">// that contains all elements in that tree.  And the `head` entry for</span>
-        <span class="comment">// non-root elements is unchanged from the first pass, that is, it points</span>
-        <span class="comment">// to the `head` entry for that element&#39;s root element.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Note that the heads[] entry for any class leader (tree root) can never</span>
-        <span class="comment">// be UFEC_NULL, since all elements must at least be in an equivalence</span>
-        <span class="comment">// class of size 1.  Hence there is no confusion possible resulting from</span>
-        <span class="comment">// using the heads bit 31 entries as a direct/indirect flag.</span>
+        <span class="comment">// As explanation, let there be N elements (`nElems`) which have been
+        // partitioned into M &lt;= N equivalence classes by calls to `union`.
+        //
+        // When we are finished, `lists` will contain M independent linked lists,
+        // each of which represents one equivalence class, and which is terminated
+        // by UFEC_NULL.  And `heads` is used to point to the starting point of
+        // each elem&#39;s equivalence class, as follows:
+        //
+        // * if heads[elem][bit 31] == 1, then heads[i][bits 30:0] contain the
+        //   index in lists[] of the first element in `elem`s equivalence class.
+        //
+        // * if heads[elem][bit 31] == 0, then heads[i][bits 30:0] contain tell us
+        //   what `elem`s equivalence class leader is.  That is, heads[i][bits
+        //   30:0] tells us the index in `heads` of the entry that contains the
+        //   first element in `elem`s equivalence class.
+        //
+        // With this arrangement, we can:
+        //
+        // * detect whether `elem` is an equivalence class leader, by inspecting
+        //   heads[elem][bit 31]
+        //
+        // * find the start of `elem`s equivalence class list, either by using
+        //   heads[elem][bits 30:0] directly if heads[elem][bit 31] == 1, or
+        //   using a single indirection if heads[elem][bit 31] == 0.
+        //
+        // For a universe of size N, this makes it possible to:
+        //
+        // * find the equivalence class list of any elem in O(1) time.
+        //
+        // * find and iterate through any single equivalence class in time O(1) +
+        //   O(size of the equivalence class).
+        //
+        // * find all the equivalence class headers in O(N) time.
+        //
+        // * find all the equivalence class headers, and then iterate through each
+        //   equivalence class exactly once, in time k1.O(N) + k2.O(N).  The first
+        //   term is the cost of finding all the headers.  The second term is the
+        //   cost of visiting all elements of each equivalence class exactly once.
+        //
+        // The construction algorithm requires two forward passes over
+        // `parent_or_size`.
+        //
+        // In the first pass, we visit each element.  If a element is a tree root,
+        // its `heads` entry is left at UFEC_NULL.  If a element isn&#39;t a tree
+        // root, we use `find` to find the root element, and set
+        // `heads[elem][30:0]` to be the tree root, and heads[elem][31] to 0.
+        // Hence, after the first pass, `heads` maps each non-root element to its
+        // equivalence class leader.
+        //
+        // The second pass builds the lists.  We again visit each element.  If a
+        // element is a tree root, it is added as a list element, and its `heads`
+        // entry is updated to point at the list element.  If a element isn&#39;t a
+        // tree root, we find its root in constant time by inspecting its `head`
+        // entry.  The element is added to the the root element&#39;s list, and the
+        // root element&#39;s `head` entry is accordingly updated.  Hence, after the
+        // second pass, the `head` entry for root elements points to a linked list
+        // that contains all elements in that tree.  And the `head` entry for
+        // non-root elements is unchanged from the first pass, that is, it points
+        // to the `head` entry for that element&#39;s root element.
+        //
+        // Note that the heads[] entry for any class leader (tree root) can never
+        // be UFEC_NULL, since all elements must at least be in an equivalence
+        // class of size 1.  Hence there is no confusion possible resulting from
+        // using the heads bit 31 entries as a direct/indirect flag.
 
-        <span class="comment">// First pass</span>
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nElems</span> {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
-                <span class="comment">// i is non-root</span>
-                <span class="kw">let</span> <span class="ident">root_i</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">find</span>(<span class="ident">i</span>);
-                <span class="macro">assert!</span>(<span class="ident">root_i</span> <span class="op">&lt;</span> <span class="number">0x8000_0000u32</span>);
-                <span class="ident">heads</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">root_i</span>; <span class="comment">// .direct flag == 0</span>
-            }
+        // First pass
+        </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..nElems {
+            <span class="kw">if </span><span class="self">self</span>.parent_or_size[i <span class="kw">as </span>usize] &gt;= <span class="number">0 </span>{
+                <span class="comment">// i is non-root
+                </span><span class="kw">let </span>root_i: u32 = <span class="self">self</span>.find(i);
+                <span class="macro">assert!</span>(root_i &lt; <span class="number">0x8000_0000u32</span>);
+                heads[i <span class="kw">as </span>usize] = root_i; <span class="comment">// .direct flag == 0
+            </span>}
         }
 
-        <span class="comment">// Second pass</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">list_bump</span> <span class="op">=</span> <span class="number">0u32</span>;
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nElems</span> {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">parent_or_size</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&lt;</span> <span class="number">0</span> {
-                <span class="comment">// i is root</span>
-                <span class="ident">lists</span>[<span class="ident">list_bump</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">LLElem</span> {
-                    <span class="ident">elem</span>: <span class="ident">i</span>,
-                    <span class="ident">tail</span>: <span class="kw">if</span> <span class="ident">heads</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">==</span> <span class="ident">UFEC_NULL</span> {
-                        <span class="ident">UFEC_NULL</span>
-                    } <span class="kw">else</span> {
-                        <span class="ident">heads</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&amp;</span> <span class="number">0x7FFF_FFFF</span>
-                    },
+        <span class="comment">// Second pass
+        </span><span class="kw">let </span><span class="kw-2">mut </span>list_bump = <span class="number">0u32</span>;
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..nElems {
+            <span class="kw">if </span><span class="self">self</span>.parent_or_size[i <span class="kw">as </span>usize] &lt; <span class="number">0 </span>{
+                <span class="comment">// i is root
+                </span>lists[list_bump <span class="kw">as </span>usize] = LLElem {
+                    elem: i,
+                    tail: <span class="kw">if </span>heads[i <span class="kw">as </span>usize] == UFEC_NULL {
+                        UFEC_NULL
+                    } <span class="kw">else </span>{
+                        heads[i <span class="kw">as </span>usize] &amp; <span class="number">0x7FFF_FFFF
+                    </span>},
                 };
-                <span class="macro">assert!</span>(<span class="ident">list_bump</span> <span class="op">&lt;</span> <span class="number">0x8000_0000u32</span>);
-                <span class="ident">heads</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">list_bump</span> <span class="op">|</span> <span class="number">0x8000_0000u32</span>; <span class="comment">// .direct flag == 1</span>
-                <span class="ident">list_bump</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            } <span class="kw">else</span> {
-                <span class="comment">// i is non-root</span>
-                <span class="kw">let</span> <span class="ident">i_root</span> <span class="op">=</span> <span class="ident">heads</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>];
-                <span class="ident">lists</span>[<span class="ident">list_bump</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">LLElem</span> {
-                    <span class="ident">elem</span>: <span class="ident">i</span>,
-                    <span class="ident">tail</span>: <span class="kw">if</span> <span class="ident">heads</span>[<span class="ident">i_root</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">==</span> <span class="ident">UFEC_NULL</span> {
-                        <span class="ident">UFEC_NULL</span>
-                    } <span class="kw">else</span> {
-                        <span class="ident">heads</span>[<span class="ident">i_root</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&amp;</span> <span class="number">0x7FFF_FFFF</span>
-                    },
+                <span class="macro">assert!</span>(list_bump &lt; <span class="number">0x8000_0000u32</span>);
+                heads[i <span class="kw">as </span>usize] = list_bump | <span class="number">0x8000_0000u32</span>; <span class="comment">// .direct flag == 1
+                </span>list_bump += <span class="number">1</span>;
+            } <span class="kw">else </span>{
+                <span class="comment">// i is non-root
+                </span><span class="kw">let </span>i_root = heads[i <span class="kw">as </span>usize];
+                lists[list_bump <span class="kw">as </span>usize] = LLElem {
+                    elem: i,
+                    tail: <span class="kw">if </span>heads[i_root <span class="kw">as </span>usize] == UFEC_NULL {
+                        UFEC_NULL
+                    } <span class="kw">else </span>{
+                        heads[i_root <span class="kw">as </span>usize] &amp; <span class="number">0x7FFF_FFFF
+                    </span>},
                 };
-                <span class="macro">assert!</span>(<span class="ident">list_bump</span> <span class="op">&lt;</span> <span class="number">0x8000_0000u32</span>);
-                <span class="ident">heads</span>[<span class="ident">i_root</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">list_bump</span> <span class="op">|</span> <span class="number">0x8000_0000u32</span>; <span class="comment">// .direct flag == 1</span>
-                <span class="ident">list_bump</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="macro">assert!</span>(list_bump &lt; <span class="number">0x8000_0000u32</span>);
+                heads[i_root <span class="kw">as </span>usize] = list_bump | <span class="number">0x8000_0000u32</span>; <span class="comment">// .direct flag == 1
+                </span>list_bump += <span class="number">1</span>;
             }
         }
-        <span class="macro">assert!</span>(<span class="ident">list_bump</span> <span class="op">==</span> <span class="ident">nElems</span>);
+        <span class="macro">assert!</span>(list_bump == nElems);
 
-        <span class="comment">// It&#39;s a wrap!</span>
-        <span class="macro">assert!</span>(<span class="ident">heads</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">nElemsUSize</span>);
-        <span class="macro">assert!</span>(<span class="ident">lists</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">nElemsUSize</span>);
-        <span class="comment">//{</span>
-        <span class="comment">//  for i in 0 .. heads.len() {</span>
-        <span class="comment">//    println!(&quot;{}:  heads {:x}  lists.elem {} .tail {:x}&quot;, i,</span>
-        <span class="comment">//             heads[i], lists[i].elem, lists[i].tail);</span>
-        <span class="comment">//  }</span>
-        <span class="comment">//}</span>
-        <span class="ident">UnionFindEquivClasses</span> {
-            <span class="ident">heads</span>,
-            <span class="ident">lists</span>,
-            <span class="ident">anchor</span>: <span class="ident">PhantomData</span>,
+        <span class="comment">// It&#39;s a wrap!
+        </span><span class="macro">assert!</span>(heads.len() == nElemsUSize);
+        <span class="macro">assert!</span>(lists.len() == nElemsUSize);
+        <span class="comment">//{
+        //  for i in 0 .. heads.len() {
+        //    println!(&quot;{}:  heads {:x}  lists.elem {} .tail {:x}&quot;, i,
+        //             heads[i], lists[i].elem, lists[i].tail);
+        //  }
+        //}
+        </span>UnionFindEquivClasses {
+            heads,
+            lists,
+            anchor: PhantomData,
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="comment">// Indicates whether `item1` and `item2` are in the same equivalence</span>
-    <span class="comment">// class.  If either falls outside the &quot;universe&quot;, returns `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_same_equivalence_class</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">item1</span>: <span class="ident">T</span>, <span class="ident">item2</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">item1num</span> <span class="op">=</span> <span class="ident">ToFromU32::to_u32</span>(<span class="ident">item1</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">item2num</span> <span class="op">=</span> <span class="ident">ToFromU32::to_u32</span>(<span class="ident">item2</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="comment">// If either item is outside our &quot;universe&quot;, say we don&#39;t know.</span>
-        <span class="kw">if</span> <span class="ident">item1num</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">heads</span>.<span class="ident">len</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">item2num</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">heads</span>.<span class="ident">len</span>() {
-            <span class="kw">return</span> <span class="prelude-val">None</span>;
+<span class="kw">impl</span>&lt;T: ToFromU32&gt; UnionFindEquivClasses&lt;T&gt; {
+    <span class="comment">// Indicates whether `item1` and `item2` are in the same equivalence
+    // class.  If either falls outside the &quot;universe&quot;, returns `None`.
+    </span><span class="kw">pub fn </span>in_same_equivalence_class(<span class="kw-2">&amp;</span><span class="self">self</span>, item1: T, item2: T) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>item1num = ToFromU32::to_u32(item1) <span class="kw">as </span>usize;
+        <span class="kw">let </span><span class="kw-2">mut </span>item2num = ToFromU32::to_u32(item2) <span class="kw">as </span>usize;
+        <span class="comment">// If either item is outside our &quot;universe&quot;, say we don&#39;t know.
+        </span><span class="kw">if </span>item1num &gt;= <span class="self">self</span>.heads.len() || item2num &gt;= <span class="self">self</span>.heads.len() {
+            <span class="kw">return </span><span class="prelude-val">None</span>;
         }
-        <span class="comment">// Ensure that `item1num` and `item2num` both point at class leaders.</span>
-        <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">item1num</span>] <span class="op">&amp;</span> <span class="number">0x8000_0000</span>) <span class="op">==</span> <span class="number">0</span> {
-            <span class="ident">item1num</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">item1num</span>] <span class="kw">as</span> <span class="ident">usize</span>;
+        <span class="comment">// Ensure that `item1num` and `item2num` both point at class leaders.
+        </span><span class="kw">if </span>(<span class="self">self</span>.heads[item1num] &amp; <span class="number">0x8000_0000</span>) == <span class="number">0 </span>{
+            item1num = <span class="self">self</span>.heads[item1num] <span class="kw">as </span>usize;
         }
-        <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">item2num</span>] <span class="op">&amp;</span> <span class="number">0x8000_0000</span>) <span class="op">==</span> <span class="number">0</span> {
-            <span class="ident">item2num</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">item2num</span>] <span class="kw">as</span> <span class="ident">usize</span>;
+        <span class="kw">if </span>(<span class="self">self</span>.heads[item2num] &amp; <span class="number">0x8000_0000</span>) == <span class="number">0 </span>{
+            item2num = <span class="self">self</span>.heads[item2num] <span class="kw">as </span>usize;
         }
-        <span class="macro">debug_assert!</span>((<span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">item1num</span>] <span class="op">&amp;</span> <span class="number">0x8000_0000</span>) <span class="op">==</span> <span class="number">0x8000_0000</span>);
-        <span class="macro">debug_assert!</span>((<span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">item2num</span>] <span class="op">&amp;</span> <span class="number">0x8000_0000</span>) <span class="op">==</span> <span class="number">0x8000_0000</span>);
-        <span class="prelude-val">Some</span>(<span class="ident">item1num</span> <span class="op">==</span> <span class="ident">item2num</span>)
+        <span class="macro">debug_assert!</span>((<span class="self">self</span>.heads[item1num] &amp; <span class="number">0x8000_0000</span>) == <span class="number">0x8000_0000</span>);
+        <span class="macro">debug_assert!</span>((<span class="self">self</span>.heads[item2num] &amp; <span class="number">0x8000_0000</span>) == <span class="number">0x8000_0000</span>);
+        <span class="prelude-val">Some</span>(item1num == item2num)
     }
 }
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">// UnionFindEquivClassElemsIter</span>
+<span class="comment">//=============================================================================
+// UnionFindEquivClassElemsIter
 
-<span class="comment">// We may want to find the equivalence class for some given element, and</span>
-<span class="comment">// iterate through its elements.  This iterator provides that.</span>
+// We may want to find the equivalence class for some given element, and
+// iterate through its elements.  This iterator provides that.
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnionFindEquivClassElemsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> {
-    <span class="comment">// The equivalence classes</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">ufec</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-    <span class="comment">// Index into `ufec.lists`, or UFEC_NULL.</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">next</span>: <span class="ident">u32</span>,
+</span><span class="kw">pub struct </span>UnionFindEquivClassElemsIter&lt;<span class="lifetime">&#39;a</span>, T: ToFromU32&gt; {
+    <span class="comment">// The equivalence classes
+    /*priv*/
+    </span>ufec: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>UnionFindEquivClasses&lt;T&gt;,
+    <span class="comment">// Index into `ufec.lists`, or UFEC_NULL.
+    /*priv*/
+    </span>next: u32,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">equiv_class_elems_iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">item</span>: <span class="ident">T</span>) -&gt; <span class="ident">UnionFindEquivClassElemsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">itemU32</span> <span class="op">=</span> <span class="ident">ToFromU32::to_u32</span>(<span class="ident">item</span>);
-        <span class="macro">assert!</span>((<span class="ident">itemU32</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">heads</span>.<span class="ident">len</span>());
-        <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">itemU32</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&amp;</span> <span class="number">0x8000_0000</span>) <span class="op">==</span> <span class="number">0</span> {
-            <span class="comment">// .direct flag is not set.  This is not a class leader.  We must</span>
-            <span class="comment">// indirect.</span>
-            <span class="ident">itemU32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">itemU32</span> <span class="kw">as</span> <span class="ident">usize</span>];
+<span class="kw">impl</span>&lt;T: ToFromU32&gt; UnionFindEquivClasses&lt;T&gt; {
+    <span class="kw">pub fn </span>equiv_class_elems_iter&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, item: T) -&gt; UnionFindEquivClassElemsIter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>itemU32 = ToFromU32::to_u32(item);
+        <span class="macro">assert!</span>((itemU32 <span class="kw">as </span>usize) &lt; <span class="self">self</span>.heads.len());
+        <span class="kw">if </span>(<span class="self">self</span>.heads[itemU32 <span class="kw">as </span>usize] &amp; <span class="number">0x8000_0000</span>) == <span class="number">0 </span>{
+            <span class="comment">// .direct flag is not set.  This is not a class leader.  We must
+            // indirect.
+            </span>itemU32 = <span class="self">self</span>.heads[itemU32 <span class="kw">as </span>usize];
         }
-        <span class="comment">// Now `itemU32` must point at a class leader.</span>
-        <span class="macro">assert!</span>((<span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">itemU32</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&amp;</span> <span class="number">0x8000_0000</span>) <span class="op">==</span> <span class="number">0x8000_0000</span>);
-        <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">heads</span>[<span class="ident">itemU32</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&amp;</span> <span class="number">0x7FFF_FFFF</span>;
-        <span class="comment">// Now `next` points at the first element in the list.</span>
-        <span class="ident">UnionFindEquivClassElemsIter</span> { <span class="ident">ufec</span>: <span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">next</span> }
+        <span class="comment">// Now `itemU32` must point at a class leader.
+        </span><span class="macro">assert!</span>((<span class="self">self</span>.heads[itemU32 <span class="kw">as </span>usize] &amp; <span class="number">0x8000_0000</span>) == <span class="number">0x8000_0000</span>);
+        <span class="kw">let </span>next = <span class="self">self</span>.heads[itemU32 <span class="kw">as </span>usize] &amp; <span class="number">0x7FFF_FFFF</span>;
+        <span class="comment">// Now `next` points at the first element in the list.
+        </span>UnionFindEquivClassElemsIter { ufec: <span class="kw-2">&amp;</span><span class="self">self</span>, next }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">UnionFindEquivClassElemsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span>;
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">next</span> <span class="op">==</span> <span class="ident">UFEC_NULL</span> {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">res</span>: <span class="ident">T</span> <span class="op">=</span> <span class="ident">ToFromU32::from_u32</span>(<span class="self">self</span>.<span class="ident">ufec</span>.<span class="ident">lists</span>[<span class="self">self</span>.<span class="ident">next</span> <span class="kw">as</span> <span class="ident">usize</span>].<span class="ident">elem</span>);
-            <span class="self">self</span>.<span class="ident">next</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ufec</span>.<span class="ident">lists</span>[<span class="self">self</span>.<span class="ident">next</span> <span class="kw">as</span> <span class="ident">usize</span>].<span class="ident">tail</span>;
-            <span class="prelude-val">Some</span>(<span class="ident">res</span>)
-        }
-    }
-}
-
-<span class="comment">// In order to visit all equivalence classes exactly once, we need something</span>
-<span class="comment">// else: a way to enumerate their leaders (some value arbitrarily drawn from</span>
-<span class="comment">// each one).  This provides that.</span>
-
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnionFindEquivClassLeadersIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> {
-    <span class="comment">// The equivalence classes</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">ufec</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-    <span class="comment">// Index into `ufec.heads` of the next unvisited item.</span>
-    <span class="comment">/*priv*/</span>
-    <span class="ident">next</span>: <span class="ident">u32</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> <span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">equiv_class_leaders_iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) -&gt; <span class="ident">UnionFindEquivClassLeadersIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">UnionFindEquivClassLeadersIter</span> {
-            <span class="ident">ufec</span>: <span class="kw-2">&amp;</span><span class="self">self</span>,
-            <span class="ident">next</span>: <span class="number">0</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: ToFromU32&gt; Iterator <span class="kw">for </span>UnionFindEquivClassElemsIter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">type </span>Item = T;
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">if </span><span class="self">self</span>.next == UFEC_NULL {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="kw">let </span>res: T = ToFromU32::from_u32(<span class="self">self</span>.ufec.lists[<span class="self">self</span>.next <span class="kw">as </span>usize].elem);
+            <span class="self">self</span>.next = <span class="self">self</span>.ufec.lists[<span class="self">self</span>.next <span class="kw">as </span>usize].tail;
+            <span class="prelude-val">Some</span>(res)
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">ToFromU32</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">UnionFindEquivClassLeadersIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span>;
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="comment">// Scan forwards through `ufec.heads` to find the next unvisited one which</span>
-        <span class="comment">// is a leader (a tree root).</span>
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">next</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">ufec</span>.<span class="ident">heads</span>.<span class="ident">len</span>() {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+<span class="comment">// In order to visit all equivalence classes exactly once, we need something
+// else: a way to enumerate their leaders (some value arbitrarily drawn from
+// each one).  This provides that.
+
+</span><span class="kw">pub struct </span>UnionFindEquivClassLeadersIter&lt;<span class="lifetime">&#39;a</span>, T: ToFromU32&gt; {
+    <span class="comment">// The equivalence classes
+    /*priv*/
+    </span>ufec: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>UnionFindEquivClasses&lt;T&gt;,
+    <span class="comment">// Index into `ufec.heads` of the next unvisited item.
+    /*priv*/
+    </span>next: u32,
+}
+
+<span class="kw">impl</span>&lt;T: ToFromU32&gt; UnionFindEquivClasses&lt;T&gt; {
+    <span class="kw">pub fn </span>equiv_class_leaders_iter&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>) -&gt; UnionFindEquivClassLeadersIter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+        UnionFindEquivClassLeadersIter {
+            ufec: <span class="kw-2">&amp;</span><span class="self">self</span>,
+            next: <span class="number">0</span>,
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: ToFromU32&gt; Iterator <span class="kw">for </span>UnionFindEquivClassLeadersIter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">type </span>Item = T;
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="comment">// Scan forwards through `ufec.heads` to find the next unvisited one which
+        // is a leader (a tree root).
+        </span><span class="kw">loop </span>{
+            <span class="kw">if </span><span class="self">self</span>.next <span class="kw">as </span>usize &gt;= <span class="self">self</span>.ufec.heads.len() {
+                <span class="kw">return </span><span class="prelude-val">None</span>;
             }
-            <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">ufec</span>.<span class="ident">heads</span>[<span class="self">self</span>.<span class="ident">next</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">&amp;</span> <span class="number">0x8000_0000</span>) <span class="op">==</span> <span class="number">0x8000_0000</span> {
-                <span class="comment">// This is a leader.</span>
-                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">ToFromU32::from_u32</span>(<span class="self">self</span>.<span class="ident">next</span>);
-                <span class="self">self</span>.<span class="ident">next</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">res</span>);
+            <span class="kw">if </span>(<span class="self">self</span>.ufec.heads[<span class="self">self</span>.next <span class="kw">as </span>usize] &amp; <span class="number">0x8000_0000</span>) == <span class="number">0x8000_0000 </span>{
+                <span class="comment">// This is a leader.
+                </span><span class="kw">let </span>res = ToFromU32::from_u32(<span class="self">self</span>.next);
+                <span class="self">self</span>.next += <span class="number">1</span>;
+                <span class="kw">return </span><span class="prelude-val">Some</span>(res);
             }
-            <span class="comment">// No luck, keep one searching.</span>
-            <span class="self">self</span>.<span class="ident">next</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="comment">// No luck, keep one searching.
+            </span><span class="self">self</span>.next += <span class="number">1</span>;
         }
-        <span class="comment">/*NOTREACHED*/</span>
-    }
+        <span class="comment">/*NOTREACHED*/
+    </span>}
 }
 
-<span class="comment">//=============================================================================</span>
-<span class="comment">// Testing machinery for UnionFind</span>
+<span class="comment">//=============================================================================
+// Testing machinery for UnionFind
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">union_find_test_utils</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::UnionFindEquivClasses</span>;
-    <span class="comment">// Test that the eclass for `elem` is `expected` (modulo ordering).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">test_eclass</span>(<span class="ident">eclasses</span>: <span class="kw-2">&amp;</span><span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">elem</span>: <span class="ident">u32</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expected_sorted</span> <span class="op">=</span> <span class="ident">expected</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">actual</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-        <span class="kw">for</span> <span class="ident">ecm</span> <span class="kw">in</span> <span class="ident">eclasses</span>.<span class="ident">equiv_class_elems_iter</span>(<span class="ident">elem</span>) {
-            <span class="ident">actual</span>.<span class="ident">push</span>(<span class="ident">ecm</span>);
+</span><span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>union_find_test_utils {
+    <span class="kw">use </span><span class="kw">super</span>::UnionFindEquivClasses;
+    <span class="comment">// Test that the eclass for `elem` is `expected` (modulo ordering).
+    </span><span class="kw">pub fn </span>test_eclass(eclasses: <span class="kw-2">&amp;</span>UnionFindEquivClasses&lt;u32&gt;, elem: u32, expected: <span class="kw-2">&amp;</span>Vec&lt;u32&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>expected_sorted = expected.clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>actual = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>ecm <span class="kw">in </span>eclasses.equiv_class_elems_iter(elem) {
+            actual.push(ecm);
         }
-        <span class="ident">expected_sorted</span>.<span class="ident">sort</span>();
-        <span class="ident">actual</span>.<span class="ident">sort</span>();
-        <span class="macro">assert!</span>(<span class="ident">actual</span> <span class="op">==</span> <span class="ident">expected_sorted</span>);
+        expected_sorted.sort();
+        actual.sort();
+        <span class="macro">assert!</span>(actual == expected_sorted);
     }
-    <span class="comment">// Test that the eclass leaders are exactly `expected`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">test_leaders</span>(
-        <span class="ident">univ_size</span>: <span class="ident">u32</span>,
-        <span class="ident">eclasses</span>: <span class="kw-2">&amp;</span><span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-        <span class="ident">expected</span>: <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+    <span class="comment">// Test that the eclass leaders are exactly `expected`.
+    </span><span class="kw">pub fn </span>test_leaders(
+        univ_size: u32,
+        eclasses: <span class="kw-2">&amp;</span>UnionFindEquivClasses&lt;u32&gt;,
+        expected: <span class="kw-2">&amp;</span>Vec&lt;u32&gt;,
     ) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">actual</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-        <span class="kw">for</span> <span class="ident">leader</span> <span class="kw">in</span> <span class="ident">eclasses</span>.<span class="ident">equiv_class_leaders_iter</span>() {
-            <span class="ident">actual</span>.<span class="ident">push</span>(<span class="ident">leader</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>actual = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>leader <span class="kw">in </span>eclasses.equiv_class_leaders_iter() {
+            actual.push(leader);
         }
-        <span class="macro">assert!</span>(<span class="ident">actual</span> <span class="op">==</span> <span class="kw-2">*</span><span class="ident">expected</span>);
-        <span class="comment">// Now use the headers to enumerate each eclass exactly once, and collect</span>
-        <span class="comment">// up the elements.  The resulting vector should be some permutation of</span>
-        <span class="comment">// [0 .. univ_size-1].</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">univ_actual</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-        <span class="kw">for</span> <span class="ident">leader</span> <span class="kw">in</span> <span class="ident">eclasses</span>.<span class="ident">equiv_class_leaders_iter</span>() {
-            <span class="kw">for</span> <span class="ident">elem</span> <span class="kw">in</span> <span class="ident">eclasses</span>.<span class="ident">equiv_class_elems_iter</span>(<span class="ident">leader</span>) {
-                <span class="ident">univ_actual</span>.<span class="ident">push</span>(<span class="ident">elem</span>);
+        <span class="macro">assert!</span>(actual == <span class="kw-2">*</span>expected);
+        <span class="comment">// Now use the headers to enumerate each eclass exactly once, and collect
+        // up the elements.  The resulting vector should be some permutation of
+        // [0 .. univ_size-1].
+        </span><span class="kw">let </span><span class="kw-2">mut </span>univ_actual = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>leader <span class="kw">in </span>eclasses.equiv_class_leaders_iter() {
+            <span class="kw">for </span>elem <span class="kw">in </span>eclasses.equiv_class_elems_iter(leader) {
+                univ_actual.push(elem);
             }
         }
-        <span class="ident">univ_actual</span>.<span class="ident">sort</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">univ_expected</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">univ_size</span> {
-            <span class="ident">univ_expected</span>.<span class="ident">push</span>(<span class="ident">i</span>);
+        univ_actual.sort();
+        <span class="kw">let </span><span class="kw-2">mut </span>univ_expected = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..univ_size {
+            univ_expected.push(i);
         }
-        <span class="macro">assert!</span>(<span class="ident">univ_actual</span> <span class="op">==</span> <span class="ident">univ_expected</span>);
+        <span class="macro">assert!</span>(univ_actual == univ_expected);
     }
-    <span class="comment">// Test that `in_same_equivalence_class` produces the expected results.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">test_in_same_eclass</span>(
-        <span class="ident">eclasses</span>: <span class="kw-2">&amp;</span><span class="ident">UnionFindEquivClasses</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-        <span class="ident">elem1</span>: <span class="ident">u32</span>,
-        <span class="ident">elem2</span>: <span class="ident">u32</span>,
-        <span class="ident">expected</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
+    <span class="comment">// Test that `in_same_equivalence_class` produces the expected results.
+    </span><span class="kw">pub fn </span>test_in_same_eclass(
+        eclasses: <span class="kw-2">&amp;</span>UnionFindEquivClasses&lt;u32&gt;,
+        elem1: u32,
+        elem2: u32,
+        expected: <span class="prelude-ty">Option</span>&lt;bool&gt;,
     ) {
-        <span class="macro">assert!</span>(<span class="ident">eclasses</span>.<span class="ident">in_same_equivalence_class</span>(<span class="ident">elem1</span>, <span class="ident">elem2</span>) <span class="op">==</span> <span class="ident">expected</span>);
-        <span class="macro">assert!</span>(<span class="ident">eclasses</span>.<span class="ident">in_same_equivalence_class</span>(<span class="ident">elem2</span>, <span class="ident">elem1</span>) <span class="op">==</span> <span class="ident">expected</span>);
+        <span class="macro">assert!</span>(eclasses.in_same_equivalence_class(elem1, elem2) == expected);
+        <span class="macro">assert!</span>(eclasses.in_same_equivalence_class(elem2, elem1) == expected);
     }
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_union_find</span>() {
-    <span class="kw">const</span> <span class="ident">UNIV_SIZE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">8</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">uf</span> <span class="op">=</span> <span class="ident">UnionFind::new</span>(<span class="ident">UNIV_SIZE</span> <span class="kw">as</span> <span class="ident">usize</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">3</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_union_find() {
+    <span class="kw">const </span>UNIV_SIZE: u32 = <span class="number">8</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>uf = UnionFind::new(UNIV_SIZE <span class="kw">as </span>usize);
+    <span class="kw">let </span><span class="kw-2">mut </span>uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">3</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);
 
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">2</span>, <span class="number">4</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">3</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);
+    uf.union(<span class="number">2</span>, <span class="number">4</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">3</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);
 
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">5</span>, <span class="number">3</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">3</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">3</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);
+    uf.union(<span class="number">5</span>, <span class="number">3</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">3</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">3</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);
 
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">2</span>, <span class="number">5</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">7</span>]);
-    <span class="comment">// At this point, also check the &quot;in same equivalence class?&quot; function.</span>
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="number">8</span>, <span class="prelude-val">None</span>);
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">8</span>, <span class="number">0</span>, <span class="prelude-val">None</span>);
-    <span class="ident">union_find_test_utils::test_in_same_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">8</span>, <span class="number">8</span>, <span class="prelude-val">None</span>);
+    uf.union(<span class="number">2</span>, <span class="number">5</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">7</span>]);
+    <span class="comment">// At this point, also check the &quot;in same equivalence class?&quot; function.
+    </span>union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">0</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">1</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">2</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="number">1</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="number">2</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="number">2</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="number">3</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="number">4</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="number">5</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="number">6</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="number">7</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="number">8</span>, <span class="prelude-val">None</span>);
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">8</span>, <span class="number">0</span>, <span class="prelude-val">None</span>);
+    union_find_test_utils::test_in_same_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">8</span>, <span class="number">8</span>, <span class="prelude-val">None</span>);
 
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">7</span>, <span class="number">1</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">7</span>]);
+    uf.union(<span class="number">7</span>, <span class="number">1</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">6</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">7</span>]);
 
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">6</span>, <span class="number">7</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">6</span>]);
+    uf.union(<span class="number">6</span>, <span class="number">7</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">6</span>]);
 
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">4</span>, <span class="number">1</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">6</span>]);
+    uf.union(<span class="number">4</span>, <span class="number">1</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">6</span>]);
 
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">0</span>, <span class="number">3</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    uf.union(<span class="number">0</span>, <span class="number">3</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
 
-    <span class="comment">// Pointless, because the classes are already maximal.</span>
-    <span class="ident">uf</span>.<span class="ident">union</span>(<span class="number">1</span>, <span class="number">2</span>);
-    <span class="ident">uf_eclasses</span> <span class="op">=</span> <span class="ident">uf</span>.<span class="ident">get_equiv_classes</span>();
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_eclass</span>(<span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
-    <span class="ident">union_find_test_utils::test_leaders</span>(<span class="ident">UNIV_SIZE</span>, <span class="kw-2">&amp;</span><span class="ident">uf_eclasses</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
+    <span class="comment">// Pointless, because the classes are already maximal.
+    </span>uf.union(<span class="number">1</span>, <span class="number">2</span>);
+    uf_eclasses = uf.get_equiv_classes();
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">4</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">6</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_eclass(<span class="kw-2">&amp;</span>uf_eclasses, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">7</span>, <span class="number">6</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>]);
+    union_find_test_utils::test_leaders(UNIV_SIZE, <span class="kw-2">&amp;</span>uf_eclasses, <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0</span>]);
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="regalloc" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="regalloc" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

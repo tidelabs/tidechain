@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error",""]],"struct":[["Codec","[`Codec`] implements [`Encoder`] and [`Decoder`], uses [`unsigned_varint`] to prefix messages with their length and uses [`prost`] and a provided `struct` implementing [`Message`] to do the encoding."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error",""]],"struct":[["Codec","[`Codec`] implements [`Encoder`] and [`Decoder`], uses [`unsigned_varint`] to prefix messages with their length and uses [`prost`] and a provided `struct` implementing [`Message`] to do the encoding."]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/prometheus-0.13.1/src/timer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>timer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../prometheus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../prometheus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../prometheus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/prometheus-0.13.1/src/timer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>timer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../prometheus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -90,93 +85,92 @@
 <span id="85">85</span>
 <span id="86">86</span>
 <span id="87">87</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicBool</span>, <span class="ident">AtomicU64</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std::thread</span>;
-<span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+<span class="kw">use </span>std::thread;
+<span class="kw">use </span>std::time::{Duration, Instant};
 
-<span class="kw">use</span> <span class="ident">lazy_static::lazy_static</span>;
+<span class="kw">use </span>lazy_static::lazy_static;
 
-<span class="doccomment">/// Milliseconds since ANCHOR.</span>
-<span class="kw">static</span> <span class="ident">RECENT</span>: <span class="ident">AtomicU64</span> <span class="op">=</span> <span class="ident">AtomicU64::new</span>(<span class="number">0</span>);
-<span class="macro">lazy_static!</span> {
-    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">ANCHOR</span>: <span class="ident">Instant</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
+<span class="doccomment">/// Milliseconds since ANCHOR.
+</span><span class="kw">static </span>RECENT: AtomicU64 = AtomicU64::new(<span class="number">0</span>);
+<span class="macro">lazy_static! </span>{
+    <span class="kw">static </span><span class="kw-2">ref </span>ANCHOR: Instant = Instant::now();
 }
 
-<span class="doccomment">/// Convert a duration to millisecond.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">duration_to_millis</span>(<span class="ident">dur</span>: <span class="ident">Duration</span>) -&gt; <span class="ident">u64</span> {
-    <span class="ident">dur</span>.<span class="ident">as_secs</span>() <span class="op">*</span> <span class="number">1000</span> <span class="op">+</span> <span class="ident">dur</span>.<span class="ident">subsec_millis</span>() <span class="kw">as</span> <span class="ident">u64</span>
+<span class="doccomment">/// Convert a duration to millisecond.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub fn </span>duration_to_millis(dur: Duration) -&gt; u64 {
+    dur.as_secs() * <span class="number">1000 </span>+ dur.subsec_millis() <span class="kw">as </span>u64
 }
 
-<span class="doccomment">/// Returns milliseconds since ANCHOR.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ANCHOR is some fixed point in history.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">now_millis</span>() -&gt; <span class="ident">u64</span> {
-    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
-    <span class="kw">let</span> <span class="ident">t</span> <span class="op">=</span> <span class="ident">duration_to_millis</span>(<span class="ident">res</span>.<span class="ident">saturating_duration_since</span>(<span class="kw-2">*</span><span class="ident">ANCHOR</span>));
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">recent</span> <span class="op">=</span> <span class="ident">RECENT</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
-    <span class="kw">loop</span> {
-        <span class="kw">if</span> <span class="ident">recent</span> <span class="op">&gt;</span> <span class="ident">t</span> {
-            <span class="kw">return</span> <span class="ident">recent</span>;
+<span class="doccomment">/// Returns milliseconds since ANCHOR.
+///
+/// ANCHOR is some fixed point in history.
+</span><span class="kw">pub fn </span>now_millis() -&gt; u64 {
+    <span class="kw">let </span>res = Instant::now();
+    <span class="kw">let </span>t = duration_to_millis(res.saturating_duration_since(<span class="kw-2">*</span>ANCHOR));
+    <span class="kw">let </span><span class="kw-2">mut </span>recent = RECENT.load(Ordering::Relaxed);
+    <span class="kw">loop </span>{
+        <span class="kw">if </span>recent &gt; t {
+            <span class="kw">return </span>recent;
         }
-        <span class="kw">match</span> <span class="ident">RECENT</span>.<span class="ident">compare_exchange_weak</span>(<span class="ident">recent</span>, <span class="ident">t</span>, <span class="ident">Ordering::Relaxed</span>, <span class="ident">Ordering::Relaxed</span>) {
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="ident">t</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">r</span>) =&gt; <span class="ident">recent</span> <span class="op">=</span> <span class="ident">r</span>,
+        <span class="kw">match </span>RECENT.compare_exchange_weak(recent, t, Ordering::Relaxed, Ordering::Relaxed) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span>t,
+            <span class="prelude-val">Err</span>(r) =&gt; recent = r,
         }
     }
 }
 
-<span class="doccomment">/// Returns recent returned value by `now_millis`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">recent_millis</span>() -&gt; <span class="ident">u64</span> {
-    <span class="ident">RECENT</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>)
+<span class="doccomment">/// Returns recent returned value by `now_millis`.
+</span><span class="kw">pub fn </span>recent_millis() -&gt; u64 {
+    RECENT.load(Ordering::Relaxed)
 }
 
-<span class="macro">lazy_static!</span> {
-    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">UPDATER_IS_RUNNING</span>: <span class="ident">AtomicBool</span> <span class="op">=</span> <span class="ident">AtomicBool::new</span>(<span class="bool-val">false</span>);
+<span class="macro">lazy_static! </span>{
+    <span class="kw">static </span><span class="kw-2">ref </span>UPDATER_IS_RUNNING: AtomicBool = AtomicBool::new(<span class="bool-val">false</span>);
 }
 
-<span class="kw">const</span> <span class="ident">CHECK_UPDATE_INTERVAL</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">200</span>);
+<span class="kw">const </span>CHECK_UPDATE_INTERVAL: Duration = Duration::from_millis(<span class="number">200</span>);
 
-<span class="doccomment">/// Ensures background updater is running, which will call `now_millis` periodically.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ensure_updater</span>() {
-    <span class="kw">if</span> <span class="ident">UPDATER_IS_RUNNING</span>
-        .<span class="ident">compare_exchange</span>(<span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::SeqCst</span>)
-        .<span class="ident">is_ok</span>()
+<span class="doccomment">/// Ensures background updater is running, which will call `now_millis` periodically.
+</span><span class="kw">pub fn </span>ensure_updater() {
+    <span class="kw">if </span>UPDATER_IS_RUNNING
+        .compare_exchange(<span class="bool-val">false</span>, <span class="bool-val">true</span>, Ordering::SeqCst, Ordering::SeqCst)
+        .is_ok()
     {
-        <span class="ident">std::thread::Builder::new</span>()
-            .<span class="ident">name</span>(<span class="string">&quot;time updater&quot;</span>.<span class="ident">to_owned</span>())
-            .<span class="ident">spawn</span>(<span class="op">|</span><span class="op">|</span> <span class="kw">loop</span> {
-                <span class="ident">thread::sleep</span>(<span class="ident">CHECK_UPDATE_INTERVAL</span>);
-                <span class="ident">now_millis</span>();
+        std::thread::Builder::new()
+            .name(<span class="string">&quot;time updater&quot;</span>.to_owned())
+            .spawn(|| <span class="kw">loop </span>{
+                thread::sleep(CHECK_UPDATE_INTERVAL);
+                now_millis();
             })
-            .<span class="ident">unwrap</span>();
+            .unwrap();
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">std::thread</span>;
-    <span class="kw">use</span> <span class="ident">std::time::Duration</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::thread;
+    <span class="kw">use </span>std::time::Duration;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_duration_to_millis</span>() {
-        <span class="kw">let</span> <span class="ident">cases</span> <span class="op">=</span> <span class="macro">vec!</span>[(<span class="number">1</span>, <span class="number">1</span>, <span class="number">1000</span>), (<span class="number">0</span>, <span class="number">1_000_000</span>, <span class="number">1</span>), (<span class="number">3</span>, <span class="number">103_000_000</span>, <span class="number">3103</span>)];
-        <span class="kw">for</span> (<span class="ident">secs</span>, <span class="ident">nanos</span>, <span class="ident">exp</span>) <span class="kw">in</span> <span class="ident">cases</span> {
-            <span class="kw">let</span> <span class="ident">dur</span> <span class="op">=</span> <span class="ident">Duration::new</span>(<span class="ident">secs</span>, <span class="ident">nanos</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::duration_to_millis</span>(<span class="ident">dur</span>), <span class="ident">exp</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_duration_to_millis() {
+        <span class="kw">let </span>cases = <span class="macro">vec!</span>[(<span class="number">1</span>, <span class="number">1</span>, <span class="number">1000</span>), (<span class="number">0</span>, <span class="number">1_000_000</span>, <span class="number">1</span>), (<span class="number">3</span>, <span class="number">103_000_000</span>, <span class="number">3103</span>)];
+        <span class="kw">for </span>(secs, nanos, exp) <span class="kw">in </span>cases {
+            <span class="kw">let </span>dur = Duration::new(secs, nanos);
+            <span class="macro">assert_eq!</span>(<span class="kw">super</span>::duration_to_millis(dur), exp);
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_time_update</span>() {
-        <span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::recent_millis</span>(), <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::now_millis</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::recent_millis</span>(), <span class="ident">now</span>);
-        <span class="ident"><span class="kw">super</span>::ensure_updater</span>();
-        <span class="ident">thread::sleep</span>(<span class="ident"><span class="kw">super</span>::CHECK_UPDATE_INTERVAL</span> <span class="op">*</span> <span class="number">2</span>);
-        <span class="macro">assert!</span>(<span class="ident"><span class="kw">super</span>::recent_millis</span>() <span class="op">&gt;</span> <span class="ident">now</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_time_update() {
+        <span class="macro">assert_eq!</span>(<span class="kw">super</span>::recent_millis(), <span class="number">0</span>);
+        <span class="kw">let </span>now = <span class="kw">super</span>::now_millis();
+        <span class="macro">assert_eq!</span>(<span class="kw">super</span>::recent_millis(), now);
+        <span class="kw">super</span>::ensure_updater();
+        thread::sleep(<span class="kw">super</span>::CHECK_UPDATE_INTERVAL * <span class="number">2</span>);
+        <span class="macro">assert!</span>(<span class="kw">super</span>::recent_millis() &gt; now);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="prometheus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="prometheus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

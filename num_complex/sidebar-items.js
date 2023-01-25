@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Complex","A complex number in Cartesian form."],["ParseComplexError",""]],"type":[["Complex32",""],["Complex64",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["Complex","A complex number in Cartesian form."],["ParseComplexError",""]],"type":[["Complex32",""],["Complex64",""]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/merge_operator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>merge_operator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/merge_operator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>merge_operator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -256,259 +251,258 @@
 <span id="251">251</span>
 <span id="252">252</span>
 <span id="253">253</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Tyler Neely</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
-<span class="comment">//</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Tyler Neely
+//
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
-<span class="doccomment">//! rustic merge operator</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//! use rocksdb::{Options, DB, MergeOperands};</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! fn concat_merge(new_key: &amp;[u8],</span>
-<span class="doccomment">//!                 existing_val: Option&lt;&amp;[u8]&gt;,</span>
-<span class="doccomment">//!                 operands: &amp;MergeOperands)</span>
-<span class="doccomment">//!                 -&gt; Option&lt;Vec&lt;u8&gt;&gt; {</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!    let mut result: Vec&lt;u8&gt; = Vec::with_capacity(operands.len());</span>
-<span class="doccomment">//!    existing_val.map(|v| {</span>
-<span class="doccomment">//!        for e in v {</span>
-<span class="doccomment">//!            result.push(*e)</span>
-<span class="doccomment">//!        }</span>
-<span class="doccomment">//!    });</span>
-<span class="doccomment">//!    for op in operands {</span>
-<span class="doccomment">//!        for e in op {</span>
-<span class="doccomment">//!            result.push(*e)</span>
-<span class="doccomment">//!        }</span>
-<span class="doccomment">//!    }</span>
-<span class="doccomment">//!    Some(result)</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!let path = &quot;_rust_path_to_rocksdb&quot;;</span>
-<span class="doccomment">//!let mut opts = Options::default();</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!opts.create_if_missing(true);</span>
-<span class="doccomment">//!opts.set_merge_operator_associative(&quot;test operator&quot;, concat_merge);</span>
-<span class="doccomment">//!{</span>
-<span class="doccomment">//!    let db = DB::open(&amp;opts, path).unwrap();</span>
-<span class="doccomment">//!    let p = db.put(b&quot;k1&quot;, b&quot;a&quot;);</span>
-<span class="doccomment">//!    db.merge(b&quot;k1&quot;, b&quot;b&quot;);</span>
-<span class="doccomment">//!    db.merge(b&quot;k1&quot;, b&quot;c&quot;);</span>
-<span class="doccomment">//!    db.merge(b&quot;k1&quot;, b&quot;d&quot;);</span>
-<span class="doccomment">//!    db.merge(b&quot;k1&quot;, b&quot;efg&quot;);</span>
-<span class="doccomment">//!    let r = db.get(b&quot;k1&quot;);</span>
-<span class="doccomment">//!    assert_eq!(r.unwrap().unwrap(), b&quot;abcdefg&quot;);</span>
-<span class="doccomment">//!}</span>
-<span class="doccomment">//!let _ = DB::destroy(&amp;opts, path);</span>
-<span class="doccomment">//! ```</span>
+</span><span class="doccomment">//! rustic merge operator
+//!
+//! ```
+//! use rocksdb::{Options, DB, MergeOperands};
+//!
+//! fn concat_merge(new_key: &amp;[u8],
+//!                 existing_val: Option&lt;&amp;[u8]&gt;,
+//!                 operands: &amp;MergeOperands)
+//!                 -&gt; Option&lt;Vec&lt;u8&gt;&gt; {
+//!
+//!    let mut result: Vec&lt;u8&gt; = Vec::with_capacity(operands.len());
+//!    existing_val.map(|v| {
+//!        for e in v {
+//!            result.push(*e)
+//!        }
+//!    });
+//!    for op in operands {
+//!        for e in op {
+//!            result.push(*e)
+//!        }
+//!    }
+//!    Some(result)
+//! }
+//!
+//!let path = &quot;_rust_path_to_rocksdb&quot;;
+//!let mut opts = Options::default();
+//!
+//!opts.create_if_missing(true);
+//!opts.set_merge_operator_associative(&quot;test operator&quot;, concat_merge);
+//!{
+//!    let db = DB::open(&amp;opts, path).unwrap();
+//!    let p = db.put(b&quot;k1&quot;, b&quot;a&quot;);
+//!    db.merge(b&quot;k1&quot;, b&quot;b&quot;);
+//!    db.merge(b&quot;k1&quot;, b&quot;c&quot;);
+//!    db.merge(b&quot;k1&quot;, b&quot;d&quot;);
+//!    db.merge(b&quot;k1&quot;, b&quot;efg&quot;);
+//!    let r = db.get(b&quot;k1&quot;);
+//!    assert_eq!(r.unwrap().unwrap(), b&quot;abcdefg&quot;);
+//!}
+//!let _ = DB::destroy(&amp;opts, path);
+//! ```
 
-<span class="kw">use</span> <span class="ident">libc</span>::{<span class="self">self</span>, <span class="ident">c_char</span>, <span class="ident">c_int</span>, <span class="ident">c_void</span>, <span class="ident">size_t</span>};
-<span class="kw">use</span> <span class="ident">std::ffi::CString</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>;
-<span class="kw">use</span> <span class="ident">std::ptr</span>;
-<span class="kw">use</span> <span class="ident">std::slice</span>;
+</span><span class="kw">use </span>libc::{<span class="self">self</span>, c_char, c_int, c_void, size_t};
+<span class="kw">use </span>std::ffi::CString;
+<span class="kw">use </span>std::mem;
+<span class="kw">use </span>std::ptr;
+<span class="kw">use </span>std::slice;
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">MergeFn</span>:
-    <span class="ident">Fn</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">MergeOperands</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>
-{
+<span class="kw">pub trait </span>MergeFn:
+    Fn(<span class="kw-2">&amp;</span>[u8], <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;, <span class="kw-2">&amp;</span>MergeOperands) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; + Send + Sync + <span class="lifetime">&#39;static
+</span>{
 }
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> <span class="ident">MergeFn</span> <span class="kw">for</span> <span class="ident">F</span> <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">MergeOperands</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>
-{
-}
-
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MergeOperatorCallback</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">MergeFn</span>, <span class="ident">PF</span>: <span class="ident">MergeFn</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="ident">name</span>: <span class="ident">CString</span>,
-    <span class="kw">pub</span> <span class="ident">full_merge_fn</span>: <span class="ident">F</span>,
-    <span class="kw">pub</span> <span class="ident">partial_merge_fn</span>: <span class="ident">PF</span>,
+<span class="kw">impl</span>&lt;F&gt; MergeFn <span class="kw">for </span>F <span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>[u8], <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;, <span class="kw-2">&amp;</span>MergeOperands) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; + Send + Sync + <span class="lifetime">&#39;static
+</span>{
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">destructor_callback</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">MergeFn</span>, <span class="ident">PF</span>: <span class="ident">MergeFn</span><span class="op">&gt;</span>(<span class="ident">raw_cb</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>) {
-    <span class="ident">Box::from_raw</span>(<span class="ident">raw_cb</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">MergeOperatorCallback</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">PF</span><span class="op">&gt;</span>);
+<span class="kw">pub struct </span>MergeOperatorCallback&lt;F: MergeFn, PF: MergeFn&gt; {
+    <span class="kw">pub </span>name: CString,
+    <span class="kw">pub </span>full_merge_fn: F,
+    <span class="kw">pub </span>partial_merge_fn: PF,
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">delete_callback</span>(
-    <span class="ident">_raw_cb</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">value</span>: <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-    <span class="ident">value_length</span>: <span class="ident">size_t</span>,
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>destructor_callback&lt;F: MergeFn, PF: MergeFn&gt;(raw_cb: <span class="kw-2">*mut </span>c_void) {
+    Box::from_raw(raw_cb <span class="kw">as </span><span class="kw-2">*mut </span>MergeOperatorCallback&lt;F, PF&gt;);
+}
+
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>delete_callback(
+    _raw_cb: <span class="kw-2">*mut </span>c_void,
+    value: <span class="kw-2">*const </span>c_char,
+    value_length: size_t,
 ) {
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">value</span>.<span class="ident">is_null</span>() {
-        <span class="ident">Box::from_raw</span>(<span class="ident">slice::from_raw_parts_mut</span>(
-            <span class="ident">value</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-            <span class="ident">value_length</span> <span class="kw">as</span> <span class="ident">usize</span>,
+    <span class="kw">if </span>!value.is_null() {
+        Box::from_raw(slice::from_raw_parts_mut(
+            value <span class="kw">as </span><span class="kw-2">*mut </span>u8,
+            value_length <span class="kw">as </span>usize,
         ));
     }
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">name_callback</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">MergeFn</span>, <span class="ident">PF</span>: <span class="ident">MergeFn</span><span class="op">&gt;</span>(
-    <span class="ident">raw_cb</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-) -&gt; <span class="kw-2">*const</span> <span class="ident">c_char</span> {
-    <span class="kw">let</span> <span class="ident">cb</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="ident">raw_cb</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">MergeOperatorCallback</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">PF</span><span class="op">&gt;</span>);
-    <span class="ident">cb</span>.<span class="ident">name</span>.<span class="ident">as_ptr</span>()
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>name_callback&lt;F: MergeFn, PF: MergeFn&gt;(
+    raw_cb: <span class="kw-2">*mut </span>c_void,
+) -&gt; <span class="kw-2">*const </span>c_char {
+    <span class="kw">let </span>cb = <span class="kw-2">&amp;mut *</span>(raw_cb <span class="kw">as </span><span class="kw-2">*mut </span>MergeOperatorCallback&lt;F, PF&gt;);
+    cb.name.as_ptr()
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">full_merge_callback</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">MergeFn</span>, <span class="ident">PF</span>: <span class="ident">MergeFn</span><span class="op">&gt;</span>(
-    <span class="ident">raw_cb</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">raw_key</span>: <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-    <span class="ident">key_len</span>: <span class="ident">size_t</span>,
-    <span class="ident">existing_value</span>: <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-    <span class="ident">existing_value_len</span>: <span class="ident">size_t</span>,
-    <span class="ident">operands_list</span>: <span class="kw-2">*const</span> <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-    <span class="ident">operands_list_len</span>: <span class="kw-2">*const</span> <span class="ident">size_t</span>,
-    <span class="ident">num_operands</span>: <span class="ident">c_int</span>,
-    <span class="ident">success</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-    <span class="ident">new_value_length</span>: <span class="kw-2">*mut</span> <span class="ident">size_t</span>,
-) -&gt; <span class="kw-2">*mut</span> <span class="ident">c_char</span> {
-    <span class="kw">let</span> <span class="ident">cb</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="ident">raw_cb</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">MergeOperatorCallback</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">PF</span><span class="op">&gt;</span>);
-    <span class="kw">let</span> <span class="ident">operands</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">MergeOperands::new</span>(<span class="ident">operands_list</span>, <span class="ident">operands_list_len</span>, <span class="ident">num_operands</span>);
-    <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts</span>(<span class="ident">raw_key</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">key_len</span> <span class="kw">as</span> <span class="ident">usize</span>);
-    <span class="kw">let</span> <span class="ident">oldval</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">existing_value</span>.<span class="ident">is_null</span>() {
-        <span class="prelude-val">None</span>
-    } <span class="kw">else</span> {
-        <span class="prelude-val">Some</span>(<span class="ident">slice::from_raw_parts</span>(
-            <span class="ident">existing_value</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>,
-            <span class="ident">existing_value_len</span> <span class="kw">as</span> <span class="ident">usize</span>,
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>full_merge_callback&lt;F: MergeFn, PF: MergeFn&gt;(
+    raw_cb: <span class="kw-2">*mut </span>c_void,
+    raw_key: <span class="kw-2">*const </span>c_char,
+    key_len: size_t,
+    existing_value: <span class="kw-2">*const </span>c_char,
+    existing_value_len: size_t,
+    operands_list: <span class="kw-2">*const *const </span>c_char,
+    operands_list_len: <span class="kw-2">*const </span>size_t,
+    num_operands: c_int,
+    success: <span class="kw-2">*mut </span>u8,
+    new_value_length: <span class="kw-2">*mut </span>size_t,
+) -&gt; <span class="kw-2">*mut </span>c_char {
+    <span class="kw">let </span>cb = <span class="kw-2">&amp;mut *</span>(raw_cb <span class="kw">as </span><span class="kw-2">*mut </span>MergeOperatorCallback&lt;F, PF&gt;);
+    <span class="kw">let </span>operands = <span class="kw-2">&amp;</span>MergeOperands::new(operands_list, operands_list_len, num_operands);
+    <span class="kw">let </span>key = slice::from_raw_parts(raw_key <span class="kw">as </span><span class="kw-2">*const </span>u8, key_len <span class="kw">as </span>usize);
+    <span class="kw">let </span>oldval = <span class="kw">if </span>existing_value.is_null() {
+        <span class="prelude-val">None
+    </span>} <span class="kw">else </span>{
+        <span class="prelude-val">Some</span>(slice::from_raw_parts(
+            existing_value <span class="kw">as </span><span class="kw-2">*const </span>u8,
+            existing_value_len <span class="kw">as </span>usize,
         ))
     };
-    (<span class="ident">cb</span>.<span class="ident">full_merge_fn</span>)(<span class="ident">key</span>, <span class="ident">oldval</span>, <span class="ident">operands</span>).<span class="ident">map_or_else</span>(
-        <span class="op">|</span><span class="op">|</span> {
-            <span class="kw-2">*</span><span class="ident">new_value_length</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="kw-2">*</span><span class="ident">success</span> <span class="op">=</span> <span class="number">0_u8</span>;
-            <span class="ident">ptr::null_mut</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_char</span>
+    (cb.full_merge_fn)(key, oldval, operands).map_or_else(
+        || {
+            <span class="kw-2">*</span>new_value_length = <span class="number">0</span>;
+            <span class="kw-2">*</span>success = <span class="number">0_u8</span>;
+            ptr::null_mut() <span class="kw">as </span><span class="kw-2">*mut </span>c_char
         },
-        <span class="op">|</span><span class="ident">result</span><span class="op">|</span> {
-            <span class="kw-2">*</span><span class="ident">new_value_length</span> <span class="op">=</span> <span class="ident">result</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">size_t</span>;
-            <span class="kw-2">*</span><span class="ident">success</span> <span class="op">=</span> <span class="number">1_u8</span>;
-            <span class="ident">Box::into_raw</span>(<span class="ident">result</span>.<span class="ident">into_boxed_slice</span>()) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_char</span>
-        },
-    )
-}
-
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">partial_merge_callback</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">MergeFn</span>, <span class="ident">PF</span>: <span class="ident">MergeFn</span><span class="op">&gt;</span>(
-    <span class="ident">raw_cb</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">raw_key</span>: <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-    <span class="ident">key_len</span>: <span class="ident">size_t</span>,
-    <span class="ident">operands_list</span>: <span class="kw-2">*const</span> <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-    <span class="ident">operands_list_len</span>: <span class="kw-2">*const</span> <span class="ident">size_t</span>,
-    <span class="ident">num_operands</span>: <span class="ident">c_int</span>,
-    <span class="ident">success</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-    <span class="ident">new_value_length</span>: <span class="kw-2">*mut</span> <span class="ident">size_t</span>,
-) -&gt; <span class="kw-2">*mut</span> <span class="ident">c_char</span> {
-    <span class="kw">let</span> <span class="ident">cb</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="ident">raw_cb</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">MergeOperatorCallback</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">PF</span><span class="op">&gt;</span>);
-    <span class="kw">let</span> <span class="ident">operands</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">MergeOperands::new</span>(<span class="ident">operands_list</span>, <span class="ident">operands_list_len</span>, <span class="ident">num_operands</span>);
-    <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts</span>(<span class="ident">raw_key</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">key_len</span> <span class="kw">as</span> <span class="ident">usize</span>);
-    (<span class="ident">cb</span>.<span class="ident">partial_merge_fn</span>)(<span class="ident">key</span>, <span class="prelude-val">None</span>, <span class="ident">operands</span>).<span class="ident">map_or_else</span>(
-        <span class="op">|</span><span class="op">|</span> {
-            <span class="kw-2">*</span><span class="ident">new_value_length</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="kw-2">*</span><span class="ident">success</span> <span class="op">=</span> <span class="number">0_u8</span>;
-            <span class="ident">ptr::null_mut</span>::<span class="op">&lt;</span><span class="ident">c_char</span><span class="op">&gt;</span>()
-        },
-        <span class="op">|</span><span class="ident">result</span><span class="op">|</span> {
-            <span class="kw-2">*</span><span class="ident">new_value_length</span> <span class="op">=</span> <span class="ident">result</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">size_t</span>;
-            <span class="kw-2">*</span><span class="ident">success</span> <span class="op">=</span> <span class="number">1_u8</span>;
-            <span class="ident">Box::into_raw</span>(<span class="ident">result</span>.<span class="ident">into_boxed_slice</span>()) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_char</span>
+        |result| {
+            <span class="kw-2">*</span>new_value_length = result.len() <span class="kw">as </span>size_t;
+            <span class="kw-2">*</span>success = <span class="number">1_u8</span>;
+            Box::into_raw(result.into_boxed_slice()) <span class="kw">as </span><span class="kw-2">*mut </span>c_char
         },
     )
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MergeOperands</span> {
-    <span class="ident">operands_list</span>: <span class="kw-2">*const</span> <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-    <span class="ident">operands_list_len</span>: <span class="kw-2">*const</span> <span class="ident">size_t</span>,
-    <span class="ident">num_operands</span>: <span class="ident">usize</span>,
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>partial_merge_callback&lt;F: MergeFn, PF: MergeFn&gt;(
+    raw_cb: <span class="kw-2">*mut </span>c_void,
+    raw_key: <span class="kw-2">*const </span>c_char,
+    key_len: size_t,
+    operands_list: <span class="kw-2">*const *const </span>c_char,
+    operands_list_len: <span class="kw-2">*const </span>size_t,
+    num_operands: c_int,
+    success: <span class="kw-2">*mut </span>u8,
+    new_value_length: <span class="kw-2">*mut </span>size_t,
+) -&gt; <span class="kw-2">*mut </span>c_char {
+    <span class="kw">let </span>cb = <span class="kw-2">&amp;mut *</span>(raw_cb <span class="kw">as </span><span class="kw-2">*mut </span>MergeOperatorCallback&lt;F, PF&gt;);
+    <span class="kw">let </span>operands = <span class="kw-2">&amp;</span>MergeOperands::new(operands_list, operands_list_len, num_operands);
+    <span class="kw">let </span>key = slice::from_raw_parts(raw_key <span class="kw">as </span><span class="kw-2">*const </span>u8, key_len <span class="kw">as </span>usize);
+    (cb.partial_merge_fn)(key, <span class="prelude-val">None</span>, operands).map_or_else(
+        || {
+            <span class="kw-2">*</span>new_value_length = <span class="number">0</span>;
+            <span class="kw-2">*</span>success = <span class="number">0_u8</span>;
+            ptr::null_mut::&lt;c_char&gt;()
+        },
+        |result| {
+            <span class="kw-2">*</span>new_value_length = result.len() <span class="kw">as </span>size_t;
+            <span class="kw-2">*</span>success = <span class="number">1_u8</span>;
+            Box::into_raw(result.into_boxed_slice()) <span class="kw">as </span><span class="kw-2">*mut </span>c_char
+        },
+    )
 }
 
-<span class="kw">impl</span> <span class="ident">MergeOperands</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">operands_list</span>: <span class="kw-2">*const</span> <span class="kw-2">*const</span> <span class="ident">c_char</span>,
-        <span class="ident">operands_list_len</span>: <span class="kw-2">*const</span> <span class="ident">size_t</span>,
-        <span class="ident">num_operands</span>: <span class="ident">c_int</span>,
-    ) -&gt; <span class="ident">MergeOperands</span> {
-        <span class="macro">assert!</span>(<span class="ident">num_operands</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span>);
-        <span class="ident">MergeOperands</span> {
-            <span class="ident">operands_list</span>,
-            <span class="ident">operands_list_len</span>,
-            <span class="ident">num_operands</span>: <span class="ident">num_operands</span> <span class="kw">as</span> <span class="ident">usize</span>,
+<span class="kw">pub struct </span>MergeOperands {
+    operands_list: <span class="kw-2">*const *const </span>c_char,
+    operands_list_len: <span class="kw-2">*const </span>size_t,
+    num_operands: usize,
+}
+
+<span class="kw">impl </span>MergeOperands {
+    <span class="kw">fn </span>new(
+        operands_list: <span class="kw-2">*const *const </span>c_char,
+        operands_list_len: <span class="kw-2">*const </span>size_t,
+        num_operands: c_int,
+    ) -&gt; MergeOperands {
+        <span class="macro">assert!</span>(num_operands &gt;= <span class="number">0</span>);
+        MergeOperands {
+            operands_list,
+            operands_list_len,
+            num_operands: num_operands <span class="kw">as </span>usize,
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">num_operands</span>
+    <span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.num_operands
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">num_operands</span> <span class="op">==</span> <span class="number">0</span>
-    }
+    <span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.num_operands == <span class="number">0
+    </span>}
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">MergeOperandsIter</span> {
-        <span class="ident">MergeOperandsIter</span> {
-            <span class="ident">operands</span>: <span class="self">self</span>,
-            <span class="ident">cursor</span>: <span class="number">0</span>,
+    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MergeOperandsIter {
+        MergeOperandsIter {
+            operands: <span class="self">self</span>,
+            cursor: <span class="number">0</span>,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">get_operand</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">index</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">num_operands</span> {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="kw">unsafe</span> {
-                <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">operands_list</span> <span class="kw">as</span> <span class="ident">usize</span>;
-                <span class="kw">let</span> <span class="ident">base_len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">operands_list_len</span> <span class="kw">as</span> <span class="ident">usize</span>;
-                <span class="kw">let</span> <span class="ident">spacing</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="kw-2">*const</span> <span class="kw-2">*const</span> <span class="ident">u8</span><span class="op">&gt;</span>();
-                <span class="kw">let</span> <span class="ident">spacing_len</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="kw-2">*const</span> <span class="ident">size_t</span><span class="op">&gt;</span>();
-                <span class="kw">let</span> <span class="ident">len_ptr</span> <span class="op">=</span> (<span class="ident">base_len</span> <span class="op">+</span> (<span class="ident">spacing_len</span> <span class="op">*</span> <span class="ident">index</span>)) <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">size_t</span>;
-                <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">len_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>;
-                <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">base</span> <span class="op">+</span> (<span class="ident">spacing</span> <span class="op">*</span> <span class="ident">index</span>);
-                <span class="prelude-val">Some</span>(<span class="ident">slice::from_raw_parts</span>(
-                    <span class="kw-2">*</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="kw-2">*const</span> <span class="ident">u8</span>) <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>,
-                    <span class="ident">len</span>,
+    <span class="kw">fn </span>get_operand(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt; {
+        <span class="kw">if </span>index &gt;= <span class="self">self</span>.num_operands {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="kw">unsafe </span>{
+                <span class="kw">let </span>base = <span class="self">self</span>.operands_list <span class="kw">as </span>usize;
+                <span class="kw">let </span>base_len = <span class="self">self</span>.operands_list_len <span class="kw">as </span>usize;
+                <span class="kw">let </span>spacing = mem::size_of::&lt;<span class="kw-2">*const *const </span>u8&gt;();
+                <span class="kw">let </span>spacing_len = mem::size_of::&lt;<span class="kw-2">*const </span>size_t&gt;();
+                <span class="kw">let </span>len_ptr = (base_len + (spacing_len * index)) <span class="kw">as </span><span class="kw-2">*const </span>size_t;
+                <span class="kw">let </span>len = <span class="kw-2">*</span>len_ptr <span class="kw">as </span>usize;
+                <span class="kw">let </span>ptr = base + (spacing * index);
+                <span class="prelude-val">Some</span>(slice::from_raw_parts(
+                    <span class="kw-2">*</span>(ptr <span class="kw">as </span><span class="kw-2">*const *const </span>u8) <span class="kw">as </span><span class="kw-2">*const </span>u8,
+                    len,
                 ))
             }
         }
     }
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MergeOperandsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">operands</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">MergeOperands</span>,
-    <span class="ident">cursor</span>: <span class="ident">usize</span>,
+<span class="kw">pub struct </span>MergeOperandsIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    operands: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>MergeOperands,
+    cursor: usize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">MergeOperandsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>];
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>MergeOperandsIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8];
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">operand</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">operands</span>.<span class="ident">get_operand</span>(<span class="self">self</span>.<span class="ident">cursor</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">cursor</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-        <span class="prelude-val">Some</span>(<span class="ident">operand</span>)
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">let </span>operand = <span class="self">self</span>.operands.get_operand(<span class="self">self</span>.cursor)<span class="question-mark">?</span>;
+        <span class="self">self</span>.cursor += <span class="number">1</span>;
+        <span class="prelude-val">Some</span>(operand)
     }
 
-    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="ident">remaining</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">operands</span>.<span class="ident">num_operands</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">cursor</span>;
-        (<span class="ident">remaining</span>, <span class="prelude-val">Some</span>(<span class="ident">remaining</span>))
+    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+        <span class="kw">let </span>remaining = <span class="self">self</span>.operands.num_operands - <span class="self">self</span>.cursor;
+        (remaining, <span class="prelude-val">Some</span>(remaining))
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">MergeOperands</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>];
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">MergeOperandsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>MergeOperands {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8];
+    <span class="kw">type </span>IntoIter = MergeOperandsIter&lt;<span class="lifetime">&#39;a</span>&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-            <span class="ident">operands</span>: <span class="self">self</span>,
-            <span class="ident">cursor</span>: <span class="number">0</span>,
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">Self</span>::IntoIter {
+            operands: <span class="self">self</span>,
+            cursor: <span class="number">0</span>,
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["MallocSizeOf",""]]});
+window.SIDEBAR_ITEMS = {"derive":[["MallocSizeOf",""]]};

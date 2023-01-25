@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1050,1053 +1045,1052 @@
 <span id="1045">1045</span>
 <span id="1046">1046</span>
 <span id="1047">1047</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">sync::Arc</span>};
+</span><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
-<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">channel::mpsc::Receiver</span>, <span class="ident">Future</span>};
-<span class="kw">use</span> <span class="ident">sc_transaction_pool_api::error</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">generic::BlockId</span>,
-	<span class="ident">traits</span>::{<span class="self">self</span>, <span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>, <span class="ident">SaturatedConversion</span>},
-	<span class="ident">transaction_validity</span>::{
-		<span class="ident">TransactionSource</span>, <span class="ident">TransactionTag</span> <span class="kw">as</span> <span class="ident">Tag</span>, <span class="ident">TransactionValidity</span>, <span class="ident">TransactionValidityError</span>,
+<span class="kw">use </span>futures::{channel::mpsc::Receiver, Future};
+<span class="kw">use </span>sc_transaction_pool_api::error;
+<span class="kw">use </span>sp_runtime::{
+	generic::BlockId,
+	traits::{<span class="self">self</span>, Block <span class="kw">as </span>BlockT, SaturatedConversion},
+	transaction_validity::{
+		TransactionSource, TransactionTag <span class="kw">as </span>Tag, TransactionValidity, TransactionValidityError,
 	},
 };
-<span class="kw">use</span> <span class="ident">std::time::Instant</span>;
+<span class="kw">use </span>std::time::Instant;
 
-<span class="kw">use</span> <span class="kw">super</span>::{
-	<span class="ident">base_pool</span> <span class="kw">as</span> <span class="ident">base</span>,
-	<span class="ident">validated_pool</span>::{<span class="ident">IsValidator</span>, <span class="ident">ValidatedPool</span>, <span class="ident">ValidatedTransaction</span>},
-	<span class="ident">watcher::Watcher</span>,
+<span class="kw">use super</span>::{
+	base_pool <span class="kw">as </span>base,
+	validated_pool::{IsValidator, ValidatedPool, ValidatedTransaction},
+	watcher::Watcher,
 };
 
-<span class="doccomment">/// Modification notification event stream type;</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">EventStream</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Modification notification event stream type;
+</span><span class="kw">pub type </span>EventStream&lt;H&gt; = Receiver&lt;H&gt;;
 
-<span class="doccomment">/// Block hash type for a pool.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">BlockHash</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">A</span> <span class="kw">as</span> <span class="ident">ChainApi</span><span class="op">&gt;</span><span class="ident">::Block</span> <span class="kw">as</span> <span class="ident">traits::Block</span><span class="op">&gt;</span><span class="ident">::Hash</span>;
-<span class="doccomment">/// Extrinsic hash type for a pool.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">A</span> <span class="kw">as</span> <span class="ident">ChainApi</span><span class="op">&gt;</span><span class="ident">::Block</span> <span class="kw">as</span> <span class="ident">traits::Block</span><span class="op">&gt;</span><span class="ident">::Hash</span>;
-<span class="doccomment">/// Extrinsic type for a pool.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">A</span> <span class="kw">as</span> <span class="ident">ChainApi</span><span class="op">&gt;</span><span class="ident">::Block</span> <span class="kw">as</span> <span class="ident">traits::Block</span><span class="op">&gt;</span><span class="ident">::Extrinsic</span>;
-<span class="doccomment">/// Block number type for the ChainApi</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">traits::NumberFor</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">A</span> <span class="kw">as</span> <span class="ident">ChainApi</span><span class="op">&gt;</span><span class="ident">::Block</span><span class="op">&gt;</span>;
-<span class="doccomment">/// A type of transaction stored in the pool</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">base::Transaction</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-<span class="doccomment">/// A type of validated transaction stored in the pool.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span>
-	<span class="ident">ValidatedTransaction</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>, <span class="op">&lt;</span><span class="ident">A</span> <span class="kw">as</span> <span class="ident">ChainApi</span><span class="op">&gt;</span><span class="ident">::Error</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Block hash type for a pool.
+</span><span class="kw">pub type </span>BlockHash&lt;A&gt; = &lt;&lt;A <span class="kw">as </span>ChainApi&gt;::Block <span class="kw">as </span>traits::Block&gt;::Hash;
+<span class="doccomment">/// Extrinsic hash type for a pool.
+</span><span class="kw">pub type </span>ExtrinsicHash&lt;A&gt; = &lt;&lt;A <span class="kw">as </span>ChainApi&gt;::Block <span class="kw">as </span>traits::Block&gt;::Hash;
+<span class="doccomment">/// Extrinsic type for a pool.
+</span><span class="kw">pub type </span>ExtrinsicFor&lt;A&gt; = &lt;&lt;A <span class="kw">as </span>ChainApi&gt;::Block <span class="kw">as </span>traits::Block&gt;::Extrinsic;
+<span class="doccomment">/// Block number type for the ChainApi
+</span><span class="kw">pub type </span>NumberFor&lt;A&gt; = traits::NumberFor&lt;&lt;A <span class="kw">as </span>ChainApi&gt;::Block&gt;;
+<span class="doccomment">/// A type of transaction stored in the pool
+</span><span class="kw">pub type </span>TransactionFor&lt;A&gt; = Arc&lt;base::Transaction&lt;ExtrinsicHash&lt;A&gt;, ExtrinsicFor&lt;A&gt;&gt;&gt;;
+<span class="doccomment">/// A type of validated transaction stored in the pool.
+</span><span class="kw">pub type </span>ValidatedTransactionFor&lt;A&gt; =
+	ValidatedTransaction&lt;ExtrinsicHash&lt;A&gt;, ExtrinsicFor&lt;A&gt;, &lt;A <span class="kw">as </span>ChainApi&gt;::Error&gt;;
 
-<span class="doccomment">/// Concrete extrinsic validation and query logic.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ChainApi</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-	<span class="doccomment">/// Block type.</span>
-	<span class="kw">type</span> <span class="ident">Block</span>: <span class="ident">BlockT</span>;
-	<span class="doccomment">/// Error type.</span>
-	<span class="kw">type</span> <span class="ident">Error</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">error::Error</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">error::IntoPoolError</span>;
-	<span class="doccomment">/// Validate transaction future.</span>
-	<span class="kw">type</span> <span class="ident">ValidationFuture</span>: <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TransactionValidity</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Unpin</span>;
-	<span class="doccomment">/// Body future (since block body might be remote)</span>
-	<span class="kw">type</span> <span class="ident">BodyFuture</span>: <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span> <span class="kw">as</span> <span class="ident">traits::Block</span><span class="op">&gt;</span><span class="ident">::Extrinsic</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span>
-		<span class="op">+</span> <span class="ident">Unpin</span>
-		<span class="op">+</span> <span class="ident">Send</span>
-		<span class="op">+</span> <span class="lifetime">&#39;static</span>;
+<span class="doccomment">/// Concrete extrinsic validation and query logic.
+</span><span class="kw">pub trait </span>ChainApi: Send + Sync {
+	<span class="doccomment">/// Block type.
+	</span><span class="kw">type </span>Block: BlockT;
+	<span class="doccomment">/// Error type.
+	</span><span class="kw">type </span>Error: From&lt;error::Error&gt; + error::IntoPoolError;
+	<span class="doccomment">/// Validate transaction future.
+	</span><span class="kw">type </span>ValidationFuture: Future&lt;Output = <span class="prelude-ty">Result</span>&lt;TransactionValidity, <span class="self">Self</span>::Error&gt;&gt; + Send + Unpin;
+	<span class="doccomment">/// Body future (since block body might be remote)
+	</span><span class="kw">type </span>BodyFuture: Future&lt;Output = <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;&lt;<span class="self">Self</span>::Block <span class="kw">as </span>traits::Block&gt;::Extrinsic&gt;&gt;, <span class="self">Self</span>::Error&gt;&gt;
+		+ Unpin
+		+ Send
+		+ <span class="lifetime">&#39;static</span>;
 
-	<span class="doccomment">/// Verify extrinsic at given block.</span>
-	<span class="kw">fn</span> <span class="ident">validate_transaction</span>(
+	<span class="doccomment">/// Verify extrinsic at given block.
+	</span><span class="kw">fn </span>validate_transaction(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span><span class="op">&gt;</span>,
-		<span class="ident">source</span>: <span class="ident">TransactionSource</span>,
-		<span class="ident">uxt</span>: <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident"><span class="self">Self</span>::ValidationFuture</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;<span class="self">Self</span>::Block&gt;,
+		source: TransactionSource,
+		uxt: ExtrinsicFor&lt;<span class="self">Self</span>&gt;,
+	) -&gt; <span class="self">Self</span>::ValidationFuture;
 
-	<span class="doccomment">/// Returns a block number given the block id.</span>
-	<span class="kw">fn</span> <span class="ident">block_id_to_number</span>(
+	<span class="doccomment">/// Returns a block number given the block id.
+	</span><span class="kw">fn </span>block_id_to_number(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;<span class="self">Self</span>::Block&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;NumberFor&lt;<span class="self">Self</span>&gt;&gt;, <span class="self">Self</span>::Error&gt;;
 
-	<span class="doccomment">/// Returns a block hash given the block id.</span>
-	<span class="kw">fn</span> <span class="ident">block_id_to_hash</span>(
+	<span class="doccomment">/// Returns a block hash given the block id.
+	</span><span class="kw">fn </span>block_id_to_hash(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span> <span class="kw">as</span> <span class="ident">BlockT</span><span class="op">&gt;</span><span class="ident">::Hash</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;<span class="self">Self</span>::Block&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;&lt;<span class="self">Self</span>::Block <span class="kw">as </span>BlockT&gt;::Hash&gt;, <span class="self">Self</span>::Error&gt;;
 
-	<span class="doccomment">/// Returns hash and encoding length of the extrinsic.</span>
-	<span class="kw">fn</span> <span class="ident">hash_and_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">uxt</span>: <span class="kw-2">&amp;</span><span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) -&gt; (<span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">usize</span>);
+	<span class="doccomment">/// Returns hash and encoding length of the extrinsic.
+	</span><span class="kw">fn </span>hash_and_length(<span class="kw-2">&amp;</span><span class="self">self</span>, uxt: <span class="kw-2">&amp;</span>ExtrinsicFor&lt;<span class="self">Self</span>&gt;) -&gt; (ExtrinsicHash&lt;<span class="self">Self</span>&gt;, usize);
 
-	<span class="doccomment">/// Returns a block body given the block id.</span>
-	<span class="kw">fn</span> <span class="ident">block_body</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="self">Self</span>::BodyFuture</span>;
+	<span class="doccomment">/// Returns a block body given the block id.
+	</span><span class="kw">fn </span>block_body(<span class="kw-2">&amp;</span><span class="self">self</span>, at: <span class="kw-2">&amp;</span>BlockId&lt;<span class="self">Self</span>::Block&gt;) -&gt; <span class="self">Self</span>::BodyFuture;
 
-	<span class="doccomment">/// Returns a block header given the block id.</span>
-	<span class="kw">fn</span> <span class="ident">block_header</span>(
+	<span class="doccomment">/// Returns a block header given the block id.
+	</span><span class="kw">fn </span>block_header(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Block</span> <span class="kw">as</span> <span class="ident">BlockT</span><span class="op">&gt;</span><span class="ident">::Header</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;<span class="self">Self</span>::Block&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;&lt;<span class="self">Self</span>::Block <span class="kw">as </span>BlockT&gt;::Header&gt;, <span class="self">Self</span>::Error&gt;;
 }
 
-<span class="doccomment">/// Pool configuration options.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Options</span> {
-	<span class="doccomment">/// Ready queue limits.</span>
-	<span class="kw">pub</span> <span class="ident">ready</span>: <span class="ident">base::Limit</span>,
-	<span class="doccomment">/// Future queue limits.</span>
-	<span class="kw">pub</span> <span class="ident">future</span>: <span class="ident">base::Limit</span>,
-	<span class="doccomment">/// Reject future transactions.</span>
-	<span class="kw">pub</span> <span class="ident">reject_future_transactions</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// Pool configuration options.
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>Options {
+	<span class="doccomment">/// Ready queue limits.
+	</span><span class="kw">pub </span>ready: base::Limit,
+	<span class="doccomment">/// Future queue limits.
+	</span><span class="kw">pub </span>future: base::Limit,
+	<span class="doccomment">/// Reject future transactions.
+	</span><span class="kw">pub </span>reject_future_transactions: bool,
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Options</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">ready</span>: <span class="ident">base::Limit</span> { <span class="ident">count</span>: <span class="number">8192</span>, <span class="ident">total_bytes</span>: <span class="number">20</span> <span class="op">*</span> <span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span> },
-			<span class="ident">future</span>: <span class="ident">base::Limit</span> { <span class="ident">count</span>: <span class="number">512</span>, <span class="ident">total_bytes</span>: <span class="number">1</span> <span class="op">*</span> <span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span> },
-			<span class="ident">reject_future_transactions</span>: <span class="bool-val">false</span>,
+<span class="kw">impl </span>Default <span class="kw">for </span>Options {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			ready: base::Limit { count: <span class="number">8192</span>, total_bytes: <span class="number">20 </span>* <span class="number">1024 </span>* <span class="number">1024 </span>},
+			future: base::Limit { count: <span class="number">512</span>, total_bytes: <span class="number">1 </span>* <span class="number">1024 </span>* <span class="number">1024 </span>},
+			reject_future_transactions: <span class="bool-val">false</span>,
 		}
 	}
 }
 
-<span class="doccomment">/// Should we check that the transaction is banned</span>
-<span class="doccomment">/// in the pool, before we verify it?</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">enum</span> <span class="ident">CheckBannedBeforeVerify</span> {
-	<span class="ident">Yes</span>,
-	<span class="ident">No</span>,
+<span class="doccomment">/// Should we check that the transaction is banned
+/// in the pool, before we verify it?
+</span><span class="attribute">#[derive(Copy, Clone)]
+</span><span class="kw">enum </span>CheckBannedBeforeVerify {
+	Yes,
+	No,
 }
 
-<span class="doccomment">/// Extrinsics pool that performs validation.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> {
-	<span class="ident">validated_pool</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ValidatedPool</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Extrinsics pool that performs validation.
+</span><span class="kw">pub struct </span>Pool&lt;B: ChainApi&gt; {
+	validated_pool: Arc&lt;ValidatedPool&lt;B&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">parity_util_mem::MallocSizeOf</span> <span class="kw">for</span> <span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>: <span class="ident">parity_util_mem::MallocSizeOf</span>,
+<span class="kw">impl</span>&lt;B: ChainApi&gt; parity_util_mem::MallocSizeOf <span class="kw">for </span>Pool&lt;B&gt;
+<span class="kw">where
+	</span>ExtrinsicFor&lt;B&gt;: parity_util_mem::MallocSizeOf,
 {
-	<span class="kw">fn</span> <span class="ident">size_of</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ops</span>: <span class="kw-2">&amp;mut</span> <span class="ident">parity_util_mem::MallocSizeOfOps</span>) -&gt; <span class="ident">usize</span> {
-		<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">size_of</span>(<span class="ident">ops</span>)
+	<span class="kw">fn </span>size_of(<span class="kw-2">&amp;</span><span class="self">self</span>, ops: <span class="kw-2">&amp;mut </span>parity_util_mem::MallocSizeOfOps) -&gt; usize {
+		<span class="self">self</span>.validated_pool.size_of(ops)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Create a new transaction pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">options</span>: <span class="ident">Options</span>, <span class="ident">is_validator</span>: <span class="ident">IsValidator</span>, <span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">validated_pool</span>: <span class="ident">Arc::new</span>(<span class="ident">ValidatedPool::new</span>(<span class="ident">options</span>, <span class="ident">is_validator</span>, <span class="ident">api</span>)) }
+<span class="kw">impl</span>&lt;B: ChainApi&gt; Pool&lt;B&gt; {
+	<span class="doccomment">/// Create a new transaction pool.
+	</span><span class="kw">pub fn </span>new(options: Options, is_validator: IsValidator, api: Arc&lt;B&gt;) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ validated_pool: Arc::new(ValidatedPool::new(options, is_validator, api)) }
 	}
 
-	<span class="doccomment">/// Imports a bunch of unverified extrinsics to the pool</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">submit_at</span>(
+	<span class="doccomment">/// Imports a bunch of unverified extrinsics to the pool
+	</span><span class="kw">pub async fn </span>submit_at(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">source</span>: <span class="ident">TransactionSource</span>,
-		<span class="ident">xts</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">xts</span> <span class="op">=</span> <span class="ident">xts</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">xt</span><span class="op">|</span> (<span class="ident">source</span>, <span class="ident">xt</span>));
-		<span class="kw">let</span> <span class="ident">validated_transactions</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">verify</span>(<span class="ident">at</span>, <span class="ident">xts</span>, <span class="ident">CheckBannedBeforeVerify::Yes</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-		<span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">submit</span>(<span class="ident">validated_transactions</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">tx</span>)<span class="op">|</span> <span class="ident">tx</span>)))
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		source: TransactionSource,
+		xts: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicFor&lt;B&gt;&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt;&gt;, B::Error&gt; {
+		<span class="kw">let </span>xts = xts.into_iter().map(|xt| (source, xt));
+		<span class="kw">let </span>validated_transactions = <span class="self">self</span>.verify(at, xts, CheckBannedBeforeVerify::Yes).<span class="kw">await</span><span class="question-mark">?</span>;
+		<span class="prelude-val">Ok</span>(<span class="self">self</span>.validated_pool.submit(validated_transactions.into_iter().map(|(<span class="kw">_</span>, tx)| tx)))
 	}
 
-	<span class="doccomment">/// Resubmit the given extrinsics to the pool.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This does not check if a transaction is banned, before we verify it again.</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">resubmit_at</span>(
+	<span class="doccomment">/// Resubmit the given extrinsics to the pool.
+	///
+	/// This does not check if a transaction is banned, before we verify it again.
+	</span><span class="kw">pub async fn </span>resubmit_at(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">source</span>: <span class="ident">TransactionSource</span>,
-		<span class="ident">xts</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">xts</span> <span class="op">=</span> <span class="ident">xts</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">xt</span><span class="op">|</span> (<span class="ident">source</span>, <span class="ident">xt</span>));
-		<span class="kw">let</span> <span class="ident">validated_transactions</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">verify</span>(<span class="ident">at</span>, <span class="ident">xts</span>, <span class="ident">CheckBannedBeforeVerify::No</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-		<span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">submit</span>(<span class="ident">validated_transactions</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">tx</span>)<span class="op">|</span> <span class="ident">tx</span>)))
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		source: TransactionSource,
+		xts: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicFor&lt;B&gt;&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt;&gt;, B::Error&gt; {
+		<span class="kw">let </span>xts = xts.into_iter().map(|xt| (source, xt));
+		<span class="kw">let </span>validated_transactions = <span class="self">self</span>.verify(at, xts, CheckBannedBeforeVerify::No).<span class="kw">await</span><span class="question-mark">?</span>;
+		<span class="prelude-val">Ok</span>(<span class="self">self</span>.validated_pool.submit(validated_transactions.into_iter().map(|(<span class="kw">_</span>, tx)| tx)))
 	}
 
-	<span class="doccomment">/// Imports one unverified extrinsic to the pool</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">submit_one</span>(
+	<span class="doccomment">/// Imports one unverified extrinsic to the pool
+	</span><span class="kw">pub async fn </span>submit_one(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">source</span>: <span class="ident">TransactionSource</span>,
-		<span class="ident">xt</span>: <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">submit_at</span>(<span class="ident">at</span>, <span class="ident">source</span>, <span class="ident">std::iter::once</span>(<span class="ident">xt</span>)).<span class="kw">await</span><span class="question-mark">?</span>.<span class="ident">pop</span>();
-		<span class="ident">res</span>.<span class="ident">expect</span>(<span class="string">&quot;One extrinsic passed; one result returned; qed&quot;</span>)
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		source: TransactionSource,
+		xt: ExtrinsicFor&lt;B&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt; {
+		<span class="kw">let </span>res = <span class="self">self</span>.submit_at(at, source, std::iter::once(xt)).<span class="kw">await</span><span class="question-mark">?</span>.pop();
+		res.expect(<span class="string">&quot;One extrinsic passed; one result returned; qed&quot;</span>)
 	}
 
-	<span class="doccomment">/// Import a single extrinsic and starts to watch its progress in the pool.</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">submit_and_watch</span>(
+	<span class="doccomment">/// Import a single extrinsic and starts to watch its progress in the pool.
+	</span><span class="kw">pub async fn </span>submit_and_watch(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">source</span>: <span class="ident">TransactionSource</span>,
-		<span class="ident">xt</span>: <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Watcher</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">block_number</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">resolve_block_number</span>(<span class="ident">at</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">tx</span>) <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">verify_one</span>(<span class="ident">at</span>, <span class="ident">block_number</span>, <span class="ident">source</span>, <span class="ident">xt</span>, <span class="ident">CheckBannedBeforeVerify::Yes</span>)
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		source: TransactionSource,
+		xt: ExtrinsicFor&lt;B&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Watcher&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicHash&lt;B&gt;&gt;, B::Error&gt; {
+		<span class="kw">let </span>block_number = <span class="self">self</span>.resolve_block_number(at)<span class="question-mark">?</span>;
+		<span class="kw">let </span>(<span class="kw">_</span>, tx) = <span class="self">self
+			</span>.verify_one(at, block_number, source, xt, CheckBannedBeforeVerify::Yes)
 			.<span class="kw">await</span>;
-		<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">submit_and_watch</span>(<span class="ident">tx</span>)
+		<span class="self">self</span>.validated_pool.submit_and_watch(tx)
 	}
 
-	<span class="doccomment">/// Resubmit some transaction that were validated elsewhere.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resubmit</span>(
+	<span class="doccomment">/// Resubmit some transaction that were validated elsewhere.
+	</span><span class="kw">pub fn </span>resubmit(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">revalidated_transactions</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+		revalidated_transactions: HashMap&lt;ExtrinsicHash&lt;B&gt;, ValidatedTransactionFor&lt;B&gt;&gt;,
 	) {
-		<span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
-		<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">resubmit</span>(<span class="ident">revalidated_transactions</span>);
-		<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+		<span class="kw">let </span>now = Instant::now();
+		<span class="self">self</span>.validated_pool.resubmit(revalidated_transactions);
+		<span class="macro">log::debug!</span>(target: <span class="string">&quot;txpool&quot;</span>,
 			<span class="string">&quot;Resubmitted. Took {} ms. Status: {:?}&quot;</span>,
-			<span class="ident">now</span>.<span class="ident">elapsed</span>().<span class="ident">as_millis</span>(),
-			<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">status</span>()
+			now.elapsed().as_millis(),
+			<span class="self">self</span>.validated_pool.status()
 		);
 	}
 
-	<span class="doccomment">/// Prunes known ready transactions.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Used to clear the pool from transactions that were part of recently imported block.</span>
-	<span class="doccomment">/// The main difference from the `prune` is that we do not revalidate any transactions</span>
-	<span class="doccomment">/// and ignore unknown passed hashes.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prune_known</span>(
+	<span class="doccomment">/// Prunes known ready transactions.
+	///
+	/// Used to clear the pool from transactions that were part of recently imported block.
+	/// The main difference from the `prune` is that we do not revalidate any transactions
+	/// and ignore unknown passed hashes.
+	</span><span class="kw">pub fn </span>prune_known(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">hashes</span>: <span class="kw-2">&amp;</span>[<span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>],
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="comment">// Get details of all extrinsics that are already in the pool</span>
-		<span class="kw">let</span> <span class="ident">in_pool_tags</span> <span class="op">=</span>
-			<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">extrinsics_tags</span>(<span class="ident">hashes</span>).<span class="ident">into_iter</span>().<span class="ident">flatten</span>().<span class="ident">flatten</span>();
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		hashes: <span class="kw-2">&amp;</span>[ExtrinsicHash&lt;B&gt;],
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
+		<span class="comment">// Get details of all extrinsics that are already in the pool
+		</span><span class="kw">let </span>in_pool_tags =
+			<span class="self">self</span>.validated_pool.extrinsics_tags(hashes).into_iter().flatten().flatten();
 
-		<span class="comment">// Prune all transactions that provide given tags</span>
-		<span class="kw">let</span> <span class="ident">prune_status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">prune_tags</span>(<span class="ident">in_pool_tags</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">pruned_transactions</span> <span class="op">=</span>
-			<span class="ident">hashes</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">chain</span>(<span class="ident">prune_status</span>.<span class="ident">pruned</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">hash</span>));
-		<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">fire_pruned</span>(<span class="ident">at</span>, <span class="ident">pruned_transactions</span>)
+		<span class="comment">// Prune all transactions that provide given tags
+		</span><span class="kw">let </span>prune_status = <span class="self">self</span>.validated_pool.prune_tags(in_pool_tags)<span class="question-mark">?</span>;
+		<span class="kw">let </span>pruned_transactions =
+			hashes.iter().cloned().chain(prune_status.pruned.iter().map(|tx| tx.hash));
+		<span class="self">self</span>.validated_pool.fire_pruned(at, pruned_transactions)
 	}
 
-	<span class="doccomment">/// Prunes ready transactions.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Used to clear the pool from transactions that were part of recently imported block.</span>
-	<span class="doccomment">/// To perform pruning we need the tags that each extrinsic provides and to avoid calling</span>
-	<span class="doccomment">/// into runtime too often we first lookup all extrinsics that are in the pool and get</span>
-	<span class="doccomment">/// their provided tags from there. Otherwise we query the runtime at the `parent` block.</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">prune</span>(
+	<span class="doccomment">/// Prunes ready transactions.
+	///
+	/// Used to clear the pool from transactions that were part of recently imported block.
+	/// To perform pruning we need the tags that each extrinsic provides and to avoid calling
+	/// into runtime too often we first lookup all extrinsics that are in the pool and get
+	/// their provided tags from there. Otherwise we query the runtime at the `parent` block.
+	</span><span class="kw">pub async fn </span>prune(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">extrinsics</span>: <span class="kw-2">&amp;</span>[<span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>],
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		parent: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		extrinsics: <span class="kw-2">&amp;</span>[ExtrinsicFor&lt;B&gt;],
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
 		<span class="macro">log::debug!</span>(
-			<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+			target: <span class="string">&quot;txpool&quot;</span>,
 			<span class="string">&quot;Starting pruning of block {:?} (extrinsics: {})&quot;</span>,
-			<span class="ident">at</span>,
-			<span class="ident">extrinsics</span>.<span class="ident">len</span>()
+			at,
+			extrinsics.len()
 		);
-		<span class="comment">// Get details of all extrinsics that are already in the pool</span>
-		<span class="kw">let</span> <span class="ident">in_pool_hashes</span> <span class="op">=</span>
-			<span class="ident">extrinsics</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">extrinsic</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">hash_of</span>(<span class="ident">extrinsic</span>)).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-		<span class="kw">let</span> <span class="ident">in_pool_tags</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">extrinsics_tags</span>(<span class="kw-2">&amp;</span><span class="ident">in_pool_hashes</span>);
+		<span class="comment">// Get details of all extrinsics that are already in the pool
+		</span><span class="kw">let </span>in_pool_hashes =
+			extrinsics.iter().map(|extrinsic| <span class="self">self</span>.hash_of(extrinsic)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+		<span class="kw">let </span>in_pool_tags = <span class="self">self</span>.validated_pool.extrinsics_tags(<span class="kw-2">&amp;</span>in_pool_hashes);
 
-		<span class="comment">// Zip the ones from the pool with the full list (we get pairs `(Extrinsic,</span>
-		<span class="comment">// Option&lt;Vec&lt;Tag&gt;&gt;)`)</span>
-		<span class="kw">let</span> <span class="ident">all</span> <span class="op">=</span> <span class="ident">extrinsics</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="ident">in_pool_tags</span>.<span class="ident">into_iter</span>());
+		<span class="comment">// Zip the ones from the pool with the full list (we get pairs `(Extrinsic,
+		// Option&lt;Vec&lt;Tag&gt;&gt;)`)
+		</span><span class="kw">let </span>all = extrinsics.iter().zip(in_pool_tags.into_iter());
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">future_tags</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-		<span class="kw">for</span> (<span class="ident">extrinsic</span>, <span class="ident">in_pool_tags</span>) <span class="kw">in</span> <span class="ident">all</span> {
-			<span class="kw">match</span> <span class="ident">in_pool_tags</span> {
-				<span class="comment">// reuse the tags for extrinsics that were found in the pool</span>
-				<span class="prelude-val">Some</span>(<span class="ident">tags</span>) =&gt; <span class="ident">future_tags</span>.<span class="ident">extend</span>(<span class="ident">tags</span>),
-				<span class="comment">// if it&#39;s not found in the pool query the runtime at parent block</span>
-				<span class="comment">// to get validity info and tags that the extrinsic provides.</span>
-				<span class="prelude-val">None</span> =&gt; {
-					<span class="kw">let</span> <span class="ident">validity</span> <span class="op">=</span> <span class="self">self</span>
-						.<span class="ident">validated_pool</span>
-						.<span class="ident">api</span>()
-						.<span class="ident">validate_transaction</span>(<span class="ident">parent</span>, <span class="ident">TransactionSource::InBlock</span>, <span class="ident">extrinsic</span>.<span class="ident">clone</span>())
+		<span class="kw">let </span><span class="kw-2">mut </span>future_tags = Vec::new();
+		<span class="kw">for </span>(extrinsic, in_pool_tags) <span class="kw">in </span>all {
+			<span class="kw">match </span>in_pool_tags {
+				<span class="comment">// reuse the tags for extrinsics that were found in the pool
+				</span><span class="prelude-val">Some</span>(tags) =&gt; future_tags.extend(tags),
+				<span class="comment">// if it&#39;s not found in the pool query the runtime at parent block
+				// to get validity info and tags that the extrinsic provides.
+				</span><span class="prelude-val">None </span>=&gt; {
+					<span class="kw">let </span>validity = <span class="self">self
+						</span>.validated_pool
+						.api()
+						.validate_transaction(parent, TransactionSource::InBlock, extrinsic.clone())
 						.<span class="kw">await</span>;
 
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(<span class="ident">validity</span>)) <span class="op">=</span> <span class="ident">validity</span> {
-						<span class="ident">future_tags</span>.<span class="ident">extend</span>(<span class="ident">validity</span>.<span class="ident">provides</span>);
+					<span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(validity)) = validity {
+						future_tags.extend(validity.provides);
 					}
 				},
 			}
 		}
 
-		<span class="self">self</span>.<span class="ident">prune_tags</span>(<span class="ident">at</span>, <span class="ident">future_tags</span>, <span class="ident">in_pool_hashes</span>).<span class="kw">await</span>
-	}
+		<span class="self">self</span>.prune_tags(at, future_tags, in_pool_hashes).<span class="kw">await
+	</span>}
 
-	<span class="doccomment">/// Prunes ready transactions that provide given list of tags.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Given tags are assumed to be always provided now, so all transactions</span>
-	<span class="doccomment">/// in the Future Queue that require that particular tag (and have other</span>
-	<span class="doccomment">/// requirements satisfied) are promoted to Ready Queue.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Moreover for each provided tag we remove transactions in the pool that:</span>
-	<span class="doccomment">/// 1. Provide that tag directly</span>
-	<span class="doccomment">/// 2. Are a dependency of pruned transaction.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns transactions that have been removed from the pool and must be reverified</span>
-	<span class="doccomment">/// before reinserting to the pool.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// By removing predecessor transactions as well we might actually end up</span>
-	<span class="doccomment">/// pruning too much, so all removed transactions are reverified against</span>
-	<span class="doccomment">/// the runtime (`validate_transaction`) to make sure they are invalid.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// However we avoid revalidating transactions that are contained within</span>
-	<span class="doccomment">/// the second parameter of `known_imported_hashes`. These transactions</span>
-	<span class="doccomment">/// (if pruned) are not revalidated and become temporarily banned to</span>
-	<span class="doccomment">/// prevent importing them in the (near) future.</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">prune_tags</span>(
+	<span class="doccomment">/// Prunes ready transactions that provide given list of tags.
+	///
+	/// Given tags are assumed to be always provided now, so all transactions
+	/// in the Future Queue that require that particular tag (and have other
+	/// requirements satisfied) are promoted to Ready Queue.
+	///
+	/// Moreover for each provided tag we remove transactions in the pool that:
+	/// 1. Provide that tag directly
+	/// 2. Are a dependency of pruned transaction.
+	///
+	/// Returns transactions that have been removed from the pool and must be reverified
+	/// before reinserting to the pool.
+	///
+	/// By removing predecessor transactions as well we might actually end up
+	/// pruning too much, so all removed transactions are reverified against
+	/// the runtime (`validate_transaction`) to make sure they are invalid.
+	///
+	/// However we avoid revalidating transactions that are contained within
+	/// the second parameter of `known_imported_hashes`. These transactions
+	/// (if pruned) are not revalidated and become temporarily banned to
+	/// prevent importing them in the (near) future.
+	</span><span class="kw">pub async fn </span>prune_tags(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">tags</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Tag</span><span class="op">&gt;</span>,
-		<span class="ident">known_imported_hashes</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Pruning at {:?}&quot;</span>, <span class="ident">at</span>);
-		<span class="comment">// Prune all transactions that provide given tags</span>
-		<span class="kw">let</span> <span class="ident">prune_status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">prune_tags</span>(<span class="ident">tags</span>)<span class="question-mark">?</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		tags: <span class="kw">impl </span>IntoIterator&lt;Item = Tag&gt;,
+		known_imported_hashes: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicHash&lt;B&gt;&gt; + Clone,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
+		<span class="macro">log::debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Pruning at {:?}&quot;</span>, at);
+		<span class="comment">// Prune all transactions that provide given tags
+		</span><span class="kw">let </span>prune_status = <span class="self">self</span>.validated_pool.prune_tags(tags)<span class="question-mark">?</span>;
 
-		<span class="comment">// Make sure that we don&#39;t revalidate extrinsics that were part of the recently</span>
-		<span class="comment">// imported block. This is especially important for UTXO-like chains cause the</span>
-		<span class="comment">// inputs are pruned so such transaction would go to future again.</span>
-		<span class="self">self</span>.<span class="ident">validated_pool</span>
-			.<span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="ident">known_imported_hashes</span>.<span class="ident">clone</span>().<span class="ident">into_iter</span>());
+		<span class="comment">// Make sure that we don&#39;t revalidate extrinsics that were part of the recently
+		// imported block. This is especially important for UTXO-like chains cause the
+		// inputs are pruned so such transaction would go to future again.
+		</span><span class="self">self</span>.validated_pool
+			.ban(<span class="kw-2">&amp;</span>Instant::now(), known_imported_hashes.clone().into_iter());
 
-		<span class="comment">// Try to re-validate pruned transactions since some of them might be still valid.</span>
-		<span class="comment">// note that `known_imported_hashes` will be rejected here due to temporary ban.</span>
-		<span class="kw">let</span> <span class="ident">pruned_hashes</span> <span class="op">=</span> <span class="ident">prune_status</span>.<span class="ident">pruned</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">hash</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-		<span class="kw">let</span> <span class="ident">pruned_transactions</span> <span class="op">=</span>
-			<span class="ident">prune_status</span>.<span class="ident">pruned</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> (<span class="ident">tx</span>.<span class="ident">source</span>, <span class="ident">tx</span>.<span class="ident">data</span>.<span class="ident">clone</span>()));
+		<span class="comment">// Try to re-validate pruned transactions since some of them might be still valid.
+		// note that `known_imported_hashes` will be rejected here due to temporary ban.
+		</span><span class="kw">let </span>pruned_hashes = prune_status.pruned.iter().map(|tx| tx.hash).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+		<span class="kw">let </span>pruned_transactions =
+			prune_status.pruned.into_iter().map(|tx| (tx.source, tx.data.clone()));
 
-		<span class="kw">let</span> <span class="ident">reverified_transactions</span> <span class="op">=</span>
-			<span class="self">self</span>.<span class="ident">verify</span>(<span class="ident">at</span>, <span class="ident">pruned_transactions</span>, <span class="ident">CheckBannedBeforeVerify::Yes</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+		<span class="kw">let </span>reverified_transactions =
+			<span class="self">self</span>.verify(at, pruned_transactions, CheckBannedBeforeVerify::Yes).<span class="kw">await</span><span class="question-mark">?</span>;
 
-		<span class="macro">log::trace!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Pruning at {:?}. Resubmitting transactions.&quot;</span>, <span class="ident">at</span>);
-		<span class="comment">// And finally - submit reverified transactions back to the pool</span>
+		<span class="macro">log::trace!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Pruning at {:?}. Resubmitting transactions.&quot;</span>, at);
+		<span class="comment">// And finally - submit reverified transactions back to the pool
 
-		<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">resubmit_pruned</span>(
-			<span class="ident">at</span>,
-			<span class="ident">known_imported_hashes</span>,
-			<span class="ident">pruned_hashes</span>,
-			<span class="ident">reverified_transactions</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">xt</span>)<span class="op">|</span> <span class="ident">xt</span>).<span class="ident">collect</span>(),
+		</span><span class="self">self</span>.validated_pool.resubmit_pruned(
+			at,
+			known_imported_hashes,
+			pruned_hashes,
+			reverified_transactions.into_iter().map(|(<span class="kw">_</span>, xt)| xt).collect(),
 		)
 	}
 
-	<span class="doccomment">/// Returns transaction hash</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash_of</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">xt</span>: <span class="kw-2">&amp;</span><span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) -&gt; <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">api</span>().<span class="ident">hash_and_length</span>(<span class="ident">xt</span>).<span class="number">0</span>
-	}
+	<span class="doccomment">/// Returns transaction hash
+	</span><span class="kw">pub fn </span>hash_of(<span class="kw-2">&amp;</span><span class="self">self</span>, xt: <span class="kw-2">&amp;</span>ExtrinsicFor&lt;B&gt;) -&gt; ExtrinsicHash&lt;B&gt; {
+		<span class="self">self</span>.validated_pool.api().hash_and_length(xt).<span class="number">0
+	</span>}
 
-	<span class="doccomment">/// Resolves block number by id.</span>
-	<span class="kw">fn</span> <span class="ident">resolve_block_number</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">api</span>().<span class="ident">block_id_to_number</span>(<span class="ident">at</span>).<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">number</span><span class="op">|</span> {
-			<span class="ident">number</span>.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error::Error::InvalidBlockId</span>(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">at</span>)).<span class="ident">into</span>())
+	<span class="doccomment">/// Resolves block number by id.
+	</span><span class="kw">fn </span>resolve_block_number(<span class="kw-2">&amp;</span><span class="self">self</span>, at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;NumberFor&lt;B&gt;, B::Error&gt; {
+		<span class="self">self</span>.validated_pool.api().block_id_to_number(at).and_then(|number| {
+			number.ok_or_else(|| error::Error::InvalidBlockId(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, at)).into())
 		})
 	}
 
-	<span class="doccomment">/// Returns future that validates a bunch of transactions at given block.</span>
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify</span>(
+	<span class="doccomment">/// Returns future that validates a bunch of transactions at given block.
+	</span><span class="kw">async fn </span>verify(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">xts</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">TransactionSource</span>, <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
-		<span class="ident">check</span>: <span class="ident">CheckBannedBeforeVerify</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="comment">// we need a block number to compute tx validity</span>
-		<span class="kw">let</span> <span class="ident">block_number</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">resolve_block_number</span>(<span class="ident">at</span>)<span class="question-mark">?</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		xts: <span class="kw">impl </span>IntoIterator&lt;Item = (TransactionSource, ExtrinsicFor&lt;B&gt;)&gt;,
+		check: CheckBannedBeforeVerify,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;HashMap&lt;ExtrinsicHash&lt;B&gt;, ValidatedTransactionFor&lt;B&gt;&gt;, B::Error&gt; {
+		<span class="comment">// we need a block number to compute tx validity
+		</span><span class="kw">let </span>block_number = <span class="self">self</span>.resolve_block_number(at)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">futures::future::join_all</span>(
-			<span class="ident">xts</span>.<span class="ident">into_iter</span>()
-				.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">source</span>, <span class="ident">xt</span>)<span class="op">|</span> <span class="self">self</span>.<span class="ident">verify_one</span>(<span class="ident">at</span>, <span class="ident">block_number</span>, <span class="ident">source</span>, <span class="ident">xt</span>, <span class="ident">check</span>)),
+		<span class="kw">let </span>res = futures::future::join_all(
+			xts.into_iter()
+				.map(|(source, xt)| <span class="self">self</span>.verify_one(at, block_number, source, xt, check)),
 		)
-		.<span class="kw">await</span>
-		.<span class="ident">into_iter</span>()
-		.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		.<span class="kw">await
+		</span>.into_iter()
+		.collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
 
-		<span class="prelude-val">Ok</span>(<span class="ident">res</span>)
+		<span class="prelude-val">Ok</span>(res)
 	}
 
-	<span class="doccomment">/// Returns future that validates single transaction at given block.</span>
-	<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_one</span>(
+	<span class="doccomment">/// Returns future that validates single transaction at given block.
+	</span><span class="kw">async fn </span>verify_one(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">block_id</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">block_number</span>: <span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">source</span>: <span class="ident">TransactionSource</span>,
-		<span class="ident">xt</span>: <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">check</span>: <span class="ident">CheckBannedBeforeVerify</span>,
-	) -&gt; (<span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> (<span class="ident">hash</span>, <span class="ident">bytes</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">api</span>().<span class="ident">hash_and_length</span>(<span class="kw-2">&amp;</span><span class="ident">xt</span>);
+		block_id: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		block_number: NumberFor&lt;B&gt;,
+		source: TransactionSource,
+		xt: ExtrinsicFor&lt;B&gt;,
+		check: CheckBannedBeforeVerify,
+	) -&gt; (ExtrinsicHash&lt;B&gt;, ValidatedTransactionFor&lt;B&gt;) {
+		<span class="kw">let </span>(hash, bytes) = <span class="self">self</span>.validated_pool.api().hash_and_length(<span class="kw-2">&amp;</span>xt);
 
-		<span class="kw">let</span> <span class="ident">ignore_banned</span> <span class="op">=</span> <span class="macro">matches!</span>(<span class="ident">check</span>, <span class="ident">CheckBannedBeforeVerify::No</span>);
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">check_is_known</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>, <span class="ident">ignore_banned</span>) {
-			<span class="kw">return</span> (<span class="ident">hash</span>, <span class="ident">ValidatedTransaction::Invalid</span>(<span class="ident">hash</span>, <span class="ident">err</span>))
+		<span class="kw">let </span>ignore_banned = <span class="macro">matches!</span>(check, CheckBannedBeforeVerify::No);
+		<span class="kw">if let </span><span class="prelude-val">Err</span>(err) = <span class="self">self</span>.validated_pool.check_is_known(<span class="kw-2">&amp;</span>hash, ignore_banned) {
+			<span class="kw">return </span>(hash, ValidatedTransaction::Invalid(hash, err))
 		}
 
-		<span class="kw">let</span> <span class="ident">validation_result</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">validated_pool</span>
-			.<span class="ident">api</span>()
-			.<span class="ident">validate_transaction</span>(<span class="ident">block_id</span>, <span class="ident">source</span>, <span class="ident">xt</span>.<span class="ident">clone</span>())
+		<span class="kw">let </span>validation_result = <span class="self">self
+			</span>.validated_pool
+			.api()
+			.validate_transaction(block_id, source, xt.clone())
 			.<span class="kw">await</span>;
 
-		<span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">validation_result</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">status</span>) =&gt; <span class="ident">status</span>,
-			<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> (<span class="ident">hash</span>, <span class="ident">ValidatedTransaction::Invalid</span>(<span class="ident">hash</span>, <span class="ident">e</span>)),
+		<span class="kw">let </span>status = <span class="kw">match </span>validation_result {
+			<span class="prelude-val">Ok</span>(status) =&gt; status,
+			<span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span>(hash, ValidatedTransaction::Invalid(hash, e)),
 		};
 
-		<span class="kw">let</span> <span class="ident">validity</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">status</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">validity</span>) =&gt;
-				<span class="kw">if</span> <span class="ident">validity</span>.<span class="ident">provides</span>.<span class="ident">is_empty</span>() {
-					<span class="ident">ValidatedTransaction::Invalid</span>(<span class="ident">hash</span>, <span class="ident">error::Error::NoTagsProvided</span>.<span class="ident">into</span>())
-				} <span class="kw">else</span> {
-					<span class="ident">ValidatedTransaction::valid_at</span>(
-						<span class="ident">block_number</span>.<span class="ident">saturated_into</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>(),
-						<span class="ident">hash</span>,
-						<span class="ident">source</span>,
-						<span class="ident">xt</span>,
-						<span class="ident">bytes</span>,
-						<span class="ident">validity</span>,
+		<span class="kw">let </span>validity = <span class="kw">match </span>status {
+			<span class="prelude-val">Ok</span>(validity) =&gt;
+				<span class="kw">if </span>validity.provides.is_empty() {
+					ValidatedTransaction::Invalid(hash, error::Error::NoTagsProvided.into())
+				} <span class="kw">else </span>{
+					ValidatedTransaction::valid_at(
+						block_number.saturated_into::&lt;u64&gt;(),
+						hash,
+						source,
+						xt,
+						bytes,
+						validity,
 					)
 				},
-			<span class="prelude-val">Err</span>(<span class="ident">TransactionValidityError::Invalid</span>(<span class="ident">e</span>)) =&gt;
-				<span class="ident">ValidatedTransaction::Invalid</span>(<span class="ident">hash</span>, <span class="ident">error::Error::InvalidTransaction</span>(<span class="ident">e</span>).<span class="ident">into</span>()),
-			<span class="prelude-val">Err</span>(<span class="ident">TransactionValidityError::Unknown</span>(<span class="ident">e</span>)) =&gt;
-				<span class="ident">ValidatedTransaction::Unknown</span>(<span class="ident">hash</span>, <span class="ident">error::Error::UnknownTransaction</span>(<span class="ident">e</span>).<span class="ident">into</span>()),
+			<span class="prelude-val">Err</span>(TransactionValidityError::Invalid(e)) =&gt;
+				ValidatedTransaction::Invalid(hash, error::Error::InvalidTransaction(e).into()),
+			<span class="prelude-val">Err</span>(TransactionValidityError::Unknown(e)) =&gt;
+				ValidatedTransaction::Unknown(hash, error::Error::UnknownTransaction(e).into()),
 		};
 
-		(<span class="ident">hash</span>, <span class="ident">validity</span>)
+		(hash, validity)
 	}
 
-	<span class="doccomment">/// get a reference to the underlying validated pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">validated_pool</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">ValidatedPool</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">validated_pool</span>
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">Pool</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">validated_pool</span>: <span class="self">self</span>.<span class="ident">validated_pool</span>.<span class="ident">clone</span>() }
+	<span class="doccomment">/// get a reference to the underlying validated pool.
+	</span><span class="kw">pub fn </span>validated_pool(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ValidatedPool&lt;B&gt; {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.validated_pool
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident"><span class="kw">super</span>::base_pool::Limit</span>, <span class="kw-2">*</span>};
-	<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::tests</span>::{<span class="ident">pool</span>, <span class="ident">uxt</span>, <span class="ident">TestApi</span>, <span class="ident">INVALID_NONCE</span>};
-	<span class="kw">use</span> <span class="ident">assert_matches::assert_matches</span>;
-	<span class="kw">use</span> <span class="ident">futures::executor::block_on</span>;
-	<span class="kw">use</span> <span class="ident">parking_lot::Mutex</span>;
-	<span class="kw">use</span> <span class="ident">sc_transaction_pool_api::TransactionStatus</span>;
-	<span class="kw">use</span> <span class="ident">sp_runtime::transaction_validity::TransactionSource</span>;
-	<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">time::Instant</span>};
-	<span class="kw">use</span> <span class="ident">substrate_test_runtime</span>::{<span class="ident">AccountId</span>, <span class="ident">Extrinsic</span>, <span class="ident">Transfer</span>, <span class="ident">H256</span>};
+<span class="kw">impl</span>&lt;B: ChainApi&gt; Clone <span class="kw">for </span>Pool&lt;B&gt; {
+	<span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ validated_pool: <span class="self">self</span>.validated_pool.clone() }
+	}
+}
 
-	<span class="kw">const</span> <span class="ident">SOURCE</span>: <span class="ident">TransactionSource</span> <span class="op">=</span> <span class="ident">TransactionSource::External</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::{<span class="kw">super</span>::base_pool::Limit, <span class="kw-2">*</span>};
+	<span class="kw">use </span><span class="kw">crate</span>::tests::{pool, uxt, TestApi, INVALID_NONCE};
+	<span class="kw">use </span>assert_matches::assert_matches;
+	<span class="kw">use </span>futures::executor::block_on;
+	<span class="kw">use </span>parking_lot::Mutex;
+	<span class="kw">use </span>sc_transaction_pool_api::TransactionStatus;
+	<span class="kw">use </span>sp_runtime::transaction_validity::TransactionSource;
+	<span class="kw">use </span>std::{collections::HashMap, time::Instant};
+	<span class="kw">use </span>substrate_test_runtime::{AccountId, Extrinsic, Transfer, H256};
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_validate_and_import_transaction</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="kw">const </span>SOURCE: TransactionSource = TransactionSource::External;
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">0</span>,
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_validate_and_import_transaction() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>pool = pool();
+
+		<span class="comment">// when
+		</span><span class="kw">let </span>hash = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">0</span>,
 			}),
 		))
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">ready</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">hash</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(), <span class="macro">vec!</span>[<span class="ident">hash</span>]);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.validated_pool().ready().map(|v| v.hash).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[hash]);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_reject_if_temporarily_banned</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="kw">let</span> <span class="ident">uxt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-			<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-			<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-			<span class="ident">amount</span>: <span class="number">5</span>,
-			<span class="ident">nonce</span>: <span class="number">0</span>,
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_reject_if_temporarily_banned() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>pool = pool();
+		<span class="kw">let </span>uxt = uxt(Transfer {
+			from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+			to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+			amount: <span class="number">5</span>,
+			nonce: <span class="number">0</span>,
 		});
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="macro">vec!</span>[<span class="ident">pool</span>.<span class="ident">hash_of</span>(<span class="kw-2">&amp;</span><span class="ident">uxt</span>)]);
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">uxt</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
+		<span class="comment">// when
+		</span>pool.validated_pool.ban(<span class="kw-2">&amp;</span>Instant::now(), <span class="macro">vec!</span>[pool.hash_of(<span class="kw-2">&amp;</span>uxt)]);
+		<span class="kw">let </span>res = block_on(pool.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, uxt));
+		<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_matches!</span>(<span class="ident">res</span>.<span class="ident">unwrap_err</span>(), <span class="ident">error::Error::TemporarilyBanned</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_matches!</span>(res.unwrap_err(), error::Error::TemporarilyBanned);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_reject_unactionable_transactions</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Pool::new</span>(
-			<span class="ident">Default::default</span>(),
-			<span class="comment">// the node does not author blocks</span>
-			<span class="bool-val">false</span>.<span class="ident">into</span>(),
-			<span class="ident">TestApi::default</span>().<span class="ident">into</span>(),
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_reject_unactionable_transactions() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>pool = Pool::new(
+			Default::default(),
+			<span class="comment">// the node does not author blocks
+			</span><span class="bool-val">false</span>.into(),
+			TestApi::default().into(),
 		);
 
-		<span class="comment">// after validation `IncludeData` will be set to non-propagable</span>
-		<span class="kw">let</span> <span class="ident">uxt</span> <span class="op">=</span> <span class="ident">Extrinsic::IncludeData</span>(<span class="macro">vec!</span>[<span class="number">42</span>]);
+		<span class="comment">// after validation `IncludeData` will be set to non-propagable
+		</span><span class="kw">let </span>uxt = Extrinsic::IncludeData(<span class="macro">vec!</span>[<span class="number">42</span>]);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">uxt</span>));
+		<span class="comment">// when
+		</span><span class="kw">let </span>res = block_on(pool.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, uxt));
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_matches!</span>(<span class="ident">res</span>.<span class="ident">unwrap_err</span>(), <span class="ident">error::Error::Unactionable</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_matches!</span>(res.unwrap_err(), error::Error::Unactionable);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_notify_about_pool_events</span>() {
-		<span class="kw">let</span> (<span class="ident">stream</span>, <span class="ident">hash0</span>, <span class="ident">hash1</span>) <span class="op">=</span> {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-			<span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">import_notification_stream</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_notify_about_pool_events() {
+		<span class="kw">let </span>(stream, hash0, hash1) = {
+			<span class="comment">// given
+			</span><span class="kw">let </span>pool = pool();
+			<span class="kw">let </span>stream = pool.validated_pool().import_notification_stream();
 
-			<span class="comment">// when</span>
-			<span class="kw">let</span> <span class="ident">hash0</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-				<span class="ident">SOURCE</span>,
-				<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">0</span>,
+			<span class="comment">// when
+			</span><span class="kw">let </span>hash0 = block_on(pool.submit_one(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+				SOURCE,
+				uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">0</span>,
 				}),
 			))
-			.<span class="ident">unwrap</span>();
-			<span class="kw">let</span> <span class="ident">hash1</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-				<span class="ident">SOURCE</span>,
-				<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">1</span>,
+			.unwrap();
+			<span class="kw">let </span>hash1 = block_on(pool.submit_one(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+				SOURCE,
+				uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">1</span>,
 				}),
 			))
-			.<span class="ident">unwrap</span>();
-			<span class="comment">// future doesn&#39;t count</span>
-			<span class="kw">let</span> <span class="ident">_hash</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-				<span class="ident">SOURCE</span>,
-				<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">3</span>,
+			.unwrap();
+			<span class="comment">// future doesn&#39;t count
+			</span><span class="kw">let </span>_hash = block_on(pool.submit_one(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+				SOURCE,
+				uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">3</span>,
 				}),
 			))
-			.<span class="ident">unwrap</span>();
+			.unwrap();
 
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">2</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">1</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">2</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">1</span>);
 
-			(<span class="ident">stream</span>, <span class="ident">hash0</span>, <span class="ident">hash1</span>)
+			(stream, hash0, hash1)
 		};
 
-		<span class="comment">// then</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">it</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">stream</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">hash0</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">hash1</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+		<span class="comment">// then
+		</span><span class="kw">let </span><span class="kw-2">mut </span>it = futures::executor::block_on_stream(stream);
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(hash0));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(hash1));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">None</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_clear_stale_transactions</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="kw">let</span> <span class="ident">hash1</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">0</span>,
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_clear_stale_transactions() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>pool = pool();
+		<span class="kw">let </span>hash1 = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">0</span>,
 			}),
 		))
-		.<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">hash2</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">1</span>,
+		.unwrap();
+		<span class="kw">let </span>hash2 = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">1</span>,
 			}),
 		))
-		.<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">hash3</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">3</span>,
+		.unwrap();
+		<span class="kw">let </span>hash3 = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">3</span>,
 			}),
 		))
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">clear_stale</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">5</span>)).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span>pool.validated_pool.clear_stale(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">5</span>)).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
-		<span class="comment">// make sure they are temporarily banned as well</span>
-		<span class="macro">assert!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash1</span>));
-		<span class="macro">assert!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash2</span>));
-		<span class="macro">assert!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash3</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.validated_pool().ready().count(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
+		<span class="comment">// make sure they are temporarily banned as well
+		</span><span class="macro">assert!</span>(pool.validated_pool.is_banned(<span class="kw-2">&amp;</span>hash1));
+		<span class="macro">assert!</span>(pool.validated_pool.is_banned(<span class="kw-2">&amp;</span>hash2));
+		<span class="macro">assert!</span>(pool.validated_pool.is_banned(<span class="kw-2">&amp;</span>hash3));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_ban_mined_transactions</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="kw">let</span> <span class="ident">hash1</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">0</span>,
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_ban_mined_transactions() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>pool = pool();
+		<span class="kw">let </span>hash1 = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">0</span>,
 			}),
 		))
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// when</span>
-		<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">prune_tags</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">1</span>), <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]], <span class="macro">vec!</span>[<span class="ident">hash1</span>.<span class="ident">clone</span>()])).<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span>block_on(pool.prune_tags(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">1</span>), <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]], <span class="macro">vec!</span>[hash1.clone()])).unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash1</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert!</span>(pool.validated_pool.is_banned(<span class="kw-2">&amp;</span>hash1));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_limit_futures</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">Limit</span> { <span class="ident">count</span>: <span class="number">100</span>, <span class="ident">total_bytes</span>: <span class="number">200</span> };
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_limit_futures() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>limit = Limit { count: <span class="number">100</span>, total_bytes: <span class="number">200 </span>};
 
-		<span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">Options</span> { <span class="ident">ready</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), <span class="ident">future</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), ..<span class="ident">Default::default</span>() };
+		<span class="kw">let </span>options = Options { ready: limit.clone(), future: limit.clone(), ..Default::default() };
 
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Pool::new</span>(<span class="ident">options</span>, <span class="bool-val">true</span>.<span class="ident">into</span>(), <span class="ident">TestApi::default</span>().<span class="ident">into</span>());
+		<span class="kw">let </span>pool = Pool::new(options, <span class="bool-val">true</span>.into(), TestApi::default().into());
 
-		<span class="kw">let</span> <span class="ident">hash1</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">1</span>,
+		<span class="kw">let </span>hash1 = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">1</span>,
 			}),
 		))
-		.<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">1</span>);
+		.unwrap();
+		<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">1</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">hash2</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">10</span>,
+		<span class="comment">// when
+		</span><span class="kw">let </span>hash2 = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">10</span>,
 			}),
 		))
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">1</span>);
-		<span class="macro">assert!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash1</span>));
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash2</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">1</span>);
+		<span class="macro">assert!</span>(pool.validated_pool.is_banned(<span class="kw-2">&amp;</span>hash1));
+		<span class="macro">assert!</span>(!pool.validated_pool.is_banned(<span class="kw-2">&amp;</span>hash2));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_error_if_reject_immediately</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">Limit</span> { <span class="ident">count</span>: <span class="number">100</span>, <span class="ident">total_bytes</span>: <span class="number">10</span> };
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_error_if_reject_immediately() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>limit = Limit { count: <span class="number">100</span>, total_bytes: <span class="number">10 </span>};
 
-		<span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">Options</span> { <span class="ident">ready</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), <span class="ident">future</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), ..<span class="ident">Default::default</span>() };
+		<span class="kw">let </span>options = Options { ready: limit.clone(), future: limit.clone(), ..Default::default() };
 
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Pool::new</span>(<span class="ident">options</span>, <span class="bool-val">true</span>.<span class="ident">into</span>(), <span class="ident">TestApi::default</span>().<span class="ident">into</span>());
+		<span class="kw">let </span>pool = Pool::new(options, <span class="bool-val">true</span>.into(), TestApi::default().into());
 
-		<span class="comment">// when</span>
-		<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">1</span>,
+		<span class="comment">// when
+		</span>block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">1</span>,
 			}),
 		))
-		.<span class="ident">unwrap_err</span>();
+		.unwrap_err();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_reject_transactions_with_no_provides</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_reject_transactions_with_no_provides() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>pool = pool();
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-			<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-			<span class="ident">SOURCE</span>,
-			<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="ident">INVALID_NONCE</span>,
+		<span class="comment">// when
+		</span><span class="kw">let </span>err = block_on(pool.submit_one(
+			<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+			SOURCE,
+			uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: INVALID_NONCE,
 			}),
 		))
-		.<span class="ident">unwrap_err</span>();
+		.unwrap_err();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
-		<span class="macro">assert_matches!</span>(<span class="ident">err</span>, <span class="ident">error::Error::NoTagsProvided</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
+		<span class="macro">assert_matches!</span>(err, error::Error::NoTagsProvided);
 	}
 
-	<span class="kw">mod</span> <span class="ident">listener</span> {
-		<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+	<span class="kw">mod </span>listener {
+		<span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_trigger_ready_and_finalized</span>() {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-			<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-				<span class="ident">SOURCE</span>,
-				<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">0</span>,
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_trigger_ready_and_finalized() {
+			<span class="comment">// given
+			</span><span class="kw">let </span>pool = pool();
+			<span class="kw">let </span>watcher = block_on(pool.submit_and_watch(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+				SOURCE,
+				uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">0</span>,
 				}),
 			))
-			.<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
+			.unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
 
-			<span class="comment">// when</span>
-			<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">prune_tags</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">2</span>), <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0u8</span>]], <span class="macro">vec!</span>[])).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
+			<span class="comment">// when
+			</span>block_on(pool.prune_tags(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">2</span>), <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0u8</span>]], <span class="macro">vec!</span>[])).unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
 
-			<span class="comment">// then</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">watcher</span>.<span class="ident">into_stream</span>());
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Ready</span>));
+			<span class="comment">// then
+			</span><span class="kw">let </span><span class="kw-2">mut </span>stream = futures::executor::block_on_stream(watcher.into_stream());
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Ready));
 			<span class="macro">assert_eq!</span>(
-				<span class="ident">stream</span>.<span class="ident">next</span>(),
-				<span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::InBlock</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>).<span class="ident">into</span>())),
+				stream.next(),
+				<span class="prelude-val">Some</span>(TransactionStatus::InBlock(H256::from_low_u64_be(<span class="number">2</span>).into())),
 			);
 		}
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_trigger_ready_and_finalized_when_pruning_via_hash</span>() {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-			<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-				<span class="ident">SOURCE</span>,
-				<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">0</span>,
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_trigger_ready_and_finalized_when_pruning_via_hash() {
+			<span class="comment">// given
+			</span><span class="kw">let </span>pool = pool();
+			<span class="kw">let </span>watcher = block_on(pool.submit_and_watch(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+				SOURCE,
+				uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">0</span>,
 				}),
 			))
-			.<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
+			.unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
 
-			<span class="comment">// when</span>
-			<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">prune_tags</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">2</span>),
+			<span class="comment">// when
+			</span>block_on(pool.prune_tags(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">2</span>),
 				<span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0u8</span>]],
-				<span class="macro">vec!</span>[<span class="ident">watcher</span>.<span class="ident">hash</span>().<span class="ident">clone</span>()],
+				<span class="macro">vec!</span>[watcher.hash().clone()],
 			))
-			.<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
+			.unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
 
-			<span class="comment">// then</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">watcher</span>.<span class="ident">into_stream</span>());
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Ready</span>));
+			<span class="comment">// then
+			</span><span class="kw">let </span><span class="kw-2">mut </span>stream = futures::executor::block_on_stream(watcher.into_stream());
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Ready));
 			<span class="macro">assert_eq!</span>(
-				<span class="ident">stream</span>.<span class="ident">next</span>(),
-				<span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::InBlock</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>).<span class="ident">into</span>())),
+				stream.next(),
+				<span class="prelude-val">Some</span>(TransactionStatus::InBlock(H256::from_low_u64_be(<span class="number">2</span>).into())),
 			);
 		}
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_trigger_future_and_ready_after_promoted</span>() {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-			<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-				<span class="ident">SOURCE</span>,
-				<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">1</span>,
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_trigger_future_and_ready_after_promoted() {
+			<span class="comment">// given
+			</span><span class="kw">let </span>pool = pool();
+			<span class="kw">let </span>watcher = block_on(pool.submit_and_watch(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+				SOURCE,
+				uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">1</span>,
 				}),
 			))
-			.<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">1</span>);
+			.unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">1</span>);
 
-			<span class="comment">// when</span>
-			<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(
-				<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>),
-				<span class="ident">SOURCE</span>,
-				<span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">0</span>,
+			<span class="comment">// when
+			</span>block_on(pool.submit_one(
+				<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>),
+				SOURCE,
+				uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">0</span>,
 				}),
 			))
-			.<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">2</span>);
+			.unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">2</span>);
 
-			<span class="comment">// then</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">watcher</span>.<span class="ident">into_stream</span>());
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Future</span>));
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Ready</span>));
+			<span class="comment">// then
+			</span><span class="kw">let </span><span class="kw-2">mut </span>stream = futures::executor::block_on_stream(watcher.into_stream());
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Future));
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Ready));
 		}
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_trigger_invalid_and_ban</span>() {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-			<span class="kw">let</span> <span class="ident">uxt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">0</span>,
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_trigger_invalid_and_ban() {
+			<span class="comment">// given
+			</span><span class="kw">let </span>pool = pool();
+			<span class="kw">let </span>uxt = uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">0</span>,
 			});
-			<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span>
-				<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">uxt</span>)).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+			<span class="kw">let </span>watcher =
+				block_on(pool.submit_and_watch(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, uxt)).unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 
-			<span class="comment">// when</span>
-			<span class="ident">pool</span>.<span class="ident">validated_pool</span>.<span class="ident">remove_invalid</span>(<span class="kw-2">&amp;</span>[<span class="kw-2">*</span><span class="ident">watcher</span>.<span class="ident">hash</span>()]);
+			<span class="comment">// when
+			</span>pool.validated_pool.remove_invalid(<span class="kw-2">&amp;</span>[<span class="kw-2">*</span>watcher.hash()]);
 
-			<span class="comment">// then</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">watcher</span>.<span class="ident">into_stream</span>());
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Ready</span>));
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Invalid</span>));
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+			<span class="comment">// then
+			</span><span class="kw">let </span><span class="kw-2">mut </span>stream = futures::executor::block_on_stream(watcher.into_stream());
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Ready));
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Invalid));
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">None</span>);
 		}
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_trigger_broadcasted</span>() {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-			<span class="kw">let</span> <span class="ident">uxt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">0</span>,
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_trigger_broadcasted() {
+			<span class="comment">// given
+			</span><span class="kw">let </span>pool = pool();
+			<span class="kw">let </span>uxt = uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">0</span>,
 			});
-			<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span>
-				<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">uxt</span>)).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+			<span class="kw">let </span>watcher =
+				block_on(pool.submit_and_watch(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, uxt)).unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 
-			<span class="comment">// when</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-			<span class="kw">let</span> <span class="ident">peers</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.<span class="ident">into</span>(), <span class="string">&quot;b&quot;</span>.<span class="ident">into</span>(), <span class="string">&quot;c&quot;</span>.<span class="ident">into</span>()];
-			<span class="ident">map</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">watcher</span>.<span class="ident">hash</span>(), <span class="ident">peers</span>.<span class="ident">clone</span>());
-			<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">on_broadcasted</span>(<span class="ident">map</span>);
+			<span class="comment">// when
+			</span><span class="kw">let </span><span class="kw-2">mut </span>map = HashMap::new();
+			<span class="kw">let </span>peers = <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.into(), <span class="string">&quot;b&quot;</span>.into(), <span class="string">&quot;c&quot;</span>.into()];
+			map.insert(<span class="kw-2">*</span>watcher.hash(), peers.clone());
+			pool.validated_pool().on_broadcasted(map);
 
-			<span class="comment">// then</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">watcher</span>.<span class="ident">into_stream</span>());
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Ready</span>));
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Broadcast</span>(<span class="ident">peers</span>)));
+			<span class="comment">// then
+			</span><span class="kw">let </span><span class="kw-2">mut </span>stream = futures::executor::block_on_stream(watcher.into_stream());
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Ready));
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Broadcast(peers)));
 		}
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_trigger_dropped_older</span>() {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">Limit</span> { <span class="ident">count</span>: <span class="number">1</span>, <span class="ident">total_bytes</span>: <span class="number">1000</span> };
-			<span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span>
-				<span class="ident">Options</span> { <span class="ident">ready</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), <span class="ident">future</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), ..<span class="ident">Default::default</span>() };
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_trigger_dropped_older() {
+			<span class="comment">// given
+			</span><span class="kw">let </span>limit = Limit { count: <span class="number">1</span>, total_bytes: <span class="number">1000 </span>};
+			<span class="kw">let </span>options =
+				Options { ready: limit.clone(), future: limit.clone(), ..Default::default() };
 
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Pool::new</span>(<span class="ident">options</span>, <span class="bool-val">true</span>.<span class="ident">into</span>(), <span class="ident">TestApi::default</span>().<span class="ident">into</span>());
+			<span class="kw">let </span>pool = Pool::new(options, <span class="bool-val">true</span>.into(), TestApi::default().into());
 
-			<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">0</span>,
+			<span class="kw">let </span>xt = uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">0</span>,
 			});
-			<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+			<span class="kw">let </span>watcher = block_on(pool.submit_and_watch(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, xt)).unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 
-			<span class="comment">// when</span>
-			<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">amount</span>: <span class="number">4</span>,
-				<span class="ident">nonce</span>: <span class="number">1</span>,
+			<span class="comment">// when
+			</span><span class="kw">let </span>xt = uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				amount: <span class="number">4</span>,
+				nonce: <span class="number">1</span>,
 			});
-			<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">1</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+			block_on(pool.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">1</span>), SOURCE, xt)).unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 
-			<span class="comment">// then</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">watcher</span>.<span class="ident">into_stream</span>());
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Ready</span>));
-			<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Dropped</span>));
+			<span class="comment">// then
+			</span><span class="kw">let </span><span class="kw-2">mut </span>stream = futures::executor::block_on_stream(watcher.into_stream());
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Ready));
+			<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Dropped));
 		}
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_trigger_dropped_lower_priority</span>() {
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_trigger_dropped_lower_priority() {
 			{
-				<span class="comment">// given</span>
-				<span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">Limit</span> { <span class="ident">count</span>: <span class="number">1</span>, <span class="ident">total_bytes</span>: <span class="number">1000</span> };
-				<span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span>
-					<span class="ident">Options</span> { <span class="ident">ready</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), <span class="ident">future</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), ..<span class="ident">Default::default</span>() };
+				<span class="comment">// given
+				</span><span class="kw">let </span>limit = Limit { count: <span class="number">1</span>, total_bytes: <span class="number">1000 </span>};
+				<span class="kw">let </span>options =
+					Options { ready: limit.clone(), future: limit.clone(), ..Default::default() };
 
-				<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Pool::new</span>(<span class="ident">options</span>, <span class="bool-val">true</span>.<span class="ident">into</span>(), <span class="ident">TestApi::default</span>().<span class="ident">into</span>());
+				<span class="kw">let </span>pool = Pool::new(options, <span class="bool-val">true</span>.into(), TestApi::default().into());
 
-				<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">Extrinsic::IncludeData</span>(<span class="ident">Vec::new</span>());
-				<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-				<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+				<span class="kw">let </span>xt = Extrinsic::IncludeData(Vec::new());
+				block_on(pool.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, xt)).unwrap();
+				<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 
-				<span class="comment">// then</span>
-				<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">amount</span>: <span class="number">4</span>,
-					<span class="ident">nonce</span>: <span class="number">1</span>,
+				<span class="comment">// then
+				</span><span class="kw">let </span>xt = uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					amount: <span class="number">4</span>,
+					nonce: <span class="number">1</span>,
 				});
-				<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">1</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>));
+				<span class="kw">let </span>result = block_on(pool.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">1</span>), SOURCE, xt));
 				<span class="macro">assert!</span>(<span class="macro">matches!</span>(
-					<span class="ident">result</span>,
-					<span class="prelude-val">Err</span>(<span class="ident">sc_transaction_pool_api::error::Error::ImmediatelyDropped</span>)
+					result,
+					<span class="prelude-val">Err</span>(sc_transaction_pool_api::error::Error::ImmediatelyDropped)
 				));
 			}
 			{
-				<span class="comment">// given</span>
-				<span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">Limit</span> { <span class="ident">count</span>: <span class="number">2</span>, <span class="ident">total_bytes</span>: <span class="number">1000</span> };
-				<span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span>
-					<span class="ident">Options</span> { <span class="ident">ready</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), <span class="ident">future</span>: <span class="ident">limit</span>.<span class="ident">clone</span>(), ..<span class="ident">Default::default</span>() };
+				<span class="comment">// given
+				</span><span class="kw">let </span>limit = Limit { count: <span class="number">2</span>, total_bytes: <span class="number">1000 </span>};
+				<span class="kw">let </span>options =
+					Options { ready: limit.clone(), future: limit.clone(), ..Default::default() };
 
-				<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Pool::new</span>(<span class="ident">options</span>, <span class="bool-val">true</span>.<span class="ident">into</span>(), <span class="ident">TestApi::default</span>().<span class="ident">into</span>());
+				<span class="kw">let </span>pool = Pool::new(options, <span class="bool-val">true</span>.into(), TestApi::default().into());
 
-				<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">Extrinsic::IncludeData</span>(<span class="ident">Vec::new</span>());
-				<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-				<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+				<span class="kw">let </span>xt = Extrinsic::IncludeData(Vec::new());
+				block_on(pool.submit_and_watch(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, xt)).unwrap();
+				<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 
-				<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-					<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-					<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-					<span class="ident">amount</span>: <span class="number">5</span>,
-					<span class="ident">nonce</span>: <span class="number">0</span>,
+				<span class="kw">let </span>xt = uxt(Transfer {
+					from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+					to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+					amount: <span class="number">5</span>,
+					nonce: <span class="number">0</span>,
 				});
-				<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span>
-					<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_and_watch</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-				<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">2</span>);
+				<span class="kw">let </span>watcher =
+					block_on(pool.submit_and_watch(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, xt)).unwrap();
+				<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">2</span>);
 
-				<span class="comment">// when</span>
-				<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">Extrinsic::Store</span>(<span class="ident">Vec::new</span>());
-				<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">1</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-				<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">2</span>);
+				<span class="comment">// when
+				</span><span class="kw">let </span>xt = Extrinsic::Store(Vec::new());
+				block_on(pool.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">1</span>), SOURCE, xt)).unwrap();
+				<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">2</span>);
 
-				<span class="comment">// then</span>
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">futures::executor::block_on_stream</span>(<span class="ident">watcher</span>.<span class="ident">into_stream</span>());
-				<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Ready</span>));
-				<span class="macro">assert_eq!</span>(<span class="ident">stream</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="ident">TransactionStatus::Dropped</span>));
+				<span class="comment">// then
+				</span><span class="kw">let </span><span class="kw-2">mut </span>stream = futures::executor::block_on_stream(watcher.into_stream());
+				<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Ready));
+				<span class="macro">assert_eq!</span>(stream.next(), <span class="prelude-val">Some</span>(TransactionStatus::Dropped));
 			}
 		}
 
-		<span class="attribute">#[<span class="ident">test</span>]</span>
-		<span class="kw">fn</span> <span class="ident">should_handle_pruning_in_the_middle_of_import</span>() {
-			<span class="comment">// given</span>
-			<span class="kw">let</span> (<span class="ident">ready</span>, <span class="ident">is_ready</span>) <span class="op">=</span> <span class="ident">std::sync::mpsc::sync_channel</span>(<span class="number">0</span>);
-			<span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">rx</span>) <span class="op">=</span> <span class="ident">std::sync::mpsc::sync_channel</span>(<span class="number">1</span>);
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">TestApi::default</span>();
-			<span class="ident">api</span>.<span class="ident">delay</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">Mutex::new</span>(<span class="ident">rx</span>.<span class="ident">into</span>()));
-			<span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">Pool::new</span>(<span class="ident">Default::default</span>(), <span class="bool-val">true</span>.<span class="ident">into</span>(), <span class="ident">api</span>.<span class="ident">into</span>()));
+		<span class="attribute">#[test]
+		</span><span class="kw">fn </span>should_handle_pruning_in_the_middle_of_import() {
+			<span class="comment">// given
+			</span><span class="kw">let </span>(ready, is_ready) = std::sync::mpsc::sync_channel(<span class="number">0</span>);
+			<span class="kw">let </span>(tx, rx) = std::sync::mpsc::sync_channel(<span class="number">1</span>);
+			<span class="kw">let </span><span class="kw-2">mut </span>api = TestApi::default();
+			api.delay = Arc::new(Mutex::new(rx.into()));
+			<span class="kw">let </span>pool = Arc::new(Pool::new(Default::default(), <span class="bool-val">true</span>.into(), api.into()));
 
-			<span class="comment">// when</span>
-			<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">5</span>,
-				<span class="ident">nonce</span>: <span class="number">1</span>,
+			<span class="comment">// when
+			</span><span class="kw">let </span>xt = uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">5</span>,
+				nonce: <span class="number">1</span>,
 			});
 
-			<span class="comment">// This transaction should go to future, since we use `nonce: 1`</span>
-			<span class="kw">let</span> <span class="ident">pool2</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">clone</span>();
-			<span class="ident">std::thread::spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-				<span class="ident">block_on</span>(<span class="ident">pool2</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-				<span class="ident">ready</span>.<span class="ident">send</span>(()).<span class="ident">unwrap</span>();
+			<span class="comment">// This transaction should go to future, since we use `nonce: 1`
+			</span><span class="kw">let </span>pool2 = pool.clone();
+			std::thread::spawn(<span class="kw">move </span>|| {
+				block_on(pool2.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, xt)).unwrap();
+				ready.send(()).unwrap();
 			});
 
-			<span class="comment">// But now before the previous one is imported we import</span>
-			<span class="comment">// the one that it depends on.</span>
-			<span class="kw">let</span> <span class="ident">xt</span> <span class="op">=</span> <span class="ident">uxt</span>(<span class="ident">Transfer</span> {
-				<span class="ident">from</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">1</span>)),
-				<span class="ident">to</span>: <span class="ident">AccountId::from_h256</span>(<span class="ident">H256::from_low_u64_be</span>(<span class="number">2</span>)),
-				<span class="ident">amount</span>: <span class="number">4</span>,
-				<span class="ident">nonce</span>: <span class="number">0</span>,
+			<span class="comment">// But now before the previous one is imported we import
+			// the one that it depends on.
+			</span><span class="kw">let </span>xt = uxt(Transfer {
+				from: AccountId::from_h256(H256::from_low_u64_be(<span class="number">1</span>)),
+				to: AccountId::from_h256(H256::from_low_u64_be(<span class="number">2</span>)),
+				amount: <span class="number">4</span>,
+				nonce: <span class="number">0</span>,
 			});
-			<span class="comment">// The tag the above transaction provides (TestApi is using just nonce as u8)</span>
-			<span class="kw">let</span> <span class="ident">provides</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0_u8</span>];
-			<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">0</span>), <span class="ident">SOURCE</span>, <span class="ident">xt</span>)).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
+			<span class="comment">// The tag the above transaction provides (TestApi is using just nonce as u8)
+			</span><span class="kw">let </span>provides = <span class="macro">vec!</span>[<span class="number">0_u8</span>];
+			block_on(pool.submit_one(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">0</span>), SOURCE, xt)).unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
 
-			<span class="comment">// Now block import happens before the second transaction is able to finish</span>
-			<span class="comment">// verification.</span>
-			<span class="ident">block_on</span>(<span class="ident">pool</span>.<span class="ident">prune_tags</span>(<span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="number">1</span>), <span class="macro">vec!</span>[<span class="ident">provides</span>], <span class="macro">vec!</span>[])).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">0</span>);
+			<span class="comment">// Now block import happens before the second transaction is able to finish
+			// verification.
+			</span>block_on(pool.prune_tags(<span class="kw-2">&amp;</span>BlockId::Number(<span class="number">1</span>), <span class="macro">vec!</span>[provides], <span class="macro">vec!</span>[])).unwrap();
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">0</span>);
 
-			<span class="comment">// so when we release the verification of the previous one it will have</span>
-			<span class="comment">// something in `requires`, but should go to ready directly, since the previous</span>
-			<span class="comment">// transaction was imported correctly.</span>
-			<span class="ident">tx</span>.<span class="ident">send</span>(()).<span class="ident">unwrap</span>();
+			<span class="comment">// so when we release the verification of the previous one it will have
+			// something in `requires`, but should go to ready directly, since the previous
+			// transaction was imported correctly.
+			</span>tx.send(()).unwrap();
 
-			<span class="comment">// then</span>
-			<span class="ident">is_ready</span>.<span class="ident">recv</span>().<span class="ident">unwrap</span>(); <span class="comment">// wait for finish</span>
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">ready</span>, <span class="number">1</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">validated_pool</span>().<span class="ident">status</span>().<span class="ident">future</span>, <span class="number">0</span>);
+			<span class="comment">// then
+			</span>is_ready.recv().unwrap(); <span class="comment">// wait for finish
+			</span><span class="macro">assert_eq!</span>(pool.validated_pool().status().ready, <span class="number">1</span>);
+			<span class="macro">assert_eq!</span>(pool.validated_pool().status().future, <span class="number">0</span>);
 		}
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Perbill","A fixed point representation of a number in the range [0, 1]."],["WeightToFee","Handles converting a weight scalar to a fee value, based on the scale and granularity of the node’s balance type."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Perbill","A fixed point representation of a number in the range [0, 1]."],["WeightToFee","Handles converting a weight scalar to a fee value, based on the scale and granularity of the node’s balance type."]]};

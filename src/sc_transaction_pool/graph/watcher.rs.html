@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/watcher.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>watcher.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/watcher.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>watcher.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -137,140 +132,139 @@
 <span id="132">132</span>
 <span id="133">133</span>
 <span id="134">134</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Extrinsics status updates.</span>
+</span><span class="doccomment">//! Extrinsics status updates.
 
-<span class="kw">use</span> <span class="ident">futures::Stream</span>;
-<span class="kw">use</span> <span class="ident">sc_transaction_pool_api::TransactionStatus</span>;
-<span class="kw">use</span> <span class="ident">sc_utils::mpsc</span>::{<span class="ident">tracing_unbounded</span>, <span class="ident">TracingUnboundedReceiver</span>, <span class="ident">TracingUnboundedSender</span>};
+</span><span class="kw">use </span>futures::Stream;
+<span class="kw">use </span>sc_transaction_pool_api::TransactionStatus;
+<span class="kw">use </span>sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
-<span class="doccomment">/// Extrinsic watcher.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Represents a stream of status updates for a particular extrinsic.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Watcher</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> {
-	<span class="ident">receiver</span>: <span class="ident">TracingUnboundedReceiver</span><span class="op">&lt;</span><span class="ident">TransactionStatus</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// transaction hash of watched extrinsic</span>
-	<span class="ident">hash</span>: <span class="ident">H</span>,
+<span class="doccomment">/// Extrinsic watcher.
+///
+/// Represents a stream of status updates for a particular extrinsic.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>Watcher&lt;H, BH&gt; {
+	receiver: TracingUnboundedReceiver&lt;TransactionStatus&lt;H, BH&gt;&gt;,
+	<span class="doccomment">/// transaction hash of watched extrinsic
+	</span>hash: H,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> <span class="ident">Watcher</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Returns the transaction hash.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">H</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">hash</span>
+<span class="kw">impl</span>&lt;H, BH&gt; Watcher&lt;H, BH&gt; {
+	<span class="doccomment">/// Returns the transaction hash.
+	</span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>H {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.hash
 	}
 
-	<span class="doccomment">/// Pipe the notifications to given sink.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Make sure to drive the future to completion.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_stream</span>(<span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">TransactionStatus</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">receiver</span>
-	}
-}
-
-<span class="doccomment">/// Sender part of the watcher. Exposed only for testing purposes.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Sender</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> {
-	<span class="ident">receivers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span><span class="ident">TransactionStatus</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">is_finalized</span>: <span class="ident">bool</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Sender</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="ident">Sender</span> { <span class="ident">receivers</span>: <span class="ident">Default::default</span>(), <span class="ident">is_finalized</span>: <span class="bool-val">false</span> }
+	<span class="doccomment">/// Pipe the notifications to given sink.
+	///
+	/// Make sure to drive the future to completion.
+	</span><span class="kw">pub fn </span>into_stream(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Stream&lt;Item = TransactionStatus&lt;H, BH&gt;&gt; {
+		<span class="self">self</span>.receiver
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Clone</span>, <span class="ident">BH</span>: <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">Sender</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Add a new watcher to this sender object.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_watcher</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">H</span>) -&gt; <span class="ident">Watcher</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">receiver</span>) <span class="op">=</span> <span class="ident">tracing_unbounded</span>(<span class="string">&quot;mpsc_txpool_watcher&quot;</span>);
-		<span class="self">self</span>.<span class="ident">receivers</span>.<span class="ident">push</span>(<span class="ident">tx</span>);
-		<span class="ident">Watcher</span> { <span class="ident">receiver</span>, <span class="ident">hash</span> }
+<span class="doccomment">/// Sender part of the watcher. Exposed only for testing purposes.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>Sender&lt;H, BH&gt; {
+	receivers: Vec&lt;TracingUnboundedSender&lt;TransactionStatus&lt;H, BH&gt;&gt;&gt;,
+	is_finalized: bool,
+}
+
+<span class="kw">impl</span>&lt;H, BH&gt; Default <span class="kw">for </span>Sender&lt;H, BH&gt; {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		Sender { receivers: Default::default(), is_finalized: <span class="bool-val">false </span>}
+	}
+}
+
+<span class="kw">impl</span>&lt;H: Clone, BH: Clone&gt; Sender&lt;H, BH&gt; {
+	<span class="doccomment">/// Add a new watcher to this sender object.
+	</span><span class="kw">pub fn </span>new_watcher(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: H) -&gt; Watcher&lt;H, BH&gt; {
+		<span class="kw">let </span>(tx, receiver) = tracing_unbounded(<span class="string">&quot;mpsc_txpool_watcher&quot;</span>);
+		<span class="self">self</span>.receivers.push(tx);
+		Watcher { receiver, hash }
 	}
 
-	<span class="doccomment">/// Transaction became ready.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ready</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Ready</span>)
+	<span class="doccomment">/// Transaction became ready.
+	</span><span class="kw">pub fn </span>ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.send(TransactionStatus::Ready)
 	}
 
-	<span class="doccomment">/// Transaction was moved to future.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">future</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Future</span>)
+	<span class="doccomment">/// Transaction was moved to future.
+	</span><span class="kw">pub fn </span>future(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.send(TransactionStatus::Future)
 	}
 
-	<span class="doccomment">/// Some state change (perhaps another extrinsic was included) rendered this extrinsic invalid.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">usurped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">H</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Usurped</span>(<span class="ident">hash</span>));
-		<span class="self">self</span>.<span class="ident">is_finalized</span> <span class="op">=</span> <span class="bool-val">true</span>;
+	<span class="doccomment">/// Some state change (perhaps another extrinsic was included) rendered this extrinsic invalid.
+	</span><span class="kw">pub fn </span>usurped(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: H) {
+		<span class="self">self</span>.send(TransactionStatus::Usurped(hash));
+		<span class="self">self</span>.is_finalized = <span class="bool-val">true</span>;
 	}
 
-	<span class="doccomment">/// Extrinsic has been included in block with given hash.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_block</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">BH</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::InBlock</span>(<span class="ident">hash</span>));
+	<span class="doccomment">/// Extrinsic has been included in block with given hash.
+	</span><span class="kw">pub fn </span>in_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: BH) {
+		<span class="self">self</span>.send(TransactionStatus::InBlock(hash));
 	}
 
-	<span class="doccomment">/// Extrinsic has been finalized by a finality gadget.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finalized</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">BH</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Finalized</span>(<span class="ident">hash</span>));
-		<span class="self">self</span>.<span class="ident">is_finalized</span> <span class="op">=</span> <span class="bool-val">true</span>;
+	<span class="doccomment">/// Extrinsic has been finalized by a finality gadget.
+	</span><span class="kw">pub fn </span>finalized(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: BH) {
+		<span class="self">self</span>.send(TransactionStatus::Finalized(hash));
+		<span class="self">self</span>.is_finalized = <span class="bool-val">true</span>;
 	}
 
-	<span class="doccomment">/// The block this extrinsic was included in has been retracted</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finality_timeout</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">BH</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::FinalityTimeout</span>(<span class="ident">hash</span>));
-		<span class="self">self</span>.<span class="ident">is_finalized</span> <span class="op">=</span> <span class="bool-val">true</span>;
+	<span class="doccomment">/// The block this extrinsic was included in has been retracted
+	</span><span class="kw">pub fn </span>finality_timeout(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: BH) {
+		<span class="self">self</span>.send(TransactionStatus::FinalityTimeout(hash));
+		<span class="self">self</span>.is_finalized = <span class="bool-val">true</span>;
 	}
 
-	<span class="doccomment">/// The block this extrinsic was included in has been retracted</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retracted</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">BH</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Retracted</span>(<span class="ident">hash</span>));
+	<span class="doccomment">/// The block this extrinsic was included in has been retracted
+	</span><span class="kw">pub fn </span>retracted(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: BH) {
+		<span class="self">self</span>.send(TransactionStatus::Retracted(hash));
 	}
 
-	<span class="doccomment">/// Extrinsic has been marked as invalid by the block builder.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">invalid</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Invalid</span>);
-		<span class="comment">// we mark as finalized as there are no more notifications</span>
-		<span class="self">self</span>.<span class="ident">is_finalized</span> <span class="op">=</span> <span class="bool-val">true</span>;
+	<span class="doccomment">/// Extrinsic has been marked as invalid by the block builder.
+	</span><span class="kw">pub fn </span>invalid(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.send(TransactionStatus::Invalid);
+		<span class="comment">// we mark as finalized as there are no more notifications
+		</span><span class="self">self</span>.is_finalized = <span class="bool-val">true</span>;
 	}
 
-	<span class="doccomment">/// Transaction has been dropped from the pool because of the limit.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dropped</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Dropped</span>);
-		<span class="self">self</span>.<span class="ident">is_finalized</span> <span class="op">=</span> <span class="bool-val">true</span>;
+	<span class="doccomment">/// Transaction has been dropped from the pool because of the limit.
+	</span><span class="kw">pub fn </span>dropped(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.send(TransactionStatus::Dropped);
+		<span class="self">self</span>.is_finalized = <span class="bool-val">true</span>;
 	}
 
-	<span class="doccomment">/// The extrinsic has been broadcast to the given peers.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">broadcast</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">peers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) {
-		<span class="self">self</span>.<span class="ident">send</span>(<span class="ident">TransactionStatus::Broadcast</span>(<span class="ident">peers</span>))
+	<span class="doccomment">/// The extrinsic has been broadcast to the given peers.
+	</span><span class="kw">pub fn </span>broadcast(<span class="kw-2">&amp;mut </span><span class="self">self</span>, peers: Vec&lt;String&gt;) {
+		<span class="self">self</span>.send(TransactionStatus::Broadcast(peers))
 	}
 
-	<span class="doccomment">/// Returns true if the are no more listeners for this extrinsic or it was finalized.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_done</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">is_finalized</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">receivers</span>.<span class="ident">is_empty</span>()
+	<span class="doccomment">/// Returns true if the are no more listeners for this extrinsic or it was finalized.
+	</span><span class="kw">pub fn </span>is_done(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="self">self</span>.is_finalized || <span class="self">self</span>.receivers.is_empty()
 	}
 
-	<span class="kw">fn</span> <span class="ident">send</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">status</span>: <span class="ident">TransactionStatus</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">BH</span><span class="op">&gt;</span>) {
-		<span class="self">self</span>.<span class="ident">receivers</span>.<span class="ident">retain</span>(<span class="op">|</span><span class="ident">sender</span><span class="op">|</span> <span class="ident">sender</span>.<span class="ident">unbounded_send</span>(<span class="ident">status</span>.<span class="ident">clone</span>()).<span class="ident">is_ok</span>())
+	<span class="kw">fn </span>send(<span class="kw-2">&amp;mut </span><span class="self">self</span>, status: TransactionStatus&lt;H, BH&gt;) {
+		<span class="self">self</span>.receivers.retain(|sender| sender.unbounded_send(status.clone()).is_ok())
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

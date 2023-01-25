@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["OrTransport","Struct returned by `or_transport()`."]]});
+window.SIDEBAR_ITEMS = {"struct":[["OrTransport","Struct returned by `or_transport()`."]]};

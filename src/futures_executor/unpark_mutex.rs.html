@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/futures-executor-0.3.21/src/unpark_mutex.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unpark_mutex.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../futures_executor/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../futures_executor/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../futures_executor/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/futures-executor-0.3.21/src/unpark_mutex.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unpark_mutex.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../futures_executor/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -140,143 +135,142 @@
 <span id="135">135</span>
 <span id="136">136</span>
 <span id="137">137</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::cell::UnsafeCell</span>;
-<span class="kw">use</span> <span class="ident">std::sync::atomic::AtomicUsize</span>;
-<span class="kw">use</span> <span class="ident">std::sync::atomic::Ordering::SeqCst</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>std::cell::UnsafeCell;
+<span class="kw">use </span>std::sync::atomic::AtomicUsize;
+<span class="kw">use </span>std::sync::atomic::Ordering::SeqCst;
 
-<span class="doccomment">/// A &quot;lock&quot; around data `D`, which employs a *helping* strategy.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Used to ensure that concurrent `unpark` invocations lead to (1) `poll` being</span>
-<span class="doccomment">/// invoked on only a single thread at a time (2) `poll` being invoked at least</span>
-<span class="doccomment">/// once after each `unpark` (unless the future has completed).</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">UnparkMutex</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="comment">// The state of task execution (state machine described below)</span>
-    <span class="ident">status</span>: <span class="ident">AtomicUsize</span>,
+<span class="doccomment">/// A &quot;lock&quot; around data `D`, which employs a *helping* strategy.
+///
+/// Used to ensure that concurrent `unpark` invocations lead to (1) `poll` being
+/// invoked on only a single thread at a time (2) `poll` being invoked at least
+/// once after each `unpark` (unless the future has completed).
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>UnparkMutex&lt;D&gt; {
+    <span class="comment">// The state of task execution (state machine described below)
+    </span>status: AtomicUsize,
 
-    <span class="comment">// The actual task data, accessible only in the POLLING state</span>
-    <span class="ident">inner</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="comment">// The actual task data, accessible only in the POLLING state
+    </span>inner: UnsafeCell&lt;<span class="prelude-ty">Option</span>&lt;D&gt;&gt;,
 }
 
-<span class="comment">// `UnparkMutex&lt;D&gt;` functions in many ways like a `Mutex&lt;D&gt;`, except that on</span>
-<span class="comment">// acquisition failure, the current lock holder performs the desired work --</span>
-<span class="comment">// re-polling.</span>
-<span class="comment">//</span>
-<span class="comment">// As such, these impls mirror those for `Mutex&lt;D&gt;`. In particular, a reference</span>
-<span class="comment">// to `UnparkMutex` can be used to gain `&amp;mut` access to the inner data, which</span>
-<span class="comment">// must therefore be `Send`.</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">UnparkMutex</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {}
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">UnparkMutex</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {}
+<span class="comment">// `UnparkMutex&lt;D&gt;` functions in many ways like a `Mutex&lt;D&gt;`, except that on
+// acquisition failure, the current lock holder performs the desired work --
+// re-polling.
+//
+// As such, these impls mirror those for `Mutex&lt;D&gt;`. In particular, a reference
+// to `UnparkMutex` can be used to gain `&amp;mut` access to the inner data, which
+// must therefore be `Send`.
+</span><span class="kw">unsafe impl</span>&lt;D: Send&gt; Send <span class="kw">for </span>UnparkMutex&lt;D&gt; {}
+<span class="kw">unsafe impl</span>&lt;D: Send&gt; Sync <span class="kw">for </span>UnparkMutex&lt;D&gt; {}
 
-<span class="comment">// There are four possible task states, listed below with their possible</span>
-<span class="comment">// transitions:</span>
+<span class="comment">// There are four possible task states, listed below with their possible
+// transitions:
 
-<span class="comment">// The task is blocked, waiting on an event</span>
-<span class="kw">const</span> <span class="ident">WAITING</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0</span>; <span class="comment">// --&gt; POLLING</span>
+// The task is blocked, waiting on an event
+</span><span class="kw">const </span>WAITING: usize = <span class="number">0</span>; <span class="comment">// --&gt; POLLING
 
-<span class="comment">// The task is actively being polled by a thread; arrival of additional events</span>
-<span class="comment">// of interest should move it to the REPOLL state</span>
-<span class="kw">const</span> <span class="ident">POLLING</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span>; <span class="comment">// --&gt; WAITING, REPOLL, or COMPLETE</span>
+// The task is actively being polled by a thread; arrival of additional events
+// of interest should move it to the REPOLL state
+</span><span class="kw">const </span>POLLING: usize = <span class="number">1</span>; <span class="comment">// --&gt; WAITING, REPOLL, or COMPLETE
 
-<span class="comment">// The task is actively being polled, but will need to be re-polled upon</span>
-<span class="comment">// completion to ensure that all events were observed.</span>
-<span class="kw">const</span> <span class="ident">REPOLL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span>; <span class="comment">// --&gt; POLLING</span>
+// The task is actively being polled, but will need to be re-polled upon
+// completion to ensure that all events were observed.
+</span><span class="kw">const </span>REPOLL: usize = <span class="number">2</span>; <span class="comment">// --&gt; POLLING
 
-<span class="comment">// The task has finished executing (either successfully or with an error/panic)</span>
-<span class="kw">const</span> <span class="ident">COMPLETE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">3</span>; <span class="comment">// No transitions out</span>
+// The task has finished executing (either successfully or with an error/panic)
+</span><span class="kw">const </span>COMPLETE: usize = <span class="number">3</span>; <span class="comment">// No transitions out
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">UnparkMutex</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">status</span>: <span class="ident">AtomicUsize::new</span>(<span class="ident">WAITING</span>), <span class="ident">inner</span>: <span class="ident">UnsafeCell::new</span>(<span class="prelude-val">None</span>) }
+</span><span class="kw">impl</span>&lt;D&gt; UnparkMutex&lt;D&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ status: AtomicUsize::new(WAITING), inner: UnsafeCell::new(<span class="prelude-val">None</span>) }
     }
 
-    <span class="doccomment">/// Attempt to &quot;notify&quot; the mutex that a poll should occur.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// An `Ok` result indicates that the `POLLING` state has been entered, and</span>
-    <span class="doccomment">/// the caller can proceed to poll the future. An `Err` result indicates</span>
-    <span class="doccomment">/// that polling is not necessary (because the task is finished or the</span>
-    <span class="doccomment">/// polling has been delegated).</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">notify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">D</span>, ()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">load</span>(<span class="ident">SeqCst</span>);
-        <span class="kw">loop</span> {
-            <span class="kw">match</span> <span class="ident">status</span> {
-                <span class="comment">// The task is idle, so try to run it immediately.</span>
-                <span class="ident">WAITING</span> =&gt; {
-                    <span class="kw">match</span> <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">compare_exchange</span>(<span class="ident">WAITING</span>, <span class="ident">POLLING</span>, <span class="ident">SeqCst</span>, <span class="ident">SeqCst</span>) {
+    <span class="doccomment">/// Attempt to &quot;notify&quot; the mutex that a poll should occur.
+    ///
+    /// An `Ok` result indicates that the `POLLING` state has been entered, and
+    /// the caller can proceed to poll the future. An `Err` result indicates
+    /// that polling is not necessary (because the task is finished or the
+    /// polling has been delegated).
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>notify(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;D, ()&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>status = <span class="self">self</span>.status.load(SeqCst);
+        <span class="kw">loop </span>{
+            <span class="kw">match </span>status {
+                <span class="comment">// The task is idle, so try to run it immediately.
+                </span>WAITING =&gt; {
+                    <span class="kw">match </span><span class="self">self</span>.status.compare_exchange(WAITING, POLLING, SeqCst, SeqCst) {
                         <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-                            <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-                                <span class="comment">// SAFETY: we&#39;ve ensured mutual exclusion via</span>
-                                <span class="comment">// the status protocol; we are the only thread</span>
-                                <span class="comment">// that has transitioned to the POLLING state,</span>
-                                <span class="comment">// and we won&#39;t transition back to QUEUED until</span>
-                                <span class="comment">// the lock is &quot;released&quot; by this thread. See</span>
-                                <span class="comment">// the protocol diagram above.</span>
-                                (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">get</span>()).<span class="ident">take</span>().<span class="ident">unwrap</span>()
+                            <span class="kw">let </span>data = <span class="kw">unsafe </span>{
+                                <span class="comment">// SAFETY: we&#39;ve ensured mutual exclusion via
+                                // the status protocol; we are the only thread
+                                // that has transitioned to the POLLING state,
+                                // and we won&#39;t transition back to QUEUED until
+                                // the lock is &quot;released&quot; by this thread. See
+                                // the protocol diagram above.
+                                </span>(<span class="kw-2">*</span><span class="self">self</span>.inner.get()).take().unwrap()
                             };
-                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">data</span>);
+                            <span class="kw">return </span><span class="prelude-val">Ok</span>(data);
                         }
-                        <span class="prelude-val">Err</span>(<span class="ident">cur</span>) =&gt; <span class="ident">status</span> <span class="op">=</span> <span class="ident">cur</span>,
+                        <span class="prelude-val">Err</span>(cur) =&gt; status = cur,
                     }
                 }
 
-                <span class="comment">// The task is being polled, so we need to record that it should</span>
-                <span class="comment">// be *repolled* when complete.</span>
-                <span class="ident">POLLING</span> =&gt; <span class="kw">match</span> <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">compare_exchange</span>(<span class="ident">POLLING</span>, <span class="ident">REPOLL</span>, <span class="ident">SeqCst</span>, <span class="ident">SeqCst</span>) {
-                    <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(()),
-                    <span class="prelude-val">Err</span>(<span class="ident">cur</span>) =&gt; <span class="ident">status</span> <span class="op">=</span> <span class="ident">cur</span>,
+                <span class="comment">// The task is being polled, so we need to record that it should
+                // be *repolled* when complete.
+                </span>POLLING =&gt; <span class="kw">match </span><span class="self">self</span>.status.compare_exchange(POLLING, REPOLL, SeqCst, SeqCst) {
+                    <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(()),
+                    <span class="prelude-val">Err</span>(cur) =&gt; status = cur,
                 },
 
-                <span class="comment">// The task is already scheduled for polling, or is complete, so</span>
-                <span class="comment">// we&#39;ve got nothing to do.</span>
-                <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(()),
+                <span class="comment">// The task is already scheduled for polling, or is complete, so
+                // we&#39;ve got nothing to do.
+                </span><span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(()),
             }
         }
     }
 
-    <span class="doccomment">/// Alert the mutex that polling is about to begin, clearing any accumulated</span>
-    <span class="doccomment">/// re-poll requests.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Callable only from the `POLLING`/`REPOLL` states, i.e. between</span>
-    <span class="doccomment">/// successful calls to `notify` and `wait`/`complete`.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">start_poll</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">store</span>(<span class="ident">POLLING</span>, <span class="ident">SeqCst</span>);
+    <span class="doccomment">/// Alert the mutex that polling is about to begin, clearing any accumulated
+    /// re-poll requests.
+    ///
+    /// # Safety
+    ///
+    /// Callable only from the `POLLING`/`REPOLL` states, i.e. between
+    /// successful calls to `notify` and `wait`/`complete`.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>start_poll(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.status.store(POLLING, SeqCst);
     }
 
-    <span class="doccomment">/// Alert the mutex that polling completed with `Pending`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Callable only from the `POLLING`/`REPOLL` states, i.e. between</span>
-    <span class="doccomment">/// successful calls to `notify` and `wait`/`complete`.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">data</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">get</span>() <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">data</span>);
+    <span class="doccomment">/// Alert the mutex that polling completed with `Pending`.
+    ///
+    /// # Safety
+    ///
+    /// Callable only from the `POLLING`/`REPOLL` states, i.e. between
+    /// successful calls to `notify` and `wait`/`complete`.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>wait(<span class="kw-2">&amp;</span><span class="self">self</span>, data: D) -&gt; <span class="prelude-ty">Result</span>&lt;(), D&gt; {
+        <span class="kw-2">*</span><span class="self">self</span>.inner.get() = <span class="prelude-val">Some</span>(data);
 
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">compare_exchange</span>(<span class="ident">POLLING</span>, <span class="ident">WAITING</span>, <span class="ident">SeqCst</span>, <span class="ident">SeqCst</span>) {
-            <span class="comment">// no unparks came in while we were running</span>
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+        <span class="kw">match </span><span class="self">self</span>.status.compare_exchange(POLLING, WAITING, SeqCst, SeqCst) {
+            <span class="comment">// no unparks came in while we were running
+            </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
 
-            <span class="comment">// guaranteed to be in REPOLL state; just clobber the</span>
-            <span class="comment">// state and run again.</span>
-            <span class="prelude-val">Err</span>(<span class="ident">status</span>) =&gt; {
-                <span class="macro">assert_eq!</span>(<span class="ident">status</span>, <span class="ident">REPOLL</span>);
-                <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">store</span>(<span class="ident">POLLING</span>, <span class="ident">SeqCst</span>);
-                <span class="prelude-val">Err</span>((<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">get</span>()).<span class="ident">take</span>().<span class="ident">unwrap</span>())
+            <span class="comment">// guaranteed to be in REPOLL state; just clobber the
+            // state and run again.
+            </span><span class="prelude-val">Err</span>(status) =&gt; {
+                <span class="macro">assert_eq!</span>(status, REPOLL);
+                <span class="self">self</span>.status.store(POLLING, SeqCst);
+                <span class="prelude-val">Err</span>((<span class="kw-2">*</span><span class="self">self</span>.inner.get()).take().unwrap())
             }
         }
     }
 
-    <span class="doccomment">/// Alert the mutex that the task has completed execution and should not be</span>
-    <span class="doccomment">/// notified again.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Callable only from the `POLLING`/`REPOLL` states, i.e. between</span>
-    <span class="doccomment">/// successful calls to `notify` and `wait`/`complete`.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">complete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">store</span>(<span class="ident">COMPLETE</span>, <span class="ident">SeqCst</span>);
+    <span class="doccomment">/// Alert the mutex that the task has completed execution and should not be
+    /// notified again.
+    ///
+    /// # Safety
+    ///
+    /// Callable only from the `POLLING`/`REPOLL` states, i.e. between
+    /// successful calls to `notify` and `wait`/`complete`.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>complete(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.status.store(COMPLETE, SeqCst);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="futures_executor" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="futures_executor" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

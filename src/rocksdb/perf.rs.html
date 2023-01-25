@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/perf.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>perf.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/perf.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>perf.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -287,290 +282,289 @@
 <span id="282">282</span>
 <span id="283">283</span>
 <span id="284">284</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Tran Tuan Linh</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Tran Tuan Linh
+//
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="kw">use</span> <span class="ident">libc</span>::{<span class="ident">c_int</span>, <span class="ident">c_uchar</span>, <span class="ident">c_void</span>};
+</span><span class="kw">use </span>libc::{c_int, c_uchar, c_void};
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">ffi</span>, <span class="ident">ffi_util::from_cstr</span>, <span class="ident">Cache</span>, <span class="ident">Error</span>, <span class="ident">DB</span>};
+<span class="kw">use crate</span>::{ffi, ffi_util::from_cstr, Cache, Error, DB};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">i32</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PerfStatsLevel</span> {
-    <span class="doccomment">/// Unknown settings</span>
-    <span class="ident">Uninitialized</span> <span class="op">=</span> <span class="number">0</span>,
-    <span class="doccomment">/// Disable perf stats</span>
-    <span class="ident">Disable</span>,
-    <span class="doccomment">/// Enables only count stats</span>
-    <span class="ident">EnableCount</span>,
-    <span class="doccomment">/// Count stats and enable time stats except for mutexes</span>
-    <span class="ident">EnableTimeExceptForMutex</span>,
-    <span class="doccomment">/// Other than time, also measure CPU time counters. Still don&#39;t measure</span>
-    <span class="doccomment">/// time (neither wall time nor CPU time) for mutexes</span>
-    <span class="ident">EnableTimeAndCPUTimeExceptForMutex</span>,
-    <span class="doccomment">/// Enables count and time stats</span>
-    <span class="ident">EnableTime</span>,
-    <span class="doccomment">/// N.B must always be the last value!</span>
-    <span class="ident">OutOfBound</span>,
+<span class="attribute">#[derive(Debug, Copy, Clone, PartialEq)]
+#[repr(i32)]
+</span><span class="kw">pub enum </span>PerfStatsLevel {
+    <span class="doccomment">/// Unknown settings
+    </span>Uninitialized = <span class="number">0</span>,
+    <span class="doccomment">/// Disable perf stats
+    </span>Disable,
+    <span class="doccomment">/// Enables only count stats
+    </span>EnableCount,
+    <span class="doccomment">/// Count stats and enable time stats except for mutexes
+    </span>EnableTimeExceptForMutex,
+    <span class="doccomment">/// Other than time, also measure CPU time counters. Still don&#39;t measure
+    /// time (neither wall time nor CPU time) for mutexes
+    </span>EnableTimeAndCPUTimeExceptForMutex,
+    <span class="doccomment">/// Enables count and time stats
+    </span>EnableTime,
+    <span class="doccomment">/// N.B must always be the last value!
+    </span>OutOfBound,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">i32</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PerfMetric</span> {
-    <span class="ident">UserKeyComparisonCount</span> <span class="op">=</span> <span class="number">0</span>,
-    <span class="ident">BlockCacheHitCount</span> <span class="op">=</span> <span class="number">1</span>,
-    <span class="ident">BlockReadCount</span> <span class="op">=</span> <span class="number">2</span>,
-    <span class="ident">BlockReadByte</span> <span class="op">=</span> <span class="number">3</span>,
-    <span class="ident">BlockReadTime</span> <span class="op">=</span> <span class="number">4</span>,
-    <span class="ident">BlockChecksumTime</span> <span class="op">=</span> <span class="number">5</span>,
-    <span class="ident">BlockDecompressTime</span> <span class="op">=</span> <span class="number">6</span>,
-    <span class="ident">GetReadBytes</span> <span class="op">=</span> <span class="number">7</span>,
-    <span class="ident">MultigetReadBytes</span> <span class="op">=</span> <span class="number">8</span>,
-    <span class="ident">IterReadBytes</span> <span class="op">=</span> <span class="number">9</span>,
-    <span class="ident">InternalKeySkippedCount</span> <span class="op">=</span> <span class="number">10</span>,
-    <span class="ident">InternalDeleteSkippedCount</span> <span class="op">=</span> <span class="number">11</span>,
-    <span class="ident">InternalRecentSkippedCount</span> <span class="op">=</span> <span class="number">12</span>,
-    <span class="ident">InternalMergeCount</span> <span class="op">=</span> <span class="number">13</span>,
-    <span class="ident">GetSnapshotTime</span> <span class="op">=</span> <span class="number">14</span>,
-    <span class="ident">GetFromMemtableTime</span> <span class="op">=</span> <span class="number">15</span>,
-    <span class="ident">GetFromMemtableCount</span> <span class="op">=</span> <span class="number">16</span>,
-    <span class="ident">GetPostProcessTime</span> <span class="op">=</span> <span class="number">17</span>,
-    <span class="ident">GetFromOutputFilesTime</span> <span class="op">=</span> <span class="number">18</span>,
-    <span class="ident">SeekOnMemtableTime</span> <span class="op">=</span> <span class="number">19</span>,
-    <span class="ident">SeekOnMemtableCount</span> <span class="op">=</span> <span class="number">20</span>,
-    <span class="ident">NextOnMemtableCount</span> <span class="op">=</span> <span class="number">21</span>,
-    <span class="ident">PrevOnMemtableCount</span> <span class="op">=</span> <span class="number">22</span>,
-    <span class="ident">SeekChildSeekTime</span> <span class="op">=</span> <span class="number">23</span>,
-    <span class="ident">SeekChildSeekCount</span> <span class="op">=</span> <span class="number">24</span>,
-    <span class="ident">SeekMinHeapTime</span> <span class="op">=</span> <span class="number">25</span>,
-    <span class="ident">SeekMaxHeapTime</span> <span class="op">=</span> <span class="number">26</span>,
-    <span class="ident">SeekInternalSeekTime</span> <span class="op">=</span> <span class="number">27</span>,
-    <span class="ident">FindNextUserEntryTime</span> <span class="op">=</span> <span class="number">28</span>,
-    <span class="ident">WriteWalTime</span> <span class="op">=</span> <span class="number">29</span>,
-    <span class="ident">WriteMemtableTime</span> <span class="op">=</span> <span class="number">30</span>,
-    <span class="ident">WriteDelayTime</span> <span class="op">=</span> <span class="number">31</span>,
-    <span class="ident">WritePreAndPostProcessTime</span> <span class="op">=</span> <span class="number">32</span>,
-    <span class="ident">DbMutexLockNanos</span> <span class="op">=</span> <span class="number">33</span>,
-    <span class="ident">DbConditionWaitNanos</span> <span class="op">=</span> <span class="number">34</span>,
-    <span class="ident">MergeOperatorTimeNanos</span> <span class="op">=</span> <span class="number">35</span>,
-    <span class="ident">ReadIndexBlockNanos</span> <span class="op">=</span> <span class="number">36</span>,
-    <span class="ident">ReadFilterBlockNanos</span> <span class="op">=</span> <span class="number">37</span>,
-    <span class="ident">NewTableBlockIterNanos</span> <span class="op">=</span> <span class="number">38</span>,
-    <span class="ident">NewTableIteratorNanos</span> <span class="op">=</span> <span class="number">39</span>,
-    <span class="ident">BlockSeekNanos</span> <span class="op">=</span> <span class="number">40</span>,
-    <span class="ident">FindTableNanos</span> <span class="op">=</span> <span class="number">41</span>,
-    <span class="ident">BloomMemtableHitCount</span> <span class="op">=</span> <span class="number">42</span>,
-    <span class="ident">BloomMemtableMissCount</span> <span class="op">=</span> <span class="number">43</span>,
-    <span class="ident">BloomSstHitCount</span> <span class="op">=</span> <span class="number">44</span>,
-    <span class="ident">BloomSstMissCount</span> <span class="op">=</span> <span class="number">45</span>,
-    <span class="ident">KeyLockWaitTime</span> <span class="op">=</span> <span class="number">46</span>,
-    <span class="ident">KeyLockWaitCount</span> <span class="op">=</span> <span class="number">47</span>,
-    <span class="ident">EnvNewSequentialFileNanos</span> <span class="op">=</span> <span class="number">48</span>,
-    <span class="ident">EnvNewRandomAccessFileNanos</span> <span class="op">=</span> <span class="number">49</span>,
-    <span class="ident">EnvNewWritableFileNanos</span> <span class="op">=</span> <span class="number">50</span>,
-    <span class="ident">EnvReuseWritableFileNanos</span> <span class="op">=</span> <span class="number">51</span>,
-    <span class="ident">EnvNewRandomRwFileNanos</span> <span class="op">=</span> <span class="number">52</span>,
-    <span class="ident">EnvNewDirectoryNanos</span> <span class="op">=</span> <span class="number">53</span>,
-    <span class="ident">EnvFileExistsNanos</span> <span class="op">=</span> <span class="number">54</span>,
-    <span class="ident">EnvGetChildrenNanos</span> <span class="op">=</span> <span class="number">55</span>,
-    <span class="ident">EnvGetChildrenFileAttributesNanos</span> <span class="op">=</span> <span class="number">56</span>,
-    <span class="ident">EnvDeleteFileNanos</span> <span class="op">=</span> <span class="number">57</span>,
-    <span class="ident">EnvCreateDirNanos</span> <span class="op">=</span> <span class="number">58</span>,
-    <span class="ident">EnvCreateDirIfMissingNanos</span> <span class="op">=</span> <span class="number">59</span>,
-    <span class="ident">EnvDeleteDirNanos</span> <span class="op">=</span> <span class="number">60</span>,
-    <span class="ident">EnvGetFileSizeNanos</span> <span class="op">=</span> <span class="number">61</span>,
-    <span class="ident">EnvGetFileModificationTimeNanos</span> <span class="op">=</span> <span class="number">62</span>,
-    <span class="ident">EnvRenameFileNanos</span> <span class="op">=</span> <span class="number">63</span>,
-    <span class="ident">EnvLinkFileNanos</span> <span class="op">=</span> <span class="number">64</span>,
-    <span class="ident">EnvLockFileNanos</span> <span class="op">=</span> <span class="number">65</span>,
-    <span class="ident">EnvUnlockFileNanos</span> <span class="op">=</span> <span class="number">66</span>,
-    <span class="ident">EnvNewLoggerNanos</span> <span class="op">=</span> <span class="number">67</span>,
-    <span class="ident">TotalMetricCount</span> <span class="op">=</span> <span class="number">68</span>,
+<span class="attribute">#[derive(Debug, Copy, Clone, PartialEq)]
+#[non_exhaustive]
+#[repr(i32)]
+</span><span class="kw">pub enum </span>PerfMetric {
+    UserKeyComparisonCount = <span class="number">0</span>,
+    BlockCacheHitCount = <span class="number">1</span>,
+    BlockReadCount = <span class="number">2</span>,
+    BlockReadByte = <span class="number">3</span>,
+    BlockReadTime = <span class="number">4</span>,
+    BlockChecksumTime = <span class="number">5</span>,
+    BlockDecompressTime = <span class="number">6</span>,
+    GetReadBytes = <span class="number">7</span>,
+    MultigetReadBytes = <span class="number">8</span>,
+    IterReadBytes = <span class="number">9</span>,
+    InternalKeySkippedCount = <span class="number">10</span>,
+    InternalDeleteSkippedCount = <span class="number">11</span>,
+    InternalRecentSkippedCount = <span class="number">12</span>,
+    InternalMergeCount = <span class="number">13</span>,
+    GetSnapshotTime = <span class="number">14</span>,
+    GetFromMemtableTime = <span class="number">15</span>,
+    GetFromMemtableCount = <span class="number">16</span>,
+    GetPostProcessTime = <span class="number">17</span>,
+    GetFromOutputFilesTime = <span class="number">18</span>,
+    SeekOnMemtableTime = <span class="number">19</span>,
+    SeekOnMemtableCount = <span class="number">20</span>,
+    NextOnMemtableCount = <span class="number">21</span>,
+    PrevOnMemtableCount = <span class="number">22</span>,
+    SeekChildSeekTime = <span class="number">23</span>,
+    SeekChildSeekCount = <span class="number">24</span>,
+    SeekMinHeapTime = <span class="number">25</span>,
+    SeekMaxHeapTime = <span class="number">26</span>,
+    SeekInternalSeekTime = <span class="number">27</span>,
+    FindNextUserEntryTime = <span class="number">28</span>,
+    WriteWalTime = <span class="number">29</span>,
+    WriteMemtableTime = <span class="number">30</span>,
+    WriteDelayTime = <span class="number">31</span>,
+    WritePreAndPostProcessTime = <span class="number">32</span>,
+    DbMutexLockNanos = <span class="number">33</span>,
+    DbConditionWaitNanos = <span class="number">34</span>,
+    MergeOperatorTimeNanos = <span class="number">35</span>,
+    ReadIndexBlockNanos = <span class="number">36</span>,
+    ReadFilterBlockNanos = <span class="number">37</span>,
+    NewTableBlockIterNanos = <span class="number">38</span>,
+    NewTableIteratorNanos = <span class="number">39</span>,
+    BlockSeekNanos = <span class="number">40</span>,
+    FindTableNanos = <span class="number">41</span>,
+    BloomMemtableHitCount = <span class="number">42</span>,
+    BloomMemtableMissCount = <span class="number">43</span>,
+    BloomSstHitCount = <span class="number">44</span>,
+    BloomSstMissCount = <span class="number">45</span>,
+    KeyLockWaitTime = <span class="number">46</span>,
+    KeyLockWaitCount = <span class="number">47</span>,
+    EnvNewSequentialFileNanos = <span class="number">48</span>,
+    EnvNewRandomAccessFileNanos = <span class="number">49</span>,
+    EnvNewWritableFileNanos = <span class="number">50</span>,
+    EnvReuseWritableFileNanos = <span class="number">51</span>,
+    EnvNewRandomRwFileNanos = <span class="number">52</span>,
+    EnvNewDirectoryNanos = <span class="number">53</span>,
+    EnvFileExistsNanos = <span class="number">54</span>,
+    EnvGetChildrenNanos = <span class="number">55</span>,
+    EnvGetChildrenFileAttributesNanos = <span class="number">56</span>,
+    EnvDeleteFileNanos = <span class="number">57</span>,
+    EnvCreateDirNanos = <span class="number">58</span>,
+    EnvCreateDirIfMissingNanos = <span class="number">59</span>,
+    EnvDeleteDirNanos = <span class="number">60</span>,
+    EnvGetFileSizeNanos = <span class="number">61</span>,
+    EnvGetFileModificationTimeNanos = <span class="number">62</span>,
+    EnvRenameFileNanos = <span class="number">63</span>,
+    EnvLinkFileNanos = <span class="number">64</span>,
+    EnvLockFileNanos = <span class="number">65</span>,
+    EnvUnlockFileNanos = <span class="number">66</span>,
+    EnvNewLoggerNanos = <span class="number">67</span>,
+    TotalMetricCount = <span class="number">68</span>,
 }
 
-<span class="doccomment">/// Sets the perf stats level for current thread.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_perf_stats</span>(<span class="ident">lvl</span>: <span class="ident">PerfStatsLevel</span>) {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ffi::rocksdb_set_perf_level</span>(<span class="ident">lvl</span> <span class="kw">as</span> <span class="ident">c_int</span>);
+<span class="doccomment">/// Sets the perf stats level for current thread.
+</span><span class="kw">pub fn </span>set_perf_stats(lvl: PerfStatsLevel) {
+    <span class="kw">unsafe </span>{
+        ffi::rocksdb_set_perf_level(lvl <span class="kw">as </span>c_int);
     }
 }
 
-<span class="doccomment">/// Thread local context for gathering performance counter efficiently</span>
-<span class="doccomment">/// and transparently.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PerfContext</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">inner</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_perfcontext_t</span>,
+<span class="doccomment">/// Thread local context for gathering performance counter efficiently
+/// and transparently.
+</span><span class="kw">pub struct </span>PerfContext {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) inner: <span class="kw-2">*mut </span>ffi::rocksdb_perfcontext_t,
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">PerfContext</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_perfcontext_create</span>() };
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">ctx</span>.<span class="ident">is_null</span>(), <span class="string">&quot;Could not create Perf Context&quot;</span>);
+<span class="kw">impl </span>Default <span class="kw">for </span>PerfContext {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>ctx = <span class="kw">unsafe </span>{ ffi::rocksdb_perfcontext_create() };
+        <span class="macro">assert!</span>(!ctx.is_null(), <span class="string">&quot;Could not create Perf Context&quot;</span>);
 
-        <span class="self">Self</span> { <span class="ident">inner</span>: <span class="ident">ctx</span> }
+        <span class="self">Self </span>{ inner: ctx }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">PerfContext</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_perfcontext_destroy</span>(<span class="self">self</span>.<span class="ident">inner</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>PerfContext {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_perfcontext_destroy(<span class="self">self</span>.inner);
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PerfContext</span> {
-    <span class="doccomment">/// Reset context</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reset</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_perfcontext_reset</span>(<span class="self">self</span>.<span class="ident">inner</span>);
+<span class="kw">impl </span>PerfContext {
+    <span class="doccomment">/// Reset context
+    </span><span class="kw">pub fn </span>reset(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_perfcontext_reset(<span class="self">self</span>.inner);
         }
     }
 
-    <span class="doccomment">/// Get the report on perf</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">report</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">exclude_zero_counters</span>: <span class="ident">bool</span>) -&gt; <span class="ident">String</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">ffi::rocksdb_perfcontext_report</span>(<span class="self">self</span>.<span class="ident">inner</span>, <span class="ident">exclude_zero_counters</span> <span class="kw">as</span> <span class="ident">c_uchar</span>);
-            <span class="kw">let</span> <span class="ident">report</span> <span class="op">=</span> <span class="ident">from_cstr</span>(<span class="ident">ptr</span>);
-            <span class="ident">libc::free</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>);
-            <span class="ident">report</span>
+    <span class="doccomment">/// Get the report on perf
+    </span><span class="kw">pub fn </span>report(<span class="kw-2">&amp;</span><span class="self">self</span>, exclude_zero_counters: bool) -&gt; String {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>ptr = ffi::rocksdb_perfcontext_report(<span class="self">self</span>.inner, exclude_zero_counters <span class="kw">as </span>c_uchar);
+            <span class="kw">let </span>report = from_cstr(ptr);
+            libc::free(ptr <span class="kw">as </span><span class="kw-2">*mut </span>c_void);
+            report
         }
     }
 
-    <span class="doccomment">/// Returns value of a metric</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metric</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="ident">PerfMetric</span>) -&gt; <span class="ident">u64</span> {
-        <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_perfcontext_metric</span>(<span class="self">self</span>.<span class="ident">inner</span>, <span class="ident">id</span> <span class="kw">as</span> <span class="ident">c_int</span>) }
+    <span class="doccomment">/// Returns value of a metric
+    </span><span class="kw">pub fn </span>metric(<span class="kw-2">&amp;</span><span class="self">self</span>, id: PerfMetric) -&gt; u64 {
+        <span class="kw">unsafe </span>{ ffi::rocksdb_perfcontext_metric(<span class="self">self</span>.inner, id <span class="kw">as </span>c_int) }
     }
 }
 
-<span class="doccomment">/// Memory usage stats</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryUsageStats</span> {
-    <span class="doccomment">/// Approximate memory usage of all the mem-tables</span>
-    <span class="kw">pub</span> <span class="ident">mem_table_total</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Approximate memory usage of un-flushed mem-tables</span>
-    <span class="kw">pub</span> <span class="ident">mem_table_unflushed</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Approximate memory usage of all the table readers</span>
-    <span class="kw">pub</span> <span class="ident">mem_table_readers_total</span>: <span class="ident">u64</span>,
-    <span class="doccomment">/// Approximate memory usage by cache</span>
-    <span class="kw">pub</span> <span class="ident">cache_total</span>: <span class="ident">u64</span>,
+<span class="doccomment">/// Memory usage stats
+</span><span class="kw">pub struct </span>MemoryUsageStats {
+    <span class="doccomment">/// Approximate memory usage of all the mem-tables
+    </span><span class="kw">pub </span>mem_table_total: u64,
+    <span class="doccomment">/// Approximate memory usage of un-flushed mem-tables
+    </span><span class="kw">pub </span>mem_table_unflushed: u64,
+    <span class="doccomment">/// Approximate memory usage of all the table readers
+    </span><span class="kw">pub </span>mem_table_readers_total: u64,
+    <span class="doccomment">/// Approximate memory usage by cache
+    </span><span class="kw">pub </span>cache_total: u64,
 }
 
-<span class="doccomment">/// Wrap over memory_usage_t. Hold current memory usage of the specified DB instances and caches</span>
-<span class="kw">struct</span> <span class="ident">MemoryUsage</span> {
-    <span class="ident">inner</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_memory_usage_t</span>,
+<span class="doccomment">/// Wrap over memory_usage_t. Hold current memory usage of the specified DB instances and caches
+</span><span class="kw">struct </span>MemoryUsage {
+    inner: <span class="kw-2">*mut </span>ffi::rocksdb_memory_usage_t,
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">MemoryUsage</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_approximate_memory_usage_destroy</span>(<span class="self">self</span>.<span class="ident">inner</span>);
-        }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">MemoryUsage</span> {
-    <span class="doccomment">/// Approximate memory usage of all the mem-tables</span>
-    <span class="kw">fn</span> <span class="ident">approximate_mem_table_total</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_approximate_memory_usage_get_mem_table_total</span>(<span class="self">self</span>.<span class="ident">inner</span>) }
-    }
-
-    <span class="doccomment">/// Approximate memory usage of un-flushed mem-tables</span>
-    <span class="kw">fn</span> <span class="ident">approximate_mem_table_unflushed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_approximate_memory_usage_get_mem_table_unflushed</span>(<span class="self">self</span>.<span class="ident">inner</span>) }
-    }
-
-    <span class="doccomment">/// Approximate memory usage of all the table readers</span>
-    <span class="kw">fn</span> <span class="ident">approximate_mem_table_readers_total</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_approximate_memory_usage_get_mem_table_readers_total</span>(<span class="self">self</span>.<span class="ident">inner</span>) }
-    }
-
-    <span class="doccomment">/// Approximate memory usage by cache</span>
-    <span class="kw">fn</span> <span class="ident">approximate_cache_total</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_approximate_memory_usage_get_cache_total</span>(<span class="self">self</span>.<span class="ident">inner</span>) }
-    }
-}
-
-<span class="doccomment">/// Builder for MemoryUsage</span>
-<span class="kw">struct</span> <span class="ident">MemoryUsageBuilder</span> {
-    <span class="ident">inner</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_memory_consumers_t</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">MemoryUsageBuilder</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_memory_consumers_destroy</span>(<span class="self">self</span>.<span class="ident">inner</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>MemoryUsage {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_approximate_memory_usage_destroy(<span class="self">self</span>.inner);
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">MemoryUsageBuilder</span> {
-    <span class="doccomment">/// Create new instance</span>
-    <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">mc</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_memory_consumers_create</span>() };
-        <span class="kw">if</span> <span class="ident">mc</span>.<span class="ident">is_null</span>() {
-            <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(
-                <span class="string">&quot;Could not create MemoryUsage builder&quot;</span>.<span class="ident">to_owned</span>(),
+<span class="kw">impl </span>MemoryUsage {
+    <span class="doccomment">/// Approximate memory usage of all the mem-tables
+    </span><span class="kw">fn </span>approximate_mem_table_total(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">unsafe </span>{ ffi::rocksdb_approximate_memory_usage_get_mem_table_total(<span class="self">self</span>.inner) }
+    }
+
+    <span class="doccomment">/// Approximate memory usage of un-flushed mem-tables
+    </span><span class="kw">fn </span>approximate_mem_table_unflushed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">unsafe </span>{ ffi::rocksdb_approximate_memory_usage_get_mem_table_unflushed(<span class="self">self</span>.inner) }
+    }
+
+    <span class="doccomment">/// Approximate memory usage of all the table readers
+    </span><span class="kw">fn </span>approximate_mem_table_readers_total(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">unsafe </span>{ ffi::rocksdb_approximate_memory_usage_get_mem_table_readers_total(<span class="self">self</span>.inner) }
+    }
+
+    <span class="doccomment">/// Approximate memory usage by cache
+    </span><span class="kw">fn </span>approximate_cache_total(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">unsafe </span>{ ffi::rocksdb_approximate_memory_usage_get_cache_total(<span class="self">self</span>.inner) }
+    }
+}
+
+<span class="doccomment">/// Builder for MemoryUsage
+</span><span class="kw">struct </span>MemoryUsageBuilder {
+    inner: <span class="kw-2">*mut </span>ffi::rocksdb_memory_consumers_t,
+}
+
+<span class="kw">impl </span>Drop <span class="kw">for </span>MemoryUsageBuilder {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_memory_consumers_destroy(<span class="self">self</span>.inner);
+        }
+    }
+}
+
+<span class="kw">impl </span>MemoryUsageBuilder {
+    <span class="doccomment">/// Create new instance
+    </span><span class="kw">fn </span>new() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">let </span>mc = <span class="kw">unsafe </span>{ ffi::rocksdb_memory_consumers_create() };
+        <span class="kw">if </span>mc.is_null() {
+            <span class="prelude-val">Err</span>(Error::new(
+                <span class="string">&quot;Could not create MemoryUsage builder&quot;</span>.to_owned(),
             ))
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">inner</span>: <span class="ident">mc</span> })
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ inner: mc })
         }
     }
 
-    <span class="doccomment">/// Add a DB instance to collect memory usage from it and add up in total stats</span>
-    <span class="kw">fn</span> <span class="ident">add_db</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">db</span>: <span class="kw-2">&amp;</span><span class="ident">DB</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_memory_consumers_add_db</span>(<span class="self">self</span>.<span class="ident">inner</span>, <span class="ident">db</span>.<span class="ident">inner</span>);
+    <span class="doccomment">/// Add a DB instance to collect memory usage from it and add up in total stats
+    </span><span class="kw">fn </span>add_db(<span class="kw-2">&amp;mut </span><span class="self">self</span>, db: <span class="kw-2">&amp;</span>DB) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_memory_consumers_add_db(<span class="self">self</span>.inner, db.inner);
         }
     }
 
-    <span class="doccomment">/// Add a cache to collect memory usage from it and add up in total stats</span>
-    <span class="kw">fn</span> <span class="ident">add_cache</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cache</span>: <span class="kw-2">&amp;</span><span class="ident">Cache</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_memory_consumers_add_cache</span>(<span class="self">self</span>.<span class="ident">inner</span>, <span class="ident">cache</span>.<span class="number">0</span>.<span class="ident">inner</span>);
+    <span class="doccomment">/// Add a cache to collect memory usage from it and add up in total stats
+    </span><span class="kw">fn </span>add_cache(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cache: <span class="kw-2">&amp;</span>Cache) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_memory_consumers_add_cache(<span class="self">self</span>.inner, cache.<span class="number">0</span>.inner);
         }
     }
 
-    <span class="doccomment">/// Build up MemoryUsage</span>
-    <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MemoryUsage</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">mu</span> <span class="op">=</span> <span class="macro">ffi_try!</span>(<span class="ident">ffi::rocksdb_approximate_memory_usage_create</span>(<span class="self">self</span>.<span class="ident">inner</span>));
-            <span class="prelude-val">Ok</span>(<span class="ident">MemoryUsage</span> { <span class="ident">inner</span>: <span class="ident">mu</span> })
+    <span class="doccomment">/// Build up MemoryUsage
+    </span><span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;MemoryUsage, Error&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>mu = <span class="macro">ffi_try!</span>(ffi::rocksdb_approximate_memory_usage_create(<span class="self">self</span>.inner));
+            <span class="prelude-val">Ok</span>(MemoryUsage { inner: mu })
         }
     }
 }
 
-<span class="doccomment">/// Get memory usage stats from DB instances and Cache instances</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_memory_usage_stats</span>(
-    <span class="ident">dbs</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">DB</span>]<span class="op">&gt;</span>,
-    <span class="ident">caches</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">Cache</span>]<span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MemoryUsageStats</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">MemoryUsageBuilder::new</span>()<span class="question-mark">?</span>;
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dbs_</span>) <span class="op">=</span> <span class="ident">dbs</span> {
-        <span class="ident">dbs_</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">db</span><span class="op">|</span> <span class="ident">builder</span>.<span class="ident">add_db</span>(<span class="ident">db</span>));
+<span class="doccomment">/// Get memory usage stats from DB instances and Cache instances
+</span><span class="kw">pub fn </span>get_memory_usage_stats(
+    dbs: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>DB]&gt;,
+    caches: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Cache]&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;MemoryUsageStats, Error&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>builder = MemoryUsageBuilder::new()<span class="question-mark">?</span>;
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(dbs_) = dbs {
+        dbs_.iter().for_each(|db| builder.add_db(db));
     }
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">caches_</span>) <span class="op">=</span> <span class="ident">caches</span> {
-        <span class="ident">caches_</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">cache</span><span class="op">|</span> <span class="ident">builder</span>.<span class="ident">add_cache</span>(<span class="ident">cache</span>));
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(caches_) = caches {
+        caches_.iter().for_each(|cache| builder.add_cache(cache));
     }
 
-    <span class="kw">let</span> <span class="ident">mu</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">build</span>()<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(<span class="ident">MemoryUsageStats</span> {
-        <span class="ident">mem_table_total</span>: <span class="ident">mu</span>.<span class="ident">approximate_mem_table_total</span>(),
-        <span class="ident">mem_table_unflushed</span>: <span class="ident">mu</span>.<span class="ident">approximate_mem_table_unflushed</span>(),
-        <span class="ident">mem_table_readers_total</span>: <span class="ident">mu</span>.<span class="ident">approximate_mem_table_readers_total</span>(),
-        <span class="ident">cache_total</span>: <span class="ident">mu</span>.<span class="ident">approximate_cache_total</span>(),
+    <span class="kw">let </span>mu = builder.build()<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(MemoryUsageStats {
+        mem_table_total: mu.approximate_mem_table_total(),
+        mem_table_unflushed: mu.approximate_mem_table_unflushed(),
+        mem_table_readers_total: mu.approximate_mem_table_readers_total(),
+        cache_total: mu.approximate_cache_total(),
     })
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

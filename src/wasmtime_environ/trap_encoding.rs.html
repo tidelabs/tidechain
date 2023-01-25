@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-environ-0.35.3/src/trap_encoding.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trap_encoding.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime_environ/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime_environ/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime_environ/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-environ-0.35.3/src/trap_encoding.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trap_encoding.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime_environ/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -218,221 +213,220 @@
 <span id="213">213</span>
 <span id="214">214</span>
 <span id="215">215</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">object::write</span>::{<span class="ident">Object</span>, <span class="ident">StandardSegment</span>};
-<span class="kw">use</span> <span class="ident">object</span>::{<span class="ident">Bytes</span>, <span class="ident">LittleEndian</span>, <span class="ident">SectionKind</span>, <span class="ident">U32Bytes</span>};
-<span class="kw">use</span> <span class="ident">std::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">std::ops::Range</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>object::write::{Object, StandardSegment};
+<span class="kw">use </span>object::{Bytes, LittleEndian, SectionKind, U32Bytes};
+<span class="kw">use </span>std::convert::TryFrom;
+<span class="kw">use </span>std::ops::Range;
 
-<span class="doccomment">/// A helper structure to build the custom-encoded section of a wasmtime</span>
-<span class="doccomment">/// compilation image which encodes trap information.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This structure is incrementally fed the results of compiling individual</span>
-<span class="doccomment">/// functions and handles all the encoding internally, allowing usage of</span>
-<span class="doccomment">/// `lookup_trap_code` below with the resulting section.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrapEncodingBuilder</span> {
-    <span class="ident">offsets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">U32Bytes</span><span class="op">&lt;</span><span class="ident">LittleEndian</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">traps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-    <span class="ident">last_offset</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// A helper structure to build the custom-encoded section of a wasmtime
+/// compilation image which encodes trap information.
+///
+/// This structure is incrementally fed the results of compiling individual
+/// functions and handles all the encoding internally, allowing usage of
+/// `lookup_trap_code` below with the resulting section.
+</span><span class="attribute">#[derive(Default)]
+</span><span class="kw">pub struct </span>TrapEncodingBuilder {
+    offsets: Vec&lt;U32Bytes&lt;LittleEndian&gt;&gt;,
+    traps: Vec&lt;u8&gt;,
+    last_offset: u32,
 }
 
-<span class="doccomment">/// A custom binary-encoded section of wasmtime compilation artifacts which</span>
-<span class="doccomment">/// encodes the ability to map an offset in the text section to the trap code</span>
-<span class="doccomment">/// that it corresponds to.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This section is used at runtime to determine what flavor fo trap happened to</span>
-<span class="doccomment">/// ensure that embedders and debuggers know the reason for the wasm trap. The</span>
-<span class="doccomment">/// encoding of this section is custom to Wasmtime and managed with helpers in</span>
-<span class="doccomment">/// the `object` crate:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * First the section has a 32-bit little endian integer indicating how many</span>
-<span class="doccomment">///   trap entries are in the section.</span>
-<span class="doccomment">/// * Next is an array, of the same length as read before, of 32-bit</span>
-<span class="doccomment">///   little-endian integers. These integers are offsets into the text section</span>
-<span class="doccomment">///   of the compilation image.</span>
-<span class="doccomment">/// * Finally is the same count number of bytes. Each of these bytes corresponds</span>
-<span class="doccomment">///   to a trap code.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This section is decoded by `lookup_trap_code` below which will read the</span>
-<span class="doccomment">/// section count, slice some bytes to get the various arrays, and then perform</span>
-<span class="doccomment">/// a binary search on the offsets array to find the an index corresponding to</span>
-<span class="doccomment">/// the pc being looked up. If found the same index in the trap array (the array</span>
-<span class="doccomment">/// of bytes) is the trap code for that offset.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that at this time this section has an alignment of 1. Additionally due</span>
-<span class="doccomment">/// to the 32-bit encodings for offsets this doesn&#39;t support images &gt;=4gb.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ELF_WASMTIME_TRAPS</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;.wasmtime.traps&quot;</span>;
+<span class="doccomment">/// A custom binary-encoded section of wasmtime compilation artifacts which
+/// encodes the ability to map an offset in the text section to the trap code
+/// that it corresponds to.
+///
+/// This section is used at runtime to determine what flavor fo trap happened to
+/// ensure that embedders and debuggers know the reason for the wasm trap. The
+/// encoding of this section is custom to Wasmtime and managed with helpers in
+/// the `object` crate:
+///
+/// * First the section has a 32-bit little endian integer indicating how many
+///   trap entries are in the section.
+/// * Next is an array, of the same length as read before, of 32-bit
+///   little-endian integers. These integers are offsets into the text section
+///   of the compilation image.
+/// * Finally is the same count number of bytes. Each of these bytes corresponds
+///   to a trap code.
+///
+/// This section is decoded by `lookup_trap_code` below which will read the
+/// section count, slice some bytes to get the various arrays, and then perform
+/// a binary search on the offsets array to find the an index corresponding to
+/// the pc being looked up. If found the same index in the trap array (the array
+/// of bytes) is the trap code for that offset.
+///
+/// Note that at this time this section has an alignment of 1. Additionally due
+/// to the 32-bit encodings for offsets this doesn&#39;t support images &gt;=4gb.
+</span><span class="kw">pub const </span>ELF_WASMTIME_TRAPS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;.wasmtime.traps&quot;</span>;
 
-<span class="doccomment">/// Information about trap.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrapInformation</span> {
-    <span class="doccomment">/// The offset of the trapping instruction in native code.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is relative to the beginning of the function.</span>
-    <span class="kw">pub</span> <span class="ident">code_offset</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Information about trap.
+</span><span class="attribute">#[derive(Debug, PartialEq, Eq, Clone)]
+</span><span class="kw">pub struct </span>TrapInformation {
+    <span class="doccomment">/// The offset of the trapping instruction in native code.
+    ///
+    /// This is relative to the beginning of the function.
+    </span><span class="kw">pub </span>code_offset: u32,
 
-    <span class="doccomment">/// Code of the trap.</span>
-    <span class="kw">pub</span> <span class="ident">trap_code</span>: <span class="ident">TrapCode</span>,
+    <span class="doccomment">/// Code of the trap.
+    </span><span class="kw">pub </span>trap_code: TrapCode,
 }
 
-<span class="doccomment">/// A trap code describing the reason for a trap.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// All trap instructions have an explicit trap code.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>, <span class="ident">Hash</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TrapCode</span> {
-    <span class="doccomment">/// The current stack space was exhausted.</span>
-    <span class="ident">StackOverflow</span>,
+<span class="doccomment">/// A trap code describing the reason for a trap.
+///
+/// All trap instructions have an explicit trap code.
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[repr(u8)]
+</span><span class="kw">pub enum </span>TrapCode {
+    <span class="doccomment">/// The current stack space was exhausted.
+    </span>StackOverflow,
 
-    <span class="doccomment">/// A `heap_addr` instruction detected an out-of-bounds error.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that not all out-of-bounds heap accesses are reported this way;</span>
-    <span class="doccomment">/// some are detected by a segmentation fault on the heap unmapped or</span>
-    <span class="doccomment">/// offset-guard pages.</span>
-    <span class="ident">HeapOutOfBounds</span>,
+    <span class="doccomment">/// A `heap_addr` instruction detected an out-of-bounds error.
+    ///
+    /// Note that not all out-of-bounds heap accesses are reported this way;
+    /// some are detected by a segmentation fault on the heap unmapped or
+    /// offset-guard pages.
+    </span>HeapOutOfBounds,
 
-    <span class="doccomment">/// A wasm atomic operation was presented with a not-naturally-aligned linear-memory address.</span>
-    <span class="ident">HeapMisaligned</span>,
+    <span class="doccomment">/// A wasm atomic operation was presented with a not-naturally-aligned linear-memory address.
+    </span>HeapMisaligned,
 
-    <span class="doccomment">/// A `table_addr` instruction detected an out-of-bounds error.</span>
-    <span class="ident">TableOutOfBounds</span>,
+    <span class="doccomment">/// A `table_addr` instruction detected an out-of-bounds error.
+    </span>TableOutOfBounds,
 
-    <span class="doccomment">/// Indirect call to a null table entry.</span>
-    <span class="ident">IndirectCallToNull</span>,
+    <span class="doccomment">/// Indirect call to a null table entry.
+    </span>IndirectCallToNull,
 
-    <span class="doccomment">/// Signature mismatch on indirect call.</span>
-    <span class="ident">BadSignature</span>,
+    <span class="doccomment">/// Signature mismatch on indirect call.
+    </span>BadSignature,
 
-    <span class="doccomment">/// An integer arithmetic operation caused an overflow.</span>
-    <span class="ident">IntegerOverflow</span>,
+    <span class="doccomment">/// An integer arithmetic operation caused an overflow.
+    </span>IntegerOverflow,
 
-    <span class="doccomment">/// An integer division by zero.</span>
-    <span class="ident">IntegerDivisionByZero</span>,
+    <span class="doccomment">/// An integer division by zero.
+    </span>IntegerDivisionByZero,
 
-    <span class="doccomment">/// Failed float-to-int conversion.</span>
-    <span class="ident">BadConversionToInteger</span>,
+    <span class="doccomment">/// Failed float-to-int conversion.
+    </span>BadConversionToInteger,
 
-    <span class="doccomment">/// Code that was supposed to have been unreachable was reached.</span>
-    <span class="ident">UnreachableCodeReached</span>,
+    <span class="doccomment">/// Code that was supposed to have been unreachable was reached.
+    </span>UnreachableCodeReached,
 
-    <span class="doccomment">/// Execution has potentially run too long and may be interrupted.</span>
-    <span class="doccomment">/// This trap is resumable.</span>
-    <span class="ident">Interrupt</span>,
-    <span class="comment">// if adding a variant here be sure to update the `check!` macro below</span>
-}
+    <span class="doccomment">/// Execution has potentially run too long and may be interrupted.
+    /// This trap is resumable.
+    </span>Interrupt,
+    <span class="comment">// if adding a variant here be sure to update the `check!` macro below
+</span>}
 
-<span class="kw">impl</span> <span class="ident">TrapEncodingBuilder</span> {
-    <span class="doccomment">/// Appends trap information about a function into this section.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function is called to describe traps for the `func` range</span>
-    <span class="doccomment">/// specified. The `func` offsets are specified relative to the text section</span>
-    <span class="doccomment">/// itself, and the `traps` offsets are specified relative to the start of</span>
-    <span class="doccomment">/// `func`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is required to be called in-order for increasing ranges of `func`</span>
-    <span class="doccomment">/// to ensure the final array is properly sorted. Additionally `traps` must</span>
-    <span class="doccomment">/// be sorted.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">push</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">func</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">traps</span>: <span class="kw-2">&amp;</span>[<span class="ident">TrapInformation</span>]) {
-        <span class="comment">// NB: for now this only supports &lt;=4GB text sections in object files.</span>
-        <span class="comment">// Alternative schemes will need to be created for &gt;32-bit offsets to</span>
-        <span class="comment">// avoid making this section overly large.</span>
-        <span class="kw">let</span> <span class="ident">func_start</span> <span class="op">=</span> <span class="ident">u32::try_from</span>(<span class="ident">func</span>.<span class="ident">start</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">func_end</span> <span class="op">=</span> <span class="ident">u32::try_from</span>(<span class="ident">func</span>.<span class="ident">end</span>).<span class="ident">unwrap</span>();
+<span class="kw">impl </span>TrapEncodingBuilder {
+    <span class="doccomment">/// Appends trap information about a function into this section.
+    ///
+    /// This function is called to describe traps for the `func` range
+    /// specified. The `func` offsets are specified relative to the text section
+    /// itself, and the `traps` offsets are specified relative to the start of
+    /// `func`.
+    ///
+    /// This is required to be called in-order for increasing ranges of `func`
+    /// to ensure the final array is properly sorted. Additionally `traps` must
+    /// be sorted.
+    </span><span class="kw">pub fn </span>push(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: Range&lt;u64&gt;, traps: <span class="kw-2">&amp;</span>[TrapInformation]) {
+        <span class="comment">// NB: for now this only supports &lt;=4GB text sections in object files.
+        // Alternative schemes will need to be created for &gt;32-bit offsets to
+        // avoid making this section overly large.
+        </span><span class="kw">let </span>func_start = u32::try_from(func.start).unwrap();
+        <span class="kw">let </span>func_end = u32::try_from(func.end).unwrap();
 
-        <span class="comment">// Sanity-check to ensure that functions are pushed in-order, otherwise</span>
-        <span class="comment">// the `offsets` array won&#39;t be sorted which is our goal.</span>
-        <span class="macro">assert!</span>(<span class="ident">func_start</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">last_offset</span>);
+        <span class="comment">// Sanity-check to ensure that functions are pushed in-order, otherwise
+        // the `offsets` array won&#39;t be sorted which is our goal.
+        </span><span class="macro">assert!</span>(func_start &gt;= <span class="self">self</span>.last_offset);
 
-        <span class="self">self</span>.<span class="ident">offsets</span>.<span class="ident">reserve</span>(<span class="ident">traps</span>.<span class="ident">len</span>());
-        <span class="self">self</span>.<span class="ident">traps</span>.<span class="ident">reserve</span>(<span class="ident">traps</span>.<span class="ident">len</span>());
-        <span class="kw">for</span> <span class="ident">info</span> <span class="kw">in</span> <span class="ident">traps</span> {
-            <span class="kw">let</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">func_start</span> <span class="op">+</span> <span class="ident">info</span>.<span class="ident">code_offset</span>;
-            <span class="macro">assert!</span>(<span class="ident">pos</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">last_offset</span>);
-            <span class="self">self</span>.<span class="ident">offsets</span>.<span class="ident">push</span>(<span class="ident">U32Bytes::new</span>(<span class="ident">LittleEndian</span>, <span class="ident">pos</span>));
-            <span class="self">self</span>.<span class="ident">traps</span>.<span class="ident">push</span>(<span class="ident">info</span>.<span class="ident">trap_code</span> <span class="kw">as</span> <span class="ident">u8</span>);
-            <span class="self">self</span>.<span class="ident">last_offset</span> <span class="op">=</span> <span class="ident">pos</span>;
+        <span class="self">self</span>.offsets.reserve(traps.len());
+        <span class="self">self</span>.traps.reserve(traps.len());
+        <span class="kw">for </span>info <span class="kw">in </span>traps {
+            <span class="kw">let </span>pos = func_start + info.code_offset;
+            <span class="macro">assert!</span>(pos &gt;= <span class="self">self</span>.last_offset);
+            <span class="self">self</span>.offsets.push(U32Bytes::new(LittleEndian, pos));
+            <span class="self">self</span>.traps.push(info.trap_code <span class="kw">as </span>u8);
+            <span class="self">self</span>.last_offset = pos;
         }
 
-        <span class="self">self</span>.<span class="ident">last_offset</span> <span class="op">=</span> <span class="ident">func_end</span>;
+        <span class="self">self</span>.last_offset = func_end;
     }
 
-    <span class="doccomment">/// Encodes this section into the object provided.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_to</span>(<span class="self">self</span>, <span class="ident">obj</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Object</span>) {
-        <span class="kw">let</span> <span class="ident">section</span> <span class="op">=</span> <span class="ident">obj</span>.<span class="ident">add_section</span>(
-            <span class="ident">obj</span>.<span class="ident">segment_name</span>(<span class="ident">StandardSegment::Data</span>).<span class="ident">to_vec</span>(),
-            <span class="ident">ELF_WASMTIME_TRAPS</span>.<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
-            <span class="ident">SectionKind::ReadOnlyData</span>,
+    <span class="doccomment">/// Encodes this section into the object provided.
+    </span><span class="kw">pub fn </span>append_to(<span class="self">self</span>, obj: <span class="kw-2">&amp;mut </span>Object) {
+        <span class="kw">let </span>section = obj.add_section(
+            obj.segment_name(StandardSegment::Data).to_vec(),
+            ELF_WASMTIME_TRAPS.as_bytes().to_vec(),
+            SectionKind::ReadOnlyData,
         );
 
-        <span class="comment">// NB: this matches the encoding expected by `lookup` below.</span>
-        <span class="kw">let</span> <span class="ident">amt</span> <span class="op">=</span> <span class="ident">u32::try_from</span>(<span class="self">self</span>.<span class="ident">traps</span>.<span class="ident">len</span>()).<span class="ident">unwrap</span>();
-        <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">section</span>, <span class="kw-2">&amp;</span><span class="ident">amt</span>.<span class="ident">to_le_bytes</span>(), <span class="number">1</span>);
-        <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">section</span>, <span class="ident">object::bytes_of_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">offsets</span>), <span class="number">1</span>);
-        <span class="ident">obj</span>.<span class="ident">append_section_data</span>(<span class="ident">section</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">traps</span>, <span class="number">1</span>);
+        <span class="comment">// NB: this matches the encoding expected by `lookup` below.
+        </span><span class="kw">let </span>amt = u32::try_from(<span class="self">self</span>.traps.len()).unwrap();
+        obj.append_section_data(section, <span class="kw-2">&amp;</span>amt.to_le_bytes(), <span class="number">1</span>);
+        obj.append_section_data(section, object::bytes_of_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.offsets), <span class="number">1</span>);
+        obj.append_section_data(section, <span class="kw-2">&amp;</span><span class="self">self</span>.traps, <span class="number">1</span>);
     }
 }
 
-<span class="doccomment">/// Decodes the provided trap information section and attempts to find the trap</span>
-<span class="doccomment">/// code corresponding to the `offset` specified.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The `section` provided is expected to have been built by</span>
-<span class="doccomment">/// `TrapEncodingBuilder` above. Additionally the `offset` should be a relative</span>
-<span class="doccomment">/// offset within the text section of the compilation image.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lookup_trap_code</span>(<span class="ident">section</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">offset</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TrapCode</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">section</span> <span class="op">=</span> <span class="ident">Bytes</span>(<span class="ident">section</span>);
-    <span class="comment">// NB: this matches the encoding written by `append_to` above.</span>
-    <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">section</span>.<span class="ident">read</span>::<span class="op">&lt;</span><span class="ident">U32Bytes</span><span class="op">&lt;</span><span class="ident">LittleEndian</span><span class="op">&gt;</span><span class="op">&gt;</span>().<span class="ident">ok</span>()<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">count</span>.<span class="ident">get</span>(<span class="ident">LittleEndian</span>)).<span class="ident">ok</span>()<span class="question-mark">?</span>;
-    <span class="kw">let</span> (<span class="ident">offsets</span>, <span class="ident">traps</span>) <span class="op">=</span>
-        <span class="ident">object::slice_from_bytes</span>::<span class="op">&lt;</span><span class="ident">U32Bytes</span><span class="op">&lt;</span><span class="ident">LittleEndian</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">section</span>.<span class="number">0</span>, <span class="ident">count</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>;
-    <span class="macro">debug_assert_eq!</span>(<span class="ident">traps</span>.<span class="ident">len</span>(), <span class="ident">count</span>);
+<span class="doccomment">/// Decodes the provided trap information section and attempts to find the trap
+/// code corresponding to the `offset` specified.
+///
+/// The `section` provided is expected to have been built by
+/// `TrapEncodingBuilder` above. Additionally the `offset` should be a relative
+/// offset within the text section of the compilation image.
+</span><span class="kw">pub fn </span>lookup_trap_code(section: <span class="kw-2">&amp;</span>[u8], offset: usize) -&gt; <span class="prelude-ty">Option</span>&lt;TrapCode&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>section = Bytes(section);
+    <span class="comment">// NB: this matches the encoding written by `append_to` above.
+    </span><span class="kw">let </span>count = section.read::&lt;U32Bytes&lt;LittleEndian&gt;&gt;().ok()<span class="question-mark">?</span>;
+    <span class="kw">let </span>count = usize::try_from(count.get(LittleEndian)).ok()<span class="question-mark">?</span>;
+    <span class="kw">let </span>(offsets, traps) =
+        object::slice_from_bytes::&lt;U32Bytes&lt;LittleEndian&gt;&gt;(section.<span class="number">0</span>, count).ok()<span class="question-mark">?</span>;
+    <span class="macro">debug_assert_eq!</span>(traps.len(), count);
 
-    <span class="comment">// The `offsets` table is sorted in the trap section so perform a binary</span>
-    <span class="comment">// search of the contents of this section to find whether `offset` is an</span>
-    <span class="comment">// entry in the section. Note that this is a precise search because trap pcs</span>
-    <span class="comment">// should always be precise as well as our metadata about them, which means</span>
-    <span class="comment">// we expect an exact match to correspond to a trap opcode.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Once an index is found within the `offsets` array then that same index is</span>
-    <span class="comment">// used to lookup from the `traps` list of bytes to get the trap code byte</span>
-    <span class="comment">// corresponding to this offset.</span>
-    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">u32::try_from</span>(<span class="ident">offset</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">offsets</span>
-        .<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">offset</span>, <span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span>.<span class="ident">get</span>(<span class="ident">LittleEndian</span>))
-        .<span class="ident">ok</span>()<span class="question-mark">?</span>;
-    <span class="macro">debug_assert!</span>(<span class="ident">index</span> <span class="op">&lt;</span> <span class="ident">traps</span>.<span class="ident">len</span>());
-    <span class="kw">let</span> <span class="ident">trap</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">traps</span>.<span class="ident">get</span>(<span class="ident">index</span>)<span class="question-mark">?</span>;
+    <span class="comment">// The `offsets` table is sorted in the trap section so perform a binary
+    // search of the contents of this section to find whether `offset` is an
+    // entry in the section. Note that this is a precise search because trap pcs
+    // should always be precise as well as our metadata about them, which means
+    // we expect an exact match to correspond to a trap opcode.
+    //
+    // Once an index is found within the `offsets` array then that same index is
+    // used to lookup from the `traps` list of bytes to get the trap code byte
+    // corresponding to this offset.
+    </span><span class="kw">let </span>offset = u32::try_from(offset).ok()<span class="question-mark">?</span>;
+    <span class="kw">let </span>index = offsets
+        .binary_search_by_key(<span class="kw-2">&amp;</span>offset, |val| val.get(LittleEndian))
+        .ok()<span class="question-mark">?</span>;
+    <span class="macro">debug_assert!</span>(index &lt; traps.len());
+    <span class="kw">let </span>trap = <span class="kw-2">*</span>traps.get(index)<span class="question-mark">?</span>;
 
-    <span class="comment">// FIXME: this could use some sort of derive-like thing to avoid having to</span>
-    <span class="comment">// deduplicate the names here.</span>
-    <span class="comment">//</span>
-    <span class="comment">// This simply converts from the `trap`, a `u8`, to the `TrapCode` enum.</span>
-    <span class="macro">macro_rules!</span> <span class="ident">check</span> {
-        ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) =&gt; ($(<span class="kw">if</span> <span class="ident">trap</span> <span class="op">==</span> <span class="ident">TrapCode</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> <span class="kw">as</span> <span class="ident">u8</span> {
-            <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">TrapCode</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>);
+    <span class="comment">// FIXME: this could use some sort of derive-like thing to avoid having to
+    // deduplicate the names here.
+    //
+    // This simply converts from the `trap`, a `u8`, to the `TrapCode` enum.
+    </span><span class="macro">macro_rules! </span>check {
+        ($(<span class="macro-nonterminal">$name</span>:ident)<span class="kw-2">*</span>) =&gt; ($(<span class="kw">if </span>trap == TrapCode::<span class="macro-nonterminal">$name </span><span class="kw">as </span>u8 {
+            <span class="kw">return </span><span class="prelude-val">Some</span>(TrapCode::<span class="macro-nonterminal">$name</span>);
         })<span class="kw-2">*</span>);
     }
 
-    <span class="macro">check!</span> {
-        <span class="ident">StackOverflow</span>
-        <span class="ident">HeapOutOfBounds</span>
-        <span class="ident">HeapMisaligned</span>
-        <span class="ident">TableOutOfBounds</span>
-        <span class="ident">IndirectCallToNull</span>
-        <span class="ident">BadSignature</span>
-        <span class="ident">IntegerOverflow</span>
-        <span class="ident">IntegerDivisionByZero</span>
-        <span class="ident">BadConversionToInteger</span>
-        <span class="ident">UnreachableCodeReached</span>
-        <span class="ident">Interrupt</span>
+    <span class="macro">check! </span>{
+        StackOverflow
+        HeapOutOfBounds
+        HeapMisaligned
+        TableOutOfBounds
+        IndirectCallToNull
+        BadSignature
+        IntegerOverflow
+        IntegerDivisionByZero
+        BadConversionToInteger
+        UnreachableCodeReached
+        Interrupt
     }
 
-    <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">debug_assertions</span>) {
-        <span class="macro">panic!</span>(<span class="string">&quot;missing mapping for {}&quot;</span>, <span class="ident">trap</span>);
-    } <span class="kw">else</span> {
-        <span class="prelude-val">None</span>
-    }
+    <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
+        <span class="macro">panic!</span>(<span class="string">&quot;missing mapping for {}&quot;</span>, trap);
+    } <span class="kw">else </span>{
+        <span class="prelude-val">None
+    </span>}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_environ" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_environ" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

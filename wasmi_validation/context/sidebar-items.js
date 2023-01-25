@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ModuleContext",""],["ModuleContextBuilder",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["ModuleContext",""],["ModuleContextBuilder",""]]};

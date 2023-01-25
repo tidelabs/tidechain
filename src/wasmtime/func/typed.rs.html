@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/func/typed.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>typed.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../wasmtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/func/typed.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>typed.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -544,547 +539,546 @@
 <span id="539">539</span>
 <span id="540">540</span>
 <span id="541">541</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">invoke_wasm_and_catch_traps</span>, <span class="ident">HostAbi</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::store</span>::{<span class="ident">AutoAssertNoGc</span>, <span class="ident">StoreOpaque</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">AsContextMut</span>, <span class="ident">ExternRef</span>, <span class="ident">Func</span>, <span class="ident">StoreContextMut</span>, <span class="ident">Trap</span>, <span class="ident">ValType</span>};
-<span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">bail</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">std::marker</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>::{<span class="self">self</span>, <span class="ident">MaybeUninit</span>};
-<span class="kw">use</span> <span class="ident">std::ptr</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_runtime</span>::{<span class="ident">VMContext</span>, <span class="ident">VMFunctionBody</span>};
+</pre><pre class="rust"><code><span class="kw">use super</span>::{invoke_wasm_and_catch_traps, HostAbi};
+<span class="kw">use </span><span class="kw">crate</span>::store::{AutoAssertNoGc, StoreOpaque};
+<span class="kw">use crate</span>::{AsContextMut, ExternRef, Func, StoreContextMut, Trap, ValType};
+<span class="kw">use </span>anyhow::{bail, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>std::marker;
+<span class="kw">use </span>std::mem::{<span class="self">self</span>, MaybeUninit};
+<span class="kw">use </span>std::ptr;
+<span class="kw">use </span>wasmtime_runtime::{VMContext, VMFunctionBody};
 
-<span class="doccomment">/// A statically typed WebAssembly function.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Values of this type represent statically type-checked WebAssembly functions.</span>
-<span class="doccomment">/// The function within a [`TypedFunc`] is statically known to have `Params` as its</span>
-<span class="doccomment">/// parameters and `Results` as its results.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This structure is created via [`Func::typed`] or [`TypedFunc::new_unchecked`].</span>
-<span class="doccomment">/// For more documentation about this see those methods.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span> <span class="comment">// here for the C API</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TypedFunc</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> {
-    <span class="ident">_a</span>: <span class="ident">marker::PhantomData</span><span class="op">&lt;</span><span class="kw">fn</span>(<span class="ident">Params</span>) -&gt; <span class="ident">Results</span><span class="op">&gt;</span>,
-    <span class="ident">func</span>: <span class="ident">Func</span>,
+<span class="doccomment">/// A statically typed WebAssembly function.
+///
+/// Values of this type represent statically type-checked WebAssembly functions.
+/// The function within a [`TypedFunc`] is statically known to have `Params` as its
+/// parameters and `Results` as its results.
+///
+/// This structure is created via [`Func::typed`] or [`TypedFunc::new_unchecked`].
+/// For more documentation about this see those methods.
+</span><span class="attribute">#[repr(transparent)] </span><span class="comment">// here for the C API
+</span><span class="kw">pub struct </span>TypedFunc&lt;Params, Results&gt; {
+    _a: marker::PhantomData&lt;<span class="kw">fn</span>(Params) -&gt; Results&gt;,
+    func: Func,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> <span class="ident">Copy</span> <span class="kw">for</span> <span class="ident">TypedFunc</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> {}
+<span class="kw">impl</span>&lt;Params, Results&gt; Copy <span class="kw">for </span>TypedFunc&lt;Params, Results&gt; {}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">TypedFunc</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">TypedFunc</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> {
-        <span class="kw-2">*</span><span class="self">self</span>
-    }
+<span class="kw">impl</span>&lt;Params, Results&gt; Clone <span class="kw">for </span>TypedFunc&lt;Params, Results&gt; {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TypedFunc&lt;Params, Results&gt; {
+        <span class="kw-2">*</span><span class="self">self
+    </span>}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> <span class="ident">TypedFunc</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">Params</span>: <span class="ident">WasmParams</span>,
-    <span class="ident">Results</span>: <span class="ident">WasmResults</span>,
+<span class="kw">impl</span>&lt;Params, Results&gt; TypedFunc&lt;Params, Results&gt;
+<span class="kw">where
+    </span>Params: WasmParams,
+    Results: WasmResults,
 {
-    <span class="doccomment">/// An unchecked version of [`Func::typed`] which does not perform a</span>
-    <span class="doccomment">/// typecheck and simply assumes that the type declared here matches the</span>
-    <span class="doccomment">/// type of this function.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The semantics of this function are the same as [`Func::typed`] except</span>
-    <span class="doccomment">/// that no error is returned because no typechecking is done.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Unsafety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function only safe to call if `typed` would otherwise return `Ok`</span>
-    <span class="doccomment">/// for the same `Params` and `Results` specified. If `typed` would return</span>
-    <span class="doccomment">/// an error then the returned `TypedFunc` is memory unsafe to invoke.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new_unchecked</span>(<span class="ident">func</span>: <span class="ident">Func</span>) -&gt; <span class="ident">TypedFunc</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span> {
-        <span class="ident">TypedFunc</span> {
-            <span class="ident">_a</span>: <span class="ident">marker::PhantomData</span>,
-            <span class="ident">func</span>,
+    <span class="doccomment">/// An unchecked version of [`Func::typed`] which does not perform a
+    /// typecheck and simply assumes that the type declared here matches the
+    /// type of this function.
+    ///
+    /// The semantics of this function are the same as [`Func::typed`] except
+    /// that no error is returned because no typechecking is done.
+    ///
+    /// # Unsafety
+    ///
+    /// This function only safe to call if `typed` would otherwise return `Ok`
+    /// for the same `Params` and `Results` specified. If `typed` would return
+    /// an error then the returned `TypedFunc` is memory unsafe to invoke.
+    </span><span class="kw">pub unsafe fn </span>new_unchecked(func: Func) -&gt; TypedFunc&lt;Params, Results&gt; {
+        TypedFunc {
+            _a: marker::PhantomData,
+            func,
         }
     }
 
-    <span class="doccomment">/// Returns the underlying [`Func`] that this is wrapping, losing the static</span>
-    <span class="doccomment">/// type information in the process.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">func</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Func</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">func</span>
+    <span class="doccomment">/// Returns the underlying [`Func`] that this is wrapping, losing the static
+    /// type information in the process.
+    </span><span class="kw">pub fn </span>func(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Func {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.func
     }
 
-    <span class="doccomment">/// Invokes this WebAssembly function with the specified parameters.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns either the results of the call, or a [`Trap`] if one happened.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more information, see the [`Func::typed`] and [`Func::call`]</span>
-    <span class="doccomment">/// documentation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will panic if it is called when the underlying [`Func`] is</span>
-    <span class="doccomment">/// connected to an asynchronous store.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">call</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>, <span class="ident">params</span>: <span class="ident">Params</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Results</span>, <span class="ident">Trap</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
+    <span class="doccomment">/// Invokes this WebAssembly function with the specified parameters.
+    ///
+    /// Returns either the results of the call, or a [`Trap`] if one happened.
+    ///
+    /// For more information, see the [`Func::typed`] and [`Func::call`]
+    /// documentation.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if it is called when the underlying [`Func`] is
+    /// connected to an asynchronous store.
+    </span><span class="kw">pub fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>store: <span class="kw">impl </span>AsContextMut, params: Params) -&gt; <span class="prelude-ty">Result</span>&lt;Results, Trap&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
         <span class="macro">assert!</span>(
-            <span class="op">!</span><span class="ident">store</span>.<span class="number">0</span>.<span class="ident">async_support</span>(),
-            <span class="string">&quot;must use `call_async` with async stores&quot;</span>
-        );
-        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">_call</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>, <span class="ident">params</span>) }
+            !store.<span class="number">0</span>.async_support(),
+            <span class="string">&quot;must use `call_async` with async stores&quot;
+        </span>);
+        <span class="kw">unsafe </span>{ <span class="self">self</span>._call(<span class="kw-2">&amp;mut </span>store, params) }
     }
 
-    <span class="doccomment">/// Invokes this WebAssembly function with the specified parameters.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns either the results of the call, or a [`Trap`] if one happened.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more information, see the [`Func::typed`] and [`Func::call_async`]</span>
-    <span class="doccomment">/// documentation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will panic if it is called when the underlying [`Func`] is</span>
-    <span class="doccomment">/// connected to a synchronous store.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">nightlydoc</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)))]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">call_async</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Invokes this WebAssembly function with the specified parameters.
+    ///
+    /// Returns either the results of the call, or a [`Trap`] if one happened.
+    ///
+    /// For more information, see the [`Func::typed`] and [`Func::call_async`]
+    /// documentation.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if it is called when the underlying [`Func`] is
+    /// connected to a synchronous store.
+    </span><span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    #[cfg_attr(nightlydoc, doc(cfg(feature = <span class="string">&quot;async&quot;</span>)))]
+    </span><span class="kw">pub async fn </span>call_async&lt;T&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span><span class="op">&lt;</span><span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
-        <span class="ident">params</span>: <span class="ident">Params</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Results</span>, <span class="ident">Trap</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">Send</span>,
+        <span class="kw-2">mut </span>store: <span class="kw">impl </span>AsContextMut&lt;Data = T&gt;,
+        params: Params,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Results, Trap&gt;
+    <span class="kw">where
+        </span>T: Send,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
         <span class="macro">assert!</span>(
-            <span class="ident">store</span>.<span class="number">0</span>.<span class="ident">async_support</span>(),
-            <span class="string">&quot;must use `call` with non-async stores&quot;</span>
-        );
-        <span class="ident">store</span>
-            .<span class="ident">on_fiber</span>(<span class="op">|</span><span class="ident">store</span><span class="op">|</span> <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">_call</span>(<span class="ident">store</span>, <span class="ident">params</span>) })
-            .<span class="kw">await</span><span class="question-mark">?</span>
-    }
+            store.<span class="number">0</span>.async_support(),
+            <span class="string">&quot;must use `call` with non-async stores&quot;
+        </span>);
+        store
+            .on_fiber(|store| <span class="kw">unsafe </span>{ <span class="self">self</span>._call(store, params) })
+            .<span class="kw">await</span><span class="question-mark">?
+    </span>}
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">_call</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
+    <span class="kw">unsafe fn </span>_call&lt;T&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span>,
-        <span class="ident">params</span>: <span class="ident">Params</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Results</span>, <span class="ident">Trap</span><span class="op">&gt;</span> {
-        <span class="comment">// See the comment in `Func::call_impl`&#39;s `write_params` function.</span>
-        <span class="kw">if</span> <span class="ident">params</span>.<span class="ident">externrefs_count</span>()
-            <span class="op">&gt;</span> <span class="ident">store</span>
-                .<span class="number">0</span>
-                .<span class="ident">externref_activations_table</span>()
-                .<span class="ident">bump_capacity_remaining</span>()
+        store: <span class="kw-2">&amp;mut </span>StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt;,
+        params: Params,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Results, Trap&gt; {
+        <span class="comment">// See the comment in `Func::call_impl`&#39;s `write_params` function.
+        </span><span class="kw">if </span>params.externrefs_count()
+            &gt; store
+                .<span class="number">0
+                </span>.externref_activations_table()
+                .bump_capacity_remaining()
         {
-            <span class="ident">store</span>.<span class="ident">gc</span>();
+            store.gc();
         }
 
-        <span class="comment">// Validate that all runtime values flowing into this store indeed</span>
-        <span class="comment">// belong within this store, otherwise it would be unsafe for store</span>
-        <span class="comment">// values to cross each other.</span>
+        <span class="comment">// Validate that all runtime values flowing into this store indeed
+        // belong within this store, otherwise it would be unsafe for store
+        // values to cross each other.
 
-        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> {
-            <span class="comment">// GC is not safe here, since we move refs into the activations</span>
-            <span class="comment">// table but don&#39;t hold a strong reference onto them until we enter</span>
-            <span class="comment">// the Wasm frame and they get referenced from the stack maps.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">AutoAssertNoGc::new</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">store</span>.<span class="ident">as_context_mut</span>().<span class="number">0</span>);
+        </span><span class="kw">let </span>params = {
+            <span class="comment">// GC is not safe here, since we move refs into the activations
+            // table but don&#39;t hold a strong reference onto them until we enter
+            // the Wasm frame and they get referenced from the stack maps.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>store = AutoAssertNoGc::new(<span class="kw-2">&amp;mut **</span>store.as_context_mut().<span class="number">0</span>);
 
-            <span class="kw">match</span> <span class="ident">params</span>.<span class="ident">into_abi</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">abi</span>) =&gt; <span class="ident">abi</span>,
-                <span class="prelude-val">None</span> =&gt; {
-                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Trap::new</span>(
+            <span class="kw">match </span>params.into_abi(<span class="kw-2">&amp;mut </span>store) {
+                <span class="prelude-val">Some</span>(abi) =&gt; abi,
+                <span class="prelude-val">None </span>=&gt; {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(Trap::new(
                         <span class="string">&quot;attempt to pass cross-`Store` value to Wasm as function argument&quot;</span>,
                     ))
                 }
             }
         };
 
-        <span class="comment">// Try to capture only a single variable (a tuple) in the closure below.</span>
-        <span class="comment">// This means the size of the closure is one pointer and is much more</span>
-        <span class="comment">// efficient to move in memory. This closure is actually invoked on the</span>
-        <span class="comment">// other side of a C++ shim, so it can never be inlined enough to make</span>
-        <span class="comment">// the memory go away, so the size matters here for performance.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">captures</span> <span class="op">=</span> (
-            <span class="self">self</span>.<span class="ident">func</span>.<span class="ident">caller_checked_anyfunc</span>(<span class="ident">store</span>.<span class="number">0</span>),
-            <span class="ident">MaybeUninit::uninit</span>(),
-            <span class="ident">params</span>,
+        <span class="comment">// Try to capture only a single variable (a tuple) in the closure below.
+        // This means the size of the closure is one pointer and is much more
+        // efficient to move in memory. This closure is actually invoked on the
+        // other side of a C++ shim, so it can never be inlined enough to make
+        // the memory go away, so the size matters here for performance.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>captures = (
+            <span class="self">self</span>.func.caller_checked_anyfunc(store.<span class="number">0</span>),
+            MaybeUninit::uninit(),
+            params,
             <span class="bool-val">false</span>,
         );
 
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">invoke_wasm_and_catch_traps</span>(<span class="ident">store</span>, <span class="op">|</span><span class="ident">callee</span><span class="op">|</span> {
-            <span class="kw">let</span> (<span class="ident">anyfunc</span>, <span class="ident">ret</span>, <span class="ident">params</span>, <span class="ident">returned</span>) <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">captures</span>;
-            <span class="kw">let</span> <span class="ident">anyfunc</span> <span class="op">=</span> <span class="ident">anyfunc</span>.<span class="ident">as_ref</span>();
-            <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">Params::invoke</span>::<span class="op">&lt;</span><span class="ident">Results</span><span class="op">&gt;</span>(
-                <span class="ident">anyfunc</span>.<span class="ident">func_ptr</span>.<span class="ident">as_ptr</span>(),
-                <span class="ident">anyfunc</span>.<span class="ident">vmctx</span>,
-                <span class="ident">callee</span>,
-                <span class="kw-2">*</span><span class="ident">params</span>,
+        <span class="kw">let </span>result = invoke_wasm_and_catch_traps(store, |callee| {
+            <span class="kw">let </span>(anyfunc, ret, params, returned) = <span class="kw-2">&amp;mut </span>captures;
+            <span class="kw">let </span>anyfunc = anyfunc.as_ref();
+            <span class="kw">let </span>result = Params::invoke::&lt;Results&gt;(
+                anyfunc.func_ptr.as_ptr(),
+                anyfunc.vmctx,
+                callee,
+                <span class="kw-2">*</span>params,
             );
-            <span class="ident">ptr::write</span>(<span class="ident">ret</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">result</span>);
-            <span class="kw-2">*</span><span class="ident">returned</span> <span class="op">=</span> <span class="bool-val">true</span>
-        });
-        <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">ret</span>, <span class="kw">_</span>, <span class="ident">returned</span>) <span class="op">=</span> <span class="ident">captures</span>;
-        <span class="macro">debug_assert_eq!</span>(<span class="ident">result</span>.<span class="ident">is_ok</span>(), <span class="ident">returned</span>);
-        <span class="ident">result</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">Results::from_abi</span>(<span class="ident">store</span>.<span class="number">0</span>, <span class="ident">ret</span>.<span class="ident">assume_init</span>()))
+            ptr::write(ret.as_mut_ptr(), result);
+            <span class="kw-2">*</span>returned = <span class="bool-val">true
+        </span>});
+        <span class="kw">let </span>(<span class="kw">_</span>, ret, <span class="kw">_</span>, returned) = captures;
+        <span class="macro">debug_assert_eq!</span>(result.is_ok(), returned);
+        result<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Results::from_abi(store.<span class="number">0</span>, ret.assume_init()))
     }
 }
 
-<span class="doccomment">/// A trait implemented for types which can be arguments and results for</span>
-<span class="doccomment">/// closures passed to [`Func::wrap`] as well as parameters to [`Func::typed`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This trait should not be implemented by user types. This trait may change at</span>
-<span class="doccomment">/// any time internally. The types which implement this trait, however, are</span>
-<span class="doccomment">/// stable over time.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For more information see [`Func::wrap`] and [`Func::typed`]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">trait</span> <span class="ident">WasmTy</span>: <span class="ident">Send</span> {
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">type</span> <span class="ident">Abi</span>: <span class="ident">Copy</span>;
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">typecheck</span>(<span class="ident">ty</span>: <span class="ident"><span class="kw">crate</span>::ValType</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">ty</span> <span class="op">==</span> <span class="ident"><span class="self">Self</span>::valtype</span>() {
+<span class="doccomment">/// A trait implemented for types which can be arguments and results for
+/// closures passed to [`Func::wrap`] as well as parameters to [`Func::typed`].
+///
+/// This trait should not be implemented by user types. This trait may change at
+/// any time internally. The types which implement this trait, however, are
+/// stable over time.
+///
+/// For more information see [`Func::wrap`] and [`Func::typed`]
+</span><span class="kw">pub unsafe trait </span>WasmTy: Send {
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">type </span>Abi: Copy;
+    <span class="attribute">#[doc(hidden)]
+    #[inline]
+    </span><span class="kw">fn </span>typecheck(ty: <span class="kw">crate</span>::ValType) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span>ty == <span class="self">Self</span>::valtype() {
             <span class="prelude-val">Ok</span>(())
-        } <span class="kw">else</span> {
-            <span class="macro">bail!</span>(<span class="string">&quot;expected {} found {}&quot;</span>, <span class="ident"><span class="self">Self</span>::valtype</span>(), <span class="ident">ty</span>)
+        } <span class="kw">else </span>{
+            <span class="macro">bail!</span>(<span class="string">&quot;expected {} found {}&quot;</span>, <span class="self">Self</span>::valtype(), ty)
         }
     }
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">valtype</span>() -&gt; <span class="ident">ValType</span>;
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">compatible_with_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;</span><span class="ident">StoreOpaque</span>) -&gt; <span class="ident">bool</span>;
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">is_externref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span>;
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">into_abi</span>(<span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="ident"><span class="self">Self</span>::Abi</span>;
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_abi</span>(<span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::Abi</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="self">Self</span>;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">fn </span>valtype() -&gt; ValType;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">fn </span>compatible_with_store(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>StoreOpaque) -&gt; bool;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">fn </span>is_externref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">fn </span>into_abi(<span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self</span>::Abi;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">unsafe fn </span>from_abi(abi: <span class="self">Self</span>::Abi, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self</span>;
 }
 
-<span class="macro">macro_rules!</span> <span class="ident">primitives</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">primitive</span>:<span class="ident">ident</span> =&gt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) =&gt; ($(
-        <span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">WasmTy</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">primitive</span> {
-            <span class="kw">type</span> <span class="ident">Abi</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">primitive</span>;
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">valtype</span>() -&gt; <span class="ident">ValType</span> {
-                <span class="ident">ValType</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>
-            }
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">compatible_with_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="ident">StoreOpaque</span>) -&gt; <span class="ident">bool</span> {
-                <span class="bool-val">true</span>
-            }
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">is_externref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-                <span class="bool-val">false</span>
-            }
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">into_abi</span>(<span class="self">self</span>, <span class="ident">_store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="ident"><span class="self">Self</span>::Abi</span> {
-                <span class="self">self</span>
-            }
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_abi</span>(<span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::Abi</span>, <span class="ident">_store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="self">Self</span> {
-                <span class="ident">abi</span>
+<span class="macro">macro_rules! </span>primitives {
+    ($(<span class="macro-nonterminal">$primitive</span>:ident =&gt; <span class="macro-nonterminal">$ty</span>:ident)<span class="kw-2">*</span>) =&gt; ($(
+        <span class="kw">unsafe impl </span>WasmTy <span class="kw">for </span><span class="macro-nonterminal">$primitive </span>{
+            <span class="kw">type </span>Abi = <span class="macro-nonterminal">$primitive</span>;
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>valtype() -&gt; ValType {
+                ValType::<span class="macro-nonterminal">$ty
+            </span>}
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>compatible_with_store(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>StoreOpaque) -&gt; bool {
+                <span class="bool-val">true
+            </span>}
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>is_externref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+                <span class="bool-val">false
+            </span>}
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>into_abi(<span class="self">self</span>, _store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self</span>::Abi {
+                <span class="self">self
+            </span>}
+            <span class="attribute">#[inline]
+            </span><span class="kw">unsafe fn </span>from_abi(abi: <span class="self">Self</span>::Abi, _store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self </span>{
+                abi
             }
         }
     )<span class="kw-2">*</span>)
 }
 
-<span class="macro">primitives!</span> {
-    <span class="ident">i32</span> =&gt; <span class="ident">I32</span>
-    <span class="ident">u32</span> =&gt; <span class="ident">I32</span>
-    <span class="ident">i64</span> =&gt; <span class="ident">I64</span>
-    <span class="ident">u64</span> =&gt; <span class="ident">I64</span>
-    <span class="ident">f32</span> =&gt; <span class="ident">F32</span>
-    <span class="ident">f64</span> =&gt; <span class="ident">F64</span>
+<span class="macro">primitives! </span>{
+    i32 =&gt; I32
+    u32 =&gt; I32
+    i64 =&gt; I64
+    u64 =&gt; I64
+    f32 =&gt; F32
+    f64 =&gt; F64
 }
 
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">WasmTy</span> <span class="kw">for</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ExternRef</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Abi</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>;
+<span class="kw">unsafe impl </span>WasmTy <span class="kw">for </span><span class="prelude-ty">Option</span>&lt;ExternRef&gt; {
+    <span class="kw">type </span>Abi = <span class="kw-2">*mut </span>u8;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">valtype</span>() -&gt; <span class="ident">ValType</span> {
-        <span class="ident">ValType::ExternRef</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>valtype() -&gt; ValType {
+        ValType::ExternRef
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">compatible_with_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_store</span>: <span class="kw-2">&amp;</span><span class="ident">StoreOpaque</span>) -&gt; <span class="ident">bool</span> {
-        <span class="bool-val">true</span>
-    }
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>compatible_with_store(<span class="kw-2">&amp;</span><span class="self">self</span>, _store: <span class="kw-2">&amp;</span>StoreOpaque) -&gt; bool {
+        <span class="bool-val">true
+    </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">is_externref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="bool-val">true</span>
-    }
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>is_externref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="bool-val">true
+    </span>}
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_abi</span>(<span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="ident"><span class="self">Self</span>::Abi</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">x</span>) <span class="op">=</span> <span class="self">self</span> {
-            <span class="kw">let</span> <span class="ident">abi</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">inner</span>.<span class="ident">as_raw</span>();
-            <span class="kw">unsafe</span> {
-                <span class="comment">// NB: We _must not_ trigger a GC when passing refs from host</span>
-                <span class="comment">// code into Wasm (e.g. returned from a host function or passed</span>
-                <span class="comment">// as arguments to a Wasm function). After insertion into the</span>
-                <span class="comment">// table, this reference is no longer rooted. If multiple</span>
-                <span class="comment">// references are being sent from the host into Wasm and we</span>
-                <span class="comment">// allowed GCs during insertion, then the following events could</span>
-                <span class="comment">// happen:</span>
-                <span class="comment">//</span>
-                <span class="comment">// * Reference A is inserted into the activations</span>
-                <span class="comment">//   table. This does not trigger a GC, but does fill the table</span>
-                <span class="comment">//   to capacity.</span>
-                <span class="comment">//</span>
-                <span class="comment">// * The caller&#39;s reference to A is removed. Now the only</span>
-                <span class="comment">//   reference to A is from the activations table.</span>
-                <span class="comment">//</span>
-                <span class="comment">// * Reference B is inserted into the activations table. Because</span>
-                <span class="comment">//   the table is at capacity, a GC is triggered.</span>
-                <span class="comment">//</span>
-                <span class="comment">// * A is reclaimed because the only reference keeping it alive</span>
-                <span class="comment">//   was the activation table&#39;s reference (it isn&#39;t inside any</span>
-                <span class="comment">//   Wasm frames on the stack yet, so stack scanning and stack</span>
-                <span class="comment">//   maps don&#39;t increment its reference count).</span>
-                <span class="comment">//</span>
-                <span class="comment">// * We transfer control to Wasm, giving it A and B. Wasm uses</span>
-                <span class="comment">//   A. That&#39;s a use after free.</span>
-                <span class="comment">//</span>
-                <span class="comment">// In conclusion, to prevent uses after free, we cannot GC</span>
-                <span class="comment">// during this insertion.</span>
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">AutoAssertNoGc::new</span>(<span class="ident">store</span>);
-                <span class="ident">store</span>.<span class="ident">insert_vmexternref_without_gc</span>(<span class="ident">x</span>.<span class="ident">inner</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_abi(<span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self</span>::Abi {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = <span class="self">self </span>{
+            <span class="kw">let </span>abi = x.inner.as_raw();
+            <span class="kw">unsafe </span>{
+                <span class="comment">// NB: We _must not_ trigger a GC when passing refs from host
+                // code into Wasm (e.g. returned from a host function or passed
+                // as arguments to a Wasm function). After insertion into the
+                // table, this reference is no longer rooted. If multiple
+                // references are being sent from the host into Wasm and we
+                // allowed GCs during insertion, then the following events could
+                // happen:
+                //
+                // * Reference A is inserted into the activations
+                //   table. This does not trigger a GC, but does fill the table
+                //   to capacity.
+                //
+                // * The caller&#39;s reference to A is removed. Now the only
+                //   reference to A is from the activations table.
+                //
+                // * Reference B is inserted into the activations table. Because
+                //   the table is at capacity, a GC is triggered.
+                //
+                // * A is reclaimed because the only reference keeping it alive
+                //   was the activation table&#39;s reference (it isn&#39;t inside any
+                //   Wasm frames on the stack yet, so stack scanning and stack
+                //   maps don&#39;t increment its reference count).
+                //
+                // * We transfer control to Wasm, giving it A and B. Wasm uses
+                //   A. That&#39;s a use after free.
+                //
+                // In conclusion, to prevent uses after free, we cannot GC
+                // during this insertion.
+                </span><span class="kw">let </span><span class="kw-2">mut </span>store = AutoAssertNoGc::new(store);
+                store.insert_vmexternref_without_gc(x.inner);
             }
-            <span class="ident">abi</span>
-        } <span class="kw">else</span> {
-            <span class="ident">ptr::null_mut</span>()
+            abi
+        } <span class="kw">else </span>{
+            ptr::null_mut()
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_abi</span>(<span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::Abi</span>, <span class="ident">_store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">if</span> <span class="ident">abi</span>.<span class="ident">is_null</span>() {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">ExternRef</span> {
-                <span class="ident">inner</span>: <span class="ident">wasmtime_runtime::VMExternRef::clone_from_raw</span>(<span class="ident">abi</span>),
+    <span class="attribute">#[inline]
+    </span><span class="kw">unsafe fn </span>from_abi(abi: <span class="self">Self</span>::Abi, _store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self </span>{
+        <span class="kw">if </span>abi.is_null() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">Some</span>(ExternRef {
+                inner: wasmtime_runtime::VMExternRef::clone_from_raw(abi),
             })
         }
     }
 }
 
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">WasmTy</span> <span class="kw">for</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Abi</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">wasmtime_runtime::VMCallerCheckedAnyfunc</span>;
+<span class="kw">unsafe impl </span>WasmTy <span class="kw">for </span><span class="prelude-ty">Option</span>&lt;Func&gt; {
+    <span class="kw">type </span>Abi = <span class="kw-2">*mut </span>wasmtime_runtime::VMCallerCheckedAnyfunc;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">valtype</span>() -&gt; <span class="ident">ValType</span> {
-        <span class="ident">ValType::FuncRef</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>valtype() -&gt; ValType {
+        ValType::FuncRef
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">compatible_with_store</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;</span><span class="ident">StoreOpaque</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">f</span>) <span class="op">=</span> <span class="self">self</span> {
-            <span class="ident">store</span>.<span class="ident">store_data</span>().<span class="ident">contains</span>(<span class="ident">f</span>.<span class="number">0</span>)
-        } <span class="kw">else</span> {
-            <span class="bool-val">true</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>compatible_with_store&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>StoreOpaque) -&gt; bool {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(f) = <span class="self">self </span>{
+            store.store_data().contains(f.<span class="number">0</span>)
+        } <span class="kw">else </span>{
+            <span class="bool-val">true
+        </span>}
+    }
+
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>is_externref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="bool-val">false
+    </span>}
+
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_abi(<span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self</span>::Abi {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(f) = <span class="self">self </span>{
+            f.caller_checked_anyfunc(store).as_ptr()
+        } <span class="kw">else </span>{
+            ptr::null_mut()
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">is_externref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="bool-val">false</span>
-    }
-
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_abi</span>(<span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="ident"><span class="self">Self</span>::Abi</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">f</span>) <span class="op">=</span> <span class="self">self</span> {
-            <span class="ident">f</span>.<span class="ident">caller_checked_anyfunc</span>(<span class="ident">store</span>).<span class="ident">as_ptr</span>()
-        } <span class="kw">else</span> {
-            <span class="ident">ptr::null_mut</span>()
-        }
-    }
-
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_abi</span>(<span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::Abi</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Func::from_caller_checked_anyfunc</span>(<span class="ident">store</span>, <span class="ident">abi</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">unsafe fn </span>from_abi(abi: <span class="self">Self</span>::Abi, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="self">Self </span>{
+        Func::from_caller_checked_anyfunc(store, abi)
     }
 }
 
-<span class="doccomment">/// A trait used for [`Func::typed`] and with [`TypedFunc`] to represent the set of</span>
-<span class="doccomment">/// parameters for wasm functions.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is implemented for bare types that can be passed to wasm as well as</span>
-<span class="doccomment">/// tuples of those types.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">trait</span> <span class="ident">WasmParams</span>: <span class="ident">Send</span> {
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">type</span> <span class="ident">Abi</span>: <span class="ident">Copy</span>;
+<span class="doccomment">/// A trait used for [`Func::typed`] and with [`TypedFunc`] to represent the set of
+/// parameters for wasm functions.
+///
+/// This is implemented for bare types that can be passed to wasm as well as
+/// tuples of those types.
+</span><span class="kw">pub unsafe trait </span>WasmParams: Send {
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">type </span>Abi: Copy;
 
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">typecheck</span>(<span class="ident">params</span>: <span class="kw">impl</span> <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::ValType</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">fn </span>typecheck(params: <span class="kw">impl </span>ExactSizeIterator&lt;Item = <span class="kw">crate</span>::ValType&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
 
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">externrefs_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span>;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">fn </span>externrefs_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
 
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">into_abi</span>(<span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Abi</span><span class="op">&gt;</span>;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">fn </span>into_abi(<span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Abi&gt;;
 
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">invoke</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">WasmResults</span><span class="op">&gt;</span>(
-        <span class="ident">func</span>: <span class="kw-2">*const</span> <span class="ident">VMFunctionBody</span>,
-        <span class="ident">vmctx1</span>: <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-        <span class="ident">vmctx2</span>: <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-        <span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::Abi</span>,
-    ) -&gt; <span class="ident">R::ResultAbi</span>;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">unsafe fn </span>invoke&lt;R: WasmResults&gt;(
+        func: <span class="kw-2">*const </span>VMFunctionBody,
+        vmctx1: <span class="kw-2">*mut </span>VMContext,
+        vmctx2: <span class="kw-2">*mut </span>VMContext,
+        abi: <span class="self">Self</span>::Abi,
+    ) -&gt; R::ResultAbi;
 }
 
-<span class="comment">// Forward an impl from `T` to `(T,)` for convenience if there&#39;s only one</span>
-<span class="comment">// parameter.</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">WasmParams</span> <span class="kw">for</span> <span class="ident">T</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">WasmTy</span>,
+<span class="comment">// Forward an impl from `T` to `(T,)` for convenience if there&#39;s only one
+// parameter.
+</span><span class="kw">unsafe impl</span>&lt;T&gt; WasmParams <span class="kw">for </span>T
+<span class="kw">where
+    </span>T: WasmTy,
 {
-    <span class="kw">type</span> <span class="ident">Abi</span> <span class="op">=</span> <span class="op">&lt;</span>(<span class="ident">T</span>,) <span class="kw">as</span> <span class="ident">WasmParams</span><span class="op">&gt;</span><span class="ident">::Abi</span>;
+    <span class="kw">type </span>Abi = &lt;(T,) <span class="kw">as </span>WasmParams&gt;::Abi;
 
-    <span class="kw">fn</span> <span class="ident">typecheck</span>(<span class="ident">params</span>: <span class="kw">impl</span> <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::ValType</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="op">&lt;</span>(<span class="ident">T</span>,) <span class="kw">as</span> <span class="ident">WasmParams</span><span class="op">&gt;</span><span class="ident">::typecheck</span>(<span class="ident">params</span>)
+    <span class="kw">fn </span>typecheck(params: <span class="kw">impl </span>ExactSizeIterator&lt;Item = <span class="kw">crate</span>::ValType&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        &lt;(T,) <span class="kw">as </span>WasmParams&gt;::typecheck(params)
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">externrefs_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">T::is_externref</span>(<span class="self">self</span>) <span class="kw">as</span> <span class="ident">usize</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>externrefs_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        T::is_externref(<span class="self">self</span>) <span class="kw">as </span>usize
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_abi</span>(<span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Abi</span><span class="op">&gt;</span> {
-        <span class="op">&lt;</span>(<span class="ident">T</span>,) <span class="kw">as</span> <span class="ident">WasmParams</span><span class="op">&gt;</span><span class="ident">::into_abi</span>((<span class="self">self</span>,), <span class="ident">store</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_abi(<span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Abi&gt; {
+        &lt;(T,) <span class="kw">as </span>WasmParams&gt;::into_abi((<span class="self">self</span>,), store)
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">invoke</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">WasmResults</span><span class="op">&gt;</span>(
-        <span class="ident">func</span>: <span class="kw-2">*const</span> <span class="ident">VMFunctionBody</span>,
-        <span class="ident">vmctx1</span>: <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-        <span class="ident">vmctx2</span>: <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-        <span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::Abi</span>,
-    ) -&gt; <span class="ident">R::ResultAbi</span> {
-        <span class="op">&lt;</span>(<span class="ident">T</span>,) <span class="kw">as</span> <span class="ident">WasmParams</span><span class="op">&gt;</span><span class="ident">::invoke</span>::<span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">func</span>, <span class="ident">vmctx1</span>, <span class="ident">vmctx2</span>, <span class="ident">abi</span>)
+    <span class="kw">unsafe fn </span>invoke&lt;R: WasmResults&gt;(
+        func: <span class="kw-2">*const </span>VMFunctionBody,
+        vmctx1: <span class="kw-2">*mut </span>VMContext,
+        vmctx2: <span class="kw-2">*mut </span>VMContext,
+        abi: <span class="self">Self</span>::Abi,
+    ) -&gt; R::ResultAbi {
+        &lt;(T,) <span class="kw">as </span>WasmParams&gt;::invoke::&lt;R&gt;(func, vmctx1, vmctx2, abi)
     }
 }
 
-<span class="macro">macro_rules!</span> <span class="ident">impl_wasm_params</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">n</span>:<span class="ident">tt</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) =&gt; {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_snake_case</span>)]</span>
-        <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span>$(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>: <span class="ident">WasmTy</span>,)<span class="kw-2">*</span><span class="op">&gt;</span> <span class="ident">WasmParams</span> <span class="kw">for</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="kw-2">*</span>) {
-            <span class="kw">type</span> <span class="ident">Abi</span> <span class="op">=</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::Abi</span>,)<span class="kw-2">*</span>);
+<span class="macro">macro_rules! </span>impl_wasm_params {
+    (<span class="macro-nonterminal">$n</span>:tt $(<span class="macro-nonterminal">$t</span>:ident)<span class="kw-2">*</span>) =&gt; {
+        <span class="attribute">#[allow(non_snake_case)]
+        </span><span class="kw">unsafe impl</span>&lt;$(<span class="macro-nonterminal">$t</span>: WasmTy,)<span class="kw-2">*</span>&gt; WasmParams <span class="kw">for </span>($(<span class="macro-nonterminal">$t</span>,)<span class="kw-2">*</span>) {
+            <span class="kw">type </span>Abi = ($(<span class="macro-nonterminal">$t::Abi</span>,)<span class="kw-2">*</span>);
 
-            <span class="kw">fn</span> <span class="ident">typecheck</span>(<span class="kw-2">mut</span> <span class="ident">params</span>: <span class="kw">impl</span> <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::ValType</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">_n</span> <span class="op">=</span> <span class="number">0</span>;
+            <span class="kw">fn </span>typecheck(<span class="kw-2">mut </span>params: <span class="kw">impl </span>ExactSizeIterator&lt;Item = <span class="kw">crate</span>::ValType&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>_n = <span class="number">0</span>;
 
                 $(
-                    <span class="kw">match</span> <span class="ident">params</span>.<span class="ident">next</span>() {
-                        <span class="prelude-val">Some</span>(<span class="ident">t</span>) =&gt; {
-                            <span class="ident">_n</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::typecheck</span>(<span class="ident">t</span>)<span class="question-mark">?</span>
-                        },
-                        <span class="prelude-val">None</span> =&gt; <span class="macro">bail!</span>(<span class="string">&quot;expected {} types, found {}&quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">n</span>, <span class="ident">params</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">_n</span>),
+                    <span class="kw">match </span>params.next() {
+                        <span class="prelude-val">Some</span>(t) =&gt; {
+                            _n += <span class="number">1</span>;
+                            <span class="macro-nonterminal">$t::typecheck</span>(t)<span class="question-mark">?
+                        </span>},
+                        <span class="prelude-val">None </span>=&gt; <span class="macro">bail!</span>(<span class="string">&quot;expected {} types, found {}&quot;</span>, <span class="macro-nonterminal">$n</span>, params.len() + _n),
                     }
-                )<span class="op">*</span>
+                )*
 
-                <span class="kw">match</span> <span class="ident">params</span>.<span class="ident">next</span>() {
-                    <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(()),
+                <span class="kw">match </span>params.next() {
+                    <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
                     <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                        <span class="ident">_n</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                        <span class="macro">bail!</span>(<span class="string">&quot;expected {} types, found {}&quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">n</span>, <span class="ident">params</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">_n</span>)
+                        _n += <span class="number">1</span>;
+                        <span class="macro">bail!</span>(<span class="string">&quot;expected {} types, found {}&quot;</span>, <span class="macro-nonterminal">$n</span>, params.len() + _n)
                     },
                 }
             }
 
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">externrefs_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-                <span class="kw">let</span> ($(<span class="kw-2">ref</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="kw-2">*</span>) <span class="op">=</span> <span class="self">self</span>;
-                <span class="number">0</span> $(
-                    <span class="op">+</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>.<span class="ident">is_externref</span>() <span class="kw">as</span> <span class="ident">usize</span>
-                )<span class="op">*</span>
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>externrefs_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+                <span class="kw">let </span>($(<span class="kw-2">ref </span><span class="macro-nonterminal">$t</span>,)<span class="kw-2">*</span>) = <span class="self">self</span>;
+                <span class="number">0 </span>$(
+                    + <span class="macro-nonterminal">$t</span>.is_externref() <span class="kw">as </span>usize
+                )*
             }
 
 
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">into_abi</span>(<span class="self">self</span>, <span class="ident">_store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Abi</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="kw-2">*</span>) <span class="op">=</span> <span class="self">self</span>;
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>into_abi(<span class="self">self</span>, _store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Abi&gt; {
+                <span class="kw">let </span>($(<span class="macro-nonterminal">$t</span>,)<span class="kw-2">*</span>) = <span class="self">self</span>;
                 $(
-                    <span class="kw">let</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> <span class="op">=</span> <span class="kw">if</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>.<span class="ident">compatible_with_store</span>(<span class="ident">_store</span>) {
-                        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>.<span class="ident">into_abi</span>(<span class="ident">_store</span>)
-                    } <span class="kw">else</span> {
-                        <span class="kw">return</span> <span class="prelude-val">None</span>;
+                    <span class="kw">let </span><span class="macro-nonterminal">$t </span>= <span class="kw">if </span><span class="macro-nonterminal">$t</span>.compatible_with_store(_store) {
+                        <span class="macro-nonterminal">$t</span>.into_abi(_store)
+                    } <span class="kw">else </span>{
+                        <span class="kw">return </span><span class="prelude-val">None</span>;
                     };
-                )<span class="op">*</span>
-                <span class="prelude-val">Some</span>(($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="kw-2">*</span>))
+                )*
+                <span class="prelude-val">Some</span>(($(<span class="macro-nonterminal">$t</span>,)<span class="kw-2">*</span>))
             }
 
-            <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">invoke</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">WasmResults</span><span class="op">&gt;</span>(
-                <span class="ident">func</span>: <span class="kw-2">*const</span> <span class="ident">VMFunctionBody</span>,
-                <span class="ident">vmctx1</span>: <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-                <span class="ident">vmctx2</span>: <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-                <span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::Abi</span>,
-            ) -&gt; <span class="ident">R::ResultAbi</span> {
-                <span class="kw">let</span> <span class="ident">fnptr</span> <span class="op">=</span> <span class="ident">mem::transmute</span>::<span class="op">&lt;</span>
-                    <span class="kw-2">*const</span> <span class="ident">VMFunctionBody</span>,
-                    <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(
-                        <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-                        <span class="kw-2">*mut</span> <span class="ident">VMContext</span>,
-                        $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::Abi</span>,)<span class="op">*</span>
-                        <span class="op">&lt;</span><span class="ident">R::ResultAbi</span> <span class="kw">as</span> <span class="ident">HostAbi</span><span class="op">&gt;</span><span class="ident">::Retptr</span>,
-                    ) -&gt; <span class="op">&lt;</span><span class="ident">R::ResultAbi</span> <span class="kw">as</span> <span class="ident">HostAbi</span><span class="op">&gt;</span><span class="ident">::Abi</span>,
-                <span class="op">&gt;</span>(<span class="ident">func</span>);
-                <span class="kw">let</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="kw-2">*</span>) <span class="op">=</span> <span class="ident">abi</span>;
-                <span class="comment">// Use the `call` function to acquire a `retptr` which we&#39;ll</span>
-                <span class="comment">// forward to the native function. Once we have it we also</span>
-                <span class="comment">// convert all our arguments to abi arguments to go to the raw</span>
-                <span class="comment">// function.</span>
-                <span class="comment">//</span>
-                <span class="comment">// Upon returning `R::call` will convert all the returns back</span>
-                <span class="comment">// into `R`.</span>
-                <span class="op">&lt;</span><span class="ident">R::ResultAbi</span> <span class="kw">as</span> <span class="ident">HostAbi</span><span class="op">&gt;</span><span class="ident">::call</span>(<span class="op">|</span><span class="ident">retptr</span><span class="op">|</span> {
-                    <span class="ident">fnptr</span>(<span class="ident">vmctx1</span>, <span class="ident">vmctx2</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="op">*</span> <span class="ident">retptr</span>)
+            <span class="kw">unsafe fn </span>invoke&lt;R: WasmResults&gt;(
+                func: <span class="kw-2">*const </span>VMFunctionBody,
+                vmctx1: <span class="kw-2">*mut </span>VMContext,
+                vmctx2: <span class="kw-2">*mut </span>VMContext,
+                abi: <span class="self">Self</span>::Abi,
+            ) -&gt; R::ResultAbi {
+                <span class="kw">let </span>fnptr = mem::transmute::&lt;
+                    <span class="kw-2">*const </span>VMFunctionBody,
+                    <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(
+                        <span class="kw-2">*mut </span>VMContext,
+                        <span class="kw-2">*mut </span>VMContext,
+                        $(<span class="macro-nonterminal">$t::Abi</span>,)*
+                        &lt;R::ResultAbi <span class="kw">as </span>HostAbi&gt;::Retptr,
+                    ) -&gt; &lt;R::ResultAbi <span class="kw">as </span>HostAbi&gt;::Abi,
+                &gt;(func);
+                <span class="kw">let </span>($(<span class="macro-nonterminal">$t</span>,)<span class="kw-2">*</span>) = abi;
+                <span class="comment">// Use the `call` function to acquire a `retptr` which we&#39;ll
+                // forward to the native function. Once we have it we also
+                // convert all our arguments to abi arguments to go to the raw
+                // function.
+                //
+                // Upon returning `R::call` will convert all the returns back
+                // into `R`.
+                </span>&lt;R::ResultAbi <span class="kw">as </span>HostAbi&gt;::call(|retptr| {
+                    fnptr(vmctx1, vmctx2, $(<span class="macro-nonterminal">$t</span>,)* retptr)
                 })
             }
         }
     };
 }
 
-<span class="macro">for_each_function_signature!</span>(<span class="ident">impl_wasm_params</span>);
+<span class="macro">for_each_function_signature!</span>(impl_wasm_params);
 
-<span class="doccomment">/// A trait used for [`Func::typed`] and with [`TypedFunc`] to represent the set of</span>
-<span class="doccomment">/// results for wasm functions.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is currently only implemented for `()` and for bare types that can be</span>
-<span class="doccomment">/// returned. This is not yet implemented for tuples because a multi-value</span>
-<span class="doccomment">/// `TypedFunc` is not currently supported.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">trait</span> <span class="ident">WasmResults</span>: <span class="ident">WasmParams</span> {
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">type</span> <span class="ident">ResultAbi</span>: <span class="ident">HostAbi</span>;
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_abi</span>(<span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>, <span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::ResultAbi</span>) -&gt; <span class="self">Self</span>;
+<span class="doccomment">/// A trait used for [`Func::typed`] and with [`TypedFunc`] to represent the set of
+/// results for wasm functions.
+///
+/// This is currently only implemented for `()` and for bare types that can be
+/// returned. This is not yet implemented for tuples because a multi-value
+/// `TypedFunc` is not currently supported.
+</span><span class="kw">pub unsafe trait </span>WasmResults: WasmParams {
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">type </span>ResultAbi: HostAbi;
+    <span class="attribute">#[doc(hidden)]
+    </span><span class="kw">unsafe fn </span>from_abi(store: <span class="kw-2">&amp;mut </span>StoreOpaque, abi: <span class="self">Self</span>::ResultAbi) -&gt; <span class="self">Self</span>;
 }
 
-<span class="comment">// Forwards from a bare type `T` to the 1-tuple type `(T,)`</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">WasmTy</span><span class="op">&gt;</span> <span class="ident">WasmResults</span> <span class="kw">for</span> <span class="ident">T</span>
-<span class="kw">where</span>
-    (<span class="ident">T::Abi</span>,): <span class="ident">HostAbi</span>,
+<span class="comment">// Forwards from a bare type `T` to the 1-tuple type `(T,)`
+</span><span class="kw">unsafe impl</span>&lt;T: WasmTy&gt; WasmResults <span class="kw">for </span>T
+<span class="kw">where
+    </span>(T::Abi,): HostAbi,
 {
-    <span class="kw">type</span> <span class="ident">ResultAbi</span> <span class="op">=</span> <span class="op">&lt;</span>(<span class="ident">T</span>,) <span class="kw">as</span> <span class="ident">WasmResults</span><span class="op">&gt;</span><span class="ident">::ResultAbi</span>;
+    <span class="kw">type </span>ResultAbi = &lt;(T,) <span class="kw">as </span>WasmResults&gt;::ResultAbi;
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_abi</span>(<span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>, <span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::ResultAbi</span>) -&gt; <span class="self">Self</span> {
-        <span class="op">&lt;</span>(<span class="ident">T</span>,) <span class="kw">as</span> <span class="ident">WasmResults</span><span class="op">&gt;</span><span class="ident">::from_abi</span>(<span class="ident">store</span>, <span class="ident">abi</span>).<span class="number">0</span>
-    }
+    <span class="kw">unsafe fn </span>from_abi(store: <span class="kw-2">&amp;mut </span>StoreOpaque, abi: <span class="self">Self</span>::ResultAbi) -&gt; <span class="self">Self </span>{
+        &lt;(T,) <span class="kw">as </span>WasmResults&gt;::from_abi(store, abi).<span class="number">0
+    </span>}
 }
 
-<span class="macro">macro_rules!</span> <span class="ident">impl_wasm_results</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">n</span>:<span class="ident">tt</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) =&gt; {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_snake_case</span>, <span class="ident">unused_variables</span>)]</span>
-        <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span>$(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>: <span class="ident">WasmTy</span>,)<span class="kw-2">*</span><span class="op">&gt;</span> <span class="ident">WasmResults</span> <span class="kw">for</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="kw-2">*</span>)
-            <span class="kw">where</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::Abi</span>,)<span class="kw-2">*</span>): <span class="ident">HostAbi</span>
+<span class="macro">macro_rules! </span>impl_wasm_results {
+    (<span class="macro-nonterminal">$n</span>:tt $(<span class="macro-nonterminal">$t</span>:ident)<span class="kw-2">*</span>) =&gt; {
+        <span class="attribute">#[allow(non_snake_case, unused_variables)]
+        </span><span class="kw">unsafe impl</span>&lt;$(<span class="macro-nonterminal">$t</span>: WasmTy,)<span class="kw-2">*</span>&gt; WasmResults <span class="kw">for </span>($(<span class="macro-nonterminal">$t</span>,)<span class="kw-2">*</span>)
+            <span class="kw">where </span>($(<span class="macro-nonterminal">$t::Abi</span>,)<span class="kw-2">*</span>): HostAbi
         {
-            <span class="kw">type</span> <span class="ident">ResultAbi</span> <span class="op">=</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::Abi</span>,)<span class="kw-2">*</span>);
+            <span class="kw">type </span>ResultAbi = ($(<span class="macro-nonterminal">$t::Abi</span>,)<span class="kw-2">*</span>);
 
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_abi</span>(<span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>, <span class="ident">abi</span>: <span class="ident"><span class="self">Self</span>::ResultAbi</span>) -&gt; <span class="self">Self</span> {
-                <span class="kw">let</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>,)<span class="kw-2">*</span>) <span class="op">=</span> <span class="ident">abi</span>;
-                ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::from_abi</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>, <span class="ident">store</span>),)<span class="kw-2">*</span>)
+            <span class="attribute">#[inline]
+            </span><span class="kw">unsafe fn </span>from_abi(store: <span class="kw-2">&amp;mut </span>StoreOpaque, abi: <span class="self">Self</span>::ResultAbi) -&gt; <span class="self">Self </span>{
+                <span class="kw">let </span>($(<span class="macro-nonterminal">$t</span>,)<span class="kw-2">*</span>) = abi;
+                ($(<span class="macro-nonterminal">$t::from_abi</span>(<span class="macro-nonterminal">$t</span>, store),)<span class="kw-2">*</span>)
             }
         }
     };
 }
 
-<span class="macro">for_each_function_signature!</span>(<span class="ident">impl_wasm_results</span>);
+<span class="macro">for_each_function_signature!</span>(impl_wasm_results);
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

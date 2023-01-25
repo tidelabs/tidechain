@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/ir/libcall.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>libcall.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/ir/libcall.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>libcall.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -218,221 +213,220 @@
 <span id="213">213</span>
 <span id="214">214</span>
 <span id="215">215</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Naming well-known routines in the runtime library.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Naming well-known routines in the runtime library.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="ident">types</span>, <span class="ident">ExternalName</span>, <span class="ident">FuncRef</span>, <span class="ident">Function</span>, <span class="ident">Opcode</span>, <span class="ident">Type</span>};
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;enable-serde&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::ir::{types, ExternalName, FuncRef, Function, Opcode, Type};
+<span class="kw">use </span>core::fmt;
+<span class="kw">use </span>core::str::FromStr;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;enable-serde&quot;</span>)]
+</span><span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="doccomment">/// The name of a runtime library routine.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Runtime library calls are generated for Cranelift IR instructions that don&#39;t have an equivalent</span>
-<span class="doccomment">/// ISA instruction or an easy macro expansion. A `LibCall` is used as a well-known name to refer to</span>
-<span class="doccomment">/// the runtime library routine. This way, Cranelift doesn&#39;t have to know about the naming</span>
-<span class="doccomment">/// convention in the embedding VM&#39;s runtime library.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This list is likely to grow over time.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;enable-serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">LibCall</span> {
-    <span class="doccomment">/// probe for stack overflow. These are emitted for functions which need</span>
-    <span class="doccomment">/// when the `enable_probestack` setting is true.</span>
-    <span class="ident">Probestack</span>,
-    <span class="doccomment">/// udiv.i64</span>
-    <span class="ident">UdivI64</span>,
-    <span class="doccomment">/// sdiv.i64</span>
-    <span class="ident">SdivI64</span>,
-    <span class="doccomment">/// urem.i64</span>
-    <span class="ident">UremI64</span>,
-    <span class="doccomment">/// srem.i64</span>
-    <span class="ident">SremI64</span>,
-    <span class="doccomment">/// ishl.i64</span>
-    <span class="ident">IshlI64</span>,
-    <span class="doccomment">/// ushr.i64</span>
-    <span class="ident">UshrI64</span>,
-    <span class="doccomment">/// sshr.i64</span>
-    <span class="ident">SshrI64</span>,
-    <span class="doccomment">/// ceil.f32</span>
-    <span class="ident">CeilF32</span>,
-    <span class="doccomment">/// ceil.f64</span>
-    <span class="ident">CeilF64</span>,
-    <span class="doccomment">/// floor.f32</span>
-    <span class="ident">FloorF32</span>,
-    <span class="doccomment">/// floor.f64</span>
-    <span class="ident">FloorF64</span>,
-    <span class="doccomment">/// trunc.f32</span>
-    <span class="ident">TruncF32</span>,
-    <span class="doccomment">/// frunc.f64</span>
-    <span class="ident">TruncF64</span>,
-    <span class="doccomment">/// nearest.f32</span>
-    <span class="ident">NearestF32</span>,
-    <span class="doccomment">/// nearest.f64</span>
-    <span class="ident">NearestF64</span>,
-    <span class="doccomment">/// libc.memcpy</span>
-    <span class="ident">Memcpy</span>,
-    <span class="doccomment">/// libc.memset</span>
-    <span class="ident">Memset</span>,
-    <span class="doccomment">/// libc.memmove</span>
-    <span class="ident">Memmove</span>,
-    <span class="doccomment">/// libc.memcmp</span>
-    <span class="ident">Memcmp</span>,
+<span class="doccomment">/// The name of a runtime library routine.
+///
+/// Runtime library calls are generated for Cranelift IR instructions that don&#39;t have an equivalent
+/// ISA instruction or an easy macro expansion. A `LibCall` is used as a well-known name to refer to
+/// the runtime library routine. This way, Cranelift doesn&#39;t have to know about the naming
+/// convention in the embedding VM&#39;s runtime library.
+///
+/// This list is likely to grow over time.
+</span><span class="attribute">#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, derive(Serialize, Deserialize))]
+</span><span class="kw">pub enum </span>LibCall {
+    <span class="doccomment">/// probe for stack overflow. These are emitted for functions which need
+    /// when the `enable_probestack` setting is true.
+    </span>Probestack,
+    <span class="doccomment">/// udiv.i64
+    </span>UdivI64,
+    <span class="doccomment">/// sdiv.i64
+    </span>SdivI64,
+    <span class="doccomment">/// urem.i64
+    </span>UremI64,
+    <span class="doccomment">/// srem.i64
+    </span>SremI64,
+    <span class="doccomment">/// ishl.i64
+    </span>IshlI64,
+    <span class="doccomment">/// ushr.i64
+    </span>UshrI64,
+    <span class="doccomment">/// sshr.i64
+    </span>SshrI64,
+    <span class="doccomment">/// ceil.f32
+    </span>CeilF32,
+    <span class="doccomment">/// ceil.f64
+    </span>CeilF64,
+    <span class="doccomment">/// floor.f32
+    </span>FloorF32,
+    <span class="doccomment">/// floor.f64
+    </span>FloorF64,
+    <span class="doccomment">/// trunc.f32
+    </span>TruncF32,
+    <span class="doccomment">/// frunc.f64
+    </span>TruncF64,
+    <span class="doccomment">/// nearest.f32
+    </span>NearestF32,
+    <span class="doccomment">/// nearest.f64
+    </span>NearestF64,
+    <span class="doccomment">/// libc.memcpy
+    </span>Memcpy,
+    <span class="doccomment">/// libc.memset
+    </span>Memset,
+    <span class="doccomment">/// libc.memmove
+    </span>Memmove,
+    <span class="doccomment">/// libc.memcmp
+    </span>Memcmp,
 
-    <span class="doccomment">/// Elf __tls_get_addr</span>
-    <span class="ident">ElfTlsGetAddr</span>,
-    <span class="comment">// When adding a new variant make sure to add it to `all_libcalls` too.</span>
-}
+    <span class="doccomment">/// Elf __tls_get_addr
+    </span>ElfTlsGetAddr,
+    <span class="comment">// When adding a new variant make sure to add it to `all_libcalls` too.
+</span>}
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">LibCall</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">fmt::Debug::fmt</span>(<span class="self">self</span>, <span class="ident">f</span>)
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>LibCall {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        fmt::Debug::fmt(<span class="self">self</span>, f)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FromStr</span> <span class="kw">for</span> <span class="ident">LibCall</span> {
-    <span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> ();
+<span class="kw">impl </span>FromStr <span class="kw">for </span>LibCall {
+    <span class="kw">type </span><span class="prelude-val">Err </span>= ();
 
-    <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Err</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">s</span> {
-            <span class="string">&quot;Probestack&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::Probestack</span>),
-            <span class="string">&quot;UdivI64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::UdivI64</span>),
-            <span class="string">&quot;SdivI64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::SdivI64</span>),
-            <span class="string">&quot;UremI64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::UremI64</span>),
-            <span class="string">&quot;SremI64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::SremI64</span>),
-            <span class="string">&quot;IshlI64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::IshlI64</span>),
-            <span class="string">&quot;UshrI64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::UshrI64</span>),
-            <span class="string">&quot;SshrI64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::SshrI64</span>),
-            <span class="string">&quot;CeilF32&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::CeilF32</span>),
-            <span class="string">&quot;CeilF64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::CeilF64</span>),
-            <span class="string">&quot;FloorF32&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::FloorF32</span>),
-            <span class="string">&quot;FloorF64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::FloorF64</span>),
-            <span class="string">&quot;TruncF32&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::TruncF32</span>),
-            <span class="string">&quot;TruncF64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::TruncF64</span>),
-            <span class="string">&quot;NearestF32&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::NearestF32</span>),
-            <span class="string">&quot;NearestF64&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::NearestF64</span>),
-            <span class="string">&quot;Memcpy&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::Memcpy</span>),
-            <span class="string">&quot;Memset&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::Memset</span>),
-            <span class="string">&quot;Memmove&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::Memmove</span>),
-            <span class="string">&quot;Memcmp&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::Memcmp</span>),
+    <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
+        <span class="kw">match </span>s {
+            <span class="string">&quot;Probestack&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Probestack),
+            <span class="string">&quot;UdivI64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::UdivI64),
+            <span class="string">&quot;SdivI64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::SdivI64),
+            <span class="string">&quot;UremI64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::UremI64),
+            <span class="string">&quot;SremI64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::SremI64),
+            <span class="string">&quot;IshlI64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::IshlI64),
+            <span class="string">&quot;UshrI64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::UshrI64),
+            <span class="string">&quot;SshrI64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::SshrI64),
+            <span class="string">&quot;CeilF32&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::CeilF32),
+            <span class="string">&quot;CeilF64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::CeilF64),
+            <span class="string">&quot;FloorF32&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::FloorF32),
+            <span class="string">&quot;FloorF64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::FloorF64),
+            <span class="string">&quot;TruncF32&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::TruncF32),
+            <span class="string">&quot;TruncF64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::TruncF64),
+            <span class="string">&quot;NearestF32&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::NearestF32),
+            <span class="string">&quot;NearestF64&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::NearestF64),
+            <span class="string">&quot;Memcpy&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Memcpy),
+            <span class="string">&quot;Memset&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Memset),
+            <span class="string">&quot;Memmove&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Memmove),
+            <span class="string">&quot;Memcmp&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Memcmp),
 
-            <span class="string">&quot;ElfTlsGetAddr&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::ElfTlsGetAddr</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(()),
+            <span class="string">&quot;ElfTlsGetAddr&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::ElfTlsGetAddr),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(()),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">LibCall</span> {
-    <span class="doccomment">/// Get the well-known library call name to use as a replacement for an instruction with the</span>
-    <span class="doccomment">/// given opcode and controlling type variable.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if no well-known library routine name exists for that instruction.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">for_inst</span>(<span class="ident">opcode</span>: <span class="ident">Opcode</span>, <span class="ident">ctrl_type</span>: <span class="ident">Type</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="kw">match</span> <span class="ident">ctrl_type</span> {
-            <span class="ident">types::I64</span> =&gt; <span class="kw">match</span> <span class="ident">opcode</span> {
-                <span class="ident">Opcode::Udiv</span> =&gt; <span class="ident"><span class="self">Self</span>::UdivI64</span>,
-                <span class="ident">Opcode::Sdiv</span> =&gt; <span class="ident"><span class="self">Self</span>::SdivI64</span>,
-                <span class="ident">Opcode::Urem</span> =&gt; <span class="ident"><span class="self">Self</span>::UremI64</span>,
-                <span class="ident">Opcode::Srem</span> =&gt; <span class="ident"><span class="self">Self</span>::SremI64</span>,
-                <span class="ident">Opcode::Ishl</span> =&gt; <span class="ident"><span class="self">Self</span>::IshlI64</span>,
-                <span class="ident">Opcode::Ushr</span> =&gt; <span class="ident"><span class="self">Self</span>::UshrI64</span>,
-                <span class="ident">Opcode::Sshr</span> =&gt; <span class="ident"><span class="self">Self</span>::SshrI64</span>,
-                <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>,
+<span class="kw">impl </span>LibCall {
+    <span class="doccomment">/// Get the well-known library call name to use as a replacement for an instruction with the
+    /// given opcode and controlling type variable.
+    ///
+    /// Returns `None` if no well-known library routine name exists for that instruction.
+    </span><span class="kw">pub fn </span>for_inst(opcode: Opcode, ctrl_type: Type) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="prelude-val">Some</span>(<span class="kw">match </span>ctrl_type {
+            types::I64 =&gt; <span class="kw">match </span>opcode {
+                Opcode::Udiv =&gt; <span class="self">Self</span>::UdivI64,
+                Opcode::Sdiv =&gt; <span class="self">Self</span>::SdivI64,
+                Opcode::Urem =&gt; <span class="self">Self</span>::UremI64,
+                Opcode::Srem =&gt; <span class="self">Self</span>::SremI64,
+                Opcode::Ishl =&gt; <span class="self">Self</span>::IshlI64,
+                Opcode::Ushr =&gt; <span class="self">Self</span>::UshrI64,
+                Opcode::Sshr =&gt; <span class="self">Self</span>::SshrI64,
+                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
             },
-            <span class="ident">types::F32</span> =&gt; <span class="kw">match</span> <span class="ident">opcode</span> {
-                <span class="ident">Opcode::Ceil</span> =&gt; <span class="ident"><span class="self">Self</span>::CeilF32</span>,
-                <span class="ident">Opcode::Floor</span> =&gt; <span class="ident"><span class="self">Self</span>::FloorF32</span>,
-                <span class="ident">Opcode::Trunc</span> =&gt; <span class="ident"><span class="self">Self</span>::TruncF32</span>,
-                <span class="ident">Opcode::Nearest</span> =&gt; <span class="ident"><span class="self">Self</span>::NearestF32</span>,
-                <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>,
+            types::F32 =&gt; <span class="kw">match </span>opcode {
+                Opcode::Ceil =&gt; <span class="self">Self</span>::CeilF32,
+                Opcode::Floor =&gt; <span class="self">Self</span>::FloorF32,
+                Opcode::Trunc =&gt; <span class="self">Self</span>::TruncF32,
+                Opcode::Nearest =&gt; <span class="self">Self</span>::NearestF32,
+                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
             },
-            <span class="ident">types::F64</span> =&gt; <span class="kw">match</span> <span class="ident">opcode</span> {
-                <span class="ident">Opcode::Ceil</span> =&gt; <span class="ident"><span class="self">Self</span>::CeilF64</span>,
-                <span class="ident">Opcode::Floor</span> =&gt; <span class="ident"><span class="self">Self</span>::FloorF64</span>,
-                <span class="ident">Opcode::Trunc</span> =&gt; <span class="ident"><span class="self">Self</span>::TruncF64</span>,
-                <span class="ident">Opcode::Nearest</span> =&gt; <span class="ident"><span class="self">Self</span>::NearestF64</span>,
-                <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>,
+            types::F64 =&gt; <span class="kw">match </span>opcode {
+                Opcode::Ceil =&gt; <span class="self">Self</span>::CeilF64,
+                Opcode::Floor =&gt; <span class="self">Self</span>::FloorF64,
+                Opcode::Trunc =&gt; <span class="self">Self</span>::TruncF64,
+                Opcode::Nearest =&gt; <span class="self">Self</span>::NearestF64,
+                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
             },
-            <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>,
+            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
         })
     }
 
-    <span class="doccomment">/// Get a list of all known `LibCall`&#39;s.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">all_libcalls</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [<span class="ident">LibCall</span>] {
-        <span class="kw">use</span> <span class="ident">LibCall</span>::<span class="kw-2">*</span>;
+    <span class="doccomment">/// Get a list of all known `LibCall`&#39;s.
+    </span><span class="kw">pub fn </span>all_libcalls() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[LibCall] {
+        <span class="kw">use </span>LibCall::<span class="kw-2">*</span>;
         <span class="kw-2">&amp;</span>[
-            <span class="ident">Probestack</span>,
-            <span class="ident">UdivI64</span>,
-            <span class="ident">SdivI64</span>,
-            <span class="ident">UremI64</span>,
-            <span class="ident">SremI64</span>,
-            <span class="ident">IshlI64</span>,
-            <span class="ident">UshrI64</span>,
-            <span class="ident">SshrI64</span>,
-            <span class="ident">CeilF32</span>,
-            <span class="ident">CeilF64</span>,
-            <span class="ident">FloorF32</span>,
-            <span class="ident">FloorF64</span>,
-            <span class="ident">TruncF32</span>,
-            <span class="ident">TruncF64</span>,
-            <span class="ident">NearestF32</span>,
-            <span class="ident">NearestF64</span>,
-            <span class="ident">Memcpy</span>,
-            <span class="ident">Memset</span>,
-            <span class="ident">Memmove</span>,
-            <span class="ident">Memcmp</span>,
-            <span class="ident">ElfTlsGetAddr</span>,
+            Probestack,
+            UdivI64,
+            SdivI64,
+            UremI64,
+            SremI64,
+            IshlI64,
+            UshrI64,
+            SshrI64,
+            CeilF32,
+            CeilF64,
+            FloorF32,
+            FloorF64,
+            TruncF32,
+            TruncF64,
+            NearestF32,
+            NearestF64,
+            Memcpy,
+            Memset,
+            Memmove,
+            Memcmp,
+            ElfTlsGetAddr,
         ]
     }
 }
 
-<span class="doccomment">/// Get a function reference for the probestack function in `func`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If there is an existing reference, use it, otherwise make a new one.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_probestack_funcref</span>(<span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Function</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FuncRef</span><span class="op">&gt;</span> {
-    <span class="ident">find_funcref</span>(<span class="ident">LibCall::Probestack</span>, <span class="ident">func</span>)
+<span class="doccomment">/// Get a function reference for the probestack function in `func`.
+///
+/// If there is an existing reference, use it, otherwise make a new one.
+</span><span class="kw">pub fn </span>get_probestack_funcref(func: <span class="kw-2">&amp;mut </span>Function) -&gt; <span class="prelude-ty">Option</span>&lt;FuncRef&gt; {
+    find_funcref(LibCall::Probestack, func)
 }
 
-<span class="doccomment">/// Get the existing function reference for `libcall` in `func` if it exists.</span>
-<span class="kw">fn</span> <span class="ident">find_funcref</span>(<span class="ident">libcall</span>: <span class="ident">LibCall</span>, <span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FuncRef</span><span class="op">&gt;</span> {
-    <span class="comment">// We&#39;re assuming that all libcall function decls are at the end.</span>
-    <span class="comment">// If we get this wrong, worst case we&#39;ll have duplicate libcall decls which is harmless.</span>
-    <span class="kw">for</span> (<span class="ident">fref</span>, <span class="ident">func_data</span>) <span class="kw">in</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">ext_funcs</span>.<span class="ident">iter</span>().<span class="ident">rev</span>() {
-        <span class="kw">match</span> <span class="ident">func_data</span>.<span class="ident">name</span> {
-            <span class="ident">ExternalName::LibCall</span>(<span class="ident">lc</span>) =&gt; {
-                <span class="kw">if</span> <span class="ident">lc</span> <span class="op">==</span> <span class="ident">libcall</span> {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">fref</span>);
+<span class="doccomment">/// Get the existing function reference for `libcall` in `func` if it exists.
+</span><span class="kw">fn </span>find_funcref(libcall: LibCall, func: <span class="kw-2">&amp;</span>Function) -&gt; <span class="prelude-ty">Option</span>&lt;FuncRef&gt; {
+    <span class="comment">// We&#39;re assuming that all libcall function decls are at the end.
+    // If we get this wrong, worst case we&#39;ll have duplicate libcall decls which is harmless.
+    </span><span class="kw">for </span>(fref, func_data) <span class="kw">in </span>func.dfg.ext_funcs.iter().rev() {
+        <span class="kw">match </span>func_data.name {
+            ExternalName::LibCall(lc) =&gt; {
+                <span class="kw">if </span>lc == libcall {
+                    <span class="kw">return </span><span class="prelude-val">Some</span>(fref);
                 }
             }
-            <span class="kw">_</span> =&gt; <span class="kw">break</span>,
+            <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
         }
     }
-    <span class="prelude-val">None</span>
-}
+    <span class="prelude-val">None
+</span>}
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">alloc::string::ToString</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>alloc::string::ToString;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">display</span>() {
-        <span class="macro">assert_eq!</span>(<span class="ident">LibCall::CeilF32</span>.<span class="ident">to_string</span>(), <span class="string">&quot;CeilF32&quot;</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">LibCall::NearestF64</span>.<span class="ident">to_string</span>(), <span class="string">&quot;NearestF64&quot;</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>display() {
+        <span class="macro">assert_eq!</span>(LibCall::CeilF32.to_string(), <span class="string">&quot;CeilF32&quot;</span>);
+        <span class="macro">assert_eq!</span>(LibCall::NearestF64.to_string(), <span class="string">&quot;NearestF64&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">parsing</span>() {
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;FloorF32&quot;</span>.<span class="ident">parse</span>(), <span class="prelude-val">Ok</span>(<span class="ident">LibCall::FloorF32</span>));
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>parsing() {
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;FloorF32&quot;</span>.parse(), <span class="prelude-val">Ok</span>(LibCall::FloorF32));
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">all_libcalls_to_from_string</span>() {
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">libcall</span> <span class="kw">in</span> <span class="ident">LibCall::all_libcalls</span>() {
-            <span class="macro">assert_eq!</span>(<span class="ident">libcall</span>.<span class="ident">to_string</span>().<span class="ident">parse</span>(), <span class="prelude-val">Ok</span>(<span class="ident">libcall</span>));
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>all_libcalls_to_from_string() {
+        <span class="kw">for </span><span class="kw-2">&amp;</span>libcall <span class="kw">in </span>LibCall::all_libcalls() {
+            <span class="macro">assert_eq!</span>(libcall.to_string().parse(), <span class="prelude-val">Ok</span>(libcall));
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

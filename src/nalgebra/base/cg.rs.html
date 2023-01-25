@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/nalgebra-0.27.1/src/base/cg.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cg.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" href="https://nalgebra.org/img/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../nalgebra/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../nalgebra/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../nalgebra/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/nalgebra-0.27.1/src/base/cg.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cg.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" href="https://nalgebra.org/img/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../nalgebra/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -476,469 +471,468 @@
  * Computer-graphics specific implementations.
  * Currently, it is mostly implemented for homogeneous matrices in 2- and 3-space.
  *
- */</span>
+ */
 
-<span class="kw">use</span> <span class="ident">num</span>::{<span class="ident">One</span>, <span class="ident">Zero</span>};
+</span><span class="kw">use </span>num::{One, Zero};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base::allocator::Allocator</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base::dimension</span>::{<span class="ident">DimName</span>, <span class="ident">DimNameDiff</span>, <span class="ident">DimNameSub</span>, <span class="ident">U1</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base::storage</span>::{<span class="ident">Storage</span>, <span class="ident">StorageMut</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base</span>::{
-    <span class="ident">Const</span>, <span class="ident">DefaultAllocator</span>, <span class="ident">Matrix3</span>, <span class="ident">Matrix4</span>, <span class="ident">OMatrix</span>, <span class="ident">OVector</span>, <span class="ident">Scalar</span>, <span class="ident">SquareMatrix</span>, <span class="ident">Unit</span>,
-    <span class="ident">Vector</span>, <span class="ident">Vector2</span>, <span class="ident">Vector3</span>,
+<span class="kw">use </span><span class="kw">crate</span>::base::allocator::Allocator;
+<span class="kw">use </span><span class="kw">crate</span>::base::dimension::{DimName, DimNameDiff, DimNameSub, U1};
+<span class="kw">use </span><span class="kw">crate</span>::base::storage::{Storage, StorageMut};
+<span class="kw">use </span><span class="kw">crate</span>::base::{
+    Const, DefaultAllocator, Matrix3, Matrix4, OMatrix, OVector, Scalar, SquareMatrix, Unit,
+    Vector, Vector2, Vector3,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::geometry</span>::{
-    <span class="ident">Isometry</span>, <span class="ident">IsometryMatrix3</span>, <span class="ident">Orthographic3</span>, <span class="ident">Perspective3</span>, <span class="ident">Point</span>, <span class="ident">Point2</span>, <span class="ident">Point3</span>, <span class="ident">Rotation2</span>,
-    <span class="ident">Rotation3</span>,
+<span class="kw">use </span><span class="kw">crate</span>::geometry::{
+    Isometry, IsometryMatrix3, Orthographic3, Perspective3, Point, Point2, Point3, Rotation2,
+    Rotation3,
 };
 
-<span class="kw">use</span> <span class="ident">simba::scalar</span>::{<span class="ident">ClosedAdd</span>, <span class="ident">ClosedMul</span>, <span class="ident">RealField</span>};
+<span class="kw">use </span>simba::scalar::{ClosedAdd, ClosedMul, RealField};
 
-<span class="doccomment">/// # Translation and scaling in any dimension</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>: <span class="ident">DimName</span><span class="op">&gt;</span> <span class="ident">OMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Scalar</span> <span class="op">+</span> <span class="ident">Zero</span> <span class="op">+</span> <span class="ident">One</span>,
-    <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
+<span class="doccomment">/// # Translation and scaling in any dimension
+</span><span class="kw">impl</span>&lt;T, D: DimName&gt; OMatrix&lt;T, D, D&gt;
+<span class="kw">where
+    </span>T: Scalar + Zero + One,
+    DefaultAllocator: Allocator&lt;T, D, D&gt;,
 {
-    <span class="doccomment">/// Creates a new homogeneous matrix that applies the same scaling factor on each dimension.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_scaling</span>(<span class="ident">scaling</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::from_diagonal_element</span>(<span class="ident">scaling</span>);
-        <span class="ident">res</span>[(<span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>, <span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>)] <span class="op">=</span> <span class="ident">T::one</span>();
+    <span class="doccomment">/// Creates a new homogeneous matrix that applies the same scaling factor on each dimension.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_scaling(scaling: T) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">Self</span>::from_diagonal_element(scaling);
+        res[(D::dim() - <span class="number">1</span>, D::dim() - <span class="number">1</span>)] = T::one();
 
-        <span class="ident">res</span>
+        res
     }
 
-    <span class="doccomment">/// Creates a new homogeneous matrix that applies a distinct scaling factor for each dimension.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_nonuniform_scaling</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(<span class="ident">scaling</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Creates a new homogeneous matrix that applies a distinct scaling factor for each dimension.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_nonuniform_scaling&lt;SB&gt;(scaling: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::identity</span>();
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">scaling</span>.<span class="ident">len</span>() {
-            <span class="ident">res</span>[(<span class="ident">i</span>, <span class="ident">i</span>)] <span class="op">=</span> <span class="ident">scaling</span>[<span class="ident">i</span>].<span class="ident">inlined_clone</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">Self</span>::identity();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..scaling.len() {
+            res[(i, i)] = scaling[i].inlined_clone();
         }
 
-        <span class="ident">res</span>
+        res
     }
 
-    <span class="doccomment">/// Creates a new homogeneous matrix that applies a pure translation.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_translation</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(<span class="ident">translation</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Creates a new homogeneous matrix that applies a pure translation.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_translation&lt;SB&gt;(translation: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::identity</span>();
-        <span class="ident">res</span>.<span class="ident">generic_slice_mut</span>(
-            (<span class="number">0</span>, <span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>),
-            (<span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>(), <span class="ident">Const</span>::<span class="op">&lt;</span><span class="number">1</span><span class="op">&gt;</span>),
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">Self</span>::identity();
+        res.generic_slice_mut(
+            (<span class="number">0</span>, D::dim() - <span class="number">1</span>),
+            (DimNameDiff::&lt;D, U1&gt;::name(), Const::&lt;<span class="number">1</span>&gt;),
         )
-        .<span class="ident">copy_from</span>(<span class="ident">translation</span>);
+        .copy_from(translation);
 
-        <span class="ident">res</span>
+        res
     }
 }
 
-<span class="doccomment">/// # 2D transformations as a Matrix3</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RealField</span><span class="op">&gt;</span> <span class="ident">Matrix3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Builds a 2 dimensional homogeneous rotation matrix from an angle in radian.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_rotation</span>(<span class="ident">angle</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Rotation2::new</span>(<span class="ident">angle</span>).<span class="ident">to_homogeneous</span>()
+<span class="doccomment">/// # 2D transformations as a Matrix3
+</span><span class="kw">impl</span>&lt;T: RealField&gt; Matrix3&lt;T&gt; {
+    <span class="doccomment">/// Builds a 2 dimensional homogeneous rotation matrix from an angle in radian.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_rotation(angle: T) -&gt; <span class="self">Self </span>{
+        Rotation2::new(angle).to_homogeneous()
     }
 
-    <span class="doccomment">/// Creates a new homogeneous matrix that applies a scaling factor for each dimension with respect to point.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Can be used to implement &quot;zoom_to&quot; functionality.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_nonuniform_scaling_wrt_point</span>(<span class="ident">scaling</span>: <span class="kw-2">&amp;</span><span class="ident">Vector2</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">pt</span>: <span class="kw-2">&amp;</span><span class="ident">Point2</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">zero</span> <span class="op">=</span> <span class="ident">T::zero</span>();
-        <span class="kw">let</span> <span class="ident">one</span> <span class="op">=</span> <span class="ident">T::one</span>();
-        <span class="ident">Matrix3::new</span>(
-            <span class="ident">scaling</span>.<span class="ident">x</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">pt</span>.<span class="ident">x</span> <span class="op">-</span> <span class="ident">pt</span>.<span class="ident">x</span> <span class="op">*</span> <span class="ident">scaling</span>.<span class="ident">x</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">scaling</span>.<span class="ident">y</span>,
-            <span class="ident">pt</span>.<span class="ident">y</span> <span class="op">-</span> <span class="ident">pt</span>.<span class="ident">y</span> <span class="op">*</span> <span class="ident">scaling</span>.<span class="ident">y</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">one</span>,
+    <span class="doccomment">/// Creates a new homogeneous matrix that applies a scaling factor for each dimension with respect to point.
+    ///
+    /// Can be used to implement &quot;zoom_to&quot; functionality.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_nonuniform_scaling_wrt_point(scaling: <span class="kw-2">&amp;</span>Vector2&lt;T&gt;, pt: <span class="kw-2">&amp;</span>Point2&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>zero = T::zero();
+        <span class="kw">let </span>one = T::one();
+        Matrix3::new(
+            scaling.x,
+            zero,
+            pt.x - pt.x * scaling.x,
+            zero,
+            scaling.y,
+            pt.y - pt.y * scaling.y,
+            zero,
+            zero,
+            one,
         )
     }
 }
 
-<span class="doccomment">/// # 3D transformations as a Matrix4</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RealField</span><span class="op">&gt;</span> <span class="ident">Matrix4</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and an angle (multiplied together).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns the identity matrix if the given argument is zero.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_rotation</span>(<span class="ident">axisangle</span>: <span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Rotation3::new</span>(<span class="ident">axisangle</span>).<span class="ident">to_homogeneous</span>()
+<span class="doccomment">/// # 3D transformations as a Matrix4
+</span><span class="kw">impl</span>&lt;T: RealField&gt; Matrix4&lt;T&gt; {
+    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and an angle (multiplied together).
+    ///
+    /// Returns the identity matrix if the given argument is zero.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_rotation(axisangle: Vector3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        Rotation3::new(axisangle).to_homogeneous()
     }
 
-    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and an angle (multiplied together).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns the identity matrix if the given argument is zero.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_rotation_wrt_point</span>(<span class="ident">axisangle</span>: <span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">pt</span>: <span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">rot</span> <span class="op">=</span> <span class="ident">Rotation3::from_scaled_axis</span>(<span class="ident">axisangle</span>);
-        <span class="ident">Isometry::rotation_wrt_point</span>(<span class="ident">rot</span>, <span class="ident">pt</span>).<span class="ident">to_homogeneous</span>()
+    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and an angle (multiplied together).
+    ///
+    /// Returns the identity matrix if the given argument is zero.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_rotation_wrt_point(axisangle: Vector3&lt;T&gt;, pt: Point3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>rot = Rotation3::from_scaled_axis(axisangle);
+        Isometry::rotation_wrt_point(rot, pt).to_homogeneous()
     }
 
-    <span class="doccomment">/// Creates a new homogeneous matrix that applies a scaling factor for each dimension with respect to point.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Can be used to implement &quot;zoom_to&quot; functionality.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_nonuniform_scaling_wrt_point</span>(<span class="ident">scaling</span>: <span class="kw-2">&amp;</span><span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">pt</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">zero</span> <span class="op">=</span> <span class="ident">T::zero</span>();
-        <span class="kw">let</span> <span class="ident">one</span> <span class="op">=</span> <span class="ident">T::one</span>();
-        <span class="ident">Matrix4::new</span>(
-            <span class="ident">scaling</span>.<span class="ident">x</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">pt</span>.<span class="ident">x</span> <span class="op">-</span> <span class="ident">pt</span>.<span class="ident">x</span> <span class="op">*</span> <span class="ident">scaling</span>.<span class="ident">x</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">scaling</span>.<span class="ident">y</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">pt</span>.<span class="ident">y</span> <span class="op">-</span> <span class="ident">pt</span>.<span class="ident">y</span> <span class="op">*</span> <span class="ident">scaling</span>.<span class="ident">y</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">scaling</span>.<span class="ident">z</span>,
-            <span class="ident">pt</span>.<span class="ident">z</span> <span class="op">-</span> <span class="ident">pt</span>.<span class="ident">z</span> <span class="op">*</span> <span class="ident">scaling</span>.<span class="ident">z</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">zero</span>,
-            <span class="ident">one</span>,
+    <span class="doccomment">/// Creates a new homogeneous matrix that applies a scaling factor for each dimension with respect to point.
+    ///
+    /// Can be used to implement &quot;zoom_to&quot; functionality.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_nonuniform_scaling_wrt_point(scaling: <span class="kw-2">&amp;</span>Vector3&lt;T&gt;, pt: <span class="kw-2">&amp;</span>Point3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>zero = T::zero();
+        <span class="kw">let </span>one = T::one();
+        Matrix4::new(
+            scaling.x,
+            zero,
+            zero,
+            pt.x - pt.x * scaling.x,
+            zero,
+            scaling.y,
+            zero,
+            pt.y - pt.y * scaling.y,
+            zero,
+            zero,
+            scaling.z,
+            pt.z - pt.z * scaling.z,
+            zero,
+            zero,
+            zero,
+            one,
         )
     }
 
-    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and an angle (multiplied together).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns the identity matrix if the given argument is zero.</span>
-    <span class="doccomment">/// This is identical to `Self::new_rotation`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_scaled_axis</span>(<span class="ident">axisangle</span>: <span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Rotation3::from_scaled_axis</span>(<span class="ident">axisangle</span>).<span class="ident">to_homogeneous</span>()
+    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and an angle (multiplied together).
+    ///
+    /// Returns the identity matrix if the given argument is zero.
+    /// This is identical to `Self::new_rotation`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>from_scaled_axis(axisangle: Vector3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        Rotation3::from_scaled_axis(axisangle).to_homogeneous()
     }
 
-    <span class="doccomment">/// Creates a new rotation from Euler angles.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The primitive rotations are applied in order: 1 roll − 2 pitch − 3 yaw.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_euler_angles</span>(<span class="ident">roll</span>: <span class="ident">T</span>, <span class="ident">pitch</span>: <span class="ident">T</span>, <span class="ident">yaw</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Rotation3::from_euler_angles</span>(<span class="ident">roll</span>, <span class="ident">pitch</span>, <span class="ident">yaw</span>).<span class="ident">to_homogeneous</span>()
+    <span class="doccomment">/// Creates a new rotation from Euler angles.
+    ///
+    /// The primitive rotations are applied in order: 1 roll − 2 pitch − 3 yaw.
+    </span><span class="kw">pub fn </span>from_euler_angles(roll: T, pitch: T, yaw: T) -&gt; <span class="self">Self </span>{
+        Rotation3::from_euler_angles(roll, pitch, yaw).to_homogeneous()
     }
 
-    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and a rotation angle.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_axis_angle</span>(<span class="ident">axis</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">angle</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Rotation3::from_axis_angle</span>(<span class="ident">axis</span>, <span class="ident">angle</span>).<span class="ident">to_homogeneous</span>()
+    <span class="doccomment">/// Builds a 3D homogeneous rotation matrix from an axis and a rotation angle.
+    </span><span class="kw">pub fn </span>from_axis_angle(axis: <span class="kw-2">&amp;</span>Unit&lt;Vector3&lt;T&gt;&gt;, angle: T) -&gt; <span class="self">Self </span>{
+        Rotation3::from_axis_angle(axis, angle).to_homogeneous()
     }
 
-    <span class="doccomment">/// Creates a new homogeneous matrix for an orthographic projection.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_orthographic</span>(<span class="ident">left</span>: <span class="ident">T</span>, <span class="ident">right</span>: <span class="ident">T</span>, <span class="ident">bottom</span>: <span class="ident">T</span>, <span class="ident">top</span>: <span class="ident">T</span>, <span class="ident">znear</span>: <span class="ident">T</span>, <span class="ident">zfar</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Orthographic3::new</span>(<span class="ident">left</span>, <span class="ident">right</span>, <span class="ident">bottom</span>, <span class="ident">top</span>, <span class="ident">znear</span>, <span class="ident">zfar</span>).<span class="ident">into_inner</span>()
+    <span class="doccomment">/// Creates a new homogeneous matrix for an orthographic projection.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_orthographic(left: T, right: T, bottom: T, top: T, znear: T, zfar: T) -&gt; <span class="self">Self </span>{
+        Orthographic3::new(left, right, bottom, top, znear, zfar).into_inner()
     }
 
-    <span class="doccomment">/// Creates a new homogeneous matrix for a perspective projection.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_perspective</span>(<span class="ident">aspect</span>: <span class="ident">T</span>, <span class="ident">fovy</span>: <span class="ident">T</span>, <span class="ident">znear</span>: <span class="ident">T</span>, <span class="ident">zfar</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Perspective3::new</span>(<span class="ident">aspect</span>, <span class="ident">fovy</span>, <span class="ident">znear</span>, <span class="ident">zfar</span>).<span class="ident">into_inner</span>()
+    <span class="doccomment">/// Creates a new homogeneous matrix for a perspective projection.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new_perspective(aspect: T, fovy: T, znear: T, zfar: T) -&gt; <span class="self">Self </span>{
+        Perspective3::new(aspect, fovy, znear, zfar).into_inner()
     }
 
-    <span class="doccomment">/// Creates an isometry that corresponds to the local frame of an observer standing at the</span>
-    <span class="doccomment">/// point `eye` and looking toward `target`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// It maps the view direction `target - eye` to the positive `z` axis and the origin to the</span>
-    <span class="doccomment">/// `eye`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">face_towards</span>(<span class="ident">eye</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">up</span>: <span class="kw-2">&amp;</span><span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">IsometryMatrix3::face_towards</span>(<span class="ident">eye</span>, <span class="ident">target</span>, <span class="ident">up</span>).<span class="ident">to_homogeneous</span>()
+    <span class="doccomment">/// Creates an isometry that corresponds to the local frame of an observer standing at the
+    /// point `eye` and looking toward `target`.
+    ///
+    /// It maps the view direction `target - eye` to the positive `z` axis and the origin to the
+    /// `eye`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>face_towards(eye: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, target: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, up: <span class="kw-2">&amp;</span>Vector3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        IsometryMatrix3::face_towards(eye, target, up).to_homogeneous()
     }
 
-    <span class="doccomment">/// Deprecated: Use [Matrix4::face_towards] instead.</span>
-    <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;renamed to `face_towards`&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_observer_frame</span>(<span class="ident">eye</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">up</span>: <span class="kw-2">&amp;</span><span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Matrix4::face_towards</span>(<span class="ident">eye</span>, <span class="ident">target</span>, <span class="ident">up</span>)
+    <span class="doccomment">/// Deprecated: Use [Matrix4::face_towards] instead.
+    </span><span class="attribute">#[deprecated(note = <span class="string">&quot;renamed to `face_towards`&quot;</span>)]
+    </span><span class="kw">pub fn </span>new_observer_frame(eye: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, target: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, up: <span class="kw-2">&amp;</span>Vector3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        Matrix4::face_towards(eye, target, up)
     }
 
-    <span class="doccomment">/// Builds a right-handed look-at view matrix.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">look_at_rh</span>(<span class="ident">eye</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">up</span>: <span class="kw-2">&amp;</span><span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">IsometryMatrix3::look_at_rh</span>(<span class="ident">eye</span>, <span class="ident">target</span>, <span class="ident">up</span>).<span class="ident">to_homogeneous</span>()
+    <span class="doccomment">/// Builds a right-handed look-at view matrix.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>look_at_rh(eye: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, target: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, up: <span class="kw-2">&amp;</span>Vector3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        IsometryMatrix3::look_at_rh(eye, target, up).to_homogeneous()
     }
 
-    <span class="doccomment">/// Builds a left-handed look-at view matrix.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">look_at_lh</span>(<span class="ident">eye</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="ident">Point3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">up</span>: <span class="kw-2">&amp;</span><span class="ident">Vector3</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">IsometryMatrix3::look_at_lh</span>(<span class="ident">eye</span>, <span class="ident">target</span>, <span class="ident">up</span>).<span class="ident">to_homogeneous</span>()
+    <span class="doccomment">/// Builds a left-handed look-at view matrix.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>look_at_lh(eye: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, target: <span class="kw-2">&amp;</span>Point3&lt;T&gt;, up: <span class="kw-2">&amp;</span>Vector3&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        IsometryMatrix3::look_at_lh(eye, target, up).to_homogeneous()
     }
 }
 
-<span class="doccomment">/// # Append/prepend translation and scaling</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Scalar</span> <span class="op">+</span> <span class="ident">Zero</span> <span class="op">+</span> <span class="ident">One</span> <span class="op">+</span> <span class="ident">ClosedMul</span> <span class="op">+</span> <span class="ident">ClosedAdd</span>, <span class="ident">D</span>: <span class="ident">DimName</span>, <span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="ident">SquareMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">S</span><span class="op">&gt;</span>
+<span class="doccomment">/// # Append/prepend translation and scaling
+</span><span class="kw">impl</span>&lt;T: Scalar + Zero + One + ClosedMul + ClosedAdd, D: DimName, S: Storage&lt;T, D, D&gt;&gt;
+    SquareMatrix&lt;T, D, S&gt;
 {
-    <span class="doccomment">/// Computes the transformation equal to `self` followed by an uniform scaling factor.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;Did you mean to use append_scaling_mut()?&quot;</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_scaling</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">scaling</span>: <span class="ident">T</span>) -&gt; <span class="ident">OMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes the transformation equal to `self` followed by an uniform scaling factor.
+    </span><span class="attribute">#[inline]
+    #[must_use = <span class="string">&quot;Did you mean to use append_scaling_mut()?&quot;</span>]
+    </span><span class="kw">pub fn </span>append_scaling(<span class="kw-2">&amp;</span><span class="self">self</span>, scaling: T) -&gt; OMatrix&lt;T, D, D&gt;
+    <span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        DefaultAllocator: Allocator&lt;T, D, D&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone_owned</span>();
-        <span class="ident">res</span>.<span class="ident">append_scaling_mut</span>(<span class="ident">scaling</span>);
-        <span class="ident">res</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.clone_owned();
+        res.append_scaling_mut(scaling);
+        res
     }
 
-    <span class="doccomment">/// Computes the transformation equal to an uniform scaling factor followed by `self`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;Did you mean to use prepend_scaling_mut()?&quot;</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepend_scaling</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">scaling</span>: <span class="ident">T</span>) -&gt; <span class="ident">OMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes the transformation equal to an uniform scaling factor followed by `self`.
+    </span><span class="attribute">#[inline]
+    #[must_use = <span class="string">&quot;Did you mean to use prepend_scaling_mut()?&quot;</span>]
+    </span><span class="kw">pub fn </span>prepend_scaling(<span class="kw-2">&amp;</span><span class="self">self</span>, scaling: T) -&gt; OMatrix&lt;T, D, D&gt;
+    <span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        DefaultAllocator: Allocator&lt;T, D, D&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone_owned</span>();
-        <span class="ident">res</span>.<span class="ident">prepend_scaling_mut</span>(<span class="ident">scaling</span>);
-        <span class="ident">res</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.clone_owned();
+        res.prepend_scaling_mut(scaling);
+        res
     }
 
-    <span class="doccomment">/// Computes the transformation equal to `self` followed by a non-uniform scaling factor.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;Did you mean to use append_nonuniform_scaling_mut()?&quot;</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_nonuniform_scaling</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Computes the transformation equal to `self` followed by a non-uniform scaling factor.
+    </span><span class="attribute">#[inline]
+    #[must_use = <span class="string">&quot;Did you mean to use append_nonuniform_scaling_mut()?&quot;</span>]
+    </span><span class="kw">pub fn </span>append_nonuniform_scaling&lt;SB&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">scaling</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">OMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
+        scaling: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;,
+    ) -&gt; OMatrix&lt;T, D, D&gt;
+    <span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
+        DefaultAllocator: Allocator&lt;T, D, D&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone_owned</span>();
-        <span class="ident">res</span>.<span class="ident">append_nonuniform_scaling_mut</span>(<span class="ident">scaling</span>);
-        <span class="ident">res</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.clone_owned();
+        res.append_nonuniform_scaling_mut(scaling);
+        res
     }
 
-    <span class="doccomment">/// Computes the transformation equal to a non-uniform scaling factor followed by `self`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;Did you mean to use prepend_nonuniform_scaling_mut()?&quot;</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepend_nonuniform_scaling</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Computes the transformation equal to a non-uniform scaling factor followed by `self`.
+    </span><span class="attribute">#[inline]
+    #[must_use = <span class="string">&quot;Did you mean to use prepend_nonuniform_scaling_mut()?&quot;</span>]
+    </span><span class="kw">pub fn </span>prepend_nonuniform_scaling&lt;SB&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">scaling</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">OMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
+        scaling: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;,
+    ) -&gt; OMatrix&lt;T, D, D&gt;
+    <span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
+        DefaultAllocator: Allocator&lt;T, D, D&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone_owned</span>();
-        <span class="ident">res</span>.<span class="ident">prepend_nonuniform_scaling_mut</span>(<span class="ident">scaling</span>);
-        <span class="ident">res</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.clone_owned();
+        res.prepend_nonuniform_scaling_mut(scaling);
+        res
     }
 
-    <span class="doccomment">/// Computes the transformation equal to `self` followed by a translation.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;Did you mean to use append_translation_mut()?&quot;</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_translation</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Computes the transformation equal to `self` followed by a translation.
+    </span><span class="attribute">#[inline]
+    #[must_use = <span class="string">&quot;Did you mean to use append_translation_mut()?&quot;</span>]
+    </span><span class="kw">pub fn </span>append_translation&lt;SB&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">shift</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">OMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
+        shift: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;,
+    ) -&gt; OMatrix&lt;T, D, D&gt;
+    <span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
+        DefaultAllocator: Allocator&lt;T, D, D&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone_owned</span>();
-        <span class="ident">res</span>.<span class="ident">append_translation_mut</span>(<span class="ident">shift</span>);
-        <span class="ident">res</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.clone_owned();
+        res.append_translation_mut(shift);
+        res
     }
 
-    <span class="doccomment">/// Computes the transformation equal to a translation followed by `self`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;Did you mean to use prepend_translation_mut()?&quot;</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepend_translation</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Computes the transformation equal to a translation followed by `self`.
+    </span><span class="attribute">#[inline]
+    #[must_use = <span class="string">&quot;Did you mean to use prepend_translation_mut()?&quot;</span>]
+    </span><span class="kw">pub fn </span>prepend_translation&lt;SB&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">shift</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">OMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        shift: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;,
+    ) -&gt; OMatrix&lt;T, D, D&gt;
+    <span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
+        DefaultAllocator: Allocator&lt;T, D, D&gt; + Allocator&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone_owned</span>();
-        <span class="ident">res</span>.<span class="ident">prepend_translation_mut</span>(<span class="ident">shift</span>);
-        <span class="ident">res</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.clone_owned();
+        res.prepend_translation_mut(shift);
+        res
     }
 
-    <span class="doccomment">/// Computes in-place the transformation equal to `self` followed by an uniform scaling factor.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_scaling_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">scaling</span>: <span class="ident">T</span>)
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">StorageMut</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes in-place the transformation equal to `self` followed by an uniform scaling factor.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>append_scaling_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scaling: T)
+    <span class="kw">where
+        </span>S: StorageMut&lt;T, D, D&gt;,
+        D: DimNameSub&lt;U1&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">to_scale</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">rows_generic_mut</span>(<span class="number">0</span>, <span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>());
-        <span class="ident">to_scale</span> <span class="kw-2">*</span><span class="op">=</span> <span class="ident">scaling</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>to_scale = <span class="self">self</span>.rows_generic_mut(<span class="number">0</span>, DimNameDiff::&lt;D, U1&gt;::name());
+        to_scale <span class="kw-2">*</span>= scaling;
     }
 
-    <span class="doccomment">/// Computes in-place the transformation equal to an uniform scaling factor followed by `self`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepend_scaling_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">scaling</span>: <span class="ident">T</span>)
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">StorageMut</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes in-place the transformation equal to an uniform scaling factor followed by `self`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>prepend_scaling_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scaling: T)
+    <span class="kw">where
+        </span>S: StorageMut&lt;T, D, D&gt;,
+        D: DimNameSub&lt;U1&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">to_scale</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">columns_generic_mut</span>(<span class="number">0</span>, <span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>());
-        <span class="ident">to_scale</span> <span class="kw-2">*</span><span class="op">=</span> <span class="ident">scaling</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>to_scale = <span class="self">self</span>.columns_generic_mut(<span class="number">0</span>, DimNameDiff::&lt;D, U1&gt;::name());
+        to_scale <span class="kw-2">*</span>= scaling;
     }
 
-    <span class="doccomment">/// Computes in-place the transformation equal to `self` followed by a non-uniform scaling factor.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_nonuniform_scaling_mut</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">scaling</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>)
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">StorageMut</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes in-place the transformation equal to `self` followed by a non-uniform scaling factor.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>append_nonuniform_scaling_mut&lt;SB&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scaling: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;)
+    <span class="kw">where
+        </span>S: StorageMut&lt;T, D, D&gt;,
+        D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
     {
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">scaling</span>.<span class="ident">len</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">to_scale</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_rows_mut</span>::<span class="op">&lt;</span><span class="number">1</span><span class="op">&gt;</span>(<span class="ident">i</span>);
-            <span class="ident">to_scale</span> <span class="kw-2">*</span><span class="op">=</span> <span class="ident">scaling</span>[<span class="ident">i</span>].<span class="ident">inlined_clone</span>();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..scaling.len() {
+            <span class="kw">let </span><span class="kw-2">mut </span>to_scale = <span class="self">self</span>.fixed_rows_mut::&lt;<span class="number">1</span>&gt;(i);
+            to_scale <span class="kw-2">*</span>= scaling[i].inlined_clone();
         }
     }
 
-    <span class="doccomment">/// Computes in-place the transformation equal to a non-uniform scaling factor followed by `self`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepend_nonuniform_scaling_mut</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">scaling</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>,
-    ) <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">StorageMut</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes in-place the transformation equal to a non-uniform scaling factor followed by `self`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>prepend_nonuniform_scaling_mut&lt;SB&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        scaling: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;,
+    ) <span class="kw">where
+        </span>S: StorageMut&lt;T, D, D&gt;,
+        D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
     {
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">scaling</span>.<span class="ident">len</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">to_scale</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_columns_mut</span>::<span class="op">&lt;</span><span class="number">1</span><span class="op">&gt;</span>(<span class="ident">i</span>);
-            <span class="ident">to_scale</span> <span class="kw-2">*</span><span class="op">=</span> <span class="ident">scaling</span>[<span class="ident">i</span>].<span class="ident">inlined_clone</span>();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..scaling.len() {
+            <span class="kw">let </span><span class="kw-2">mut </span>to_scale = <span class="self">self</span>.fixed_columns_mut::&lt;<span class="number">1</span>&gt;(i);
+            to_scale <span class="kw-2">*</span>= scaling[i].inlined_clone();
         }
     }
 
-    <span class="doccomment">/// Computes the transformation equal to `self` followed by a translation.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_translation_mut</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">shift</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>)
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">StorageMut</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes the transformation equal to `self` followed by a translation.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>append_translation_mut&lt;SB&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, shift: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;)
+    <span class="kw">where
+        </span>S: StorageMut&lt;T, D, D&gt;,
+        D: DimNameSub&lt;U1&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
     {
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">D::dim</span>() {
-            <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span> {
-                <span class="kw">let</span> <span class="ident">add</span> <span class="op">=</span> <span class="ident">shift</span>[<span class="ident">j</span>].<span class="ident">inlined_clone</span>() <span class="op">*</span> <span class="self">self</span>[(<span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>, <span class="ident">i</span>)].<span class="ident">inlined_clone</span>();
-                <span class="self">self</span>[(<span class="ident">j</span>, <span class="ident">i</span>)] <span class="op">+</span><span class="op">=</span> <span class="ident">add</span>;
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..D::dim() {
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..D::dim() - <span class="number">1 </span>{
+                <span class="kw">let </span>add = shift[j].inlined_clone() * <span class="self">self</span>[(D::dim() - <span class="number">1</span>, i)].inlined_clone();
+                <span class="self">self</span>[(j, i)] += add;
             }
         }
     }
 
-    <span class="doccomment">/// Computes the transformation equal to a translation followed by `self`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepend_translation_mut</span><span class="op">&lt;</span><span class="ident">SB</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">shift</span>: <span class="kw-2">&amp;</span><span class="ident">Vector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">SB</span><span class="op">&gt;</span>)
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>,
-        <span class="ident">S</span>: <span class="ident">StorageMut</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">SB</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Computes the transformation equal to a translation followed by `self`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>prepend_translation_mut&lt;SB&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, shift: <span class="kw-2">&amp;</span>Vector&lt;T, DimNameDiff&lt;D, U1&gt;, SB&gt;)
+    <span class="kw">where
+        </span>D: DimNameSub&lt;U1&gt;,
+        S: StorageMut&lt;T, D, D&gt;,
+        SB: Storage&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
+        DefaultAllocator: Allocator&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
     {
-        <span class="kw">let</span> <span class="ident">scale</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">generic_slice</span>(
-                (<span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>, <span class="number">0</span>),
-                (<span class="ident">Const</span>::<span class="op">&lt;</span><span class="number">1</span><span class="op">&gt;</span>, <span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>()),
+        <span class="kw">let </span>scale = <span class="self">self
+            </span>.generic_slice(
+                (D::dim() - <span class="number">1</span>, <span class="number">0</span>),
+                (Const::&lt;<span class="number">1</span>&gt;, DimNameDiff::&lt;D, U1&gt;::name()),
             )
-            .<span class="ident">tr_dot</span>(<span class="kw-2">&amp;</span><span class="ident">shift</span>);
-        <span class="kw">let</span> <span class="ident">post_translation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">generic_slice</span>(
+            .tr_dot(<span class="kw-2">&amp;</span>shift);
+        <span class="kw">let </span>post_translation = <span class="self">self</span>.generic_slice(
             (<span class="number">0</span>, <span class="number">0</span>),
-            (<span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>(), <span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>()),
-        ) <span class="op">*</span> <span class="ident">shift</span>;
+            (DimNameDiff::&lt;D, U1&gt;::name(), DimNameDiff::&lt;D, U1&gt;::name()),
+        ) * shift;
 
-        <span class="self">self</span>[(<span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>, <span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>)] <span class="op">+</span><span class="op">=</span> <span class="ident">scale</span>;
+        <span class="self">self</span>[(D::dim() - <span class="number">1</span>, D::dim() - <span class="number">1</span>)] += scale;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">translation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">generic_slice_mut</span>(
-            (<span class="number">0</span>, <span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>),
-            (<span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>(), <span class="ident">Const</span>::<span class="op">&lt;</span><span class="number">1</span><span class="op">&gt;</span>),
+        <span class="kw">let </span><span class="kw-2">mut </span>translation = <span class="self">self</span>.generic_slice_mut(
+            (<span class="number">0</span>, D::dim() - <span class="number">1</span>),
+            (DimNameDiff::&lt;D, U1&gt;::name(), Const::&lt;<span class="number">1</span>&gt;),
         );
-        <span class="ident">translation</span> <span class="op">+</span><span class="op">=</span> <span class="ident">post_translation</span>;
+        translation += post_translation;
     }
 }
 
-<span class="doccomment">/// # Transformation of vectors and points</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RealField</span>, <span class="ident">D</span>: <span class="ident">DimNameSub</span><span class="op">&lt;</span><span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SquareMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">D</span>, <span class="ident">D</span><span class="op">&gt;</span>
-        <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>
-        <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// # Transformation of vectors and points
+</span><span class="kw">impl</span>&lt;T: RealField, D: DimNameSub&lt;U1&gt;, S: Storage&lt;T, D, D&gt;&gt; SquareMatrix&lt;T, D, S&gt;
+<span class="kw">where
+    </span>DefaultAllocator: Allocator&lt;T, D, D&gt;
+        + Allocator&lt;T, DimNameDiff&lt;D, U1&gt;&gt;
+        + Allocator&lt;T, DimNameDiff&lt;D, U1&gt;, DimNameDiff&lt;D, U1&gt;&gt;,
 {
-    <span class="doccomment">/// Transforms the given vector, assuming the matrix `self` uses homogeneous coordinates.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">transform_vector</span>(
+    <span class="doccomment">/// Transforms the given vector, assuming the matrix `self` uses homogeneous coordinates.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>transform_vector(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="ident">OVector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">OVector</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">DimNameDiff</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">transform</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">generic_slice</span>(
+        v: <span class="kw-2">&amp;</span>OVector&lt;T, DimNameDiff&lt;D, U1&gt;&gt;,
+    ) -&gt; OVector&lt;T, DimNameDiff&lt;D, U1&gt;&gt; {
+        <span class="kw">let </span>transform = <span class="self">self</span>.generic_slice(
             (<span class="number">0</span>, <span class="number">0</span>),
-            (<span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>(), <span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>()),
+            (DimNameDiff::&lt;D, U1&gt;::name(), DimNameDiff::&lt;D, U1&gt;::name()),
         );
-        <span class="kw">let</span> <span class="ident">normalizer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">generic_slice</span>(
-            (<span class="ident">D::dim</span>() <span class="op">-</span> <span class="number">1</span>, <span class="number">0</span>),
-            (<span class="ident">Const</span>::<span class="op">&lt;</span><span class="number">1</span><span class="op">&gt;</span>, <span class="ident">DimNameDiff</span>::<span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">U1</span><span class="op">&gt;</span><span class="ident">::name</span>()),
+        <span class="kw">let </span>normalizer = <span class="self">self</span>.generic_slice(
+            (D::dim() - <span class="number">1</span>, <span class="number">0</span>),
+            (Const::&lt;<span class="number">1</span>&gt;, DimNameDiff::&lt;D, U1&gt;::name()),
         );
-        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">normalizer</span>.<span class="ident">tr_dot</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>);
+        <span class="kw">let </span>n = normalizer.tr_dot(<span class="kw-2">&amp;</span>v);
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">n</span>.<span class="ident">is_zero</span>() {
-            <span class="kw">return</span> <span class="ident">transform</span> <span class="op">*</span> (<span class="ident">v</span> <span class="op">/</span> <span class="ident">n</span>);
+        <span class="kw">if </span>!n.is_zero() {
+            <span class="kw">return </span>transform * (v / n);
         }
 
-        <span class="ident">transform</span> <span class="op">*</span> <span class="ident">v</span>
+        transform * v
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RealField</span>, <span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Const</span><span class="op">&lt;</span><span class="number">3</span><span class="op">&gt;</span>, <span class="ident">Const</span><span class="op">&lt;</span><span class="number">3</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SquareMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Const</span><span class="op">&lt;</span><span class="number">3</span><span class="op">&gt;</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Transforms the given point, assuming the matrix `self` uses homogeneous coordinates.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">transform_point</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pt</span>: <span class="kw-2">&amp;</span><span class="ident">Point</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="number">2</span><span class="op">&gt;</span>) -&gt; <span class="ident">Point</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="number">2</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">transform</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_slice</span>::<span class="op">&lt;</span><span class="number">2</span>, <span class="number">2</span><span class="op">&gt;</span>(<span class="number">0</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">translation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_slice</span>::<span class="op">&lt;</span><span class="number">2</span>, <span class="number">1</span><span class="op">&gt;</span>(<span class="number">0</span>, <span class="number">2</span>);
-        <span class="kw">let</span> <span class="ident">normalizer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_slice</span>::<span class="op">&lt;</span><span class="number">1</span>, <span class="number">2</span><span class="op">&gt;</span>(<span class="number">2</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">normalizer</span>.<span class="ident">tr_dot</span>(<span class="kw-2">&amp;</span><span class="ident">pt</span>.<span class="ident">coords</span>) <span class="op">+</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">get_unchecked</span>((<span class="number">2</span>, <span class="number">2</span>)) };
+<span class="kw">impl</span>&lt;T: RealField, S: Storage&lt;T, Const&lt;<span class="number">3</span>&gt;, Const&lt;<span class="number">3</span>&gt;&gt;&gt; SquareMatrix&lt;T, Const&lt;<span class="number">3</span>&gt;, S&gt; {
+    <span class="doccomment">/// Transforms the given point, assuming the matrix `self` uses homogeneous coordinates.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>transform_point(<span class="kw-2">&amp;</span><span class="self">self</span>, pt: <span class="kw-2">&amp;</span>Point&lt;T, <span class="number">2</span>&gt;) -&gt; Point&lt;T, <span class="number">2</span>&gt; {
+        <span class="kw">let </span>transform = <span class="self">self</span>.fixed_slice::&lt;<span class="number">2</span>, <span class="number">2</span>&gt;(<span class="number">0</span>, <span class="number">0</span>);
+        <span class="kw">let </span>translation = <span class="self">self</span>.fixed_slice::&lt;<span class="number">2</span>, <span class="number">1</span>&gt;(<span class="number">0</span>, <span class="number">2</span>);
+        <span class="kw">let </span>normalizer = <span class="self">self</span>.fixed_slice::&lt;<span class="number">1</span>, <span class="number">2</span>&gt;(<span class="number">2</span>, <span class="number">0</span>);
+        <span class="kw">let </span>n = normalizer.tr_dot(<span class="kw-2">&amp;</span>pt.coords) + <span class="kw">unsafe </span>{ <span class="kw-2">*</span><span class="self">self</span>.get_unchecked((<span class="number">2</span>, <span class="number">2</span>)) };
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">n</span>.<span class="ident">is_zero</span>() {
-            (<span class="ident">transform</span> <span class="op">*</span> <span class="ident">pt</span> <span class="op">+</span> <span class="ident">translation</span>) <span class="op">/</span> <span class="ident">n</span>
-        } <span class="kw">else</span> {
-            <span class="ident">transform</span> <span class="op">*</span> <span class="ident">pt</span> <span class="op">+</span> <span class="ident">translation</span>
+        <span class="kw">if </span>!n.is_zero() {
+            (transform * pt + translation) / n
+        } <span class="kw">else </span>{
+            transform * pt + translation
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RealField</span>, <span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Const</span><span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span>, <span class="ident">Const</span><span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SquareMatrix</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Const</span><span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Transforms the given point, assuming the matrix `self` uses homogeneous coordinates.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">transform_point</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pt</span>: <span class="kw-2">&amp;</span><span class="ident">Point</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="number">3</span><span class="op">&gt;</span>) -&gt; <span class="ident">Point</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="number">3</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">transform</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_slice</span>::<span class="op">&lt;</span><span class="number">3</span>, <span class="number">3</span><span class="op">&gt;</span>(<span class="number">0</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">translation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_slice</span>::<span class="op">&lt;</span><span class="number">3</span>, <span class="number">1</span><span class="op">&gt;</span>(<span class="number">0</span>, <span class="number">3</span>);
-        <span class="kw">let</span> <span class="ident">normalizer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fixed_slice</span>::<span class="op">&lt;</span><span class="number">1</span>, <span class="number">3</span><span class="op">&gt;</span>(<span class="number">3</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">normalizer</span>.<span class="ident">tr_dot</span>(<span class="kw-2">&amp;</span><span class="ident">pt</span>.<span class="ident">coords</span>) <span class="op">+</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">get_unchecked</span>((<span class="number">3</span>, <span class="number">3</span>)) };
+<span class="kw">impl</span>&lt;T: RealField, S: Storage&lt;T, Const&lt;<span class="number">4</span>&gt;, Const&lt;<span class="number">4</span>&gt;&gt;&gt; SquareMatrix&lt;T, Const&lt;<span class="number">4</span>&gt;, S&gt; {
+    <span class="doccomment">/// Transforms the given point, assuming the matrix `self` uses homogeneous coordinates.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>transform_point(<span class="kw-2">&amp;</span><span class="self">self</span>, pt: <span class="kw-2">&amp;</span>Point&lt;T, <span class="number">3</span>&gt;) -&gt; Point&lt;T, <span class="number">3</span>&gt; {
+        <span class="kw">let </span>transform = <span class="self">self</span>.fixed_slice::&lt;<span class="number">3</span>, <span class="number">3</span>&gt;(<span class="number">0</span>, <span class="number">0</span>);
+        <span class="kw">let </span>translation = <span class="self">self</span>.fixed_slice::&lt;<span class="number">3</span>, <span class="number">1</span>&gt;(<span class="number">0</span>, <span class="number">3</span>);
+        <span class="kw">let </span>normalizer = <span class="self">self</span>.fixed_slice::&lt;<span class="number">1</span>, <span class="number">3</span>&gt;(<span class="number">3</span>, <span class="number">0</span>);
+        <span class="kw">let </span>n = normalizer.tr_dot(<span class="kw-2">&amp;</span>pt.coords) + <span class="kw">unsafe </span>{ <span class="kw-2">*</span><span class="self">self</span>.get_unchecked((<span class="number">3</span>, <span class="number">3</span>)) };
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">n</span>.<span class="ident">is_zero</span>() {
-            (<span class="ident">transform</span> <span class="op">*</span> <span class="ident">pt</span> <span class="op">+</span> <span class="ident">translation</span>) <span class="op">/</span> <span class="ident">n</span>
-        } <span class="kw">else</span> {
-            <span class="ident">transform</span> <span class="op">*</span> <span class="ident">pt</span> <span class="op">+</span> <span class="ident">translation</span>
+        <span class="kw">if </span>!n.is_zero() {
+            (transform * pt + translation) / n
+        } <span class="kw">else </span>{
+            transform * pt + translation
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nalgebra" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nalgebra" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

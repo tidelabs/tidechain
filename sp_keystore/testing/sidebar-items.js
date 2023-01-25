@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["KeyStore","A keystore implementation usable in tests."]]});
+window.SIDEBAR_ITEMS = {"struct":[["KeyStore","A keystore implementation usable in tests."]]};

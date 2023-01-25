@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["decode","Decode a mixed Base16 (hex) string into the provided destination buffer."]]});
+window.SIDEBAR_ITEMS = {"fn":[["decode","Decode a mixed Base16 (hex) string into the provided destination buffer."]]};

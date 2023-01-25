@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SharedData","Some shared data that provides support for locking this shared data for some time."],["SharedDataLocked","Created by [`SharedData::shared_data_locked`]."],["SharedDataLockedUpgradable","Created by [`SharedDataLocked::release_mutex`]."]]});
+window.SIDEBAR_ITEMS = {"struct":[["SharedData","Some shared data that provides support for locking this shared data for some time."],["SharedDataLocked","Created by [`SharedData::shared_data_locked`]."],["SharedDataLockedUpgradable","Created by [`SharedDataLocked::release_mutex`]."]]};

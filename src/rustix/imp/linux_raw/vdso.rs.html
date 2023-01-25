@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/vdso.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>vdso.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../rustix/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/vdso.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>vdso.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../rustix/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -427,204 +422,204 @@
 <span id="422">422</span>
 <span id="423">423</span>
 <span id="424">424</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Parse the Linux vDSO.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The following code is transliterated from</span>
-<span class="doccomment">//! tools/testing/selftests/vDSO/parse_vdso.c in Linux 5.11, which is licensed</span>
-<span class="doccomment">//! with Creative Commons Zero License, version 1.0,</span>
-<span class="doccomment">//! available at &lt;https://creativecommons.org/publicdomain/zero/1.0/legalcode&gt;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Safety</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Parsing the vDSO involves a lot of raw pointer manipulation. This</span>
-<span class="doccomment">//! implementation follows Linux&#39;s reference implementation, and adds several</span>
-<span class="doccomment">//! additional safety checks.</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Parse the Linux vDSO.
+//!
+//! The following code is transliterated from
+//! tools/testing/selftests/vDSO/parse_vdso.c in Linux 5.11, which is licensed
+//! with Creative Commons Zero License, version 1.0,
+//! available at &lt;https://creativecommons.org/publicdomain/zero/1.0/legalcode&gt;
+//!
+//! # Safety
+//!
+//! Parsing the vDSO involves a lot of raw pointer manipulation. This
+//! implementation follows Linux&#39;s reference implementation, and adds several
+//! additional safety checks.
+</span><span class="attribute">#![allow(unsafe_code)]
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::c</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::elf</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ffi::ZStr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>::{<span class="self">self</span>, <span class="ident">madvise</span>, <span class="ident">Advice</span>};
-<span class="kw">use</span> <span class="ident">core::mem</span>::{<span class="ident">align_of</span>, <span class="ident">size_of</span>};
-<span class="kw">use</span> <span class="ident">core::ptr::null</span>;
+</span><span class="kw">use </span><span class="kw">super</span>::c;
+<span class="kw">use </span><span class="kw">super</span>::elf::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::ffi::ZStr;
+<span class="kw">use </span><span class="kw">crate</span>::io::{<span class="self">self</span>, madvise, Advice};
+<span class="kw">use </span>core::mem::{align_of, size_of};
+<span class="kw">use </span>core::ptr::null;
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Vdso</span> {
-    <span class="comment">// Load information</span>
-    <span class="ident">load_addr</span>: <span class="ident">usize</span>,
-    <span class="ident">load_end</span>: <span class="ident">usize</span>,    <span class="comment">// the end of the `PT_LOAD` segment</span>
-    <span class="ident">load_offset</span>: <span class="ident">usize</span>, <span class="comment">// load_addr - recorded vaddr</span>
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Vdso {
+    <span class="comment">// Load information
+    </span>load_addr: usize,
+    load_end: usize,    <span class="comment">// the end of the `PT_LOAD` segment
+    </span>load_offset: usize, <span class="comment">// load_addr - recorded vaddr
 
-    <span class="comment">// Symbol table</span>
-    <span class="ident">symtab</span>: <span class="kw-2">*const</span> <span class="ident">Elf_Sym</span>,
-    <span class="ident">symstrings</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>,
-    <span class="ident">bucket</span>: <span class="kw-2">*const</span> <span class="ident">u32</span>,
-    <span class="ident">chain</span>: <span class="kw-2">*const</span> <span class="ident">u32</span>,
-    <span class="ident">nbucket</span>: <span class="ident">u32</span>,
-    <span class="comment">//nchain: u32,</span>
+    // Symbol table
+    </span>symtab: <span class="kw-2">*const </span>Elf_Sym,
+    symstrings: <span class="kw-2">*const </span>u8,
+    bucket: <span class="kw-2">*const </span>u32,
+    chain: <span class="kw-2">*const </span>u32,
+    nbucket: u32,
+    <span class="comment">//nchain: u32,
 
-    <span class="comment">// Version table</span>
-    <span class="ident">versym</span>: <span class="kw-2">*const</span> <span class="ident">u16</span>,
-    <span class="ident">verdef</span>: <span class="kw-2">*const</span> <span class="ident">Elf_Verdef</span>,
+    // Version table
+    </span>versym: <span class="kw-2">*const </span>u16,
+    verdef: <span class="kw-2">*const </span>Elf_Verdef,
 }
 
-<span class="comment">// Straight from the ELF specification.</span>
-<span class="kw">fn</span> <span class="ident">elf_hash</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">u32</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">h</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0</span>;
-    <span class="kw">for</span> <span class="ident">b</span> <span class="kw">in</span> <span class="ident">name</span>.<span class="ident">to_bytes</span>() {
-        <span class="ident">h</span> <span class="op">=</span> (<span class="ident">h</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>).<span class="ident">wrapping_add</span>(<span class="ident">u32::from</span>(<span class="kw-2">*</span><span class="ident">b</span>));
-        <span class="kw">let</span> <span class="ident">g</span> <span class="op">=</span> <span class="ident">h</span> <span class="op">&amp;</span> <span class="number">0xf000_0000</span>;
-        <span class="kw">if</span> <span class="ident">g</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="ident">h</span> <span class="op">^</span><span class="op">=</span> <span class="ident">g</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">24</span>;
+<span class="comment">// Straight from the ELF specification.
+</span><span class="kw">fn </span>elf_hash(name: <span class="kw-2">&amp;</span>ZStr) -&gt; u32 {
+    <span class="kw">let </span><span class="kw-2">mut </span>h: u32 = <span class="number">0</span>;
+    <span class="kw">for </span>b <span class="kw">in </span>name.to_bytes() {
+        h = (h &lt;&lt; <span class="number">4</span>).wrapping_add(u32::from(<span class="kw-2">*</span>b));
+        <span class="kw">let </span>g = h &amp; <span class="number">0xf000_0000</span>;
+        <span class="kw">if </span>g != <span class="number">0 </span>{
+            h ^= g &gt;&gt; <span class="number">24</span>;
         }
-        <span class="ident">h</span> <span class="op">&amp;=</span> <span class="op">!</span><span class="ident">g</span>;
+        h &amp;= !g;
     }
-    <span class="ident">h</span>
+    h
 }
 
-<span class="doccomment">/// Cast `value` to a pointer type, doing some checks for validity.</span>
-<span class="kw">const</span> <span class="kw">fn</span> <span class="ident">make_pointer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">*const</span> <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">value</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">value</span>.<span class="ident">checked_add</span>(<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>()).<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">value</span> <span class="op">%</span> <span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>() <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>;
+<span class="doccomment">/// Cast `value` to a pointer type, doing some checks for validity.
+</span><span class="kw">const fn </span>make_pointer&lt;T&gt;(value: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>T&gt; {
+    <span class="kw">if </span>value == <span class="number">0 </span>|| value.checked_add(size_of::&lt;T&gt;()).is_none() || value % align_of::&lt;T&gt;() != <span class="number">0 </span>{
+        <span class="kw">return </span><span class="prelude-val">None</span>;
     }
 
-    <span class="prelude-val">Some</span>(<span class="ident">value</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">T</span>)
+    <span class="prelude-val">Some</span>(value <span class="kw">as </span><span class="kw-2">*const </span>T)
 }
 
-<span class="doccomment">/// Create a `Vdso` value by parsing the vDSO at the given address.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `base` must be a valid pointer to an ELF image in memory.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">init_from_sysinfo_ehdr</span>(<span class="ident">base</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vdso</span><span class="op">&gt;</span> {
-    <span class="comment">// Check that `base` is a valid pointer to the kernel-provided vDSO.</span>
-    <span class="kw">let</span> <span class="ident">hdr</span> <span class="op">=</span> <span class="ident">check_vdso_base</span>(<span class="ident">base</span>)<span class="question-mark">?</span>;
+<span class="doccomment">/// Create a `Vdso` value by parsing the vDSO at the given address.
+///
+/// # Safety
+///
+/// `base` must be a valid pointer to an ELF image in memory.
+</span><span class="kw">unsafe fn </span>init_from_sysinfo_ehdr(base: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Vdso&gt; {
+    <span class="comment">// Check that `base` is a valid pointer to the kernel-provided vDSO.
+    </span><span class="kw">let </span>hdr = check_vdso_base(base)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vdso</span> <span class="op">=</span> <span class="ident">Vdso</span> {
-        <span class="ident">load_addr</span>: <span class="ident">base</span>,
-        <span class="ident">load_end</span>: <span class="ident">base</span>,
-        <span class="ident">load_offset</span>: <span class="number">0</span>,
-        <span class="ident">symtab</span>: <span class="ident">null</span>(),
-        <span class="ident">symstrings</span>: <span class="ident">null</span>(),
-        <span class="ident">bucket</span>: <span class="ident">null</span>(),
-        <span class="ident">chain</span>: <span class="ident">null</span>(),
-        <span class="ident">nbucket</span>: <span class="number">0</span>,
-        <span class="comment">//nchain: 0,</span>
-        <span class="ident">versym</span>: <span class="ident">null</span>(),
-        <span class="ident">verdef</span>: <span class="ident">null</span>(),
+    <span class="kw">let </span><span class="kw-2">mut </span>vdso = Vdso {
+        load_addr: base,
+        load_end: base,
+        load_offset: <span class="number">0</span>,
+        symtab: null(),
+        symstrings: null(),
+        bucket: null(),
+        chain: null(),
+        nbucket: <span class="number">0</span>,
+        <span class="comment">//nchain: 0,
+        </span>versym: null(),
+        verdef: null(),
     };
 
-    <span class="kw">let</span> <span class="ident">pt</span> <span class="op">=</span> <span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">Elf_Phdr</span><span class="op">&gt;</span>(<span class="ident">base</span>.<span class="ident">checked_add</span>(<span class="ident">hdr</span>.<span class="ident">e_phoff</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dyn_</span>: <span class="kw-2">*const</span> <span class="ident">Elf_Dyn</span> <span class="op">=</span> <span class="ident">null</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">num_dyn</span> <span class="op">=</span> <span class="number">0</span>;
+    <span class="kw">let </span>pt = make_pointer::&lt;Elf_Phdr&gt;(base.checked_add(hdr.e_phoff)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>dyn_: <span class="kw-2">*const </span>Elf_Dyn = null();
+    <span class="kw">let </span><span class="kw-2">mut </span>num_dyn = <span class="number">0</span>;
 
-    <span class="comment">// We need two things from the segment table: the load offset</span>
-    <span class="comment">// and the dynamic table.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">found_vaddr</span> <span class="op">=</span> <span class="bool-val">false</span>;
-    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">hdr</span>.<span class="ident">e_phnum</span> {
-        <span class="kw">let</span> <span class="ident">phdr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">pt</span>.<span class="ident">add</span>(<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="kw">if</span> <span class="ident">phdr</span>.<span class="ident">p_flags</span> <span class="op">&amp;</span> <span class="ident">PF_W</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="comment">// Don&#39;t trust any vDSO that claims to be loading writable</span>
-            <span class="comment">// segments into memory.</span>
-            <span class="kw">return</span> <span class="prelude-val">None</span>;
+    <span class="comment">// We need two things from the segment table: the load offset
+    // and the dynamic table.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>found_vaddr = <span class="bool-val">false</span>;
+    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..hdr.e_phnum {
+        <span class="kw">let </span>phdr = <span class="kw-2">&amp;*</span>pt.add(i <span class="kw">as </span>usize);
+        <span class="kw">if </span>phdr.p_flags &amp; PF_W != <span class="number">0 </span>{
+            <span class="comment">// Don&#39;t trust any vDSO that claims to be loading writable
+            // segments into memory.
+            </span><span class="kw">return </span><span class="prelude-val">None</span>;
         }
-        <span class="kw">if</span> <span class="ident">phdr</span>.<span class="ident">p_type</span> <span class="op">==</span> <span class="ident">PT_LOAD</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">found_vaddr</span> {
-            <span class="comment">// The segment should be readable and executable, because it</span>
-            <span class="comment">// contains the symbol table and the function bodies.</span>
-            <span class="kw">if</span> <span class="ident">phdr</span>.<span class="ident">p_flags</span> <span class="op">&amp;</span> (<span class="ident">PF_R</span> <span class="op">|</span> <span class="ident">PF_X</span>) <span class="op">!</span><span class="op">=</span> (<span class="ident">PF_R</span> <span class="op">|</span> <span class="ident">PF_X</span>) {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+        <span class="kw">if </span>phdr.p_type == PT_LOAD &amp;&amp; !found_vaddr {
+            <span class="comment">// The segment should be readable and executable, because it
+            // contains the symbol table and the function bodies.
+            </span><span class="kw">if </span>phdr.p_flags &amp; (PF_R | PF_X) != (PF_R | PF_X) {
+                <span class="kw">return </span><span class="prelude-val">None</span>;
             }
-            <span class="ident">found_vaddr</span> <span class="op">=</span> <span class="bool-val">true</span>;
-            <span class="ident">vdso</span>.<span class="ident">load_end</span> <span class="op">=</span> <span class="ident">base</span>.<span class="ident">checked_add</span>(<span class="ident">phdr</span>.<span class="ident">p_offset</span>.<span class="ident">checked_add</span>(<span class="ident">phdr</span>.<span class="ident">p_memsz</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
-            <span class="ident">vdso</span>.<span class="ident">load_offset</span> <span class="op">=</span> <span class="ident">base</span>.<span class="ident">wrapping_add</span>(<span class="ident">phdr</span>.<span class="ident">p_offset</span>.<span class="ident">wrapping_sub</span>(<span class="ident">phdr</span>.<span class="ident">p_vaddr</span>));
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">phdr</span>.<span class="ident">p_type</span> <span class="op">==</span> <span class="ident">PT_DYNAMIC</span> {
-            <span class="comment">// If `p_offset` is zero, it&#39;s more likely that we&#39;re looking at memory</span>
-            <span class="comment">// that has been zeroed than that the kernel has somehow aliased the</span>
-            <span class="comment">// `Ehdr` and the `Elf_Dyn` array.</span>
-            <span class="kw">if</span> <span class="ident">phdr</span>.<span class="ident">p_offset</span> <span class="op">&lt;</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Ehdr</span><span class="op">&gt;</span>() {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+            found_vaddr = <span class="bool-val">true</span>;
+            vdso.load_end = base.checked_add(phdr.p_offset.checked_add(phdr.p_memsz)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+            vdso.load_offset = base.wrapping_add(phdr.p_offset.wrapping_sub(phdr.p_vaddr));
+        } <span class="kw">else if </span>phdr.p_type == PT_DYNAMIC {
+            <span class="comment">// If `p_offset` is zero, it&#39;s more likely that we&#39;re looking at memory
+            // that has been zeroed than that the kernel has somehow aliased the
+            // `Ehdr` and the `Elf_Dyn` array.
+            </span><span class="kw">if </span>phdr.p_offset &lt; size_of::&lt;Elf_Ehdr&gt;() {
+                <span class="kw">return </span><span class="prelude-val">None</span>;
             }
 
-            <span class="ident">dyn_</span> <span class="op">=</span> <span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">Elf_Dyn</span><span class="op">&gt;</span>(<span class="ident">base</span>.<span class="ident">checked_add</span>(<span class="ident">phdr</span>.<span class="ident">p_offset</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
-            <span class="ident">num_dyn</span> <span class="op">=</span> <span class="ident">phdr</span>.<span class="ident">p_memsz</span> <span class="op">/</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Dyn</span><span class="op">&gt;</span>();
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">phdr</span>.<span class="ident">p_type</span> <span class="op">==</span> <span class="ident">PT_INTERP</span> <span class="op">|</span><span class="op">|</span> <span class="ident">phdr</span>.<span class="ident">p_type</span> <span class="op">==</span> <span class="ident">PT_GNU_RELRO</span> {
-            <span class="comment">// Don&#39;t trust any ELF image that has an &quot;interpreter&quot; or that uses</span>
-            <span class="comment">// RELRO, which is likely to be a user ELF image rather and not the</span>
-            <span class="comment">// kernel vDSO.</span>
-            <span class="kw">return</span> <span class="prelude-val">None</span>;
+            dyn_ = make_pointer::&lt;Elf_Dyn&gt;(base.checked_add(phdr.p_offset)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+            num_dyn = phdr.p_memsz / size_of::&lt;Elf_Dyn&gt;();
+        } <span class="kw">else if </span>phdr.p_type == PT_INTERP || phdr.p_type == PT_GNU_RELRO {
+            <span class="comment">// Don&#39;t trust any ELF image that has an &quot;interpreter&quot; or that uses
+            // RELRO, which is likely to be a user ELF image rather and not the
+            // kernel vDSO.
+            </span><span class="kw">return </span><span class="prelude-val">None</span>;
         }
     }
 
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">found_vaddr</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dyn_</span>.<span class="ident">is_null</span>() {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Failed</span>
-    }
+    <span class="kw">if </span>!found_vaddr || dyn_.is_null() {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Failed
+    </span>}
 
-    <span class="comment">// Fish out the useful bits of the dynamic table.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hash</span>: <span class="kw-2">*const</span> <span class="ident">u32</span> <span class="op">=</span> <span class="ident">null</span>();
-    <span class="ident">vdso</span>.<span class="ident">symstrings</span> <span class="op">=</span> <span class="ident">null</span>();
-    <span class="ident">vdso</span>.<span class="ident">symtab</span> <span class="op">=</span> <span class="ident">null</span>();
-    <span class="ident">vdso</span>.<span class="ident">versym</span> <span class="op">=</span> <span class="ident">null</span>();
-    <span class="ident">vdso</span>.<span class="ident">verdef</span> <span class="op">=</span> <span class="ident">null</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
-    <span class="kw">loop</span> {
-        <span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">num_dyn</span> {
-            <span class="kw">return</span> <span class="prelude-val">None</span>;
+    <span class="comment">// Fish out the useful bits of the dynamic table.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>hash: <span class="kw-2">*const </span>u32 = null();
+    vdso.symstrings = null();
+    vdso.symtab = null();
+    vdso.versym = null();
+    vdso.verdef = null();
+    <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+    <span class="kw">loop </span>{
+        <span class="kw">if </span>i == num_dyn {
+            <span class="kw">return </span><span class="prelude-val">None</span>;
         }
-        <span class="kw">let</span> <span class="ident">d</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">dyn_</span>.<span class="ident">add</span>(<span class="ident">i</span>);
-        <span class="kw">match</span> <span class="ident">d</span>.<span class="ident">d_tag</span> {
-            <span class="ident">DT_STRTAB</span> =&gt; {
-                <span class="ident">vdso</span>.<span class="ident">symstrings</span> <span class="op">=</span> <span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>(<span class="ident">d</span>.<span class="ident">d_val</span>.<span class="ident">checked_add</span>(<span class="ident">vdso</span>.<span class="ident">load_offset</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>d = <span class="kw-2">&amp;*</span>dyn_.add(i);
+        <span class="kw">match </span>d.d_tag {
+            DT_STRTAB =&gt; {
+                vdso.symstrings = make_pointer::&lt;u8&gt;(d.d_val.checked_add(vdso.load_offset)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">DT_SYMTAB</span> =&gt; {
-                <span class="ident">vdso</span>.<span class="ident">symtab</span> <span class="op">=</span> <span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">Elf_Sym</span><span class="op">&gt;</span>(<span class="ident">d</span>.<span class="ident">d_val</span>.<span class="ident">checked_add</span>(<span class="ident">vdso</span>.<span class="ident">load_offset</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+            DT_SYMTAB =&gt; {
+                vdso.symtab = make_pointer::&lt;Elf_Sym&gt;(d.d_val.checked_add(vdso.load_offset)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">DT_HASH</span> =&gt; {
-                <span class="ident">hash</span> <span class="op">=</span> <span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>(<span class="ident">d</span>.<span class="ident">d_val</span>.<span class="ident">checked_add</span>(<span class="ident">vdso</span>.<span class="ident">load_offset</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+            DT_HASH =&gt; {
+                hash = make_pointer::&lt;u32&gt;(d.d_val.checked_add(vdso.load_offset)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">DT_VERSYM</span> =&gt; {
-                <span class="ident">vdso</span>.<span class="ident">versym</span> <span class="op">=</span> <span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span>(<span class="ident">d</span>.<span class="ident">d_val</span>.<span class="ident">checked_add</span>(<span class="ident">vdso</span>.<span class="ident">load_offset</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+            DT_VERSYM =&gt; {
+                vdso.versym = make_pointer::&lt;u16&gt;(d.d_val.checked_add(vdso.load_offset)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">DT_VERDEF</span> =&gt; {
-                <span class="ident">vdso</span>.<span class="ident">verdef</span> <span class="op">=</span> <span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">Elf_Verdef</span><span class="op">&gt;</span>(<span class="ident">d</span>.<span class="ident">d_val</span>.<span class="ident">checked_add</span>(<span class="ident">vdso</span>.<span class="ident">load_offset</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+            DT_VERDEF =&gt; {
+                vdso.verdef = make_pointer::&lt;Elf_Verdef&gt;(d.d_val.checked_add(vdso.load_offset)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">DT_SYMENT</span> =&gt; {
-                <span class="kw">if</span> <span class="ident">d</span>.<span class="ident">d_val</span> <span class="op">!</span><span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Sym</span><span class="op">&gt;</span>() {
-                    <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Failed</span>
-                }
+            DT_SYMENT =&gt; {
+                <span class="kw">if </span>d.d_val != size_of::&lt;Elf_Sym&gt;() {
+                    <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Failed
+                </span>}
             }
-            <span class="ident">DT_NULL</span> =&gt; <span class="kw">break</span>,
-            <span class="kw">_</span> =&gt; {}
+            DT_NULL =&gt; <span class="kw">break</span>,
+            <span class="kw">_ </span>=&gt; {}
         }
-        <span class="ident">i</span> <span class="op">=</span> <span class="ident">i</span>.<span class="ident">checked_add</span>(<span class="number">1</span>)<span class="question-mark">?</span>;
+        i = i.checked_add(<span class="number">1</span>)<span class="question-mark">?</span>;
     }
-    <span class="kw">if</span> <span class="ident">vdso</span>.<span class="ident">symstrings</span>.<span class="ident">is_null</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">vdso</span>.<span class="ident">symtab</span>.<span class="ident">is_null</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">hash</span>.<span class="ident">is_null</span>() {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Failed</span>
+    <span class="kw">if </span>vdso.symstrings.is_null() || vdso.symtab.is_null() || hash.is_null() {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Failed
+    </span>}
+
+    <span class="kw">if </span>vdso.verdef.is_null() {
+        vdso.versym = null();
     }
 
-    <span class="kw">if</span> <span class="ident">vdso</span>.<span class="ident">verdef</span>.<span class="ident">is_null</span>() {
-        <span class="ident">vdso</span>.<span class="ident">versym</span> <span class="op">=</span> <span class="ident">null</span>();
-    }
+    <span class="comment">// Parse the hash table header.
+    </span>vdso.nbucket = <span class="kw-2">*</span>hash.add(<span class="number">0</span>);
+    <span class="comment">//vdso.nchain = *hash.add(1);
+    </span>vdso.bucket = hash.add(<span class="number">2</span>);
+    vdso.chain = hash.add(vdso.nbucket <span class="kw">as </span>usize + <span class="number">2</span>);
 
-    <span class="comment">// Parse the hash table header.</span>
-    <span class="ident">vdso</span>.<span class="ident">nbucket</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">hash</span>.<span class="ident">add</span>(<span class="number">0</span>);
-    <span class="comment">//vdso.nchain = *hash.add(1);</span>
-    <span class="ident">vdso</span>.<span class="ident">bucket</span> <span class="op">=</span> <span class="ident">hash</span>.<span class="ident">add</span>(<span class="number">2</span>);
-    <span class="ident">vdso</span>.<span class="ident">chain</span> <span class="op">=</span> <span class="ident">hash</span>.<span class="ident">add</span>(<span class="ident">vdso</span>.<span class="ident">nbucket</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="number">2</span>);
-
-    <span class="comment">// That&#39;s all we need.</span>
-    <span class="prelude-val">Some</span>(<span class="ident">vdso</span>)
+    <span class="comment">// That&#39;s all we need.
+    </span><span class="prelude-val">Some</span>(vdso)
 }
 
-<span class="doccomment">/// Check that `base` is a valid pointer to the kernel-provided vDSO.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `base` is some value we got from a `AT_SYSINFO_EHDR` aux record somewhere,</span>
-<span class="doccomment">/// which hopefully holds the value of the kernel-provided vDSO in memory. Do</span>
-<span class="doccomment">/// a series of checks to be as sure as we can that it&#39;s safe to use.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">check_vdso_base</span><span class="op">&lt;</span><span class="lifetime">&#39;vdso</span><span class="op">&gt;</span>(<span class="ident">base</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;vdso</span> <span class="ident">Elf_Ehdr</span><span class="op">&gt;</span> {
-    <span class="comment">// In theory, we could check that we&#39;re not attempting to parse our own ELF</span>
-    <span class="comment">// image, as an additional check. However, older Linux toolchains don&#39;t</span>
-    <span class="comment">// support this, and Rust&#39;s `#[linkage = &quot;extern_weak&quot;]` isn&#39;t stable yet,</span>
-    <span class="comment">// so just disable this for now.</span>
-    <span class="comment">/*
+<span class="doccomment">/// Check that `base` is a valid pointer to the kernel-provided vDSO.
+///
+/// `base` is some value we got from a `AT_SYSINFO_EHDR` aux record somewhere,
+/// which hopefully holds the value of the kernel-provided vDSO in memory. Do
+/// a series of checks to be as sure as we can that it&#39;s safe to use.
+</span><span class="kw">unsafe fn </span>check_vdso_base&lt;<span class="lifetime">&#39;vdso</span>&gt;(base: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;vdso </span>Elf_Ehdr&gt; {
+    <span class="comment">// In theory, we could check that we&#39;re not attempting to parse our own ELF
+    // image, as an additional check. However, older Linux toolchains don&#39;t
+    // support this, and Rust&#39;s `#[linkage = &quot;extern_weak&quot;]` isn&#39;t stable yet,
+    // so just disable this for now.
+    /*
     {
         extern &quot;C&quot; {
             static __ehdr_start: c::c_void;
@@ -635,203 +630,203 @@
             return None;
         }
     }
-    */</span>
+    */
 
-    <span class="comment">// Check that the vDSO is page-aligned and appropriately mapped.</span>
-    <span class="ident">madvise</span>(
-        <span class="ident">base</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-        <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Ehdr</span><span class="op">&gt;</span>(),
-        <span class="ident">Advice::Normal</span>,
+    // Check that the vDSO is page-aligned and appropriately mapped.
+    </span>madvise(
+        base <span class="kw">as </span><span class="kw-2">*mut </span>c::c_void,
+        size_of::&lt;Elf_Ehdr&gt;(),
+        Advice::Normal,
     )
-    .<span class="ident">ok</span>()<span class="question-mark">?</span>;
+    .ok()<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">hdr</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">make_pointer</span>::<span class="op">&lt;</span><span class="ident">Elf_Ehdr</span><span class="op">&gt;</span>(<span class="ident">base</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>hdr = <span class="kw-2">&amp;*</span>make_pointer::&lt;Elf_Ehdr&gt;(base)<span class="question-mark">?</span>;
 
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_ident</span>[..<span class="ident">SELFMAG</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">ELFMAG</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Wrong ELF magic</span>
-    }
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_ident</span>[<span class="ident">EI_CLASS</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">ELFCLASS</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Wrong ELF class</span>
-    }
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_ident</span>[<span class="ident">EI_DATA</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">ELFDATA</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Wrong ELF data</span>
-    }
-    <span class="kw">if</span> <span class="op">!</span><span class="macro">matches!</span>(<span class="ident">hdr</span>.<span class="ident">e_ident</span>[<span class="ident">EI_OSABI</span>], <span class="ident">ELFOSABI_SYSV</span> <span class="op">|</span> <span class="ident">ELFOSABI_LINUX</span>) {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Unrecognized ELF OS ABI</span>
-    }
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_ident</span>[<span class="ident">EI_ABIVERSION</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">ELFABIVERSION</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Unrecognized ELF ABI version</span>
-    }
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_type</span> <span class="op">!</span><span class="op">=</span> <span class="ident">ET_DYN</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Wrong ELF type</span>
-    }
-    <span class="comment">// Verify that the `e_machine` matches the architecture we&#39;re running as.</span>
-    <span class="comment">// This helps catch cases where we&#39;re running under qemu.</span>
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_machine</span> <span class="op">!</span><span class="op">=</span> <span class="ident">EM_CURRENT</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// Wrong machine type</span>
-    }
+    <span class="kw">if </span>hdr.e_ident[..SELFMAG] != ELFMAG {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Wrong ELF magic
+    </span>}
+    <span class="kw">if </span>hdr.e_ident[EI_CLASS] != ELFCLASS {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Wrong ELF class
+    </span>}
+    <span class="kw">if </span>hdr.e_ident[EI_DATA] != ELFDATA {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Wrong ELF data
+    </span>}
+    <span class="kw">if </span>!<span class="macro">matches!</span>(hdr.e_ident[EI_OSABI], ELFOSABI_SYSV | ELFOSABI_LINUX) {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Unrecognized ELF OS ABI
+    </span>}
+    <span class="kw">if </span>hdr.e_ident[EI_ABIVERSION] != ELFABIVERSION {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Unrecognized ELF ABI version
+    </span>}
+    <span class="kw">if </span>hdr.e_type != ET_DYN {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Wrong ELF type
+    </span>}
+    <span class="comment">// Verify that the `e_machine` matches the architecture we&#39;re running as.
+    // This helps catch cases where we&#39;re running under qemu.
+    </span><span class="kw">if </span>hdr.e_machine != EM_CURRENT {
+        <span class="kw">return </span><span class="prelude-val">None</span>; <span class="comment">// Wrong machine type
+    </span>}
 
-    <span class="comment">// If ELF is extended, we&#39;ll need to adjust.</span>
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_ident</span>[<span class="ident">EI_VERSION</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">EV_CURRENT</span>
-        <span class="op">|</span><span class="op">|</span> <span class="ident">hdr</span>.<span class="ident">e_ehsize</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">!</span><span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Ehdr</span><span class="op">&gt;</span>()
-        <span class="op">|</span><span class="op">|</span> <span class="ident">hdr</span>.<span class="ident">e_phentsize</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">!</span><span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Phdr</span><span class="op">&gt;</span>()
+    <span class="comment">// If ELF is extended, we&#39;ll need to adjust.
+    </span><span class="kw">if </span>hdr.e_ident[EI_VERSION] != EV_CURRENT
+        || hdr.e_ehsize <span class="kw">as </span>usize != size_of::&lt;Elf_Ehdr&gt;()
+        || hdr.e_phentsize <span class="kw">as </span>usize != size_of::&lt;Elf_Phdr&gt;()
     {
-        <span class="kw">return</span> <span class="prelude-val">None</span>;
+        <span class="kw">return </span><span class="prelude-val">None</span>;
     }
-    <span class="comment">// We don&#39;t currently support extra-large numbers of segments.</span>
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_phnum</span> <span class="op">==</span> <span class="ident">PN_XNUM</span> {
-        <span class="kw">return</span> <span class="prelude-val">None</span>;
-    }
-
-    <span class="comment">// If `e_phoff` is zero, it&#39;s more likely that we&#39;re looking at memory that</span>
-    <span class="comment">// has been zeroed than that the kernel has somehow aliased the `Ehdr` and</span>
-    <span class="comment">// the `Phdr`.</span>
-    <span class="kw">if</span> <span class="ident">hdr</span>.<span class="ident">e_phoff</span> <span class="op">&lt;</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Elf_Ehdr</span><span class="op">&gt;</span>() {
-        <span class="kw">return</span> <span class="prelude-val">None</span>;
+    <span class="comment">// We don&#39;t currently support extra-large numbers of segments.
+    </span><span class="kw">if </span>hdr.e_phnum == PN_XNUM {
+        <span class="kw">return </span><span class="prelude-val">None</span>;
     }
 
-    <span class="comment">// Check that the vDSO is not writable, since that would indicate that this</span>
-    <span class="comment">// isn&#39;t the kernel vDSO. Here we&#39;re just using `clock_getres` just as an</span>
-    <span class="comment">// arbitrary system call which writes to a buffer and fails with `EFAULT`</span>
-    <span class="comment">// if the buffer is not writable.</span>
-    {
-        <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::arch::choose::syscall2</span>;
-        <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::conv</span>::{<span class="ident">clockid_t</span>, <span class="ident">ret</span>, <span class="ident">void_star</span>};
-        <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::reg::nr</span>;
-        <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::time::ClockId</span>;
-        <span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_clock_getres</span>;
-        <span class="kw">if</span> <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_clock_getres</span>),
-            <span class="ident">clockid_t</span>(<span class="ident">ClockId::Monotonic</span>),
-            <span class="ident">void_star</span>(<span class="ident">base</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>),
-        )) <span class="op">!</span><span class="op">=</span> <span class="prelude-val">Err</span>(<span class="ident">io::Error::FAULT</span>)
+    <span class="comment">// If `e_phoff` is zero, it&#39;s more likely that we&#39;re looking at memory that
+    // has been zeroed than that the kernel has somehow aliased the `Ehdr` and
+    // the `Phdr`.
+    </span><span class="kw">if </span>hdr.e_phoff &lt; size_of::&lt;Elf_Ehdr&gt;() {
+        <span class="kw">return </span><span class="prelude-val">None</span>;
+    }
+
+    <span class="comment">// Check that the vDSO is not writable, since that would indicate that this
+    // isn&#39;t the kernel vDSO. Here we&#39;re just using `clock_getres` just as an
+    // arbitrary system call which writes to a buffer and fails with `EFAULT`
+    // if the buffer is not writable.
+    </span>{
+        <span class="kw">use </span><span class="kw">super</span>::arch::choose::syscall2;
+        <span class="kw">use </span><span class="kw">super</span>::conv::{clockid_t, ret, void_star};
+        <span class="kw">use </span><span class="kw">super</span>::reg::nr;
+        <span class="kw">use </span><span class="kw">crate</span>::time::ClockId;
+        <span class="kw">use </span>linux_raw_sys::general::__NR_clock_getres;
+        <span class="kw">if </span>ret(syscall2(
+            nr(__NR_clock_getres),
+            clockid_t(ClockId::Monotonic),
+            void_star(base <span class="kw">as </span><span class="kw-2">*mut </span>c::c_void),
+        )) != <span class="prelude-val">Err</span>(io::Error::FAULT)
         {
-            <span class="comment">// We can&#39;t gracefully fail here because we would seem to have just</span>
-            <span class="comment">// mutated some unknown memory.</span>
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-            {
-                <span class="ident">std::process::abort</span>();
+            <span class="comment">// We can&#39;t gracefully fail here because we would seem to have just
+            // mutated some unknown memory.
+            </span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+            </span>{
+                std::process::abort();
             }
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>), <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rustc-dep-of-std&quot;</span>))]</span>
-            {
-                <span class="ident">core::intrinsics::abort</span>();
+            <span class="attribute">#[cfg(all(not(feature = <span class="string">&quot;std&quot;</span>), feature = <span class="string">&quot;rustc-dep-of-std&quot;</span>))]
+            </span>{
+                core::intrinsics::abort();
             }
         }
     }
 
-    <span class="prelude-val">Some</span>(<span class="ident">hdr</span>)
+    <span class="prelude-val">Some</span>(hdr)
 }
 
-<span class="kw">impl</span> <span class="ident">Vdso</span> {
-    <span class="doccomment">/// Parse the vDSO.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns None if the vDSO can&#39;t be located or if it doesn&#39;t conform</span>
-    <span class="doccomment">/// to our expectations.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">init_from_auxv</span>()
+<span class="kw">impl </span>Vdso {
+    <span class="doccomment">/// Parse the vDSO.
+    ///
+    /// Returns None if the vDSO can&#39;t be located or if it doesn&#39;t conform
+    /// to our expectations.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new() -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+        init_from_auxv()
     }
 
-    <span class="doccomment">/// Check the version for a symbol.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The raw pointers inside `self` must be valid.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">match_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">ver</span>: <span class="ident">u16</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">hash</span>: <span class="ident">u32</span>) -&gt; <span class="ident">bool</span> {
-        <span class="comment">// This is a helper function to check if the version indexed by</span>
-        <span class="comment">// ver matches name (which hashes to hash).</span>
-        <span class="comment">//</span>
-        <span class="comment">// The version definition table is a mess, and I don&#39;t know how</span>
-        <span class="comment">// to do this in better than linear time without allocating memory</span>
-        <span class="comment">// to build an index. I also don&#39;t know why the table has</span>
-        <span class="comment">// variable size entries in the first place.</span>
-        <span class="comment">//</span>
-        <span class="comment">// For added fun, I can&#39;t find a comprehensible specification of how</span>
-        <span class="comment">// to parse all the weird flags in the table.</span>
-        <span class="comment">//</span>
-        <span class="comment">// So I just parse the whole table every time.</span>
+    <span class="doccomment">/// Check the version for a symbol.
+    ///
+    /// # Safety
+    ///
+    /// The raw pointers inside `self` must be valid.
+    </span><span class="kw">unsafe fn </span>match_version(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>ver: u16, name: <span class="kw-2">&amp;</span>ZStr, hash: u32) -&gt; bool {
+        <span class="comment">// This is a helper function to check if the version indexed by
+        // ver matches name (which hashes to hash).
+        //
+        // The version definition table is a mess, and I don&#39;t know how
+        // to do this in better than linear time without allocating memory
+        // to build an index. I also don&#39;t know why the table has
+        // variable size entries in the first place.
+        //
+        // For added fun, I can&#39;t find a comprehensible specification of how
+        // to parse all the weird flags in the table.
+        //
+        // So I just parse the whole table every time.
 
-        <span class="comment">// First step: find the version definition</span>
-        <span class="ident">ver</span> <span class="op">&amp;=</span> <span class="number">0x7fff</span>; <span class="comment">// Apparently bit 15 means &quot;hidden&quot;</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">def</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">verdef</span>;
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> (<span class="kw-2">*</span><span class="ident">def</span>).<span class="ident">vd_version</span> <span class="op">!</span><span class="op">=</span> <span class="ident">VER_DEF_CURRENT</span> {
-                <span class="kw">return</span> <span class="bool-val">false</span>; <span class="comment">// Failed</span>
-            }
+        // First step: find the version definition
+        </span>ver &amp;= <span class="number">0x7fff</span>; <span class="comment">// Apparently bit 15 means &quot;hidden&quot;
+        </span><span class="kw">let </span><span class="kw-2">mut </span>def = <span class="self">self</span>.verdef;
+        <span class="kw">loop </span>{
+            <span class="kw">if </span>(<span class="kw-2">*</span>def).vd_version != VER_DEF_CURRENT {
+                <span class="kw">return </span><span class="bool-val">false</span>; <span class="comment">// Failed
+            </span>}
 
-            <span class="kw">if</span> ((<span class="kw-2">*</span><span class="ident">def</span>).<span class="ident">vd_flags</span> <span class="op">&amp;</span> <span class="ident">VER_FLG_BASE</span>) <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> ((<span class="kw-2">*</span><span class="ident">def</span>).<span class="ident">vd_ndx</span> <span class="op">&amp;</span> <span class="number">0x7fff</span>) <span class="op">==</span> <span class="ident">ver</span> {
+            <span class="kw">if </span>((<span class="kw-2">*</span>def).vd_flags &amp; VER_FLG_BASE) == <span class="number">0 </span>&amp;&amp; ((<span class="kw-2">*</span>def).vd_ndx &amp; <span class="number">0x7fff</span>) == ver {
                 <span class="kw">break</span>;
             }
 
-            <span class="kw">if</span> (<span class="kw-2">*</span><span class="ident">def</span>).<span class="ident">vd_next</span> <span class="op">==</span> <span class="number">0</span> {
-                <span class="kw">return</span> <span class="bool-val">false</span>; <span class="comment">// No definition.</span>
-            }
+            <span class="kw">if </span>(<span class="kw-2">*</span>def).vd_next == <span class="number">0 </span>{
+                <span class="kw">return </span><span class="bool-val">false</span>; <span class="comment">// No definition.
+            </span>}
 
-            <span class="ident">def</span> <span class="op">=</span> <span class="ident">def</span>
-                .<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>()
-                .<span class="ident">add</span>((<span class="kw-2">*</span><span class="ident">def</span>).<span class="ident">vd_next</span> <span class="kw">as</span> <span class="ident">usize</span>)
-                .<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">Elf_Verdef</span><span class="op">&gt;</span>();
+            def = def
+                .cast::&lt;u8&gt;()
+                .add((<span class="kw-2">*</span>def).vd_next <span class="kw">as </span>usize)
+                .cast::&lt;Elf_Verdef&gt;();
         }
 
-        <span class="comment">// Now figure out whether it matches.</span>
-        <span class="kw">let</span> <span class="ident">aux</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">def</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>())
-            .<span class="ident">add</span>((<span class="kw-2">*</span><span class="ident">def</span>).<span class="ident">vd_aux</span> <span class="kw">as</span> <span class="ident">usize</span>)
-            .<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">Elf_Verdaux</span><span class="op">&gt;</span>();
-        (<span class="kw-2">*</span><span class="ident">def</span>).<span class="ident">vd_hash</span> <span class="op">==</span> <span class="ident">hash</span>
-            <span class="op">&amp;&amp;</span> (<span class="ident">name</span> <span class="op">==</span> <span class="ident">ZStr::from_ptr</span>(<span class="self">self</span>.<span class="ident">symstrings</span>.<span class="ident">add</span>(<span class="ident">aux</span>.<span class="ident">vda_name</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">cast</span>()))
+        <span class="comment">// Now figure out whether it matches.
+        </span><span class="kw">let </span>aux = <span class="kw-2">&amp;*</span>(def.cast::&lt;u8&gt;())
+            .add((<span class="kw-2">*</span>def).vd_aux <span class="kw">as </span>usize)
+            .cast::&lt;Elf_Verdaux&gt;();
+        (<span class="kw-2">*</span>def).vd_hash == hash
+            &amp;&amp; (name == ZStr::from_ptr(<span class="self">self</span>.symstrings.add(aux.vda_name <span class="kw">as </span>usize).cast()))
     }
 
-    <span class="doccomment">/// Look up a symbol in the vDSO.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">sym</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">version</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="kw-2">*const</span> <span class="ident">c::c_void</span> {
-        <span class="kw">let</span> <span class="ident">ver_hash</span> <span class="op">=</span> <span class="ident">elf_hash</span>(<span class="ident">version</span>);
-        <span class="kw">let</span> <span class="ident">name_hash</span> <span class="op">=</span> <span class="ident">elf_hash</span>(<span class="ident">name</span>);
+    <span class="doccomment">/// Look up a symbol in the vDSO.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>sym(<span class="kw-2">&amp;</span><span class="self">self</span>, version: <span class="kw-2">&amp;</span>ZStr, name: <span class="kw-2">&amp;</span>ZStr) -&gt; <span class="kw-2">*const </span>c::c_void {
+        <span class="kw">let </span>ver_hash = elf_hash(version);
+        <span class="kw">let </span>name_hash = elf_hash(name);
 
-        <span class="comment">// Safety: The pointers in `self` must be valid.</span>
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">bucket</span>.<span class="ident">add</span>((<span class="ident">name_hash</span> <span class="op">%</span> <span class="self">self</span>.<span class="ident">nbucket</span>) <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="comment">// Safety: The pointers in `self` must be valid.
+        </span><span class="kw">unsafe </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>chain = <span class="kw-2">*</span><span class="self">self</span>.bucket.add((name_hash % <span class="self">self</span>.nbucket) <span class="kw">as </span>usize);
 
-            <span class="kw">while</span> <span class="ident">chain</span> <span class="op">!</span><span class="op">=</span> <span class="ident">STN_UNDEF</span> {
-                <span class="kw">let</span> <span class="ident">sym</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">symtab</span>.<span class="ident">add</span>(<span class="ident">chain</span> <span class="kw">as</span> <span class="ident">usize</span>);
+            <span class="kw">while </span>chain != STN_UNDEF {
+                <span class="kw">let </span>sym = <span class="kw-2">&amp;*</span><span class="self">self</span>.symtab.add(chain <span class="kw">as </span>usize);
 
-                <span class="comment">// Check for a defined global or weak function w/ right name.</span>
-                <span class="comment">//</span>
-                <span class="comment">// The reference parser in Linux&#39;s parse_vdso.c requires</span>
-                <span class="comment">// symbols to have type `STT_FUNC`, but on powerpc64, the vDSO</span>
-                <span class="comment">// uses `STT_NOTYPE`, so allow that too.</span>
-                <span class="kw">if</span> (<span class="ident">ELF_ST_TYPE</span>(<span class="ident">sym</span>.<span class="ident">st_info</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">STT_FUNC</span> <span class="op">&amp;&amp;</span>
-                        <span class="ident">ELF_ST_TYPE</span>(<span class="ident">sym</span>.<span class="ident">st_info</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">STT_NOTYPE</span>)
-                    <span class="op">|</span><span class="op">|</span> (<span class="ident">ELF_ST_BIND</span>(<span class="ident">sym</span>.<span class="ident">st_info</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">STB_GLOBAL</span>
-                        <span class="op">&amp;&amp;</span> <span class="ident">ELF_ST_BIND</span>(<span class="ident">sym</span>.<span class="ident">st_info</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">STB_WEAK</span>)
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">sym</span>.<span class="ident">st_shndx</span> <span class="op">==</span> <span class="ident">SHN_UNDEF</span>
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">sym</span>.<span class="ident">st_shndx</span> <span class="op">==</span> <span class="ident">SHN_ABS</span>
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">ELF_ST_VISIBILITY</span>(<span class="ident">sym</span>.<span class="ident">st_other</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">STV_DEFAULT</span>
-                    <span class="op">|</span><span class="op">|</span> (<span class="ident">name</span> <span class="op">!</span><span class="op">=</span> <span class="ident">ZStr::from_ptr</span>(<span class="self">self</span>.<span class="ident">symstrings</span>.<span class="ident">add</span>(<span class="ident">sym</span>.<span class="ident">st_name</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">cast</span>()))
-                    <span class="comment">// Check symbol version.</span>
-                    <span class="op">|</span><span class="op">|</span> (<span class="op">!</span><span class="self">self</span>.<span class="ident">versym</span>.<span class="ident">is_null</span>()
-                        <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">match_version</span>(<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">versym</span>.<span class="ident">add</span>(<span class="ident">chain</span> <span class="kw">as</span> <span class="ident">usize</span>), <span class="ident">version</span>, <span class="ident">ver_hash</span>))
+                <span class="comment">// Check for a defined global or weak function w/ right name.
+                //
+                // The reference parser in Linux&#39;s parse_vdso.c requires
+                // symbols to have type `STT_FUNC`, but on powerpc64, the vDSO
+                // uses `STT_NOTYPE`, so allow that too.
+                </span><span class="kw">if </span>(ELF_ST_TYPE(sym.st_info) != STT_FUNC &amp;&amp;
+                        ELF_ST_TYPE(sym.st_info) != STT_NOTYPE)
+                    || (ELF_ST_BIND(sym.st_info) != STB_GLOBAL
+                        &amp;&amp; ELF_ST_BIND(sym.st_info) != STB_WEAK)
+                    || sym.st_shndx == SHN_UNDEF
+                    || sym.st_shndx == SHN_ABS
+                    || ELF_ST_VISIBILITY(sym.st_other) != STV_DEFAULT
+                    || (name != ZStr::from_ptr(<span class="self">self</span>.symstrings.add(sym.st_name <span class="kw">as </span>usize).cast()))
+                    <span class="comment">// Check symbol version.
+                    </span>|| (!<span class="self">self</span>.versym.is_null()
+                        &amp;&amp; !<span class="self">self</span>.match_version(<span class="kw-2">*</span><span class="self">self</span>.versym.add(chain <span class="kw">as </span>usize), version, ver_hash))
                 {
-                    <span class="ident">chain</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">add</span>(<span class="ident">chain</span> <span class="kw">as</span> <span class="ident">usize</span>);
+                    chain = <span class="kw-2">*</span><span class="self">self</span>.chain.add(chain <span class="kw">as </span>usize);
                     <span class="kw">continue</span>;
                 }
 
-                <span class="kw">let</span> <span class="ident">sum</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">load_offset</span>.<span class="ident">checked_add</span>(<span class="ident">sym</span>.<span class="ident">st_value</span>).<span class="ident">unwrap</span>();
-                <span class="macro">assert!</span>(<span class="ident">sum</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">load_addr</span> <span class="op">&amp;&amp;</span> <span class="ident">sum</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">load_end</span>);
-                <span class="kw">return</span> <span class="ident">sum</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">c::c_void</span>;
+                <span class="kw">let </span>sum = <span class="self">self</span>.load_offset.checked_add(sym.st_value).unwrap();
+                <span class="macro">assert!</span>(sum &gt;= <span class="self">self</span>.load_addr &amp;&amp; sum &lt;= <span class="self">self</span>.load_end);
+                <span class="kw">return </span>sum <span class="kw">as </span><span class="kw-2">*const </span>c::c_void;
             }
         }
 
-        <span class="ident">null</span>()
+        null()
     }
 }
 
-<span class="comment">// Find the `AT_SYSINFO_EHDR` in auxv records in memory. We have our own code</span>
-<span class="comment">// for reading the auxv records in memory, so we don&#39;t currently use this.</span>
-<span class="comment">//</span>
-<span class="comment">// # Safety</span>
-<span class="comment">//</span>
-<span class="comment">// `elf_auxv` must point to a valid array of AUXV records terminated by an</span>
-<span class="comment">// `AT_NULL` record.</span>
-<span class="comment">/*
+<span class="comment">// Find the `AT_SYSINFO_EHDR` in auxv records in memory. We have our own code
+// for reading the auxv records in memory, so we don&#39;t currently use this.
+//
+// # Safety
+//
+// `elf_auxv` must point to a valid array of AUXV records terminated by an
+// `AT_NULL` record.
+/*
 unsafe fn init_from_auxv(elf_auxv: *const Elf_auxv_t) -&gt; Option&lt;Vdso&gt; {
     let mut i = 0;
     while (*elf_auxv.add(i)).a_type != AT_NULL {
@@ -843,14 +838,13 @@ unsafe fn init_from_auxv(elf_auxv: *const Elf_auxv_t) -&gt; Option&lt;Vdso&gt; {
 
     None
 }
-*/</span>
+*/
 
-<span class="comment">// Find the vDSO image by following the `AT_SYSINFO_EHDR` auxv record pointer.</span>
-<span class="kw">fn</span> <span class="ident">init_from_auxv</span>() -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vdso</span><span class="op">&gt;</span> {
-    <span class="comment">// Safety: `sysinfo_ehdr` does extensive checks to ensure that the value</span>
-    <span class="comment">// we get really is an `AT_SYSINFO_EHDR` value from the kernel.</span>
-    <span class="kw">unsafe</span> { <span class="ident">init_from_sysinfo_ehdr</span>(<span class="ident"><span class="kw">super</span>::process::sysinfo_ehdr</span>()) }
+// Find the vDSO image by following the `AT_SYSINFO_EHDR` auxv record pointer.
+</span><span class="kw">fn </span>init_from_auxv() -&gt; <span class="prelude-ty">Option</span>&lt;Vdso&gt; {
+    <span class="comment">// Safety: `sysinfo_ehdr` does extensive checks to ensure that the value
+    // we get really is an `AT_SYSINFO_EHDR` value from the kernel.
+    </span><span class="kw">unsafe </span>{ init_from_sysinfo_ehdr(<span class="kw">super</span>::process::sysinfo_ehdr()) }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

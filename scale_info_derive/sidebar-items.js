@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["TypeInfo",""]]});
+window.SIDEBAR_ITEMS = {"derive":[["TypeInfo",""]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/finality-grandpa-0.16.0/src/vote_graph.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>vote_graph.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../finality_grandpa/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../finality_grandpa/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../finality_grandpa/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/finality-grandpa-0.16.0/src/vote_graph.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>vote_graph.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../finality_grandpa/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -856,261 +851,261 @@
 <span id="851">851</span>
 <span id="852">852</span>
 <span id="853">853</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2018-2019 Parity Technologies (UK) Ltd</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">//     http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2018-2019 Parity Technologies (UK) Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! Maintains the vote-graph of the blockchain.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See docs on `VoteGraph` for more information.</span>
+</span><span class="doccomment">//! Maintains the vote-graph of the blockchain.
+//!
+//! See docs on `VoteGraph` for more information.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::std</span>::{
-	<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>},
-	<span class="ident">fmt::Debug</span>,
-	<span class="ident">ops::AddAssign</span>,
-	<span class="ident">vec::Vec</span>,
+</span><span class="kw">use </span><span class="kw">crate</span>::std::{
+	collections::{BTreeMap, BTreeSet},
+	fmt::Debug,
+	ops::AddAssign,
+	vec::Vec,
 };
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">BlockNumberOps</span>, <span class="ident">Chain</span>, <span class="ident">Error</span>};
+<span class="kw">use super</span>::{BlockNumberOps, Chain, Error};
 
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">test</span>), <span class="ident">derive</span>(<span class="ident">Debug</span>))]</span>
-<span class="kw">struct</span> <span class="ident">Entry</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="ident">number</span>: <span class="ident">N</span>,
-	<span class="comment">// ancestor hashes in reverse order, e.g. ancestors[0] is the parent</span>
-	<span class="comment">// and the last entry is the hash of the parent vote-node.</span>
-	<span class="ident">ancestors</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
-	<span class="ident">descendents</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="comment">// descendent vote-nodes</span>
-	<span class="ident">cumulative_vote</span>: <span class="ident">V</span>,
+<span class="attribute">#[cfg_attr(any(feature = <span class="string">&quot;std&quot;</span>, test), derive(Debug))]
+</span><span class="kw">struct </span>Entry&lt;H, N, V&gt; {
+	number: N,
+	<span class="comment">// ancestor hashes in reverse order, e.g. ancestors[0] is the parent
+	// and the last entry is the hash of the parent vote-node.
+	</span>ancestors: Vec&lt;H&gt;,
+	descendents: Vec&lt;H&gt;, <span class="comment">// descendent vote-nodes
+	</span>cumulative_vote: V,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Clone</span>, <span class="ident">N</span>: <span class="ident">BlockNumberOps</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">Entry</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="comment">// whether the given hash, number pair is a direct ancestor of this node.</span>
-	<span class="comment">// `None` signifies that the graph must be traversed further back.</span>
-	<span class="kw">fn</span> <span class="ident">in_direct_ancestry</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">H</span>, <span class="ident">number</span>: <span class="ident">N</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">ancestor_block</span>(<span class="ident">number</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span> <span class="op">==</span> <span class="ident">hash</span>)
+<span class="kw">impl</span>&lt;H: Ord + PartialEq + Clone, N: BlockNumberOps, V&gt; Entry&lt;H, N, V&gt; {
+	<span class="comment">// whether the given hash, number pair is a direct ancestor of this node.
+	// `None` signifies that the graph must be traversed further back.
+	</span><span class="kw">fn </span>in_direct_ancestry(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>H, number: N) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+		<span class="self">self</span>.ancestor_block(number).map(|h| h == hash)
 	}
 
-	<span class="comment">// Get ancestor block by number. Returns `None` if there is no block</span>
-	<span class="comment">// by that number in the direct ancestry.</span>
-	<span class="kw">fn</span> <span class="ident">ancestor_block</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">number</span>: <span class="ident">N</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">H</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">number</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">number</span> {
-			<span class="kw">return</span> <span class="prelude-val">None</span>
-		}
-		<span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">number</span> <span class="op">-</span> <span class="ident">number</span> <span class="op">-</span> <span class="ident">N::one</span>();
+	<span class="comment">// Get ancestor block by number. Returns `None` if there is no block
+	// by that number in the direct ancestry.
+	</span><span class="kw">fn </span>ancestor_block(<span class="kw-2">&amp;</span><span class="self">self</span>, number: N) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>H&gt; {
+		<span class="kw">if </span>number &gt;= <span class="self">self</span>.number {
+			<span class="kw">return </span><span class="prelude-val">None
+		</span>}
+		<span class="kw">let </span>offset = <span class="self">self</span>.number - number - N::one();
 
-		<span class="self">self</span>.<span class="ident">ancestors</span>.<span class="ident">get</span>(<span class="ident">offset</span>.<span class="ident">as_</span>())
+		<span class="self">self</span>.ancestors.get(offset.as_())
 	}
 
-	<span class="comment">// get ancestor vote-node.</span>
-	<span class="kw">fn</span> <span class="ident">ancestor_node</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">ancestors</span>.<span class="ident">last</span>().<span class="ident">cloned</span>()
-	}
-}
-
-<span class="comment">// a subchain of blocks by hash.</span>
-<span class="kw">struct</span> <span class="ident">Subchain</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-	<span class="ident">hashes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="comment">// forward order.</span>
-	<span class="ident">best_number</span>: <span class="ident">N</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Clone</span>, <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">BlockNumberOps</span><span class="op">&gt;</span> <span class="ident">Subchain</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">best</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">H</span>, <span class="ident">N</span>)<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">hashes</span>.<span class="ident">last</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> (<span class="ident">x</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">best_number</span>))
+	<span class="comment">// get ancestor vote-node.
+	</span><span class="kw">fn </span>ancestor_node(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;H&gt; {
+		<span class="self">self</span>.ancestors.last().cloned()
 	}
 }
 
-<span class="doccomment">/// Maintains a DAG of blocks in the chain which have votes attached to them,</span>
-<span class="doccomment">/// and vote data which is accumulated along edges.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VoteGraph</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Eq</span>, <span class="ident">N</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="ident">entries</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Entry</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">heads</span>: <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
-	<span class="ident">base</span>: <span class="ident">H</span>,
-	<span class="ident">base_number</span>: <span class="ident">N</span>,
+<span class="comment">// a subchain of blocks by hash.
+</span><span class="kw">struct </span>Subchain&lt;H, N&gt; {
+	hashes: Vec&lt;H&gt;, <span class="comment">// forward order.
+	</span>best_number: N,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">VoteGraph</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">H</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Debug</span>,
-	<span class="ident">V</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">AddAssign</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">V</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Debug</span>,
-	<span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">BlockNumberOps</span>,
+<span class="kw">impl</span>&lt;H: Clone, N: Copy + BlockNumberOps&gt; Subchain&lt;H, N&gt; {
+	<span class="kw">fn </span>best(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(H, N)&gt; {
+		<span class="self">self</span>.hashes.last().map(|x| (x.clone(), <span class="self">self</span>.best_number))
+	}
+}
+
+<span class="doccomment">/// Maintains a DAG of blocks in the chain which have votes attached to them,
+/// and vote data which is accumulated along edges.
+</span><span class="kw">pub struct </span>VoteGraph&lt;H: Ord + Eq, N, V&gt; {
+	entries: BTreeMap&lt;H, Entry&lt;H, N, V&gt;&gt;,
+	heads: BTreeSet&lt;H&gt;,
+	base: H,
+	base_number: N,
+}
+
+<span class="kw">impl</span>&lt;H, N, V&gt; VoteGraph&lt;H, N, V&gt;
+<span class="kw">where
+	</span>H: Eq + Clone + Ord + Debug,
+	V: <span class="kw">for</span>&lt;<span class="lifetime">&#39;a</span>&gt; AddAssign&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V&gt; + Default + Clone + Debug,
+	N: Copy + Debug + BlockNumberOps,
 {
-	<span class="doccomment">/// Create a new `VoteGraph` with base node as given.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">base_hash</span>: <span class="ident">H</span>, <span class="ident">base_number</span>: <span class="ident">N</span>, <span class="ident">base_node</span>: <span class="ident">V</span>) -&gt; <span class="self">Self</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">entries</span> <span class="op">=</span> <span class="ident">BTreeMap::new</span>();
-		<span class="ident">entries</span>.<span class="ident">insert</span>(
-			<span class="ident">base_hash</span>.<span class="ident">clone</span>(),
-			<span class="ident">Entry</span> {
-				<span class="ident">number</span>: <span class="ident">base_number</span>,
-				<span class="ident">ancestors</span>: <span class="ident">Vec::new</span>(),
-				<span class="ident">descendents</span>: <span class="ident">Vec::new</span>(),
-				<span class="ident">cumulative_vote</span>: <span class="ident">base_node</span>,
+	<span class="doccomment">/// Create a new `VoteGraph` with base node as given.
+	</span><span class="kw">pub fn </span>new(base_hash: H, base_number: N, base_node: V) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span><span class="kw-2">mut </span>entries = BTreeMap::new();
+		entries.insert(
+			base_hash.clone(),
+			Entry {
+				number: base_number,
+				ancestors: Vec::new(),
+				descendents: Vec::new(),
+				cumulative_vote: base_node,
 			},
 		);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">heads</span> <span class="op">=</span> <span class="ident">BTreeSet::new</span>();
-		<span class="ident">heads</span>.<span class="ident">insert</span>(<span class="ident">base_hash</span>.<span class="ident">clone</span>());
+		<span class="kw">let </span><span class="kw-2">mut </span>heads = BTreeSet::new();
+		heads.insert(base_hash.clone());
 
-		<span class="ident">VoteGraph</span> { <span class="ident">entries</span>, <span class="ident">heads</span>, <span class="ident">base</span>: <span class="ident">base_hash</span>, <span class="ident">base_number</span> }
+		VoteGraph { entries, heads, base: base_hash, base_number }
 	}
 
-	<span class="doccomment">/// Get the base block.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">base</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">H</span>, <span class="ident">N</span>) {
-		(<span class="self">self</span>.<span class="ident">base</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">base_number</span>)
+	<span class="doccomment">/// Get the base block.
+	</span><span class="kw">pub fn </span>base(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (H, N) {
+		(<span class="self">self</span>.base.clone(), <span class="self">self</span>.base_number)
 	}
 
-	<span class="doccomment">/// Adjust the base of the graph. The new base must be an ancestor of the</span>
-	<span class="doccomment">/// old base.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Provide an ancestry proof from the old base to the new. The proof</span>
-	<span class="doccomment">/// should be in reverse order from the old base&#39;s parent.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">adjust_base</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ancestry_proof</span>: <span class="kw-2">&amp;</span>[<span class="ident">H</span>]) {
-		<span class="kw">let</span> <span class="ident">new_hash</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ancestry_proof</span>.<span class="ident">last</span>() {
-			<span class="prelude-val">None</span> =&gt; <span class="kw">return</span>, <span class="comment">// empty -- nothing to do.</span>
-			<span class="prelude-val">Some</span>(<span class="ident">h</span>) =&gt; <span class="ident">h</span>,
+	<span class="doccomment">/// Adjust the base of the graph. The new base must be an ancestor of the
+	/// old base.
+	///
+	/// Provide an ancestry proof from the old base to the new. The proof
+	/// should be in reverse order from the old base&#39;s parent.
+	</span><span class="kw">pub fn </span>adjust_base(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ancestry_proof: <span class="kw-2">&amp;</span>[H]) {
+		<span class="kw">let </span>new_hash = <span class="kw">match </span>ancestry_proof.last() {
+			<span class="prelude-val">None </span>=&gt; <span class="kw">return</span>, <span class="comment">// empty -- nothing to do.
+			</span><span class="prelude-val">Some</span>(h) =&gt; h,
 		};
 
-		<span class="comment">// not a valid ancestry proof. TODO: error?</span>
-		<span class="kw">if</span> <span class="ident">ancestry_proof</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">base_number</span>.<span class="ident">as_</span>() {
-			<span class="kw">return</span>
-		}
+		<span class="comment">// not a valid ancestry proof. TODO: error?
+		</span><span class="kw">if </span>ancestry_proof.len() &gt; <span class="self">self</span>.base_number.as_() {
+			<span class="kw">return
+		</span>}
 
-		<span class="comment">// hack because we can&#39;t convert usize -&gt; N, only vice-versa.</span>
-		<span class="comment">// hopefully LLVM can optimize.</span>
-		<span class="comment">//</span>
-		<span class="comment">// TODO: Add TryFrom to `BlockNumberOps`.</span>
-		<span class="kw">let</span> <span class="ident">new_number</span> <span class="op">=</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_number</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">base_number</span>;
-			<span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">ancestry_proof</span>.<span class="ident">len</span>() {
-				<span class="ident">new_number</span> <span class="op">=</span> <span class="ident">new_number</span> <span class="op">-</span> <span class="ident">N::one</span>();
+		<span class="comment">// hack because we can&#39;t convert usize -&gt; N, only vice-versa.
+		// hopefully LLVM can optimize.
+		//
+		// TODO: Add TryFrom to `BlockNumberOps`.
+		</span><span class="kw">let </span>new_number = {
+			<span class="kw">let </span><span class="kw-2">mut </span>new_number = <span class="self">self</span>.base_number;
+			<span class="kw">for _ in </span><span class="number">0</span>..ancestry_proof.len() {
+				new_number = new_number - N::one();
 			}
-			<span class="ident">new_number</span>
+			new_number
 		};
 
-		<span class="kw">let</span> <span class="ident">entry</span> <span class="op">=</span> {
-			<span class="kw">let</span> <span class="ident">old_entry</span> <span class="op">=</span>
-				<span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">base</span>).<span class="ident">expect</span>(<span class="string">&quot;base hash entry always exists; qed&quot;</span>);
+		<span class="kw">let </span>entry = {
+			<span class="kw">let </span>old_entry =
+				<span class="self">self</span>.entries.get_mut(<span class="kw-2">&amp;</span><span class="self">self</span>.base).expect(<span class="string">&quot;base hash entry always exists; qed&quot;</span>);
 
-			<span class="ident">old_entry</span>.<span class="ident">ancestors</span>.<span class="ident">extend</span>(<span class="ident">ancestry_proof</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>());
+			old_entry.ancestors.extend(ancestry_proof.iter().cloned());
 
-			<span class="ident">Entry</span> {
-				<span class="ident">number</span>: <span class="ident">new_number</span>,
-				<span class="ident">ancestors</span>: <span class="ident">Vec::new</span>(),
-				<span class="ident">descendents</span>: <span class="macro">vec!</span>[<span class="self">self</span>.<span class="ident">base</span>.<span class="ident">clone</span>()],
-				<span class="ident">cumulative_vote</span>: <span class="ident">old_entry</span>.<span class="ident">cumulative_vote</span>.<span class="ident">clone</span>(),
+			Entry {
+				number: new_number,
+				ancestors: Vec::new(),
+				descendents: <span class="macro">vec!</span>[<span class="self">self</span>.base.clone()],
+				cumulative_vote: old_entry.cumulative_vote.clone(),
 			}
 		};
 
-		<span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">insert</span>(<span class="ident">new_hash</span>.<span class="ident">clone</span>(), <span class="ident">entry</span>);
-		<span class="self">self</span>.<span class="ident">base</span> <span class="op">=</span> <span class="ident">new_hash</span>.<span class="ident">clone</span>();
-		<span class="self">self</span>.<span class="ident">base_number</span> <span class="op">=</span> <span class="ident">new_number</span>;
+		<span class="self">self</span>.entries.insert(new_hash.clone(), entry);
+		<span class="self">self</span>.base = new_hash.clone();
+		<span class="self">self</span>.base_number = new_number;
 	}
 
-	<span class="doccomment">/// Insert a vote with given value into the graph at given hash and number.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">Chain</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span>, <span class="ident">W</span><span class="op">&gt;</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">hash</span>: <span class="ident">H</span>,
-		<span class="ident">number</span>: <span class="ident">N</span>,
-		<span class="ident">vote</span>: <span class="ident">W</span>,
-		<span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="ident">C</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">V</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">AddAssign</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">W</span><span class="op">&gt;</span>,
+	<span class="doccomment">/// Insert a vote with given value into the graph at given hash and number.
+	</span><span class="kw">pub fn </span>insert&lt;C: Chain&lt;H, N&gt;, W&gt;(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		hash: H,
+		number: N,
+		vote: W,
+		chain: <span class="kw-2">&amp;</span>C,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;
+	<span class="kw">where
+		</span>V: <span class="kw">for</span>&lt;<span class="lifetime">&#39;a</span>&gt; AddAssign&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>W&gt;,
 	{
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">containing</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">find_containing_nodes</span>(<span class="ident">hash</span>.<span class="ident">clone</span>(), <span class="ident">number</span>) {
-			<span class="kw">if</span> <span class="ident">containing</span>.<span class="ident">is_empty</span>() {
-				<span class="self">self</span>.<span class="ident">append</span>(<span class="ident">hash</span>.<span class="ident">clone</span>(), <span class="ident">number</span>, <span class="ident">chain</span>)<span class="question-mark">?</span>;
-			} <span class="kw">else</span> {
-				<span class="self">self</span>.<span class="ident">introduce_branch</span>(<span class="ident">containing</span>, <span class="ident">hash</span>.<span class="ident">clone</span>(), <span class="ident">number</span>);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(containing) = <span class="self">self</span>.find_containing_nodes(hash.clone(), number) {
+			<span class="kw">if </span>containing.is_empty() {
+				<span class="self">self</span>.append(hash.clone(), number, chain)<span class="question-mark">?</span>;
+			} <span class="kw">else </span>{
+				<span class="self">self</span>.introduce_branch(containing, hash.clone(), number);
 			}
-		} <span class="kw">else</span> {
-			<span class="comment">// this entry already exists</span>
-		}
+		} <span class="kw">else </span>{
+			<span class="comment">// this entry already exists
+		</span>}
 
-		<span class="comment">// update cumulative vote data.</span>
-		<span class="comment">// NOTE: below this point, there always exists a node with the given hash and number.</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inspecting_hash</span> <span class="op">=</span> <span class="ident">hash</span>;
-		<span class="kw">loop</span> {
-			<span class="kw">let</span> <span class="ident">active_entry</span> <span class="op">=</span> <span class="self">self</span>
-				.<span class="ident">entries</span>
-				.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">inspecting_hash</span>)
-				.<span class="ident">expect</span>(<span class="string">&quot;vote-node and its ancestry always exist after initial phase; qed&quot;</span>);
+		<span class="comment">// update cumulative vote data.
+		// NOTE: below this point, there always exists a node with the given hash and number.
+		</span><span class="kw">let </span><span class="kw-2">mut </span>inspecting_hash = hash;
+		<span class="kw">loop </span>{
+			<span class="kw">let </span>active_entry = <span class="self">self
+				</span>.entries
+				.get_mut(<span class="kw-2">&amp;</span>inspecting_hash)
+				.expect(<span class="string">&quot;vote-node and its ancestry always exist after initial phase; qed&quot;</span>);
 
-			<span class="ident">active_entry</span>.<span class="ident">cumulative_vote</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">vote</span>;
+			active_entry.cumulative_vote += <span class="kw-2">&amp;</span>vote;
 
-			<span class="kw">match</span> <span class="ident">active_entry</span>.<span class="ident">ancestor_node</span>() {
-				<span class="prelude-val">Some</span>(<span class="ident">parent</span>) =&gt; <span class="ident">inspecting_hash</span> <span class="op">=</span> <span class="ident">parent</span>,
-				<span class="prelude-val">None</span> =&gt; <span class="kw">break</span>,
+			<span class="kw">match </span>active_entry.ancestor_node() {
+				<span class="prelude-val">Some</span>(parent) =&gt; inspecting_hash = parent,
+				<span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 			}
 		}
 
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Find the block with the highest block number in the chain with the given head</span>
-	<span class="doccomment">/// which fulfills the given condition.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns `None` if the given head is not in the graph or no node fulfills the</span>
-	<span class="doccomment">/// given condition.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_ancestor</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">hash</span>: <span class="ident">H</span>, <span class="kw-2">mut</span> <span class="ident">number</span>: <span class="ident">N</span>, <span class="ident">condition</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">H</span>, <span class="ident">N</span>)<span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">bool</span>,
+	<span class="doccomment">/// Find the block with the highest block number in the chain with the given head
+	/// which fulfills the given condition.
+	///
+	/// Returns `None` if the given head is not in the graph or no node fulfills the
+	/// given condition.
+	</span><span class="kw">pub fn </span>find_ancestor&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>hash: H, <span class="kw-2">mut </span>number: N, condition: F) -&gt; <span class="prelude-ty">Option</span>&lt;(H, N)&gt;
+	<span class="kw">where
+		</span>F: Fn(<span class="kw-2">&amp;</span>V) -&gt; bool,
 	{
-		<span class="kw">loop</span> {
-			<span class="kw">match</span> <span class="self">self</span>.<span class="ident">find_containing_nodes</span>(<span class="ident">hash</span>.<span class="ident">clone</span>(), <span class="ident">number</span>) {
-				<span class="prelude-val">None</span> =&gt; {
-					<span class="comment">// The block has a vote-node in the graph.</span>
-					<span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span>
-						<span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>).<span class="ident">expect</span>(<span class="string">&quot;by defn of find_containing_nodes; qed&quot;</span>);
-					<span class="comment">// If the weight is sufficient, we are done.</span>
-					<span class="kw">if</span> <span class="ident">condition</span>(<span class="kw-2">&amp;</span><span class="ident">node</span>.<span class="ident">cumulative_vote</span>) {
-						<span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="ident">hash</span>, <span class="ident">number</span>))
+		<span class="kw">loop </span>{
+			<span class="kw">match </span><span class="self">self</span>.find_containing_nodes(hash.clone(), number) {
+				<span class="prelude-val">None </span>=&gt; {
+					<span class="comment">// The block has a vote-node in the graph.
+					</span><span class="kw">let </span>node =
+						<span class="self">self</span>.entries.get(<span class="kw-2">&amp;</span>hash).expect(<span class="string">&quot;by defn of find_containing_nodes; qed&quot;</span>);
+					<span class="comment">// If the weight is sufficient, we are done.
+					</span><span class="kw">if </span>condition(<span class="kw-2">&amp;</span>node.cumulative_vote) {
+						<span class="kw">return </span><span class="prelude-val">Some</span>((hash, number))
 					}
-					<span class="comment">// Not enough weight, check the parent block.</span>
-					<span class="kw">match</span> <span class="ident">node</span>.<span class="ident">ancestors</span>.<span class="ident">get</span>(<span class="number">0</span>) {
-						<span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>,
-						<span class="prelude-val">Some</span>(<span class="ident">a</span>) =&gt; {
-							<span class="ident">hash</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">clone</span>();
-							<span class="ident">number</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">number</span> <span class="op">-</span> <span class="ident">N::one</span>();
+					<span class="comment">// Not enough weight, check the parent block.
+					</span><span class="kw">match </span>node.ancestors.get(<span class="number">0</span>) {
+						<span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+						<span class="prelude-val">Some</span>(a) =&gt; {
+							hash = a.clone();
+							number = node.number - N::one();
 						},
 					}
 				},
-				<span class="prelude-val">Some</span>(<span class="ident">children</span>) =&gt; {
-					<span class="comment">// If there are no vote-nodes below the block in the graph,</span>
-					<span class="comment">// the block is not in the graph at all.</span>
-					<span class="kw">if</span> <span class="ident">children</span>.<span class="ident">is_empty</span>() {
-						<span class="kw">return</span> <span class="prelude-val">None</span>
+				<span class="prelude-val">Some</span>(children) =&gt; {
+					<span class="comment">// If there are no vote-nodes below the block in the graph,
+					// the block is not in the graph at all.
+					</span><span class="kw">if </span>children.is_empty() {
+						<span class="kw">return </span><span class="prelude-val">None
+					</span>}
+					<span class="comment">// The block is &quot;contained&quot; in the graph (i.e. in the ancestry-chain
+					// of at least one vote-node) but does not itself have a vote-node.
+					// Check if the accumulated weight on all child vote-nodes is sufficient.
+					</span><span class="kw">let </span><span class="kw-2">mut </span>v = V::default();
+					<span class="kw">for </span>c <span class="kw">in </span><span class="kw-2">&amp;</span>children {
+						<span class="kw">let </span>e = <span class="self">self</span>.entries.get(c).expect(<span class="string">&quot;all children in graph; qed&quot;</span>);
+						v += <span class="kw-2">&amp;</span>e.cumulative_vote;
 					}
-					<span class="comment">// The block is &quot;contained&quot; in the graph (i.e. in the ancestry-chain</span>
-					<span class="comment">// of at least one vote-node) but does not itself have a vote-node.</span>
-					<span class="comment">// Check if the accumulated weight on all child vote-nodes is sufficient.</span>
-					<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">V::default</span>();
-					<span class="kw">for</span> <span class="ident">c</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">children</span> {
-						<span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="ident">c</span>).<span class="ident">expect</span>(<span class="string">&quot;all children in graph; qed&quot;</span>);
-						<span class="ident">v</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">e</span>.<span class="ident">cumulative_vote</span>;
-					}
-					<span class="kw">if</span> <span class="ident">condition</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>) {
-						<span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="ident">hash</span>, <span class="ident">number</span>))
+					<span class="kw">if </span>condition(<span class="kw-2">&amp;</span>v) {
+						<span class="kw">return </span><span class="prelude-val">Some</span>((hash, number))
 					}
 
-					<span class="comment">// Not enough weight, check the parent block.</span>
-					<span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="ident">children</span>.<span class="ident">last</span>().<span class="ident">expect</span>(<span class="string">&quot;children not empty; qed&quot;</span>);
-					<span class="kw">let</span> <span class="ident">entry</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="ident">child</span>).<span class="ident">expect</span>(<span class="string">&quot;all children in graph; qed&quot;</span>);
-					<span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> (<span class="ident">entry</span>.<span class="ident">number</span> <span class="op">-</span> <span class="ident">number</span>).<span class="ident">as_</span>();
-					<span class="kw">match</span> <span class="ident">entry</span>.<span class="ident">ancestors</span>.<span class="ident">get</span>(<span class="ident">offset</span>) {
-						<span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>, <span class="comment">// Reached base without sufficient weight.</span>
-						<span class="prelude-val">Some</span>(<span class="ident">parent</span>) =&gt; {
-							<span class="ident">hash</span> <span class="op">=</span> <span class="ident">parent</span>.<span class="ident">clone</span>();
-							<span class="ident">number</span> <span class="op">=</span> <span class="ident">number</span> <span class="op">-</span> <span class="ident">N::one</span>();
+					<span class="comment">// Not enough weight, check the parent block.
+					</span><span class="kw">let </span>child = children.last().expect(<span class="string">&quot;children not empty; qed&quot;</span>);
+					<span class="kw">let </span>entry = <span class="self">self</span>.entries.get(child).expect(<span class="string">&quot;all children in graph; qed&quot;</span>);
+					<span class="kw">let </span>offset = (entry.number - number).as_();
+					<span class="kw">match </span>entry.ancestors.get(offset) {
+						<span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>, <span class="comment">// Reached base without sufficient weight.
+						</span><span class="prelude-val">Some</span>(parent) =&gt; {
+							hash = parent.clone();
+							number = number - N::one();
 						},
 					}
 				},
@@ -1118,597 +1113,596 @@
 		}
 	}
 
-	<span class="doccomment">/// Find the total vote on a given block.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cumulative_vote</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">H</span>, <span class="ident">number</span>: <span class="ident">N</span>) -&gt; <span class="ident">V</span> {
-		<span class="kw">let</span> <span class="ident">entries</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">entries</span>;
-		<span class="kw">let</span> <span class="ident">get_node</span> <span class="op">=</span> <span class="op">|</span><span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="kw">_</span><span class="op">|</span> -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw">_</span> {
-			<span class="ident">entries</span>
-				.<span class="ident">get</span>(<span class="ident">hash</span>)
-				.<span class="ident">expect</span>(<span class="string">&quot;node either base or referenced by other in graph; qed&quot;</span>)
+	<span class="doccomment">/// Find the total vote on a given block.
+	</span><span class="kw">pub fn </span>cumulative_vote&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, hash: H, number: N) -&gt; V {
+		<span class="kw">let </span>entries = <span class="kw-2">&amp;</span><span class="self">self</span>.entries;
+		<span class="kw">let </span>get_node = |hash: <span class="kw-2">&amp;</span><span class="kw">_</span>| -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">_ </span>{
+			entries
+				.get(hash)
+				.expect(<span class="string">&quot;node either base or referenced by other in graph; qed&quot;</span>)
 		};
 
-		<span class="kw">match</span> <span class="self">self</span>.<span class="ident">find_containing_nodes</span>(<span class="ident">hash</span>.<span class="ident">clone</span>(), <span class="ident">number</span>) {
-			<span class="prelude-val">None</span> =&gt; <span class="ident">get_node</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>).<span class="ident">cumulative_vote</span>.<span class="ident">clone</span>(),
-			<span class="prelude-val">Some</span>(<span class="ident">nodes</span>) =&gt; {
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Default::default</span>();
-				<span class="kw">for</span> <span class="ident">node</span> <span class="kw">in</span> <span class="ident">nodes</span> {
-					<span class="ident">v</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">get_node</span>(<span class="kw-2">&amp;</span><span class="ident">node</span>).<span class="ident">cumulative_vote</span>;
+		<span class="kw">match </span><span class="self">self</span>.find_containing_nodes(hash.clone(), number) {
+			<span class="prelude-val">None </span>=&gt; get_node(<span class="kw-2">&amp;</span>hash).cumulative_vote.clone(),
+			<span class="prelude-val">Some</span>(nodes) =&gt; {
+				<span class="kw">let </span><span class="kw-2">mut </span>v = Default::default();
+				<span class="kw">for </span>node <span class="kw">in </span>nodes {
+					v += <span class="kw-2">&amp;</span>get_node(<span class="kw-2">&amp;</span>node).cumulative_vote;
 				}
 
-				<span class="ident">v</span>
+				v
 			},
 		}
 	}
 
-	<span class="doccomment">/// Find the best GHOST descendent of the given block.</span>
-	<span class="doccomment">/// Pass a closure used to evaluate the cumulative vote value.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The GHOST (hash, number) returned will be the block with highest number for which the</span>
-	<span class="doccomment">/// cumulative votes of descendents and itself causes the closure to evaluate to true.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This assumes that the evaluation closure is one which returns true for at most a single</span>
-	<span class="doccomment">/// descendent of a block, in that only one fork of a block can be &quot;heavy&quot;</span>
-	<span class="doccomment">/// enough to trigger the threshold.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns `None` when the given `current_best` does not fulfill the condition.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_ghost</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">current_best</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">H</span>, <span class="ident">N</span>)<span class="op">&gt;</span>, <span class="ident">condition</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">H</span>, <span class="ident">N</span>)<span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">bool</span>,
+	<span class="doccomment">/// Find the best GHOST descendent of the given block.
+	/// Pass a closure used to evaluate the cumulative vote value.
+	///
+	/// The GHOST (hash, number) returned will be the block with highest number for which the
+	/// cumulative votes of descendents and itself causes the closure to evaluate to true.
+	///
+	/// This assumes that the evaluation closure is one which returns true for at most a single
+	/// descendent of a block, in that only one fork of a block can be &quot;heavy&quot;
+	/// enough to trigger the threshold.
+	///
+	/// Returns `None` when the given `current_best` does not fulfill the condition.
+	</span><span class="kw">pub fn </span>find_ghost&lt;<span class="lifetime">&#39;a</span>, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, current_best: <span class="prelude-ty">Option</span>&lt;(H, N)&gt;, condition: F) -&gt; <span class="prelude-ty">Option</span>&lt;(H, N)&gt;
+	<span class="kw">where
+		</span>F: Fn(<span class="kw-2">&amp;</span>V) -&gt; bool,
 	{
-		<span class="kw">let</span> <span class="ident">entries</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">entries</span>;
-		<span class="kw">let</span> <span class="ident">get_node</span> <span class="op">=</span> <span class="op">|</span><span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="kw">_</span><span class="op">|</span> -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw">_</span> {
-			<span class="ident">entries</span>
-				.<span class="ident">get</span>(<span class="ident">hash</span>)
-				.<span class="ident">expect</span>(<span class="string">&quot;node either base or referenced by other in graph; qed&quot;</span>)
+		<span class="kw">let </span>entries = <span class="kw-2">&amp;</span><span class="self">self</span>.entries;
+		<span class="kw">let </span>get_node = |hash: <span class="kw-2">&amp;</span><span class="kw">_</span>| -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">_ </span>{
+			entries
+				.get(hash)
+				.expect(<span class="string">&quot;node either base or referenced by other in graph; qed&quot;</span>)
 		};
 
-		<span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">node_key</span>, <span class="kw-2">mut</span> <span class="ident">force_constrain</span>) <span class="op">=</span> <span class="ident">current_best</span>
-			.<span class="ident">clone</span>()
-			.<span class="ident">and_then</span>(<span class="op">|</span>(<span class="ident">hash</span>, <span class="ident">number</span>)<span class="op">|</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">find_containing_nodes</span>(<span class="ident">hash</span>.<span class="ident">clone</span>(), <span class="ident">number</span>) {
-				<span class="prelude-val">None</span> =&gt; <span class="prelude-val">Some</span>((<span class="ident">hash</span>, <span class="bool-val">false</span>)),
-				<span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">x</span>) <span class="kw">if</span> <span class="op">!</span><span class="ident">x</span>.<span class="ident">is_empty</span>() =&gt; {
-					<span class="kw">let</span> <span class="ident">ancestor</span> <span class="op">=</span> <span class="ident">get_node</span>(<span class="kw-2">&amp;</span><span class="ident">x</span>[<span class="number">0</span>])
-						.<span class="ident">ancestor_node</span>()
-						.<span class="ident">expect</span>(<span class="string">&quot;node containing non-node in history always has ancestor; qed&quot;</span>);
+		<span class="kw">let </span>(<span class="kw-2">mut </span>node_key, <span class="kw-2">mut </span>force_constrain) = current_best
+			.clone()
+			.and_then(|(hash, number)| <span class="kw">match </span><span class="self">self</span>.find_containing_nodes(hash.clone(), number) {
+				<span class="prelude-val">None </span>=&gt; <span class="prelude-val">Some</span>((hash, <span class="bool-val">false</span>)),
+				<span class="prelude-val">Some</span>(<span class="kw-2">ref </span>x) <span class="kw">if </span>!x.is_empty() =&gt; {
+					<span class="kw">let </span>ancestor = get_node(<span class="kw-2">&amp;</span>x[<span class="number">0</span>])
+						.ancestor_node()
+						.expect(<span class="string">&quot;node containing non-node in history always has ancestor; qed&quot;</span>);
 
-					<span class="prelude-val">Some</span>((<span class="ident">ancestor</span>, <span class="bool-val">true</span>))
+					<span class="prelude-val">Some</span>((ancestor, <span class="bool-val">true</span>))
 				},
 				<span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
 			})
-			.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> (<span class="self">self</span>.<span class="ident">base</span>.<span class="ident">clone</span>(), <span class="bool-val">false</span>));
+			.unwrap_or_else(|| (<span class="self">self</span>.base.clone(), <span class="bool-val">false</span>));
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">active_node</span> <span class="op">=</span> <span class="ident">get_node</span>(<span class="kw-2">&amp;</span><span class="ident">node_key</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>active_node = get_node(<span class="kw-2">&amp;</span>node_key);
 
-		<span class="kw">if</span> <span class="op">!</span><span class="ident">condition</span>(<span class="kw-2">&amp;</span><span class="ident">active_node</span>.<span class="ident">cumulative_vote</span>) {
-			<span class="kw">return</span> <span class="prelude-val">None</span>
-		}
+		<span class="kw">if </span>!condition(<span class="kw-2">&amp;</span>active_node.cumulative_vote) {
+			<span class="kw">return </span><span class="prelude-val">None
+		</span>}
 
-		<span class="comment">// breadth-first search starting from this node.</span>
-		<span class="kw">loop</span> {
-			<span class="kw">let</span> <span class="ident">next_descendent</span> <span class="op">=</span> <span class="ident">active_node</span>
-				.<span class="ident">descendents</span>
-				.<span class="ident">iter</span>()
-				.<span class="ident">map</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> (<span class="ident">d</span>.<span class="ident">clone</span>(), <span class="ident">get_node</span>(<span class="ident">d</span>)))
-				.<span class="ident">filter</span>(<span class="op">|</span><span class="kw-2">&amp;</span>(<span class="kw">_</span>, <span class="ident">node</span>)<span class="op">|</span> {
-					<span class="comment">// take only descendents with our block in the ancestry.</span>
-					<span class="kw">if</span> <span class="kw">let</span> (<span class="bool-val">true</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(<span class="kw-2">ref</span> <span class="ident">h</span>, <span class="ident">n</span>))) <span class="op">=</span> (<span class="ident">force_constrain</span>, <span class="ident">current_best</span>.<span class="ident">as_ref</span>()) {
-						<span class="ident">node</span>.<span class="ident">in_direct_ancestry</span>(<span class="ident">h</span>, <span class="ident">n</span>).<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>)
-					} <span class="kw">else</span> {
-						<span class="bool-val">true</span>
-					}
+		<span class="comment">// breadth-first search starting from this node.
+		</span><span class="kw">loop </span>{
+			<span class="kw">let </span>next_descendent = active_node
+				.descendents
+				.iter()
+				.map(|d| (d.clone(), get_node(d)))
+				.filter(|<span class="kw-2">&amp;</span>(<span class="kw">_</span>, node)| {
+					<span class="comment">// take only descendents with our block in the ancestry.
+					</span><span class="kw">if let </span>(<span class="bool-val">true</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(<span class="kw-2">ref </span>h, n))) = (force_constrain, current_best.as_ref()) {
+						node.in_direct_ancestry(h, n).unwrap_or(<span class="bool-val">false</span>)
+					} <span class="kw">else </span>{
+						<span class="bool-val">true
+					</span>}
 				})
-				.<span class="ident">find</span>(<span class="op">|</span><span class="kw-2">&amp;</span>(<span class="kw">_</span>, <span class="ident">node</span>)<span class="op">|</span> <span class="ident">condition</span>(<span class="kw-2">&amp;</span><span class="ident">node</span>.<span class="ident">cumulative_vote</span>));
+				.find(|<span class="kw-2">&amp;</span>(<span class="kw">_</span>, node)| condition(<span class="kw-2">&amp;</span>node.cumulative_vote));
 
-			<span class="kw">match</span> <span class="ident">next_descendent</span> {
-				<span class="prelude-val">Some</span>((<span class="ident">key</span>, <span class="ident">node</span>)) =&gt; {
-					<span class="comment">// once we&#39;ve made at least one hop, we don&#39;t need to constrain</span>
-					<span class="comment">// ancestry anymore.</span>
-					<span class="ident">force_constrain</span> <span class="op">=</span> <span class="bool-val">false</span>;
-					<span class="ident">node_key</span> <span class="op">=</span> <span class="ident">key</span>;
-					<span class="ident">active_node</span> <span class="op">=</span> <span class="ident">node</span>;
+			<span class="kw">match </span>next_descendent {
+				<span class="prelude-val">Some</span>((key, node)) =&gt; {
+					<span class="comment">// once we&#39;ve made at least one hop, we don&#39;t need to constrain
+					// ancestry anymore.
+					</span>force_constrain = <span class="bool-val">false</span>;
+					node_key = key;
+					active_node = node;
 				},
-				<span class="prelude-val">None</span> =&gt; <span class="kw">break</span>,
+				<span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 			}
 		}
 
-		<span class="comment">// active_node and node_key now correspond to the vote-node with enough cumulative votes.</span>
-		<span class="comment">// its descendents comprise frontier of vote-nodes which individually don&#39;t have enough votes</span>
-		<span class="comment">// to pass the threshold but some subset of them join either at `active_node`&#39;s block or at some</span>
-		<span class="comment">// descendent block of it, giving that block sufficient votes.</span>
-		<span class="self">self</span>.<span class="ident">ghost_find_merge_point</span>(
-			<span class="ident">node_key</span>,
-			<span class="ident">active_node</span>,
-			<span class="kw">if</span> <span class="ident">force_constrain</span> { <span class="ident">current_best</span> } <span class="kw">else</span> { <span class="prelude-val">None</span> },
-			<span class="ident">condition</span>,
+		<span class="comment">// active_node and node_key now correspond to the vote-node with enough cumulative votes.
+		// its descendents comprise frontier of vote-nodes which individually don&#39;t have enough votes
+		// to pass the threshold but some subset of them join either at `active_node`&#39;s block or at some
+		// descendent block of it, giving that block sufficient votes.
+		</span><span class="self">self</span>.ghost_find_merge_point(
+			node_key,
+			active_node,
+			<span class="kw">if </span>force_constrain { current_best } <span class="kw">else </span>{ <span class="prelude-val">None </span>},
+			condition,
 		)
-		.<span class="ident">best</span>()
+		.best()
 	}
 
-	<span class="comment">// given a key, node pair (which must correspond), assuming this node fulfills the condition,</span>
-	<span class="comment">// this function will find the highest point at which its descendents merge, which may be the</span>
-	<span class="comment">// node itself.</span>
-	<span class="kw">fn</span> <span class="ident">ghost_find_merge_point</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">F</span><span class="op">&gt;</span>(
-		<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
-		<span class="ident">node_key</span>: <span class="ident">H</span>,
-		<span class="ident">active_node</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Entry</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span>, <span class="ident">V</span><span class="op">&gt;</span>,
-		<span class="ident">force_constrain</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">H</span>, <span class="ident">N</span>)<span class="op">&gt;</span>,
-		<span class="ident">condition</span>: <span class="ident">F</span>,
-	) -&gt; <span class="ident">Subchain</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">bool</span>,
+	<span class="comment">// given a key, node pair (which must correspond), assuming this node fulfills the condition,
+	// this function will find the highest point at which its descendents merge, which may be the
+	// node itself.
+	</span><span class="kw">fn </span>ghost_find_merge_point&lt;<span class="lifetime">&#39;a</span>, F&gt;(
+		<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+		node_key: H,
+		active_node: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Entry&lt;H, N, V&gt;,
+		force_constrain: <span class="prelude-ty">Option</span>&lt;(H, N)&gt;,
+		condition: F,
+	) -&gt; Subchain&lt;H, N&gt;
+	<span class="kw">where
+		</span>F: Fn(<span class="kw-2">&amp;</span>V) -&gt; bool,
 	{
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descendent_nodes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">active_node</span>
-			.<span class="ident">descendents</span>
-			.<span class="ident">iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="ident">h</span>).<span class="ident">expect</span>(<span class="string">&quot;descendents always present in node storage; qed&quot;</span>))
-			.<span class="ident">filter</span>(<span class="op">|</span><span class="ident">n</span><span class="op">|</span> {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw-2">ref</span> <span class="ident">h</span>, <span class="ident">num</span>)) <span class="op">=</span> <span class="ident">force_constrain</span> {
-					<span class="ident">n</span>.<span class="ident">in_direct_ancestry</span>(<span class="ident">h</span>, <span class="ident">num</span>).<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>)
-				} <span class="kw">else</span> {
-					<span class="bool-val">true</span>
-				}
+		<span class="kw">let </span><span class="kw-2">mut </span>descendent_nodes: Vec&lt;<span class="kw">_</span>&gt; = active_node
+			.descendents
+			.iter()
+			.map(|h| <span class="self">self</span>.entries.get(h).expect(<span class="string">&quot;descendents always present in node storage; qed&quot;</span>))
+			.filter(|n| {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw-2">ref </span>h, num)) = force_constrain {
+					n.in_direct_ancestry(h, num).unwrap_or(<span class="bool-val">false</span>)
+				} <span class="kw">else </span>{
+					<span class="bool-val">true
+				</span>}
 			})
-			.<span class="ident">collect</span>();
+			.collect();
 
-		<span class="kw">let</span> <span class="ident">base_number</span> <span class="op">=</span> <span class="ident">active_node</span>.<span class="ident">number</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">best_number</span> <span class="op">=</span> <span class="ident">active_node</span>.<span class="ident">number</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descendent_blocks</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">descendent_nodes</span>.<span class="ident">len</span>());
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hashes</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">node_key</span>];
+		<span class="kw">let </span>base_number = active_node.number;
+		<span class="kw">let </span><span class="kw-2">mut </span>best_number = active_node.number;
+		<span class="kw">let </span><span class="kw-2">mut </span>descendent_blocks = Vec::with_capacity(descendent_nodes.len());
+		<span class="kw">let </span><span class="kw-2">mut </span>hashes = <span class="macro">vec!</span>[node_key];
 
-		<span class="comment">// TODO: for long ranges of blocks this could get inefficient</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">N::zero</span>();
-		<span class="kw">loop</span> {
-			<span class="ident">offset</span> <span class="op">=</span> <span class="ident">offset</span> <span class="op">+</span> <span class="ident">N::one</span>();
+		<span class="comment">// TODO: for long ranges of blocks this could get inefficient
+		</span><span class="kw">let </span><span class="kw-2">mut </span>offset = N::zero();
+		<span class="kw">loop </span>{
+			offset = offset + N::one();
 
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_best</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-			<span class="kw">for</span> <span class="ident">d_node</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">descendent_nodes</span> {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">d_block</span>) <span class="op">=</span> <span class="ident">d_node</span>.<span class="ident">ancestor_block</span>(<span class="ident">base_number</span> <span class="op">+</span> <span class="ident">offset</span>) {
-					<span class="kw">match</span> <span class="ident">descendent_blocks</span>.<span class="ident">binary_search_by_key</span>(<span class="kw-2">&amp;</span><span class="ident">d_block</span>, <span class="op">|</span><span class="kw-2">&amp;</span>(<span class="kw-2">ref</span> <span class="ident">x</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">x</span>) {
-						<span class="prelude-val">Ok</span>(<span class="ident">idx</span>) =&gt; {
-							<span class="ident">descendent_blocks</span>[<span class="ident">idx</span>].<span class="number">1</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">d_node</span>.<span class="ident">cumulative_vote</span>;
-							<span class="kw">if</span> <span class="ident">condition</span>(<span class="kw-2">&amp;</span><span class="ident">descendent_blocks</span>[<span class="ident">idx</span>].<span class="number">1</span>) {
-								<span class="ident">new_best</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">d_block</span>.<span class="ident">clone</span>());
-								<span class="kw">break</span>
-							}
+			<span class="kw">let </span><span class="kw-2">mut </span>new_best = <span class="prelude-val">None</span>;
+			<span class="kw">for </span>d_node <span class="kw">in </span><span class="kw-2">&amp;</span>descendent_nodes {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(d_block) = d_node.ancestor_block(base_number + offset) {
+					<span class="kw">match </span>descendent_blocks.binary_search_by_key(<span class="kw-2">&amp;</span>d_block, |<span class="kw-2">&amp;</span>(<span class="kw-2">ref </span>x, <span class="kw">_</span>)| x) {
+						<span class="prelude-val">Ok</span>(idx) =&gt; {
+							descendent_blocks[idx].<span class="number">1 </span>+= <span class="kw-2">&amp;</span>d_node.cumulative_vote;
+							<span class="kw">if </span>condition(<span class="kw-2">&amp;</span>descendent_blocks[idx].<span class="number">1</span>) {
+								new_best = <span class="prelude-val">Some</span>(d_block.clone());
+								<span class="kw">break
+							</span>}
 						},
-						<span class="prelude-val">Err</span>(<span class="ident">idx</span>) =&gt; <span class="ident">descendent_blocks</span>
-							.<span class="ident">insert</span>(<span class="ident">idx</span>, (<span class="ident">d_block</span>.<span class="ident">clone</span>(), <span class="ident">d_node</span>.<span class="ident">cumulative_vote</span>.<span class="ident">clone</span>())),
+						<span class="prelude-val">Err</span>(idx) =&gt; descendent_blocks
+							.insert(idx, (d_block.clone(), d_node.cumulative_vote.clone())),
 					}
 				}
 			}
 
-			<span class="kw">match</span> <span class="ident">new_best</span> {
-				<span class="prelude-val">Some</span>(<span class="ident">new_best</span>) =&gt; {
-					<span class="ident">best_number</span> <span class="op">=</span> <span class="ident">best_number</span> <span class="op">+</span> <span class="ident">N::one</span>();
+			<span class="kw">match </span>new_best {
+				<span class="prelude-val">Some</span>(new_best) =&gt; {
+					best_number = best_number + N::one();
 
-					<span class="ident">descendent_blocks</span>.<span class="ident">clear</span>();
-					<span class="ident">descendent_nodes</span>
-						.<span class="ident">retain</span>(<span class="op">|</span><span class="ident">n</span><span class="op">|</span> <span class="ident">n</span>.<span class="ident">in_direct_ancestry</span>(<span class="kw-2">&amp;</span><span class="ident">new_best</span>, <span class="ident">best_number</span>).<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>));
+					descendent_blocks.clear();
+					descendent_nodes
+						.retain(|n| n.in_direct_ancestry(<span class="kw-2">&amp;</span>new_best, best_number).unwrap_or(<span class="bool-val">false</span>));
 
-					<span class="ident">hashes</span>.<span class="ident">push</span>(<span class="ident">new_best</span>);
+					hashes.push(new_best);
 				},
-				<span class="prelude-val">None</span> =&gt; <span class="kw">break</span>,
+				<span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 			}
 		}
 
-		<span class="ident">Subchain</span> { <span class="ident">hashes</span>, <span class="ident">best_number</span> }
+		Subchain { hashes, best_number }
 	}
 
-	<span class="comment">// attempts to find the containing node keys for the given hash and number.</span>
-	<span class="comment">//</span>
-	<span class="comment">// returns `None` if there is a node by that key already, and a vector</span>
-	<span class="comment">// (potentially empty) of nodes with the given block in its ancestor-edge</span>
-	<span class="comment">// otherwise.</span>
-	<span class="kw">fn</span> <span class="ident">find_containing_nodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">H</span>, <span class="ident">number</span>: <span class="ident">N</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>) {
-			<span class="kw">return</span> <span class="prelude-val">None</span>
-		}
+	<span class="comment">// attempts to find the containing node keys for the given hash and number.
+	//
+	// returns `None` if there is a node by that key already, and a vector
+	// (potentially empty) of nodes with the given block in its ancestor-edge
+	// otherwise.
+	</span><span class="kw">fn </span>find_containing_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: H, number: N) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;H&gt;&gt; {
+		<span class="kw">if </span><span class="self">self</span>.entries.contains_key(<span class="kw-2">&amp;</span>hash) {
+			<span class="kw">return </span><span class="prelude-val">None
+		</span>}
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">containing_keys</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">visited</span> <span class="op">=</span> <span class="ident">BTreeSet::new</span>();
+		<span class="kw">let </span><span class="kw-2">mut </span>containing_keys = Vec::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>visited = BTreeSet::new();
 
-		<span class="comment">// iterate vote-heads and their ancestry backwards until we find the one with</span>
-		<span class="comment">// this target hash in that chain.</span>
-		<span class="kw">for</span> <span class="kw-2">mut</span> <span class="ident">head</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">heads</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>() {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">active_entry</span>;
+		<span class="comment">// iterate vote-heads and their ancestry backwards until we find the one with
+		// this target hash in that chain.
+		</span><span class="kw">for </span><span class="kw-2">mut </span>head <span class="kw">in </span><span class="self">self</span>.heads.iter().cloned() {
+			<span class="kw">let </span><span class="kw-2">mut </span>active_entry;
 
-			<span class="kw">loop</span> {
-				<span class="ident">active_entry</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">head</span>) {
-					<span class="prelude-val">Some</span>(<span class="ident">e</span>) =&gt; <span class="ident">e</span>,
-					<span class="prelude-val">None</span> =&gt; <span class="kw">break</span>,
+			<span class="kw">loop </span>{
+				active_entry = <span class="kw">match </span><span class="self">self</span>.entries.get(<span class="kw-2">&amp;</span>head) {
+					<span class="prelude-val">Some</span>(e) =&gt; e,
+					<span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 				};
 
-				<span class="comment">// if node has been checked already, break</span>
-				<span class="kw">if</span> <span class="op">!</span><span class="ident">visited</span>.<span class="ident">insert</span>(<span class="ident">head</span>.<span class="ident">clone</span>()) {
-					<span class="kw">break</span>
-				}
+				<span class="comment">// if node has been checked already, break
+				</span><span class="kw">if </span>!visited.insert(head.clone()) {
+					<span class="kw">break
+				</span>}
 
-				<span class="kw">match</span> <span class="ident">active_entry</span>.<span class="ident">in_direct_ancestry</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>, <span class="ident">number</span>) {
+				<span class="kw">match </span>active_entry.in_direct_ancestry(<span class="kw-2">&amp;</span>hash, number) {
 					<span class="prelude-val">Some</span>(<span class="bool-val">true</span>) =&gt; {
-						<span class="comment">// set containing node and continue search.</span>
-						<span class="ident">containing_keys</span>.<span class="ident">push</span>(<span class="ident">head</span>.<span class="ident">clone</span>());
+						<span class="comment">// set containing node and continue search.
+						</span>containing_keys.push(head.clone());
 					},
-					<span class="prelude-val">Some</span>(<span class="bool-val">false</span>) =&gt; {}, <span class="comment">// nothing in this branch. continue search.</span>
-					<span class="prelude-val">None</span> =&gt;
-						<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">prev</span>) <span class="op">=</span> <span class="ident">active_entry</span>.<span class="ident">ancestor_node</span>() {
-							<span class="ident">head</span> <span class="op">=</span> <span class="ident">prev</span>;
-							<span class="kw">continue</span> <span class="comment">// iterate backwards</span>
-						},
+					<span class="prelude-val">Some</span>(<span class="bool-val">false</span>) =&gt; {}, <span class="comment">// nothing in this branch. continue search.
+					</span><span class="prelude-val">None </span>=&gt;
+						<span class="kw">if let </span><span class="prelude-val">Some</span>(prev) = active_entry.ancestor_node() {
+							head = prev;
+							<span class="kw">continue </span><span class="comment">// iterate backwards
+						</span>},
 				}
 
-				<span class="kw">break</span>
-			}
+				<span class="kw">break
+			</span>}
 		}
 
-		<span class="prelude-val">Some</span>(<span class="ident">containing_keys</span>)
+		<span class="prelude-val">Some</span>(containing_keys)
 	}
 
-	<span class="comment">// introduce a branch to given vote-nodes.</span>
-	<span class="comment">//</span>
-	<span class="comment">// `descendents` is a list of nodes with ancestor-edges containing the given ancestor.</span>
-	<span class="comment">//</span>
-	<span class="comment">// This function panics if any member of `descendents` is not a vote-node</span>
-	<span class="comment">// or does not have ancestor with given hash and number OR if `ancestor_hash`</span>
-	<span class="comment">// is already a known entry.</span>
-	<span class="kw">fn</span> <span class="ident">introduce_branch</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">descendents</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">ancestor_hash</span>: <span class="ident">H</span>, <span class="ident">ancestor_number</span>: <span class="ident">N</span>) {
-		<span class="kw">let</span> <span class="ident">produced_entry</span> <span class="op">=</span> <span class="ident">descendents</span>.<span class="ident">into_iter</span>().<span class="ident">fold</span>(<span class="prelude-val">None</span>, <span class="op">|</span><span class="kw-2">mut</span> <span class="ident">maybe_entry</span>, <span class="ident">descendent</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">entry</span> <span class="op">=</span> <span class="self">self</span>
-				.<span class="ident">entries</span>
-				.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">descendent</span>)
-				.<span class="ident">expect</span>(<span class="string">&quot;this function only invoked with keys of vote-nodes; qed&quot;</span>);
+	<span class="comment">// introduce a branch to given vote-nodes.
+	//
+	// `descendents` is a list of nodes with ancestor-edges containing the given ancestor.
+	//
+	// This function panics if any member of `descendents` is not a vote-node
+	// or does not have ancestor with given hash and number OR if `ancestor_hash`
+	// is already a known entry.
+	</span><span class="kw">fn </span>introduce_branch(<span class="kw-2">&amp;mut </span><span class="self">self</span>, descendents: Vec&lt;H&gt;, ancestor_hash: H, ancestor_number: N) {
+		<span class="kw">let </span>produced_entry = descendents.into_iter().fold(<span class="prelude-val">None</span>, |<span class="kw-2">mut </span>maybe_entry, descendent| {
+			<span class="kw">let </span>entry = <span class="self">self
+				</span>.entries
+				.get_mut(<span class="kw-2">&amp;</span>descendent)
+				.expect(<span class="string">&quot;this function only invoked with keys of vote-nodes; qed&quot;</span>);
 
-			<span class="macro">debug_assert!</span>(<span class="ident">entry</span>.<span class="ident">in_direct_ancestry</span>(<span class="kw-2">&amp;</span><span class="ident">ancestor_hash</span>, <span class="ident">ancestor_number</span>).<span class="ident">unwrap</span>());
+			<span class="macro">debug_assert!</span>(entry.in_direct_ancestry(<span class="kw-2">&amp;</span>ancestor_hash, ancestor_number).unwrap());
 
-			<span class="comment">// example: splitting number 10 at ancestor 4</span>
-			<span class="comment">// before: [9 8 7 6 5 4 3 2 1]</span>
-			<span class="comment">// after: [9 8 7 6 5 4], [3 2 1]</span>
-			<span class="comment">// we ensure the `entry.ancestors` is drained regardless of whether</span>
-			<span class="comment">// the `new_entry` has already been constructed.</span>
-			{
-				<span class="kw">let</span> <span class="ident">prev_ancestor</span> <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">ancestor_node</span>();
-				<span class="kw">let</span> <span class="ident">offset_usize</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">ancestor_number</span> <span class="op">&gt;</span> <span class="ident">entry</span>.<span class="ident">number</span> {
+			<span class="comment">// example: splitting number 10 at ancestor 4
+			// before: [9 8 7 6 5 4 3 2 1]
+			// after: [9 8 7 6 5 4], [3 2 1]
+			// we ensure the `entry.ancestors` is drained regardless of whether
+			// the `new_entry` has already been constructed.
+			</span>{
+				<span class="kw">let </span>prev_ancestor = entry.ancestor_node();
+				<span class="kw">let </span>offset_usize: usize = <span class="kw">if </span>ancestor_number &gt; entry.number {
 					<span class="macro">panic!</span>(<span class="string">&quot;this function only invoked with direct ancestors; qed&quot;</span>)
-				} <span class="kw">else</span> {
-					(<span class="ident">entry</span>.<span class="ident">number</span> <span class="op">-</span> <span class="ident">ancestor_number</span>).<span class="ident">as_</span>()
+				} <span class="kw">else </span>{
+					(entry.number - ancestor_number).as_()
 				};
-				<span class="kw">let</span> <span class="ident">new_ancestors</span> <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">ancestors</span>.<span class="ident">drain</span>(<span class="ident">offset_usize</span>..);
+				<span class="kw">let </span>new_ancestors = entry.ancestors.drain(offset_usize..);
 
-				<span class="kw">let</span> <span class="kw-2">&amp;mut</span> (<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">new_entry</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">maybe_entry</span>.<span class="ident">get_or_insert_with</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-					<span class="kw">let</span> <span class="ident">new_entry</span> <span class="op">=</span> <span class="ident">Entry</span> {
-						<span class="ident">number</span>: <span class="ident">ancestor_number</span>,
-						<span class="ident">ancestors</span>: <span class="ident">new_ancestors</span>.<span class="ident">collect</span>(),
-						<span class="ident">descendents</span>: <span class="macro">vec!</span>[],
-						<span class="ident">cumulative_vote</span>: <span class="ident">V::default</span>(),
+				<span class="kw">let </span><span class="kw-2">&amp;mut </span>(<span class="kw-2">ref mut </span>new_entry, <span class="kw">_</span>) = maybe_entry.get_or_insert_with(<span class="kw">move </span>|| {
+					<span class="kw">let </span>new_entry = Entry {
+						number: ancestor_number,
+						ancestors: new_ancestors.collect(),
+						descendents: <span class="macro">vec!</span>[],
+						cumulative_vote: V::default(),
 					};
 
-					(<span class="ident">new_entry</span>, <span class="ident">prev_ancestor</span>)
+					(new_entry, prev_ancestor)
 				});
 
-				<span class="ident">new_entry</span>.<span class="ident">descendents</span>.<span class="ident">push</span>(<span class="ident">descendent</span>);
-				<span class="ident">new_entry</span>.<span class="ident">cumulative_vote</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">entry</span>.<span class="ident">cumulative_vote</span>;
+				new_entry.descendents.push(descendent);
+				new_entry.cumulative_vote += <span class="kw-2">&amp;</span>entry.cumulative_vote;
 			}
 
-			<span class="ident">maybe_entry</span>
+			maybe_entry
 		});
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">new_entry</span>, <span class="ident">prev_ancestor</span>)) <span class="op">=</span> <span class="ident">produced_entry</span> {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">prev_ancestor</span>) <span class="op">=</span> <span class="ident">prev_ancestor</span> {
-				<span class="kw">let</span> <span class="ident">prev_ancestor_node</span> <span class="op">=</span> <span class="self">self</span>
-					.<span class="ident">entries</span>
-					.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">prev_ancestor</span>)
-					.<span class="ident">expect</span>(<span class="string">&quot;Prior ancestor is referenced from a node; qed&quot;</span>);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>((new_entry, prev_ancestor)) = produced_entry {
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(prev_ancestor) = prev_ancestor {
+				<span class="kw">let </span>prev_ancestor_node = <span class="self">self
+					</span>.entries
+					.get_mut(<span class="kw-2">&amp;</span>prev_ancestor)
+					.expect(<span class="string">&quot;Prior ancestor is referenced from a node; qed&quot;</span>);
 
-				<span class="ident">prev_ancestor_node</span>.<span class="ident">descendents</span>.<span class="ident">retain</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="op">!</span><span class="ident">new_entry</span>.<span class="ident">descendents</span>.<span class="ident">contains</span>(<span class="ident">h</span>));
-				<span class="ident">prev_ancestor_node</span>.<span class="ident">descendents</span>.<span class="ident">push</span>(<span class="ident">ancestor_hash</span>.<span class="ident">clone</span>());
+				prev_ancestor_node.descendents.retain(|h| !new_entry.descendents.contains(h));
+				prev_ancestor_node.descendents.push(ancestor_hash.clone());
 			}
 
 			<span class="macro">assert!</span>(
-				<span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">insert</span>(<span class="ident">ancestor_hash</span>, <span class="ident">new_entry</span>).<span class="ident">is_none</span>(),
+				<span class="self">self</span>.entries.insert(ancestor_hash, new_entry).is_none(),
 				<span class="string">&quot;thus function is only invoked when there is no entry for the ancestor already; qed&quot;</span>,
 			)
 		}
 	}
 
-	<span class="comment">// append a vote-node onto the chain-tree. This should only be called if</span>
-	<span class="comment">// no node in the tree keeps the target anyway.</span>
-	<span class="kw">fn</span> <span class="ident">append</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">Chain</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hash</span>: <span class="ident">H</span>, <span class="ident">number</span>: <span class="ident">N</span>, <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="ident">C</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ancestry</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">ancestry</span>(<span class="self">self</span>.<span class="ident">base</span>.<span class="ident">clone</span>(), <span class="ident">hash</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>;
-		<span class="ident">ancestry</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">base</span>.<span class="ident">clone</span>()); <span class="comment">// ancestry doesn&#39;t include base.</span>
+	<span class="comment">// append a vote-node onto the chain-tree. This should only be called if
+	// no node in the tree keeps the target anyway.
+	</span><span class="kw">fn </span>append&lt;C: Chain&lt;H, N&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: H, number: N, chain: <span class="kw-2">&amp;</span>C) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>ancestry = chain.ancestry(<span class="self">self</span>.base.clone(), hash.clone())<span class="question-mark">?</span>;
+		ancestry.push(<span class="self">self</span>.base.clone()); <span class="comment">// ancestry doesn&#39;t include base.
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ancestor_index</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-		<span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">ancestor</span>) <span class="kw">in</span> <span class="ident">ancestry</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">entry</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get_mut</span>(<span class="ident">ancestor</span>) {
-				<span class="ident">entry</span>.<span class="ident">descendents</span>.<span class="ident">push</span>(<span class="ident">hash</span>.<span class="ident">clone</span>());
-				<span class="ident">ancestor_index</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">i</span>);
-				<span class="kw">break</span>
-			}
+		</span><span class="kw">let </span><span class="kw-2">mut </span>ancestor_index = <span class="prelude-val">None</span>;
+		<span class="kw">for </span>(i, ancestor) <span class="kw">in </span>ancestry.iter().enumerate() {
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = <span class="self">self</span>.entries.get_mut(ancestor) {
+				entry.descendents.push(hash.clone());
+				ancestor_index = <span class="prelude-val">Some</span>(i);
+				<span class="kw">break
+			</span>}
 		}
 
-		<span class="kw">let</span> <span class="ident">ancestor_index</span> <span class="op">=</span> <span class="ident">ancestor_index</span>.<span class="ident">expect</span>(
+		<span class="kw">let </span>ancestor_index = ancestor_index.expect(
 			<span class="string">&quot;base is kept; \
 			chain returns ancestry only if the block is a descendent of base; qed&quot;</span>,
 		);
 
-		<span class="kw">let</span> <span class="ident">ancestor_hash</span> <span class="op">=</span> <span class="ident">ancestry</span>[<span class="ident">ancestor_index</span>].<span class="ident">clone</span>();
-		<span class="ident">ancestry</span>.<span class="ident">truncate</span>(<span class="ident">ancestor_index</span> <span class="op">+</span> <span class="number">1</span>);
+		<span class="kw">let </span>ancestor_hash = ancestry[ancestor_index].clone();
+		ancestry.truncate(ancestor_index + <span class="number">1</span>);
 
-		<span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">insert</span>(
-			<span class="ident">hash</span>.<span class="ident">clone</span>(),
-			<span class="ident">Entry</span> {
-				<span class="ident">number</span>,
-				<span class="ident">ancestors</span>: <span class="ident">ancestry</span>,
-				<span class="ident">descendents</span>: <span class="ident">Vec::new</span>(),
-				<span class="ident">cumulative_vote</span>: <span class="ident">V::default</span>(),
+		<span class="self">self</span>.entries.insert(
+			hash.clone(),
+			Entry {
+				number,
+				ancestors: ancestry,
+				descendents: Vec::new(),
+				cumulative_vote: V::default(),
 			},
 		);
 
-		<span class="self">self</span>.<span class="ident">heads</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">ancestor_hash</span>);
-		<span class="self">self</span>.<span class="ident">heads</span>.<span class="ident">insert</span>(<span class="ident">hash</span>);
+		<span class="self">self</span>.heads.remove(<span class="kw-2">&amp;</span>ancestor_hash);
+		<span class="self">self</span>.heads.insert(hash);
 
 		<span class="prelude-val">Ok</span>(())
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::testing::chain</span>::{<span class="ident">DummyChain</span>, <span class="ident">GENESIS_HASH</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use </span><span class="kw">crate</span>::testing::chain::{DummyChain, GENESIS_HASH};
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">graph_fork_not_at_node</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>graph_fork_not_at_node() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;A&quot;</span>, <span class="number">2</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;A&quot;</span>, <span class="number">2</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert!</span>(<span class="ident">tracker</span>.<span class="ident">heads</span>.<span class="ident">contains</span>(<span class="string">&quot;E1&quot;</span>));
-		<span class="macro">assert!</span>(<span class="ident">tracker</span>.<span class="ident">heads</span>.<span class="ident">contains</span>(<span class="string">&quot;F2&quot;</span>));
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">tracker</span>.<span class="ident">heads</span>.<span class="ident">contains</span>(<span class="string">&quot;A&quot;</span>));
+		<span class="macro">assert!</span>(tracker.heads.contains(<span class="string">&quot;E1&quot;</span>));
+		<span class="macro">assert!</span>(tracker.heads.contains(<span class="string">&quot;F2&quot;</span>));
+		<span class="macro">assert!</span>(!tracker.heads.contains(<span class="string">&quot;A&quot;</span>));
 
-		<span class="kw">let</span> <span class="ident">a_entry</span> <span class="op">=</span> <span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="string">&quot;A&quot;</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">a_entry</span>.<span class="ident">descendents</span>, <span class="macro">vec!</span>[<span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
-		<span class="macro">assert_eq!</span>(<span class="ident">a_entry</span>.<span class="ident">cumulative_vote</span>, <span class="number">300</span>);
+		<span class="kw">let </span>a_entry = tracker.entries.get(<span class="string">&quot;A&quot;</span>).unwrap();
+		<span class="macro">assert_eq!</span>(a_entry.descendents, <span class="macro">vec!</span>[<span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
+		<span class="macro">assert_eq!</span>(a_entry.cumulative_vote, <span class="number">300</span>);
 
-		<span class="kw">let</span> <span class="ident">e_entry</span> <span class="op">=</span> <span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="string">&quot;E1&quot;</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">e_entry</span>.<span class="ident">ancestor_node</span>().<span class="ident">unwrap</span>(), <span class="string">&quot;A&quot;</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">e_entry</span>.<span class="ident">cumulative_vote</span>, <span class="number">100</span>);
+		<span class="kw">let </span>e_entry = tracker.entries.get(<span class="string">&quot;E1&quot;</span>).unwrap();
+		<span class="macro">assert_eq!</span>(e_entry.ancestor_node().unwrap(), <span class="string">&quot;A&quot;</span>);
+		<span class="macro">assert_eq!</span>(e_entry.cumulative_vote, <span class="number">100</span>);
 
-		<span class="kw">let</span> <span class="ident">f_entry</span> <span class="op">=</span> <span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="string">&quot;F2&quot;</span>).<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">f_entry</span>.<span class="ident">ancestor_node</span>().<span class="ident">unwrap</span>(), <span class="string">&quot;A&quot;</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">f_entry</span>.<span class="ident">cumulative_vote</span>, <span class="number">100</span>);
+		<span class="kw">let </span>f_entry = tracker.entries.get(<span class="string">&quot;F2&quot;</span>).unwrap();
+		<span class="macro">assert_eq!</span>(f_entry.ancestor_node().unwrap(), <span class="string">&quot;A&quot;</span>);
+		<span class="macro">assert_eq!</span>(f_entry.cumulative_vote, <span class="number">100</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">graph_fork_at_node</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker1</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker2</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>graph_fork_at_node() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker1 = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker2 = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
 
-		<span class="ident">tracker1</span>.<span class="ident">insert</span>(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker1</span>.<span class="ident">insert</span>(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker1</span>.<span class="ident">insert</span>(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker1.insert(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker1.insert(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker1.insert(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="ident">tracker2</span>.<span class="ident">insert</span>(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker2</span>.<span class="ident">insert</span>(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker2</span>.<span class="ident">insert</span>(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker2.insert(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker2.insert(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker2.insert(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="kw">for</span> <span class="ident">tracker</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">tracker1</span>, <span class="kw-2">&amp;</span><span class="ident">tracker2</span>] {
-			<span class="macro">assert!</span>(<span class="ident">tracker</span>.<span class="ident">heads</span>.<span class="ident">contains</span>(<span class="string">&quot;E1&quot;</span>));
-			<span class="macro">assert!</span>(<span class="ident">tracker</span>.<span class="ident">heads</span>.<span class="ident">contains</span>(<span class="string">&quot;F2&quot;</span>));
-			<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">tracker</span>.<span class="ident">heads</span>.<span class="ident">contains</span>(<span class="string">&quot;C&quot;</span>));
+		<span class="kw">for </span>tracker <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>tracker1, <span class="kw-2">&amp;</span>tracker2] {
+			<span class="macro">assert!</span>(tracker.heads.contains(<span class="string">&quot;E1&quot;</span>));
+			<span class="macro">assert!</span>(tracker.heads.contains(<span class="string">&quot;F2&quot;</span>));
+			<span class="macro">assert!</span>(!tracker.heads.contains(<span class="string">&quot;C&quot;</span>));
 
-			<span class="kw">let</span> <span class="ident">c_entry</span> <span class="op">=</span> <span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="string">&quot;C&quot;</span>).<span class="ident">unwrap</span>();
-			<span class="macro">assert!</span>(<span class="ident">c_entry</span>.<span class="ident">descendents</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="string">&quot;E1&quot;</span>));
-			<span class="macro">assert!</span>(<span class="ident">c_entry</span>.<span class="ident">descendents</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="string">&quot;F2&quot;</span>));
-			<span class="macro">assert_eq!</span>(<span class="ident">c_entry</span>.<span class="ident">ancestor_node</span>().<span class="ident">unwrap</span>(), <span class="ident">GENESIS_HASH</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">c_entry</span>.<span class="ident">cumulative_vote</span>, <span class="number">300</span>);
+			<span class="kw">let </span>c_entry = tracker.entries.get(<span class="string">&quot;C&quot;</span>).unwrap();
+			<span class="macro">assert!</span>(c_entry.descendents.contains(<span class="kw-2">&amp;</span><span class="string">&quot;E1&quot;</span>));
+			<span class="macro">assert!</span>(c_entry.descendents.contains(<span class="kw-2">&amp;</span><span class="string">&quot;F2&quot;</span>));
+			<span class="macro">assert_eq!</span>(c_entry.ancestor_node().unwrap(), GENESIS_HASH);
+			<span class="macro">assert_eq!</span>(c_entry.cumulative_vote, <span class="number">300</span>);
 
-			<span class="kw">let</span> <span class="ident">e_entry</span> <span class="op">=</span> <span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="string">&quot;E1&quot;</span>).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">e_entry</span>.<span class="ident">ancestor_node</span>().<span class="ident">unwrap</span>(), <span class="string">&quot;C&quot;</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">e_entry</span>.<span class="ident">cumulative_vote</span>, <span class="number">100</span>);
+			<span class="kw">let </span>e_entry = tracker.entries.get(<span class="string">&quot;E1&quot;</span>).unwrap();
+			<span class="macro">assert_eq!</span>(e_entry.ancestor_node().unwrap(), <span class="string">&quot;C&quot;</span>);
+			<span class="macro">assert_eq!</span>(e_entry.cumulative_vote, <span class="number">100</span>);
 
-			<span class="kw">let</span> <span class="ident">f_entry</span> <span class="op">=</span> <span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="string">&quot;F2&quot;</span>).<span class="ident">unwrap</span>();
-			<span class="macro">assert_eq!</span>(<span class="ident">f_entry</span>.<span class="ident">ancestor_node</span>().<span class="ident">unwrap</span>(), <span class="string">&quot;C&quot;</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">f_entry</span>.<span class="ident">cumulative_vote</span>, <span class="number">100</span>);
+			<span class="kw">let </span>f_entry = tracker.entries.get(<span class="string">&quot;F2&quot;</span>).unwrap();
+			<span class="macro">assert_eq!</span>(f_entry.ancestor_node().unwrap(), <span class="string">&quot;C&quot;</span>);
+			<span class="macro">assert_eq!</span>(f_entry.cumulative_vote, <span class="number">100</span>);
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">ghost_merge_at_node</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>ghost_merge_at_node() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;E1&quot;</span>, <span class="number">6</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">None</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)));
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)), <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)));
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">Some</span>((<span class="string">&quot;B&quot;</span>, <span class="number">3</span>)), <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">None</span>, |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)), |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">Some</span>((<span class="string">&quot;B&quot;</span>, <span class="number">3</span>)), |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">ghost_merge_not_at_node_one_side_weighted</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>ghost_merge_not_at_node_one_side_weighted() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;F&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;G2&quot;</span>, <span class="string">&quot;H2&quot;</span>, <span class="string">&quot;I2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;F&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;G2&quot;</span>, <span class="string">&quot;H2&quot;</span>, <span class="string">&quot;I2&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;G1&quot;</span>, <span class="number">8</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;H2&quot;</span>, <span class="number">9</span>, <span class="number">150</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;G1&quot;</span>, <span class="number">8</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;H2&quot;</span>, <span class="number">9</span>, <span class="number">150</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">None</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)), <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)), <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">Some</span>((<span class="string">&quot;B&quot;</span>, <span class="number">3</span>)), <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">None</span>, |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)), |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)), |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">Some</span>((<span class="string">&quot;B&quot;</span>, <span class="number">3</span>)), |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">250</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;F&quot;</span>, <span class="number">7</span>)));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">ghost_introduce_branch</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>ghost_introduce_branch() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;F&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;E&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;EA&quot;</span>, <span class="string">&quot;EB&quot;</span>, <span class="string">&quot;EC&quot;</span>, <span class="string">&quot;ED&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;FA&quot;</span>, <span class="string">&quot;FB&quot;</span>, <span class="string">&quot;FC&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;F&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;E&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;EA&quot;</span>, <span class="string">&quot;EB&quot;</span>, <span class="string">&quot;EC&quot;</span>, <span class="string">&quot;ED&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;FA&quot;</span>, <span class="string">&quot;FB&quot;</span>, <span class="string">&quot;FC&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;FC&quot;</span>, <span class="number">10</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;ED&quot;</span>, <span class="number">10</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;FC&quot;</span>, <span class="number">10</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;ED&quot;</span>, <span class="number">10</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">None</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">None</span>, |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="ident">GENESIS_HASH</span>).<span class="ident">unwrap</span>().<span class="ident">descendents</span>, <span class="macro">vec!</span>[<span class="string">&quot;FC&quot;</span>, <span class="string">&quot;ED&quot;</span>]);
+		<span class="macro">assert_eq!</span>(tracker.entries.get(GENESIS_HASH).unwrap().descendents, <span class="macro">vec!</span>[<span class="string">&quot;FC&quot;</span>, <span class="string">&quot;ED&quot;</span>]);
 
-		<span class="comment">// introduce a branch in the middle.</span>
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;E&quot;</span>, <span class="number">6</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// introduce a branch in the middle.
+		</span>tracker.insert(<span class="string">&quot;E&quot;</span>, <span class="number">6</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="ident">GENESIS_HASH</span>).<span class="ident">unwrap</span>().<span class="ident">descendents</span>, <span class="macro">vec!</span>[<span class="string">&quot;E&quot;</span>]);
-		<span class="kw">let</span> <span class="ident">descendents</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="string">&quot;E&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">descendents</span>;
-		<span class="macro">assert_eq!</span>(<span class="ident">descendents</span>.<span class="ident">len</span>(), <span class="number">2</span>);
-		<span class="macro">assert!</span>(<span class="ident">descendents</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="string">&quot;ED&quot;</span>));
-		<span class="macro">assert!</span>(<span class="ident">descendents</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="string">&quot;FC&quot;</span>));
+		<span class="macro">assert_eq!</span>(tracker.entries.get(GENESIS_HASH).unwrap().descendents, <span class="macro">vec!</span>[<span class="string">&quot;E&quot;</span>]);
+		<span class="kw">let </span>descendents = <span class="kw-2">&amp;</span>tracker.entries.get(<span class="string">&quot;E&quot;</span>).unwrap().descendents;
+		<span class="macro">assert_eq!</span>(descendents.len(), <span class="number">2</span>);
+		<span class="macro">assert!</span>(descendents.contains(<span class="kw-2">&amp;</span><span class="string">&quot;ED&quot;</span>));
+		<span class="macro">assert!</span>(descendents.contains(<span class="kw-2">&amp;</span><span class="string">&quot;FC&quot;</span>));
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">None</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)), <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ghost</span>(<span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)), <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">None</span>, |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">Some</span>((<span class="string">&quot;C&quot;</span>, <span class="number">4</span>)), |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
+		<span class="macro">assert_eq!</span>(tracker.find_ghost(<span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)), |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="string">&quot;E&quot;</span>, <span class="number">6</span>)));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">walk_back_from_block_in_edge_fork_below</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>walk_back_from_block_in_edge_fork_below() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>, <span class="string">&quot;H2&quot;</span>, <span class="string">&quot;I2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>, <span class="string">&quot;H2&quot;</span>, <span class="string">&quot;I2&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">10</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;F1&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;G2&quot;</span>, <span class="number">8</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">10</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;F1&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;G2&quot;</span>, <span class="number">8</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="kw">let</span> <span class="ident">test_cases</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>];
+		<span class="kw">let </span>test_cases = <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>];
 
-		<span class="kw">for</span> <span class="ident">block</span> <span class="kw">in</span> <span class="ident">test_cases</span> {
-			<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">number</span>(<span class="ident">block</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ancestor</span>(<span class="ident">block</span>, <span class="ident">number</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span> <span class="number">5</span>).<span class="ident">unwrap</span>(), (<span class="string">&quot;C&quot;</span>, <span class="number">4</span>));
+		<span class="kw">for </span>block <span class="kw">in </span>test_cases {
+			<span class="kw">let </span>number = chain.number(block);
+			<span class="macro">assert_eq!</span>(tracker.find_ancestor(block, number, |<span class="kw-2">&amp;</span>x| x &gt; <span class="number">5</span>).unwrap(), (<span class="string">&quot;C&quot;</span>, <span class="number">4</span>));
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">walk_back_from_fork_block_node_below</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>walk_back_from_fork_block_node_below() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;D&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;D&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>, <span class="string">&quot;H2&quot;</span>, <span class="string">&quot;I2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;D&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;D&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>, <span class="string">&quot;H2&quot;</span>, <span class="string">&quot;I2&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">10</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;F1&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;G2&quot;</span>, <span class="number">8</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;B&quot;</span>, <span class="number">3</span>, <span class="number">10</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;F1&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;G2&quot;</span>, <span class="number">8</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ancestor</span>(<span class="string">&quot;G2&quot;</span>, <span class="number">8</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span> <span class="number">5</span>).<span class="ident">unwrap</span>(), (<span class="string">&quot;D&quot;</span>, <span class="number">5</span>));
-		<span class="kw">let</span> <span class="ident">test_cases</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="string">&quot;E1&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>];
+		<span class="macro">assert_eq!</span>(tracker.find_ancestor(<span class="string">&quot;G2&quot;</span>, <span class="number">8</span>, |<span class="kw-2">&amp;</span>x| x &gt; <span class="number">5</span>).unwrap(), (<span class="string">&quot;D&quot;</span>, <span class="number">5</span>));
+		<span class="kw">let </span>test_cases = <span class="kw-2">&amp;</span>[<span class="string">&quot;E1&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;G2&quot;</span>];
 
-		<span class="kw">for</span> <span class="ident">block</span> <span class="kw">in</span> <span class="ident">test_cases</span> {
-			<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">number</span>(<span class="ident">block</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ancestor</span>(<span class="ident">block</span>, <span class="ident">number</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span> <span class="number">5</span>).<span class="ident">unwrap</span>(), (<span class="string">&quot;D&quot;</span>, <span class="number">5</span>));
+		<span class="kw">for </span>block <span class="kw">in </span>test_cases {
+			<span class="kw">let </span>number = chain.number(block);
+			<span class="macro">assert_eq!</span>(tracker.find_ancestor(block, number, |<span class="kw-2">&amp;</span>x| x &gt; <span class="number">5</span>).unwrap(), (<span class="string">&quot;D&quot;</span>, <span class="number">5</span>));
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">walk_back_at_node</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>walk_back_at_node() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">1</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D1&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;G1&quot;</span>, <span class="string">&quot;H1&quot;</span>, <span class="string">&quot;I1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;C&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F2&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">10</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;F1&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;I1&quot;</span>, <span class="number">10</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;C&quot;</span>, <span class="number">4</span>, <span class="number">10</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;F1&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;F2&quot;</span>, <span class="number">7</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;I1&quot;</span>, <span class="number">10</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="kw">let</span> <span class="ident">test_cases</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="string">&quot;C&quot;</span>, <span class="string">&quot;D1&quot;</span>, <span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;I1&quot;</span>];
+		<span class="kw">let </span>test_cases = <span class="kw-2">&amp;</span>[<span class="string">&quot;C&quot;</span>, <span class="string">&quot;D1&quot;</span>, <span class="string">&quot;D2&quot;</span>, <span class="string">&quot;E1&quot;</span>, <span class="string">&quot;E2&quot;</span>, <span class="string">&quot;F1&quot;</span>, <span class="string">&quot;F2&quot;</span>, <span class="string">&quot;I1&quot;</span>];
 
-		<span class="kw">for</span> <span class="ident">block</span> <span class="kw">in</span> <span class="ident">test_cases</span> {
-			<span class="kw">let</span> <span class="ident">number</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">number</span>(<span class="ident">block</span>);
-			<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">find_ancestor</span>(<span class="ident">block</span>, <span class="ident">number</span>, <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">20</span>).<span class="ident">unwrap</span>(), (<span class="string">&quot;C&quot;</span>, <span class="number">4</span>));
+		<span class="kw">for </span>block <span class="kw">in </span>test_cases {
+			<span class="kw">let </span>number = chain.number(block);
+			<span class="macro">assert_eq!</span>(tracker.find_ancestor(block, number, |<span class="kw-2">&amp;</span>x| x &gt;= <span class="number">20</span>).unwrap(), (<span class="string">&quot;C&quot;</span>, <span class="number">4</span>));
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">adjust_base</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="string">&quot;E&quot;</span>, <span class="number">6</span>, <span class="number">0u32</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>adjust_base() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(<span class="string">&quot;E&quot;</span>, <span class="number">6</span>, <span class="number">0u32</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;F&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;E&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;EA&quot;</span>, <span class="string">&quot;EB&quot;</span>, <span class="string">&quot;EC&quot;</span>, <span class="string">&quot;ED&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;FA&quot;</span>, <span class="string">&quot;FB&quot;</span>, <span class="string">&quot;FC&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;F&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;E&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;EA&quot;</span>, <span class="string">&quot;EB&quot;</span>, <span class="string">&quot;EC&quot;</span>, <span class="string">&quot;ED&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;F&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;FA&quot;</span>, <span class="string">&quot;FB&quot;</span>, <span class="string">&quot;FC&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;FC&quot;</span>, <span class="number">10</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;ED&quot;</span>, <span class="number">10</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;FC&quot;</span>, <span class="number">10</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;ED&quot;</span>, <span class="number">10</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">base</span>(), (<span class="string">&quot;E&quot;</span>, <span class="number">6</span>));
+		<span class="macro">assert_eq!</span>(tracker.base(), (<span class="string">&quot;E&quot;</span>, <span class="number">6</span>));
 
-		<span class="ident">tracker</span>.<span class="ident">adjust_base</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;D&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;A&quot;</span>]);
+		tracker.adjust_base(<span class="kw-2">&amp;</span>[<span class="string">&quot;D&quot;</span>, <span class="string">&quot;C&quot;</span>, <span class="string">&quot;B&quot;</span>, <span class="string">&quot;A&quot;</span>]);
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">base</span>(), (<span class="string">&quot;A&quot;</span>, <span class="number">2</span>));
+		<span class="macro">assert_eq!</span>(tracker.base(), (<span class="string">&quot;A&quot;</span>, <span class="number">2</span>));
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;A&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;3&quot;</span>, <span class="string">&quot;4&quot;</span>, <span class="string">&quot;5&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;A&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;3&quot;</span>, <span class="string">&quot;4&quot;</span>, <span class="string">&quot;5&quot;</span>]);
 
-		<span class="ident">tracker</span>.<span class="ident">adjust_base</span>(<span class="kw-2">&amp;</span>[<span class="ident">GENESIS_HASH</span>]);
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">base</span>(), (<span class="ident">GENESIS_HASH</span>, <span class="number">1</span>));
+		tracker.adjust_base(<span class="kw-2">&amp;</span>[GENESIS_HASH]);
+		<span class="macro">assert_eq!</span>(tracker.base(), (GENESIS_HASH, <span class="number">1</span>));
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="ident">GENESIS_HASH</span>).<span class="ident">unwrap</span>().<span class="ident">cumulative_vote</span>, <span class="number">12</span>);
+		<span class="macro">assert_eq!</span>(tracker.entries.get(GENESIS_HASH).unwrap().cumulative_vote, <span class="number">12</span>);
 
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;5&quot;</span>, <span class="number">5</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		tracker.insert(<span class="string">&quot;5&quot;</span>, <span class="number">5</span>, <span class="number">3</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">tracker</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="ident">GENESIS_HASH</span>).<span class="ident">unwrap</span>().<span class="ident">cumulative_vote</span>, <span class="number">15</span>);
+		<span class="macro">assert_eq!</span>(tracker.entries.get(GENESIS_HASH).unwrap().cumulative_vote, <span class="number">15</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">find_ancestor_is_largest</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">DummyChain::new</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tracker</span> <span class="op">=</span> <span class="ident">VoteGraph::new</span>(<span class="ident">GENESIS_HASH</span>, <span class="number">0</span>, <span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>find_ancestor_is_largest() {
+		<span class="kw">let </span><span class="kw-2">mut </span>chain = DummyChain::new();
+		<span class="kw">let </span><span class="kw-2">mut </span>tracker = VoteGraph::new(GENESIS_HASH, <span class="number">0</span>, <span class="number">0</span>);
 
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="ident">GENESIS_HASH</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;B&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;A&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;A&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A2&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;B&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;B1&quot;</span>]);
-		<span class="ident">chain</span>.<span class="ident">push_blocks</span>(<span class="string">&quot;B&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;B2&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;A&quot;</span>]);
+		chain.push_blocks(GENESIS_HASH, <span class="kw-2">&amp;</span>[<span class="string">&quot;B&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;A&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;A&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;A2&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;B&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;B1&quot;</span>]);
+		chain.push_blocks(<span class="string">&quot;B&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;B2&quot;</span>]);
 
-		<span class="comment">// Inserting the Bs first used to exhibit incorrect behaviour.</span>
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;B1&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;B2&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;A1&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
-		<span class="ident">tracker</span>.<span class="ident">insert</span>(<span class="string">&quot;A2&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>).<span class="ident">unwrap</span>();
+		<span class="comment">// Inserting the Bs first used to exhibit incorrect behaviour.
+		</span>tracker.insert(<span class="string">&quot;B1&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;B2&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;A1&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span>chain).unwrap();
+		tracker.insert(<span class="string">&quot;A2&quot;</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span>chain).unwrap();
 
-		<span class="kw">let</span> <span class="ident">actual</span> <span class="op">=</span> <span class="ident">tracker</span>.<span class="ident">find_ancestor</span>(<span class="string">&quot;A&quot;</span>, <span class="number">1</span>, <span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="number">2</span>).<span class="ident">unwrap</span>();
-		<span class="comment">// `actual` used to (incorrectly) be (genesis, 0)</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">actual</span>, (<span class="string">&quot;A&quot;</span>, <span class="number">1</span>));
+		<span class="kw">let </span>actual = tracker.find_ancestor(<span class="string">&quot;A&quot;</span>, <span class="number">1</span>, |x| x &gt;= <span class="kw-2">&amp;</span><span class="number">2</span>).unwrap();
+		<span class="comment">// `actual` used to (incorrectly) be (genesis, 0)
+		</span><span class="macro">assert_eq!</span>(actual, (<span class="string">&quot;A&quot;</span>, <span class="number">1</span>));
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="finality_grandpa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="finality_grandpa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

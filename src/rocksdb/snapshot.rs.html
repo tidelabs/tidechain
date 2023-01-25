@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/snapshot.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>snapshot.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/snapshot.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>snapshot.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -228,231 +223,230 @@
 <span id="223">223</span>
 <span id="224">224</span>
 <span id="225">225</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Tyler Neely</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Tyler Neely
+//
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">db::DBAccess</span>, <span class="ident">ffi</span>, <span class="ident">AsColumnFamilyRef</span>, <span class="ident">DBIteratorWithThreadMode</span>, <span class="ident">DBRawIteratorWithThreadMode</span>,
-    <span class="ident">Error</span>, <span class="ident">IteratorMode</span>, <span class="ident">ReadOptions</span>, <span class="ident">DB</span>,
+</span><span class="kw">use crate</span>::{
+    db::DBAccess, ffi, AsColumnFamilyRef, DBIteratorWithThreadMode, DBRawIteratorWithThreadMode,
+    Error, IteratorMode, ReadOptions, DB,
 };
 
-<span class="doccomment">/// A type alias to keep compatibility. See [`SnapshotWithThreadMode`] for details</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Snapshot</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SnapshotWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">DB</span><span class="op">&gt;</span>;
+<span class="doccomment">/// A type alias to keep compatibility. See [`SnapshotWithThreadMode`] for details
+</span><span class="kw">pub type </span>Snapshot&lt;<span class="lifetime">&#39;a</span>&gt; = SnapshotWithThreadMode&lt;<span class="lifetime">&#39;a</span>, DB&gt;;
 
-<span class="doccomment">/// A consistent view of the database at the point of creation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Examples</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use rocksdb::{DB, IteratorMode, Options};</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let path = &quot;_path_for_rocksdb_storage3&quot;;</span>
-<span class="doccomment">/// {</span>
-<span class="doccomment">///     let db = DB::open_default(path).unwrap();</span>
-<span class="doccomment">///     let snapshot = db.snapshot(); // Creates a longer-term snapshot of the DB, but closed when goes out of scope</span>
-<span class="doccomment">///     let mut iter = snapshot.iterator(IteratorMode::Start); // Make as many iterators as you&#39;d like from one snapshot</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// let _ = DB::destroy(&amp;Options::default(), path);</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SnapshotWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span>: <span class="ident">DBAccess</span><span class="op">&gt;</span> {
-    <span class="ident">db</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">D</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">inner</span>: <span class="kw-2">*const</span> <span class="ident">ffi::rocksdb_snapshot_t</span>,
+<span class="doccomment">/// A consistent view of the database at the point of creation.
+///
+/// # Examples
+///
+/// ```
+/// use rocksdb::{DB, IteratorMode, Options};
+///
+/// let path = &quot;_path_for_rocksdb_storage3&quot;;
+/// {
+///     let db = DB::open_default(path).unwrap();
+///     let snapshot = db.snapshot(); // Creates a longer-term snapshot of the DB, but closed when goes out of scope
+///     let mut iter = snapshot.iterator(IteratorMode::Start); // Make as many iterators as you&#39;d like from one snapshot
+/// }
+/// let _ = DB::destroy(&amp;Options::default(), path);
+/// ```
+///
+</span><span class="kw">pub struct </span>SnapshotWithThreadMode&lt;<span class="lifetime">&#39;a</span>, D: DBAccess&gt; {
+    db: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>D,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) inner: <span class="kw-2">*const </span>ffi::rocksdb_snapshot_t,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span>: <span class="ident">DBAccess</span><span class="op">&gt;</span> <span class="ident">SnapshotWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new `SnapshotWithThreadMode` of the database `db`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">db</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">D</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">snapshot</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">ffi::rocksdb_create_snapshot</span>(<span class="ident">db</span>.<span class="ident">inner</span>()) };
-        <span class="self">Self</span> {
-            <span class="ident">db</span>,
-            <span class="ident">inner</span>: <span class="ident">snapshot</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, D: DBAccess&gt; SnapshotWithThreadMode&lt;<span class="lifetime">&#39;a</span>, D&gt; {
+    <span class="doccomment">/// Creates a new `SnapshotWithThreadMode` of the database `db`.
+    </span><span class="kw">pub fn </span>new(db: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>D) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>snapshot = <span class="kw">unsafe </span>{ ffi::rocksdb_create_snapshot(db.inner()) };
+        <span class="self">Self </span>{
+            db,
+            inner: snapshot,
         }
     }
 
-    <span class="doccomment">/// Creates an iterator over the data in this snapshot, using the default read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iterator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mode</span>: <span class="ident">IteratorMode</span>) -&gt; <span class="ident">DBIteratorWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">iterator_opt</span>(<span class="ident">mode</span>, <span class="ident">readopts</span>)
+    <span class="doccomment">/// Creates an iterator over the data in this snapshot, using the default read options.
+    </span><span class="kw">pub fn </span>iterator(<span class="kw-2">&amp;</span><span class="self">self</span>, mode: IteratorMode) -&gt; DBIteratorWithThreadMode&lt;<span class="lifetime">&#39;a</span>, D&gt; {
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.iterator_opt(mode, readopts)
     }
 
-    <span class="doccomment">/// Creates an iterator over the data in this snapshot under the given column family, using</span>
-    <span class="doccomment">/// the default read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iterator_cf</span>(
+    <span class="doccomment">/// Creates an iterator over the data in this snapshot under the given column family, using
+    /// the default read options.
+    </span><span class="kw">pub fn </span>iterator_cf(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">cf_handle</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">AsColumnFamilyRef</span>,
-        <span class="ident">mode</span>: <span class="ident">IteratorMode</span>,
-    ) -&gt; <span class="ident">DBIteratorWithThreadMode</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">iterator_cf_opt</span>(<span class="ident">cf_handle</span>, <span class="ident">readopts</span>, <span class="ident">mode</span>)
+        cf_handle: <span class="kw-2">&amp;</span><span class="kw">impl </span>AsColumnFamilyRef,
+        mode: IteratorMode,
+    ) -&gt; DBIteratorWithThreadMode&lt;D&gt; {
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.iterator_cf_opt(cf_handle, readopts, mode)
     }
 
-    <span class="doccomment">/// Creates an iterator over the data in this snapshot, using the given read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iterator_opt</span>(
+    <span class="doccomment">/// Creates an iterator over the data in this snapshot, using the given read options.
+    </span><span class="kw">pub fn </span>iterator_opt(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">mode</span>: <span class="ident">IteratorMode</span>,
-        <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>,
-    ) -&gt; <span class="ident">DBIteratorWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="ident">DBIteratorWithThreadMode</span>::<span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="ident">::new</span>(<span class="self">self</span>.<span class="ident">db</span>, <span class="ident">readopts</span>, <span class="ident">mode</span>)
+        mode: IteratorMode,
+        <span class="kw-2">mut </span>readopts: ReadOptions,
+    ) -&gt; DBIteratorWithThreadMode&lt;<span class="lifetime">&#39;a</span>, D&gt; {
+        readopts.set_snapshot(<span class="self">self</span>);
+        DBIteratorWithThreadMode::&lt;D&gt;::new(<span class="self">self</span>.db, readopts, mode)
     }
 
-    <span class="doccomment">/// Creates an iterator over the data in this snapshot under the given column family, using</span>
-    <span class="doccomment">/// the given read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iterator_cf_opt</span>(
+    <span class="doccomment">/// Creates an iterator over the data in this snapshot under the given column family, using
+    /// the given read options.
+    </span><span class="kw">pub fn </span>iterator_cf_opt(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">cf_handle</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">AsColumnFamilyRef</span>,
-        <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>,
-        <span class="ident">mode</span>: <span class="ident">IteratorMode</span>,
-    ) -&gt; <span class="ident">DBIteratorWithThreadMode</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="ident">DBIteratorWithThreadMode::new_cf</span>(<span class="self">self</span>.<span class="ident">db</span>, <span class="ident">cf_handle</span>.<span class="ident">inner</span>(), <span class="ident">readopts</span>, <span class="ident">mode</span>)
+        cf_handle: <span class="kw-2">&amp;</span><span class="kw">impl </span>AsColumnFamilyRef,
+        <span class="kw-2">mut </span>readopts: ReadOptions,
+        mode: IteratorMode,
+    ) -&gt; DBIteratorWithThreadMode&lt;D&gt; {
+        readopts.set_snapshot(<span class="self">self</span>);
+        DBIteratorWithThreadMode::new_cf(<span class="self">self</span>.db, cf_handle.inner(), readopts, mode)
     }
 
-    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot, using the default read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw_iterator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DBRawIteratorWithThreadMode</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">raw_iterator_opt</span>(<span class="ident">readopts</span>)
+    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot, using the default read options.
+    </span><span class="kw">pub fn </span>raw_iterator(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DBRawIteratorWithThreadMode&lt;D&gt; {
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.raw_iterator_opt(readopts)
     }
 
-    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot under the given column family, using</span>
-    <span class="doccomment">/// the default read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw_iterator_cf</span>(
+    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot under the given column family, using
+    /// the default read options.
+    </span><span class="kw">pub fn </span>raw_iterator_cf(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">cf_handle</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">AsColumnFamilyRef</span>,
-    ) -&gt; <span class="ident">DBRawIteratorWithThreadMode</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">raw_iterator_cf_opt</span>(<span class="ident">cf_handle</span>, <span class="ident">readopts</span>)
+        cf_handle: <span class="kw-2">&amp;</span><span class="kw">impl </span>AsColumnFamilyRef,
+    ) -&gt; DBRawIteratorWithThreadMode&lt;D&gt; {
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.raw_iterator_cf_opt(cf_handle, readopts)
     }
 
-    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot, using the given read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw_iterator_opt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>) -&gt; <span class="ident">DBRawIteratorWithThreadMode</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="ident">DBRawIteratorWithThreadMode::new</span>(<span class="self">self</span>.<span class="ident">db</span>, <span class="ident">readopts</span>)
+    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot, using the given read options.
+    </span><span class="kw">pub fn </span>raw_iterator_opt(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>readopts: ReadOptions) -&gt; DBRawIteratorWithThreadMode&lt;D&gt; {
+        readopts.set_snapshot(<span class="self">self</span>);
+        DBRawIteratorWithThreadMode::new(<span class="self">self</span>.db, readopts)
     }
 
-    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot under the given column family, using</span>
-    <span class="doccomment">/// the given read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw_iterator_cf_opt</span>(
+    <span class="doccomment">/// Creates a raw iterator over the data in this snapshot under the given column family, using
+    /// the given read options.
+    </span><span class="kw">pub fn </span>raw_iterator_cf_opt(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">cf_handle</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">AsColumnFamilyRef</span>,
-        <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>,
-    ) -&gt; <span class="ident">DBRawIteratorWithThreadMode</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="ident">DBRawIteratorWithThreadMode::new_cf</span>(<span class="self">self</span>.<span class="ident">db</span>, <span class="ident">cf_handle</span>.<span class="ident">inner</span>(), <span class="ident">readopts</span>)
+        cf_handle: <span class="kw-2">&amp;</span><span class="kw">impl </span>AsColumnFamilyRef,
+        <span class="kw-2">mut </span>readopts: ReadOptions,
+    ) -&gt; DBRawIteratorWithThreadMode&lt;D&gt; {
+        readopts.set_snapshot(<span class="self">self</span>);
+        DBRawIteratorWithThreadMode::new_cf(<span class="self">self</span>.db, cf_handle.inner(), readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with a key value with default read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="ident">K</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">get_opt</span>(<span class="ident">key</span>, <span class="ident">readopts</span>)
+    <span class="doccomment">/// Returns the bytes associated with a key value with default read options.
+    </span><span class="kw">pub fn </span>get&lt;K: AsRef&lt;[u8]&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: K) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt; {
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.get_opt(key, readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with a key value and given column family with default read</span>
-    <span class="doccomment">/// options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_cf</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Returns the bytes associated with a key value and given column family with default read
+    /// options.
+    </span><span class="kw">pub fn </span>get_cf&lt;K: AsRef&lt;[u8]&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">cf</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">AsColumnFamilyRef</span>,
-        <span class="ident">key</span>: <span class="ident">K</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">get_cf_opt</span>(<span class="ident">cf</span>, <span class="ident">key</span>.<span class="ident">as_ref</span>(), <span class="ident">readopts</span>)
+        cf: <span class="kw-2">&amp;</span><span class="kw">impl </span>AsColumnFamilyRef,
+        key: K,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt; {
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.get_cf_opt(cf, key.as_ref(), readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with a key value and given read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_opt</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Returns the bytes associated with a key value and given read options.
+    </span><span class="kw">pub fn </span>get_opt&lt;K: AsRef&lt;[u8]&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">key</span>: <span class="ident">K</span>,
-        <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="self">self</span>.<span class="ident">db</span>.<span class="ident">get_opt</span>(<span class="ident">key</span>.<span class="ident">as_ref</span>(), <span class="kw-2">&amp;</span><span class="ident">readopts</span>)
+        key: K,
+        <span class="kw-2">mut </span>readopts: ReadOptions,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt; {
+        readopts.set_snapshot(<span class="self">self</span>);
+        <span class="self">self</span>.db.get_opt(key.as_ref(), <span class="kw-2">&amp;</span>readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with a key value, given column family and read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_cf_opt</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Returns the bytes associated with a key value, given column family and read options.
+    </span><span class="kw">pub fn </span>get_cf_opt&lt;K: AsRef&lt;[u8]&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">cf</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">AsColumnFamilyRef</span>,
-        <span class="ident">key</span>: <span class="ident">K</span>,
-        <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="self">self</span>.<span class="ident">db</span>.<span class="ident">get_cf_opt</span>(<span class="ident">cf</span>, <span class="ident">key</span>.<span class="ident">as_ref</span>(), <span class="kw-2">&amp;</span><span class="ident">readopts</span>)
+        cf: <span class="kw-2">&amp;</span><span class="kw">impl </span>AsColumnFamilyRef,
+        key: K,
+        <span class="kw-2">mut </span>readopts: ReadOptions,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt; {
+        readopts.set_snapshot(<span class="self">self</span>);
+        <span class="self">self</span>.db.get_cf_opt(cf, key.as_ref(), <span class="kw-2">&amp;</span>readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with the given key values and default read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">multi_get</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="ident">I</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">keys</span>: <span class="ident">I</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">K</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Returns the bytes associated with the given key values and default read options.
+    </span><span class="kw">pub fn </span>multi_get&lt;K: AsRef&lt;[u8]&gt;, I&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, keys: I) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt;&gt;
+    <span class="kw">where
+        </span>I: IntoIterator&lt;Item = K&gt;,
     {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">multi_get_opt</span>(<span class="ident">keys</span>, <span class="ident">readopts</span>)
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.multi_get_opt(keys, readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with the given key values and default read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">multi_get_cf</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="ident">K</span>, <span class="ident">I</span>, <span class="ident">W</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">keys_cf</span>: <span class="ident">I</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-        <span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">W</span>, <span class="ident">K</span>)<span class="op">&gt;</span>,
-        <span class="ident">W</span>: <span class="ident">AsColumnFamilyRef</span> <span class="op">+</span> <span class="lifetime">&#39;b</span>,
+    <span class="doccomment">/// Returns the bytes associated with the given key values and default read options.
+    </span><span class="kw">pub fn </span>multi_get_cf&lt;<span class="lifetime">&#39;b</span>, K, I, W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, keys_cf: I) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt;&gt;
+    <span class="kw">where
+        </span>K: AsRef&lt;[u8]&gt;,
+        I: IntoIterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>W, K)&gt;,
+        W: AsColumnFamilyRef + <span class="lifetime">&#39;b</span>,
     {
-        <span class="kw">let</span> <span class="ident">readopts</span> <span class="op">=</span> <span class="ident">ReadOptions::default</span>();
-        <span class="self">self</span>.<span class="ident">multi_get_cf_opt</span>(<span class="ident">keys_cf</span>, <span class="ident">readopts</span>)
+        <span class="kw">let </span>readopts = ReadOptions::default();
+        <span class="self">self</span>.multi_get_cf_opt(keys_cf, readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with the given key values and given read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">multi_get_opt</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">I</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Returns the bytes associated with the given key values and given read options.
+    </span><span class="kw">pub fn </span>multi_get_opt&lt;K, I&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">keys</span>: <span class="ident">I</span>,
-        <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>,
-    ) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-        <span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">K</span><span class="op">&gt;</span>,
+        keys: I,
+        <span class="kw-2">mut </span>readopts: ReadOptions,
+    ) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt;&gt;
+    <span class="kw">where
+        </span>K: AsRef&lt;[u8]&gt;,
+        I: IntoIterator&lt;Item = K&gt;,
     {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="self">self</span>.<span class="ident">db</span>.<span class="ident">multi_get_opt</span>(<span class="ident">keys</span>, <span class="kw-2">&amp;</span><span class="ident">readopts</span>)
+        readopts.set_snapshot(<span class="self">self</span>);
+        <span class="self">self</span>.db.multi_get_opt(keys, <span class="kw-2">&amp;</span>readopts)
     }
 
-    <span class="doccomment">/// Returns the bytes associated with the given key values, given column family and read options.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">multi_get_cf_opt</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="ident">K</span>, <span class="ident">I</span>, <span class="ident">W</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Returns the bytes associated with the given key values, given column family and read options.
+    </span><span class="kw">pub fn </span>multi_get_cf_opt&lt;<span class="lifetime">&#39;b</span>, K, I, W&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">keys_cf</span>: <span class="ident">I</span>,
-        <span class="kw-2">mut</span> <span class="ident">readopts</span>: <span class="ident">ReadOptions</span>,
-    ) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">K</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-        <span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">W</span>, <span class="ident">K</span>)<span class="op">&gt;</span>,
-        <span class="ident">W</span>: <span class="ident">AsColumnFamilyRef</span> <span class="op">+</span> <span class="lifetime">&#39;b</span>,
+        keys_cf: I,
+        <span class="kw-2">mut </span>readopts: ReadOptions,
+    ) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;, Error&gt;&gt;
+    <span class="kw">where
+        </span>K: AsRef&lt;[u8]&gt;,
+        I: IntoIterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>W, K)&gt;,
+        W: AsColumnFamilyRef + <span class="lifetime">&#39;b</span>,
     {
-        <span class="ident">readopts</span>.<span class="ident">set_snapshot</span>(<span class="self">self</span>);
-        <span class="self">self</span>.<span class="ident">db</span>.<span class="ident">multi_get_cf_opt</span>(<span class="ident">keys_cf</span>, <span class="kw-2">&amp;</span><span class="ident">readopts</span>)
+        readopts.set_snapshot(<span class="self">self</span>);
+        <span class="self">self</span>.db.multi_get_cf_opt(keys_cf, <span class="kw-2">&amp;</span>readopts)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span>: <span class="ident">DBAccess</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">SnapshotWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ffi::rocksdb_release_snapshot</span>(<span class="self">self</span>.<span class="ident">db</span>.<span class="ident">inner</span>(), <span class="self">self</span>.<span class="ident">inner</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, D: DBAccess&gt; Drop <span class="kw">for </span>SnapshotWithThreadMode&lt;<span class="lifetime">&#39;a</span>, D&gt; {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ffi::rocksdb_release_snapshot(<span class="self">self</span>.db.inner(), <span class="self">self</span>.inner);
         }
     }
 }
 
-<span class="doccomment">/// `Send` and `Sync` implementations for `SnapshotWithThreadMode` are safe, because `SnapshotWithThreadMode` is</span>
-<span class="doccomment">/// immutable and can be safely shared between threads.</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span>: <span class="ident">DBAccess</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">SnapshotWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span><span class="op">&gt;</span> {}
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span>: <span class="ident">DBAccess</span><span class="op">&gt;</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">SnapshotWithThreadMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span><span class="op">&gt;</span> {}
+<span class="doccomment">/// `Send` and `Sync` implementations for `SnapshotWithThreadMode` are safe, because `SnapshotWithThreadMode` is
+/// immutable and can be safely shared between threads.
+</span><span class="kw">unsafe impl</span>&lt;<span class="lifetime">&#39;a</span>, D: DBAccess&gt; Send <span class="kw">for </span>SnapshotWithThreadMode&lt;<span class="lifetime">&#39;a</span>, D&gt; {}
+<span class="kw">unsafe impl</span>&lt;<span class="lifetime">&#39;a</span>, D: DBAccess&gt; Sync <span class="kw">for </span>SnapshotWithThreadMode&lt;<span class="lifetime">&#39;a</span>, D&gt; {}
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

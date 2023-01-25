@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/support/src/storage/transactional.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>transactional.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../frame_support/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../frame_support/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../frame_support/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/support/src/storage/transactional.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>transactional.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../frame_support/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -304,148 +299,148 @@
 <span id="299">299</span>
 <span id="300">300</span>
 <span id="301">301</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! Provides functionality around the transaction storage.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Transactional storage provides functionality to run an entire code block</span>
-<span class="doccomment">//! in a storage transaction. This means that either the entire changes to the</span>
-<span class="doccomment">//! storage are committed or everything is thrown away. This simplifies the</span>
-<span class="doccomment">//! writing of functionality that may bail at any point of operation. Otherwise</span>
-<span class="doccomment">//! you would need to first verify all storage accesses and then do the storage</span>
-<span class="doccomment">//! modifications.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! [`with_transaction`] provides a way to run a given closure in a transactional context.</span>
+</span><span class="doccomment">//! Provides functionality around the transaction storage.
+//!
+//! Transactional storage provides functionality to run an entire code block
+//! in a storage transaction. This means that either the entire changes to the
+//! storage are committed or everything is thrown away. This simplifies the
+//! writing of functionality that may bail at any point of operation. Otherwise
+//! you would need to first verify all storage accesses and then do the storage
+//! modifications.
+//!
+//! [`with_transaction`] provides a way to run a given closure in a transactional context.
 
-<span class="kw">use</span> <span class="ident">sp_io::storage</span>::{<span class="ident">commit_transaction</span>, <span class="ident">rollback_transaction</span>, <span class="ident">start_transaction</span>};
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{<span class="ident">DispatchError</span>, <span class="ident">TransactionOutcome</span>, <span class="ident">TransactionalError</span>};
+</span><span class="kw">use </span>sp_io::storage::{commit_transaction, rollback_transaction, start_transaction};
+<span class="kw">use </span>sp_runtime::{DispatchError, TransactionOutcome, TransactionalError};
 
-<span class="doccomment">/// The type that is being used to store the current number of active layers.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Layer</span> <span class="op">=</span> <span class="ident">u32</span>;
-<span class="doccomment">/// The key that is holds the current number of active layers.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TRANSACTION_LEVEL_KEY</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;:transaction_level:&quot;</span>;
-<span class="doccomment">/// The maximum number of nested layers.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TRANSACTIONAL_LIMIT</span>: <span class="ident">Layer</span> <span class="op">=</span> <span class="number">255</span>;
+<span class="doccomment">/// The type that is being used to store the current number of active layers.
+</span><span class="kw">pub type </span>Layer = u32;
+<span class="doccomment">/// The key that is holds the current number of active layers.
+</span><span class="kw">pub const </span>TRANSACTION_LEVEL_KEY: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;:transaction_level:&quot;</span>;
+<span class="doccomment">/// The maximum number of nested layers.
+</span><span class="kw">pub const </span>TRANSACTIONAL_LIMIT: Layer = <span class="number">255</span>;
 
-<span class="doccomment">/// Returns the current number of nested transactional layers.</span>
-<span class="kw">fn</span> <span class="ident">get_transaction_level</span>() -&gt; <span class="ident">Layer</span> {
-	<span class="ident"><span class="kw">crate</span>::storage::unhashed::get_or_default</span>::<span class="op">&lt;</span><span class="ident">Layer</span><span class="op">&gt;</span>(<span class="ident">TRANSACTION_LEVEL_KEY</span>)
+<span class="doccomment">/// Returns the current number of nested transactional layers.
+</span><span class="kw">fn </span>get_transaction_level() -&gt; Layer {
+	<span class="kw">crate</span>::storage::unhashed::get_or_default::&lt;Layer&gt;(TRANSACTION_LEVEL_KEY)
 }
 
-<span class="doccomment">/// Set the current number of nested transactional layers.</span>
-<span class="kw">fn</span> <span class="ident">set_transaction_level</span>(<span class="ident">level</span>: <span class="ident">Layer</span>) {
-	<span class="ident"><span class="kw">crate</span>::storage::unhashed::put</span>::<span class="op">&lt;</span><span class="ident">Layer</span><span class="op">&gt;</span>(<span class="ident">TRANSACTION_LEVEL_KEY</span>, <span class="kw-2">&amp;</span><span class="ident">level</span>);
+<span class="doccomment">/// Set the current number of nested transactional layers.
+</span><span class="kw">fn </span>set_transaction_level(level: Layer) {
+	<span class="kw">crate</span>::storage::unhashed::put::&lt;Layer&gt;(TRANSACTION_LEVEL_KEY, <span class="kw-2">&amp;</span>level);
 }
 
-<span class="doccomment">/// Kill the transactional layers storage.</span>
-<span class="kw">fn</span> <span class="ident">kill_transaction_level</span>() {
-	<span class="ident"><span class="kw">crate</span>::storage::unhashed::kill</span>(<span class="ident">TRANSACTION_LEVEL_KEY</span>);
+<span class="doccomment">/// Kill the transactional layers storage.
+</span><span class="kw">fn </span>kill_transaction_level() {
+	<span class="kw">crate</span>::storage::unhashed::kill(TRANSACTION_LEVEL_KEY);
 }
 
-<span class="doccomment">/// Increments the transaction level. Returns an error if levels go past the limit.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns a guard that when dropped decrements the transaction level automatically.</span>
-<span class="kw">fn</span> <span class="ident">inc_transaction_level</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StorageLayerGuard</span>, ()<span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">existing_levels</span> <span class="op">=</span> <span class="ident">get_transaction_level</span>();
-	<span class="kw">if</span> <span class="ident">existing_levels</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">TRANSACTIONAL_LIMIT</span> {
-		<span class="kw">return</span> <span class="prelude-val">Err</span>(())
+<span class="doccomment">/// Increments the transaction level. Returns an error if levels go past the limit.
+///
+/// Returns a guard that when dropped decrements the transaction level automatically.
+</span><span class="kw">fn </span>inc_transaction_level() -&gt; <span class="prelude-ty">Result</span>&lt;StorageLayerGuard, ()&gt; {
+	<span class="kw">let </span>existing_levels = get_transaction_level();
+	<span class="kw">if </span>existing_levels &gt;= TRANSACTIONAL_LIMIT {
+		<span class="kw">return </span><span class="prelude-val">Err</span>(())
 	}
-	<span class="comment">// Cannot overflow because of check above.</span>
-	<span class="ident">set_transaction_level</span>(<span class="ident">existing_levels</span> <span class="op">+</span> <span class="number">1</span>);
-	<span class="prelude-val">Ok</span>(<span class="ident">StorageLayerGuard</span>)
+	<span class="comment">// Cannot overflow because of check above.
+	</span>set_transaction_level(existing_levels + <span class="number">1</span>);
+	<span class="prelude-val">Ok</span>(StorageLayerGuard)
 }
 
-<span class="kw">fn</span> <span class="ident">dec_transaction_level</span>() {
-	<span class="kw">let</span> <span class="ident">existing_levels</span> <span class="op">=</span> <span class="ident">get_transaction_level</span>();
-	<span class="kw">if</span> <span class="ident">existing_levels</span> <span class="op">==</span> <span class="number">0</span> {
+<span class="kw">fn </span>dec_transaction_level() {
+	<span class="kw">let </span>existing_levels = get_transaction_level();
+	<span class="kw">if </span>existing_levels == <span class="number">0 </span>{
 		<span class="macro">log::warn!</span>(
 				<span class="string">&quot;We are underflowing with calculating transactional levels. Not great, but let&#39;s not panic...&quot;</span>,
 			);
-	} <span class="kw">else</span> <span class="kw">if</span> <span class="ident">existing_levels</span> <span class="op">==</span> <span class="number">1</span> {
-		<span class="comment">// Don&#39;t leave any trace of this storage item.</span>
-		<span class="ident">kill_transaction_level</span>();
-	} <span class="kw">else</span> {
-		<span class="comment">// Cannot underflow because of checks above.</span>
-		<span class="ident">set_transaction_level</span>(<span class="ident">existing_levels</span> <span class="op">-</span> <span class="number">1</span>);
+	} <span class="kw">else if </span>existing_levels == <span class="number">1 </span>{
+		<span class="comment">// Don&#39;t leave any trace of this storage item.
+		</span>kill_transaction_level();
+	} <span class="kw">else </span>{
+		<span class="comment">// Cannot underflow because of checks above.
+		</span>set_transaction_level(existing_levels - <span class="number">1</span>);
 	}
 }
 
-<span class="kw">struct</span> <span class="ident">StorageLayerGuard</span>;
+<span class="kw">struct </span>StorageLayerGuard;
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">StorageLayerGuard</span> {
-	<span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="ident">dec_transaction_level</span>()
+<span class="kw">impl </span>Drop <span class="kw">for </span>StorageLayerGuard {
+	<span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		dec_transaction_level()
 	}
 }
 
-<span class="doccomment">/// Check if the current call is within a transactional layer.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_transactional</span>() -&gt; <span class="ident">bool</span> {
-	<span class="ident">get_transaction_level</span>() <span class="op">&gt;</span> <span class="number">0</span>
-}
+<span class="doccomment">/// Check if the current call is within a transactional layer.
+</span><span class="kw">pub fn </span>is_transactional() -&gt; bool {
+	get_transaction_level() &gt; <span class="number">0
+</span>}
 
-<span class="doccomment">/// Execute the supplied function in a new storage transaction.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// All changes to storage performed by the supplied function are discarded if the returned</span>
-<span class="doccomment">/// outcome is `TransactionOutcome::Rollback`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Transactions can be nested up to `TRANSACTIONAL_LIMIT` times; more than that will result in an</span>
-<span class="doccomment">/// error.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Commits happen to the parent transaction.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_transaction</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">E</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">DispatchError</span><span class="op">&gt;</span>,
-	<span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Execute the supplied function in a new storage transaction.
+///
+/// All changes to storage performed by the supplied function are discarded if the returned
+/// outcome is `TransactionOutcome::Rollback`.
+///
+/// Transactions can be nested up to `TRANSACTIONAL_LIMIT` times; more than that will result in an
+/// error.
+///
+/// Commits happen to the parent transaction.
+</span><span class="kw">pub fn </span>with_transaction&lt;T, E, F&gt;(f: F) -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;
+<span class="kw">where
+	</span>E: From&lt;DispatchError&gt;,
+	F: FnOnce() -&gt; TransactionOutcome&lt;<span class="prelude-ty">Result</span>&lt;T, E&gt;&gt;,
 {
-	<span class="comment">// This needs to happen before `start_transaction` below.</span>
-	<span class="comment">// Otherwise we may rollback the increase, then decrease as the guard goes out of scope</span>
-	<span class="comment">// and then end in some bad state.</span>
-	<span class="kw">let</span> <span class="ident">_guard</span> <span class="op">=</span> <span class="ident">inc_transaction_level</span>().<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">TransactionalError::LimitReached</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+	<span class="comment">// This needs to happen before `start_transaction` below.
+	// Otherwise we may rollback the increase, then decrease as the guard goes out of scope
+	// and then end in some bad state.
+	</span><span class="kw">let </span>_guard = inc_transaction_level().map_err(|()| TransactionalError::LimitReached.into())<span class="question-mark">?</span>;
 
-	<span class="ident">start_transaction</span>();
+	start_transaction();
 
-	<span class="kw">match</span> <span class="ident">f</span>() {
-		<span class="ident">TransactionOutcome::Commit</span>(<span class="ident">res</span>) =&gt; {
-			<span class="ident">commit_transaction</span>();
-			<span class="ident">res</span>
+	<span class="kw">match </span>f() {
+		TransactionOutcome::Commit(res) =&gt; {
+			commit_transaction();
+			res
 		},
-		<span class="ident">TransactionOutcome::Rollback</span>(<span class="ident">res</span>) =&gt; {
-			<span class="ident">rollback_transaction</span>();
-			<span class="ident">res</span>
+		TransactionOutcome::Rollback(res) =&gt; {
+			rollback_transaction();
+			res
 		},
 	}
 }
 
-<span class="doccomment">/// Same as [`with_transaction`] but without a limit check on nested transactional layers.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is mostly for backwards compatibility before there was a transactional layer limit.</span>
-<span class="doccomment">/// It is recommended to only use [`with_transaction`] to avoid users from generating too many</span>
-<span class="doccomment">/// transactional layers.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_transaction_unchecked</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="ident">R</span>
-<span class="kw">where</span>
-	<span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Same as [`with_transaction`] but without a limit check on nested transactional layers.
+///
+/// This is mostly for backwards compatibility before there was a transactional layer limit.
+/// It is recommended to only use [`with_transaction`] to avoid users from generating too many
+/// transactional layers.
+</span><span class="kw">pub fn </span>with_transaction_unchecked&lt;R, F&gt;(f: F) -&gt; R
+<span class="kw">where
+	</span>F: FnOnce() -&gt; TransactionOutcome&lt;R&gt;,
 {
-	<span class="comment">// This needs to happen before `start_transaction` below.</span>
-	<span class="comment">// Otherwise we may rollback the increase, then decrease as the guard goes out of scope</span>
-	<span class="comment">// and then end in some bad state.</span>
-	<span class="kw">let</span> <span class="ident">maybe_guard</span> <span class="op">=</span> <span class="ident">inc_transaction_level</span>();
+	<span class="comment">// This needs to happen before `start_transaction` below.
+	// Otherwise we may rollback the increase, then decrease as the guard goes out of scope
+	// and then end in some bad state.
+	</span><span class="kw">let </span>maybe_guard = inc_transaction_level();
 
-	<span class="kw">if</span> <span class="ident">maybe_guard</span>.<span class="ident">is_err</span>() {
+	<span class="kw">if </span>maybe_guard.is_err() {
 		<span class="macro">log::warn!</span>(
 			<span class="string">&quot;The transactional layer limit has been reached, and new transactional layers are being
 			spawned with `with_transaction_unchecked`. This could be caused by someone trying to
@@ -454,157 +449,156 @@
 		);
 	}
 
-	<span class="ident">start_transaction</span>();
+	start_transaction();
 
-	<span class="kw">match</span> <span class="ident">f</span>() {
-		<span class="ident">TransactionOutcome::Commit</span>(<span class="ident">res</span>) =&gt; {
-			<span class="ident">commit_transaction</span>();
-			<span class="ident">res</span>
+	<span class="kw">match </span>f() {
+		TransactionOutcome::Commit(res) =&gt; {
+			commit_transaction();
+			res
 		},
-		<span class="ident">TransactionOutcome::Rollback</span>(<span class="ident">res</span>) =&gt; {
-			<span class="ident">rollback_transaction</span>();
-			<span class="ident">res</span>
+		TransactionOutcome::Rollback(res) =&gt; {
+			rollback_transaction();
+			res
 		},
 	}
 }
 
-<span class="doccomment">/// Execute the supplied function, adding a new storage layer.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is the same as `with_transaction`, but assuming that any function returning an `Err` should</span>
-<span class="doccomment">/// rollback, and any function returning `Ok` should commit. This provides a cleaner API to the</span>
-<span class="doccomment">/// developer who wants this behavior.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_storage_layer</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">E</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">DispatchError</span><span class="op">&gt;</span>,
-	<span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Execute the supplied function, adding a new storage layer.
+///
+/// This is the same as `with_transaction`, but assuming that any function returning an `Err` should
+/// rollback, and any function returning `Ok` should commit. This provides a cleaner API to the
+/// developer who wants this behavior.
+</span><span class="kw">pub fn </span>with_storage_layer&lt;T, E, F&gt;(f: F) -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;
+<span class="kw">where
+	</span>E: From&lt;DispatchError&gt;,
+	F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;,
 {
-	<span class="ident">with_transaction</span>(<span class="op">|</span><span class="op">|</span> {
-		<span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">f</span>();
-		<span class="kw">if</span> <span class="ident">r</span>.<span class="ident">is_ok</span>() {
-			<span class="ident">TransactionOutcome::Commit</span>(<span class="ident">r</span>)
-		} <span class="kw">else</span> {
-			<span class="ident">TransactionOutcome::Rollback</span>(<span class="ident">r</span>)
+	with_transaction(|| {
+		<span class="kw">let </span>r = f();
+		<span class="kw">if </span>r.is_ok() {
+			TransactionOutcome::Commit(r)
+		} <span class="kw">else </span>{
+			TransactionOutcome::Rollback(r)
 		}
 	})
 }
 
-<span class="doccomment">/// Execute the supplied function, ensuring we are at least in one storage layer.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If we are already in a storage layer, we just execute the provided closure.</span>
-<span class="doccomment">/// If we are not, we execute the closure within a [`with_storage_layer`].</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_storage_layer</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">E</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">DispatchError</span><span class="op">&gt;</span>,
-	<span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Execute the supplied function, ensuring we are at least in one storage layer.
+///
+/// If we are already in a storage layer, we just execute the provided closure.
+/// If we are not, we execute the closure within a [`with_storage_layer`].
+</span><span class="kw">pub fn </span>in_storage_layer&lt;T, E, F&gt;(f: F) -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;
+<span class="kw">where
+	</span>E: From&lt;DispatchError&gt;,
+	F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;,
 {
-	<span class="kw">if</span> <span class="ident">is_transactional</span>() {
-		<span class="ident">f</span>()
-	} <span class="kw">else</span> {
-		<span class="ident">with_storage_layer</span>(<span class="ident">f</span>)
+	<span class="kw">if </span>is_transactional() {
+		f()
+	} <span class="kw">else </span>{
+		with_storage_layer(f)
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">assert_noop</span>, <span class="ident">assert_ok</span>};
-	<span class="kw">use</span> <span class="ident">sp_io::TestExternalities</span>;
-	<span class="kw">use</span> <span class="ident">sp_runtime::DispatchResult</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use crate</span>::{assert_noop, assert_ok};
+	<span class="kw">use </span>sp_io::TestExternalities;
+	<span class="kw">use </span>sp_runtime::DispatchResult;
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">is_transactional_should_return_false</span>() {
-		<span class="ident">TestExternalities::default</span>().<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">is_transactional</span>());
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>is_transactional_should_return_false() {
+		TestExternalities::default().execute_with(|| {
+			<span class="macro">assert!</span>(!is_transactional());
 		});
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">is_transactional_should_not_error_in_with_transaction</span>() {
-		<span class="ident">TestExternalities::default</span>().<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="macro">assert_ok!</span>(<span class="ident">with_transaction</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="ident">DispatchResult</span><span class="op">&gt;</span> {
-				<span class="macro">assert!</span>(<span class="ident">is_transactional</span>());
-				<span class="ident">TransactionOutcome::Commit</span>(<span class="prelude-val">Ok</span>(()))
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>is_transactional_should_not_error_in_with_transaction() {
+		TestExternalities::default().execute_with(|| {
+			<span class="macro">assert_ok!</span>(with_transaction(|| -&gt; TransactionOutcome&lt;DispatchResult&gt; {
+				<span class="macro">assert!</span>(is_transactional());
+				TransactionOutcome::Commit(<span class="prelude-val">Ok</span>(()))
 			}));
 
 			<span class="macro">assert_noop!</span>(
-				<span class="ident">with_transaction</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="ident">DispatchResult</span><span class="op">&gt;</span> {
-					<span class="macro">assert!</span>(<span class="ident">is_transactional</span>());
-					<span class="ident">TransactionOutcome::Rollback</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;revert&quot;</span>.<span class="ident">into</span>()))
+				with_transaction(|| -&gt; TransactionOutcome&lt;DispatchResult&gt; {
+					<span class="macro">assert!</span>(is_transactional());
+					TransactionOutcome::Rollback(<span class="prelude-val">Err</span>(<span class="string">&quot;revert&quot;</span>.into()))
 				}),
-				<span class="string">&quot;revert&quot;</span>
-			);
+				<span class="string">&quot;revert&quot;
+			</span>);
 		});
 	}
 
-	<span class="kw">fn</span> <span class="ident">recursive_transactional</span>(<span class="ident">num</span>: <span class="ident">u32</span>) -&gt; <span class="ident">DispatchResult</span> {
-		<span class="kw">if</span> <span class="ident">num</span> <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(())
+	<span class="kw">fn </span>recursive_transactional(num: u32) -&gt; DispatchResult {
+		<span class="kw">if </span>num == <span class="number">0 </span>{
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(())
 		}
 
-		<span class="ident">with_transaction</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="ident">DispatchResult</span><span class="op">&gt;</span> {
-			<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">recursive_transactional</span>(<span class="ident">num</span> <span class="op">-</span> <span class="number">1</span>);
-			<span class="ident">TransactionOutcome::Commit</span>(<span class="ident">res</span>)
+		with_transaction(|| -&gt; TransactionOutcome&lt;DispatchResult&gt; {
+			<span class="kw">let </span>res = recursive_transactional(num - <span class="number">1</span>);
+			TransactionOutcome::Commit(res)
 		})
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">transaction_limit_should_work</span>() {
-		<span class="ident">TestExternalities::default</span>().<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>transaction_limit_should_work() {
+		TestExternalities::default().execute_with(|| {
+			<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">0</span>);
 
-			<span class="macro">assert_ok!</span>(<span class="ident">with_transaction</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="ident">DispatchResult</span><span class="op">&gt;</span> {
-				<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">1</span>);
-				<span class="ident">TransactionOutcome::Commit</span>(<span class="prelude-val">Ok</span>(()))
+			<span class="macro">assert_ok!</span>(with_transaction(|| -&gt; TransactionOutcome&lt;DispatchResult&gt; {
+				<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">1</span>);
+				TransactionOutcome::Commit(<span class="prelude-val">Ok</span>(()))
 			}));
 
-			<span class="macro">assert_ok!</span>(<span class="ident">with_transaction</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="ident">DispatchResult</span><span class="op">&gt;</span> {
-				<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">1</span>);
-				<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">with_transaction</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">TransactionOutcome</span><span class="op">&lt;</span><span class="ident">DispatchResult</span><span class="op">&gt;</span> {
-					<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">2</span>);
-					<span class="ident">TransactionOutcome::Commit</span>(<span class="prelude-val">Ok</span>(()))
+			<span class="macro">assert_ok!</span>(with_transaction(|| -&gt; TransactionOutcome&lt;DispatchResult&gt; {
+				<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">1</span>);
+				<span class="kw">let </span>res = with_transaction(|| -&gt; TransactionOutcome&lt;DispatchResult&gt; {
+					<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">2</span>);
+					TransactionOutcome::Commit(<span class="prelude-val">Ok</span>(()))
 				});
-				<span class="ident">TransactionOutcome::Commit</span>(<span class="ident">res</span>)
+				TransactionOutcome::Commit(res)
 			}));
 
-			<span class="macro">assert_ok!</span>(<span class="ident">recursive_transactional</span>(<span class="number">255</span>));
+			<span class="macro">assert_ok!</span>(recursive_transactional(<span class="number">255</span>));
 			<span class="macro">assert_noop!</span>(
-				<span class="ident">recursive_transactional</span>(<span class="number">256</span>),
-				<span class="ident">sp_runtime::TransactionalError::LimitReached</span>
+				recursive_transactional(<span class="number">256</span>),
+				sp_runtime::TransactionalError::LimitReached
 			);
 
-			<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">0</span>);
+			<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">0</span>);
 		});
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">in_storage_layer_works</span>() {
-		<span class="ident">TestExternalities::default</span>().<span class="ident">execute_with</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">0</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>in_storage_layer_works() {
+		TestExternalities::default().execute_with(|| {
+			<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">0</span>);
 
-			<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">in_storage_layer</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">DispatchResult</span> {
-				<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">1</span>);
-				<span class="ident">in_storage_layer</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">DispatchResult</span> {
-					<span class="comment">// We are still in the same layer :)</span>
-					<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">1</span>);
+			<span class="kw">let </span>res = in_storage_layer(|| -&gt; DispatchResult {
+				<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">1</span>);
+				in_storage_layer(|| -&gt; DispatchResult {
+					<span class="comment">// We are still in the same layer :)
+					</span><span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">1</span>);
 					<span class="prelude-val">Ok</span>(())
 				})
 			});
 
-			<span class="macro">assert_ok!</span>(<span class="ident">res</span>);
+			<span class="macro">assert_ok!</span>(res);
 
-			<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">in_storage_layer</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">DispatchResult</span> {
-				<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">1</span>);
-				<span class="ident">in_storage_layer</span>(<span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">DispatchResult</span> {
-					<span class="comment">// We are still in the same layer :)</span>
-					<span class="macro">assert_eq!</span>(<span class="ident">get_transaction_level</span>(), <span class="number">1</span>);
-					<span class="prelude-val">Err</span>(<span class="string">&quot;epic fail&quot;</span>.<span class="ident">into</span>())
+			<span class="kw">let </span>res = in_storage_layer(|| -&gt; DispatchResult {
+				<span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">1</span>);
+				in_storage_layer(|| -&gt; DispatchResult {
+					<span class="comment">// We are still in the same layer :)
+					</span><span class="macro">assert_eq!</span>(get_transaction_level(), <span class="number">1</span>);
+					<span class="prelude-val">Err</span>(<span class="string">&quot;epic fail&quot;</span>.into())
 				})
 			});
 
-			<span class="macro">assert_noop!</span>(<span class="ident">res</span>, <span class="string">&quot;epic fail&quot;</span>);
+			<span class="macro">assert_noop!</span>(res, <span class="string">&quot;epic fail&quot;</span>);
 		});
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="frame_support" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="frame_support" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

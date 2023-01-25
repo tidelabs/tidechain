@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/base_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>base_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/base_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>base_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1066,1069 +1061,1068 @@
 <span id="1061">1061</span>
 <span id="1062">1062</span>
 <span id="1063">1063</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! A basic version of the dependency graph.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! For a more full-featured pool, have a look at the `pool` module.</span>
+</span><span class="doccomment">//! A basic version of the dependency graph.
+//!
+//! For a more full-featured pool, have a look at the `pool` module.
 
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">cmp::Ordering</span>, <span class="ident">collections::HashSet</span>, <span class="ident">fmt</span>, <span class="ident">hash</span>, <span class="ident">sync::Arc</span>};
+</span><span class="kw">use </span>std::{cmp::Ordering, collections::HashSet, fmt, hash, sync::Arc};
 
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
-<span class="kw">use</span> <span class="ident">sc_transaction_pool_api</span>::{<span class="ident">error</span>, <span class="ident">InPoolTransaction</span>, <span class="ident">PoolStatus</span>};
-<span class="kw">use</span> <span class="ident">serde::Serialize</span>;
-<span class="kw">use</span> <span class="ident">sp_core::hexdisplay::HexDisplay</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">traits::Member</span>,
-	<span class="ident">transaction_validity</span>::{
-		<span class="ident">TransactionLongevity</span> <span class="kw">as</span> <span class="ident">Longevity</span>, <span class="ident">TransactionPriority</span> <span class="kw">as</span> <span class="ident">Priority</span>,
-		<span class="ident">TransactionSource</span> <span class="kw">as</span> <span class="ident">Source</span>, <span class="ident">TransactionTag</span> <span class="kw">as</span> <span class="ident">Tag</span>,
+<span class="kw">use </span>log::{debug, trace, warn};
+<span class="kw">use </span>sc_transaction_pool_api::{error, InPoolTransaction, PoolStatus};
+<span class="kw">use </span>serde::Serialize;
+<span class="kw">use </span>sp_core::hexdisplay::HexDisplay;
+<span class="kw">use </span>sp_runtime::{
+	traits::Member,
+	transaction_validity::{
+		TransactionLongevity <span class="kw">as </span>Longevity, TransactionPriority <span class="kw">as </span>Priority,
+		TransactionSource <span class="kw">as </span>Source, TransactionTag <span class="kw">as </span>Tag,
 	},
 };
 
-<span class="kw">use</span> <span class="kw">super</span>::{
-	<span class="ident">future</span>::{<span class="ident">FutureTransactions</span>, <span class="ident">WaitingTransaction</span>},
-	<span class="ident">ready</span>::{<span class="ident">BestIterator</span>, <span class="ident">ReadyTransactions</span>, <span class="ident">TransactionRef</span>},
+<span class="kw">use super</span>::{
+	future::{FutureTransactions, WaitingTransaction},
+	ready::{BestIterator, ReadyTransactions, TransactionRef},
 };
 
-<span class="doccomment">/// Successful import result.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Imported</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Transaction was successfully imported to Ready queue.</span>
-	<span class="ident">Ready</span> {
-		<span class="doccomment">/// Hash of transaction that was successfully imported.</span>
-		<span class="ident">hash</span>: <span class="ident">Hash</span>,
-		<span class="doccomment">/// Transactions that got promoted from the Future queue.</span>
-		<span class="ident">promoted</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Hash</span><span class="op">&gt;</span>,
-		<span class="doccomment">/// Transactions that failed to be promoted from the Future queue and are now discarded.</span>
-		<span class="ident">failed</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Hash</span><span class="op">&gt;</span>,
-		<span class="doccomment">/// Transactions removed from the Ready pool (replaced).</span>
-		<span class="ident">removed</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Successful import result.
+</span><span class="attribute">#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>Imported&lt;Hash, Ex&gt; {
+	<span class="doccomment">/// Transaction was successfully imported to Ready queue.
+	</span>Ready {
+		<span class="doccomment">/// Hash of transaction that was successfully imported.
+		</span>hash: Hash,
+		<span class="doccomment">/// Transactions that got promoted from the Future queue.
+		</span>promoted: Vec&lt;Hash&gt;,
+		<span class="doccomment">/// Transactions that failed to be promoted from the Future queue and are now discarded.
+		</span>failed: Vec&lt;Hash&gt;,
+		<span class="doccomment">/// Transactions removed from the Ready pool (replaced).
+		</span>removed: Vec&lt;Arc&lt;Transaction&lt;Hash, Ex&gt;&gt;&gt;,
 	},
-	<span class="doccomment">/// Transaction was successfully imported to Future queue.</span>
-	<span class="ident">Future</span> {
-		<span class="doccomment">/// Hash of transaction that was successfully imported.</span>
-		<span class="ident">hash</span>: <span class="ident">Hash</span>,
+	<span class="doccomment">/// Transaction was successfully imported to Future queue.
+	</span>Future {
+		<span class="doccomment">/// Hash of transaction that was successfully imported.
+		</span>hash: Hash,
 	},
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> <span class="ident">Imported</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Returns the hash of imported transaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Hash</span> {
-		<span class="kw">use</span> <span class="ident"><span class="self">self</span>::Imported</span>::<span class="kw-2">*</span>;
-		<span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-			<span class="ident">Ready</span> { <span class="kw-2">ref</span> <span class="ident">hash</span>, .. } =&gt; <span class="ident">hash</span>,
-			<span class="ident">Future</span> { <span class="kw-2">ref</span> <span class="ident">hash</span>, .. } =&gt; <span class="ident">hash</span>,
+<span class="kw">impl</span>&lt;Hash, Ex&gt; Imported&lt;Hash, Ex&gt; {
+	<span class="doccomment">/// Returns the hash of imported transaction.
+	</span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Hash {
+		<span class="kw">use </span><span class="self">self</span>::Imported::<span class="kw-2">*</span>;
+		<span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+			Ready { <span class="kw-2">ref </span>hash, .. } =&gt; hash,
+			Future { <span class="kw-2">ref </span>hash, .. } =&gt; hash,
 		}
 	}
 }
 
-<span class="doccomment">/// Status of pruning the queue.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PruneStatus</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// A list of imports that satisfying the tag triggered.</span>
-	<span class="kw">pub</span> <span class="ident">promoted</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Imported</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// A list of transactions that failed to be promoted and now are discarded.</span>
-	<span class="kw">pub</span> <span class="ident">failed</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Hash</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// A list of transactions that got pruned from the ready queue.</span>
-	<span class="kw">pub</span> <span class="ident">pruned</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Status of pruning the queue.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>PruneStatus&lt;Hash, Ex&gt; {
+	<span class="doccomment">/// A list of imports that satisfying the tag triggered.
+	</span><span class="kw">pub </span>promoted: Vec&lt;Imported&lt;Hash, Ex&gt;&gt;,
+	<span class="doccomment">/// A list of transactions that failed to be promoted and now are discarded.
+	</span><span class="kw">pub </span>failed: Vec&lt;Hash&gt;,
+	<span class="doccomment">/// A list of transactions that got pruned from the ready queue.
+	</span><span class="kw">pub </span>pruned: Vec&lt;Arc&lt;Transaction&lt;Hash, Ex&gt;&gt;&gt;,
 }
 
-<span class="doccomment">/// Immutable transaction</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">derive</span>(<span class="ident">Clone</span>))]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">parity_util_mem::MallocSizeOf</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Raw extrinsic representing that transaction.</span>
-	<span class="kw">pub</span> <span class="ident">data</span>: <span class="ident">Extrinsic</span>,
-	<span class="doccomment">/// Number of bytes encoding of the transaction requires.</span>
-	<span class="kw">pub</span> <span class="ident">bytes</span>: <span class="ident">usize</span>,
-	<span class="doccomment">/// Transaction hash (unique)</span>
-	<span class="kw">pub</span> <span class="ident">hash</span>: <span class="ident">Hash</span>,
-	<span class="doccomment">/// Transaction priority (higher = better)</span>
-	<span class="kw">pub</span> <span class="ident">priority</span>: <span class="ident">Priority</span>,
-	<span class="doccomment">/// At which block the transaction becomes invalid?</span>
-	<span class="kw">pub</span> <span class="ident">valid_till</span>: <span class="ident">Longevity</span>,
-	<span class="doccomment">/// Tags required by the transaction.</span>
-	<span class="kw">pub</span> <span class="ident">requires</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Tag</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Tags that this transaction provides.</span>
-	<span class="kw">pub</span> <span class="ident">provides</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Tag</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Should that transaction be propagated.</span>
-	<span class="kw">pub</span> <span class="ident">propagate</span>: <span class="ident">bool</span>,
-	<span class="doccomment">/// Source of that transaction.</span>
-	<span class="kw">pub</span> <span class="ident">source</span>: <span class="ident">Source</span>,
+<span class="doccomment">/// Immutable transaction
+</span><span class="attribute">#[cfg_attr(test, derive(Clone))]
+#[derive(PartialEq, Eq, parity_util_mem::MallocSizeOf)]
+</span><span class="kw">pub struct </span>Transaction&lt;Hash, Extrinsic&gt; {
+	<span class="doccomment">/// Raw extrinsic representing that transaction.
+	</span><span class="kw">pub </span>data: Extrinsic,
+	<span class="doccomment">/// Number of bytes encoding of the transaction requires.
+	</span><span class="kw">pub </span>bytes: usize,
+	<span class="doccomment">/// Transaction hash (unique)
+	</span><span class="kw">pub </span>hash: Hash,
+	<span class="doccomment">/// Transaction priority (higher = better)
+	</span><span class="kw">pub </span>priority: Priority,
+	<span class="doccomment">/// At which block the transaction becomes invalid?
+	</span><span class="kw">pub </span>valid_till: Longevity,
+	<span class="doccomment">/// Tags required by the transaction.
+	</span><span class="kw">pub </span>requires: Vec&lt;Tag&gt;,
+	<span class="doccomment">/// Tags that this transaction provides.
+	</span><span class="kw">pub </span>provides: Vec&lt;Tag&gt;,
+	<span class="doccomment">/// Should that transaction be propagated.
+	</span><span class="kw">pub </span>propagate: bool,
+	<span class="doccomment">/// Source of that transaction.
+	</span><span class="kw">pub </span>source: Source,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Extrinsic</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Extrinsic</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>
-	}
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span> <span class="ident">InPoolTransaction</span> <span class="kw">for</span> <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Transaction</span> <span class="op">=</span> <span class="ident">Extrinsic</span>;
-	<span class="kw">type</span> <span class="ident">Hash</span> <span class="op">=</span> <span class="ident">Hash</span>;
-
-	<span class="kw">fn</span> <span class="ident">data</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Extrinsic</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>
-	}
-
-	<span class="kw">fn</span> <span class="ident">hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Hash</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">hash</span>
-	}
-
-	<span class="kw">fn</span> <span class="ident">priority</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Priority</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">priority</span>
-	}
-
-	<span class="kw">fn</span> <span class="ident">longevity</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Longevity</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">valid_till</span>
-	}
-
-	<span class="kw">fn</span> <span class="ident">requires</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">Tag</span>] {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">requires</span>
-	}
-
-	<span class="kw">fn</span> <span class="ident">provides</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">Tag</span>] {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">provides</span>
-	}
-
-	<span class="kw">fn</span> <span class="ident">is_propagable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">propagate</span>
+<span class="kw">impl</span>&lt;Hash, Extrinsic&gt; AsRef&lt;Extrinsic&gt; <span class="kw">for </span>Transaction&lt;Hash, Extrinsic&gt; {
+	<span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Extrinsic {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.data
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>: <span class="ident">Clone</span>, <span class="ident">Extrinsic</span>: <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Explicit transaction clone.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Transaction should be cloned only if absolutely necessary &amp;&amp; we want</span>
-	<span class="doccomment">/// every reason to be commented. That&#39;s why we `Transaction` is not `Clone`,</span>
-	<span class="doccomment">/// but there&#39;s explicit `duplicate` method.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">duplicate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">data</span>: <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">clone</span>(),
-			<span class="ident">bytes</span>: <span class="self">self</span>.<span class="ident">bytes</span>,
-			<span class="ident">hash</span>: <span class="self">self</span>.<span class="ident">hash</span>.<span class="ident">clone</span>(),
-			<span class="ident">priority</span>: <span class="self">self</span>.<span class="ident">priority</span>,
-			<span class="ident">source</span>: <span class="self">self</span>.<span class="ident">source</span>,
-			<span class="ident">valid_till</span>: <span class="self">self</span>.<span class="ident">valid_till</span>,
-			<span class="ident">requires</span>: <span class="self">self</span>.<span class="ident">requires</span>.<span class="ident">clone</span>(),
-			<span class="ident">provides</span>: <span class="self">self</span>.<span class="ident">provides</span>.<span class="ident">clone</span>(),
-			<span class="ident">propagate</span>: <span class="self">self</span>.<span class="ident">propagate</span>,
+<span class="kw">impl</span>&lt;Hash, Extrinsic&gt; InPoolTransaction <span class="kw">for </span>Transaction&lt;Hash, Extrinsic&gt; {
+	<span class="kw">type </span>Transaction = Extrinsic;
+	<span class="kw">type </span>Hash = Hash;
+
+	<span class="kw">fn </span>data(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Extrinsic {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.data
+	}
+
+	<span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Hash {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.hash
+	}
+
+	<span class="kw">fn </span>priority(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Priority {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.priority
+	}
+
+	<span class="kw">fn </span>longevity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Longevity {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.valid_till
+	}
+
+	<span class="kw">fn </span>requires(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Tag] {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.requires
+	}
+
+	<span class="kw">fn </span>provides(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Tag] {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.provides
+	}
+
+	<span class="kw">fn </span>is_propagable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="self">self</span>.propagate
+	}
+}
+
+<span class="kw">impl</span>&lt;Hash: Clone, Extrinsic: Clone&gt; Transaction&lt;Hash, Extrinsic&gt; {
+	<span class="doccomment">/// Explicit transaction clone.
+	///
+	/// Transaction should be cloned only if absolutely necessary &amp;&amp; we want
+	/// every reason to be commented. That&#39;s why we `Transaction` is not `Clone`,
+	/// but there&#39;s explicit `duplicate` method.
+	</span><span class="kw">pub fn </span>duplicate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			data: <span class="self">self</span>.data.clone(),
+			bytes: <span class="self">self</span>.bytes,
+			hash: <span class="self">self</span>.hash.clone(),
+			priority: <span class="self">self</span>.priority,
+			source: <span class="self">self</span>.source,
+			valid_till: <span class="self">self</span>.valid_till,
+			requires: <span class="self">self</span>.requires.clone(),
+			provides: <span class="self">self</span>.provides.clone(),
+			propagate: <span class="self">self</span>.propagate,
 		}
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Extrinsic</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">Hash</span>: <span class="ident">fmt::Debug</span>,
-	<span class="ident">Extrinsic</span>: <span class="ident">fmt::Debug</span>,
+<span class="kw">impl</span>&lt;Hash, Extrinsic&gt; fmt::Debug <span class="kw">for </span>Transaction&lt;Hash, Extrinsic&gt;
+<span class="kw">where
+	</span>Hash: fmt::Debug,
+	Extrinsic: fmt::Debug,
 {
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-		<span class="kw">let</span> <span class="ident">join_tags</span> <span class="op">=</span> <span class="op">|</span><span class="ident">tags</span>: <span class="kw-2">&amp;</span>[<span class="ident">Tag</span>]<span class="op">|</span> {
-			<span class="ident">tags</span>.<span class="ident">iter</span>()
-				.<span class="ident">map</span>(<span class="op">|</span><span class="ident">tag</span><span class="op">|</span> <span class="ident">HexDisplay::from</span>(<span class="ident">tag</span>).<span class="ident">to_string</span>())
-				.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-				.<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>)
+	<span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, fmt: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+		<span class="kw">let </span>join_tags = |tags: <span class="kw-2">&amp;</span>[Tag]| {
+			tags.iter()
+				.map(|tag| HexDisplay::from(tag).to_string())
+				.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+				.join(<span class="string">&quot;, &quot;</span>)
 		};
 
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;Transaction {{ &quot;</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;hash: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">hash</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;priority: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">priority</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;valid_till: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">valid_till</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;bytes: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;propagate: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">propagate</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;source: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">source</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;requires: [{}], &quot;</span>, <span class="ident">join_tags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">requires</span>))<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;provides: [{}], &quot;</span>, <span class="ident">join_tags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">provides</span>))<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;data: {:?}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>)<span class="question-mark">?</span>;
-		<span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;Transaction {{ &quot;</span>)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;hash: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.hash)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;priority: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.priority)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;valid_till: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.valid_till)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;bytes: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.bytes)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;propagate: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.propagate)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;source: {:?}, &quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.source)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;requires: [{}], &quot;</span>, join_tags(<span class="kw-2">&amp;</span><span class="self">self</span>.requires))<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;provides: [{}], &quot;</span>, join_tags(<span class="kw-2">&amp;</span><span class="self">self</span>.provides))<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;data: {:?}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.data)<span class="question-mark">?</span>;
+		<span class="macro">write!</span>(fmt, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
 		<span class="prelude-val">Ok</span>(())
 	}
 }
 
-<span class="doccomment">/// Store last pruned tags for given number of invocations.</span>
-<span class="kw">const</span> <span class="ident">RECENTLY_PRUNED_TAGS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span>;
+<span class="doccomment">/// Store last pruned tags for given number of invocations.
+</span><span class="kw">const </span>RECENTLY_PRUNED_TAGS: usize = <span class="number">2</span>;
 
-<span class="doccomment">/// Transaction pool.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Builds a dependency graph for all transactions in the pool and returns</span>
-<span class="doccomment">/// the ones that are currently ready to be executed.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// General note:</span>
-<span class="doccomment">/// If function returns some transactions it usually means that importing them</span>
-<span class="doccomment">/// as-is for the second time will fail or produce unwanted results.</span>
-<span class="doccomment">/// Most likely it is required to revalidate them and recompute set of</span>
-<span class="doccomment">/// required tags.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">parity_util_mem::MallocSizeOf</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BasePool</span><span class="op">&lt;</span><span class="ident">Hash</span>: <span class="ident">hash::Hash</span> <span class="op">+</span> <span class="ident">Eq</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-	<span class="ident">reject_future_transactions</span>: <span class="ident">bool</span>,
-	<span class="ident">future</span>: <span class="ident">FutureTransactions</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>,
-	<span class="ident">ready</span>: <span class="ident">ReadyTransactions</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Store recently pruned tags (for last two invocations).</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This is used to make sure we don&#39;t accidentally put</span>
-	<span class="doccomment">/// transactions to future in case they were just stuck in verification.</span>
-	<span class="ident">recently_pruned</span>: [<span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">Tag</span><span class="op">&gt;</span>; <span class="ident">RECENTLY_PRUNED_TAGS</span>],
-	<span class="ident">recently_pruned_index</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// Transaction pool.
+///
+/// Builds a dependency graph for all transactions in the pool and returns
+/// the ones that are currently ready to be executed.
+///
+/// General note:
+/// If function returns some transactions it usually means that importing them
+/// as-is for the second time will fail or produce unwanted results.
+/// Most likely it is required to revalidate them and recompute set of
+/// required tags.
+</span><span class="attribute">#[derive(Debug, parity_util_mem::MallocSizeOf)]
+</span><span class="kw">pub struct </span>BasePool&lt;Hash: hash::Hash + Eq, Ex&gt; {
+	reject_future_transactions: bool,
+	future: FutureTransactions&lt;Hash, Ex&gt;,
+	ready: ReadyTransactions&lt;Hash, Ex&gt;,
+	<span class="doccomment">/// Store recently pruned tags (for last two invocations).
+	///
+	/// This is used to make sure we don&#39;t accidentally put
+	/// transactions to future in case they were just stuck in verification.
+	</span>recently_pruned: [HashSet&lt;Tag&gt;; RECENTLY_PRUNED_TAGS],
+	recently_pruned_index: usize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>: <span class="ident">hash::Hash</span> <span class="op">+</span> <span class="ident">Member</span> <span class="op">+</span> <span class="ident">Serialize</span>, <span class="ident">Ex</span>: <span class="ident">std::fmt::Debug</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">BasePool</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="ident"><span class="self">Self</span>::new</span>(<span class="bool-val">false</span>)
+<span class="kw">impl</span>&lt;Hash: hash::Hash + Member + Serialize, Ex: std::fmt::Debug&gt; Default <span class="kw">for </span>BasePool&lt;Hash, Ex&gt; {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>::new(<span class="bool-val">false</span>)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>: <span class="ident">hash::Hash</span> <span class="op">+</span> <span class="ident">Member</span> <span class="op">+</span> <span class="ident">Serialize</span>, <span class="ident">Ex</span>: <span class="ident">std::fmt::Debug</span><span class="op">&gt;</span> <span class="ident">BasePool</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Create new pool given reject_future_transactions flag.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">reject_future_transactions</span>: <span class="ident">bool</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">reject_future_transactions</span>,
-			<span class="ident">future</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">ready</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">recently_pruned</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">recently_pruned_index</span>: <span class="number">0</span>,
+<span class="kw">impl</span>&lt;Hash: hash::Hash + Member + Serialize, Ex: std::fmt::Debug&gt; BasePool&lt;Hash, Ex&gt; {
+	<span class="doccomment">/// Create new pool given reject_future_transactions flag.
+	</span><span class="kw">pub fn </span>new(reject_future_transactions: bool) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			reject_future_transactions,
+			future: Default::default(),
+			ready: Default::default(),
+			recently_pruned: Default::default(),
+			recently_pruned_index: <span class="number">0</span>,
 		}
 	}
 
-	<span class="doccomment">/// Temporary enables future transactions, runs closure and then restores</span>
-	<span class="doccomment">/// `reject_future_transactions` flag back to previous value.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The closure accepts the mutable reference to the pool and original value</span>
-	<span class="doccomment">/// of the `reject_future_transactions` flag.</span>
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">with_futures_enabled</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">closure</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;mut</span> <span class="self">Self</span>, <span class="ident">bool</span>) -&gt; <span class="ident">T</span>,
-	) -&gt; <span class="ident">T</span> {
-		<span class="kw">let</span> <span class="ident">previous</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reject_future_transactions</span>;
-		<span class="self">self</span>.<span class="ident">reject_future_transactions</span> <span class="op">=</span> <span class="bool-val">false</span>;
-		<span class="kw">let</span> <span class="ident">return_value</span> <span class="op">=</span> <span class="ident">closure</span>(<span class="self">self</span>, <span class="ident">previous</span>);
-		<span class="self">self</span>.<span class="ident">reject_future_transactions</span> <span class="op">=</span> <span class="ident">previous</span>;
-		<span class="ident">return_value</span>
+	<span class="doccomment">/// Temporary enables future transactions, runs closure and then restores
+	/// `reject_future_transactions` flag back to previous value.
+	///
+	/// The closure accepts the mutable reference to the pool and original value
+	/// of the `reject_future_transactions` flag.
+	</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_futures_enabled&lt;T&gt;(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		closure: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span><span class="self">Self</span>, bool) -&gt; T,
+	) -&gt; T {
+		<span class="kw">let </span>previous = <span class="self">self</span>.reject_future_transactions;
+		<span class="self">self</span>.reject_future_transactions = <span class="bool-val">false</span>;
+		<span class="kw">let </span>return_value = closure(<span class="self">self</span>, previous);
+		<span class="self">self</span>.reject_future_transactions = previous;
+		return_value
 	}
 
-	<span class="doccomment">/// Returns if the transaction for the given hash is already imported.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_imported</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tx_hash</span>: <span class="kw-2">&amp;</span><span class="ident">Hash</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">future</span>.<span class="ident">contains</span>(<span class="ident">tx_hash</span>) <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">contains</span>(<span class="ident">tx_hash</span>)
+	<span class="doccomment">/// Returns if the transaction for the given hash is already imported.
+	</span><span class="kw">pub fn </span>is_imported(<span class="kw-2">&amp;</span><span class="self">self</span>, tx_hash: <span class="kw-2">&amp;</span>Hash) -&gt; bool {
+		<span class="self">self</span>.future.contains(tx_hash) || <span class="self">self</span>.ready.contains(tx_hash)
 	}
 
-	<span class="doccomment">/// Imports transaction to the pool.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The pool consists of two parts: Future and Ready.</span>
-	<span class="doccomment">/// The former contains transactions that require some tags that are not yet provided by</span>
-	<span class="doccomment">/// other transactions in the pool.</span>
-	<span class="doccomment">/// The latter contains transactions that have all the requirements satisfied and are</span>
-	<span class="doccomment">/// ready to be included in the block.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">import</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">tx</span>: <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>) -&gt; <span class="ident">error::Result</span><span class="op">&lt;</span><span class="ident">Imported</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_imported</span>(<span class="kw-2">&amp;</span><span class="ident">tx</span>.<span class="ident">hash</span>) {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error::Error::AlreadyImported</span>(<span class="ident">Box::new</span>(<span class="ident">tx</span>.<span class="ident">hash</span>)))
+	<span class="doccomment">/// Imports transaction to the pool.
+	///
+	/// The pool consists of two parts: Future and Ready.
+	/// The former contains transactions that require some tags that are not yet provided by
+	/// other transactions in the pool.
+	/// The latter contains transactions that have all the requirements satisfied and are
+	/// ready to be included in the block.
+	</span><span class="kw">pub fn </span>import(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tx: Transaction&lt;Hash, Ex&gt;) -&gt; error::Result&lt;Imported&lt;Hash, Ex&gt;&gt; {
+		<span class="kw">if </span><span class="self">self</span>.is_imported(<span class="kw-2">&amp;</span>tx.hash) {
+			<span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::AlreadyImported(Box::new(tx.hash)))
 		}
 
-		<span class="kw">let</span> <span class="ident">tx</span> <span class="op">=</span> <span class="ident">WaitingTransaction::new</span>(<span class="ident">tx</span>, <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">provided_tags</span>(), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">recently_pruned</span>);
-		<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] {:?}&quot;</span>, <span class="ident">tx</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>, <span class="ident">tx</span>);
+		<span class="kw">let </span>tx = WaitingTransaction::new(tx, <span class="self">self</span>.ready.provided_tags(), <span class="kw-2">&amp;</span><span class="self">self</span>.recently_pruned);
+		<span class="macro">trace!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] {:?}&quot;</span>, tx.transaction.hash, tx);
 		<span class="macro">debug!</span>(
-			<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+			target: <span class="string">&quot;txpool&quot;</span>,
 			<span class="string">&quot;[{:?}] Importing to {}&quot;</span>,
-			<span class="ident">tx</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>,
-			<span class="kw">if</span> <span class="ident">tx</span>.<span class="ident">is_ready</span>() { <span class="string">&quot;ready&quot;</span> } <span class="kw">else</span> { <span class="string">&quot;future&quot;</span> }
+			tx.transaction.hash,
+			<span class="kw">if </span>tx.is_ready() { <span class="string">&quot;ready&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;future&quot; </span>}
 		);
 
-		<span class="comment">// If all tags are not satisfied import to future.</span>
-		<span class="kw">if</span> <span class="op">!</span><span class="ident">tx</span>.<span class="ident">is_ready</span>() {
-			<span class="kw">if</span> <span class="self">self</span>.<span class="ident">reject_future_transactions</span> {
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error::Error::RejectedFutureTransaction</span>)
+		<span class="comment">// If all tags are not satisfied import to future.
+		</span><span class="kw">if </span>!tx.is_ready() {
+			<span class="kw">if </span><span class="self">self</span>.reject_future_transactions {
+				<span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::RejectedFutureTransaction)
 			}
 
-			<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">tx</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>.<span class="ident">clone</span>();
-			<span class="self">self</span>.<span class="ident">future</span>.<span class="ident">import</span>(<span class="ident">tx</span>);
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Imported::Future</span> { <span class="ident">hash</span> })
+			<span class="kw">let </span>hash = tx.transaction.hash.clone();
+			<span class="self">self</span>.future.import(tx);
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(Imported::Future { hash })
 		}
 
-		<span class="self">self</span>.<span class="ident">import_to_ready</span>(<span class="ident">tx</span>)
+		<span class="self">self</span>.import_to_ready(tx)
 	}
 
-	<span class="doccomment">/// Imports transaction to ready queue.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// NOTE the transaction has to have all requirements satisfied.</span>
-	<span class="kw">fn</span> <span class="ident">import_to_ready</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">tx</span>: <span class="ident">WaitingTransaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">error::Result</span><span class="op">&lt;</span><span class="ident">Imported</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">tx</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>.<span class="ident">clone</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">promoted</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">failed</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">removed</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+	<span class="doccomment">/// Imports transaction to ready queue.
+	///
+	/// NOTE the transaction has to have all requirements satisfied.
+	</span><span class="kw">fn </span>import_to_ready(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		tx: WaitingTransaction&lt;Hash, Ex&gt;,
+	) -&gt; error::Result&lt;Imported&lt;Hash, Ex&gt;&gt; {
+		<span class="kw">let </span>hash = tx.transaction.hash.clone();
+		<span class="kw">let </span><span class="kw-2">mut </span>promoted = <span class="macro">vec!</span>[];
+		<span class="kw">let </span><span class="kw-2">mut </span>failed = <span class="macro">vec!</span>[];
+		<span class="kw">let </span><span class="kw-2">mut </span>removed = <span class="macro">vec!</span>[];
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">first</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">to_import</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">tx</span>];
+		<span class="kw">let </span><span class="kw-2">mut </span>first = <span class="bool-val">true</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>to_import = <span class="macro">vec!</span>[tx];
 
-		<span class="comment">// take first transaction from the list</span>
-		<span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">tx</span>) <span class="op">=</span> <span class="ident">to_import</span>.<span class="ident">pop</span>() {
-			<span class="comment">// find transactions in Future that it unlocks</span>
-			<span class="ident">to_import</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">future</span>.<span class="ident">satisfy_tags</span>(<span class="kw-2">&amp;</span><span class="ident">tx</span>.<span class="ident">transaction</span>.<span class="ident">provides</span>));
+		<span class="comment">// take first transaction from the list
+		</span><span class="kw">while let </span><span class="prelude-val">Some</span>(tx) = to_import.pop() {
+			<span class="comment">// find transactions in Future that it unlocks
+			</span>to_import.append(<span class="kw-2">&amp;mut </span><span class="self">self</span>.future.satisfy_tags(<span class="kw-2">&amp;</span>tx.transaction.provides));
 
-			<span class="comment">// import this transaction</span>
-			<span class="kw">let</span> <span class="ident">current_hash</span> <span class="op">=</span> <span class="ident">tx</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>.<span class="ident">clone</span>();
-			<span class="kw">match</span> <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">import</span>(<span class="ident">tx</span>) {
-				<span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">replaced</span>) =&gt; {
-					<span class="kw">if</span> <span class="op">!</span><span class="ident">first</span> {
-						<span class="ident">promoted</span>.<span class="ident">push</span>(<span class="ident">current_hash</span>);
+			<span class="comment">// import this transaction
+			</span><span class="kw">let </span>current_hash = tx.transaction.hash.clone();
+			<span class="kw">match </span><span class="self">self</span>.ready.import(tx) {
+				<span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>replaced) =&gt; {
+					<span class="kw">if </span>!first {
+						promoted.push(current_hash);
 					}
-					<span class="comment">// The transactions were removed from the ready pool. We might attempt to</span>
-					<span class="comment">// re-import them.</span>
-					<span class="ident">removed</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">replaced</span>);
+					<span class="comment">// The transactions were removed from the ready pool. We might attempt to
+					// re-import them.
+					</span>removed.append(<span class="kw-2">&amp;mut </span>replaced);
 				},
-				<span class="comment">// transaction failed to be imported.</span>
-				<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt;
-					<span class="kw">if</span> <span class="ident">first</span> {
-						<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] Error importing: {:?}&quot;</span>, <span class="ident">current_hash</span>, <span class="ident">e</span>);
-						<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>)
-					} <span class="kw">else</span> {
-						<span class="ident">failed</span>.<span class="ident">push</span>(<span class="ident">current_hash</span>);
+				<span class="comment">// transaction failed to be imported.
+				</span><span class="prelude-val">Err</span>(e) =&gt;
+					<span class="kw">if </span>first {
+						<span class="macro">debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] Error importing: {:?}&quot;</span>, current_hash, e);
+						<span class="kw">return </span><span class="prelude-val">Err</span>(e)
+					} <span class="kw">else </span>{
+						failed.push(current_hash);
 					},
 			}
-			<span class="ident">first</span> <span class="op">=</span> <span class="bool-val">false</span>;
+			first = <span class="bool-val">false</span>;
 		}
 
-		<span class="comment">// An edge case when importing transaction caused</span>
-		<span class="comment">// some future transactions to be imported and that</span>
-		<span class="comment">// future transactions pushed out current transaction.</span>
-		<span class="comment">// This means that there is a cycle and the transactions should</span>
-		<span class="comment">// be moved back to future, since we can&#39;t resolve it.</span>
-		<span class="kw">if</span> <span class="ident">removed</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">hash</span> <span class="op">==</span> <span class="ident">hash</span>) {
-			<span class="comment">// We still need to remove all transactions that we promoted</span>
-			<span class="comment">// since they depend on each other and will never get to the best iterator.</span>
-			<span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">remove_subtree</span>(<span class="kw-2">&amp;</span><span class="ident">promoted</span>);
+		<span class="comment">// An edge case when importing transaction caused
+		// some future transactions to be imported and that
+		// future transactions pushed out current transaction.
+		// This means that there is a cycle and the transactions should
+		// be moved back to future, since we can&#39;t resolve it.
+		</span><span class="kw">if </span>removed.iter().any(|tx| tx.hash == hash) {
+			<span class="comment">// We still need to remove all transactions that we promoted
+			// since they depend on each other and will never get to the best iterator.
+			</span><span class="self">self</span>.ready.remove_subtree(<span class="kw-2">&amp;</span>promoted);
 
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] Cycle detected, bailing.&quot;</span>, <span class="ident">hash</span>);
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error::Error::CycleDetected</span>)
+			<span class="macro">debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] Cycle detected, bailing.&quot;</span>, hash);
+			<span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::CycleDetected)
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">Imported::Ready</span> { <span class="ident">hash</span>, <span class="ident">promoted</span>, <span class="ident">failed</span>, <span class="ident">removed</span> })
+		<span class="prelude-val">Ok</span>(Imported::Ready { hash, promoted, failed, removed })
 	}
 
-	<span class="doccomment">/// Returns an iterator over ready transactions in the pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ready</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">BestIterator</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">get</span>()
+	<span class="doccomment">/// Returns an iterator over ready transactions in the pool.
+	</span><span class="kw">pub fn </span>ready(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BestIterator&lt;Hash, Ex&gt; {
+		<span class="self">self</span>.ready.get()
 	}
 
-	<span class="doccomment">/// Returns an iterator over future transactions in the pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">futures</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">future</span>.<span class="ident">all</span>()
+	<span class="doccomment">/// Returns an iterator over future transactions in the pool.
+	</span><span class="kw">pub fn </span>futures(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>Transaction&lt;Hash, Ex&gt;&gt; {
+		<span class="self">self</span>.future.all()
 	}
 
-	<span class="doccomment">/// Returns pool transactions given list of hashes.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Includes both ready and future pool. For every hash in the `hashes`</span>
-	<span class="doccomment">/// iterator an `Option` is produced (so the resulting `Vec` always have the same length).</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">by_hashes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hashes</span>: <span class="kw-2">&amp;</span>[<span class="ident">Hash</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">ready</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">by_hashes</span>(<span class="ident">hashes</span>);
-		<span class="kw">let</span> <span class="ident">future</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">future</span>.<span class="ident">by_hashes</span>(<span class="ident">hashes</span>);
+	<span class="doccomment">/// Returns pool transactions given list of hashes.
+	///
+	/// Includes both ready and future pool. For every hash in the `hashes`
+	/// iterator an `Option` is produced (so the resulting `Vec` always have the same length).
+	</span><span class="kw">pub fn </span>by_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, hashes: <span class="kw-2">&amp;</span>[Hash]) -&gt; Vec&lt;<span class="prelude-ty">Option</span>&lt;Arc&lt;Transaction&lt;Hash, Ex&gt;&gt;&gt;&gt; {
+		<span class="kw">let </span>ready = <span class="self">self</span>.ready.by_hashes(hashes);
+		<span class="kw">let </span>future = <span class="self">self</span>.future.by_hashes(hashes);
 
-		<span class="ident">ready</span>.<span class="ident">into_iter</span>().<span class="ident">zip</span>(<span class="ident">future</span>).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">or</span>(<span class="ident">b</span>)).<span class="ident">collect</span>()
+		ready.into_iter().zip(future).map(|(a, b)| a.or(b)).collect()
 	}
 
-	<span class="doccomment">/// Returns pool transaction by hash.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ready_by_hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">Hash</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">by_hash</span>(<span class="ident">hash</span>)
+	<span class="doccomment">/// Returns pool transaction by hash.
+	</span><span class="kw">pub fn </span>ready_by_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>Hash) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;Transaction&lt;Hash, Ex&gt;&gt;&gt; {
+		<span class="self">self</span>.ready.by_hash(hash)
 	}
 
-	<span class="doccomment">/// Makes sure that the transactions in the queues stay within provided limits.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Removes and returns worst transactions from the queues and all transactions that depend on</span>
-	<span class="doccomment">/// them. Technically the worst transaction should be evaluated by computing the entire pending</span>
-	<span class="doccomment">/// set. We use a simplified approach to remove transactions with the lowest priority first or</span>
-	<span class="doccomment">/// those that occupy the pool for the longest time in case priority is the same.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enforce_limits</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">ready</span>: <span class="kw-2">&amp;</span><span class="ident">Limit</span>,
-		<span class="ident">future</span>: <span class="kw-2">&amp;</span><span class="ident">Limit</span>,
-	) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">removed</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+	<span class="doccomment">/// Makes sure that the transactions in the queues stay within provided limits.
+	///
+	/// Removes and returns worst transactions from the queues and all transactions that depend on
+	/// them. Technically the worst transaction should be evaluated by computing the entire pending
+	/// set. We use a simplified approach to remove transactions with the lowest priority first or
+	/// those that occupy the pool for the longest time in case priority is the same.
+	</span><span class="kw">pub fn </span>enforce_limits(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		ready: <span class="kw-2">&amp;</span>Limit,
+		future: <span class="kw-2">&amp;</span>Limit,
+	) -&gt; Vec&lt;Arc&lt;Transaction&lt;Hash, Ex&gt;&gt;&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>removed = <span class="macro">vec!</span>[];
 
-		<span class="kw">while</span> <span class="ident">ready</span>.<span class="ident">is_exceeded</span>(<span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">bytes</span>()) {
-			<span class="comment">// find the worst transaction</span>
-			<span class="kw">let</span> <span class="ident">worst</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">fold</span>::<span class="op">&lt;</span><span class="ident">TransactionRef</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="op">|</span><span class="ident">worst</span>, <span class="ident">current</span><span class="op">|</span> {
-				<span class="kw">let</span> <span class="ident">transaction</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">current</span>.<span class="ident">transaction</span>;
-				<span class="ident">worst</span>
-					.<span class="ident">map</span>(<span class="op">|</span><span class="ident">worst</span><span class="op">|</span> {
-						<span class="comment">// Here we don&#39;t use `TransactionRef`&#39;s ordering implementation because</span>
-						<span class="comment">// while it prefers priority like need here, it also prefers older</span>
-						<span class="comment">// transactions for inclusion purposes and limit enforcement needs to prefer</span>
-						<span class="comment">// newer transactions instead and drop the older ones.</span>
-						<span class="kw">match</span> <span class="ident">worst</span>.<span class="ident">transaction</span>.<span class="ident">priority</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">transaction</span>.<span class="ident">transaction</span>.<span class="ident">priority</span>) {
-							<span class="ident">Ordering::Less</span> =&gt; <span class="ident">worst</span>,
-							<span class="ident">Ordering::Equal</span> =&gt;
-								<span class="kw">if</span> <span class="ident">worst</span>.<span class="ident">insertion_id</span> <span class="op">&gt;</span> <span class="ident">transaction</span>.<span class="ident">insertion_id</span> {
-									<span class="ident">transaction</span>.<span class="ident">clone</span>()
-								} <span class="kw">else</span> {
-									<span class="ident">worst</span>
+		<span class="kw">while </span>ready.is_exceeded(<span class="self">self</span>.ready.len(), <span class="self">self</span>.ready.bytes()) {
+			<span class="comment">// find the worst transaction
+			</span><span class="kw">let </span>worst = <span class="self">self</span>.ready.fold::&lt;TransactionRef&lt;Hash, Ex&gt;, <span class="kw">_</span>&gt;(|worst, current| {
+				<span class="kw">let </span>transaction = <span class="kw-2">&amp;</span>current.transaction;
+				worst
+					.map(|worst| {
+						<span class="comment">// Here we don&#39;t use `TransactionRef`&#39;s ordering implementation because
+						// while it prefers priority like need here, it also prefers older
+						// transactions for inclusion purposes and limit enforcement needs to prefer
+						// newer transactions instead and drop the older ones.
+						</span><span class="kw">match </span>worst.transaction.priority.cmp(<span class="kw-2">&amp;</span>transaction.transaction.priority) {
+							Ordering::Less =&gt; worst,
+							Ordering::Equal =&gt;
+								<span class="kw">if </span>worst.insertion_id &gt; transaction.insertion_id {
+									transaction.clone()
+								} <span class="kw">else </span>{
+									worst
 								},
-							<span class="ident">Ordering::Greater</span> =&gt; <span class="ident">transaction</span>.<span class="ident">clone</span>(),
+							Ordering::Greater =&gt; transaction.clone(),
 						}
 					})
-					.<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">transaction</span>.<span class="ident">clone</span>()))
+					.or_else(|| <span class="prelude-val">Some</span>(transaction.clone()))
 			});
 
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">worst</span>) <span class="op">=</span> <span class="ident">worst</span> {
-				<span class="ident">removed</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">remove_subtree</span>(<span class="kw-2">&amp;</span>[<span class="ident">worst</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>.<span class="ident">clone</span>()]))
-			} <span class="kw">else</span> {
-				<span class="kw">break</span>
-			}
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(worst) = worst {
+				removed.append(<span class="kw-2">&amp;mut </span><span class="self">self</span>.remove_subtree(<span class="kw-2">&amp;</span>[worst.transaction.hash.clone()]))
+			} <span class="kw">else </span>{
+				<span class="kw">break
+			</span>}
 		}
 
-		<span class="kw">while</span> <span class="ident">future</span>.<span class="ident">is_exceeded</span>(<span class="self">self</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="self">self</span>.<span class="ident">future</span>.<span class="ident">bytes</span>()) {
-			<span class="comment">// find the worst transaction</span>
-			<span class="kw">let</span> <span class="ident">worst</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">future</span>.<span class="ident">fold</span>(<span class="op">|</span><span class="ident">worst</span>, <span class="ident">current</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">worst</span> {
-				<span class="prelude-val">None</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">current</span>.<span class="ident">clone</span>()),
-				<span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">tx</span>) <span class="kw">if</span> <span class="ident">tx</span>.<span class="ident">imported_at</span> <span class="op">&gt;</span> <span class="ident">current</span>.<span class="ident">imported_at</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">current</span>.<span class="ident">clone</span>()),
-				<span class="ident">other</span> =&gt; <span class="ident">other</span>,
+		<span class="kw">while </span>future.is_exceeded(<span class="self">self</span>.future.len(), <span class="self">self</span>.future.bytes()) {
+			<span class="comment">// find the worst transaction
+			</span><span class="kw">let </span>worst = <span class="self">self</span>.future.fold(|worst, current| <span class="kw">match </span>worst {
+				<span class="prelude-val">None </span>=&gt; <span class="prelude-val">Some</span>(current.clone()),
+				<span class="prelude-val">Some</span>(<span class="kw-2">ref </span>tx) <span class="kw">if </span>tx.imported_at &gt; current.imported_at =&gt; <span class="prelude-val">Some</span>(current.clone()),
+				other =&gt; other,
 			});
 
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">worst</span>) <span class="op">=</span> <span class="ident">worst</span> {
-				<span class="ident">removed</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">remove_subtree</span>(<span class="kw-2">&amp;</span>[<span class="ident">worst</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>.<span class="ident">clone</span>()]))
-			} <span class="kw">else</span> {
-				<span class="kw">break</span>
-			}
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(worst) = worst {
+				removed.append(<span class="kw-2">&amp;mut </span><span class="self">self</span>.remove_subtree(<span class="kw-2">&amp;</span>[worst.transaction.hash.clone()]))
+			} <span class="kw">else </span>{
+				<span class="kw">break
+			</span>}
 		}
 
-		<span class="ident">removed</span>
+		removed
 	}
 
-	<span class="doccomment">/// Removes all transactions represented by the hashes and all other transactions</span>
-	<span class="doccomment">/// that depend on them.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns a list of actually removed transactions.</span>
-	<span class="doccomment">/// NOTE some transactions might still be valid, but were just removed because</span>
-	<span class="doccomment">/// they were part of a chain, you may attempt to re-import them later.</span>
-	<span class="doccomment">/// NOTE If you want to remove ready transactions that were already used</span>
-	<span class="doccomment">/// and you don&#39;t want them to be stored in the pool use `prune_tags` method.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove_subtree</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">hashes</span>: <span class="kw-2">&amp;</span>[<span class="ident">Hash</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">removed</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">remove_subtree</span>(<span class="ident">hashes</span>);
-		<span class="ident">removed</span>.<span class="ident">extend</span>(<span class="self">self</span>.<span class="ident">future</span>.<span class="ident">remove</span>(<span class="ident">hashes</span>));
-		<span class="ident">removed</span>
+	<span class="doccomment">/// Removes all transactions represented by the hashes and all other transactions
+	/// that depend on them.
+	///
+	/// Returns a list of actually removed transactions.
+	/// NOTE some transactions might still be valid, but were just removed because
+	/// they were part of a chain, you may attempt to re-import them later.
+	/// NOTE If you want to remove ready transactions that were already used
+	/// and you don&#39;t want them to be stored in the pool use `prune_tags` method.
+	</span><span class="kw">pub fn </span>remove_subtree(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hashes: <span class="kw-2">&amp;</span>[Hash]) -&gt; Vec&lt;Arc&lt;Transaction&lt;Hash, Ex&gt;&gt;&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>removed = <span class="self">self</span>.ready.remove_subtree(hashes);
+		removed.extend(<span class="self">self</span>.future.remove(hashes));
+		removed
 	}
 
-	<span class="doccomment">/// Removes and returns all transactions from the future queue.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_future</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">future</span>.<span class="ident">clear</span>()
+	<span class="doccomment">/// Removes and returns all transactions from the future queue.
+	</span><span class="kw">pub fn </span>clear_future(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;Arc&lt;Transaction&lt;Hash, Ex&gt;&gt;&gt; {
+		<span class="self">self</span>.future.clear()
 	}
 
-	<span class="doccomment">/// Prunes transactions that provide given list of tags.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This will cause all transactions that provide these tags to be removed from the pool,</span>
-	<span class="doccomment">/// but unlike `remove_subtree`, dependent transactions are not touched.</span>
-	<span class="doccomment">/// Additional transactions from future queue might be promoted to ready if you satisfy tags</span>
-	<span class="doccomment">/// that the pool didn&#39;t previously know about.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prune_tags</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">tags</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Tag</span><span class="op">&gt;</span>) -&gt; <span class="ident">PruneStatus</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">to_import</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pruned</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-		<span class="kw">let</span> <span class="ident">recently_pruned</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">recently_pruned</span>[<span class="self">self</span>.<span class="ident">recently_pruned_index</span>];
-		<span class="self">self</span>.<span class="ident">recently_pruned_index</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">recently_pruned_index</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">%</span> <span class="ident">RECENTLY_PRUNED_TAGS</span>;
-		<span class="ident">recently_pruned</span>.<span class="ident">clear</span>();
+	<span class="doccomment">/// Prunes transactions that provide given list of tags.
+	///
+	/// This will cause all transactions that provide these tags to be removed from the pool,
+	/// but unlike `remove_subtree`, dependent transactions are not touched.
+	/// Additional transactions from future queue might be promoted to ready if you satisfy tags
+	/// that the pool didn&#39;t previously know about.
+	</span><span class="kw">pub fn </span>prune_tags(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tags: <span class="kw">impl </span>IntoIterator&lt;Item = Tag&gt;) -&gt; PruneStatus&lt;Hash, Ex&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>to_import = <span class="macro">vec!</span>[];
+		<span class="kw">let </span><span class="kw-2">mut </span>pruned = <span class="macro">vec!</span>[];
+		<span class="kw">let </span>recently_pruned = <span class="kw-2">&amp;mut </span><span class="self">self</span>.recently_pruned[<span class="self">self</span>.recently_pruned_index];
+		<span class="self">self</span>.recently_pruned_index = (<span class="self">self</span>.recently_pruned_index + <span class="number">1</span>) % RECENTLY_PRUNED_TAGS;
+		recently_pruned.clear();
 
-		<span class="kw">for</span> <span class="ident">tag</span> <span class="kw">in</span> <span class="ident">tags</span> {
-			<span class="comment">// make sure to promote any future transactions that could be unlocked</span>
-			<span class="ident">to_import</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">future</span>.<span class="ident">satisfy_tags</span>(<span class="ident">std::iter::once</span>(<span class="kw-2">&amp;</span><span class="ident">tag</span>)));
-			<span class="comment">// and actually prune transactions in ready queue</span>
-			<span class="ident">pruned</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">prune_tags</span>(<span class="ident">tag</span>.<span class="ident">clone</span>()));
-			<span class="comment">// store the tags for next submission</span>
-			<span class="ident">recently_pruned</span>.<span class="ident">insert</span>(<span class="ident">tag</span>);
+		<span class="kw">for </span>tag <span class="kw">in </span>tags {
+			<span class="comment">// make sure to promote any future transactions that could be unlocked
+			</span>to_import.append(<span class="kw-2">&amp;mut </span><span class="self">self</span>.future.satisfy_tags(std::iter::once(<span class="kw-2">&amp;</span>tag)));
+			<span class="comment">// and actually prune transactions in ready queue
+			</span>pruned.append(<span class="kw-2">&amp;mut </span><span class="self">self</span>.ready.prune_tags(tag.clone()));
+			<span class="comment">// store the tags for next submission
+			</span>recently_pruned.insert(tag);
 		}
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">promoted</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">failed</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-		<span class="kw">for</span> <span class="ident">tx</span> <span class="kw">in</span> <span class="ident">to_import</span> {
-			<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">tx</span>.<span class="ident">transaction</span>.<span class="ident">hash</span>.<span class="ident">clone</span>();
-			<span class="kw">match</span> <span class="self">self</span>.<span class="ident">import_to_ready</span>(<span class="ident">tx</span>) {
-				<span class="prelude-val">Ok</span>(<span class="ident">res</span>) =&gt; <span class="ident">promoted</span>.<span class="ident">push</span>(<span class="ident">res</span>),
-				<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-					<span class="macro">warn!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] Failed to promote during pruning: {:?}&quot;</span>, <span class="ident">hash</span>, <span class="ident">e</span>);
-					<span class="ident">failed</span>.<span class="ident">push</span>(<span class="ident">hash</span>)
+		<span class="kw">let </span><span class="kw-2">mut </span>promoted = <span class="macro">vec!</span>[];
+		<span class="kw">let </span><span class="kw-2">mut </span>failed = <span class="macro">vec!</span>[];
+		<span class="kw">for </span>tx <span class="kw">in </span>to_import {
+			<span class="kw">let </span>hash = tx.transaction.hash.clone();
+			<span class="kw">match </span><span class="self">self</span>.import_to_ready(tx) {
+				<span class="prelude-val">Ok</span>(res) =&gt; promoted.push(res),
+				<span class="prelude-val">Err</span>(e) =&gt; {
+					<span class="macro">warn!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;[{:?}] Failed to promote during pruning: {:?}&quot;</span>, hash, e);
+					failed.push(hash)
 				},
 			}
 		}
 
-		<span class="ident">PruneStatus</span> { <span class="ident">pruned</span>, <span class="ident">failed</span>, <span class="ident">promoted</span> }
+		PruneStatus { pruned, failed, promoted }
 	}
 
-	<span class="doccomment">/// Get pool status.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PoolStatus</span> {
-		<span class="ident">PoolStatus</span> {
-			<span class="ident">ready</span>: <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">len</span>(),
-			<span class="ident">ready_bytes</span>: <span class="self">self</span>.<span class="ident">ready</span>.<span class="ident">bytes</span>(),
-			<span class="ident">future</span>: <span class="self">self</span>.<span class="ident">future</span>.<span class="ident">len</span>(),
-			<span class="ident">future_bytes</span>: <span class="self">self</span>.<span class="ident">future</span>.<span class="ident">bytes</span>(),
+	<span class="doccomment">/// Get pool status.
+	</span><span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolStatus {
+		PoolStatus {
+			ready: <span class="self">self</span>.ready.len(),
+			ready_bytes: <span class="self">self</span>.ready.bytes(),
+			future: <span class="self">self</span>.future.len(),
+			future_bytes: <span class="self">self</span>.future.bytes(),
 		}
 	}
 }
 
-<span class="doccomment">/// Queue limits</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Limit</span> {
-	<span class="doccomment">/// Maximal number of transactions in the queue.</span>
-	<span class="kw">pub</span> <span class="ident">count</span>: <span class="ident">usize</span>,
-	<span class="doccomment">/// Maximal size of encodings of all transactions in the queue.</span>
-	<span class="kw">pub</span> <span class="ident">total_bytes</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// Queue limits
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>Limit {
+	<span class="doccomment">/// Maximal number of transactions in the queue.
+	</span><span class="kw">pub </span>count: usize,
+	<span class="doccomment">/// Maximal size of encodings of all transactions in the queue.
+	</span><span class="kw">pub </span>total_bytes: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">Limit</span> {
-	<span class="doccomment">/// Returns true if any of the provided values exceeds the limit.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_exceeded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">count</span>: <span class="ident">usize</span>, <span class="ident">bytes</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">count</span> <span class="op">&lt;</span> <span class="ident">count</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">total_bytes</span> <span class="op">&lt;</span> <span class="ident">bytes</span>
+<span class="kw">impl </span>Limit {
+	<span class="doccomment">/// Returns true if any of the provided values exceeds the limit.
+	</span><span class="kw">pub fn </span>is_exceeded(<span class="kw-2">&amp;</span><span class="self">self</span>, count: usize, bytes: usize) -&gt; bool {
+		<span class="self">self</span>.count &lt; count || <span class="self">self</span>.total_bytes &lt; bytes
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-	<span class="kw">type</span> <span class="ident">Hash</span> <span class="op">=</span> <span class="ident">u64</span>;
+	<span class="kw">type </span>Hash = u64;
 
-	<span class="kw">fn</span> <span class="ident">pool</span>() -&gt; <span class="ident">BasePool</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="ident">BasePool::default</span>()
+	<span class="kw">fn </span>pool() -&gt; BasePool&lt;Hash, Vec&lt;u8&gt;&gt; {
+		BasePool::default()
 	}
 
-	<span class="kw">const</span> <span class="ident">DEFAULT_TX</span>: <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Transaction</span> {
-		<span class="ident">data</span>: <span class="macro">vec!</span>[],
-		<span class="ident">bytes</span>: <span class="number">1</span>,
-		<span class="ident">hash</span>: <span class="number">1u64</span>,
-		<span class="ident">priority</span>: <span class="number">5u64</span>,
-		<span class="ident">valid_till</span>: <span class="number">64u64</span>,
-		<span class="ident">requires</span>: <span class="macro">vec!</span>[],
-		<span class="ident">provides</span>: <span class="macro">vec!</span>[],
-		<span class="ident">propagate</span>: <span class="bool-val">true</span>,
-		<span class="ident">source</span>: <span class="ident">Source::External</span>,
+	<span class="kw">const </span>DEFAULT_TX: Transaction&lt;Hash, Vec&lt;u8&gt;&gt; = Transaction {
+		data: <span class="macro">vec!</span>[],
+		bytes: <span class="number">1</span>,
+		hash: <span class="number">1u64</span>,
+		priority: <span class="number">5u64</span>,
+		valid_till: <span class="number">64u64</span>,
+		requires: <span class="macro">vec!</span>[],
+		provides: <span class="macro">vec!</span>[],
+		propagate: <span class="bool-val">true</span>,
+		source: Source::External,
 	};
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_import_transaction_to_ready</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_import_transaction_to_ready() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> { <span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>], <span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>() })
-			.<span class="ident">unwrap</span>();
+		<span class="comment">// when
+		</span>pool.import(Transaction { data: <span class="macro">vec!</span>[<span class="number">1u8</span>], provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..DEFAULT_TX.clone() })
+			.unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">1</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">1</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">1</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_not_import_same_transaction_twice</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_not_import_same_transaction_twice() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> { <span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>], <span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>() })
-			.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> { <span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>], <span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>() })
-			.<span class="ident">unwrap_err</span>();
+		<span class="comment">// when
+		</span>pool.import(Transaction { data: <span class="macro">vec!</span>[<span class="number">1u8</span>], provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..DEFAULT_TX.clone() })
+			.unwrap();
+		pool.import(Transaction { data: <span class="macro">vec!</span>[<span class="number">1u8</span>], provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..DEFAULT_TX.clone() })
+			.unwrap_err();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">1</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">1</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">1</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_import_transaction_to_future_and_promote_it_later</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_import_transaction_to_future_and_promote_it_later() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>],
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// when
+		</span>pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">1u8</span>],
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">0</span>);
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">2u8</span>],
-			<span class="ident">hash</span>: <span class="number">2</span>,
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		<span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">0</span>);
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">2u8</span>],
+			hash: <span class="number">2</span>,
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">2</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">2</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">2</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">2</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_promote_a_subgraph</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_promote_a_subgraph() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>],
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// when
+		</span>pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">1u8</span>],
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">3u8</span>],
-			<span class="ident">hash</span>: <span class="number">3</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">3u8</span>],
+			hash: <span class="number">3</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">2u8</span>],
-			<span class="ident">hash</span>: <span class="number">2</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">2u8</span>],
+			hash: <span class="number">2</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-			<span class="ident">hash</span>: <span class="number">4</span>,
-			<span class="ident">priority</span>: <span class="number">1_000u64</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+			hash: <span class="number">4</span>,
+			priority: <span class="number">1_000u64</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+		.unwrap();
+		<span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">0</span>);
 
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">pool</span>
-			.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-				<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">5u8</span>],
-				<span class="ident">hash</span>: <span class="number">5</span>,
-				<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
-				..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="kw">let </span>res = pool
+			.import(Transaction {
+				data: <span class="macro">vec!</span>[<span class="number">5u8</span>],
+				hash: <span class="number">5</span>,
+				provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
+				..DEFAULT_TX.clone()
 			})
-			.<span class="ident">unwrap</span>();
+			.unwrap();
 
-		<span class="comment">// then</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">it</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">data</span>[<span class="number">0</span>]);
+		<span class="comment">// then
+		</span><span class="kw">let </span><span class="kw-2">mut </span>it = pool.ready().into_iter().map(|tx| tx.data[<span class="number">0</span>]);
 
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">5</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">2</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">4</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">5</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">2</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">4</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">None</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">res</span>,
-			<span class="ident">Imported::Ready</span> {
-				<span class="ident">hash</span>: <span class="number">5</span>,
-				<span class="ident">promoted</span>: <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],
-				<span class="ident">failed</span>: <span class="macro">vec!</span>[],
-				<span class="ident">removed</span>: <span class="macro">vec!</span>[],
+			res,
+			Imported::Ready {
+				hash: <span class="number">5</span>,
+				promoted: <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],
+				failed: <span class="macro">vec!</span>[],
+				removed: <span class="macro">vec!</span>[],
 			}
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_handle_a_cycle</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>],
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_handle_a_cycle() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">1u8</span>],
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">3u8</span>],
-			<span class="ident">hash</span>: <span class="number">3</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">3u8</span>],
+			hash: <span class="number">3</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+		.unwrap();
+		<span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">0</span>);
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">2u8</span>],
-			<span class="ident">hash</span>: <span class="number">2</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// when
+		</span>pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">2u8</span>],
+			hash: <span class="number">2</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// then</span>
-		{
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">it</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">data</span>[<span class="number">0</span>]);
-			<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+		<span class="comment">// then
+		</span>{
+			<span class="kw">let </span><span class="kw-2">mut </span>it = pool.ready().into_iter().map(|tx| tx.data[<span class="number">0</span>]);
+			<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">None</span>);
 		}
-		<span class="comment">// all transactions occupy the Future queue - it&#39;s fine</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">3</span>);
+		<span class="comment">// all transactions occupy the Future queue - it&#39;s fine
+		</span><span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">3</span>);
 
-		<span class="comment">// let&#39;s close the cycle with one additional transaction</span>
-		<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">pool</span>
-			.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-				<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-				<span class="ident">hash</span>: <span class="number">4</span>,
-				<span class="ident">priority</span>: <span class="number">50u64</span>,
-				<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-				..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// let&#39;s close the cycle with one additional transaction
+		</span><span class="kw">let </span>res = pool
+			.import(Transaction {
+				data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+				hash: <span class="number">4</span>,
+				priority: <span class="number">50u64</span>,
+				provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+				..DEFAULT_TX.clone()
 			})
-			.<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">it</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">data</span>[<span class="number">0</span>]);
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">4</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+			.unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>it = pool.ready().into_iter().map(|tx| tx.data[<span class="number">0</span>]);
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">4</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">None</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">res</span>,
-			<span class="ident">Imported::Ready</span> { <span class="ident">hash</span>: <span class="number">4</span>, <span class="ident">promoted</span>: <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">3</span>], <span class="ident">failed</span>: <span class="macro">vec!</span>[<span class="number">2</span>], <span class="ident">removed</span>: <span class="macro">vec!</span>[] }
+			res,
+			Imported::Ready { hash: <span class="number">4</span>, promoted: <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">3</span>], failed: <span class="macro">vec!</span>[<span class="number">2</span>], removed: <span class="macro">vec!</span>[] }
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">0</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_handle_a_cycle_with_low_priority</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>],
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_handle_a_cycle_with_low_priority() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">1u8</span>],
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">3u8</span>],
-			<span class="ident">hash</span>: <span class="number">3</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">3u8</span>],
+			hash: <span class="number">3</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+		.unwrap();
+		<span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">0</span>);
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">2u8</span>],
-			<span class="ident">hash</span>: <span class="number">2</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// when
+		</span>pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">2u8</span>],
+			hash: <span class="number">2</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// then</span>
-		{
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">it</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">data</span>[<span class="number">0</span>]);
-			<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);
+		<span class="comment">// then
+		</span>{
+			<span class="kw">let </span><span class="kw-2">mut </span>it = pool.ready().into_iter().map(|tx| tx.data[<span class="number">0</span>]);
+			<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">None</span>);
 		}
-		<span class="comment">// all transactions occupy the Future queue - it&#39;s fine</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">3</span>);
+		<span class="comment">// all transactions occupy the Future queue - it&#39;s fine
+		</span><span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">3</span>);
 
-		<span class="comment">// let&#39;s close the cycle with one additional transaction</span>
-		<span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">pool</span>
-			.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-				<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-				<span class="ident">hash</span>: <span class="number">4</span>,
-				<span class="ident">priority</span>: <span class="number">1u64</span>, <span class="comment">// lower priority than Tx(2)</span>
-				<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-				..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// let&#39;s close the cycle with one additional transaction
+		</span><span class="kw">let </span>err = pool
+			.import(Transaction {
+				data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+				hash: <span class="number">4</span>,
+				priority: <span class="number">1u64</span>, <span class="comment">// lower priority than Tx(2)
+				</span>provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+				..DEFAULT_TX.clone()
 			})
-			.<span class="ident">unwrap_err</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">it</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">data</span>[<span class="number">0</span>]);
-		<span class="macro">assert_eq!</span>(<span class="ident">it</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">0</span>);
-		<span class="kw">if</span> <span class="kw">let</span> <span class="ident">error::Error::CycleDetected</span> <span class="op">=</span> <span class="ident">err</span> {
-		} <span class="kw">else</span> {
-			<span class="macro">assert!</span>(<span class="bool-val">false</span>, <span class="string">&quot;Invalid error kind: {:?}&quot;</span>, <span class="ident">err</span>);
+			.unwrap_err();
+		<span class="kw">let </span><span class="kw-2">mut </span>it = pool.ready().into_iter().map(|tx| tx.data[<span class="number">0</span>]);
+		<span class="macro">assert_eq!</span>(it.next(), <span class="prelude-val">None</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">0</span>);
+		<span class="kw">if let </span>error::Error::CycleDetected = err {
+		} <span class="kw">else </span>{
+			<span class="macro">assert!</span>(<span class="bool-val">false</span>, <span class="string">&quot;Invalid error kind: {:?}&quot;</span>, err);
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">can_track_heap_size</span>() {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">5u8</span>; <span class="number">1024</span>],
-			<span class="ident">hash</span>: <span class="number">5</span>,
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>can_track_heap_size() {
+		<span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">5u8</span>; <span class="number">1024</span>],
+			hash: <span class="number">5</span>,
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">expect</span>(<span class="string">&quot;import 1 should be ok&quot;</span>);
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">3u8</span>; <span class="number">1024</span>],
-			<span class="ident">hash</span>: <span class="number">7</span>,
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>], <span class="macro">vec!</span>[<span class="number">7</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.expect(<span class="string">&quot;import 1 should be ok&quot;</span>);
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">3u8</span>; <span class="number">1024</span>],
+			hash: <span class="number">7</span>,
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>], <span class="macro">vec!</span>[<span class="number">7</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">expect</span>(<span class="string">&quot;import 2 should be ok&quot;</span>);
+		.expect(<span class="string">&quot;import 2 should be ok&quot;</span>);
 
-		<span class="macro">assert!</span>(<span class="ident">parity_util_mem::malloc_size</span>(<span class="kw-2">&amp;</span><span class="ident">pool</span>) <span class="op">&gt;</span> <span class="number">5000</span>);
+		<span class="macro">assert!</span>(parity_util_mem::malloc_size(<span class="kw-2">&amp;</span>pool) &gt; <span class="number">5000</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_remove_invalid_transactions</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">5u8</span>],
-			<span class="ident">hash</span>: <span class="number">5</span>,
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_remove_invalid_transactions() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">5u8</span>],
+			hash: <span class="number">5</span>,
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>],
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">1u8</span>],
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">3u8</span>],
-			<span class="ident">hash</span>: <span class="number">3</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">3u8</span>],
+			hash: <span class="number">3</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">2u8</span>],
-			<span class="ident">hash</span>: <span class="number">2</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">2u8</span>],
+			hash: <span class="number">2</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-			<span class="ident">hash</span>: <span class="number">4</span>,
-			<span class="ident">priority</span>: <span class="number">1_000u64</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+			hash: <span class="number">4</span>,
+			priority: <span class="number">1_000u64</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">4</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="comment">// future</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">6u8</span>],
-			<span class="ident">hash</span>: <span class="number">6</span>,
-			<span class="ident">priority</span>: <span class="number">1_000u64</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">11</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		<span class="comment">// future
+		</span>pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">6u8</span>],
+			hash: <span class="number">6</span>,
+			priority: <span class="number">1_000u64</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">11</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">5</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">1</span>);
+		.unwrap();
+		<span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">5</span>);
+		<span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">1</span>);
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">remove_subtree</span>(<span class="kw-2">&amp;</span>[<span class="number">6</span>, <span class="number">1</span>]);
+		<span class="comment">// when
+		</span>pool.remove_subtree(<span class="kw-2">&amp;</span>[<span class="number">6</span>, <span class="number">1</span>]);
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">1</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">0</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_prune_ready_transactions</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="comment">// future (waiting for 0)</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">5u8</span>],
-			<span class="ident">hash</span>: <span class="number">5</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">100</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_prune_ready_transactions() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
+		<span class="comment">// future (waiting for 0)
+		</span>pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">5u8</span>],
+			hash: <span class="number">5</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">100</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="comment">// ready</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> { <span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">1u8</span>], <span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>() })
-			.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">2u8</span>],
-			<span class="ident">hash</span>: <span class="number">2</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		<span class="comment">// ready
+		</span>pool.import(Transaction { data: <span class="macro">vec!</span>[<span class="number">1u8</span>], provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]], ..DEFAULT_TX.clone() })
+			.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">2u8</span>],
+			hash: <span class="number">2</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">3u8</span>],
-			<span class="ident">hash</span>: <span class="number">3</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">3u8</span>],
+			hash: <span class="number">3</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">2</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-			<span class="ident">hash</span>: <span class="number">4</span>,
-			<span class="ident">priority</span>: <span class="number">1_000u64</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		.unwrap();
+		pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+			hash: <span class="number">4</span>,
+			priority: <span class="number">1_000u64</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">4</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">4</span>);
+		<span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">1</span>);
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">prune_tags</span>(<span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">2</span>]]);
+		<span class="comment">// when
+		</span><span class="kw">let </span>result = pool.prune_tags(<span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">2</span>]]);
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">result</span>.<span class="ident">pruned</span>.<span class="ident">len</span>(), <span class="number">2</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">result</span>.<span class="ident">failed</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(result.pruned.len(), <span class="number">2</span>);
+		<span class="macro">assert_eq!</span>(result.failed.len(), <span class="number">0</span>);
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">result</span>.<span class="ident">promoted</span>[<span class="number">0</span>],
-			<span class="ident">Imported::Ready</span> { <span class="ident">hash</span>: <span class="number">5</span>, <span class="ident">promoted</span>: <span class="macro">vec!</span>[], <span class="ident">failed</span>: <span class="macro">vec!</span>[], <span class="ident">removed</span>: <span class="macro">vec!</span>[] }
+			result.promoted[<span class="number">0</span>],
+			Imported::Ready { hash: <span class="number">5</span>, promoted: <span class="macro">vec!</span>[], failed: <span class="macro">vec!</span>[], removed: <span class="macro">vec!</span>[] }
 		);
-		<span class="macro">assert_eq!</span>(<span class="ident">result</span>.<span class="ident">promoted</span>.<span class="ident">len</span>(), <span class="number">1</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">0</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>.<span class="ident">len</span>(), <span class="number">3</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">ready</span>().<span class="ident">count</span>(), <span class="number">3</span>);
+		<span class="macro">assert_eq!</span>(result.promoted.len(), <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">0</span>);
+		<span class="macro">assert_eq!</span>(pool.ready.len(), <span class="number">3</span>);
+		<span class="macro">assert_eq!</span>(pool.ready().count(), <span class="number">3</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">transaction_debug</span>() {
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>transaction_debug() {
 		<span class="macro">assert_eq!</span>(
 			<span class="macro">format!</span>(
 				<span class="string">&quot;{:?}&quot;</span>,
-				<span class="ident">Transaction</span> {
-					<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-					<span class="ident">hash</span>: <span class="number">4</span>,
-					<span class="ident">priority</span>: <span class="number">1_000u64</span>,
-					<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
-					<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
-					..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+				Transaction {
+					data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+					hash: <span class="number">4</span>,
+					priority: <span class="number">1_000u64</span>,
+					requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
+					provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
+					..DEFAULT_TX.clone()
 				}
 			),
 			<span class="string">&quot;Transaction { \
 hash: 4, priority: 1000, valid_till: 64, bytes: 1, propagate: true, \
-source: TransactionSource::External, requires: [03, 02], provides: [04], data: [4]}&quot;</span>
-				.<span class="ident">to_owned</span>()
+source: TransactionSource::External, requires: [03, 02], provides: [04], data: [4]}&quot;
+				</span>.to_owned()
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">transaction_propagation</span>() {
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>transaction_propagation() {
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">Transaction</span> {
-				<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-				<span class="ident">hash</span>: <span class="number">4</span>,
-				<span class="ident">priority</span>: <span class="number">1_000u64</span>,
-				<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
-				<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
-				..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+			Transaction {
+				data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+				hash: <span class="number">4</span>,
+				priority: <span class="number">1_000u64</span>,
+				requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
+				provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
+				..DEFAULT_TX.clone()
 			}
-			.<span class="ident">is_propagable</span>(),
-			<span class="bool-val">true</span>
-		);
+			.is_propagable(),
+			<span class="bool-val">true
+		</span>);
 
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">Transaction</span> {
-				<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">4u8</span>],
-				<span class="ident">hash</span>: <span class="number">4</span>,
-				<span class="ident">priority</span>: <span class="number">1_000u64</span>,
-				<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
-				<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
-				<span class="ident">propagate</span>: <span class="bool-val">false</span>,
-				..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+			Transaction {
+				data: <span class="macro">vec!</span>[<span class="number">4u8</span>],
+				hash: <span class="number">4</span>,
+				priority: <span class="number">1_000u64</span>,
+				requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[<span class="number">2</span>]],
+				provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>]],
+				propagate: <span class="bool-val">false</span>,
+				..DEFAULT_TX.clone()
 			}
-			.<span class="ident">is_propagable</span>(),
-			<span class="bool-val">false</span>
-		);
+			.is_propagable(),
+			<span class="bool-val">false
+		</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_reject_future_transactions</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_reject_future_transactions() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">reject_future_transactions</span> <span class="op">=</span> <span class="bool-val">true</span>;
+		<span class="comment">// when
+		</span>pool.reject_future_transactions = <span class="bool-val">true</span>;
 
-		<span class="comment">// then</span>
-		<span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">5u8</span>],
-			<span class="ident">hash</span>: <span class="number">5</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// then
+		</span><span class="kw">let </span>err = pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">5u8</span>],
+			hash: <span class="number">5</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			..DEFAULT_TX.clone()
 		});
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">error::Error::RejectedFutureTransaction</span>) <span class="op">=</span> <span class="ident">err</span> {
-		} <span class="kw">else</span> {
-			<span class="macro">assert!</span>(<span class="bool-val">false</span>, <span class="string">&quot;Invalid error kind: {:?}&quot;</span>, <span class="ident">err</span>);
+		<span class="kw">if let </span><span class="prelude-val">Err</span>(error::Error::RejectedFutureTransaction) = err {
+		} <span class="kw">else </span>{
+			<span class="macro">assert!</span>(<span class="bool-val">false</span>, <span class="string">&quot;Invalid error kind: {:?}&quot;</span>, err);
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_clear_future_queue</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_clear_future_queue() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
 
-		<span class="comment">// when</span>
-		<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-			<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">5u8</span>],
-			<span class="ident">hash</span>: <span class="number">5</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-			..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// when
+		</span>pool.import(Transaction {
+			data: <span class="macro">vec!</span>[<span class="number">5u8</span>],
+			hash: <span class="number">5</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+			..DEFAULT_TX.clone()
 		})
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">1</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">1</span>);
 
-		<span class="comment">// and then when</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">clear_future</span>().<span class="ident">len</span>(), <span class="number">1</span>);
+		<span class="comment">// and then when
+		</span><span class="macro">assert_eq!</span>(pool.clear_future().len(), <span class="number">1</span>);
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">0</span>);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_accept_future_transactions_when_explicitly_asked_to</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">pool</span>();
-		<span class="ident">pool</span>.<span class="ident">reject_future_transactions</span> <span class="op">=</span> <span class="bool-val">true</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_accept_future_transactions_when_explicitly_asked_to() {
+		<span class="comment">// given
+		</span><span class="kw">let </span><span class="kw-2">mut </span>pool = pool();
+		pool.reject_future_transactions = <span class="bool-val">true</span>;
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">flag_value</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">with_futures_enabled</span>(<span class="op">|</span><span class="ident">pool</span>, <span class="ident">flag</span><span class="op">|</span> {
-			<span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">Transaction</span> {
-				<span class="ident">data</span>: <span class="macro">vec!</span>[<span class="number">5u8</span>],
-				<span class="ident">hash</span>: <span class="number">5</span>,
-				<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
-				..<span class="ident">DEFAULT_TX</span>.<span class="ident">clone</span>()
+		<span class="comment">// when
+		</span><span class="kw">let </span>flag_value = pool.with_futures_enabled(|pool, flag| {
+			pool.import(Transaction {
+				data: <span class="macro">vec!</span>[<span class="number">5u8</span>],
+				hash: <span class="number">5</span>,
+				requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]],
+				..DEFAULT_TX.clone()
 			})
-			.<span class="ident">unwrap</span>();
+			.unwrap();
 
-			<span class="ident">flag</span>
+			flag
 		});
 
-		<span class="comment">// then</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">flag_value</span>, <span class="bool-val">true</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">reject_future_transactions</span>, <span class="bool-val">true</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">pool</span>.<span class="ident">future</span>.<span class="ident">len</span>(), <span class="number">1</span>);
+		<span class="comment">// then
+		</span><span class="macro">assert_eq!</span>(flag_value, <span class="bool-val">true</span>);
+		<span class="macro">assert_eq!</span>(pool.reject_future_transactions, <span class="bool-val">true</span>);
+		<span class="macro">assert_eq!</span>(pool.future.len(), <span class="number">1</span>);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Deflate","The deflate extension type."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Deflate","The deflate extension type."]]};

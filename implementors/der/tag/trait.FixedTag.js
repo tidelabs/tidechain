@@ -1,3 +1,4 @@
-(function() {var implementors = {};
-implementors["sec1"] = [{"text":"impl <a class=\"trait\" href=\"der/tag/trait.FixedTag.html\" title=\"trait der::tag::FixedTag\">FixedTag</a> for <a class=\"enum\" href=\"sec1/enum.EcParameters.html\" title=\"enum sec1::EcParameters\">EcParameters</a>","synthetic":false,"types":["sec1::parameters::EcParameters"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"der":[],
+"sec1":[["impl <a class=\"trait\" href=\"der/tag/trait.FixedTag.html\" title=\"trait der::tag::FixedTag\">FixedTag</a> for <a class=\"enum\" href=\"sec1/enum.EcParameters.html\" title=\"enum sec1::EcParameters\">EcParameters</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

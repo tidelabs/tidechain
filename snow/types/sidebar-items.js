@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["Cipher","Cipher operations"],["Dh","Diffie-Hellman operations"],["Hash","Hashing operations"],["Random","CSPRNG operations"]]});
+window.SIDEBAR_ITEMS = {"trait":[["Cipher","Cipher operations"],["Dh","Diffie-Hellman operations"],["Hash","Hashing operations"],["Random","CSPRNG operations"]]};

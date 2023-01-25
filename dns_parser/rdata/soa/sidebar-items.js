@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Record","The SOA (Start of Authority) record"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Record","The SOA (Start of Authority) record"]]};

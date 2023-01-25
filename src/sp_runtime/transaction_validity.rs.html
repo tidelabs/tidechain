@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/runtime/src/transaction_validity.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>transaction_validity.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sp_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sp_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/runtime/src/transaction_validity.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>transaction_validity.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sp_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -480,483 +475,482 @@
 <span id="475">475</span>
 <span id="476">476</span>
 <span id="477">477</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! Transaction validity interface.</span>
+</span><span class="doccomment">//! Transaction validity interface.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>},
-	<span class="ident">RuntimeDebug</span>,
+</span><span class="kw">use crate</span>::{
+	codec::{Decode, Encode},
+	RuntimeDebug,
 };
-<span class="kw">use</span> <span class="ident">scale_info::TypeInfo</span>;
-<span class="kw">use</span> <span class="ident">sp_std::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use </span>scale_info::TypeInfo;
+<span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 
-<span class="doccomment">/// Priority for a transaction. Additive. Higher is better.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">TransactionPriority</span> <span class="op">=</span> <span class="ident">u64</span>;
+<span class="doccomment">/// Priority for a transaction. Additive. Higher is better.
+</span><span class="kw">pub type </span>TransactionPriority = u64;
 
-<span class="doccomment">/// Minimum number of blocks a transaction will remain valid for.</span>
-<span class="doccomment">/// `TransactionLongevity::max_value()` means &quot;forever&quot;.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">TransactionLongevity</span> <span class="op">=</span> <span class="ident">u64</span>;
+<span class="doccomment">/// Minimum number of blocks a transaction will remain valid for.
+/// `TransactionLongevity::max_value()` means &quot;forever&quot;.
+</span><span class="kw">pub type </span>TransactionLongevity = u64;
 
-<span class="doccomment">/// Tag for a transaction. No two transactions with the same tag should be placed on-chain.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">TransactionTag</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Tag for a transaction. No two transactions with the same tag should be placed on-chain.
+</span><span class="kw">pub type </span>TransactionTag = Vec&lt;u8&gt;;
 
-<span class="doccomment">/// An invalid transaction validity.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Encode</span>, <span class="ident">Decode</span>, <span class="ident">Copy</span>, <span class="ident">RuntimeDebug</span>, <span class="ident">TypeInfo</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">derive</span>(<span class="ident">serde::Serialize</span>, <span class="ident">serde::Deserialize</span>))]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">InvalidTransaction</span> {
-	<span class="doccomment">/// The call of the transaction is not expected.</span>
-	<span class="ident">Call</span>,
-	<span class="doccomment">/// General error to do with the inability to pay some fees (e.g. account balance too low).</span>
-	<span class="ident">Payment</span>,
-	<span class="doccomment">/// General error to do with the transaction not yet being valid (e.g. nonce too high).</span>
-	<span class="ident">Future</span>,
-	<span class="doccomment">/// General error to do with the transaction being outdated (e.g. nonce too low).</span>
-	<span class="ident">Stale</span>,
-	<span class="doccomment">/// General error to do with the transaction&#39;s proofs (e.g. signature).</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// # Possible causes</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// When using a signed extension that provides additional data for signing, it is required</span>
-	<span class="doccomment">/// that the signing and the verifying side use the same additional data. Additional</span>
-	<span class="doccomment">/// data will only be used to generate the signature, but will not be part of the transaction</span>
-	<span class="doccomment">/// itself. As the verifying side does not know which additional data was used while signing</span>
-	<span class="doccomment">/// it will only be able to assume a bad signature and cannot express a more meaningful error.</span>
-	<span class="ident">BadProof</span>,
-	<span class="doccomment">/// The transaction birth block is ancient.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// # Possible causes</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// For `FRAME`-based runtimes this would be caused by `current block number</span>
-	<span class="doccomment">/// - Era::birth block number &gt; BlockHashCount`. (e.g. in Polkadot `BlockHashCount` = 2400, so</span>
-	<span class="doccomment">///   a</span>
-	<span class="doccomment">/// transaction with birth block number 1337 would be valid up until block number 1337 + 2400,</span>
-	<span class="doccomment">/// after which point the transaction would be considered to have an ancient birth block.)</span>
-	<span class="ident">AncientBirthBlock</span>,
-	<span class="doccomment">/// The transaction would exhaust the resources of current block.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The transaction might be valid, but there are not enough resources</span>
-	<span class="doccomment">/// left in the current block.</span>
-	<span class="ident">ExhaustsResources</span>,
-	<span class="doccomment">/// Any other custom invalid validity that is not covered by this enum.</span>
-	<span class="ident">Custom</span>(<span class="ident">u8</span>),
-	<span class="doccomment">/// An extrinsic with a Mandatory dispatch resulted in Error. This is indicative of either a</span>
-	<span class="doccomment">/// malicious validator or a buggy `provide_inherent`. In any case, it can result in</span>
-	<span class="doccomment">/// dangerously overweight blocks and therefore if found, invalidates the block.</span>
-	<span class="ident">BadMandatory</span>,
-	<span class="doccomment">/// A transaction with a mandatory dispatch. This is invalid; only inherent extrinsics are</span>
-	<span class="doccomment">/// allowed to have mandatory dispatches.</span>
-	<span class="ident">MandatoryDispatch</span>,
-	<span class="doccomment">/// The sending address is disabled or known to be invalid.</span>
-	<span class="ident">BadSigner</span>,
+<span class="doccomment">/// An invalid transaction validity.
+</span><span class="attribute">#[derive(Clone, PartialEq, Eq, Encode, Decode, Copy, RuntimeDebug, TypeInfo)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub enum </span>InvalidTransaction {
+	<span class="doccomment">/// The call of the transaction is not expected.
+	</span>Call,
+	<span class="doccomment">/// General error to do with the inability to pay some fees (e.g. account balance too low).
+	</span>Payment,
+	<span class="doccomment">/// General error to do with the transaction not yet being valid (e.g. nonce too high).
+	</span>Future,
+	<span class="doccomment">/// General error to do with the transaction being outdated (e.g. nonce too low).
+	</span>Stale,
+	<span class="doccomment">/// General error to do with the transaction&#39;s proofs (e.g. signature).
+	///
+	/// # Possible causes
+	///
+	/// When using a signed extension that provides additional data for signing, it is required
+	/// that the signing and the verifying side use the same additional data. Additional
+	/// data will only be used to generate the signature, but will not be part of the transaction
+	/// itself. As the verifying side does not know which additional data was used while signing
+	/// it will only be able to assume a bad signature and cannot express a more meaningful error.
+	</span>BadProof,
+	<span class="doccomment">/// The transaction birth block is ancient.
+	///
+	/// # Possible causes
+	///
+	/// For `FRAME`-based runtimes this would be caused by `current block number
+	/// - Era::birth block number &gt; BlockHashCount`. (e.g. in Polkadot `BlockHashCount` = 2400, so
+	///   a
+	/// transaction with birth block number 1337 would be valid up until block number 1337 + 2400,
+	/// after which point the transaction would be considered to have an ancient birth block.)
+	</span>AncientBirthBlock,
+	<span class="doccomment">/// The transaction would exhaust the resources of current block.
+	///
+	/// The transaction might be valid, but there are not enough resources
+	/// left in the current block.
+	</span>ExhaustsResources,
+	<span class="doccomment">/// Any other custom invalid validity that is not covered by this enum.
+	</span>Custom(u8),
+	<span class="doccomment">/// An extrinsic with a Mandatory dispatch resulted in Error. This is indicative of either a
+	/// malicious validator or a buggy `provide_inherent`. In any case, it can result in
+	/// dangerously overweight blocks and therefore if found, invalidates the block.
+	</span>BadMandatory,
+	<span class="doccomment">/// A transaction with a mandatory dispatch. This is invalid; only inherent extrinsics are
+	/// allowed to have mandatory dispatches.
+	</span>MandatoryDispatch,
+	<span class="doccomment">/// The sending address is disabled or known to be invalid.
+	</span>BadSigner,
 }
 
-<span class="kw">impl</span> <span class="ident">InvalidTransaction</span> {
-	<span class="doccomment">/// Returns if the reason for the invalidity was block resource exhaustion.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exhausted_resources</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident"><span class="self">Self</span>::ExhaustsResources</span>)
+<span class="kw">impl </span>InvalidTransaction {
+	<span class="doccomment">/// Returns if the reason for the invalidity was block resource exhaustion.
+	</span><span class="kw">pub fn </span>exhausted_resources(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::ExhaustsResources)
 	}
 
-	<span class="doccomment">/// Returns if the reason for the invalidity was a mandatory call failing.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">was_mandatory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident"><span class="self">Self</span>::BadMandatory</span>)
+	<span class="doccomment">/// Returns if the reason for the invalidity was a mandatory call failing.
+	</span><span class="kw">pub fn </span>was_mandatory(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::BadMandatory)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">InvalidTransaction</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">invalid</span>: <span class="ident">InvalidTransaction</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-		<span class="kw">match</span> <span class="ident">invalid</span> {
-			<span class="ident">InvalidTransaction::Call</span> =&gt; <span class="string">&quot;Transaction call is not expected&quot;</span>,
-			<span class="ident">InvalidTransaction::Future</span> =&gt; <span class="string">&quot;Transaction will be valid in the future&quot;</span>,
-			<span class="ident">InvalidTransaction::Stale</span> =&gt; <span class="string">&quot;Transaction is outdated&quot;</span>,
-			<span class="ident">InvalidTransaction::BadProof</span> =&gt; <span class="string">&quot;Transaction has a bad signature&quot;</span>,
-			<span class="ident">InvalidTransaction::AncientBirthBlock</span> =&gt; <span class="string">&quot;Transaction has an ancient birth block&quot;</span>,
-			<span class="ident">InvalidTransaction::ExhaustsResources</span> =&gt; <span class="string">&quot;Transaction would exhaust the block limits&quot;</span>,
-			<span class="ident">InvalidTransaction::Payment</span> =&gt;
+<span class="kw">impl </span>From&lt;InvalidTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+	<span class="kw">fn </span>from(invalid: InvalidTransaction) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+		<span class="kw">match </span>invalid {
+			InvalidTransaction::Call =&gt; <span class="string">&quot;Transaction call is not expected&quot;</span>,
+			InvalidTransaction::Future =&gt; <span class="string">&quot;Transaction will be valid in the future&quot;</span>,
+			InvalidTransaction::Stale =&gt; <span class="string">&quot;Transaction is outdated&quot;</span>,
+			InvalidTransaction::BadProof =&gt; <span class="string">&quot;Transaction has a bad signature&quot;</span>,
+			InvalidTransaction::AncientBirthBlock =&gt; <span class="string">&quot;Transaction has an ancient birth block&quot;</span>,
+			InvalidTransaction::ExhaustsResources =&gt; <span class="string">&quot;Transaction would exhaust the block limits&quot;</span>,
+			InvalidTransaction::Payment =&gt;
 				<span class="string">&quot;Inability to pay some fees (e.g. account balance too low)&quot;</span>,
-			<span class="ident">InvalidTransaction::BadMandatory</span> =&gt;
+			InvalidTransaction::BadMandatory =&gt;
 				<span class="string">&quot;A call was labelled as mandatory, but resulted in an Error.&quot;</span>,
-			<span class="ident">InvalidTransaction::MandatoryDispatch</span> =&gt;
+			InvalidTransaction::MandatoryDispatch =&gt;
 				<span class="string">&quot;Transaction dispatch is mandatory; transactions may not have mandatory dispatches.&quot;</span>,
-			<span class="ident">InvalidTransaction::Custom</span>(<span class="kw">_</span>) =&gt; <span class="string">&quot;InvalidTransaction custom error&quot;</span>,
-			<span class="ident">InvalidTransaction::BadSigner</span> =&gt; <span class="string">&quot;Invalid signing address&quot;</span>,
+			InvalidTransaction::Custom(<span class="kw">_</span>) =&gt; <span class="string">&quot;InvalidTransaction custom error&quot;</span>,
+			InvalidTransaction::BadSigner =&gt; <span class="string">&quot;Invalid signing address&quot;</span>,
 		}
 	}
 }
 
-<span class="doccomment">/// An unknown transaction validity.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Encode</span>, <span class="ident">Decode</span>, <span class="ident">Copy</span>, <span class="ident">RuntimeDebug</span>, <span class="ident">TypeInfo</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">derive</span>(<span class="ident">serde::Serialize</span>, <span class="ident">serde::Deserialize</span>))]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">UnknownTransaction</span> {
-	<span class="doccomment">/// Could not lookup some information that is required to validate the transaction.</span>
-	<span class="ident">CannotLookup</span>,
-	<span class="doccomment">/// No validator found for the given unsigned transaction.</span>
-	<span class="ident">NoUnsignedValidator</span>,
-	<span class="doccomment">/// Any other custom unknown validity that is not covered by this enum.</span>
-	<span class="ident">Custom</span>(<span class="ident">u8</span>),
+<span class="doccomment">/// An unknown transaction validity.
+</span><span class="attribute">#[derive(Clone, PartialEq, Eq, Encode, Decode, Copy, RuntimeDebug, TypeInfo)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub enum </span>UnknownTransaction {
+	<span class="doccomment">/// Could not lookup some information that is required to validate the transaction.
+	</span>CannotLookup,
+	<span class="doccomment">/// No validator found for the given unsigned transaction.
+	</span>NoUnsignedValidator,
+	<span class="doccomment">/// Any other custom unknown validity that is not covered by this enum.
+	</span>Custom(u8),
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">UnknownTransaction</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">unknown</span>: <span class="ident">UnknownTransaction</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-		<span class="kw">match</span> <span class="ident">unknown</span> {
-			<span class="ident">UnknownTransaction::CannotLookup</span> =&gt;
+<span class="kw">impl </span>From&lt;UnknownTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+	<span class="kw">fn </span>from(unknown: UnknownTransaction) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+		<span class="kw">match </span>unknown {
+			UnknownTransaction::CannotLookup =&gt;
 				<span class="string">&quot;Could not lookup information required to validate the transaction&quot;</span>,
-			<span class="ident">UnknownTransaction::NoUnsignedValidator</span> =&gt;
+			UnknownTransaction::NoUnsignedValidator =&gt;
 				<span class="string">&quot;Could not find an unsigned validator for the unsigned transaction&quot;</span>,
-			<span class="ident">UnknownTransaction::Custom</span>(<span class="kw">_</span>) =&gt; <span class="string">&quot;UnknownTransaction custom error&quot;</span>,
+			UnknownTransaction::Custom(<span class="kw">_</span>) =&gt; <span class="string">&quot;UnknownTransaction custom error&quot;</span>,
 		}
 	}
 }
 
-<span class="doccomment">/// Errors that can occur while checking the validity of a transaction.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Encode</span>, <span class="ident">Decode</span>, <span class="ident">Copy</span>, <span class="ident">RuntimeDebug</span>, <span class="ident">TypeInfo</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">derive</span>(<span class="ident">serde::Serialize</span>, <span class="ident">serde::Deserialize</span>))]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TransactionValidityError</span> {
-	<span class="doccomment">/// The transaction is invalid.</span>
-	<span class="ident">Invalid</span>(<span class="ident">InvalidTransaction</span>),
-	<span class="doccomment">/// Transaction validity can&#39;t be determined.</span>
-	<span class="ident">Unknown</span>(<span class="ident">UnknownTransaction</span>),
+<span class="doccomment">/// Errors that can occur while checking the validity of a transaction.
+</span><span class="attribute">#[derive(Clone, PartialEq, Eq, Encode, Decode, Copy, RuntimeDebug, TypeInfo)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub enum </span>TransactionValidityError {
+	<span class="doccomment">/// The transaction is invalid.
+	</span>Invalid(InvalidTransaction),
+	<span class="doccomment">/// Transaction validity can&#39;t be determined.
+	</span>Unknown(UnknownTransaction),
 }
 
-<span class="kw">impl</span> <span class="ident">TransactionValidityError</span> {
-	<span class="doccomment">/// Returns `true` if the reason for the error was block resource exhaustion.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exhausted_resources</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="kw">match</span> <span class="self">self</span> {
-			<span class="ident"><span class="self">Self</span>::Invalid</span>(<span class="ident">e</span>) =&gt; <span class="ident">e</span>.<span class="ident">exhausted_resources</span>(),
-			<span class="ident"><span class="self">Self</span>::Unknown</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
+<span class="kw">impl </span>TransactionValidityError {
+	<span class="doccomment">/// Returns `true` if the reason for the error was block resource exhaustion.
+	</span><span class="kw">pub fn </span>exhausted_resources(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="kw">match </span><span class="self">self </span>{
+			<span class="self">Self</span>::Invalid(e) =&gt; e.exhausted_resources(),
+			<span class="self">Self</span>::Unknown(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
 		}
 	}
 
-	<span class="doccomment">/// Returns `true` if the reason for the error was it being a mandatory dispatch that could not</span>
-	<span class="doccomment">/// be completed successfully.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">was_mandatory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="kw">match</span> <span class="self">self</span> {
-			<span class="ident"><span class="self">Self</span>::Invalid</span>(<span class="ident">e</span>) =&gt; <span class="ident">e</span>.<span class="ident">was_mandatory</span>(),
-			<span class="ident"><span class="self">Self</span>::Unknown</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
-		}
-	}
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">TransactionValidityError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">err</span>: <span class="ident">TransactionValidityError</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-		<span class="kw">match</span> <span class="ident">err</span> {
-			<span class="ident">TransactionValidityError::Invalid</span>(<span class="ident">invalid</span>) =&gt; <span class="ident">invalid</span>.<span class="ident">into</span>(),
-			<span class="ident">TransactionValidityError::Unknown</span>(<span class="ident">unknown</span>) =&gt; <span class="ident">unknown</span>.<span class="ident">into</span>(),
+	<span class="doccomment">/// Returns `true` if the reason for the error was it being a mandatory dispatch that could not
+	/// be completed successfully.
+	</span><span class="kw">pub fn </span>was_mandatory(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+		<span class="kw">match </span><span class="self">self </span>{
+			<span class="self">Self</span>::Invalid(e) =&gt; e.was_mandatory(),
+			<span class="self">Self</span>::Unknown(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
 		}
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">InvalidTransaction</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TransactionValidityError</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">err</span>: <span class="ident">InvalidTransaction</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">TransactionValidityError::Invalid</span>(<span class="ident">err</span>)
-	}
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">UnknownTransaction</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TransactionValidityError</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">err</span>: <span class="ident">UnknownTransaction</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">TransactionValidityError::Unknown</span>(<span class="ident">err</span>)
-	}
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">std::error::Error</span> <span class="kw">for</span> <span class="ident">TransactionValidityError</span> {
-	<span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
-		<span class="prelude-val">None</span>
-	}
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">std::fmt::Display</span> <span class="kw">for</span> <span class="ident">TransactionValidityError</span> {
-	<span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">std::fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">std::fmt::Result</span> {
-		<span class="kw">let</span> <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">into</span>();
-		<span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">s</span>)
-	}
-}
-
-<span class="doccomment">/// Information on a transaction&#39;s validity and, if valid, on how it relates to other transactions.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">TransactionValidity</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ValidTransaction</span>, <span class="ident">TransactionValidityError</span><span class="op">&gt;</span>;
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">InvalidTransaction</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TransactionValidity</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">invalid_transaction</span>: <span class="ident">InvalidTransaction</span>) -&gt; <span class="self">Self</span> {
-		<span class="prelude-val">Err</span>(<span class="ident">TransactionValidityError::Invalid</span>(<span class="ident">invalid_transaction</span>))
-	}
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">UnknownTransaction</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TransactionValidity</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">unknown_transaction</span>: <span class="ident">UnknownTransaction</span>) -&gt; <span class="self">Self</span> {
-		<span class="prelude-val">Err</span>(<span class="ident">TransactionValidityError::Unknown</span>(<span class="ident">unknown_transaction</span>))
-	}
-}
-
-<span class="doccomment">/// The source of the transaction.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Depending on the source we might apply different validation schemes.</span>
-<span class="doccomment">/// For instance we can disallow specific kinds of transactions if they were not produced</span>
-<span class="doccomment">/// by our local node (for instance off-chain workers).</span>
-<span class="attribute">#[<span class="ident">derive</span>(
-	<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Encode</span>, <span class="ident">Decode</span>, <span class="ident">RuntimeDebug</span>, <span class="ident">parity_util_mem::MallocSizeOf</span>,
-)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TransactionSource</span> {
-	<span class="doccomment">/// Transaction is already included in block.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This means that we can&#39;t really tell where the transaction is coming from,</span>
-	<span class="doccomment">/// since it&#39;s already in the received block. Note that the custom validation logic</span>
-	<span class="doccomment">/// using either `Local` or `External` should most likely just allow `InBlock`</span>
-	<span class="doccomment">/// transactions as well.</span>
-	<span class="ident">InBlock</span>,
-
-	<span class="doccomment">/// Transaction is coming from a local source.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This means that the transaction was produced internally by the node</span>
-	<span class="doccomment">/// (for instance an Off-Chain Worker, or an Off-Chain Call), as opposed</span>
-	<span class="doccomment">/// to being received over the network.</span>
-	<span class="ident">Local</span>,
-
-	<span class="doccomment">/// Transaction has been received externally.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This means the transaction has been received from (usually) &quot;untrusted&quot; source,</span>
-	<span class="doccomment">/// for instance received over the network or RPC.</span>
-	<span class="ident">External</span>,
-}
-
-<span class="doccomment">/// Information concerning a valid transaction.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Encode</span>, <span class="ident">Decode</span>, <span class="ident">RuntimeDebug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ValidTransaction</span> {
-	<span class="doccomment">/// Priority of the transaction.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Priority determines the ordering of two transactions that have all</span>
-	<span class="doccomment">/// their dependencies (required tags) satisfied.</span>
-	<span class="kw">pub</span> <span class="ident">priority</span>: <span class="ident">TransactionPriority</span>,
-	<span class="doccomment">/// Transaction dependencies</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// A non-empty list signifies that some other transactions which provide</span>
-	<span class="doccomment">/// given tags are required to be included before that one.</span>
-	<span class="kw">pub</span> <span class="ident">requires</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TransactionTag</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Provided tags</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// A list of tags this transaction provides. Successfully importing the transaction</span>
-	<span class="doccomment">/// will enable other transactions that depend on (require) those tags to be included as well.</span>
-	<span class="doccomment">/// Provided and required tags allow Substrate to build a dependency graph of transactions</span>
-	<span class="doccomment">/// and import them in the right (linear) order.</span>
-	<span class="kw">pub</span> <span class="ident">provides</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TransactionTag</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// Transaction longevity</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Longevity describes minimum number of blocks the validity is correct.</span>
-	<span class="doccomment">/// After this period transaction should be removed from the pool or revalidated.</span>
-	<span class="kw">pub</span> <span class="ident">longevity</span>: <span class="ident">TransactionLongevity</span>,
-	<span class="doccomment">/// A flag indicating if the transaction should be propagated to other peers.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// By setting `false` here the transaction will still be considered for</span>
-	<span class="doccomment">/// including in blocks that are authored on the current node, but will</span>
-	<span class="doccomment">/// never be sent to other peers.</span>
-	<span class="kw">pub</span> <span class="ident">propagate</span>: <span class="ident">bool</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ValidTransaction</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">priority</span>: <span class="number">0</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[],
-			<span class="ident">longevity</span>: <span class="ident">TransactionLongevity::max_value</span>(),
-			<span class="ident">propagate</span>: <span class="bool-val">true</span>,
+<span class="kw">impl </span>From&lt;TransactionValidityError&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+	<span class="kw">fn </span>from(err: TransactionValidityError) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+		<span class="kw">match </span>err {
+			TransactionValidityError::Invalid(invalid) =&gt; invalid.into(),
+			TransactionValidityError::Unknown(unknown) =&gt; unknown.into(),
 		}
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">ValidTransaction</span> {
-	<span class="doccomment">/// Initiate `ValidTransaction` builder object with a particular prefix for tags.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// To avoid conflicts between different parts in runtime it&#39;s recommended to build `requires`</span>
-	<span class="doccomment">/// and `provides` tags with a unique prefix.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_tag_prefix</span>(<span class="ident">prefix</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>) -&gt; <span class="ident">ValidTransactionBuilder</span> {
-		<span class="ident">ValidTransactionBuilder</span> { <span class="ident">prefix</span>: <span class="prelude-val">Some</span>(<span class="ident">prefix</span>), <span class="ident">validity</span>: <span class="ident">Default::default</span>() }
+<span class="kw">impl </span>From&lt;InvalidTransaction&gt; <span class="kw">for </span>TransactionValidityError {
+	<span class="kw">fn </span>from(err: InvalidTransaction) -&gt; <span class="self">Self </span>{
+		TransactionValidityError::Invalid(err)
+	}
+}
+
+<span class="kw">impl </span>From&lt;UnknownTransaction&gt; <span class="kw">for </span>TransactionValidityError {
+	<span class="kw">fn </span>from(err: UnknownTransaction) -&gt; <span class="self">Self </span>{
+		TransactionValidityError::Unknown(err)
+	}
+}
+
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>TransactionValidityError {
+	<span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)&gt; {
+		<span class="prelude-val">None
+	</span>}
+}
+
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>TransactionValidityError {
+	<span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+		<span class="kw">let </span>s: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = (<span class="kw-2">*</span><span class="self">self</span>).into();
+		<span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, s)
+	}
+}
+
+<span class="doccomment">/// Information on a transaction&#39;s validity and, if valid, on how it relates to other transactions.
+</span><span class="kw">pub type </span>TransactionValidity = <span class="prelude-ty">Result</span>&lt;ValidTransaction, TransactionValidityError&gt;;
+
+<span class="kw">impl </span>From&lt;InvalidTransaction&gt; <span class="kw">for </span>TransactionValidity {
+	<span class="kw">fn </span>from(invalid_transaction: InvalidTransaction) -&gt; <span class="self">Self </span>{
+		<span class="prelude-val">Err</span>(TransactionValidityError::Invalid(invalid_transaction))
+	}
+}
+
+<span class="kw">impl </span>From&lt;UnknownTransaction&gt; <span class="kw">for </span>TransactionValidity {
+	<span class="kw">fn </span>from(unknown_transaction: UnknownTransaction) -&gt; <span class="self">Self </span>{
+		<span class="prelude-val">Err</span>(TransactionValidityError::Unknown(unknown_transaction))
+	}
+}
+
+<span class="doccomment">/// The source of the transaction.
+///
+/// Depending on the source we might apply different validation schemes.
+/// For instance we can disallow specific kinds of transactions if they were not produced
+/// by our local node (for instance off-chain workers).
+</span><span class="attribute">#[derive(
+	Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, parity_util_mem::MallocSizeOf,
+)]
+</span><span class="kw">pub enum </span>TransactionSource {
+	<span class="doccomment">/// Transaction is already included in block.
+	///
+	/// This means that we can&#39;t really tell where the transaction is coming from,
+	/// since it&#39;s already in the received block. Note that the custom validation logic
+	/// using either `Local` or `External` should most likely just allow `InBlock`
+	/// transactions as well.
+	</span>InBlock,
+
+	<span class="doccomment">/// Transaction is coming from a local source.
+	///
+	/// This means that the transaction was produced internally by the node
+	/// (for instance an Off-Chain Worker, or an Off-Chain Call), as opposed
+	/// to being received over the network.
+	</span>Local,
+
+	<span class="doccomment">/// Transaction has been received externally.
+	///
+	/// This means the transaction has been received from (usually) &quot;untrusted&quot; source,
+	/// for instance received over the network or RPC.
+	</span>External,
+}
+
+<span class="doccomment">/// Information concerning a valid transaction.
+</span><span class="attribute">#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+</span><span class="kw">pub struct </span>ValidTransaction {
+	<span class="doccomment">/// Priority of the transaction.
+	///
+	/// Priority determines the ordering of two transactions that have all
+	/// their dependencies (required tags) satisfied.
+	</span><span class="kw">pub </span>priority: TransactionPriority,
+	<span class="doccomment">/// Transaction dependencies
+	///
+	/// A non-empty list signifies that some other transactions which provide
+	/// given tags are required to be included before that one.
+	</span><span class="kw">pub </span>requires: Vec&lt;TransactionTag&gt;,
+	<span class="doccomment">/// Provided tags
+	///
+	/// A list of tags this transaction provides. Successfully importing the transaction
+	/// will enable other transactions that depend on (require) those tags to be included as well.
+	/// Provided and required tags allow Substrate to build a dependency graph of transactions
+	/// and import them in the right (linear) order.
+	</span><span class="kw">pub </span>provides: Vec&lt;TransactionTag&gt;,
+	<span class="doccomment">/// Transaction longevity
+	///
+	/// Longevity describes minimum number of blocks the validity is correct.
+	/// After this period transaction should be removed from the pool or revalidated.
+	</span><span class="kw">pub </span>longevity: TransactionLongevity,
+	<span class="doccomment">/// A flag indicating if the transaction should be propagated to other peers.
+	///
+	/// By setting `false` here the transaction will still be considered for
+	/// including in blocks that are authored on the current node, but will
+	/// never be sent to other peers.
+	</span><span class="kw">pub </span>propagate: bool,
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>ValidTransaction {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			priority: <span class="number">0</span>,
+			requires: <span class="macro">vec!</span>[],
+			provides: <span class="macro">vec!</span>[],
+			longevity: TransactionLongevity::max_value(),
+			propagate: <span class="bool-val">true</span>,
+		}
+	}
+}
+
+<span class="kw">impl </span>ValidTransaction {
+	<span class="doccomment">/// Initiate `ValidTransaction` builder object with a particular prefix for tags.
+	///
+	/// To avoid conflicts between different parts in runtime it&#39;s recommended to build `requires`
+	/// and `provides` tags with a unique prefix.
+	</span><span class="kw">pub fn </span>with_tag_prefix(prefix: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; ValidTransactionBuilder {
+		ValidTransactionBuilder { prefix: <span class="prelude-val">Some</span>(prefix), validity: Default::default() }
 	}
 
-	<span class="doccomment">/// Combine two instances into one, as a best effort. This will take the superset of each of the</span>
-	<span class="doccomment">/// `provides` and `requires` tags, it will sum the priorities, take the minimum longevity and</span>
-	<span class="doccomment">/// the logic *And* of the propagate flags.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">combine_with</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">other</span>: <span class="ident">ValidTransaction</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> {
-			<span class="ident">priority</span>: <span class="self">self</span>.<span class="ident">priority</span>.<span class="ident">saturating_add</span>(<span class="ident">other</span>.<span class="ident">priority</span>),
-			<span class="ident">requires</span>: {
-				<span class="self">self</span>.<span class="ident">requires</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">other</span>.<span class="ident">requires</span>);
-				<span class="self">self</span>.<span class="ident">requires</span>
+	<span class="doccomment">/// Combine two instances into one, as a best effort. This will take the superset of each of the
+	/// `provides` and `requires` tags, it will sum the priorities, take the minimum longevity and
+	/// the logic *And* of the propagate flags.
+	</span><span class="kw">pub fn </span>combine_with(<span class="kw-2">mut </span><span class="self">self</span>, <span class="kw-2">mut </span>other: ValidTransaction) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{
+			priority: <span class="self">self</span>.priority.saturating_add(other.priority),
+			requires: {
+				<span class="self">self</span>.requires.append(<span class="kw-2">&amp;mut </span>other.requires);
+				<span class="self">self</span>.requires
 			},
-			<span class="ident">provides</span>: {
-				<span class="self">self</span>.<span class="ident">provides</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">other</span>.<span class="ident">provides</span>);
-				<span class="self">self</span>.<span class="ident">provides</span>
+			provides: {
+				<span class="self">self</span>.provides.append(<span class="kw-2">&amp;mut </span>other.provides);
+				<span class="self">self</span>.provides
 			},
-			<span class="ident">longevity</span>: <span class="self">self</span>.<span class="ident">longevity</span>.<span class="ident">min</span>(<span class="ident">other</span>.<span class="ident">longevity</span>),
-			<span class="ident">propagate</span>: <span class="self">self</span>.<span class="ident">propagate</span> <span class="op">&amp;&amp;</span> <span class="ident">other</span>.<span class="ident">propagate</span>,
+			longevity: <span class="self">self</span>.longevity.min(other.longevity),
+			propagate: <span class="self">self</span>.propagate &amp;&amp; other.propagate,
 		}
 	}
 }
 
-<span class="doccomment">/// `ValidTransaction` builder.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Allows to easily construct `ValidTransaction` and most importantly takes care of</span>
-<span class="doccomment">/// prefixing `requires` and `provides` tags to avoid conflicts.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">RuntimeDebug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ValidTransactionBuilder</span> {
-	<span class="ident">prefix</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span>,
-	<span class="ident">validity</span>: <span class="ident">ValidTransaction</span>,
+<span class="doccomment">/// `ValidTransaction` builder.
+///
+///
+/// Allows to easily construct `ValidTransaction` and most importantly takes care of
+/// prefixing `requires` and `provides` tags to avoid conflicts.
+</span><span class="attribute">#[derive(Default, Clone, RuntimeDebug)]
+</span><span class="kw">pub struct </span>ValidTransactionBuilder {
+	prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
+	validity: ValidTransaction,
 }
 
-<span class="kw">impl</span> <span class="ident">ValidTransactionBuilder</span> {
-	<span class="doccomment">/// Set the priority of a transaction.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Note that the final priority for `FRAME` is combined from all `SignedExtension`s.</span>
-	<span class="doccomment">/// Most likely for unsigned transactions you want the priority to be higher</span>
-	<span class="doccomment">/// than for regular transactions. We recommend exposing a base priority for unsigned</span>
-	<span class="doccomment">/// transactions as a runtime module parameter, so that the runtime can tune inter-module</span>
-	<span class="doccomment">/// priorities.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">priority</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">priority</span>: <span class="ident">TransactionPriority</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">validity</span>.<span class="ident">priority</span> <span class="op">=</span> <span class="ident">priority</span>;
-		<span class="self">self</span>
-	}
+<span class="kw">impl </span>ValidTransactionBuilder {
+	<span class="doccomment">/// Set the priority of a transaction.
+	///
+	/// Note that the final priority for `FRAME` is combined from all `SignedExtension`s.
+	/// Most likely for unsigned transactions you want the priority to be higher
+	/// than for regular transactions. We recommend exposing a base priority for unsigned
+	/// transactions as a runtime module parameter, so that the runtime can tune inter-module
+	/// priorities.
+	</span><span class="kw">pub fn </span>priority(<span class="kw-2">mut </span><span class="self">self</span>, priority: TransactionPriority) -&gt; <span class="self">Self </span>{
+		<span class="self">self</span>.validity.priority = priority;
+		<span class="self">self
+	</span>}
 
-	<span class="doccomment">/// Set the longevity of a transaction.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// By default the transaction will be considered valid forever and will not be revalidated</span>
-	<span class="doccomment">/// by the transaction pool. It&#39;s recommended though to set the longevity to a finite value</span>
-	<span class="doccomment">/// though. If unsure, it&#39;s also reasonable to expose this parameter via module configuration</span>
-	<span class="doccomment">/// and let the runtime decide.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">longevity</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">longevity</span>: <span class="ident">TransactionLongevity</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">validity</span>.<span class="ident">longevity</span> <span class="op">=</span> <span class="ident">longevity</span>;
-		<span class="self">self</span>
-	}
+	<span class="doccomment">/// Set the longevity of a transaction.
+	///
+	/// By default the transaction will be considered valid forever and will not be revalidated
+	/// by the transaction pool. It&#39;s recommended though to set the longevity to a finite value
+	/// though. If unsure, it&#39;s also reasonable to expose this parameter via module configuration
+	/// and let the runtime decide.
+	</span><span class="kw">pub fn </span>longevity(<span class="kw-2">mut </span><span class="self">self</span>, longevity: TransactionLongevity) -&gt; <span class="self">Self </span>{
+		<span class="self">self</span>.validity.longevity = longevity;
+		<span class="self">self
+	</span>}
 
-	<span class="doccomment">/// Set the propagate flag.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Set to `false` if the transaction is not meant to be gossiped to peers. Combined with</span>
-	<span class="doccomment">/// `TransactionSource::Local` validation it can be used to have special kind of</span>
-	<span class="doccomment">/// transactions that are only produced and included by the validator nodes.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">propagate</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">propagate</span>: <span class="ident">bool</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">validity</span>.<span class="ident">propagate</span> <span class="op">=</span> <span class="ident">propagate</span>;
-		<span class="self">self</span>
-	}
+	<span class="doccomment">/// Set the propagate flag.
+	///
+	/// Set to `false` if the transaction is not meant to be gossiped to peers. Combined with
+	/// `TransactionSource::Local` validation it can be used to have special kind of
+	/// transactions that are only produced and included by the validator nodes.
+	</span><span class="kw">pub fn </span>propagate(<span class="kw-2">mut </span><span class="self">self</span>, propagate: bool) -&gt; <span class="self">Self </span>{
+		<span class="self">self</span>.validity.propagate = propagate;
+		<span class="self">self
+	</span>}
 
-	<span class="doccomment">/// Add a `TransactionTag` to the set of required tags.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The tag will be encoded and prefixed with module prefix (if any).</span>
-	<span class="doccomment">/// If you&#39;d rather add a raw `require` tag, consider using `#combine_with` method.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">and_requires</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">tag</span>: <span class="kw">impl</span> <span class="ident">Encode</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">validity</span>.<span class="ident">requires</span>.<span class="ident">push</span>(<span class="kw">match</span> <span class="self">self</span>.<span class="ident">prefix</span>.<span class="ident">as_ref</span>() {
-			<span class="prelude-val">Some</span>(<span class="ident">prefix</span>) =&gt; (<span class="ident">prefix</span>, <span class="ident">tag</span>).<span class="ident">encode</span>(),
-			<span class="prelude-val">None</span> =&gt; <span class="ident">tag</span>.<span class="ident">encode</span>(),
+	<span class="doccomment">/// Add a `TransactionTag` to the set of required tags.
+	///
+	/// The tag will be encoded and prefixed with module prefix (if any).
+	/// If you&#39;d rather add a raw `require` tag, consider using `#combine_with` method.
+	</span><span class="kw">pub fn </span>and_requires(<span class="kw-2">mut </span><span class="self">self</span>, tag: <span class="kw">impl </span>Encode) -&gt; <span class="self">Self </span>{
+		<span class="self">self</span>.validity.requires.push(<span class="kw">match </span><span class="self">self</span>.prefix.as_ref() {
+			<span class="prelude-val">Some</span>(prefix) =&gt; (prefix, tag).encode(),
+			<span class="prelude-val">None </span>=&gt; tag.encode(),
 		});
-		<span class="self">self</span>
-	}
+		<span class="self">self
+	</span>}
 
-	<span class="doccomment">/// Add a `TransactionTag` to the set of provided tags.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The tag will be encoded and prefixed with module prefix (if any).</span>
-	<span class="doccomment">/// If you&#39;d rather add a raw `require` tag, consider using `#combine_with` method.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">and_provides</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">tag</span>: <span class="kw">impl</span> <span class="ident">Encode</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">validity</span>.<span class="ident">provides</span>.<span class="ident">push</span>(<span class="kw">match</span> <span class="self">self</span>.<span class="ident">prefix</span>.<span class="ident">as_ref</span>() {
-			<span class="prelude-val">Some</span>(<span class="ident">prefix</span>) =&gt; (<span class="ident">prefix</span>, <span class="ident">tag</span>).<span class="ident">encode</span>(),
-			<span class="prelude-val">None</span> =&gt; <span class="ident">tag</span>.<span class="ident">encode</span>(),
+	<span class="doccomment">/// Add a `TransactionTag` to the set of provided tags.
+	///
+	/// The tag will be encoded and prefixed with module prefix (if any).
+	/// If you&#39;d rather add a raw `require` tag, consider using `#combine_with` method.
+	</span><span class="kw">pub fn </span>and_provides(<span class="kw-2">mut </span><span class="self">self</span>, tag: <span class="kw">impl </span>Encode) -&gt; <span class="self">Self </span>{
+		<span class="self">self</span>.validity.provides.push(<span class="kw">match </span><span class="self">self</span>.prefix.as_ref() {
+			<span class="prelude-val">Some</span>(prefix) =&gt; (prefix, tag).encode(),
+			<span class="prelude-val">None </span>=&gt; tag.encode(),
 		});
-		<span class="self">self</span>
-	}
+		<span class="self">self
+	</span>}
 
-	<span class="doccomment">/// Augment the builder with existing `ValidTransaction`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This method does add the prefix to `require` or `provides` tags.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">combine_with</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">validity</span>: <span class="ident">ValidTransaction</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">validity</span> <span class="op">=</span> <span class="ident">core::mem::take</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">validity</span>).<span class="ident">combine_with</span>(<span class="ident">validity</span>);
-		<span class="self">self</span>
-	}
+	<span class="doccomment">/// Augment the builder with existing `ValidTransaction`.
+	///
+	/// This method does add the prefix to `require` or `provides` tags.
+	</span><span class="kw">pub fn </span>combine_with(<span class="kw-2">mut </span><span class="self">self</span>, validity: ValidTransaction) -&gt; <span class="self">Self </span>{
+		<span class="self">self</span>.validity = core::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.validity).combine_with(validity);
+		<span class="self">self
+	</span>}
 
-	<span class="doccomment">/// Finalize the builder and produce `TransactionValidity`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Note the result will always be `Ok`. Use `Into` to produce `ValidTransaction`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build</span>(<span class="self">self</span>) -&gt; <span class="ident">TransactionValidity</span> {
-		<span class="self">self</span>.<span class="ident">into</span>()
-	}
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ValidTransactionBuilder</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TransactionValidity</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">builder</span>: <span class="ident">ValidTransactionBuilder</span>) -&gt; <span class="self">Self</span> {
-		<span class="prelude-val">Ok</span>(<span class="ident">builder</span>.<span class="ident">into</span>())
+	<span class="doccomment">/// Finalize the builder and produce `TransactionValidity`.
+	///
+	/// Note the result will always be `Ok`. Use `Into` to produce `ValidTransaction`.
+	</span><span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; TransactionValidity {
+		<span class="self">self</span>.into()
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ValidTransactionBuilder</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ValidTransaction</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">builder</span>: <span class="ident">ValidTransactionBuilder</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">builder</span>.<span class="ident">validity</span>
+<span class="kw">impl </span>From&lt;ValidTransactionBuilder&gt; <span class="kw">for </span>TransactionValidity {
+	<span class="kw">fn </span>from(builder: ValidTransactionBuilder) -&gt; <span class="self">Self </span>{
+		<span class="prelude-val">Ok</span>(builder.into())
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="kw">impl </span>From&lt;ValidTransactionBuilder&gt; <span class="kw">for </span>ValidTransaction {
+	<span class="kw">fn </span>from(builder: ValidTransactionBuilder) -&gt; <span class="self">Self </span>{
+		builder.validity
+	}
+}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_encode_and_decode</span>() {
-		<span class="kw">let</span> <span class="ident">v</span>: <span class="ident">TransactionValidity</span> <span class="op">=</span> <span class="prelude-val">Ok</span>(<span class="ident">ValidTransaction</span> {
-			<span class="ident">priority</span>: <span class="number">5</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]],
-			<span class="ident">longevity</span>: <span class="number">42</span>,
-			<span class="ident">propagate</span>: <span class="bool-val">false</span>,
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_encode_and_decode() {
+		<span class="kw">let </span>v: TransactionValidity = <span class="prelude-val">Ok</span>(ValidTransaction {
+			priority: <span class="number">5</span>,
+			requires: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]],
+			provides: <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]],
+			longevity: <span class="number">42</span>,
+			propagate: <span class="bool-val">false</span>,
 		});
 
-		<span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">encode</span>();
+		<span class="kw">let </span>encoded = v.encode();
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">encoded</span>,
+			encoded,
 			<span class="macro">vec!</span>[
 				<span class="number">0</span>, <span class="number">5</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">4</span>, <span class="number">16</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">4</span>, <span class="number">12</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">42</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
-				<span class="number">0</span>, <span class="number">0</span>
-			]
+				<span class="number">0</span>, <span class="number">0
+			</span>]
 		);
 
-		<span class="comment">// decode back</span>
-		<span class="macro">assert_eq!</span>(<span class="ident">TransactionValidity::decode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">encoded</span>), <span class="prelude-val">Ok</span>(<span class="ident">v</span>));
+		<span class="comment">// decode back
+		</span><span class="macro">assert_eq!</span>(TransactionValidity::decode(<span class="kw-2">&amp;mut &amp;*</span>encoded), <span class="prelude-val">Ok</span>(v));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">builder_should_prefix_the_tags</span>() {
-		<span class="kw">const</span> <span class="ident">PREFIX</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;test&quot;</span>;
-		<span class="kw">let</span> <span class="ident">a</span>: <span class="ident">ValidTransaction</span> <span class="op">=</span> <span class="ident">ValidTransaction::with_tag_prefix</span>(<span class="ident">PREFIX</span>)
-			.<span class="ident">and_requires</span>(<span class="number">1</span>)
-			.<span class="ident">and_requires</span>(<span class="number">2</span>)
-			.<span class="ident">and_provides</span>(<span class="number">3</span>)
-			.<span class="ident">and_provides</span>(<span class="number">4</span>)
-			.<span class="ident">propagate</span>(<span class="bool-val">false</span>)
-			.<span class="ident">longevity</span>(<span class="number">5</span>)
-			.<span class="ident">priority</span>(<span class="number">3</span>)
-			.<span class="ident">priority</span>(<span class="number">6</span>)
-			.<span class="ident">into</span>();
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>builder_should_prefix_the_tags() {
+		<span class="kw">const </span>PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;test&quot;</span>;
+		<span class="kw">let </span>a: ValidTransaction = ValidTransaction::with_tag_prefix(PREFIX)
+			.and_requires(<span class="number">1</span>)
+			.and_requires(<span class="number">2</span>)
+			.and_provides(<span class="number">3</span>)
+			.and_provides(<span class="number">4</span>)
+			.propagate(<span class="bool-val">false</span>)
+			.longevity(<span class="number">5</span>)
+			.priority(<span class="number">3</span>)
+			.priority(<span class="number">6</span>)
+			.into();
 		<span class="macro">assert_eq!</span>(
-			<span class="ident">a</span>,
-			<span class="ident">ValidTransaction</span> {
-				<span class="ident">propagate</span>: <span class="bool-val">false</span>,
-				<span class="ident">longevity</span>: <span class="number">5</span>,
-				<span class="ident">priority</span>: <span class="number">6</span>,
-				<span class="ident">requires</span>: <span class="macro">vec!</span>[(<span class="ident">PREFIX</span>, <span class="number">1</span>).<span class="ident">encode</span>(), (<span class="ident">PREFIX</span>, <span class="number">2</span>).<span class="ident">encode</span>()],
-				<span class="ident">provides</span>: <span class="macro">vec!</span>[(<span class="ident">PREFIX</span>, <span class="number">3</span>).<span class="ident">encode</span>(), (<span class="ident">PREFIX</span>, <span class="number">4</span>).<span class="ident">encode</span>()],
+			a,
+			ValidTransaction {
+				propagate: <span class="bool-val">false</span>,
+				longevity: <span class="number">5</span>,
+				priority: <span class="number">6</span>,
+				requires: <span class="macro">vec!</span>[(PREFIX, <span class="number">1</span>).encode(), (PREFIX, <span class="number">2</span>).encode()],
+				provides: <span class="macro">vec!</span>[(PREFIX, <span class="number">3</span>).encode(), (PREFIX, <span class="number">4</span>).encode()],
 			}
 		);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

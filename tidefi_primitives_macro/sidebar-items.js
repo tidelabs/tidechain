@@ -1,1 +1,1 @@
-initSidebarItems({"attr":[["assets",""]]});
+window.SIDEBAR_ITEMS = {"attr":[["assets",""]]};

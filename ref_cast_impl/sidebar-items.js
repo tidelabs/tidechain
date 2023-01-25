@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["RefCast",""]]});
+window.SIDEBAR_ITEMS = {"derive":[["RefCast",""]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/traphandlers/unix.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unix.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/traphandlers/unix.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unix.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -346,349 +341,348 @@
 <span id="341">341</span>
 <span id="342">342</span>
 <span id="343">343</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::traphandlers</span>::{<span class="ident">tls</span>, <span class="ident">wasmtime_longjmp</span>, <span class="ident">Trap</span>};
-<span class="kw">use</span> <span class="ident">std::cell::RefCell</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>::{<span class="self">self</span>, <span class="ident">MaybeUninit</span>};
-<span class="kw">use</span> <span class="ident">std::ptr</span>::{<span class="self">self</span>, <span class="ident">null_mut</span>};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::traphandlers::{tls, wasmtime_longjmp, Trap};
+<span class="kw">use </span>std::cell::RefCell;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::mem::{<span class="self">self</span>, MaybeUninit};
+<span class="kw">use </span>std::ptr::{<span class="self">self</span>, null_mut};
 
-<span class="doccomment">/// Function which may handle custom signals while processing traps.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SignalHandler</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span>
-    <span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">libc::c_int</span>, <span class="kw-2">*const</span> <span class="ident">libc::siginfo_t</span>, <span class="kw-2">*const</span> <span class="ident">libc::c_void</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>;
+<span class="doccomment">/// Function which may handle custom signals while processing traps.
+</span><span class="kw">pub type </span>SignalHandler&lt;<span class="lifetime">&#39;a</span>&gt; =
+    <span class="kw">dyn </span>Fn(libc::c_int, <span class="kw-2">*const </span>libc::siginfo_t, <span class="kw-2">*const </span>libc::c_void) -&gt; bool + Send + Sync + <span class="lifetime">&#39;a</span>;
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">PREV_SIGSEGV</span>: <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">libc::sigaction</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">MaybeUninit::uninit</span>();
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">PREV_SIGBUS</span>: <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">libc::sigaction</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">MaybeUninit::uninit</span>();
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">PREV_SIGILL</span>: <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">libc::sigaction</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">MaybeUninit::uninit</span>();
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">PREV_SIGFPE</span>: <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">libc::sigaction</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">MaybeUninit::uninit</span>();
+<span class="kw">static </span><span class="kw-2">mut </span>PREV_SIGSEGV: MaybeUninit&lt;libc::sigaction&gt; = MaybeUninit::uninit();
+<span class="kw">static </span><span class="kw-2">mut </span>PREV_SIGBUS: MaybeUninit&lt;libc::sigaction&gt; = MaybeUninit::uninit();
+<span class="kw">static </span><span class="kw-2">mut </span>PREV_SIGILL: MaybeUninit&lt;libc::sigaction&gt; = MaybeUninit::uninit();
+<span class="kw">static </span><span class="kw-2">mut </span>PREV_SIGFPE: MaybeUninit&lt;libc::sigaction&gt; = MaybeUninit::uninit();
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">platform_init</span>() {
-    <span class="kw">let</span> <span class="ident">register</span> <span class="op">=</span> <span class="op">|</span><span class="ident">slot</span>: <span class="kw-2">&amp;mut</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">libc::sigaction</span><span class="op">&gt;</span>, <span class="ident">signal</span>: <span class="ident">i32</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handler</span>: <span class="ident">libc::sigaction</span> <span class="op">=</span> <span class="ident">mem::zeroed</span>();
-        <span class="comment">// The flags here are relatively careful, and they are...</span>
-        <span class="comment">//</span>
-        <span class="comment">// SA_SIGINFO gives us access to information like the program</span>
-        <span class="comment">// counter from where the fault happened.</span>
-        <span class="comment">//</span>
-        <span class="comment">// SA_ONSTACK allows us to handle signals on an alternate stack,</span>
-        <span class="comment">// so that the handler can run in response to running out of</span>
-        <span class="comment">// stack space on the main stack. Rust installs an alternate</span>
-        <span class="comment">// stack with sigaltstack, so we rely on that.</span>
-        <span class="comment">//</span>
-        <span class="comment">// SA_NODEFER allows us to reenter the signal handler if we</span>
-        <span class="comment">// crash while handling the signal, and fall through to the</span>
-        <span class="comment">// Breakpad handler by testing handlingSegFault.</span>
-        <span class="ident">handler</span>.<span class="ident">sa_flags</span> <span class="op">=</span> <span class="ident">libc::SA_SIGINFO</span> <span class="op">|</span> <span class="ident">libc::SA_NODEFER</span> <span class="op">|</span> <span class="ident">libc::SA_ONSTACK</span>;
-        <span class="ident">handler</span>.<span class="ident">sa_sigaction</span> <span class="op">=</span> <span class="ident">trap_handler</span> <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="ident">libc::sigemptyset</span>(<span class="kw-2">&amp;mut</span> <span class="ident">handler</span>.<span class="ident">sa_mask</span>);
-        <span class="kw">if</span> <span class="ident">libc::sigaction</span>(<span class="ident">signal</span>, <span class="kw-2">&amp;</span><span class="ident">handler</span>, <span class="ident">slot</span>.<span class="ident">as_mut_ptr</span>()) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+<span class="kw">pub unsafe fn </span>platform_init() {
+    <span class="kw">let </span>register = |slot: <span class="kw-2">&amp;mut </span>MaybeUninit&lt;libc::sigaction&gt;, signal: i32| {
+        <span class="kw">let </span><span class="kw-2">mut </span>handler: libc::sigaction = mem::zeroed();
+        <span class="comment">// The flags here are relatively careful, and they are...
+        //
+        // SA_SIGINFO gives us access to information like the program
+        // counter from where the fault happened.
+        //
+        // SA_ONSTACK allows us to handle signals on an alternate stack,
+        // so that the handler can run in response to running out of
+        // stack space on the main stack. Rust installs an alternate
+        // stack with sigaltstack, so we rely on that.
+        //
+        // SA_NODEFER allows us to reenter the signal handler if we
+        // crash while handling the signal, and fall through to the
+        // Breakpad handler by testing handlingSegFault.
+        </span>handler.sa_flags = libc::SA_SIGINFO | libc::SA_NODEFER | libc::SA_ONSTACK;
+        handler.sa_sigaction = trap_handler <span class="kw">as </span>usize;
+        libc::sigemptyset(<span class="kw-2">&amp;mut </span>handler.sa_mask);
+        <span class="kw">if </span>libc::sigaction(signal, <span class="kw-2">&amp;</span>handler, slot.as_mut_ptr()) != <span class="number">0 </span>{
             <span class="macro">panic!</span>(
                 <span class="string">&quot;unable to install signal handler: {}&quot;</span>,
-                <span class="ident">io::Error::last_os_error</span>(),
+                io::Error::last_os_error(),
             );
         }
     };
 
-    <span class="comment">// Allow handling OOB with signals on all architectures</span>
-    <span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="ident">PREV_SIGSEGV</span>, <span class="ident">libc::SIGSEGV</span>);
+    <span class="comment">// Allow handling OOB with signals on all architectures
+    </span>register(<span class="kw-2">&amp;mut </span>PREV_SIGSEGV, libc::SIGSEGV);
 
-    <span class="comment">// Handle `unreachable` instructions which execute `ud2` right now</span>
-    <span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="ident">PREV_SIGILL</span>, <span class="ident">libc::SIGILL</span>);
+    <span class="comment">// Handle `unreachable` instructions which execute `ud2` right now
+    </span>register(<span class="kw-2">&amp;mut </span>PREV_SIGILL, libc::SIGILL);
 
-    <span class="comment">// x86 and s390x use SIGFPE to report division by zero</span>
-    <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>) <span class="op">|</span><span class="op">|</span> <span class="macro">cfg!</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>) <span class="op">|</span><span class="op">|</span> <span class="macro">cfg!</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;s390x&quot;</span>) {
-        <span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="ident">PREV_SIGFPE</span>, <span class="ident">libc::SIGFPE</span>);
+    <span class="comment">// x86 and s390x use SIGFPE to report division by zero
+    </span><span class="kw">if </span><span class="macro">cfg!</span>(target_arch = <span class="string">&quot;x86&quot;</span>) || <span class="macro">cfg!</span>(target_arch = <span class="string">&quot;x86_64&quot;</span>) || <span class="macro">cfg!</span>(target_arch = <span class="string">&quot;s390x&quot;</span>) {
+        register(<span class="kw-2">&amp;mut </span>PREV_SIGFPE, libc::SIGFPE);
     }
 
-    <span class="comment">// Sometimes we need to handle SIGBUS too:</span>
-    <span class="comment">// - On ARM, handle Unaligned Accesses.</span>
-    <span class="comment">// - On Darwin, guard page accesses are raised as SIGBUS.</span>
-    <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>) <span class="op">|</span><span class="op">|</span> <span class="macro">cfg!</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>) <span class="op">|</span><span class="op">|</span> <span class="macro">cfg!</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;freebsd&quot;</span>) {
-        <span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="ident">PREV_SIGBUS</span>, <span class="ident">libc::SIGBUS</span>);
+    <span class="comment">// Sometimes we need to handle SIGBUS too:
+    // - On ARM, handle Unaligned Accesses.
+    // - On Darwin, guard page accesses are raised as SIGBUS.
+    </span><span class="kw">if </span><span class="macro">cfg!</span>(target_arch = <span class="string">&quot;arm&quot;</span>) || <span class="macro">cfg!</span>(target_os = <span class="string">&quot;macos&quot;</span>) || <span class="macro">cfg!</span>(target_os = <span class="string">&quot;freebsd&quot;</span>) {
+        register(<span class="kw-2">&amp;mut </span>PREV_SIGBUS, libc::SIGBUS);
     }
 }
 
-<span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">trap_handler</span>(
-    <span class="ident">signum</span>: <span class="ident">libc::c_int</span>,
-    <span class="ident">siginfo</span>: <span class="kw-2">*mut</span> <span class="ident">libc::siginfo_t</span>,
-    <span class="ident">context</span>: <span class="kw-2">*mut</span> <span class="ident">libc::c_void</span>,
+<span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>trap_handler(
+    signum: libc::c_int,
+    siginfo: <span class="kw-2">*mut </span>libc::siginfo_t,
+    context: <span class="kw-2">*mut </span>libc::c_void,
 ) {
-    <span class="kw">let</span> <span class="ident">previous</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">signum</span> {
-        <span class="ident">libc::SIGSEGV</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">PREV_SIGSEGV</span>,
-        <span class="ident">libc::SIGBUS</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">PREV_SIGBUS</span>,
-        <span class="ident">libc::SIGFPE</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">PREV_SIGFPE</span>,
-        <span class="ident">libc::SIGILL</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">PREV_SIGILL</span>,
-        <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;unknown signal: {}&quot;</span>, <span class="ident">signum</span>),
+    <span class="kw">let </span>previous = <span class="kw">match </span>signum {
+        libc::SIGSEGV =&gt; <span class="kw-2">&amp;</span>PREV_SIGSEGV,
+        libc::SIGBUS =&gt; <span class="kw-2">&amp;</span>PREV_SIGBUS,
+        libc::SIGFPE =&gt; <span class="kw-2">&amp;</span>PREV_SIGFPE,
+        libc::SIGILL =&gt; <span class="kw-2">&amp;</span>PREV_SIGILL,
+        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;unknown signal: {}&quot;</span>, signum),
     };
-    <span class="kw">let</span> <span class="ident">handled</span> <span class="op">=</span> <span class="ident">tls::with</span>(<span class="op">|</span><span class="ident">info</span><span class="op">|</span> {
-        <span class="comment">// If no wasm code is executing, we don&#39;t handle this as a wasm</span>
-        <span class="comment">// trap.</span>
-        <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">info</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">info</span>) =&gt; <span class="ident">info</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="bool-val">false</span>,
+    <span class="kw">let </span>handled = tls::with(|info| {
+        <span class="comment">// If no wasm code is executing, we don&#39;t handle this as a wasm
+        // trap.
+        </span><span class="kw">let </span>info = <span class="kw">match </span>info {
+            <span class="prelude-val">Some</span>(info) =&gt; info,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
         };
 
-        <span class="comment">// If we hit an exception while handling a previous trap, that&#39;s</span>
-        <span class="comment">// quite bad, so bail out and let the system handle this</span>
-        <span class="comment">// recursive segfault.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Otherwise flag ourselves as handling a trap, do the trap</span>
-        <span class="comment">// handling, and reset our trap handling flag. Then we figure</span>
-        <span class="comment">// out what to do based on the result of the trap handling.</span>
-        <span class="kw">let</span> <span class="ident">pc</span> <span class="op">=</span> <span class="ident">get_pc</span>(<span class="ident">context</span>, <span class="ident">signum</span>);
-        <span class="kw">let</span> <span class="ident">jmp_buf</span> <span class="op">=</span> <span class="ident">info</span>.<span class="ident">jmp_buf_if_trap</span>(<span class="ident">pc</span>, <span class="op">|</span><span class="ident">handler</span><span class="op">|</span> <span class="ident">handler</span>(<span class="ident">signum</span>, <span class="ident">siginfo</span>, <span class="ident">context</span>));
+        <span class="comment">// If we hit an exception while handling a previous trap, that&#39;s
+        // quite bad, so bail out and let the system handle this
+        // recursive segfault.
+        //
+        // Otherwise flag ourselves as handling a trap, do the trap
+        // handling, and reset our trap handling flag. Then we figure
+        // out what to do based on the result of the trap handling.
+        </span><span class="kw">let </span>pc = get_pc(context, signum);
+        <span class="kw">let </span>jmp_buf = info.jmp_buf_if_trap(pc, |handler| handler(signum, siginfo, context));
 
-        <span class="comment">// Figure out what to do based on the result of this handling of</span>
-        <span class="comment">// the trap. Note that our sentinel value of 1 means that the</span>
-        <span class="comment">// exception was handled by a custom exception handler, so we</span>
-        <span class="comment">// keep executing.</span>
-        <span class="kw">if</span> <span class="ident">jmp_buf</span>.<span class="ident">is_null</span>() {
-            <span class="kw">return</span> <span class="bool-val">false</span>;
+        <span class="comment">// Figure out what to do based on the result of this handling of
+        // the trap. Note that our sentinel value of 1 means that the
+        // exception was handled by a custom exception handler, so we
+        // keep executing.
+        </span><span class="kw">if </span>jmp_buf.is_null() {
+            <span class="kw">return </span><span class="bool-val">false</span>;
         }
-        <span class="kw">if</span> <span class="ident">jmp_buf</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">==</span> <span class="number">1</span> {
-            <span class="kw">return</span> <span class="bool-val">true</span>;
+        <span class="kw">if </span>jmp_buf <span class="kw">as </span>usize == <span class="number">1 </span>{
+            <span class="kw">return </span><span class="bool-val">true</span>;
         }
-        <span class="ident">info</span>.<span class="ident">capture_backtrace</span>(<span class="ident">pc</span>);
-        <span class="comment">// On macOS this is a bit special, unfortunately. If we were to</span>
-        <span class="comment">// `siglongjmp` out of the signal handler that notably does</span>
-        <span class="comment">// *not* reset the sigaltstack state of our signal handler. This</span>
-        <span class="comment">// seems to trick the kernel into thinking that the sigaltstack</span>
-        <span class="comment">// is still in use upon delivery of the next signal, meaning</span>
-        <span class="comment">// that the sigaltstack is not ever used again if we immediately</span>
-        <span class="comment">// call `wasmtime_longjmp` here.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Note that if we use `longjmp` instead of `siglongjmp` then</span>
-        <span class="comment">// the problem is fixed. The problem with that, however, is that</span>
-        <span class="comment">// `setjmp` is much slower than `sigsetjmp` due to the</span>
-        <span class="comment">// preservation of the proceses signal mask. The reason</span>
-        <span class="comment">// `longjmp` appears to work is that it seems to call a function</span>
-        <span class="comment">// (according to published macOS sources) called</span>
-        <span class="comment">// `_sigunaltstack` which updates the kernel to say the</span>
-        <span class="comment">// sigaltstack is no longer in use. We ideally want to call that</span>
-        <span class="comment">// here but I don&#39;t think there&#39;s a stable way for us to call</span>
-        <span class="comment">// that.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Given all that, on macOS only, we do the next best thing. We</span>
-        <span class="comment">// return from the signal handler after updating the register</span>
-        <span class="comment">// context. This will cause control to return to our shim</span>
-        <span class="comment">// function defined here which will perform the</span>
-        <span class="comment">// `wasmtime_longjmp` (`siglongjmp`) for us. The reason this</span>
-        <span class="comment">// works is that by returning from the signal handler we&#39;ll</span>
-        <span class="comment">// trigger all the normal machinery for &quot;the signal handler is</span>
-        <span class="comment">// done running&quot; which will clear the sigaltstack flag and allow</span>
-        <span class="comment">// reusing it for the next signal. Then upon resuming in our custom</span>
-        <span class="comment">// code we blow away the stack anyway with a longjmp.</span>
-        <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>) {
-            <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">wasmtime_longjmp_shim</span>(<span class="ident">jmp_buf</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>) {
-                <span class="ident">wasmtime_longjmp</span>(<span class="ident">jmp_buf</span>)
+        info.capture_backtrace(pc);
+        <span class="comment">// On macOS this is a bit special, unfortunately. If we were to
+        // `siglongjmp` out of the signal handler that notably does
+        // *not* reset the sigaltstack state of our signal handler. This
+        // seems to trick the kernel into thinking that the sigaltstack
+        // is still in use upon delivery of the next signal, meaning
+        // that the sigaltstack is not ever used again if we immediately
+        // call `wasmtime_longjmp` here.
+        //
+        // Note that if we use `longjmp` instead of `siglongjmp` then
+        // the problem is fixed. The problem with that, however, is that
+        // `setjmp` is much slower than `sigsetjmp` due to the
+        // preservation of the proceses signal mask. The reason
+        // `longjmp` appears to work is that it seems to call a function
+        // (according to published macOS sources) called
+        // `_sigunaltstack` which updates the kernel to say the
+        // sigaltstack is no longer in use. We ideally want to call that
+        // here but I don&#39;t think there&#39;s a stable way for us to call
+        // that.
+        //
+        // Given all that, on macOS only, we do the next best thing. We
+        // return from the signal handler after updating the register
+        // context. This will cause control to return to our shim
+        // function defined here which will perform the
+        // `wasmtime_longjmp` (`siglongjmp`) for us. The reason this
+        // works is that by returning from the signal handler we&#39;ll
+        // trigger all the normal machinery for &quot;the signal handler is
+        // done running&quot; which will clear the sigaltstack flag and allow
+        // reusing it for the next signal. Then upon resuming in our custom
+        // code we blow away the stack anyway with a longjmp.
+        </span><span class="kw">if </span><span class="macro">cfg!</span>(target_os = <span class="string">&quot;macos&quot;</span>) {
+            <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>wasmtime_longjmp_shim(jmp_buf: <span class="kw-2">*const </span>u8) {
+                wasmtime_longjmp(jmp_buf)
             }
-            <span class="ident">set_pc</span>(<span class="ident">context</span>, <span class="ident">wasmtime_longjmp_shim</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">jmp_buf</span> <span class="kw">as</span> <span class="ident">usize</span>);
-            <span class="kw">return</span> <span class="bool-val">true</span>;
+            set_pc(context, wasmtime_longjmp_shim <span class="kw">as </span>usize, jmp_buf <span class="kw">as </span>usize);
+            <span class="kw">return </span><span class="bool-val">true</span>;
         }
-        <span class="ident">wasmtime_longjmp</span>(<span class="ident">jmp_buf</span>)
+        wasmtime_longjmp(jmp_buf)
     });
 
-    <span class="kw">if</span> <span class="ident">handled</span> {
+    <span class="kw">if </span>handled {
         <span class="kw">return</span>;
     }
 
-    <span class="comment">// This signal is not for any compiled wasm code we expect, so we</span>
-    <span class="comment">// need to forward the signal to the next handler. If there is no</span>
-    <span class="comment">// next handler (SIG_IGN or SIG_DFL), then it&#39;s time to crash. To do</span>
-    <span class="comment">// this, we set the signal back to its original disposition and</span>
-    <span class="comment">// return. This will cause the faulting op to be re-executed which</span>
-    <span class="comment">// will crash in the normal way. If there is a next handler, call</span>
-    <span class="comment">// it. It will either crash synchronously, fix up the instruction</span>
-    <span class="comment">// so that execution can continue and return, or trigger a crash by</span>
-    <span class="comment">// returning the signal to it&#39;s original disposition and returning.</span>
-    <span class="kw">let</span> <span class="ident">previous</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">previous</span>.<span class="ident">as_ptr</span>();
-    <span class="kw">if</span> <span class="ident">previous</span>.<span class="ident">sa_flags</span> <span class="op">&amp;</span> <span class="ident">libc::SA_SIGINFO</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-        <span class="ident">mem::transmute</span>::<span class="op">&lt;</span><span class="ident">usize</span>, <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">libc::c_int</span>, <span class="kw-2">*mut</span> <span class="ident">libc::siginfo_t</span>, <span class="kw-2">*mut</span> <span class="ident">libc::c_void</span>)<span class="op">&gt;</span>(
-            <span class="ident">previous</span>.<span class="ident">sa_sigaction</span>,
-        )(<span class="ident">signum</span>, <span class="ident">siginfo</span>, <span class="ident">context</span>)
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">previous</span>.<span class="ident">sa_sigaction</span> <span class="op">==</span> <span class="ident">libc::SIG_DFL</span> <span class="op">|</span><span class="op">|</span> <span class="ident">previous</span>.<span class="ident">sa_sigaction</span> <span class="op">==</span> <span class="ident">libc::SIG_IGN</span> {
-        <span class="ident">libc::sigaction</span>(<span class="ident">signum</span>, <span class="ident">previous</span>, <span class="ident">ptr::null_mut</span>());
-    } <span class="kw">else</span> {
-        <span class="ident">mem::transmute</span>::<span class="op">&lt;</span><span class="ident">usize</span>, <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">libc::c_int</span>)<span class="op">&gt;</span>(<span class="ident">previous</span>.<span class="ident">sa_sigaction</span>)(<span class="ident">signum</span>)
+    <span class="comment">// This signal is not for any compiled wasm code we expect, so we
+    // need to forward the signal to the next handler. If there is no
+    // next handler (SIG_IGN or SIG_DFL), then it&#39;s time to crash. To do
+    // this, we set the signal back to its original disposition and
+    // return. This will cause the faulting op to be re-executed which
+    // will crash in the normal way. If there is a next handler, call
+    // it. It will either crash synchronously, fix up the instruction
+    // so that execution can continue and return, or trigger a crash by
+    // returning the signal to it&#39;s original disposition and returning.
+    </span><span class="kw">let </span>previous = <span class="kw-2">&amp;*</span>previous.as_ptr();
+    <span class="kw">if </span>previous.sa_flags &amp; libc::SA_SIGINFO != <span class="number">0 </span>{
+        mem::transmute::&lt;usize, <span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(libc::c_int, <span class="kw-2">*mut </span>libc::siginfo_t, <span class="kw-2">*mut </span>libc::c_void)&gt;(
+            previous.sa_sigaction,
+        )(signum, siginfo, context)
+    } <span class="kw">else if </span>previous.sa_sigaction == libc::SIG_DFL || previous.sa_sigaction == libc::SIG_IGN {
+        libc::sigaction(signum, previous, ptr::null_mut());
+    } <span class="kw">else </span>{
+        mem::transmute::&lt;usize, <span class="kw">extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(libc::c_int)&gt;(previous.sa_sigaction)(signum)
     }
 }
 
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get_pc</span>(<span class="ident">cx</span>: <span class="kw-2">*mut</span> <span class="ident">libc::c_void</span>, <span class="ident">_signum</span>: <span class="ident">libc::c_int</span>) -&gt; <span class="kw-2">*const</span> <span class="ident">u8</span> {
-    <span class="macro">cfg_if::cfg_if!</span> {
-        <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            <span class="ident">cx</span>.<span class="ident">uc_mcontext</span>.<span class="ident">gregs</span>[<span class="ident">libc::REG_RIP</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>))]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            <span class="ident">cx</span>.<span class="ident">uc_mcontext</span>.<span class="ident">gregs</span>[<span class="ident">libc::REG_EIP</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>), <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>))]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            <span class="ident">cx</span>.<span class="ident">uc_mcontext</span>.<span class="ident">pc</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;s390x&quot;</span>))]</span> {
-            <span class="comment">// On s390x, SIGILL and SIGFPE are delivered with the PSW address</span>
-            <span class="comment">// pointing *after* the faulting instruction, while SIGSEGV and</span>
-            <span class="comment">// SIGBUS are delivered with the PSW address pointing *to* the</span>
-            <span class="comment">// faulting instruction.  To handle this, the code generator registers</span>
-            <span class="comment">// any trap that results in one of &quot;late&quot; signals on the last byte</span>
-            <span class="comment">// of the instruction, and any trap that results in one of the &quot;early&quot;</span>
-            <span class="comment">// signals on the first byte of the instruction (as usual).  This</span>
-            <span class="comment">// means we simply need to decrement the reported PSW address by</span>
-            <span class="comment">// one in the case of a &quot;late&quot; signal here to ensure we always</span>
-            <span class="comment">// correctly find the associated trap handler.</span>
-            <span class="kw">let</span> <span class="ident">trap_offset</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">_signum</span> {
-                <span class="ident">libc::SIGILL</span> <span class="op">|</span> <span class="ident">libc::SIGFPE</span> =&gt; <span class="number">1</span>,
-                <span class="kw">_</span> =&gt; <span class="number">0</span>,
+<span class="kw">unsafe fn </span>get_pc(cx: <span class="kw-2">*mut </span>libc::c_void, _signum: libc::c_int) -&gt; <span class="kw-2">*const </span>u8 {
+    <span class="macro">cfg_if::cfg_if! </span>{
+        <span class="kw">if </span><span class="attribute">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            cx.uc_mcontext.gregs[libc::REG_RIP <span class="kw">as </span>usize] <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else if </span><span class="attribute">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, target_arch = <span class="string">&quot;x86&quot;</span>))] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            cx.uc_mcontext.gregs[libc::REG_EIP <span class="kw">as </span>usize] <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else if </span><span class="attribute">#[cfg(all(any(target_os = <span class="string">&quot;linux&quot;</span>, target_os = <span class="string">&quot;android&quot;</span>), target_arch = <span class="string">&quot;aarch64&quot;</span>))] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            cx.uc_mcontext.pc <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else if </span><span class="attribute">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, target_arch = <span class="string">&quot;s390x&quot;</span>))] </span>{
+            <span class="comment">// On s390x, SIGILL and SIGFPE are delivered with the PSW address
+            // pointing *after* the faulting instruction, while SIGSEGV and
+            // SIGBUS are delivered with the PSW address pointing *to* the
+            // faulting instruction.  To handle this, the code generator registers
+            // any trap that results in one of &quot;late&quot; signals on the last byte
+            // of the instruction, and any trap that results in one of the &quot;early&quot;
+            // signals on the first byte of the instruction (as usual).  This
+            // means we simply need to decrement the reported PSW address by
+            // one in the case of a &quot;late&quot; signal here to ensure we always
+            // correctly find the associated trap handler.
+            </span><span class="kw">let </span>trap_offset = <span class="kw">match </span>_signum {
+                libc::SIGILL | libc::SIGFPE =&gt; <span class="number">1</span>,
+                <span class="kw">_ </span>=&gt; <span class="number">0</span>,
             };
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            (<span class="ident">cx</span>.<span class="ident">uc_mcontext</span>.<span class="ident">psw</span>.<span class="ident">addr</span> <span class="op">-</span> <span class="ident">trap_offset</span>) <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__rip</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>))]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__eip</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>))]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__pc</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;freebsd&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>))]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">libc::ucontext_t</span>);
-            <span class="ident">cx</span>.<span class="ident">uc_mcontext</span>.<span class="ident">mc_rip</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span>
-        } <span class="kw">else</span> {
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            (cx.uc_mcontext.psw.addr - trap_offset) <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else if </span><span class="attribute">#[cfg(all(target_os = <span class="string">&quot;macos&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__rip <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else if </span><span class="attribute">#[cfg(all(target_os = <span class="string">&quot;macos&quot;</span>, target_arch = <span class="string">&quot;x86&quot;</span>))] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__eip <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else if </span><span class="attribute">#[cfg(all(target_os = <span class="string">&quot;macos&quot;</span>, target_arch = <span class="string">&quot;aarch64&quot;</span>))] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__pc <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else if </span><span class="attribute">#[cfg(all(target_os = <span class="string">&quot;freebsd&quot;</span>, target_arch = <span class="string">&quot;x86_64&quot;</span>))] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;*</span>(cx <span class="kw">as </span><span class="kw-2">*const </span>libc::ucontext_t);
+            cx.uc_mcontext.mc_rip <span class="kw">as </span><span class="kw-2">*const </span>u8
+        } <span class="kw">else </span>{
             <span class="macro">compile_error!</span>(<span class="string">&quot;unsupported platform&quot;</span>);
         }
     }
 }
 
-<span class="comment">// This is only used on macOS targets for calling an unwinding shim</span>
-<span class="comment">// function to ensure that we return from the signal handler.</span>
-<span class="comment">//</span>
-<span class="comment">// See more comments above where this is called for what it&#39;s doing.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_pc</span>(<span class="ident">cx</span>: <span class="kw-2">*mut</span> <span class="ident">libc::c_void</span>, <span class="ident">pc</span>: <span class="ident">usize</span>, <span class="ident">arg1</span>: <span class="ident">usize</span>) {
-    <span class="macro">cfg_if::cfg_if!</span> {
-        <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>))]</span> {
-            <span class="ident">drop</span>((<span class="ident">cx</span>, <span class="ident">pc</span>, <span class="ident">arg1</span>));
-            <span class="macro">unreachable!</span>(); <span class="comment">// not used on these platforms</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">libc::ucontext_t</span>);
-            (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__rip</span> <span class="op">=</span> <span class="ident">pc</span> <span class="kw">as</span> <span class="ident">u64</span>;
-            (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__rdi</span> <span class="op">=</span> <span class="ident">arg1</span> <span class="kw">as</span> <span class="ident">u64</span>;
-            <span class="comment">// We&#39;re simulating a &quot;pseudo-call&quot; so we need to ensure</span>
-            <span class="comment">// stack alignment is properly respected, notably that on a</span>
-            <span class="comment">// `call` instruction the stack is 8/16-byte aligned, then</span>
-            <span class="comment">// the function adjusts itself to be 16-byte aligned.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Most of the time the stack pointer is 16-byte aligned at</span>
-            <span class="comment">// the time of the trap but for more robust-ness with JIT</span>
-            <span class="comment">// code where it may ud2 in a prologue check before the</span>
-            <span class="comment">// stack is aligned we double-check here.</span>
-            <span class="kw">if</span> (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__rsp</span> <span class="op">%</span> <span class="number">16</span> <span class="op">==</span> <span class="number">0</span> {
-                (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__rsp</span> <span class="op">-</span><span class="op">=</span> <span class="number">8</span>;
+<span class="comment">// This is only used on macOS targets for calling an unwinding shim
+// function to ensure that we return from the signal handler.
+//
+// See more comments above where this is called for what it&#39;s doing.
+</span><span class="kw">unsafe fn </span>set_pc(cx: <span class="kw-2">*mut </span>libc::c_void, pc: usize, arg1: usize) {
+    <span class="macro">cfg_if::cfg_if! </span>{
+        <span class="kw">if </span><span class="attribute">#[cfg(not(target_os = <span class="string">&quot;macos&quot;</span>))] </span>{
+            drop((cx, pc, arg1));
+            <span class="macro">unreachable!</span>(); <span class="comment">// not used on these platforms
+        </span>} <span class="kw">else if </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;mut *</span>(cx <span class="kw">as </span><span class="kw-2">*mut </span>libc::ucontext_t);
+            (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__rip = pc <span class="kw">as </span>u64;
+            (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__rdi = arg1 <span class="kw">as </span>u64;
+            <span class="comment">// We&#39;re simulating a &quot;pseudo-call&quot; so we need to ensure
+            // stack alignment is properly respected, notably that on a
+            // `call` instruction the stack is 8/16-byte aligned, then
+            // the function adjusts itself to be 16-byte aligned.
+            //
+            // Most of the time the stack pointer is 16-byte aligned at
+            // the time of the trap but for more robust-ness with JIT
+            // code where it may ud2 in a prologue check before the
+            // stack is aligned we double-check here.
+            </span><span class="kw">if </span>(<span class="kw-2">*</span>cx.uc_mcontext).__ss.__rsp % <span class="number">16 </span>== <span class="number">0 </span>{
+                (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__rsp -= <span class="number">8</span>;
             }
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>)]</span> {
-            <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="ident">cx</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">libc::ucontext_t</span>);
-            (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__pc</span> <span class="op">=</span> <span class="ident">pc</span> <span class="kw">as</span> <span class="ident">u64</span>;
-            (<span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">uc_mcontext</span>).<span class="ident">__ss</span>.<span class="ident">__x</span>[<span class="number">0</span>] <span class="op">=</span> <span class="ident">arg1</span> <span class="kw">as</span> <span class="ident">u64</span>;
-        } <span class="kw">else</span> {
+        } <span class="kw">else if </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)] </span>{
+            <span class="kw">let </span>cx = <span class="kw-2">&amp;mut *</span>(cx <span class="kw">as </span><span class="kw-2">*mut </span>libc::ucontext_t);
+            (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__pc = pc <span class="kw">as </span>u64;
+            (<span class="kw-2">*</span>cx.uc_mcontext).__ss.__x[<span class="number">0</span>] = arg1 <span class="kw">as </span>u64;
+        } <span class="kw">else </span>{
             <span class="macro">compile_error!</span>(<span class="string">&quot;unsupported macos target architecture&quot;</span>);
         }
     }
 }
 
-<span class="doccomment">/// A function for registering a custom alternate signal stack (sigaltstack).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Rust&#39;s libstd installs an alternate stack with size `SIGSTKSZ`, which is not</span>
-<span class="doccomment">/// always large enough for our signal handling code. Override it by creating</span>
-<span class="doccomment">/// and registering our own alternate stack that is large enough and has a guard</span>
-<span class="doccomment">/// page.</span>
-<span class="attribute">#[<span class="ident">cold</span>]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lazy_per_thread_init</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Trap</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="comment">// This thread local is purely used to register a `Stack` to get deallocated</span>
-    <span class="comment">// when the thread exists. Otherwise this function is only ever called at</span>
-    <span class="comment">// most once per-thread.</span>
-    <span class="macro">thread_local!</span> {
-        <span class="kw">static</span> <span class="ident">STACK</span>: <span class="ident">RefCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Stack</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefCell::new</span>(<span class="prelude-val">None</span>);
+<span class="doccomment">/// A function for registering a custom alternate signal stack (sigaltstack).
+///
+/// Rust&#39;s libstd installs an alternate stack with size `SIGSTKSZ`, which is not
+/// always large enough for our signal handling code. Override it by creating
+/// and registering our own alternate stack that is large enough and has a guard
+/// page.
+</span><span class="attribute">#[cold]
+</span><span class="kw">pub fn </span>lazy_per_thread_init() -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;Trap&gt;&gt; {
+    <span class="comment">// This thread local is purely used to register a `Stack` to get deallocated
+    // when the thread exists. Otherwise this function is only ever called at
+    // most once per-thread.
+    </span><span class="macro">thread_local! </span>{
+        <span class="kw">static </span>STACK: RefCell&lt;<span class="prelude-ty">Option</span>&lt;Stack&gt;&gt; = RefCell::new(<span class="prelude-val">None</span>);
     }
 
-    <span class="doccomment">/// The size of the sigaltstack (not including the guard, which will be</span>
-    <span class="doccomment">/// added). Make this large enough to run our signal handlers.</span>
-    <span class="kw">const</span> <span class="ident">MIN_STACK_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span> <span class="op">*</span> <span class="number">4096</span>;
+    <span class="doccomment">/// The size of the sigaltstack (not including the guard, which will be
+    /// added). Make this large enough to run our signal handlers.
+    </span><span class="kw">const </span>MIN_STACK_SIZE: usize = <span class="number">16 </span>* <span class="number">4096</span>;
 
-    <span class="kw">struct</span> <span class="ident">Stack</span> {
-        <span class="ident">mmap_ptr</span>: <span class="kw-2">*mut</span> <span class="ident">libc::c_void</span>,
-        <span class="ident">mmap_size</span>: <span class="ident">usize</span>,
+    <span class="kw">struct </span>Stack {
+        mmap_ptr: <span class="kw-2">*mut </span>libc::c_void,
+        mmap_size: usize,
     }
 
-    <span class="kw">return</span> <span class="ident">STACK</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> {
-        <span class="kw-2">*</span><span class="ident">s</span>.<span class="ident">borrow_mut</span>() <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">allocate_sigaltstack</span>()<span class="question-mark">?</span> };
+    <span class="kw">return </span>STACK.with(|s| {
+        <span class="kw-2">*</span>s.borrow_mut() = <span class="kw">unsafe </span>{ allocate_sigaltstack()<span class="question-mark">? </span>};
         <span class="prelude-val">Ok</span>(())
     });
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">allocate_sigaltstack</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Stack</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Trap</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// Check to see if the existing sigaltstack, if it exists, is big</span>
-        <span class="comment">// enough. If so we don&#39;t need to allocate our own.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">old_stack</span> <span class="op">=</span> <span class="ident">mem::zeroed</span>();
-        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">libc::sigaltstack</span>(<span class="ident">ptr::null</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">old_stack</span>);
+    <span class="kw">unsafe fn </span>allocate_sigaltstack() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Stack&gt;, Box&lt;Trap&gt;&gt; {
+        <span class="comment">// Check to see if the existing sigaltstack, if it exists, is big
+        // enough. If so we don&#39;t need to allocate our own.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>old_stack = mem::zeroed();
+        <span class="kw">let </span>r = libc::sigaltstack(ptr::null(), <span class="kw-2">&amp;mut </span>old_stack);
         <span class="macro">assert_eq!</span>(
-            <span class="ident">r</span>,
+            r,
             <span class="number">0</span>,
             <span class="string">&quot;learning about sigaltstack failed: {}&quot;</span>,
-            <span class="ident">io::Error::last_os_error</span>()
+            io::Error::last_os_error()
         );
-        <span class="kw">if</span> <span class="ident">old_stack</span>.<span class="ident">ss_flags</span> <span class="op">&amp;</span> <span class="ident">libc::SS_DISABLE</span> <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">old_stack</span>.<span class="ident">ss_size</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">MIN_STACK_SIZE</span> {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        <span class="kw">if </span>old_stack.ss_flags &amp; libc::SS_DISABLE == <span class="number">0 </span>&amp;&amp; old_stack.ss_size &gt;= MIN_STACK_SIZE {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
-        <span class="comment">// ... but failing that we need to allocate our own, so do all that</span>
-        <span class="comment">// here.</span>
-        <span class="kw">let</span> <span class="ident">page_size</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">region::page::size</span>();
-        <span class="kw">let</span> <span class="ident">guard_size</span> <span class="op">=</span> <span class="ident">page_size</span>;
-        <span class="kw">let</span> <span class="ident">alloc_size</span> <span class="op">=</span> <span class="ident">guard_size</span> <span class="op">+</span> <span class="ident">MIN_STACK_SIZE</span>;
+        <span class="comment">// ... but failing that we need to allocate our own, so do all that
+        // here.
+        </span><span class="kw">let </span>page_size: usize = region::page::size();
+        <span class="kw">let </span>guard_size = page_size;
+        <span class="kw">let </span>alloc_size = guard_size + MIN_STACK_SIZE;
 
-        <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">rustix::io::mmap_anonymous</span>(
-            <span class="ident">null_mut</span>(),
-            <span class="ident">alloc_size</span>,
-            <span class="ident">rustix::io::ProtFlags::empty</span>(),
-            <span class="ident">rustix::io::MapFlags::PRIVATE</span>,
+        <span class="kw">let </span>ptr = rustix::io::mmap_anonymous(
+            null_mut(),
+            alloc_size,
+            rustix::io::ProtFlags::empty(),
+            rustix::io::MapFlags::PRIVATE,
         )
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Box::new</span>(<span class="ident">Trap::oom</span>()))<span class="question-mark">?</span>;
+        .map_err(|<span class="kw">_</span>| Box::new(Trap::oom()))<span class="question-mark">?</span>;
 
-        <span class="comment">// Prepare the stack with readable/writable memory and then register it</span>
-        <span class="comment">// with `sigaltstack`.</span>
-        <span class="kw">let</span> <span class="ident">stack_ptr</span> <span class="op">=</span> (<span class="ident">ptr</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="ident">guard_size</span>) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">std::ffi::c_void</span>;
-        <span class="ident">rustix::io::mprotect</span>(
-            <span class="ident">stack_ptr</span>,
-            <span class="ident">MIN_STACK_SIZE</span>,
-            <span class="ident">rustix::io::MprotectFlags::READ</span> <span class="op">|</span> <span class="ident">rustix::io::MprotectFlags::WRITE</span>,
+        <span class="comment">// Prepare the stack with readable/writable memory and then register it
+        // with `sigaltstack`.
+        </span><span class="kw">let </span>stack_ptr = (ptr <span class="kw">as </span>usize + guard_size) <span class="kw">as </span><span class="kw-2">*mut </span>std::ffi::c_void;
+        rustix::io::mprotect(
+            stack_ptr,
+            MIN_STACK_SIZE,
+            rustix::io::MprotectFlags::READ | rustix::io::MprotectFlags::WRITE,
         )
-        .<span class="ident">expect</span>(<span class="string">&quot;mprotect to configure memory for sigaltstack failed&quot;</span>);
-        <span class="kw">let</span> <span class="ident">new_stack</span> <span class="op">=</span> <span class="ident">libc::stack_t</span> {
-            <span class="ident">ss_sp</span>: <span class="ident">stack_ptr</span>,
-            <span class="ident">ss_flags</span>: <span class="number">0</span>,
-            <span class="ident">ss_size</span>: <span class="ident">MIN_STACK_SIZE</span>,
+        .expect(<span class="string">&quot;mprotect to configure memory for sigaltstack failed&quot;</span>);
+        <span class="kw">let </span>new_stack = libc::stack_t {
+            ss_sp: stack_ptr,
+            ss_flags: <span class="number">0</span>,
+            ss_size: MIN_STACK_SIZE,
         };
-        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">libc::sigaltstack</span>(<span class="kw-2">&amp;</span><span class="ident">new_stack</span>, <span class="ident">ptr::null_mut</span>());
+        <span class="kw">let </span>r = libc::sigaltstack(<span class="kw-2">&amp;</span>new_stack, ptr::null_mut());
         <span class="macro">assert_eq!</span>(
-            <span class="ident">r</span>,
+            r,
             <span class="number">0</span>,
             <span class="string">&quot;registering new sigaltstack failed: {}&quot;</span>,
-            <span class="ident">io::Error::last_os_error</span>()
+            io::Error::last_os_error()
         );
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Stack</span> {
-            <span class="ident">mmap_ptr</span>: <span class="ident">ptr</span>,
-            <span class="ident">mmap_size</span>: <span class="ident">alloc_size</span>,
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Stack {
+            mmap_ptr: ptr,
+            mmap_size: alloc_size,
         }))
     }
 
-    <span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Stack</span> {
-        <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-            <span class="kw">unsafe</span> {
-                <span class="comment">// Deallocate the stack memory.</span>
-                <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">rustix::io::munmap</span>(<span class="self">self</span>.<span class="ident">mmap_ptr</span>, <span class="self">self</span>.<span class="ident">mmap_size</span>);
-                <span class="macro">debug_assert!</span>(<span class="ident">r</span>.<span class="ident">is_ok</span>(), <span class="string">&quot;munmap failed during thread shutdown&quot;</span>);
+    <span class="kw">impl </span>Drop <span class="kw">for </span>Stack {
+        <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="kw">unsafe </span>{
+                <span class="comment">// Deallocate the stack memory.
+                </span><span class="kw">let </span>r = rustix::io::munmap(<span class="self">self</span>.mmap_ptr, <span class="self">self</span>.mmap_size);
+                <span class="macro">debug_assert!</span>(r.is_ok(), <span class="string">&quot;munmap failed during thread shutdown&quot;</span>);
             }
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

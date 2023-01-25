@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/parity-db-0.3.14/src/btree/node.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>node.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../parity_db/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../parity_db/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../parity_db/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/parity-db-0.3.14/src/btree/node.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>node.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../parity_db/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -830,551 +825,551 @@
 <span id="825">825</span>
 <span id="826">826</span>
 <span id="827">827</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// This file is part of Parity.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2022 Parity Technologies (UK) Ltd.
+// This file is part of Parity.
 
-<span class="comment">// Parity is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// Parity is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// Parity is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// Parity is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with Parity.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with Parity.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! BTree node struct and methods.</span>
+</span><span class="doccomment">//! BTree node struct and methods.
 
-<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">column::Column</span>,
-	<span class="ident">error::Result</span>,
-	<span class="ident">index::Address</span>,
-	<span class="ident">log</span>::{<span class="ident">LogQuery</span>, <span class="ident">LogWriter</span>},
-	<span class="ident">table::key::TableKey</span>,
+</span><span class="kw">use super</span>::<span class="kw-2">*</span>;
+<span class="kw">use crate</span>::{
+	column::Column,
+	error::Result,
+	index::Address,
+	log::{LogQuery, LogWriter},
+	table::key::TableKey,
 };
-<span class="kw">use</span> <span class="ident">std::cmp::Ordering</span>;
+<span class="kw">use </span>std::cmp::Ordering;
 
-<span class="kw">impl</span> <span class="ident">Node</span> {
-	<span class="kw">fn</span> <span class="ident">last_separator_index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">i</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">number_separator</span>();
-		<span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="number">0</span> {
-			<span class="prelude-val">None</span>
-		} <span class="kw">else</span> {
-			<span class="prelude-val">Some</span>(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)
+<span class="kw">impl </span>Node {
+	<span class="kw">fn </span>last_separator_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+		<span class="kw">let </span>i = <span class="self">self</span>.number_separator();
+		<span class="kw">if </span>i == <span class="number">0 </span>{
+			<span class="prelude-val">None
+		</span>} <span class="kw">else </span>{
+			<span class="prelude-val">Some</span>(i - <span class="number">1</span>)
 		}
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_child</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">i</span>: <span class="ident">usize</span>,
-		<span class="ident">child</span>: <span class="self">Self</span>,
-		<span class="ident">btree</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="ident">child</span>.<span class="ident">changed</span> {
-			<span class="kw">let</span> <span class="ident">child_index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">children</span>[<span class="ident">i</span>].<span class="ident">entry_index</span>;
-			<span class="kw">let</span> <span class="ident">new_index</span> <span class="op">=</span> <span class="ident">BTreeTable::write_node_plan</span>(<span class="ident">btree</span>, <span class="ident">child</span>, <span class="ident">log</span>, <span class="ident">child_index</span>)<span class="question-mark">?</span>;
-			<span class="kw">if</span> <span class="ident">new_index</span>.<span class="ident">is_some</span>() {
-				<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-				<span class="self">self</span>.<span class="ident">children</span>[<span class="ident">i</span>].<span class="ident">entry_index</span> <span class="op">=</span> <span class="ident">new_index</span>;
+	<span class="kw">pub fn </span>write_child(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		i: usize,
+		child: <span class="self">Self</span>,
+		btree: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+		<span class="kw">if </span>child.changed {
+			<span class="kw">let </span>child_index = <span class="self">self</span>.children[i].entry_index;
+			<span class="kw">let </span>new_index = BTreeTable::write_node_plan(btree, child, log, child_index)<span class="question-mark">?</span>;
+			<span class="kw">if </span>new_index.is_some() {
+				<span class="self">self</span>.changed = <span class="bool-val">true</span>;
+				<span class="self">self</span>.children[i].entry_index = new_index;
 			}
 		}
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_split_child</span>(
-		<span class="ident">right_ix</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
-		<span class="ident">right</span>: <span class="ident">Node</span>,
-		<span class="ident">btree</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Child</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">new_index</span> <span class="op">=</span> <span class="ident">BTreeTable::write_node_plan</span>(<span class="ident">btree</span>, <span class="ident">right</span>, <span class="ident">log</span>, <span class="ident">right_ix</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">right_ix</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">new_index</span>.<span class="ident">is_some</span>() { <span class="ident">new_index</span> } <span class="kw">else</span> { <span class="ident">right_ix</span> };
-		<span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::new_child</span>(<span class="ident">right_ix</span>))
+	<span class="kw">pub fn </span>write_split_child(
+		right_ix: <span class="prelude-ty">Option</span>&lt;Address&gt;,
+		right: Node,
+		btree: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Child&gt; {
+		<span class="kw">let </span>new_index = BTreeTable::write_node_plan(btree, right, log, right_ix)<span class="question-mark">?</span>;
+		<span class="kw">let </span>right_ix = <span class="kw">if </span>new_index.is_some() { new_index } <span class="kw">else </span>{ right_ix };
+		<span class="prelude-val">Ok</span>(<span class="self">Self</span>::new_child(right_ix))
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">change</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">parent</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">Self</span>, <span class="ident">usize</span>)<span class="op">&gt;</span>,
-		<span class="ident">depth</span>: <span class="ident">u32</span>,
-		<span class="ident">changes</span>: <span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span>[(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>)],
-		<span class="ident">btree</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Separator</span>, <span class="ident">Child</span>)<span class="op">&gt;</span>, <span class="ident">bool</span>)<span class="op">&gt;</span> {
-		<span class="kw">loop</span> {
-			<span class="kw">if</span> <span class="ident">changes</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
-				<span class="kw">if</span> <span class="ident">changes</span>[<span class="number">0</span>].<span class="number">0</span> <span class="op">==</span> <span class="ident">changes</span>[<span class="number">1</span>].<span class="number">0</span> {
-					<span class="comment">// TODO only when advancing (here rec call useless)</span>
-					<span class="kw-2">*</span><span class="ident">changes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">changes</span>[<span class="number">1</span>..];
-					<span class="kw">continue</span>
-				}
-				<span class="macro">debug_assert!</span>(<span class="ident">changes</span>[<span class="number">0</span>].<span class="number">0</span> <span class="op">&lt;</span> <span class="ident">changes</span>[<span class="number">1</span>].<span class="number">0</span>);
+	<span class="kw">pub fn </span>change(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		parent: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;mut </span><span class="self">Self</span>, usize)&gt;,
+		depth: u32,
+		changes: <span class="kw-2">&amp;mut &amp;</span>[(Vec&lt;u8&gt;, <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;)],
+		btree: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;(Separator, Child)&gt;, bool)&gt; {
+		<span class="kw">loop </span>{
+			<span class="kw">if </span>changes.len() &gt; <span class="number">1 </span>{
+				<span class="kw">if </span>changes[<span class="number">0</span>].<span class="number">0 </span>== changes[<span class="number">1</span>].<span class="number">0 </span>{
+					<span class="comment">// TODO only when advancing (here rec call useless)
+					</span><span class="kw-2">*</span>changes = <span class="kw-2">&amp;</span>changes[<span class="number">1</span>..];
+					<span class="kw">continue
+				</span>}
+				<span class="macro">debug_assert!</span>(changes[<span class="number">0</span>].<span class="number">0 </span>&lt; changes[<span class="number">1</span>].<span class="number">0</span>);
 			}
-			<span class="kw">let</span> (<span class="ident">key</span>, <span class="ident">value</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">changes</span>[<span class="number">0</span>];
-			<span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="ident">value</span> {
-				<span class="self">self</span>.<span class="ident">insert</span>(<span class="ident">depth</span>, <span class="ident">key</span>, <span class="ident">value</span>, <span class="ident">changes</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>
-			} <span class="kw">else</span> {
-				<span class="self">self</span>.<span class="ident">remove</span>(<span class="ident">depth</span>, <span class="ident">key</span>, <span class="ident">changes</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>
-			};
-			<span class="kw">if</span> <span class="ident">r</span>.<span class="number">0</span>.<span class="ident">is_some</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">r</span>.<span class="number">1</span> {
-				<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">r</span>)
+			<span class="kw">let </span>(key, value) = <span class="kw-2">&amp;</span>changes[<span class="number">0</span>];
+			<span class="kw">let </span>r = <span class="kw">if let </span><span class="prelude-val">Some</span>(value) = value {
+				<span class="self">self</span>.insert(depth, key, value, changes, btree, log)<span class="question-mark">?
+			</span>} <span class="kw">else </span>{
+				<span class="self">self</span>.remove(depth, key, changes, btree, log)<span class="question-mark">?
+			</span>};
+			<span class="kw">if </span>r.<span class="number">0</span>.is_some() || r.<span class="number">1 </span>{
+				<span class="kw">return </span><span class="prelude-val">Ok</span>(r)
 			}
-			<span class="kw">if</span> <span class="ident">changes</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">1</span> {
-				<span class="kw">break</span>
-			}
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">parent</span>, <span class="ident">p</span>)) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">parent</span> {
-				<span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">changes</span>[<span class="number">1</span>].<span class="number">0</span>;
-				<span class="kw">let</span> (<span class="ident">at</span>, <span class="ident">i</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">position</span>(<span class="ident">key</span>)<span class="question-mark">?</span>; <span class="comment">// TODO could start position from current</span>
-				<span class="kw">if</span> <span class="ident">at</span> <span class="op">|</span><span class="op">|</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">number_separator</span>() {
-					<span class="kw-2">*</span><span class="ident">changes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">changes</span>[<span class="number">1</span>..];
-					<span class="kw">continue</span>
-				}
-				<span class="kw">let</span> (<span class="ident">at</span>, <span class="ident">i</span>) <span class="op">=</span> <span class="ident">parent</span>.<span class="ident">position</span>(<span class="ident">key</span>)<span class="question-mark">?</span>;
-				<span class="kw">if</span> <span class="op">!</span><span class="ident">at</span> <span class="op">&amp;&amp;</span> <span class="kw-2">&amp;</span><span class="ident">i</span> <span class="op">==</span> <span class="ident">p</span> <span class="op">&amp;&amp;</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">parent</span>.<span class="ident">number_separator</span>() {
-					<span class="kw-2">*</span><span class="ident">changes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">changes</span>[<span class="number">1</span>..];
-					<span class="kw">continue</span>
-				}
-				<span class="comment">// Could check other parents for case i == parent.number_separator.</span>
-				<span class="comment">// Would mean unsafe Vec&lt;*mut&gt;, or other complex design: skipping</span>
-				<span class="comment">// this case.</span>
-			}
-			<span class="kw">break</span>
-		}
+			<span class="kw">if </span>changes.len() == <span class="number">1 </span>{
+				<span class="kw">break
+			</span>}
+			<span class="kw">if let </span><span class="prelude-val">Some</span>((parent, p)) = <span class="kw-2">&amp;</span>parent {
+				<span class="kw">let </span>key = <span class="kw-2">&amp;</span>changes[<span class="number">1</span>].<span class="number">0</span>;
+				<span class="kw">let </span>(at, i) = <span class="self">self</span>.position(key)<span class="question-mark">?</span>; <span class="comment">// TODO could start position from current
+				</span><span class="kw">if </span>at || i &lt; <span class="self">self</span>.number_separator() {
+					<span class="kw-2">*</span>changes = <span class="kw-2">&amp;</span>changes[<span class="number">1</span>..];
+					<span class="kw">continue
+				</span>}
+				<span class="kw">let </span>(at, i) = parent.position(key)<span class="question-mark">?</span>;
+				<span class="kw">if </span>!at &amp;&amp; <span class="kw-2">&amp;</span>i == p &amp;&amp; i &lt; parent.number_separator() {
+					<span class="kw-2">*</span>changes = <span class="kw-2">&amp;</span>changes[<span class="number">1</span>..];
+					<span class="kw">continue
+				</span>}
+				<span class="comment">// Could check other parents for case i == parent.number_separator.
+				// Would mean unsafe Vec&lt;*mut&gt;, or other complex design: skipping
+				// this case.
+			</span>}
+			<span class="kw">break
+		</span>}
 		<span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="bool-val">false</span>))
 	}
 
-	<span class="kw">fn</span> <span class="ident">insert</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">depth</span>: <span class="ident">u32</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">value</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">changes</span>: <span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span>[(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>)],
-		<span class="ident">btree</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Separator</span>, <span class="ident">Child</span>)<span class="op">&gt;</span>, <span class="ident">bool</span>)<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">has_child</span> <span class="op">=</span> <span class="ident">depth</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>;
+	<span class="kw">fn </span>insert(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		depth: u32,
+		key: <span class="kw-2">&amp;</span>[u8],
+		value: <span class="kw-2">&amp;</span>[u8],
+		changes: <span class="kw-2">&amp;mut &amp;</span>[(Vec&lt;u8&gt;, <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;)],
+		btree: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;(Separator, Child)&gt;, bool)&gt; {
+		<span class="kw">let </span>has_child = depth != <span class="number">0</span>;
 
-		<span class="kw">let</span> (<span class="ident">at</span>, <span class="ident">i</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">position</span>(<span class="ident">key</span>)<span class="question-mark">?</span>;
-		<span class="comment">// insert</span>
-		<span class="kw">if</span> <span class="op">!</span><span class="ident">at</span> {
-			<span class="kw">if</span> <span class="ident">has_child</span> {
-				<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">child</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">i</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span> {
-					<span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">child</span>.<span class="ident">change</span>(<span class="prelude-val">Some</span>((<span class="self">self</span>, <span class="ident">i</span>)), <span class="ident">depth</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">changes</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-					<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">i</span>, <span class="ident">child</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-					<span class="kw">match</span> <span class="ident">r</span> {
-						(<span class="prelude-val">Some</span>((<span class="ident">sep</span>, <span class="ident">right</span>)), <span class="kw">_</span>) =&gt; {
-							<span class="comment">// insert from child</span>
-							(<span class="self">self</span>.<span class="ident">insert_node</span>(<span class="ident">depth</span>, <span class="ident">i</span>, <span class="ident">sep</span>, <span class="ident">right</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>, <span class="bool-val">false</span>)
+		<span class="kw">let </span>(at, i) = <span class="self">self</span>.position(key)<span class="question-mark">?</span>;
+		<span class="comment">// insert
+		</span><span class="kw">if </span>!at {
+			<span class="kw">if </span>has_child {
+				<span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>child) = <span class="self">self</span>.fetch_child(i, btree, log)<span class="question-mark">? </span>{
+					<span class="kw">let </span>r = child.change(<span class="prelude-val">Some</span>((<span class="self">self</span>, i)), depth - <span class="number">1</span>, changes, btree, log)<span class="question-mark">?</span>;
+					<span class="self">self</span>.write_child(i, child, btree, log)<span class="question-mark">?</span>;
+					<span class="kw">match </span>r {
+						(<span class="prelude-val">Some</span>((sep, right)), <span class="kw">_</span>) =&gt; {
+							<span class="comment">// insert from child
+							</span>(<span class="self">self</span>.insert_node(depth, i, sep, right, btree, log)<span class="question-mark">?</span>, <span class="bool-val">false</span>)
 						},
 						(<span class="prelude-val">None</span>, <span class="bool-val">true</span>) =&gt; {
-							<span class="self">self</span>.<span class="ident">rebalance</span>(<span class="ident">depth</span>, <span class="ident">i</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-							(<span class="prelude-val">None</span>, <span class="self">self</span>.<span class="ident">need_rebalance</span>())
+							<span class="self">self</span>.rebalance(depth, i, btree, log)<span class="question-mark">?</span>;
+							(<span class="prelude-val">None</span>, <span class="self">self</span>.need_rebalance())
 						},
-						<span class="ident">r</span> =&gt; <span class="ident">r</span>,
+						r =&gt; r,
 					}
-				} <span class="kw">else</span> {
+				} <span class="kw">else </span>{
 					(<span class="prelude-val">None</span>, <span class="bool-val">false</span>)
 				})
 			}
 
-			<span class="kw">if</span> <span class="self">self</span>.<span class="ident">has_separator</span>(<span class="ident">ORDER</span> <span class="op">-</span> <span class="number">1</span>) {
-				<span class="comment">// full</span>
-				<span class="kw">let</span> <span class="ident">middle</span> <span class="op">=</span> <span class="ident">ORDER</span> <span class="op">/</span> <span class="number">2</span>;
-				<span class="kw">let</span> <span class="ident">insert</span> <span class="op">=</span> <span class="ident">i</span>;
-				<span class="kw">let</span> <span class="ident">insert_separator</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::create_separator</span>(<span class="ident">key</span>, <span class="ident">value</span>, <span class="ident">btree</span>, <span class="ident">log</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+			<span class="kw">if </span><span class="self">self</span>.has_separator(ORDER - <span class="number">1</span>) {
+				<span class="comment">// full
+				</span><span class="kw">let </span>middle = ORDER / <span class="number">2</span>;
+				<span class="kw">let </span>insert = i;
+				<span class="kw">let </span>insert_separator = <span class="self">Self</span>::create_separator(key, value, btree, log, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
 
-				<span class="kw">match</span> <span class="ident">insert</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">middle</span>) {
-					<span class="ident">std::cmp::Ordering::Equal</span> =&gt; {
-						<span class="kw">let</span> (<span class="ident">right</span>, <span class="ident">right_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">split</span>(<span class="ident">middle</span>, <span class="bool-val">true</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">has_child</span>);
-						<span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::write_split_child</span>(<span class="ident">right_ix</span>, <span class="ident">right</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-						<span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>((<span class="ident">insert_separator</span>, <span class="ident">right</span>)), <span class="bool-val">false</span>))
+				<span class="kw">match </span>insert.cmp(<span class="kw-2">&amp;</span>middle) {
+					std::cmp::Ordering::Equal =&gt; {
+						<span class="kw">let </span>(right, right_ix) = <span class="self">self</span>.split(middle, <span class="bool-val">true</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, has_child);
+						<span class="kw">let </span>right = <span class="self">Self</span>::write_split_child(right_ix, right, btree, log)<span class="question-mark">?</span>;
+						<span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>((insert_separator, right)), <span class="bool-val">false</span>))
 					},
-					<span class="ident">std::cmp::Ordering::Less</span> =&gt; {
-						<span class="kw">let</span> (<span class="ident">right</span>, <span class="ident">right_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">split</span>(<span class="ident">middle</span>, <span class="bool-val">false</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">has_child</span>);
-						<span class="kw">let</span> <span class="ident">sep</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">middle</span> <span class="op">-</span> <span class="number">1</span>);
-						<span class="self">self</span>.<span class="ident">shift_from</span>(<span class="ident">insert</span>, <span class="ident">has_child</span>, <span class="bool-val">false</span>);
-						<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">insert</span>, <span class="ident">insert_separator</span>);
-						<span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::write_split_child</span>(<span class="ident">right_ix</span>, <span class="ident">right</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-						<span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>((<span class="ident">sep</span>, <span class="ident">right</span>)), <span class="bool-val">false</span>))
+					std::cmp::Ordering::Less =&gt; {
+						<span class="kw">let </span>(right, right_ix) = <span class="self">self</span>.split(middle, <span class="bool-val">false</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, has_child);
+						<span class="kw">let </span>sep = <span class="self">self</span>.remove_separator(middle - <span class="number">1</span>);
+						<span class="self">self</span>.shift_from(insert, has_child, <span class="bool-val">false</span>);
+						<span class="self">self</span>.set_separator(insert, insert_separator);
+						<span class="kw">let </span>right = <span class="self">Self</span>::write_split_child(right_ix, right, btree, log)<span class="question-mark">?</span>;
+						<span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>((sep, right)), <span class="bool-val">false</span>))
 					},
-					<span class="ident">std::cmp::Ordering::Greater</span> =&gt; {
-						<span class="kw">let</span> (<span class="ident">right</span>, <span class="ident">right_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">split</span>(
-							<span class="ident">middle</span> <span class="op">+</span> <span class="number">1</span>,
+					std::cmp::Ordering::Greater =&gt; {
+						<span class="kw">let </span>(right, right_ix) = <span class="self">self</span>.split(
+							middle + <span class="number">1</span>,
 							<span class="bool-val">false</span>,
-							<span class="prelude-val">Some</span>((<span class="ident">insert</span>, <span class="ident">insert_separator</span>)),
+							<span class="prelude-val">Some</span>((insert, insert_separator)),
 							<span class="prelude-val">None</span>,
-							<span class="ident">has_child</span>,
+							has_child,
 						);
-						<span class="kw">let</span> <span class="ident">sep</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">middle</span>);
-						<span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::write_split_child</span>(<span class="ident">right_ix</span>, <span class="ident">right</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-						<span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>((<span class="ident">sep</span>, <span class="ident">right</span>)), <span class="bool-val">false</span>))
+						<span class="kw">let </span>sep = <span class="self">self</span>.remove_separator(middle);
+						<span class="kw">let </span>right = <span class="self">Self</span>::write_split_child(right_ix, right, btree, log)<span class="question-mark">?</span>;
+						<span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>((sep, right)), <span class="bool-val">false</span>))
 					},
 				}
 			}
 
-			<span class="self">self</span>.<span class="ident">shift_from</span>(<span class="ident">i</span>, <span class="ident">has_child</span>, <span class="bool-val">false</span>);
-			<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">i</span>, <span class="ident"><span class="self">Self</span>::create_separator</span>(<span class="ident">key</span>, <span class="ident">value</span>, <span class="ident">btree</span>, <span class="ident">log</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>);
-		} <span class="kw">else</span> {
-			<span class="kw">let</span> <span class="ident">existing</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">separator_address</span>(<span class="ident">i</span>);
-			<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">i</span>, <span class="ident"><span class="self">Self</span>::create_separator</span>(<span class="ident">key</span>, <span class="ident">value</span>, <span class="ident">btree</span>, <span class="ident">log</span>, <span class="ident">existing</span>)<span class="question-mark">?</span>);
+			<span class="self">self</span>.shift_from(i, has_child, <span class="bool-val">false</span>);
+			<span class="self">self</span>.set_separator(i, <span class="self">Self</span>::create_separator(key, value, btree, log, <span class="prelude-val">None</span>)<span class="question-mark">?</span>);
+		} <span class="kw">else </span>{
+			<span class="kw">let </span>existing = <span class="self">self</span>.separator_address(i);
+			<span class="self">self</span>.set_separator(i, <span class="self">Self</span>::create_separator(key, value, btree, log, existing)<span class="question-mark">?</span>);
 		}
 		<span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="bool-val">false</span>))
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert_node</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">depth</span>: <span class="ident">u32</span>,
-		<span class="ident">at</span>: <span class="ident">usize</span>,
-		<span class="ident">separator</span>: <span class="ident">Separator</span>,
-		<span class="ident">right_child</span>: <span class="ident">Child</span>,
-		<span class="ident">btree</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Separator</span>, <span class="ident">Child</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="macro">debug_assert!</span>(<span class="ident">depth</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>);
-		<span class="kw">let</span> <span class="ident">has_child</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="ident">right_child</span>;
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">has_separator</span>(<span class="ident">ORDER</span> <span class="op">-</span> <span class="number">1</span>) {
-			<span class="comment">// full</span>
-			<span class="kw">let</span> <span class="ident">middle</span> <span class="op">=</span> <span class="ident">ORDER</span> <span class="op">/</span> <span class="number">2</span>;
-			<span class="kw">let</span> <span class="ident">insert</span> <span class="op">=</span> <span class="ident">at</span>;
+	<span class="kw">pub fn </span>insert_node(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		depth: u32,
+		at: usize,
+		separator: Separator,
+		right_child: Child,
+		btree: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Separator, Child)&gt;&gt; {
+		<span class="macro">debug_assert!</span>(depth != <span class="number">0</span>);
+		<span class="kw">let </span>has_child = <span class="bool-val">true</span>;
+		<span class="kw">let </span>child = right_child;
+		<span class="kw">if </span><span class="self">self</span>.has_separator(ORDER - <span class="number">1</span>) {
+			<span class="comment">// full
+			</span><span class="kw">let </span>middle = ORDER / <span class="number">2</span>;
+			<span class="kw">let </span>insert = at;
 
-			<span class="kw">match</span> <span class="ident">insert</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">middle</span>) {
-				<span class="ident">std::cmp::Ordering::Equal</span> =&gt; {
-					<span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">right</span>, <span class="ident">right_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">split</span>(<span class="ident">middle</span>, <span class="bool-val">true</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">has_child</span>);
-					<span class="ident">right</span>.<span class="ident">set_child</span>(<span class="number">0</span>, <span class="ident">child</span>);
-					<span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::write_split_child</span>(<span class="ident">right_ix</span>, <span class="ident">right</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-					<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((<span class="ident">separator</span>, <span class="ident">right</span>)))
+			<span class="kw">match </span>insert.cmp(<span class="kw-2">&amp;</span>middle) {
+				std::cmp::Ordering::Equal =&gt; {
+					<span class="kw">let </span>(<span class="kw-2">mut </span>right, right_ix) = <span class="self">self</span>.split(middle, <span class="bool-val">true</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, has_child);
+					right.set_child(<span class="number">0</span>, child);
+					<span class="kw">let </span>right = <span class="self">Self</span>::write_split_child(right_ix, right, btree, log)<span class="question-mark">?</span>;
+					<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((separator, right)))
 				},
-				<span class="ident">std::cmp::Ordering::Less</span> =&gt; {
-					<span class="kw">let</span> (<span class="ident">right</span>, <span class="ident">right_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">split</span>(<span class="ident">middle</span>, <span class="bool-val">false</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">has_child</span>);
-					<span class="kw">let</span> <span class="ident">sep</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">middle</span> <span class="op">-</span> <span class="number">1</span>);
-					<span class="self">self</span>.<span class="ident">shift_from</span>(<span class="ident">insert</span>, <span class="ident">has_child</span>, <span class="bool-val">false</span>);
-					<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">insert</span>, <span class="ident">separator</span>);
-					<span class="self">self</span>.<span class="ident">set_child</span>(<span class="ident">insert</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">child</span>);
-					<span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::write_split_child</span>(<span class="ident">right_ix</span>, <span class="ident">right</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-					<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((<span class="ident">sep</span>, <span class="ident">right</span>)))
+				std::cmp::Ordering::Less =&gt; {
+					<span class="kw">let </span>(right, right_ix) = <span class="self">self</span>.split(middle, <span class="bool-val">false</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, has_child);
+					<span class="kw">let </span>sep = <span class="self">self</span>.remove_separator(middle - <span class="number">1</span>);
+					<span class="self">self</span>.shift_from(insert, has_child, <span class="bool-val">false</span>);
+					<span class="self">self</span>.set_separator(insert, separator);
+					<span class="self">self</span>.set_child(insert + <span class="number">1</span>, child);
+					<span class="kw">let </span>right = <span class="self">Self</span>::write_split_child(right_ix, right, btree, log)<span class="question-mark">?</span>;
+					<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((sep, right)))
 				},
-				<span class="ident">std::cmp::Ordering::Greater</span> =&gt; {
-					<span class="kw">let</span> (<span class="ident">right</span>, <span class="ident">right_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">split</span>(
-						<span class="ident">middle</span> <span class="op">+</span> <span class="number">1</span>,
+				std::cmp::Ordering::Greater =&gt; {
+					<span class="kw">let </span>(right, right_ix) = <span class="self">self</span>.split(
+						middle + <span class="number">1</span>,
 						<span class="bool-val">false</span>,
-						<span class="prelude-val">Some</span>((<span class="ident">insert</span>, <span class="ident">separator</span>)),
-						<span class="prelude-val">Some</span>((<span class="ident">insert</span>, <span class="ident">child</span>)),
-						<span class="ident">has_child</span>,
+						<span class="prelude-val">Some</span>((insert, separator)),
+						<span class="prelude-val">Some</span>((insert, child)),
+						has_child,
 					);
-					<span class="kw">let</span> <span class="ident">sep</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">middle</span>);
-					<span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::write_split_child</span>(<span class="ident">right_ix</span>, <span class="ident">right</span>, <span class="ident">btree</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-					<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((<span class="ident">sep</span>, <span class="ident">right</span>)))
+					<span class="kw">let </span>sep = <span class="self">self</span>.remove_separator(middle);
+					<span class="kw">let </span>right = <span class="self">Self</span>::write_split_child(right_ix, right, btree, log)<span class="question-mark">?</span>;
+					<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((sep, right)))
 				},
 			}
-		} <span class="kw">else</span> {
-			<span class="self">self</span>.<span class="ident">shift_from</span>(<span class="ident">at</span>, <span class="ident">has_child</span>, <span class="bool-val">false</span>);
-			<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">at</span>, <span class="ident">separator</span>);
-			<span class="self">self</span>.<span class="ident">set_child</span>(<span class="ident">at</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">child</span>);
+		} <span class="kw">else </span>{
+			<span class="self">self</span>.shift_from(at, has_child, <span class="bool-val">false</span>);
+			<span class="self">self</span>.set_separator(at, separator);
+			<span class="self">self</span>.set_child(at + <span class="number">1</span>, child);
 			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">remove</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">depth</span>: <span class="ident">u32</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">changes</span>: <span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span>[(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>)],
-		<span class="ident">values</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Separator</span>, <span class="ident">Child</span>)<span class="op">&gt;</span>, <span class="ident">bool</span>)<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">has_child</span> <span class="op">=</span> <span class="ident">depth</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">let</span> (<span class="ident">at</span>, <span class="ident">i</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">position</span>(<span class="ident">key</span>)<span class="question-mark">?</span>;
-		<span class="kw">if</span> <span class="ident">at</span> {
-			<span class="kw">let</span> <span class="ident">existing</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">separator_address</span>(<span class="ident">i</span>);
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">existing</span>) <span class="op">=</span> <span class="ident">existing</span> {
-				<span class="ident">Column::write_existing_value_plan</span>(
-					<span class="kw-2">&amp;</span><span class="ident">TableKey::NoHash</span>,
-					<span class="ident">values</span>,
-					<span class="ident">existing</span>,
+	<span class="kw">fn </span>remove(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		depth: u32,
+		key: <span class="kw-2">&amp;</span>[u8],
+		changes: <span class="kw-2">&amp;mut &amp;</span>[(Vec&lt;u8&gt;, <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;)],
+		values: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;(Separator, Child)&gt;, bool)&gt; {
+		<span class="kw">let </span>has_child = depth != <span class="number">0</span>;
+		<span class="kw">let </span>(at, i) = <span class="self">self</span>.position(key)<span class="question-mark">?</span>;
+		<span class="kw">if </span>at {
+			<span class="kw">let </span>existing = <span class="self">self</span>.separator_address(i);
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(existing) = existing {
+				Column::write_existing_value_plan(
+					<span class="kw-2">&amp;</span>TableKey::NoHash,
+					values,
+					existing,
 					<span class="prelude-val">None</span>,
-					<span class="ident">log</span>,
+					log,
 					<span class="prelude-val">None</span>,
 				)<span class="question-mark">?</span>;
 			}
-			<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">i</span>);
-			<span class="kw">if</span> <span class="ident">depth</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-				<span class="comment">// replace by bigger value in left child.</span>
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">child</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">i</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span> {
-					<span class="kw">let</span> (<span class="ident">need_balance</span>, <span class="ident">sep</span>) <span class="op">=</span> <span class="ident">child</span>.<span class="ident">remove_last</span>(<span class="ident">depth</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-					<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">i</span>, <span class="ident">child</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">sep</span>) <span class="op">=</span> <span class="ident">sep</span> {
-						<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">i</span>, <span class="ident">sep</span>);
+			<span class="kw">let _ </span>= <span class="self">self</span>.remove_separator(i);
+			<span class="kw">if </span>depth != <span class="number">0 </span>{
+				<span class="comment">// replace by bigger value in left child.
+				</span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>child) = <span class="self">self</span>.fetch_child(i, values, log)<span class="question-mark">? </span>{
+					<span class="kw">let </span>(need_balance, sep) = child.remove_last(depth - <span class="number">1</span>, values, log)<span class="question-mark">?</span>;
+					<span class="self">self</span>.write_child(i, child, values, log)<span class="question-mark">?</span>;
+					<span class="kw">if let </span><span class="prelude-val">Some</span>(sep) = sep {
+						<span class="self">self</span>.set_separator(i, sep);
 					}
-					<span class="kw">if</span> <span class="ident">need_balance</span> {
-						<span class="self">self</span>.<span class="ident">rebalance</span>(<span class="ident">depth</span>, <span class="ident">i</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
+					<span class="kw">if </span>need_balance {
+						<span class="self">self</span>.rebalance(depth, i, values, log)<span class="question-mark">?</span>;
 					}
 				}
-			} <span class="kw">else</span> {
-				<span class="self">self</span>.<span class="ident">remove_from</span>(<span class="ident">i</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>);
+			} <span class="kw">else </span>{
+				<span class="self">self</span>.remove_from(i, <span class="bool-val">false</span>, <span class="bool-val">true</span>);
 			}
-		} <span class="kw">else</span> {
-			<span class="kw">if</span> <span class="op">!</span><span class="ident">has_child</span> {
-				<span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="bool-val">false</span>))
+		} <span class="kw">else </span>{
+			<span class="kw">if </span>!has_child {
+				<span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="bool-val">false</span>))
 			}
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">child</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">i</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span> {
-				<span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">child</span>.<span class="ident">change</span>(<span class="prelude-val">Some</span>((<span class="self">self</span>, <span class="ident">i</span>)), <span class="ident">depth</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">changes</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-				<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">i</span>, <span class="ident">child</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-				<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">r</span> {
-					(<span class="prelude-val">Some</span>((<span class="ident">sep</span>, <span class="ident">right</span>)), <span class="kw">_</span>) =&gt; {
-						<span class="comment">// insert from child</span>
-						(<span class="self">self</span>.<span class="ident">insert_node</span>(<span class="ident">depth</span>, <span class="ident">i</span>, <span class="ident">sep</span>, <span class="ident">right</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>, <span class="bool-val">false</span>)
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>child) = <span class="self">self</span>.fetch_child(i, values, log)<span class="question-mark">? </span>{
+				<span class="kw">let </span>r = child.change(<span class="prelude-val">Some</span>((<span class="self">self</span>, i)), depth - <span class="number">1</span>, changes, values, log)<span class="question-mark">?</span>;
+				<span class="self">self</span>.write_child(i, child, values, log)<span class="question-mark">?</span>;
+				<span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="kw">match </span>r {
+					(<span class="prelude-val">Some</span>((sep, right)), <span class="kw">_</span>) =&gt; {
+						<span class="comment">// insert from child
+						</span>(<span class="self">self</span>.insert_node(depth, i, sep, right, values, log)<span class="question-mark">?</span>, <span class="bool-val">false</span>)
 					},
 					(<span class="prelude-val">None</span>, <span class="bool-val">true</span>) =&gt; {
-						<span class="self">self</span>.<span class="ident">rebalance</span>(<span class="ident">depth</span>, <span class="ident">i</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-						(<span class="prelude-val">None</span>, <span class="self">self</span>.<span class="ident">need_rebalance</span>())
+						<span class="self">self</span>.rebalance(depth, i, values, log)<span class="question-mark">?</span>;
+						(<span class="prelude-val">None</span>, <span class="self">self</span>.need_rebalance())
 					},
-					<span class="ident">r</span> =&gt; <span class="ident">r</span>,
+					r =&gt; r,
 				})
-			} <span class="kw">else</span> {
-				<span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="bool-val">false</span>))
+			} <span class="kw">else </span>{
+				<span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="bool-val">false</span>))
 			}
 		}
 
-		<span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="self">self</span>.<span class="ident">need_rebalance</span>()))
+		<span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="self">self</span>.need_rebalance()))
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rebalance</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">depth</span>: <span class="ident">u32</span>,
-		<span class="ident">at</span>: <span class="ident">usize</span>,
-		<span class="ident">values</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">has_child</span> <span class="op">=</span> <span class="ident">depth</span> <span class="op">-</span> <span class="number">1</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">let</span> <span class="ident">middle</span> <span class="op">=</span> <span class="ident">ORDER</span> <span class="op">/</span> <span class="number">2</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">balance_from_left</span> <span class="op">=</span> <span class="bool-val">false</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">left</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-		<span class="kw">if</span> <span class="ident">at</span> <span class="op">&gt;</span> <span class="number">0</span> {
-			<span class="ident">left</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">at</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">left</span>.<span class="ident">as_ref</span>() {
-				<span class="kw">if</span> <span class="ident">node</span>.<span class="ident">has_separator</span>(<span class="ident">middle</span>) {
-					<span class="ident">balance_from_left</span> <span class="op">=</span> <span class="bool-val">true</span>;
+	<span class="kw">pub fn </span>rebalance(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		depth: u32,
+		at: usize,
+		values: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+		<span class="kw">let </span>has_child = depth - <span class="number">1 </span>!= <span class="number">0</span>;
+		<span class="kw">let </span>middle = ORDER / <span class="number">2</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>balance_from_left = <span class="bool-val">false</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>left = <span class="prelude-val">None</span>;
+		<span class="kw">if </span>at &gt; <span class="number">0 </span>{
+			left = <span class="self">self</span>.fetch_child(at - <span class="number">1</span>, values, log)<span class="question-mark">?</span>;
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(node) = left.as_ref() {
+				<span class="kw">if </span>node.has_separator(middle) {
+					balance_from_left = <span class="bool-val">true</span>;
 				}
 			}
 		}
-		<span class="kw">if</span> <span class="ident">balance_from_left</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">left</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">unwrap</span>();
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">child</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-			<span class="kw">let</span> <span class="ident">last_sibling</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">last_separator_index</span>().<span class="ident">unwrap</span>();
-			<span class="kw">if</span> <span class="ident">has_child</span> {
-				<span class="ident">child</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">left</span>.<span class="ident">remove_child</span>(<span class="ident">last_sibling</span> <span class="op">+</span> <span class="number">1</span>));
+		<span class="kw">if </span>balance_from_left {
+			<span class="kw">let </span><span class="kw-2">mut </span>left = left.unwrap();
+			<span class="kw">let </span><span class="kw-2">mut </span>child = <span class="prelude-val">None</span>;
+			<span class="kw">let </span>last_sibling = left.last_separator_index().unwrap();
+			<span class="kw">if </span>has_child {
+				child = <span class="prelude-val">Some</span>(left.remove_child(last_sibling + <span class="number">1</span>));
 			}
-			<span class="kw">let</span> <span class="ident">separator2</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">remove_separator</span>(<span class="ident">last_sibling</span>);
-			<span class="kw">let</span> <span class="ident">separator</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">at</span> <span class="op">-</span> <span class="number">1</span>);
-			<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">at</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">separator2</span>);
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">at</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>.<span class="ident">unwrap</span>();
-			<span class="ident">right</span>.<span class="ident">shift_from</span>(<span class="number">0</span>, <span class="ident">has_child</span>, <span class="bool-val">true</span>);
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">child</span>) <span class="op">=</span> <span class="ident">child</span> {
-				<span class="ident">right</span>.<span class="ident">set_child</span>(<span class="number">0</span>, <span class="ident">child</span>);
+			<span class="kw">let </span>separator2 = left.remove_separator(last_sibling);
+			<span class="kw">let </span>separator = <span class="self">self</span>.remove_separator(at - <span class="number">1</span>);
+			<span class="self">self</span>.set_separator(at - <span class="number">1</span>, separator2);
+			<span class="kw">let </span><span class="kw-2">mut </span>right = <span class="self">self</span>.fetch_child(at, values, log)<span class="question-mark">?</span>.unwrap();
+			right.shift_from(<span class="number">0</span>, has_child, <span class="bool-val">true</span>);
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(child) = child {
+				right.set_child(<span class="number">0</span>, child);
 			}
-			<span class="ident">right</span>.<span class="ident">set_separator</span>(<span class="number">0</span>, <span class="ident">separator</span>);
-			<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">at</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">left</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">at</span>, <span class="ident">right</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(())
+			right.set_separator(<span class="number">0</span>, separator);
+			<span class="self">self</span>.write_child(at - <span class="number">1</span>, left, values, log)<span class="question-mark">?</span>;
+			<span class="self">self</span>.write_child(at, right, values, log)<span class="question-mark">?</span>;
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(())
 		}
 
-		<span class="kw">let</span> <span class="ident">number_child</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">number_separator</span>() <span class="op">+</span> <span class="number">1</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">balance_from_right</span> <span class="op">=</span> <span class="bool-val">false</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-		<span class="kw">if</span> <span class="ident">at</span> <span class="op">+</span> <span class="number">1</span> <span class="op">&lt;</span> <span class="ident">number_child</span> {
-			<span class="ident">right</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">at</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">right</span>.<span class="ident">as_ref</span>() {
-				<span class="kw">if</span> <span class="ident">node</span>.<span class="ident">has_separator</span>(<span class="ident">middle</span>) {
-					<span class="ident">balance_from_right</span> <span class="op">=</span> <span class="bool-val">true</span>;
+		<span class="kw">let </span>number_child = <span class="self">self</span>.number_separator() + <span class="number">1</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>balance_from_right = <span class="bool-val">false</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>right = <span class="prelude-val">None</span>;
+		<span class="kw">if </span>at + <span class="number">1 </span>&lt; number_child {
+			right = <span class="self">self</span>.fetch_child(at + <span class="number">1</span>, values, log)<span class="question-mark">?</span>;
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(node) = right.as_ref() {
+				<span class="kw">if </span>node.has_separator(middle) {
+					balance_from_right = <span class="bool-val">true</span>;
 				}
 			}
 		}
 
-		<span class="kw">if</span> <span class="ident">balance_from_right</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">child</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">unwrap</span>();
-			<span class="kw">if</span> <span class="ident">has_child</span> {
-				<span class="ident">child</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">right</span>.<span class="ident">remove_child</span>(<span class="number">0</span>));
+		<span class="kw">if </span>balance_from_right {
+			<span class="kw">let </span><span class="kw-2">mut </span>child = <span class="prelude-val">None</span>;
+			<span class="kw">let </span><span class="kw-2">mut </span>right = right.unwrap();
+			<span class="kw">if </span>has_child {
+				child = <span class="prelude-val">Some</span>(right.remove_child(<span class="number">0</span>));
 			}
-			<span class="kw">let</span> <span class="ident">separator2</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">remove_separator</span>(<span class="number">0</span>);
-			<span class="ident">right</span>.<span class="ident">remove_from</span>(<span class="number">0</span>, <span class="ident">has_child</span>, <span class="bool-val">true</span>);
-			<span class="kw">let</span> <span class="ident">separator</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">at</span>);
-			<span class="self">self</span>.<span class="ident">set_separator</span>(<span class="ident">at</span>, <span class="ident">separator2</span>);
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">left</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">at</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>.<span class="ident">unwrap</span>();
-			<span class="kw">let</span> <span class="ident">last_left</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">number_separator</span>();
-			<span class="ident">left</span>.<span class="ident">set_separator</span>(<span class="ident">last_left</span>, <span class="ident">separator</span>);
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">child</span>) <span class="op">=</span> <span class="ident">child</span> {
-				<span class="ident">left</span>.<span class="ident">set_child</span>(<span class="ident">last_left</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">child</span>);
+			<span class="kw">let </span>separator2 = right.remove_separator(<span class="number">0</span>);
+			right.remove_from(<span class="number">0</span>, has_child, <span class="bool-val">true</span>);
+			<span class="kw">let </span>separator = <span class="self">self</span>.remove_separator(at);
+			<span class="self">self</span>.set_separator(at, separator2);
+			<span class="kw">let </span><span class="kw-2">mut </span>left = <span class="self">self</span>.fetch_child(at, values, log)<span class="question-mark">?</span>.unwrap();
+			<span class="kw">let </span>last_left = left.number_separator();
+			left.set_separator(last_left, separator);
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(child) = child {
+				left.set_child(last_left + <span class="number">1</span>, child);
 			}
-			<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">at</span>, <span class="ident">left</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">at</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">right</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(())
+			<span class="self">self</span>.write_child(at, left, values, log)<span class="question-mark">?</span>;
+			<span class="self">self</span>.write_child(at + <span class="number">1</span>, right, values, log)<span class="question-mark">?</span>;
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(())
 		}
 
-		<span class="kw">let</span> (<span class="ident">at</span>, <span class="ident">at_right</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">at</span> <span class="op">+</span> <span class="number">1</span> <span class="op">==</span> <span class="ident">number_child</span> {
-			<span class="ident">right</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">at</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			(<span class="ident">at</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">at</span>)
-		} <span class="kw">else</span> {
-			<span class="ident">left</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">at</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="kw">if</span> <span class="ident">right</span>.<span class="ident">is_none</span>() {
-				<span class="ident">right</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">at</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>(at, at_right) = <span class="kw">if </span>at + <span class="number">1 </span>== number_child {
+			right = <span class="self">self</span>.fetch_child(at, values, log)<span class="question-mark">?</span>;
+			(at - <span class="number">1</span>, at)
+		} <span class="kw">else </span>{
+			left = <span class="self">self</span>.fetch_child(at, values, log)<span class="question-mark">?</span>;
+			<span class="kw">if </span>right.is_none() {
+				right = <span class="self">self</span>.fetch_child(at + <span class="number">1</span>, values, log)<span class="question-mark">?</span>;
 			}
-			(<span class="ident">at</span>, <span class="ident">at</span> <span class="op">+</span> <span class="number">1</span>)
+			(at, at + <span class="number">1</span>)
 		};
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">left</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">separator</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">at</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">number_separator</span>();
-		<span class="ident">left</span>.<span class="ident">set_separator</span>(<span class="ident">i</span>, <span class="ident">separator</span>);
-		<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">unwrap</span>();
-		<span class="kw">let</span> <span class="ident">right_len</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">number_separator</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right_i</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">while</span> <span class="ident">right_i</span> <span class="op">&lt;</span> <span class="ident">right_len</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">child</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-			<span class="kw">if</span> <span class="ident">has_child</span> {
-				<span class="ident">child</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">right</span>.<span class="ident">remove_child</span>(<span class="ident">right_i</span>));
+		<span class="kw">let </span><span class="kw-2">mut </span>left = left.unwrap();
+		<span class="kw">let </span>separator = <span class="self">self</span>.remove_separator(at);
+		<span class="kw">let </span><span class="kw-2">mut </span>i = left.number_separator();
+		left.set_separator(i, separator);
+		i += <span class="number">1</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>right = right.unwrap();
+		<span class="kw">let </span>right_len = right.number_separator();
+		<span class="kw">let </span><span class="kw-2">mut </span>right_i = <span class="number">0</span>;
+		<span class="kw">while </span>right_i &lt; right_len {
+			<span class="kw">let </span><span class="kw-2">mut </span>child = <span class="prelude-val">None</span>;
+			<span class="kw">if </span>has_child {
+				child = <span class="prelude-val">Some</span>(right.remove_child(right_i));
 			}
-			<span class="kw">let</span> <span class="ident">separator</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">remove_separator</span>(<span class="ident">right_i</span>);
-			<span class="ident">left</span>.<span class="ident">set_separator</span>(<span class="ident">i</span>, <span class="ident">separator</span>);
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">child</span>) <span class="op">=</span> <span class="ident">child</span> {
-				<span class="ident">left</span>.<span class="ident">set_child</span>(<span class="ident">i</span>, <span class="ident">child</span>);
+			<span class="kw">let </span>separator = right.remove_separator(right_i);
+			left.set_separator(i, separator);
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(child) = child {
+				left.set_child(i, child);
 			}
-			<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-			<span class="ident">right_i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+			i += <span class="number">1</span>;
+			right_i += <span class="number">1</span>;
 		}
-		<span class="kw">if</span> <span class="ident">has_child</span> {
-			<span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">remove_child</span>(<span class="ident">right_i</span>);
-			<span class="ident">left</span>.<span class="ident">set_child</span>(<span class="ident">i</span>, <span class="ident">child</span>);
+		<span class="kw">if </span>has_child {
+			<span class="kw">let </span>child = right.remove_child(right_i);
+			left.set_child(i, child);
 		}
 
-		<span class="kw">let</span> <span class="ident">removed</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_child</span>(<span class="ident">at_right</span>);
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">index</span>) <span class="op">=</span> <span class="ident">removed</span>.<span class="ident">entry_index</span> {
-			<span class="ident">BTreeTable::write_plan_remove_node</span>(<span class="ident">values</span>, <span class="ident">log</span>, <span class="ident">index</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>removed = <span class="self">self</span>.remove_child(at_right);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(index) = removed.entry_index {
+			BTreeTable::write_plan_remove_node(values, log, index)<span class="question-mark">?</span>;
 		}
-		<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">at</span>, <span class="ident">left</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">has_child</span> <span class="op">=</span> <span class="bool-val">true</span>; <span class="comment">// rebalance on parent.</span>
-		<span class="self">self</span>.<span class="ident">remove_from</span>(<span class="ident">at</span>, <span class="ident">has_child</span>, <span class="bool-val">false</span>);
+		<span class="self">self</span>.write_child(at, left, values, log)<span class="question-mark">?</span>;
+		<span class="kw">let </span>has_child = <span class="bool-val">true</span>; <span class="comment">// rebalance on parent.
+		</span><span class="self">self</span>.remove_from(at, has_child, <span class="bool-val">false</span>);
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="kw">fn</span> <span class="ident">need_rebalance</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-		<span class="kw">let</span> <span class="ident">middle</span> <span class="op">=</span> <span class="ident">ORDER</span> <span class="op">/</span> <span class="number">2</span>;
-		<span class="op">!</span><span class="self">self</span>.<span class="ident">has_separator</span>(<span class="ident">middle</span> <span class="op">-</span> <span class="number">1</span>)
+	<span class="kw">fn </span>need_rebalance(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; bool {
+		<span class="kw">let </span>middle = ORDER / <span class="number">2</span>;
+		!<span class="self">self</span>.has_separator(middle - <span class="number">1</span>)
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">need_remove_root</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">values</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>, <span class="ident">Node</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">number_separator</span>() <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="number">0</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>.<span class="ident">is_some</span>() {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="number">0</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span> {
-				<span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_child</span>(<span class="number">0</span>);
-				<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((<span class="ident">child</span>.<span class="ident">entry_index</span>, <span class="ident">node</span>)))
+	<span class="kw">pub fn </span>need_remove_root(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		values: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(<span class="prelude-ty">Option</span>&lt;Address&gt;, Node)&gt;&gt; {
+		<span class="kw">if </span><span class="self">self</span>.number_separator() == <span class="number">0 </span>&amp;&amp; <span class="self">self</span>.fetch_child(<span class="number">0</span>, values, log)<span class="question-mark">?</span>.is_some() {
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(node) = <span class="self">self</span>.fetch_child(<span class="number">0</span>, values, log)<span class="question-mark">? </span>{
+				<span class="kw">let </span>child = <span class="self">self</span>.remove_child(<span class="number">0</span>);
+				<span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((child.entry_index, node)))
 			}
 		}
 		<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove_last</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">depth</span>: <span class="ident">u32</span>,
-		<span class="ident">values</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">bool</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Separator</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">last</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">last</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">last_separator_index</span>() {
-			<span class="ident">last</span>
-		} <span class="kw">else</span> {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="bool-val">false</span>, <span class="prelude-val">None</span>))
+	<span class="kw">pub fn </span>remove_last(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		depth: u32,
+		values: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(bool, <span class="prelude-ty">Option</span>&lt;Separator&gt;)&gt; {
+		<span class="kw">let </span>last = <span class="kw">if let </span><span class="prelude-val">Some</span>(last) = <span class="self">self</span>.last_separator_index() {
+			last
+		} <span class="kw">else </span>{
+			<span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="bool-val">false</span>, <span class="prelude-val">None</span>))
 		};
-		<span class="kw">let</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">last</span>;
-		<span class="kw">if</span> <span class="ident">depth</span> <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">i</span>);
+		<span class="kw">let </span>i = last;
+		<span class="kw">if </span>depth == <span class="number">0 </span>{
+			<span class="kw">let </span>result = <span class="self">self</span>.remove_separator(i);
 
-			<span class="prelude-val">Ok</span>((<span class="self">self</span>.<span class="ident">need_rebalance</span>(), <span class="prelude-val">Some</span>(<span class="ident">result</span>)))
-		} <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">child</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span> {
-			<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">child</span>.<span class="ident">remove_last</span>(<span class="ident">depth</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="self">self</span>.<span class="ident">write_child</span>(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">child</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="kw">if</span> <span class="ident">result</span>.<span class="number">0</span> {
-				<span class="self">self</span>.<span class="ident">rebalance</span>(<span class="ident">depth</span>, <span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-				<span class="prelude-val">Ok</span>((<span class="self">self</span>.<span class="ident">need_rebalance</span>(), <span class="ident">result</span>.<span class="number">1</span>))
-			} <span class="kw">else</span> {
-				<span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+			<span class="prelude-val">Ok</span>((<span class="self">self</span>.need_rebalance(), <span class="prelude-val">Some</span>(result)))
+		} <span class="kw">else if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>child) = <span class="self">self</span>.fetch_child(i + <span class="number">1</span>, values, log)<span class="question-mark">? </span>{
+			<span class="kw">let </span>result = child.remove_last(depth - <span class="number">1</span>, values, log)<span class="question-mark">?</span>;
+			<span class="self">self</span>.write_child(i + <span class="number">1</span>, child, values, log)<span class="question-mark">?</span>;
+			<span class="kw">if </span>result.<span class="number">0 </span>{
+				<span class="self">self</span>.rebalance(depth, i + <span class="number">1</span>, values, log)<span class="question-mark">?</span>;
+				<span class="prelude-val">Ok</span>((<span class="self">self</span>.need_rebalance(), result.<span class="number">1</span>))
+			} <span class="kw">else </span>{
+				<span class="prelude-val">Ok</span>(result)
 			}
-		} <span class="kw">else</span> {
+		} <span class="kw">else </span>{
 			<span class="prelude-val">Ok</span>((<span class="bool-val">false</span>, <span class="prelude-val">None</span>))
 		}
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>(
+	<span class="kw">pub fn </span>get(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">values</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">LogQuery</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> (<span class="ident">at</span>, <span class="ident">i</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">position</span>(<span class="ident">key</span>)<span class="question-mark">?</span>;
-		<span class="kw">if</span> <span class="ident">at</span> {
-			<span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">separator_address</span>(<span class="ident">i</span>))
-		} <span class="kw">else</span> {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">child</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">i</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span> {
-				<span class="kw">return</span> <span class="ident">child</span>.<span class="ident">get</span>(<span class="ident">key</span>, <span class="ident">values</span>, <span class="ident">log</span>)
+		key: <span class="kw-2">&amp;</span>[u8],
+		values: TablesRef,
+		log: <span class="kw-2">&amp;</span><span class="kw">impl </span>LogQuery,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Address&gt;&gt; {
+		<span class="kw">let </span>(at, i) = <span class="self">self</span>.position(key)<span class="question-mark">?</span>;
+		<span class="kw">if </span>at {
+			<span class="prelude-val">Ok</span>(<span class="self">self</span>.separator_address(i))
+		} <span class="kw">else </span>{
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(child) = <span class="self">self</span>.fetch_child(i, values, log)<span class="question-mark">? </span>{
+				<span class="kw">return </span>child.get(key, values, log)
 			}
 
 			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
 		}
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">seek</span>(
-		<span class="ident">from</span>: <span class="self">Self</span>,
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">values</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">LogQuery</span>,
-		<span class="ident">depth</span>: <span class="ident">u32</span>,
-		<span class="ident">stack</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="self">Self</span>)<span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> (<span class="ident">at</span>, <span class="ident">i</span>) <span class="op">=</span> <span class="ident">from</span>.<span class="ident">position</span>(<span class="ident">key</span>)<span class="question-mark">?</span>;
-		<span class="kw">if</span> <span class="ident">at</span> {
-			<span class="ident">stack</span>.<span class="ident">push</span>((<span class="ident">i</span>, <span class="ident">from</span>));
+	<span class="kw">pub fn </span>seek(
+		from: <span class="self">Self</span>,
+		key: <span class="kw-2">&amp;</span>[u8],
+		values: TablesRef,
+		log: <span class="kw-2">&amp;</span><span class="kw">impl </span>LogQuery,
+		depth: u32,
+		stack: <span class="kw-2">&amp;mut </span>Vec&lt;(usize, <span class="self">Self</span>)&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+		<span class="kw">let </span>(at, i) = from.position(key)<span class="question-mark">?</span>;
+		<span class="kw">if </span>at {
+			stack.push((i, from));
 			<span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
-		} <span class="kw">else</span> {
-			<span class="kw">if</span> <span class="ident">depth</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">child</span>) <span class="op">=</span> <span class="ident">from</span>.<span class="ident">fetch_child</span>(<span class="ident">i</span>, <span class="ident">values</span>, <span class="ident">log</span>)<span class="question-mark">?</span> {
-					<span class="ident">stack</span>.<span class="ident">push</span>((<span class="ident">i</span>, <span class="ident">from</span>));
-					<span class="kw">return</span> <span class="ident"><span class="self">Self</span>::seek</span>(<span class="ident">child</span>, <span class="ident">key</span>, <span class="ident">values</span>, <span class="ident">log</span>, <span class="ident">depth</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">stack</span>)
+		} <span class="kw">else </span>{
+			<span class="kw">if </span>depth != <span class="number">0 </span>{
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(child) = from.fetch_child(i, values, log)<span class="question-mark">? </span>{
+					stack.push((i, from));
+					<span class="kw">return </span><span class="self">Self</span>::seek(child, key, values, log, depth - <span class="number">1</span>, stack)
 				}
 			}
-			<span class="ident">stack</span>.<span class="ident">push</span>((<span class="ident">i</span>, <span class="ident">from</span>));
+			stack.push((i, from));
 			<span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
 		}
 	}
 
-	<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_balanced</span>(
+	<span class="attribute">#[cfg(test)]
+	</span><span class="kw">pub fn </span>is_balanced(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">tables</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">LogQuery</span>,
-		<span class="ident">parent_size</span>: <span class="ident">usize</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">number_separator</span>();
-		<span class="kw">if</span> <span class="ident">parent_size</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">size</span> <span class="op">&lt;</span> <span class="ident">ORDER</span> <span class="op">/</span> <span class="number">2</span> {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+		tables: TablesRef,
+		log: <span class="kw-2">&amp;</span><span class="kw">impl </span>LogQuery,
+		parent_size: usize,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+		<span class="kw">let </span>size = <span class="self">self</span>.number_separator();
+		<span class="kw">if </span>parent_size != <span class="number">0 </span>&amp;&amp; size &lt; ORDER / <span class="number">2 </span>{
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
 		}
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">while</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">ORDER</span> {
-			<span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_child</span>(<span class="ident">i</span>, <span class="ident">tables</span>, <span class="ident">log</span>)<span class="question-mark">?</span>;
-			<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-			<span class="kw">if</span> <span class="ident">child</span>.<span class="ident">is_none</span>() {
-				<span class="kw">continue</span>
-			}
-			<span class="kw">if</span> <span class="op">!</span><span class="ident">child</span>.<span class="ident">unwrap</span>().<span class="ident">is_balanced</span>(<span class="ident">tables</span>, <span class="ident">log</span>, <span class="ident">size</span>)<span class="question-mark">?</span> {
-				<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+		<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+		<span class="kw">while </span>i &lt; ORDER {
+			<span class="kw">let </span>child = <span class="self">self</span>.fetch_child(i, tables, log)<span class="question-mark">?</span>;
+			i += <span class="number">1</span>;
+			<span class="kw">if </span>child.is_none() {
+				<span class="kw">continue
+			</span>}
+			<span class="kw">if </span>!child.unwrap().is_balanced(tables, log, size)<span class="question-mark">? </span>{
+				<span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
 			}
 		}
 
@@ -1382,281 +1377,280 @@
 	}
 }
 
-<span class="doccomment">/// Nodes with data loaded in memory.</span>
-<span class="doccomment">/// Nodes get only serialized when flushed in the global overlay</span>
-<span class="doccomment">/// (there we need one entry per record id).</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Node</span> {
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">separators</span>: [<span class="ident">node::Separator</span>; <span class="ident">ORDER</span>],
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">children</span>: [<span class="ident">node::Child</span>; <span class="ident">ORDER_CHILD</span>],
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">changed</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// Nodes with data loaded in memory.
+/// Nodes get only serialized when flushed in the global overlay
+/// (there we need one entry per record id).
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>Node {
+	<span class="kw">pub</span>(<span class="kw">super</span>) separators: [node::Separator; ORDER],
+	<span class="kw">pub</span>(<span class="kw">super</span>) children: [node::Child; ORDER_CHILD],
+	<span class="kw">pub</span>(<span class="kw">super</span>) changed: bool,
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Node</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="ident">Node</span> { <span class="ident">separators</span>: <span class="ident">Default::default</span>(), <span class="ident">children</span>: <span class="ident">Default::default</span>(), <span class="ident">changed</span>: <span class="bool-val">true</span> }
+<span class="kw">impl </span>Default <span class="kw">for </span>Node {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		Node { separators: Default::default(), children: Default::default(), changed: <span class="bool-val">true </span>}
 	}
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Separator</span> {
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">modified</span>: <span class="ident">bool</span>,
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">separator</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SeparatorInner</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Clone, Default)]
+</span><span class="kw">pub struct </span>Separator {
+	<span class="kw">pub</span>(<span class="kw">super</span>) modified: bool,
+	<span class="kw">pub</span>(<span class="kw">super</span>) separator: <span class="prelude-ty">Option</span>&lt;SeparatorInner&gt;,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SeparatorInner</span> {
-	<span class="kw">pub</span> <span class="ident">key</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-	<span class="kw">pub</span> <span class="ident">value</span>: <span class="ident">Address</span>,
+<span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>SeparatorInner {
+	<span class="kw">pub </span>key: Vec&lt;u8&gt;,
+	<span class="kw">pub </span>value: Address,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Child</span> {
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">moved</span>: <span class="ident">bool</span>,
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">entry_index</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Clone, Default)]
+</span><span class="kw">pub struct </span>Child {
+	<span class="kw">pub</span>(<span class="kw">super</span>) moved: bool,
+	<span class="kw">pub</span>(<span class="kw">super</span>) entry_index: <span class="prelude-ty">Option</span>&lt;Address&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Node</span> {
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">separators</span> <span class="op">=</span> <span class="ident">Default::default</span>();
-		<span class="self">self</span>.<span class="ident">children</span> <span class="op">=</span> <span class="ident">Default::default</span>();
-		<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
+<span class="kw">impl </span>Node {
+	<span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.separators = Default::default();
+		<span class="self">self</span>.children = Default::default();
+		<span class="self">self</span>.changed = <span class="bool-val">true</span>;
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_encoded</span>(<span class="ident">enc</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">entry</span> <span class="op">=</span> <span class="ident">Entry::from_encoded</span>(<span class="ident">enc</span>);
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">node</span> <span class="op">=</span>
-			<span class="ident">Node</span> { <span class="ident">separators</span>: <span class="ident">Default::default</span>(), <span class="ident">children</span>: <span class="ident">Default::default</span>(), <span class="ident">changed</span>: <span class="bool-val">false</span> };
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i_children</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i_separator</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">loop</span> {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">child_index</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">read_child_index</span>() {
-				<span class="ident">node</span>.<span class="ident">children</span>.<span class="ident">as_mut</span>()[<span class="ident">i_children</span>].<span class="ident">entry_index</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">child_index</span>);
+	<span class="kw">pub fn </span>from_encoded(enc: Vec&lt;u8&gt;) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span><span class="kw-2">mut </span>entry = Entry::from_encoded(enc);
+		<span class="kw">let </span><span class="kw-2">mut </span>node =
+			Node { separators: Default::default(), children: Default::default(), changed: <span class="bool-val">false </span>};
+		<span class="kw">let </span><span class="kw-2">mut </span>i_children = <span class="number">0</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>i_separator = <span class="number">0</span>;
+		<span class="kw">loop </span>{
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(child_index) = entry.read_child_index() {
+				node.children.as_mut()[i_children].entry_index = <span class="prelude-val">Some</span>(child_index);
 			}
-			<span class="ident">i_children</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-			<span class="kw">if</span> <span class="ident">i_children</span> <span class="op">==</span> <span class="ident">ORDER_CHILD</span> {
-				<span class="kw">break</span>
-			}
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">sep</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">read_separator</span>() {
-				<span class="ident">node</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">i_separator</span>].<span class="ident">separator</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">sep</span>);
-				<span class="ident">i_separator</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>
-			} <span class="kw">else</span> {
-				<span class="kw">break</span>
-			}
+			i_children += <span class="number">1</span>;
+			<span class="kw">if </span>i_children == ORDER_CHILD {
+				<span class="kw">break
+			</span>}
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(sep) = entry.read_separator() {
+				node.separators.as_mut()[i_separator].separator = <span class="prelude-val">Some</span>(sep);
+				i_separator += <span class="number">1
+			</span>} <span class="kw">else </span>{
+				<span class="kw">break
+			</span>}
 		}
-		<span class="ident">node</span>
+		node
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove_separator</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Separator</span> {
-		<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">separator</span> <span class="op">=</span> <span class="ident">std::mem::replace</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">separators</span>[<span class="ident">at</span>],
-			<span class="ident">Separator</span> { <span class="ident">modified</span>: <span class="bool-val">true</span>, <span class="ident">separator</span>: <span class="prelude-val">None</span> },
+	<span class="kw">pub fn </span>remove_separator(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize) -&gt; Separator {
+		<span class="self">self</span>.changed = <span class="bool-val">true</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>separator = std::mem::replace(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>.separators[at],
+			Separator { modified: <span class="bool-val">true</span>, separator: <span class="prelude-val">None </span>},
 		);
-		<span class="ident">separator</span>.<span class="ident">modified</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="ident">separator</span>
+		separator.modified = <span class="bool-val">true</span>;
+		separator
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove_child</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Child</span> {
-		<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">child</span> <span class="op">=</span>
-			<span class="ident">std::mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">children</span>[<span class="ident">at</span>], <span class="ident">Child</span> { <span class="ident">moved</span>: <span class="bool-val">true</span>, <span class="ident">entry_index</span>: <span class="prelude-val">None</span> });
-		<span class="ident">child</span>.<span class="ident">moved</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="ident">child</span>
+	<span class="kw">pub fn </span>remove_child(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize) -&gt; Child {
+		<span class="self">self</span>.changed = <span class="bool-val">true</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>child =
+			std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.children[at], Child { moved: <span class="bool-val">true</span>, entry_index: <span class="prelude-val">None </span>});
+		child.moved = <span class="bool-val">true</span>;
+		child
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_separator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">separators</span>[<span class="ident">at</span>].<span class="ident">separator</span>.<span class="ident">is_some</span>()
+	<span class="kw">pub fn </span>has_separator(<span class="kw-2">&amp;</span><span class="self">self</span>, at: usize) -&gt; bool {
+		<span class="self">self</span>.separators[at].separator.is_some()
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">separator_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">separators</span>[<span class="ident">at</span>].<span class="ident">separator</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">key</span>.<span class="ident">clone</span>())
+	<span class="kw">pub fn </span>separator_key(<span class="kw-2">&amp;</span><span class="self">self</span>, at: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
+		<span class="self">self</span>.separators[at].separator.as_ref().map(|s| s.key.clone())
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">separator_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">separators</span>[<span class="ident">at</span>].<span class="ident">separator</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">value</span>)
+	<span class="kw">pub fn </span>separator_address(<span class="kw-2">&amp;</span><span class="self">self</span>, at: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Address&gt; {
+		<span class="self">self</span>.separators[at].separator.as_ref().map(|s| s.value)
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_separator</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>, <span class="kw-2">mut</span> <span class="ident">sep</span>: <span class="ident">Separator</span>) {
-		<span class="ident">sep</span>.<span class="ident">modified</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="self">self</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">at</span>] <span class="op">=</span> <span class="ident">sep</span>;
+	<span class="kw">pub fn </span>set_separator(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize, <span class="kw-2">mut </span>sep: Separator) {
+		sep.modified = <span class="bool-val">true</span>;
+		<span class="self">self</span>.changed = <span class="bool-val">true</span>;
+		<span class="self">self</span>.separators.as_mut()[at] = sep;
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_child</span>(<span class="ident">index</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>) -&gt; <span class="ident">Child</span> {
-		<span class="ident">Child</span> { <span class="ident">moved</span>: <span class="bool-val">true</span>, <span class="ident">entry_index</span>: <span class="ident">index</span> }
+	<span class="kw">pub fn </span>new_child(index: <span class="prelude-ty">Option</span>&lt;Address&gt;) -&gt; Child {
+		Child { moved: <span class="bool-val">true</span>, entry_index: index }
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_child</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>, <span class="kw-2">mut</span> <span class="ident">child</span>: <span class="ident">Child</span>) {
-		<span class="ident">child</span>.<span class="ident">moved</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="self">self</span>.<span class="ident">children</span>.<span class="ident">as_mut</span>()[<span class="ident">at</span>] <span class="op">=</span> <span class="ident">child</span>;
+	<span class="kw">pub fn </span>set_child(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize, <span class="kw-2">mut </span>child: Child) {
+		child.moved = <span class="bool-val">true</span>;
+		<span class="self">self</span>.changed = <span class="bool-val">true</span>;
+		<span class="self">self</span>.children.as_mut()[at] = child;
 	}
 
-	<span class="kw">fn</span> <span class="ident">create_separator</span>(
-		<span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">value</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">btree</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;mut</span> <span class="ident">LogWriter</span>,
-		<span class="ident">existing</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Separator</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">key</span>.<span class="ident">to_vec</span>();
-		<span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">address</span>) <span class="op">=</span> <span class="ident">existing</span> {
-			<span class="ident">Column::write_existing_value_plan</span>(
-				<span class="kw-2">&amp;</span><span class="ident">TableKey::NoHash</span>,
-				<span class="ident">btree</span>,
-				<span class="ident">address</span>,
-				<span class="prelude-val">Some</span>(<span class="ident">value</span>),
-				<span class="ident">log</span>,
+	<span class="kw">fn </span>create_separator(
+		key: <span class="kw-2">&amp;</span>[u8],
+		value: <span class="kw-2">&amp;</span>[u8],
+		btree: TablesRef,
+		log: <span class="kw-2">&amp;mut </span>LogWriter,
+		existing: <span class="prelude-ty">Option</span>&lt;Address&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Separator&gt; {
+		<span class="kw">let </span>key = key.to_vec();
+		<span class="kw">let </span>value = <span class="kw">if let </span><span class="prelude-val">Some</span>(address) = existing {
+			Column::write_existing_value_plan(
+				<span class="kw-2">&amp;</span>TableKey::NoHash,
+				btree,
+				address,
+				<span class="prelude-val">Some</span>(value),
+				log,
 				<span class="prelude-val">None</span>,
-			)<span class="question-mark">?</span>
-			.<span class="number">1</span>
-			.<span class="ident">unwrap_or</span>(<span class="ident">address</span>)
-		} <span class="kw">else</span> {
-			<span class="ident">Column::write_new_value_plan</span>(<span class="kw-2">&amp;</span><span class="ident">TableKey::NoHash</span>, <span class="ident">btree</span>, <span class="ident">value</span>, <span class="ident">log</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>
-		};
-		<span class="prelude-val">Ok</span>(<span class="ident">Separator</span> { <span class="ident">modified</span>: <span class="bool-val">true</span>, <span class="ident">separator</span>: <span class="prelude-val">Some</span>(<span class="ident">SeparatorInner</span> { <span class="ident">key</span>, <span class="ident">value</span> }) })
+			)<span class="question-mark">?
+			</span>.<span class="number">1
+			</span>.unwrap_or(address)
+		} <span class="kw">else </span>{
+			Column::write_new_value_plan(<span class="kw-2">&amp;</span>TableKey::NoHash, btree, value, log, <span class="prelude-val">None</span>)<span class="question-mark">?
+		</span>};
+		<span class="prelude-val">Ok</span>(Separator { modified: <span class="bool-val">true</span>, separator: <span class="prelude-val">Some</span>(SeparatorInner { key, value }) })
 	}
 
-	<span class="kw">fn</span> <span class="ident">split</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">at</span>: <span class="ident">usize</span>,
-		<span class="ident">skip_left_child</span>: <span class="ident">bool</span>,
-		<span class="kw-2">mut</span> <span class="ident">insert_right</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="ident">Separator</span>)<span class="op">&gt;</span>,
-		<span class="kw-2">mut</span> <span class="ident">insert_right_child</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="ident">Child</span>)<span class="op">&gt;</span>,
-		<span class="ident">has_child</span>: <span class="ident">bool</span>,
-	) -&gt; (<span class="self">Self</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> (<span class="ident">right_ix</span>, <span class="kw-2">mut</span> <span class="ident">right</span>) <span class="op">=</span> (<span class="prelude-val">None</span>, <span class="ident"><span class="self">Self</span>::default</span>());
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">let</span> <span class="ident">right_start</span> <span class="op">=</span> <span class="ident">at</span>;
-		<span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">right_start</span>..<span class="ident">ORDER</span> {
-			<span class="kw">let</span> <span class="ident">sep</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">i</span>);
-			<span class="kw">if</span> <span class="ident">insert_right</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">ins</span><span class="op">|</span> <span class="ident">ins</span>.<span class="number">0</span> <span class="op">==</span> <span class="ident">i</span>).<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>) {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">sep</span>)) <span class="op">=</span> <span class="ident">insert_right</span>.<span class="ident">take</span>() {
-					<span class="ident">right</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span> <span class="op">-</span> <span class="ident">right_start</span>] <span class="op">=</span> <span class="ident">sep</span>;
-					<span class="ident">offset</span> <span class="op">=</span> <span class="number">1</span>;
+	<span class="kw">fn </span>split(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		at: usize,
+		skip_left_child: bool,
+		<span class="kw-2">mut </span>insert_right: <span class="prelude-ty">Option</span>&lt;(usize, Separator)&gt;,
+		<span class="kw-2">mut </span>insert_right_child: <span class="prelude-ty">Option</span>&lt;(usize, Child)&gt;,
+		has_child: bool,
+	) -&gt; (<span class="self">Self</span>, <span class="prelude-ty">Option</span>&lt;Address&gt;) {
+		<span class="kw">let </span>(right_ix, <span class="kw-2">mut </span>right) = (<span class="prelude-val">None</span>, <span class="self">Self</span>::default());
+		<span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">0</span>;
+		<span class="kw">let </span>right_start = at;
+		<span class="kw">for </span>i <span class="kw">in </span>right_start..ORDER {
+			<span class="kw">let </span>sep = <span class="self">self</span>.remove_separator(i);
+			<span class="kw">if </span>insert_right.as_ref().map(|ins| ins.<span class="number">0 </span>== i).unwrap_or(<span class="bool-val">false</span>) {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, sep)) = insert_right.take() {
+					right.separators.as_mut()[i - right_start] = sep;
+					offset = <span class="number">1</span>;
 				}
 			}
-			<span class="ident">right</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span> <span class="op">+</span> <span class="ident">offset</span> <span class="op">-</span> <span class="ident">right_start</span>] <span class="op">=</span> <span class="ident">sep</span>;
+			right.separators.as_mut()[i + offset - right_start] = sep;
 		}
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">insert</span>, <span class="ident">sep</span>)) <span class="op">=</span> <span class="ident">insert_right</span>.<span class="ident">take</span>() {
-			<span class="macro">debug_assert!</span>(<span class="ident">insert</span> <span class="op">==</span> <span class="ident">ORDER</span>);
-			<span class="ident">right</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">insert</span> <span class="op">-</span> <span class="ident">right_start</span>] <span class="op">=</span> <span class="ident">sep</span>;
+		<span class="kw">if let </span><span class="prelude-val">Some</span>((insert, sep)) = insert_right.take() {
+			<span class="macro">debug_assert!</span>(insert == ORDER);
+			right.separators.as_mut()[insert - right_start] = sep;
 		}
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">if</span> <span class="ident">has_child</span> {
-			<span class="kw">let</span> <span class="ident">skip_offset</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">skip_left_child</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> };
-			<span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">right_start</span> <span class="op">+</span> <span class="ident">skip_offset</span>..<span class="ident">ORDER_CHILD</span> {
-				<span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_child</span>(<span class="ident">i</span>);
-				<span class="kw">if</span> <span class="ident">insert_right_child</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">ins</span><span class="op">|</span> <span class="ident">ins</span>.<span class="number">0</span> <span class="op">+</span> <span class="number">1</span> <span class="op">==</span> <span class="ident">i</span>).<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>) {
-					<span class="ident">offset</span> <span class="op">=</span> <span class="number">1</span>;
-					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="kw-2">mut</span> <span class="ident">child</span>)) <span class="op">=</span> <span class="ident">insert_right_child</span>.<span class="ident">take</span>() {
-						<span class="ident">child</span>.<span class="ident">moved</span> <span class="op">=</span> <span class="bool-val">true</span>;
-						<span class="ident">right</span>.<span class="ident">children</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span> <span class="op">-</span> <span class="ident">right_start</span>] <span class="op">=</span> <span class="ident">child</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">0</span>;
+		<span class="kw">if </span>has_child {
+			<span class="kw">let </span>skip_offset = <span class="kw">if </span>skip_left_child { <span class="number">1 </span>} <span class="kw">else </span>{ <span class="number">0 </span>};
+			<span class="kw">for </span>i <span class="kw">in </span>right_start + skip_offset..ORDER_CHILD {
+				<span class="kw">let </span>child = <span class="self">self</span>.remove_child(i);
+				<span class="kw">if </span>insert_right_child.as_ref().map(|ins| ins.<span class="number">0 </span>+ <span class="number">1 </span>== i).unwrap_or(<span class="bool-val">false</span>) {
+					offset = <span class="number">1</span>;
+					<span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="kw-2">mut </span>child)) = insert_right_child.take() {
+						child.moved = <span class="bool-val">true</span>;
+						right.children.as_mut()[i - right_start] = child;
 					}
 				}
-				<span class="ident">right</span>.<span class="ident">children</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span> <span class="op">+</span> <span class="ident">offset</span> <span class="op">-</span> <span class="ident">right_start</span>] <span class="op">=</span> <span class="ident">child</span>;
+				right.children.as_mut()[i + offset - right_start] = child;
 			}
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">insert</span>, <span class="kw-2">mut</span> <span class="ident">child</span>)) <span class="op">=</span> <span class="ident">insert_right_child</span>.<span class="ident">take</span>() {
-				<span class="macro">debug_assert!</span>(<span class="ident">insert</span> <span class="op">==</span> <span class="ident">ORDER</span>);
-				<span class="ident">child</span>.<span class="ident">moved</span> <span class="op">=</span> <span class="bool-val">true</span>;
-				<span class="ident">right</span>.<span class="ident">children</span>.<span class="ident">as_mut</span>()[<span class="ident">insert</span> <span class="op">+</span> <span class="number">1</span> <span class="op">-</span> <span class="ident">right_start</span>] <span class="op">=</span> <span class="ident">child</span>;
+			<span class="kw">if let </span><span class="prelude-val">Some</span>((insert, <span class="kw-2">mut </span>child)) = insert_right_child.take() {
+				<span class="macro">debug_assert!</span>(insert == ORDER);
+				child.moved = <span class="bool-val">true</span>;
+				right.children.as_mut()[insert + <span class="number">1 </span>- right_start] = child;
 			}
 		}
-		(<span class="ident">right</span>, <span class="ident">right_ix</span>)
+		(right, right_ix)
 	}
 
-	<span class="kw">fn</span> <span class="ident">shift_from</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">from</span>: <span class="ident">usize</span>, <span class="ident">has_child</span>: <span class="ident">bool</span>, <span class="ident">with_left_child</span>: <span class="ident">bool</span>) {
-		<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">from</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">current</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">i</span>);
-		<span class="kw">while</span> <span class="ident">current</span>.<span class="ident">separator</span>.<span class="ident">is_some</span>() {
-			<span class="ident">current</span>.<span class="ident">modified</span> <span class="op">=</span> <span class="bool-val">true</span>;
-			<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-			<span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">ORDER</span> {
-				<span class="kw">break</span>
-			}
-			<span class="ident">current</span> <span class="op">=</span> <span class="ident">std::mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">separators</span>[<span class="ident">i</span>], <span class="ident">current</span>);
+	<span class="kw">fn </span>shift_from(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, has_child: bool, with_left_child: bool) {
+		<span class="self">self</span>.changed = <span class="bool-val">true</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>i = from;
+		<span class="kw">let </span><span class="kw-2">mut </span>current = <span class="self">self</span>.remove_separator(i);
+		<span class="kw">while </span>current.separator.is_some() {
+			current.modified = <span class="bool-val">true</span>;
+			i += <span class="number">1</span>;
+			<span class="kw">if </span>i == ORDER {
+				<span class="kw">break
+			</span>}
+			current = std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.separators[i], current);
 		}
-		<span class="kw">if</span> <span class="ident">has_child</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">with_left_child</span> { <span class="ident">from</span> } <span class="kw">else</span> { <span class="ident">from</span> <span class="op">+</span> <span class="number">1</span> };
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">current</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_child</span>(<span class="ident">i</span>);
-			<span class="kw">while</span> <span class="ident">current</span>.<span class="ident">entry_index</span>.<span class="ident">is_some</span>() {
-				<span class="ident">current</span>.<span class="ident">moved</span> <span class="op">=</span> <span class="bool-val">true</span>;
-				<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-				<span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">ORDER_CHILD</span> {
-					<span class="kw">break</span>
-				}
-				<span class="ident">current</span> <span class="op">=</span> <span class="ident">std::mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">children</span>[<span class="ident">i</span>], <span class="ident">current</span>);
-			}
-		}
-	}
-
-	<span class="kw">fn</span> <span class="ident">remove_from</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">from</span>: <span class="ident">usize</span>, <span class="ident">has_child</span>: <span class="ident">bool</span>, <span class="ident">with_left_child</span>: <span class="ident">bool</span>) {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">from</span>;
-		<span class="self">self</span>.<span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-		<span class="kw">while</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">ORDER</span> <span class="op">-</span> <span class="number">1</span> {
-			<span class="self">self</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span>] <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_separator</span>(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>);
-			<span class="self">self</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span>].<span class="ident">modified</span> <span class="op">=</span> <span class="bool-val">true</span>;
-			<span class="kw">if</span> <span class="self">self</span>.<span class="ident">separators</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span>].<span class="ident">separator</span>.<span class="ident">is_none</span>() {
-				<span class="kw">break</span>
-			}
-			<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-		}
-		<span class="kw">if</span> <span class="ident">has_child</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">with_left_child</span> { <span class="ident">from</span> } <span class="kw">else</span> { <span class="ident">from</span> <span class="op">+</span> <span class="number">1</span> };
-			<span class="kw">while</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">ORDER_CHILD</span> <span class="op">-</span> <span class="number">1</span> {
-				<span class="self">self</span>.<span class="ident">children</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span>] <span class="op">=</span> <span class="self">self</span>.<span class="ident">remove_child</span>(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>);
-				<span class="kw">if</span> <span class="self">self</span>.<span class="ident">children</span>.<span class="ident">as_mut</span>()[<span class="ident">i</span>].<span class="ident">entry_index</span>.<span class="ident">is_none</span>() {
-					<span class="kw">break</span>
-				}
-				<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+		<span class="kw">if </span>has_child {
+			<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="kw">if </span>with_left_child { from } <span class="kw">else </span>{ from + <span class="number">1 </span>};
+			<span class="kw">let </span><span class="kw-2">mut </span>current = <span class="self">self</span>.remove_child(i);
+			<span class="kw">while </span>current.entry_index.is_some() {
+				current.moved = <span class="bool-val">true</span>;
+				i += <span class="number">1</span>;
+				<span class="kw">if </span>i == ORDER_CHILD {
+					<span class="kw">break
+				</span>}
+				current = std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.children[i], current);
 			}
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">number_separator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">while</span> <span class="self">self</span>.<span class="ident">separators</span>[<span class="ident">i</span>].<span class="ident">separator</span>.<span class="ident">is_some</span>() {
-			<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-			<span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">ORDER</span> {
-				<span class="kw">break</span>
+	<span class="kw">fn </span>remove_from(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, has_child: bool, with_left_child: bool) {
+		<span class="kw">let </span><span class="kw-2">mut </span>i = from;
+		<span class="self">self</span>.changed = <span class="bool-val">true</span>;
+		<span class="kw">while </span>i &lt; ORDER - <span class="number">1 </span>{
+			<span class="self">self</span>.separators.as_mut()[i] = <span class="self">self</span>.remove_separator(i + <span class="number">1</span>);
+			<span class="self">self</span>.separators.as_mut()[i].modified = <span class="bool-val">true</span>;
+			<span class="kw">if </span><span class="self">self</span>.separators.as_mut()[i].separator.is_none() {
+				<span class="kw">break
+			</span>}
+			i += <span class="number">1</span>;
+		}
+		<span class="kw">if </span>has_child {
+			<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="kw">if </span>with_left_child { from } <span class="kw">else </span>{ from + <span class="number">1 </span>};
+			<span class="kw">while </span>i &lt; ORDER_CHILD - <span class="number">1 </span>{
+				<span class="self">self</span>.children.as_mut()[i] = <span class="self">self</span>.remove_child(i + <span class="number">1</span>);
+				<span class="kw">if </span><span class="self">self</span>.children.as_mut()[i].entry_index.is_none() {
+					<span class="kw">break
+				</span>}
+				i += <span class="number">1</span>;
 			}
 		}
-		<span class="ident">i</span>
 	}
 
-	<span class="comment">// Return true if match and matched position.</span>
-	<span class="comment">// Return index of first element bigger than key otherwhise.</span>
-	<span class="kw">fn</span> <span class="ident">position</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">bool</span>, <span class="ident">usize</span>)<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
-		<span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">separator</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">separators</span>[<span class="ident">i</span>].<span class="ident">separator</span>.<span class="ident">as_ref</span>() {
-			<span class="kw">match</span> <span class="ident">key</span>[..].<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">separator</span>.<span class="ident">key</span>[..]) {
-				<span class="ident">Ordering::Greater</span> =&gt; (),
-				<span class="ident">Ordering::Less</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="bool-val">false</span>, <span class="ident">i</span>)),
-				<span class="ident">Ordering::Equal</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="bool-val">true</span>, <span class="ident">i</span>)),
-			}
-			<span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-			<span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">ORDER</span> {
-				<span class="kw">break</span>
-			}
+	<span class="kw">fn </span>number_separator(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+		<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+		<span class="kw">while </span><span class="self">self</span>.separators[i].separator.is_some() {
+			i += <span class="number">1</span>;
+			<span class="kw">if </span>i == ORDER {
+				<span class="kw">break
+			</span>}
 		}
-		<span class="prelude-val">Ok</span>((<span class="bool-val">false</span>, <span class="ident">i</span>))
+		i
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fetch_child</span>(
+	<span class="comment">// Return true if match and matched position.
+	// Return index of first element bigger than key otherwhise.
+	</span><span class="kw">fn </span>position(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(bool, usize)&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+		<span class="kw">while let </span><span class="prelude-val">Some</span>(separator) = <span class="self">self</span>.separators[i].separator.as_ref() {
+			<span class="kw">match </span>key[..].cmp(<span class="kw-2">&amp;</span>separator.key[..]) {
+				Ordering::Greater =&gt; (),
+				Ordering::Less =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="bool-val">false</span>, i)),
+				Ordering::Equal =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="bool-val">true</span>, i)),
+			}
+			i += <span class="number">1</span>;
+			<span class="kw">if </span>i == ORDER {
+				<span class="kw">break
+			</span>}
+		}
+		<span class="prelude-val">Ok</span>((<span class="bool-val">false</span>, i))
+	}
+
+	<span class="kw">pub fn </span>fetch_child(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">i</span>: <span class="ident">usize</span>,
-		<span class="ident">values</span>: <span class="ident">TablesRef</span>,
-		<span class="ident">log</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">LogQuery</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">children</span>[<span class="ident">i</span>].<span class="ident">entry_index</span> {
-			<span class="kw">let</span> <span class="ident">entry</span> <span class="op">=</span> <span class="ident">BTreeTable::get_encoded_entry</span>(<span class="ident">ix</span>, <span class="ident">log</span>, <span class="ident">values</span>)<span class="question-mark">?</span>;
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::from_encoded</span>(<span class="ident">entry</span>)))
+		i: usize,
+		values: TablesRef,
+		log: <span class="kw-2">&amp;</span><span class="kw">impl </span>LogQuery,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;&gt; {
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(ix) = <span class="self">self</span>.children[i].entry_index {
+			<span class="kw">let </span>entry = BTreeTable::get_encoded_entry(ix, log, values)<span class="question-mark">?</span>;
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="self">Self</span>::from_encoded(entry)))
 		}
 		<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="parity_db" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="parity_db" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

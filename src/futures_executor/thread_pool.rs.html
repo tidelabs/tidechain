@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/futures-executor-0.3.21/src/thread_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../futures_executor/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../futures_executor/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../futures_executor/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/futures-executor-0.3.21/src/thread_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../futures_executor/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -378,339 +373,339 @@
 <span id="373">373</span>
 <span id="374">374</span>
 <span id="375">375</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::enter</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::unpark_mutex::UnparkMutex</span>;
-<span class="kw">use</span> <span class="ident">futures_core::future::Future</span>;
-<span class="kw">use</span> <span class="ident">futures_core::task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>};
-<span class="kw">use</span> <span class="ident">futures_task</span>::{<span class="ident">waker_ref</span>, <span class="ident">ArcWake</span>};
-<span class="kw">use</span> <span class="ident">futures_task</span>::{<span class="ident">FutureObj</span>, <span class="ident">Spawn</span>, <span class="ident">SpawnError</span>};
-<span class="kw">use</span> <span class="ident">futures_util::future::FutureExt</span>;
-<span class="kw">use</span> <span class="ident">std::cmp</span>;
-<span class="kw">use</span> <span class="ident">std::fmt</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std::sync::mpsc</span>;
-<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>};
-<span class="kw">use</span> <span class="ident">std::thread</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::enter;
+<span class="kw">use </span><span class="kw">crate</span>::unpark_mutex::UnparkMutex;
+<span class="kw">use </span>futures_core::future::Future;
+<span class="kw">use </span>futures_core::task::{Context, Poll};
+<span class="kw">use </span>futures_task::{waker_ref, ArcWake};
+<span class="kw">use </span>futures_task::{FutureObj, Spawn, SpawnError};
+<span class="kw">use </span>futures_util::future::FutureExt;
+<span class="kw">use </span>std::cmp;
+<span class="kw">use </span>std::fmt;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
+<span class="kw">use </span>std::sync::mpsc;
+<span class="kw">use </span>std::sync::{Arc, Mutex};
+<span class="kw">use </span>std::thread;
 
-<span class="doccomment">/// A general-purpose thread pool for scheduling tasks that poll futures to</span>
-<span class="doccomment">/// completion.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The thread pool multiplexes any number of tasks onto a fixed number of</span>
-<span class="doccomment">/// worker threads.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type is a clonable handle to the threadpool itself.</span>
-<span class="doccomment">/// Cloning it will only create a new reference, not a new threadpool.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type is only available when the `thread-pool` feature of this</span>
-<span class="doccomment">/// library is activated.</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;thread-pool&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ThreadPool</span> {
-    <span class="ident">state</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">PoolState</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A general-purpose thread pool for scheduling tasks that poll futures to
+/// completion.
+///
+/// The thread pool multiplexes any number of tasks onto a fixed number of
+/// worker threads.
+///
+/// This type is a clonable handle to the threadpool itself.
+/// Cloning it will only create a new reference, not a new threadpool.
+///
+/// This type is only available when the `thread-pool` feature of this
+/// library is activated.
+</span><span class="attribute">#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;thread-pool&quot;</span>)))]
+</span><span class="kw">pub struct </span>ThreadPool {
+    state: Arc&lt;PoolState&gt;,
 }
 
-<span class="doccomment">/// Thread pool configuration object.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type is only available when the `thread-pool` feature of this</span>
-<span class="doccomment">/// library is activated.</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;thread-pool&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ThreadPoolBuilder</span> {
-    <span class="ident">pool_size</span>: <span class="ident">usize</span>,
-    <span class="ident">stack_size</span>: <span class="ident">usize</span>,
-    <span class="ident">name_prefix</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-    <span class="ident">after_start</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">before_stop</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Thread pool configuration object.
+///
+/// This type is only available when the `thread-pool` feature of this
+/// library is activated.
+</span><span class="attribute">#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;thread-pool&quot;</span>)))]
+</span><span class="kw">pub struct </span>ThreadPoolBuilder {
+    pool_size: usize,
+    stack_size: usize,
+    name_prefix: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    after_start: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Fn(usize) + Send + Sync&gt;&gt;,
+    before_stop: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Fn(usize) + Send + Sync&gt;&gt;,
 }
 
-<span class="kw">trait</span> <span class="ident">AssertSendSync</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {}
-<span class="kw">impl</span> <span class="ident">AssertSendSync</span> <span class="kw">for</span> <span class="ident">ThreadPool</span> {}
+<span class="kw">trait </span>AssertSendSync: Send + Sync {}
+<span class="kw">impl </span>AssertSendSync <span class="kw">for </span>ThreadPool {}
 
-<span class="kw">struct</span> <span class="ident">PoolState</span> {
-    <span class="ident">tx</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">mpsc::Sender</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">rx</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">mpsc::Receiver</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">cnt</span>: <span class="ident">AtomicUsize</span>,
-    <span class="ident">size</span>: <span class="ident">usize</span>,
+<span class="kw">struct </span>PoolState {
+    tx: Mutex&lt;mpsc::Sender&lt;Message&gt;&gt;,
+    rx: Mutex&lt;mpsc::Receiver&lt;Message&gt;&gt;,
+    cnt: AtomicUsize,
+    size: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">ThreadPool</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;ThreadPool&quot;</span>).<span class="ident">field</span>(<span class="string">&quot;size&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">size</span>).<span class="ident">finish</span>()
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>ThreadPool {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;ThreadPool&quot;</span>).field(<span class="string">&quot;size&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.state.size).finish()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">ThreadPoolBuilder</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;ThreadPoolBuilder&quot;</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;pool_size&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pool_size</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;name_prefix&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">name_prefix</span>)
-            .<span class="ident">finish</span>()
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>ThreadPoolBuilder {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;ThreadPoolBuilder&quot;</span>)
+            .field(<span class="string">&quot;pool_size&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.pool_size)
+            .field(<span class="string">&quot;name_prefix&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name_prefix)
+            .finish()
     }
 }
 
-<span class="kw">enum</span> <span class="ident">Message</span> {
-    <span class="ident">Run</span>(<span class="ident">Task</span>),
-    <span class="ident">Close</span>,
+<span class="kw">enum </span>Message {
+    Run(Task),
+    Close,
 }
 
-<span class="kw">impl</span> <span class="ident">ThreadPool</span> {
-    <span class="doccomment">/// Creates a new thread pool with the default configuration.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// See documentation for the methods in</span>
-    <span class="doccomment">/// [`ThreadPoolBuilder`](ThreadPoolBuilder) for details on the default</span>
-    <span class="doccomment">/// configuration.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
-        <span class="ident">ThreadPoolBuilder::new</span>().<span class="ident">create</span>()
+<span class="kw">impl </span>ThreadPool {
+    <span class="doccomment">/// Creates a new thread pool with the default configuration.
+    ///
+    /// See documentation for the methods in
+    /// [`ThreadPoolBuilder`](ThreadPoolBuilder) for details on the default
+    /// configuration.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, io::Error&gt; {
+        ThreadPoolBuilder::new().create()
     }
 
-    <span class="doccomment">/// Create a default thread pool configuration, which can then be customized.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// See documentation for the methods in</span>
-    <span class="doccomment">/// [`ThreadPoolBuilder`](ThreadPoolBuilder) for details on the default</span>
-    <span class="doccomment">/// configuration.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>() -&gt; <span class="ident">ThreadPoolBuilder</span> {
-        <span class="ident">ThreadPoolBuilder::new</span>()
+    <span class="doccomment">/// Create a default thread pool configuration, which can then be customized.
+    ///
+    /// See documentation for the methods in
+    /// [`ThreadPoolBuilder`](ThreadPoolBuilder) for details on the default
+    /// configuration.
+    </span><span class="kw">pub fn </span>builder() -&gt; ThreadPoolBuilder {
+        ThreadPoolBuilder::new()
     }
 
-    <span class="doccomment">/// Spawns a future that will be run to completion.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// &gt; **Note**: This method is similar to `Spawn::spawn_obj`, except that</span>
-    <span class="doccomment">/// &gt;           it is guaranteed to always succeed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_obj_ok</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">future</span>: <span class="ident">FutureObj</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="ident">Task</span> {
-            <span class="ident">future</span>,
-            <span class="ident">wake_handle</span>: <span class="ident">Arc::new</span>(<span class="ident">WakeHandle</span> { <span class="ident">exec</span>: <span class="self">self</span>.<span class="ident">clone</span>(), <span class="ident">mutex</span>: <span class="ident">UnparkMutex::new</span>() }),
-            <span class="ident">exec</span>: <span class="self">self</span>.<span class="ident">clone</span>(),
+    <span class="doccomment">/// Spawns a future that will be run to completion.
+    ///
+    /// &gt; **Note**: This method is similar to `Spawn::spawn_obj`, except that
+    /// &gt;           it is guaranteed to always succeed.
+    </span><span class="kw">pub fn </span>spawn_obj_ok(<span class="kw-2">&amp;</span><span class="self">self</span>, future: FutureObj&lt;<span class="lifetime">&#39;static</span>, ()&gt;) {
+        <span class="kw">let </span>task = Task {
+            future,
+            wake_handle: Arc::new(WakeHandle { exec: <span class="self">self</span>.clone(), mutex: UnparkMutex::new() }),
+            exec: <span class="self">self</span>.clone(),
         };
-        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">send</span>(<span class="ident">Message::Run</span>(<span class="ident">task</span>));
+        <span class="self">self</span>.state.send(Message::Run(task));
     }
 
-    <span class="doccomment">/// Spawns a task that polls the given future with output `()` to</span>
-    <span class="doccomment">/// completion.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use futures::executor::ThreadPool;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let pool = ThreadPool::new().unwrap();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let future = async { /* ... */ };</span>
-    <span class="doccomment">/// pool.spawn_ok(future);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// &gt; **Note**: This method is similar to `SpawnExt::spawn`, except that</span>
-    <span class="doccomment">/// &gt;           it is guaranteed to always succeed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_ok</span><span class="op">&lt;</span><span class="ident">Fut</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">future</span>: <span class="ident">Fut</span>)
-    <span class="kw">where</span>
-        <span class="ident">Fut</span>: <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> ()<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+    <span class="doccomment">/// Spawns a task that polls the given future with output `()` to
+    /// completion.
+    ///
+    /// ```
+    /// use futures::executor::ThreadPool;
+    ///
+    /// let pool = ThreadPool::new().unwrap();
+    ///
+    /// let future = async { /* ... */ };
+    /// pool.spawn_ok(future);
+    /// ```
+    ///
+    /// &gt; **Note**: This method is similar to `SpawnExt::spawn`, except that
+    /// &gt;           it is guaranteed to always succeed.
+    </span><span class="kw">pub fn </span>spawn_ok&lt;Fut&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, future: Fut)
+    <span class="kw">where
+        </span>Fut: Future&lt;Output = ()&gt; + Send + <span class="lifetime">&#39;static</span>,
     {
-        <span class="self">self</span>.<span class="ident">spawn_obj_ok</span>(<span class="ident">FutureObj::new</span>(<span class="ident">Box::new</span>(<span class="ident">future</span>)))
+        <span class="self">self</span>.spawn_obj_ok(FutureObj::new(Box::new(future)))
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Spawn</span> <span class="kw">for</span> <span class="ident">ThreadPool</span> {
-    <span class="kw">fn</span> <span class="ident">spawn_obj</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">future</span>: <span class="ident">FutureObj</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SpawnError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">spawn_obj_ok</span>(<span class="ident">future</span>);
+<span class="kw">impl </span>Spawn <span class="kw">for </span>ThreadPool {
+    <span class="kw">fn </span>spawn_obj(<span class="kw-2">&amp;</span><span class="self">self</span>, future: FutureObj&lt;<span class="lifetime">&#39;static</span>, ()&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), SpawnError&gt; {
+        <span class="self">self</span>.spawn_obj_ok(future);
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PoolState</span> {
-    <span class="kw">fn</span> <span class="ident">send</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">Message</span>) {
-        <span class="self">self</span>.<span class="ident">tx</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">send</span>(<span class="ident">msg</span>).<span class="ident">unwrap</span>();
+<span class="kw">impl </span>PoolState {
+    <span class="kw">fn </span>send(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: Message) {
+        <span class="self">self</span>.tx.lock().unwrap().send(msg).unwrap();
     }
 
-    <span class="kw">fn</span> <span class="ident">work</span>(
+    <span class="kw">fn </span>work(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">idx</span>: <span class="ident">usize</span>,
-        <span class="ident">after_start</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">before_stop</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        idx: usize,
+        after_start: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Fn(usize) + Send + Sync&gt;&gt;,
+        before_stop: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Fn(usize) + Send + Sync&gt;&gt;,
     ) {
-        <span class="kw">let</span> <span class="ident">_scope</span> <span class="op">=</span> <span class="ident">enter</span>().<span class="ident">unwrap</span>();
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">after_start</span>) <span class="op">=</span> <span class="ident">after_start</span> {
-            <span class="ident">after_start</span>(<span class="ident">idx</span>);
+        <span class="kw">let </span>_scope = enter().unwrap();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(after_start) = after_start {
+            after_start(idx);
         }
-        <span class="kw">loop</span> {
-            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">rx</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">recv</span>().<span class="ident">unwrap</span>();
-            <span class="kw">match</span> <span class="ident">msg</span> {
-                <span class="ident">Message::Run</span>(<span class="ident">task</span>) =&gt; <span class="ident">task</span>.<span class="ident">run</span>(),
-                <span class="ident">Message::Close</span> =&gt; <span class="kw">break</span>,
+        <span class="kw">loop </span>{
+            <span class="kw">let </span>msg = <span class="self">self</span>.rx.lock().unwrap().recv().unwrap();
+            <span class="kw">match </span>msg {
+                Message::Run(task) =&gt; task.run(),
+                Message::Close =&gt; <span class="kw">break</span>,
             }
         }
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">before_stop</span>) <span class="op">=</span> <span class="ident">before_stop</span> {
-            <span class="ident">before_stop</span>(<span class="ident">idx</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(before_stop) = before_stop {
+            before_stop(idx);
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">ThreadPool</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">cnt</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>);
-        <span class="self">Self</span> { <span class="ident">state</span>: <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">clone</span>() }
+<span class="kw">impl </span>Clone <span class="kw">for </span>ThreadPool {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.state.cnt.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+        <span class="self">Self </span>{ state: <span class="self">self</span>.state.clone() }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">ThreadPool</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">cnt</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>) <span class="op">==</span> <span class="number">1</span> {
-            <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">state</span>.<span class="ident">size</span> {
-                <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">send</span>(<span class="ident">Message::Close</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>ThreadPool {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if </span><span class="self">self</span>.state.cnt.fetch_sub(<span class="number">1</span>, Ordering::Relaxed) == <span class="number">1 </span>{
+            <span class="kw">for _ in </span><span class="number">0</span>..<span class="self">self</span>.state.size {
+                <span class="self">self</span>.state.send(Message::Close);
             }
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">ThreadPoolBuilder</span> {
-    <span class="doccomment">/// Create a default thread pool configuration.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// See the other methods on this type for details on the defaults.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">pool_size</span>: <span class="ident">cmp::max</span>(<span class="number">1</span>, <span class="ident">num_cpus::get</span>()),
-            <span class="ident">stack_size</span>: <span class="number">0</span>,
-            <span class="ident">name_prefix</span>: <span class="prelude-val">None</span>,
-            <span class="ident">after_start</span>: <span class="prelude-val">None</span>,
-            <span class="ident">before_stop</span>: <span class="prelude-val">None</span>,
+<span class="kw">impl </span>ThreadPoolBuilder {
+    <span class="doccomment">/// Create a default thread pool configuration.
+    ///
+    /// See the other methods on this type for details on the defaults.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            pool_size: cmp::max(<span class="number">1</span>, num_cpus::get()),
+            stack_size: <span class="number">0</span>,
+            name_prefix: <span class="prelude-val">None</span>,
+            after_start: <span class="prelude-val">None</span>,
+            before_stop: <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="doccomment">/// Set size of a future ThreadPool</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The size of a thread pool is the number of worker threads spawned. By</span>
-    <span class="doccomment">/// default, this is equal to the number of CPU cores.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `pool_size == 0`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pool_size</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="macro">assert!</span>(<span class="ident">size</span> <span class="op">&gt;</span> <span class="number">0</span>);
-        <span class="self">self</span>.<span class="ident">pool_size</span> <span class="op">=</span> <span class="ident">size</span>;
-        <span class="self">self</span>
-    }
+    <span class="doccomment">/// Set size of a future ThreadPool
+    ///
+    /// The size of a thread pool is the number of worker threads spawned. By
+    /// default, this is equal to the number of CPU cores.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `pool_size == 0`.
+    </span><span class="kw">pub fn </span>pool_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, size: usize) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="macro">assert!</span>(size &gt; <span class="number">0</span>);
+        <span class="self">self</span>.pool_size = size;
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Set stack size of threads in the pool, in bytes.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// By default, worker threads use Rust&#39;s standard stack size.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stack_size</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">stack_size</span>: <span class="ident">usize</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">stack_size</span> <span class="op">=</span> <span class="ident">stack_size</span>;
-        <span class="self">self</span>
-    }
+    <span class="doccomment">/// Set stack size of threads in the pool, in bytes.
+    ///
+    /// By default, worker threads use Rust&#39;s standard stack size.
+    </span><span class="kw">pub fn </span>stack_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, stack_size: usize) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.stack_size = stack_size;
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Set thread name prefix of a future ThreadPool.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Thread name prefix is used for generating thread names. For example, if prefix is</span>
-    <span class="doccomment">/// `my-pool-`, then threads in the pool will get names like `my-pool-1` etc.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// By default, worker threads are assigned Rust&#39;s standard thread name.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name_prefix</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">name_prefix</span>: <span class="ident">S</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">name_prefix</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">name_prefix</span>.<span class="ident">into</span>());
-        <span class="self">self</span>
-    }
+    <span class="doccomment">/// Set thread name prefix of a future ThreadPool.
+    ///
+    /// Thread name prefix is used for generating thread names. For example, if prefix is
+    /// `my-pool-`, then threads in the pool will get names like `my-pool-1` etc.
+    ///
+    /// By default, worker threads are assigned Rust&#39;s standard thread name.
+    </span><span class="kw">pub fn </span>name_prefix&lt;S: Into&lt;String&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name_prefix: S) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.name_prefix = <span class="prelude-val">Some</span>(name_prefix.into());
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Execute the closure `f` immediately after each worker thread is started,</span>
-    <span class="doccomment">/// but before running any tasks on it.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This hook is intended for bookkeeping and monitoring.</span>
-    <span class="doccomment">/// The closure `f` will be dropped after the `builder` is dropped</span>
-    <span class="doccomment">/// and all worker threads in the pool have executed it.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The closure provided will receive an index corresponding to the worker</span>
-    <span class="doccomment">/// thread it&#39;s running on.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">after_start</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+    <span class="doccomment">/// Execute the closure `f` immediately after each worker thread is started,
+    /// but before running any tasks on it.
+    ///
+    /// This hook is intended for bookkeeping and monitoring.
+    /// The closure `f` will be dropped after the `builder` is dropped
+    /// and all worker threads in the pool have executed it.
+    ///
+    /// The closure provided will receive an index corresponding to the worker
+    /// thread it&#39;s running on.
+    </span><span class="kw">pub fn </span>after_start&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self
+    </span><span class="kw">where
+        </span>F: Fn(usize) + Send + Sync + <span class="lifetime">&#39;static</span>,
     {
-        <span class="self">self</span>.<span class="ident">after_start</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">f</span>));
-        <span class="self">self</span>
-    }
+        <span class="self">self</span>.after_start = <span class="prelude-val">Some</span>(Arc::new(f));
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Execute closure `f` just prior to shutting down each worker thread.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This hook is intended for bookkeeping and monitoring.</span>
-    <span class="doccomment">/// The closure `f` will be dropped after the `builder` is dropped</span>
-    <span class="doccomment">/// and all threads in the pool have executed it.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The closure provided will receive an index corresponding to the worker</span>
-    <span class="doccomment">/// thread it&#39;s running on.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">before_stop</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+    <span class="doccomment">/// Execute closure `f` just prior to shutting down each worker thread.
+    ///
+    /// This hook is intended for bookkeeping and monitoring.
+    /// The closure `f` will be dropped after the `builder` is dropped
+    /// and all threads in the pool have executed it.
+    ///
+    /// The closure provided will receive an index corresponding to the worker
+    /// thread it&#39;s running on.
+    </span><span class="kw">pub fn </span>before_stop&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self
+    </span><span class="kw">where
+        </span>F: Fn(usize) + Send + Sync + <span class="lifetime">&#39;static</span>,
     {
-        <span class="self">self</span>.<span class="ident">before_stop</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">f</span>));
-        <span class="self">self</span>
-    }
+        <span class="self">self</span>.before_stop = <span class="prelude-val">Some</span>(Arc::new(f));
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Create a [`ThreadPool`](ThreadPool) with the given configuration.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ThreadPool</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">rx</span>) <span class="op">=</span> <span class="ident">mpsc::channel</span>();
-        <span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">ThreadPool</span> {
-            <span class="ident">state</span>: <span class="ident">Arc::new</span>(<span class="ident">PoolState</span> {
-                <span class="ident">tx</span>: <span class="ident">Mutex::new</span>(<span class="ident">tx</span>),
-                <span class="ident">rx</span>: <span class="ident">Mutex::new</span>(<span class="ident">rx</span>),
-                <span class="ident">cnt</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">1</span>),
-                <span class="ident">size</span>: <span class="self">self</span>.<span class="ident">pool_size</span>,
+    <span class="doccomment">/// Create a [`ThreadPool`](ThreadPool) with the given configuration.
+    </span><span class="kw">pub fn </span>create(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ThreadPool, io::Error&gt; {
+        <span class="kw">let </span>(tx, rx) = mpsc::channel();
+        <span class="kw">let </span>pool = ThreadPool {
+            state: Arc::new(PoolState {
+                tx: Mutex::new(tx),
+                rx: Mutex::new(rx),
+                cnt: AtomicUsize::new(<span class="number">1</span>),
+                size: <span class="self">self</span>.pool_size,
             }),
         };
 
-        <span class="kw">for</span> <span class="ident">counter</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">pool_size</span> {
-            <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">state</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="ident">after_start</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">after_start</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="ident">before_stop</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">before_stop</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">thread_builder</span> <span class="op">=</span> <span class="ident">thread::Builder::new</span>();
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">name_prefix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">name_prefix</span> {
-                <span class="ident">thread_builder</span> <span class="op">=</span> <span class="ident">thread_builder</span>.<span class="ident">name</span>(<span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="ident">name_prefix</span>, <span class="ident">counter</span>));
+        <span class="kw">for </span>counter <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.pool_size {
+            <span class="kw">let </span>state = pool.state.clone();
+            <span class="kw">let </span>after_start = <span class="self">self</span>.after_start.clone();
+            <span class="kw">let </span>before_stop = <span class="self">self</span>.before_stop.clone();
+            <span class="kw">let </span><span class="kw-2">mut </span>thread_builder = thread::Builder::new();
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>name_prefix) = <span class="self">self</span>.name_prefix {
+                thread_builder = thread_builder.name(<span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, name_prefix, counter));
             }
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">stack_size</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                <span class="ident">thread_builder</span> <span class="op">=</span> <span class="ident">thread_builder</span>.<span class="ident">stack_size</span>(<span class="self">self</span>.<span class="ident">stack_size</span>);
+            <span class="kw">if </span><span class="self">self</span>.stack_size &gt; <span class="number">0 </span>{
+                thread_builder = thread_builder.stack_size(<span class="self">self</span>.stack_size);
             }
-            <span class="ident">thread_builder</span>.<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">state</span>.<span class="ident">work</span>(<span class="ident">counter</span>, <span class="ident">after_start</span>, <span class="ident">before_stop</span>))<span class="question-mark">?</span>;
+            thread_builder.spawn(<span class="kw">move </span>|| state.work(counter, after_start, before_stop))<span class="question-mark">?</span>;
         }
-        <span class="prelude-val">Ok</span>(<span class="ident">pool</span>)
+        <span class="prelude-val">Ok</span>(pool)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ThreadPoolBuilder</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>()
+<span class="kw">impl </span>Default <span class="kw">for </span>ThreadPoolBuilder {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
 }
 
-<span class="doccomment">/// A task responsible for polling a future to completion.</span>
-<span class="kw">struct</span> <span class="ident">Task</span> {
-    <span class="ident">future</span>: <span class="ident">FutureObj</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span>,
-    <span class="ident">exec</span>: <span class="ident">ThreadPool</span>,
-    <span class="ident">wake_handle</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">WakeHandle</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A task responsible for polling a future to completion.
+</span><span class="kw">struct </span>Task {
+    future: FutureObj&lt;<span class="lifetime">&#39;static</span>, ()&gt;,
+    exec: ThreadPool,
+    wake_handle: Arc&lt;WakeHandle&gt;,
 }
 
-<span class="kw">struct</span> <span class="ident">WakeHandle</span> {
-    <span class="ident">mutex</span>: <span class="ident">UnparkMutex</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&gt;</span>,
-    <span class="ident">exec</span>: <span class="ident">ThreadPool</span>,
+<span class="kw">struct </span>WakeHandle {
+    mutex: UnparkMutex&lt;Task&gt;,
+    exec: ThreadPool,
 }
 
-<span class="kw">impl</span> <span class="ident">Task</span> {
-    <span class="doccomment">/// Actually run the task (invoking `poll` on the future) on the current</span>
-    <span class="doccomment">/// thread.</span>
-    <span class="kw">fn</span> <span class="ident">run</span>(<span class="self">self</span>) {
-        <span class="kw">let</span> <span class="self">Self</span> { <span class="kw-2">mut</span> <span class="ident">future</span>, <span class="ident">wake_handle</span>, <span class="kw-2">mut</span> <span class="ident">exec</span> } <span class="op">=</span> <span class="self">self</span>;
-        <span class="kw">let</span> <span class="ident">waker</span> <span class="op">=</span> <span class="ident">waker_ref</span>(<span class="kw-2">&amp;</span><span class="ident">wake_handle</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::from_waker</span>(<span class="kw-2">&amp;</span><span class="ident">waker</span>);
+<span class="kw">impl </span>Task {
+    <span class="doccomment">/// Actually run the task (invoking `poll` on the future) on the current
+    /// thread.
+    </span><span class="kw">fn </span>run(<span class="self">self</span>) {
+        <span class="kw">let </span><span class="self">Self </span>{ <span class="kw-2">mut </span>future, wake_handle, <span class="kw-2">mut </span>exec } = <span class="self">self</span>;
+        <span class="kw">let </span>waker = waker_ref(<span class="kw-2">&amp;</span>wake_handle);
+        <span class="kw">let </span><span class="kw-2">mut </span>cx = Context::from_waker(<span class="kw-2">&amp;</span>waker);
 
-        <span class="comment">// Safety: The ownership of this `Task` object is evidence that</span>
-        <span class="comment">// we are in the `POLLING`/`REPOLL` state for the mutex.</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">wake_handle</span>.<span class="ident">mutex</span>.<span class="ident">start_poll</span>();
+        <span class="comment">// Safety: The ownership of this `Task` object is evidence that
+        // we are in the `POLLING`/`REPOLL` state for the mutex.
+        </span><span class="kw">unsafe </span>{
+            wake_handle.mutex.start_poll();
 
-            <span class="kw">loop</span> {
-                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">future</span>.<span class="ident">poll_unpin</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cx</span>);
-                <span class="kw">match</span> <span class="ident">res</span> {
-                    <span class="ident">Poll::Pending</span> =&gt; {}
-                    <span class="ident">Poll::Ready</span>(()) =&gt; <span class="kw">return</span> <span class="ident">wake_handle</span>.<span class="ident">mutex</span>.<span class="ident">complete</span>(),
+            <span class="kw">loop </span>{
+                <span class="kw">let </span>res = future.poll_unpin(<span class="kw-2">&amp;mut </span>cx);
+                <span class="kw">match </span>res {
+                    Poll::Pending =&gt; {}
+                    Poll::Ready(()) =&gt; <span class="kw">return </span>wake_handle.mutex.complete(),
                 }
-                <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="self">Self</span> { <span class="ident">future</span>, <span class="ident">wake_handle</span>: <span class="ident">wake_handle</span>.<span class="ident">clone</span>(), <span class="ident">exec</span> };
-                <span class="kw">match</span> <span class="ident">wake_handle</span>.<span class="ident">mutex</span>.<span class="ident">wait</span>(<span class="ident">task</span>) {
-                    <span class="prelude-val">Ok</span>(()) =&gt; <span class="kw">return</span>, <span class="comment">// we&#39;ve waited</span>
-                    <span class="prelude-val">Err</span>(<span class="ident">task</span>) =&gt; {
-                        <span class="comment">// someone&#39;s notified us</span>
-                        <span class="ident">future</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">future</span>;
-                        <span class="ident">exec</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">exec</span>;
+                <span class="kw">let </span>task = <span class="self">Self </span>{ future, wake_handle: wake_handle.clone(), exec };
+                <span class="kw">match </span>wake_handle.mutex.wait(task) {
+                    <span class="prelude-val">Ok</span>(()) =&gt; <span class="kw">return</span>, <span class="comment">// we&#39;ve waited
+                    </span><span class="prelude-val">Err</span>(task) =&gt; {
+                        <span class="comment">// someone&#39;s notified us
+                        </span>future = task.future;
+                        exec = task.exec;
                     }
                 }
             }
@@ -718,41 +713,40 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Task</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Task&quot;</span>).<span class="ident">field</span>(<span class="string">&quot;contents&quot;</span>, <span class="kw-2">&amp;</span><span class="string">&quot;...&quot;</span>).<span class="ident">finish</span>()
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Task {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Task&quot;</span>).field(<span class="string">&quot;contents&quot;</span>, <span class="kw-2">&amp;</span><span class="string">&quot;...&quot;</span>).finish()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">ArcWake</span> <span class="kw">for</span> <span class="ident">WakeHandle</span> {
-    <span class="kw">fn</span> <span class="ident">wake_by_ref</span>(<span class="ident">arc_self</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) {
-        <span class="kw">match</span> <span class="ident">arc_self</span>.<span class="ident">mutex</span>.<span class="ident">notify</span>() {
-            <span class="prelude-val">Ok</span>(<span class="ident">task</span>) =&gt; <span class="ident">arc_self</span>.<span class="ident">exec</span>.<span class="ident">state</span>.<span class="ident">send</span>(<span class="ident">Message::Run</span>(<span class="ident">task</span>)),
+<span class="kw">impl </span>ArcWake <span class="kw">for </span>WakeHandle {
+    <span class="kw">fn </span>wake_by_ref(arc_self: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;) {
+        <span class="kw">match </span>arc_self.mutex.notify() {
+            <span class="prelude-val">Ok</span>(task) =&gt; arc_self.exec.state.send(Message::Run(task)),
             <span class="prelude-val">Err</span>(()) =&gt; {}
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">std::sync::mpsc</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>std::sync::mpsc;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_drop_after_start</span>() {
-        <span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">rx</span>) <span class="op">=</span> <span class="ident">mpsc::sync_channel</span>(<span class="number">2</span>);
-        <span class="kw">let</span> <span class="ident">_cpu_pool</span> <span class="op">=</span> <span class="ident">ThreadPoolBuilder::new</span>()
-            .<span class="ident">pool_size</span>(<span class="number">2</span>)
-            .<span class="ident">after_start</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">send</span>(<span class="number">1</span>).<span class="ident">unwrap</span>())
-            .<span class="ident">create</span>()
-            .<span class="ident">unwrap</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_drop_after_start() {
+        <span class="kw">let </span>(tx, rx) = mpsc::sync_channel(<span class="number">2</span>);
+        <span class="kw">let </span>_cpu_pool = ThreadPoolBuilder::new()
+            .pool_size(<span class="number">2</span>)
+            .after_start(<span class="kw">move </span>|<span class="kw">_</span>| tx.send(<span class="number">1</span>).unwrap())
+            .create()
+            .unwrap();
 
-        <span class="comment">// After ThreadPoolBuilder is deconstructed, the tx should be dropped</span>
-        <span class="comment">// so that we can use rx as an iterator.</span>
-        <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">rx</span>.<span class="ident">into_iter</span>().<span class="ident">count</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">count</span>, <span class="number">2</span>);
+        <span class="comment">// After ThreadPoolBuilder is deconstructed, the tx should be dropped
+        // so that we can use rx as an iterator.
+        </span><span class="kw">let </span>count = rx.into_iter().count();
+        <span class="macro">assert_eq!</span>(count, <span class="number">2</span>);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="futures_executor" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="futures_executor" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

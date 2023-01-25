@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["Multihash",""]]});
+window.SIDEBAR_ITEMS = {"derive":[["Multihash",""]]};

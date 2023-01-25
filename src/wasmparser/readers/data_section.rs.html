@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmparser-0.83.0/src/readers/data_section.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>data_section.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../wasmparser/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../wasmparser/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../wasmparser/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmparser-0.83.0/src/readers/data_section.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>data_section.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmparser/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -185,162 +180,161 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */</span>
+ */
 
-<span class="kw">use</span> <span class="kw">super</span>::{
-    <span class="ident">BinaryReader</span>, <span class="ident">BinaryReaderError</span>, <span class="ident">InitExpr</span>, <span class="ident">Range</span>, <span class="prelude-ty">Result</span>, <span class="ident">SectionIteratorLimited</span>,
-    <span class="ident">SectionReader</span>, <span class="ident">SectionWithLimitedItems</span>,
+</span><span class="kw">use super</span>::{
+    BinaryReader, BinaryReaderError, InitExpr, Range, <span class="prelude-ty">Result</span>, SectionIteratorLimited,
+    SectionReader, SectionWithLimitedItems,
 };
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Data</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="ident">kind</span>: <span class="ident">DataKind</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>],
-    <span class="kw">pub</span> <span class="ident">range</span>: <span class="ident">Range</span>,
+<span class="attribute">#[derive(Debug, Copy, Clone)]
+</span><span class="kw">pub struct </span>Data&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub </span>kind: DataKind&lt;<span class="lifetime">&#39;a</span>&gt;,
+    <span class="kw">pub </span>data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
+    <span class="kw">pub </span>range: Range,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DataKind</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">Passive</span>,
-    <span class="ident">Active</span> {
-        <span class="ident">memory_index</span>: <span class="ident">u32</span>,
-        <span class="ident">init_expr</span>: <span class="ident">InitExpr</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Debug, Copy, Clone)]
+</span><span class="kw">pub enum </span>DataKind&lt;<span class="lifetime">&#39;a</span>&gt; {
+    Passive,
+    Active {
+        memory_index: u32,
+        init_expr: InitExpr&lt;<span class="lifetime">&#39;a</span>&gt;,
     },
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DataSectionReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">reader</span>: <span class="ident">BinaryReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">count</span>: <span class="ident">u32</span>,
-    <span class="ident">forbid_bulk_memory</span>: <span class="ident">bool</span>,
+<span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>DataSectionReader&lt;<span class="lifetime">&#39;a</span>&gt; {
+    reader: BinaryReader&lt;<span class="lifetime">&#39;a</span>&gt;,
+    count: u32,
+    forbid_bulk_memory: bool,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">DataSectionReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="ident">offset</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DataSectionReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">BinaryReader::new_with_offset</span>(<span class="ident">data</span>, <span class="ident">offset</span>);
-        <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">reader</span>.<span class="ident">read_var_u32</span>()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">DataSectionReader</span> {
-            <span class="ident">reader</span>,
-            <span class="ident">count</span>,
-            <span class="ident">forbid_bulk_memory</span>: <span class="bool-val">false</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; DataSectionReader&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub fn </span>new(data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], offset: usize) -&gt; <span class="prelude-ty">Result</span>&lt;DataSectionReader&lt;<span class="lifetime">&#39;a</span>&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>reader = BinaryReader::new_with_offset(data, offset);
+        <span class="kw">let </span>count = reader.read_var_u32()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(DataSectionReader {
+            reader,
+            count,
+            forbid_bulk_memory: <span class="bool-val">false</span>,
         })
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">original_position</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">original_position</span>()
+    <span class="kw">pub fn </span>original_position(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.reader.original_position()
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="self">self</span>.<span class="ident">count</span>
+    <span class="kw">pub fn </span>get_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="self">self</span>.count
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">forbid_bulk_memory</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">forbid</span>: <span class="ident">bool</span>) {
-        <span class="self">self</span>.<span class="ident">forbid_bulk_memory</span> <span class="op">=</span> <span class="ident">forbid</span>;
+    <span class="kw">pub fn </span>forbid_bulk_memory(<span class="kw-2">&amp;mut </span><span class="self">self</span>, forbid: bool) {
+        <span class="self">self</span>.forbid_bulk_memory = forbid;
     }
 
-    <span class="kw">fn</span> <span class="ident">verify_data_end</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">end</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">buffer</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">end</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">BinaryReaderError::new</span>(
+    <span class="kw">fn </span>verify_data_end(<span class="kw-2">&amp;</span><span class="self">self</span>, end: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span><span class="self">self</span>.reader.buffer.len() &lt; end {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(BinaryReaderError::new(
                 <span class="string">&quot;Data segment extends past end of the data section&quot;</span>,
-                <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">original_offset</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">buffer</span>.<span class="ident">len</span>(),
+                <span class="self">self</span>.reader.original_offset + <span class="self">self</span>.reader.buffer.len(),
             ));
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Reads content of the data section.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use wasmparser::{DataSectionReader, DataKind};</span>
-    <span class="doccomment">/// # let data: &amp;[u8] = &amp;[</span>
-    <span class="doccomment">/// #     0x01, 0x00, 0x41, 0x80, 0x08, 0x0b, 0x04, 0x00, 0x00, 0x00, 0x00];</span>
-    <span class="doccomment">/// let mut data_reader = DataSectionReader::new(data, 0).unwrap();</span>
-    <span class="doccomment">/// for _ in 0..data_reader.get_count() {</span>
-    <span class="doccomment">///     let data = data_reader.read().expect(&quot;data&quot;);</span>
-    <span class="doccomment">///     println!(&quot;Data: {:?}&quot;, data);</span>
-    <span class="doccomment">///     if let DataKind::Active { init_expr, .. } = data.kind {</span>
-    <span class="doccomment">///         let mut init_expr_reader = init_expr.get_binary_reader();</span>
-    <span class="doccomment">///         let op = init_expr_reader.read_operator().expect(&quot;op&quot;);</span>
-    <span class="doccomment">///         println!(&quot;Init const: {:?}&quot;, op);</span>
-    <span class="doccomment">///     }</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Data</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,
+    <span class="doccomment">/// Reads content of the data section.
+    ///
+    /// # Examples
+    /// ```
+    /// use wasmparser::{DataSectionReader, DataKind};
+    /// # let data: &amp;[u8] = &amp;[
+    /// #     0x01, 0x00, 0x41, 0x80, 0x08, 0x0b, 0x04, 0x00, 0x00, 0x00, 0x00];
+    /// let mut data_reader = DataSectionReader::new(data, 0).unwrap();
+    /// for _ in 0..data_reader.get_count() {
+    ///     let data = data_reader.read().expect(&quot;data&quot;);
+    ///     println!(&quot;Data: {:?}&quot;, data);
+    ///     if let DataKind::Active { init_expr, .. } = data.kind {
+    ///         let mut init_expr_reader = init_expr.get_binary_reader();
+    ///         let op = init_expr_reader.read_operator().expect(&quot;op&quot;);
+    ///         println!(&quot;Init const: {:?}&quot;, op);
+    ///     }
+    /// }
+    /// ```
+    </span><span class="kw">pub fn </span>read&lt;<span class="lifetime">&#39;b</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Data&lt;<span class="lifetime">&#39;b</span>&gt;&gt;
+    <span class="kw">where
+        </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,
     {
-        <span class="kw">let</span> <span class="ident">segment_start</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">original_position</span>();
+        <span class="kw">let </span>segment_start = <span class="self">self</span>.reader.original_position();
 
-        <span class="kw">let</span> <span class="ident">flags</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">read_var_u32</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">forbid_bulk_memory</span> <span class="op">&amp;&amp;</span> <span class="ident">flags</span> <span class="op">==</span> <span class="number">1</span> {
-            <span class="ident">DataKind::Passive</span>
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">memory_index</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">flags</span> {
-                <span class="number">0</span> =&gt; <span class="number">0</span>,
-                <span class="kw">_</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">forbid_bulk_memory</span> =&gt; <span class="ident">flags</span>,
-                <span class="number">2</span> =&gt; <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">read_var_u32</span>()<span class="question-mark">?</span>,
-                <span class="kw">_</span> =&gt; {
-                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">BinaryReaderError::new</span>(
+        <span class="kw">let </span>flags = <span class="self">self</span>.reader.read_var_u32()<span class="question-mark">?</span>;
+        <span class="kw">let </span>kind = <span class="kw">if </span>!<span class="self">self</span>.forbid_bulk_memory &amp;&amp; flags == <span class="number">1 </span>{
+            DataKind::Passive
+        } <span class="kw">else </span>{
+            <span class="kw">let </span>memory_index = <span class="kw">match </span>flags {
+                <span class="number">0 </span>=&gt; <span class="number">0</span>,
+                <span class="kw">_ if </span><span class="self">self</span>.forbid_bulk_memory =&gt; flags,
+                <span class="number">2 </span>=&gt; <span class="self">self</span>.reader.read_var_u32()<span class="question-mark">?</span>,
+                <span class="kw">_ </span>=&gt; {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(BinaryReaderError::new(
                         <span class="string">&quot;invalid flags byte in data segment&quot;</span>,
-                        <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">original_position</span>() <span class="op">-</span> <span class="number">1</span>,
+                        <span class="self">self</span>.reader.original_position() - <span class="number">1</span>,
                     ));
                 }
             };
-            <span class="kw">let</span> <span class="ident">init_expr</span> <span class="op">=</span> {
-                <span class="kw">let</span> <span class="ident">expr_offset</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">position</span>;
-                <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">skip_init_expr</span>()<span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">buffer</span>[<span class="ident">expr_offset</span>..<span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">position</span>];
-                <span class="ident">InitExpr::new</span>(<span class="ident">data</span>, <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">original_offset</span> <span class="op">+</span> <span class="ident">expr_offset</span>)
+            <span class="kw">let </span>init_expr = {
+                <span class="kw">let </span>expr_offset = <span class="self">self</span>.reader.position;
+                <span class="self">self</span>.reader.skip_init_expr()<span class="question-mark">?</span>;
+                <span class="kw">let </span>data = <span class="kw-2">&amp;</span><span class="self">self</span>.reader.buffer[expr_offset..<span class="self">self</span>.reader.position];
+                InitExpr::new(data, <span class="self">self</span>.reader.original_offset + expr_offset)
             };
-            <span class="ident">DataKind::Active</span> {
-                <span class="ident">memory_index</span>,
-                <span class="ident">init_expr</span>,
+            DataKind::Active {
+                memory_index,
+                init_expr,
             }
         };
-        <span class="kw">let</span> <span class="ident">data_len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">read_var_u32</span>()<span class="question-mark">?</span> <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">data_end</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">position</span> <span class="op">+</span> <span class="ident">data_len</span>;
-        <span class="self">self</span>.<span class="ident">verify_data_end</span>(<span class="ident">data_end</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">buffer</span>[<span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">position</span>..<span class="ident">data_end</span>];
-        <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">skip_to</span>(<span class="ident">data_end</span>);
+        <span class="kw">let </span>data_len = <span class="self">self</span>.reader.read_var_u32()<span class="question-mark">? </span><span class="kw">as </span>usize;
+        <span class="kw">let </span>data_end = <span class="self">self</span>.reader.position + data_len;
+        <span class="self">self</span>.verify_data_end(data_end)<span class="question-mark">?</span>;
+        <span class="kw">let </span>data = <span class="kw-2">&amp;</span><span class="self">self</span>.reader.buffer[<span class="self">self</span>.reader.position..data_end];
+        <span class="self">self</span>.reader.skip_to(data_end);
 
-        <span class="kw">let</span> <span class="ident">segment_end</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">original_position</span>();
-        <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">Range::new</span>(<span class="ident">segment_start</span>, <span class="ident">segment_end</span>);
+        <span class="kw">let </span>segment_end = <span class="self">self</span>.reader.original_position();
+        <span class="kw">let </span>range = Range::new(segment_start, segment_end);
 
-        <span class="prelude-val">Ok</span>(<span class="ident">Data</span> { <span class="ident">kind</span>, <span class="ident">data</span>, <span class="ident">range</span> })
+        <span class="prelude-val">Ok</span>(Data { kind, data, range })
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">SectionReader</span> <span class="kw">for</span> <span class="ident">DataSectionReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Data</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="ident">DataSectionReader::read</span>(<span class="self">self</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; SectionReader <span class="kw">for </span>DataSectionReader&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">type </span>Item = Data&lt;<span class="lifetime">&#39;a</span>&gt;;
+    <span class="kw">fn </span>read(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Item&gt; {
+        DataSectionReader::read(<span class="self">self</span>)
     }
-    <span class="kw">fn</span> <span class="ident">eof</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">eof</span>()
+    <span class="kw">fn </span>eof(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.reader.eof()
     }
-    <span class="kw">fn</span> <span class="ident">original_position</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">DataSectionReader::original_position</span>(<span class="self">self</span>)
+    <span class="kw">fn </span>original_position(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        DataSectionReader::original_position(<span class="self">self</span>)
     }
-    <span class="kw">fn</span> <span class="ident">range</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Range</span> {
-        <span class="self">self</span>.<span class="ident">reader</span>.<span class="ident">range</span>()
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">SectionWithLimitedItems</span> <span class="kw">for</span> <span class="ident">DataSectionReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">get_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="ident">DataSectionReader::get_count</span>(<span class="self">self</span>)
+    <span class="kw">fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Range {
+        <span class="self">self</span>.reader.range()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="ident">DataSectionReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Data</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">SectionIteratorLimited</span><span class="op">&lt;</span><span class="ident">DataSectionReader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; SectionWithLimitedItems <span class="kw">for </span>DataSectionReader&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>get_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        DataSectionReader::get_count(<span class="self">self</span>)
+    }
+}
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="ident">SectionIteratorLimited::new</span>(<span class="self">self</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; IntoIterator <span class="kw">for </span>DataSectionReader&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;Data&lt;<span class="lifetime">&#39;a</span>&gt;&gt;;
+    <span class="kw">type </span>IntoIter = SectionIteratorLimited&lt;DataSectionReader&lt;<span class="lifetime">&#39;a</span>&gt;&gt;;
+
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        SectionIteratorLimited::new(<span class="self">self</span>)
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmparser" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmparser" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

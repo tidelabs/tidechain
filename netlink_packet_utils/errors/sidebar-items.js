@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DecodeError",""],["EncodeError",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["DecodeError",""],["EncodeError",""]]};

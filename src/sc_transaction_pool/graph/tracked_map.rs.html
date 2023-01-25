@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/tracked_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>tracked_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/tracked_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>tracked_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -177,180 +172,179 @@
 <span id="172">172</span>
 <span id="173">173</span>
 <span id="174">174</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="ident">parking_lot</span>::{<span class="ident">RwLock</span>, <span class="ident">RwLockReadGuard</span>, <span class="ident">RwLockWriteGuard</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">collections::HashMap</span>,
-	<span class="ident">sync</span>::{
-		<span class="ident">atomic</span>::{<span class="ident">AtomicIsize</span>, <span class="ident">Ordering</span> <span class="kw">as</span> <span class="ident">AtomicOrdering</span>},
-		<span class="ident">Arc</span>,
+</span><span class="kw">use </span>parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+<span class="kw">use </span>std::{
+	collections::HashMap,
+	sync::{
+		atomic::{AtomicIsize, Ordering <span class="kw">as </span>AtomicOrdering},
+		Arc,
 	},
 };
 
-<span class="doccomment">/// Something that can report its size.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Size</span> {
-	<span class="kw">fn</span> <span class="ident">size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span>;
+<span class="doccomment">/// Something that can report its size.
+</span><span class="kw">pub trait </span>Size {
+	<span class="kw">fn </span>size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
 }
 
-<span class="doccomment">/// Map with size tracking.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Size reported might be slightly off and only approximately true.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">parity_util_mem::MallocSizeOf</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrackedMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="ident">index</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">bytes</span>: <span class="ident">AtomicIsize</span>,
-	<span class="ident">length</span>: <span class="ident">AtomicIsize</span>,
+<span class="doccomment">/// Map with size tracking.
+///
+/// Size reported might be slightly off and only approximately true.
+</span><span class="attribute">#[derive(Debug, parity_util_mem::MallocSizeOf)]
+</span><span class="kw">pub struct </span>TrackedMap&lt;K, V&gt; {
+	index: Arc&lt;RwLock&lt;HashMap&lt;K, V&gt;&gt;&gt;,
+	bytes: AtomicIsize,
+	length: AtomicIsize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TrackedMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">index</span>: <span class="ident">Arc::new</span>(<span class="ident">HashMap::default</span>().<span class="ident">into</span>()), <span class="ident">bytes</span>: <span class="number">0</span>.<span class="ident">into</span>(), <span class="ident">length</span>: <span class="number">0</span>.<span class="ident">into</span>() }
+<span class="kw">impl</span>&lt;K, V&gt; Default <span class="kw">for </span>TrackedMap&lt;K, V&gt; {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ index: Arc::new(HashMap::default().into()), bytes: <span class="number">0</span>.into(), length: <span class="number">0</span>.into() }
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">TrackedMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Current tracked length of the content.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-		<span class="ident">std::cmp::max</span>(<span class="self">self</span>.<span class="ident">length</span>.<span class="ident">load</span>(<span class="ident">AtomicOrdering::Relaxed</span>), <span class="number">0</span>) <span class="kw">as</span> <span class="ident">usize</span>
+<span class="kw">impl</span>&lt;K, V&gt; TrackedMap&lt;K, V&gt; {
+	<span class="doccomment">/// Current tracked length of the content.
+	</span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+		std::cmp::max(<span class="self">self</span>.length.load(AtomicOrdering::Relaxed), <span class="number">0</span>) <span class="kw">as </span>usize
 	}
 
-	<span class="doccomment">/// Current sum of content length.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-		<span class="ident">std::cmp::max</span>(<span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">load</span>(<span class="ident">AtomicOrdering::Relaxed</span>), <span class="number">0</span>) <span class="kw">as</span> <span class="ident">usize</span>
+	<span class="doccomment">/// Current sum of content length.
+	</span><span class="kw">pub fn </span>bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+		std::cmp::max(<span class="self">self</span>.bytes.load(AtomicOrdering::Relaxed), <span class="number">0</span>) <span class="kw">as </span>usize
 	}
 
-	<span class="doccomment">/// Lock map for read.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">TrackedMapReadAccess</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="ident">TrackedMapReadAccess</span> { <span class="ident">inner_guard</span>: <span class="self">self</span>.<span class="ident">index</span>.<span class="ident">read</span>() }
+	<span class="doccomment">/// Lock map for read.
+	</span><span class="kw">pub fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TrackedMapReadAccess&lt;K, V&gt; {
+		TrackedMapReadAccess { inner_guard: <span class="self">self</span>.index.read() }
 	}
 
-	<span class="doccomment">/// Lock map for write.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">TrackedMapWriteAccess</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="ident">TrackedMapWriteAccess</span> {
-			<span class="ident">inner_guard</span>: <span class="self">self</span>.<span class="ident">index</span>.<span class="ident">write</span>(),
-			<span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>,
-			<span class="ident">length</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">length</span>,
+	<span class="doccomment">/// Lock map for write.
+	</span><span class="kw">pub fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TrackedMapWriteAccess&lt;K, V&gt; {
+		TrackedMapWriteAccess {
+			inner_guard: <span class="self">self</span>.index.write(),
+			bytes: <span class="kw-2">&amp;</span><span class="self">self</span>.bytes,
+			length: <span class="kw-2">&amp;</span><span class="self">self</span>.length,
 		}
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">Clone</span>, <span class="ident">V</span>: <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">TrackedMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Clone the inner map.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clone_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">index</span>.<span class="ident">read</span>().<span class="ident">clone</span>()
+<span class="kw">impl</span>&lt;K: Clone, V: Clone&gt; TrackedMap&lt;K, V&gt; {
+	<span class="doccomment">/// Clone the inner map.
+	</span><span class="kw">pub fn </span>clone_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HashMap&lt;K, V&gt; {
+		<span class="self">self</span>.index.read().clone()
 	}
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrackedMapReadAccess</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="ident">inner_guard</span>: <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">pub struct </span>TrackedMapReadAccess&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+	inner_guard: RwLockReadGuard&lt;<span class="lifetime">&#39;a</span>, HashMap&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">TrackedMapReadAccess</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">std::hash::Hash</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; TrackedMapReadAccess&lt;<span class="lifetime">&#39;a</span>, K, V&gt;
+<span class="kw">where
+	</span>K: Eq + std::hash::Hash,
 {
-	<span class="doccomment">/// Returns true if map contains key.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">inner_guard</span>.<span class="ident">contains_key</span>(<span class="ident">key</span>)
+	<span class="doccomment">/// Returns true if map contains key.
+	</span><span class="kw">pub fn </span>contains_key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; bool {
+		<span class="self">self</span>.inner_guard.contains_key(key)
 	}
 
-	<span class="doccomment">/// Returns reference to the contained value by key, if exists.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">inner_guard</span>.<span class="ident">get</span>(<span class="ident">key</span>)
+	<span class="doccomment">/// Returns reference to the contained value by key, if exists.
+	</span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
+		<span class="self">self</span>.inner_guard.get(key)
 	}
 
-	<span class="doccomment">/// Returns iterator over all values.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">values</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">std::collections::hash_map::Values</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">inner_guard</span>.<span class="ident">values</span>()
+	<span class="doccomment">/// Returns iterator over all values.
+	</span><span class="kw">pub fn </span>values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::collections::hash_map::Values&lt;K, V&gt; {
+		<span class="self">self</span>.inner_guard.values()
 	}
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrackedMapWriteAccess</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-	<span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">AtomicIsize</span>,
-	<span class="ident">length</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">AtomicIsize</span>,
-	<span class="ident">inner_guard</span>: <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">pub struct </span>TrackedMapWriteAccess&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+	bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AtomicIsize,
+	length: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AtomicIsize,
+	inner_guard: RwLockWriteGuard&lt;<span class="lifetime">&#39;a</span>, HashMap&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">TrackedMapWriteAccess</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">K</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">std::hash::Hash</span>,
-	<span class="ident">V</span>: <span class="ident">Size</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; TrackedMapWriteAccess&lt;<span class="lifetime">&#39;a</span>, K, V&gt;
+<span class="kw">where
+	</span>K: Eq + std::hash::Hash,
+	V: Size,
 {
-	<span class="doccomment">/// Insert value and return previous (if any).</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">K</span>, <span class="ident">val</span>: <span class="ident">V</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">new_bytes</span> <span class="op">=</span> <span class="ident">val</span>.<span class="ident">size</span>();
-		<span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">fetch_add</span>(<span class="ident">new_bytes</span> <span class="kw">as</span> <span class="ident">isize</span>, <span class="ident">AtomicOrdering::Relaxed</span>);
-		<span class="self">self</span>.<span class="ident">length</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">AtomicOrdering::Relaxed</span>);
-		<span class="self">self</span>.<span class="ident">inner_guard</span>.<span class="ident">insert</span>(<span class="ident">key</span>, <span class="ident">val</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">old_val</span><span class="op">|</span> {
-			<span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">fetch_sub</span>(<span class="ident">old_val</span>.<span class="ident">size</span>() <span class="kw">as</span> <span class="ident">isize</span>, <span class="ident">AtomicOrdering::Relaxed</span>);
-			<span class="self">self</span>.<span class="ident">length</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">AtomicOrdering::Relaxed</span>);
-			<span class="ident">old_val</span>
+	<span class="doccomment">/// Insert value and return previous (if any).
+	</span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K, val: V) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt; {
+		<span class="kw">let </span>new_bytes = val.size();
+		<span class="self">self</span>.bytes.fetch_add(new_bytes <span class="kw">as </span>isize, AtomicOrdering::Relaxed);
+		<span class="self">self</span>.length.fetch_add(<span class="number">1</span>, AtomicOrdering::Relaxed);
+		<span class="self">self</span>.inner_guard.insert(key, val).map(|old_val| {
+			<span class="self">self</span>.bytes.fetch_sub(old_val.size() <span class="kw">as </span>isize, AtomicOrdering::Relaxed);
+			<span class="self">self</span>.length.fetch_sub(<span class="number">1</span>, AtomicOrdering::Relaxed);
+			old_val
 		})
 	}
 
-	<span class="doccomment">/// Remove value by key.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner_guard</span>.<span class="ident">remove</span>(<span class="ident">key</span>);
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">size</span>) <span class="op">=</span> <span class="ident">val</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="ident">Size::size</span>) {
-			<span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">fetch_sub</span>(<span class="ident">size</span> <span class="kw">as</span> <span class="ident">isize</span>, <span class="ident">AtomicOrdering::Relaxed</span>);
-			<span class="self">self</span>.<span class="ident">length</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">AtomicOrdering::Relaxed</span>);
+	<span class="doccomment">/// Remove value by key.
+	</span><span class="kw">pub fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt; {
+		<span class="kw">let </span>val = <span class="self">self</span>.inner_guard.remove(key);
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(size) = val.as_ref().map(Size::size) {
+			<span class="self">self</span>.bytes.fetch_sub(size <span class="kw">as </span>isize, AtomicOrdering::Relaxed);
+			<span class="self">self</span>.length.fetch_sub(<span class="number">1</span>, AtomicOrdering::Relaxed);
 		}
-		<span class="ident">val</span>
+		val
 	}
 
-	<span class="doccomment">/// Returns mutable reference to the contained value by key, if exists.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">V</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">inner_guard</span>.<span class="ident">get_mut</span>(<span class="ident">key</span>)
+	<span class="doccomment">/// Returns mutable reference to the contained value by key, if exists.
+	</span><span class="kw">pub fn </span>get_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>V&gt; {
+		<span class="self">self</span>.inner_guard.get_mut(key)
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
 
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-	<span class="kw">impl</span> <span class="ident">Size</span> <span class="kw">for</span> <span class="ident">i32</span> {
-		<span class="kw">fn</span> <span class="ident">size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-			<span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">/</span> <span class="number">10</span>
-		}
+	<span class="kw">impl </span>Size <span class="kw">for </span>i32 {
+		<span class="kw">fn </span>size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+			<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize / <span class="number">10
+		</span>}
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">basic</span>() {
-		<span class="kw">let</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">TrackedMap::default</span>();
-		<span class="ident">map</span>.<span class="ident">write</span>().<span class="ident">insert</span>(<span class="number">5</span>, <span class="number">10</span>);
-		<span class="ident">map</span>.<span class="ident">write</span>().<span class="ident">insert</span>(<span class="number">6</span>, <span class="number">20</span>);
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>basic() {
+		<span class="kw">let </span>map = TrackedMap::default();
+		map.write().insert(<span class="number">5</span>, <span class="number">10</span>);
+		map.write().insert(<span class="number">6</span>, <span class="number">20</span>);
 
-		<span class="macro">assert_eq!</span>(<span class="ident">map</span>.<span class="ident">bytes</span>(), <span class="number">3</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">map</span>.<span class="ident">len</span>(), <span class="number">2</span>);
+		<span class="macro">assert_eq!</span>(map.bytes(), <span class="number">3</span>);
+		<span class="macro">assert_eq!</span>(map.len(), <span class="number">2</span>);
 
-		<span class="ident">map</span>.<span class="ident">write</span>().<span class="ident">insert</span>(<span class="number">6</span>, <span class="number">30</span>);
+		map.write().insert(<span class="number">6</span>, <span class="number">30</span>);
 
-		<span class="macro">assert_eq!</span>(<span class="ident">map</span>.<span class="ident">bytes</span>(), <span class="number">4</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">map</span>.<span class="ident">len</span>(), <span class="number">2</span>);
+		<span class="macro">assert_eq!</span>(map.bytes(), <span class="number">4</span>);
+		<span class="macro">assert_eq!</span>(map.len(), <span class="number">2</span>);
 
-		<span class="ident">map</span>.<span class="ident">write</span>().<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="number">6</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">map</span>.<span class="ident">bytes</span>(), <span class="number">1</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident">map</span>.<span class="ident">len</span>(), <span class="number">1</span>);
+		map.write().remove(<span class="kw-2">&amp;</span><span class="number">6</span>);
+		<span class="macro">assert_eq!</span>(map.bytes(), <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(map.len(), <span class="number">1</span>);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

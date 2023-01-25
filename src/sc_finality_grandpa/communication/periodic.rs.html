@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/finality-grandpa/src/communication/periodic.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>periodic.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_finality_grandpa/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_finality_grandpa/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_finality_grandpa/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/finality-grandpa/src/communication/periodic.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>periodic.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_finality_grandpa/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -118,121 +113,120 @@
 <span id="113">113</span>
 <span id="114">114</span>
 <span id="115">115</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Periodic rebroadcast of neighbor packets.</span>
+</span><span class="doccomment">//! Periodic rebroadcast of neighbor packets.
 
-<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">future::FutureExt</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">ready</span>, <span class="ident">stream::Stream</span>};
-<span class="kw">use</span> <span class="ident">futures_timer::Delay</span>;
-<span class="kw">use</span> <span class="ident">log::debug</span>;
-<span class="kw">use</span> <span class="ident">sc_utils::mpsc</span>::{<span class="ident">tracing_unbounded</span>, <span class="ident">TracingUnboundedReceiver</span>, <span class="ident">TracingUnboundedSender</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">pin::Pin</span>,
-	<span class="ident">task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>},
-	<span class="ident">time::Duration</span>,
+</span><span class="kw">use </span>futures::{future::FutureExt <span class="kw">as _</span>, prelude::<span class="kw-2">*</span>, ready, stream::Stream};
+<span class="kw">use </span>futures_timer::Delay;
+<span class="kw">use </span>log::debug;
+<span class="kw">use </span>sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
+<span class="kw">use </span>std::{
+	pin::Pin,
+	task::{Context, Poll},
+	time::Duration,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::gossip</span>::{<span class="ident">GossipMessage</span>, <span class="ident">NeighborPacket</span>};
-<span class="kw">use</span> <span class="ident">sc_network::PeerId</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime::traits</span>::{<span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>, <span class="ident">NumberFor</span>};
+<span class="kw">use </span><span class="kw">super</span>::gossip::{GossipMessage, NeighborPacket};
+<span class="kw">use </span>sc_network::PeerId;
+<span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, NumberFor};
 
-<span class="comment">// How often to rebroadcast, in cases where no new packets are created.</span>
-<span class="kw">const</span> <span class="ident">REBROADCAST_AFTER</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">2</span> <span class="op">*</span> <span class="number">60</span>);
+<span class="comment">// How often to rebroadcast, in cases where no new packets are created.
+</span><span class="kw">const </span>REBROADCAST_AFTER: Duration = Duration::from_secs(<span class="number">2 </span>* <span class="number">60</span>);
 
-<span class="doccomment">/// A sender used to send neighbor packets to a background job.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">NeighborPacketSender</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span>(
-	<span class="ident">TracingUnboundedSender</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PeerId</span><span class="op">&gt;</span>, <span class="ident">NeighborPacket</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+<span class="doccomment">/// A sender used to send neighbor packets to a background job.
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>NeighborPacketSender&lt;B: BlockT&gt;(
+	TracingUnboundedSender&lt;(Vec&lt;PeerId&gt;, NeighborPacket&lt;NumberFor&lt;B&gt;&gt;)&gt;,
 );
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">NeighborPacketSender</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Send a neighbor packet for the background worker to gossip to peers.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">send</span>(
+<span class="kw">impl</span>&lt;B: BlockT&gt; NeighborPacketSender&lt;B&gt; {
+	<span class="doccomment">/// Send a neighbor packet for the background worker to gossip to peers.
+	</span><span class="kw">pub fn </span>send(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">who</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">sc_network::PeerId</span><span class="op">&gt;</span>,
-		<span class="ident">neighbor_packet</span>: <span class="ident">NeighborPacket</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+		who: Vec&lt;sc_network::PeerId&gt;,
+		neighbor_packet: NeighborPacket&lt;NumberFor&lt;B&gt;&gt;,
 	) {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">unbounded_send</span>((<span class="ident">who</span>, <span class="ident">neighbor_packet</span>)) {
-			<span class="macro">debug!</span>(<span class="ident">target</span>: <span class="string">&quot;afg&quot;</span>, <span class="string">&quot;Failed to send neighbor packet: {:?}&quot;</span>, <span class="ident">err</span>);
+		<span class="kw">if let </span><span class="prelude-val">Err</span>(err) = <span class="self">self</span>.<span class="number">0</span>.unbounded_send((who, neighbor_packet)) {
+			<span class="macro">debug!</span>(target: <span class="string">&quot;afg&quot;</span>, <span class="string">&quot;Failed to send neighbor packet: {:?}&quot;</span>, err);
 		}
 	}
 }
 
-<span class="doccomment">/// NeighborPacketWorker is listening on a channel for new neighbor packets being produced by</span>
-<span class="doccomment">/// components within `finality-grandpa` and forwards those packets to the underlying</span>
-<span class="doccomment">/// `NetworkEngine` through the `NetworkBridge` that it is being polled by (see `Stream`</span>
-<span class="doccomment">/// implementation). Periodically it sends out the last packet in cases where no new ones arrive.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">NeighborPacketWorker</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> {
-	<span class="ident">last</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PeerId</span><span class="op">&gt;</span>, <span class="ident">NeighborPacket</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
-	<span class="ident">delay</span>: <span class="ident">Delay</span>,
-	<span class="ident">rx</span>: <span class="ident">TracingUnboundedReceiver</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PeerId</span><span class="op">&gt;</span>, <span class="ident">NeighborPacket</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+<span class="doccomment">/// NeighborPacketWorker is listening on a channel for new neighbor packets being produced by
+/// components within `finality-grandpa` and forwards those packets to the underlying
+/// `NetworkEngine` through the `NetworkBridge` that it is being polled by (see `Stream`
+/// implementation). Periodically it sends out the last packet in cases where no new ones arrive.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>NeighborPacketWorker&lt;B: BlockT&gt; {
+	last: <span class="prelude-ty">Option</span>&lt;(Vec&lt;PeerId&gt;, NeighborPacket&lt;NumberFor&lt;B&gt;&gt;)&gt;,
+	delay: Delay,
+	rx: TracingUnboundedReceiver&lt;(Vec&lt;PeerId&gt;, NeighborPacket&lt;NumberFor&lt;B&gt;&gt;)&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">Unpin</span> <span class="kw">for</span> <span class="ident">NeighborPacketWorker</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {}
+<span class="kw">impl</span>&lt;B: BlockT&gt; Unpin <span class="kw">for </span>NeighborPacketWorker&lt;B&gt; {}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">NeighborPacketWorker</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>() -&gt; (<span class="self">Self</span>, <span class="ident">NeighborPacketSender</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">rx</span>) <span class="op">=</span> <span class="ident">tracing_unbounded</span>::<span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PeerId</span><span class="op">&gt;</span>, <span class="ident">NeighborPacket</span><span class="op">&lt;</span><span class="ident">NumberFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>)<span class="op">&gt;</span>(
+<span class="kw">impl</span>&lt;B: BlockT&gt; NeighborPacketWorker&lt;B&gt; {
+	<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new() -&gt; (<span class="self">Self</span>, NeighborPacketSender&lt;B&gt;) {
+		<span class="kw">let </span>(tx, rx) = tracing_unbounded::&lt;(Vec&lt;PeerId&gt;, NeighborPacket&lt;NumberFor&lt;B&gt;&gt;)&gt;(
 			<span class="string">&quot;mpsc_grandpa_neighbor_packet_worker&quot;</span>,
 		);
-		<span class="kw">let</span> <span class="ident">delay</span> <span class="op">=</span> <span class="ident">Delay::new</span>(<span class="ident">REBROADCAST_AFTER</span>);
+		<span class="kw">let </span>delay = Delay::new(REBROADCAST_AFTER);
 
-		(<span class="ident">NeighborPacketWorker</span> { <span class="ident">last</span>: <span class="prelude-val">None</span>, <span class="ident">delay</span>, <span class="ident">rx</span> }, <span class="ident">NeighborPacketSender</span>(<span class="ident">tx</span>))
+		(NeighborPacketWorker { last: <span class="prelude-val">None</span>, delay, rx }, NeighborPacketSender(tx))
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BlockT</span><span class="op">&gt;</span> <span class="ident">Stream</span> <span class="kw">for</span> <span class="ident">NeighborPacketWorker</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PeerId</span><span class="op">&gt;</span>, <span class="ident">GossipMessage</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>);
+<span class="kw">impl</span>&lt;B: BlockT&gt; Stream <span class="kw">for </span>NeighborPacketWorker&lt;B&gt; {
+	<span class="kw">type </span>Item = (Vec&lt;PeerId&gt;, GossipMessage&lt;B&gt;);
 
-	<span class="kw">fn</span> <span class="ident">poll_next</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="self">self</span>;
-		<span class="kw">match</span> <span class="ident">this</span>.<span class="ident">rx</span>.<span class="ident">poll_next_unpin</span>(<span class="ident">cx</span>) {
-			<span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>),
-			<span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>((<span class="ident">to</span>, <span class="ident">packet</span>))) =&gt; {
-				<span class="ident">this</span>.<span class="ident">delay</span>.<span class="ident">reset</span>(<span class="ident">REBROADCAST_AFTER</span>);
-				<span class="ident">this</span>.<span class="ident">last</span> <span class="op">=</span> <span class="prelude-val">Some</span>((<span class="ident">to</span>.<span class="ident">clone</span>(), <span class="ident">packet</span>.<span class="ident">clone</span>()));
+	<span class="kw">fn </span>poll_next(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context) -&gt; Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
+		<span class="kw">let </span>this = <span class="kw-2">&amp;mut *</span><span class="self">self</span>;
+		<span class="kw">match </span>this.rx.poll_next_unpin(cx) {
+			Poll::Ready(<span class="prelude-val">None</span>) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">None</span>),
+			Poll::Ready(<span class="prelude-val">Some</span>((to, packet))) =&gt; {
+				this.delay.reset(REBROADCAST_AFTER);
+				this.last = <span class="prelude-val">Some</span>((to.clone(), packet.clone()));
 
-				<span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>((<span class="ident">to</span>, <span class="ident">GossipMessage</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="ident">::from</span>(<span class="ident">packet</span>))))
+				<span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>((to, GossipMessage::&lt;B&gt;::from(packet))))
 			},
-			<span class="comment">// Don&#39;t return yet, maybe the timer fired.</span>
-			<span class="ident">Poll::Pending</span> =&gt; {},
+			<span class="comment">// Don&#39;t return yet, maybe the timer fired.
+			</span>Poll::Pending =&gt; {},
 		};
 
-		<span class="macro">ready!</span>(<span class="ident">this</span>.<span class="ident">delay</span>.<span class="ident">poll_unpin</span>(<span class="ident">cx</span>));
+		<span class="macro">ready!</span>(this.delay.poll_unpin(cx));
 
-		<span class="comment">// Getting this far here implies that the timer fired.</span>
+		<span class="comment">// Getting this far here implies that the timer fired.
 
-		<span class="ident">this</span>.<span class="ident">delay</span>.<span class="ident">reset</span>(<span class="ident">REBROADCAST_AFTER</span>);
+		</span>this.delay.reset(REBROADCAST_AFTER);
 
-		<span class="comment">// Make sure the underlying task is scheduled for wake-up.</span>
-		<span class="comment">//</span>
-		<span class="comment">// Note: In case poll_unpin is called after the resetted delay fires again, this</span>
-		<span class="comment">// will drop one tick. Deemed as very unlikely and also not critical.</span>
-		<span class="kw">while</span> <span class="kw">let</span> <span class="ident">Poll::Ready</span>(()) <span class="op">=</span> <span class="ident">this</span>.<span class="ident">delay</span>.<span class="ident">poll_unpin</span>(<span class="ident">cx</span>) {}
+		<span class="comment">// Make sure the underlying task is scheduled for wake-up.
+		//
+		// Note: In case poll_unpin is called after the resetted delay fires again, this
+		// will drop one tick. Deemed as very unlikely and also not critical.
+		</span><span class="kw">while let </span>Poll::Ready(()) = this.delay.poll_unpin(cx) {}
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw-2">ref</span> <span class="ident">to</span>, <span class="kw-2">ref</span> <span class="ident">packet</span>)) <span class="op">=</span> <span class="ident">this</span>.<span class="ident">last</span> {
-			<span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>((<span class="ident">to</span>.<span class="ident">clone</span>(), <span class="ident">GossipMessage</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="ident">::from</span>(<span class="ident">packet</span>.<span class="ident">clone</span>()))))
+		<span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw-2">ref </span>to, <span class="kw-2">ref </span>packet)) = this.last {
+			<span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>((to.clone(), GossipMessage::&lt;B&gt;::from(packet.clone()))))
 		}
 
-		<span class="ident">Poll::Pending</span>
+		Poll::Pending
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_finality_grandpa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_finality_grandpa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

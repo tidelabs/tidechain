@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["getrandom","`getrandom(buf, flags)`—Reads a sequence of random bytes."]],"struct":[["GetRandomFlags","`GRND_*` flags for use with `getrandom`."]]});
+window.SIDEBAR_ITEMS = {"fn":[["getrandom","`getrandom(buf, flags)`—Reads a sequence of random bytes."]],"struct":[["GetRandomFlags","`GRND_*` flags for use with `getrandom`."]]};

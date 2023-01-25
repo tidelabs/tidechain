@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/staking/src/inflation.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>inflation.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../pallet_staking/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../pallet_staking/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../pallet_staking/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/frame/staking/src/inflation.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>inflation.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../pallet_staking/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -111,114 +106,113 @@
 <span id="106">106</span>
 <span id="107">107</span>
 <span id="108">108</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! This module expose one function `P_NPoS` (Payout NPoS) or `compute_total_payout` which returns</span>
-<span class="doccomment">//! the total payout for the era given the era duration and the staking rate in NPoS.</span>
-<span class="doccomment">//! The staking rate in NPoS is the total amount of tokens staked by nominators and validators,</span>
-<span class="doccomment">//! divided by the total token supply.</span>
+</span><span class="doccomment">//! This module expose one function `P_NPoS` (Payout NPoS) or `compute_total_payout` which returns
+//! the total payout for the era given the era duration and the staking rate in NPoS.
+//! The staking rate in NPoS is the total amount of tokens staked by nominators and validators,
+//! divided by the total token supply.
 
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{<span class="ident">curve::PiecewiseLinear</span>, <span class="ident">traits::AtLeast32BitUnsigned</span>, <span class="ident">Perbill</span>};
+</span><span class="kw">use </span>sp_runtime::{curve::PiecewiseLinear, traits::AtLeast32BitUnsigned, Perbill};
 
-<span class="doccomment">/// The total payout to all validators (and their nominators) per era and maximum payout.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Defined as such:</span>
-<span class="doccomment">/// `staker-payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens /</span>
-<span class="doccomment">/// era_per_year` `maximum-payout = max_yearly_inflation * total_tokens / era_per_year`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `era_duration` is expressed in millisecond.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compute_total_payout</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>(
-	<span class="ident">yearly_inflation</span>: <span class="kw-2">&amp;</span><span class="ident">PiecewiseLinear</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span>,
-	<span class="ident">npos_token_staked</span>: <span class="ident">N</span>,
-	<span class="ident">total_tokens</span>: <span class="ident">N</span>,
-	<span class="ident">era_duration</span>: <span class="ident">u64</span>,
-) -&gt; (<span class="ident">N</span>, <span class="ident">N</span>)
-<span class="kw">where</span>
-	<span class="ident">N</span>: <span class="ident">AtLeast32BitUnsigned</span> <span class="op">+</span> <span class="ident">Clone</span>,
+<span class="doccomment">/// The total payout to all validators (and their nominators) per era and maximum payout.
+///
+/// Defined as such:
+/// `staker-payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens /
+/// era_per_year` `maximum-payout = max_yearly_inflation * total_tokens / era_per_year`
+///
+/// `era_duration` is expressed in millisecond.
+</span><span class="kw">pub fn </span>compute_total_payout&lt;N&gt;(
+	yearly_inflation: <span class="kw-2">&amp;</span>PiecewiseLinear&lt;<span class="lifetime">&#39;static</span>&gt;,
+	npos_token_staked: N,
+	total_tokens: N,
+	era_duration: u64,
+) -&gt; (N, N)
+<span class="kw">where
+	</span>N: AtLeast32BitUnsigned + Clone,
 {
-	<span class="comment">// Milliseconds per year for the Julian year (365.25 days).</span>
-	<span class="kw">const</span> <span class="ident">MILLISECONDS_PER_YEAR</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">1000</span> <span class="op">*</span> <span class="number">3600</span> <span class="op">*</span> <span class="number">24</span> <span class="op">*</span> <span class="number">36525</span> <span class="op">/</span> <span class="number">100</span>;
+	<span class="comment">// Milliseconds per year for the Julian year (365.25 days).
+	</span><span class="kw">const </span>MILLISECONDS_PER_YEAR: u64 = <span class="number">1000 </span>* <span class="number">3600 </span>* <span class="number">24 </span>* <span class="number">36525 </span>/ <span class="number">100</span>;
 
-	<span class="kw">let</span> <span class="ident">portion</span> <span class="op">=</span> <span class="ident">Perbill::from_rational</span>(<span class="ident">era_duration</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">MILLISECONDS_PER_YEAR</span>);
-	<span class="kw">let</span> <span class="ident">payout</span> <span class="op">=</span> <span class="ident">portion</span> <span class="op">*</span>
-		<span class="ident">yearly_inflation</span>
-			.<span class="ident">calculate_for_fraction_times_denominator</span>(<span class="ident">npos_token_staked</span>, <span class="ident">total_tokens</span>.<span class="ident">clone</span>());
-	<span class="kw">let</span> <span class="ident">maximum</span> <span class="op">=</span> <span class="ident">portion</span> <span class="op">*</span> (<span class="ident">yearly_inflation</span>.<span class="ident">maximum</span> <span class="op">*</span> <span class="ident">total_tokens</span>);
-	(<span class="ident">payout</span>, <span class="ident">maximum</span>)
+	<span class="kw">let </span>portion = Perbill::from_rational(era_duration <span class="kw">as </span>u64, MILLISECONDS_PER_YEAR);
+	<span class="kw">let </span>payout = portion *
+		yearly_inflation
+			.calculate_for_fraction_times_denominator(npos_token_staked, total_tokens.clone());
+	<span class="kw">let </span>maximum = portion * (yearly_inflation.maximum * total_tokens);
+	(payout, maximum)
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-	<span class="kw">use</span> <span class="ident">sp_runtime::curve::PiecewiseLinear</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+	<span class="kw">use </span>sp_runtime::curve::PiecewiseLinear;
 
-	<span class="macro">pallet_staking_reward_curve::build!</span> {
-		<span class="kw">const</span> <span class="ident">I_NPOS</span>: <span class="ident">PiecewiseLinear</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">curve!</span>(
-			<span class="ident">min_inflation</span>: <span class="number">0_025_000</span>,
-			<span class="ident">max_inflation</span>: <span class="number">0_100_000</span>,
-			<span class="ident">ideal_stake</span>: <span class="number">0_500_000</span>,
-			<span class="ident">falloff</span>: <span class="number">0_050_000</span>,
-			<span class="ident">max_piece_count</span>: <span class="number">40</span>,
-			<span class="ident">test_precision</span>: <span class="number">0_005_000</span>,
+	<span class="macro">pallet_staking_reward_curve::build! </span>{
+		<span class="kw">const </span>I_NPOS: PiecewiseLinear&lt;<span class="lifetime">&#39;static</span>&gt; = <span class="macro">curve!</span>(
+			min_inflation: <span class="number">0_025_000</span>,
+			max_inflation: <span class="number">0_100_000</span>,
+			ideal_stake: <span class="number">0_500_000</span>,
+			falloff: <span class="number">0_050_000</span>,
+			max_piece_count: <span class="number">40</span>,
+			test_precision: <span class="number">0_005_000</span>,
 		);
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">npos_curve_is_sensible</span>() {
-		<span class="kw">const</span> <span class="ident">YEAR</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">365</span> <span class="op">*</span> <span class="number">24</span> <span class="op">*</span> <span class="number">60</span> <span class="op">*</span> <span class="number">60</span> <span class="op">*</span> <span class="number">1000</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>npos_curve_is_sensible() {
+		<span class="kw">const </span>YEAR: u64 = <span class="number">365 </span>* <span class="number">24 </span>* <span class="number">60 </span>* <span class="number">60 </span>* <span class="number">1000</span>;
 
-		<span class="comment">// check maximum inflation.</span>
-		<span class="comment">// not 10_000 due to rounding error.</span>
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">0</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">1</span>, <span class="number">9_993</span>);
+		<span class="comment">// check maximum inflation.
+		// not 10_000 due to rounding error.
+		</span><span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">0</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">1</span>, <span class="number">9_993</span>);
 
-		<span class="comment">// super::I_NPOS.calculate_for_fraction_times_denominator(25, 100)</span>
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">0</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">2_498</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">5_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">3_248</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">25_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">6_246</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">40_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">8_494</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">50_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">9_993</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">60_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">4_379</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">75_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">2_733</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">95_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">2_513</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">100_000</span>, <span class="number">100_000u64</span>, <span class="ident">YEAR</span>).<span class="number">0</span>, <span class="number">2_505</span>);
+		<span class="comment">// super::I_NPOS.calculate_for_fraction_times_denominator(25, 100)
+		</span><span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">0</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">2_498</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">5_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">3_248</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">25_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">6_246</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">40_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">8_494</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">50_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">9_993</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">60_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">4_379</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">75_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">2_733</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">95_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">2_513</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">100_000</span>, <span class="number">100_000u64</span>, YEAR).<span class="number">0</span>, <span class="number">2_505</span>);
 
-		<span class="kw">const</span> <span class="ident">DAY</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">24</span> <span class="op">*</span> <span class="number">60</span> <span class="op">*</span> <span class="number">60</span> <span class="op">*</span> <span class="number">1000</span>;
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">25_000</span>, <span class="number">100_000u64</span>, <span class="ident">DAY</span>).<span class="number">0</span>, <span class="number">17</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">50_000</span>, <span class="number">100_000u64</span>, <span class="ident">DAY</span>).<span class="number">0</span>, <span class="number">27</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">75_000</span>, <span class="number">100_000u64</span>, <span class="ident">DAY</span>).<span class="number">0</span>, <span class="number">7</span>);
+		<span class="kw">const </span>DAY: u64 = <span class="number">24 </span>* <span class="number">60 </span>* <span class="number">60 </span>* <span class="number">1000</span>;
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">25_000</span>, <span class="number">100_000u64</span>, DAY).<span class="number">0</span>, <span class="number">17</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">50_000</span>, <span class="number">100_000u64</span>, DAY).<span class="number">0</span>, <span class="number">27</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">75_000</span>, <span class="number">100_000u64</span>, DAY).<span class="number">0</span>, <span class="number">7</span>);
 
-		<span class="kw">const</span> <span class="ident">SIX_HOURS</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">6</span> <span class="op">*</span> <span class="number">60</span> <span class="op">*</span> <span class="number">60</span> <span class="op">*</span> <span class="number">1000</span>;
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">25_000</span>, <span class="number">100_000u64</span>, <span class="ident">SIX_HOURS</span>).<span class="number">0</span>, <span class="number">4</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">50_000</span>, <span class="number">100_000u64</span>, <span class="ident">SIX_HOURS</span>).<span class="number">0</span>, <span class="number">7</span>);
-		<span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>, <span class="number">75_000</span>, <span class="number">100_000u64</span>, <span class="ident">SIX_HOURS</span>).<span class="number">0</span>, <span class="number">2</span>);
+		<span class="kw">const </span>SIX_HOURS: u64 = <span class="number">6 </span>* <span class="number">60 </span>* <span class="number">60 </span>* <span class="number">1000</span>;
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">25_000</span>, <span class="number">100_000u64</span>, SIX_HOURS).<span class="number">0</span>, <span class="number">4</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">50_000</span>, <span class="number">100_000u64</span>, SIX_HOURS).<span class="number">0</span>, <span class="number">7</span>);
+		<span class="macro">assert_eq!</span>(<span class="kw">super</span>::compute_total_payout(<span class="kw-2">&amp;</span>I_NPOS, <span class="number">75_000</span>, <span class="number">100_000u64</span>, SIX_HOURS).<span class="number">0</span>, <span class="number">2</span>);
 
-		<span class="kw">const</span> <span class="ident">HOUR</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">60</span> <span class="op">*</span> <span class="number">60</span> <span class="op">*</span> <span class="number">1000</span>;
+		<span class="kw">const </span>HOUR: u64 = <span class="number">60 </span>* <span class="number">60 </span>* <span class="number">1000</span>;
 		<span class="macro">assert_eq!</span>(
-			<span class="ident"><span class="kw">super</span>::compute_total_payout</span>(
-				<span class="kw-2">&amp;</span><span class="ident">I_NPOS</span>,
+			<span class="kw">super</span>::compute_total_payout(
+				<span class="kw-2">&amp;</span>I_NPOS,
 				<span class="number">2_500_000_000_000_000_000_000_000_000u128</span>,
 				<span class="number">5_000_000_000_000_000_000_000_000_000u128</span>,
-				<span class="ident">HOUR</span>
+				HOUR
 			)
 			.<span class="number">0</span>,
-			<span class="number">57_038_500_000_000_000_000_000</span>
-		);
+			<span class="number">57_038_500_000_000_000_000_000
+		</span>);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="pallet_staking" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="pallet_staking" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

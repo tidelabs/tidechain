@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PollRecv",""],["PollRecvFrom",""],["PollRecvFromFull",""],["PollSend",""],["PollSendTo",""]],"trait":[["AsyncSocketExt","Support trait for [`AsyncSocket`]"]]});
+window.SIDEBAR_ITEMS = {"struct":[["PollRecv",""],["PollRecvFrom",""],["PollRecvFromFull",""],["PollSend",""],["PollSendTo",""]],"trait":[["AsyncSocketExt","Support trait for [`AsyncSocket`]"]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["TaggedTransactionQueue","The `TaggedTransactionQueue` api trait for interfering with the transaction queue."]]});
+window.SIDEBAR_ITEMS = {"trait":[["TaggedTransactionQueue","The `TaggedTransactionQueue` api trait for interfering with the transaction queue."]]};

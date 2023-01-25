@@ -1,1 +1,1 @@
-initSidebarItems({"attr":[["clonable",""]]});
+window.SIDEBAR_ITEMS = {"attr":[["clonable",""]]};

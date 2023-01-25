@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["RULE_HEADER_LEN",""]],"struct":[["RuleMessageBuffer",""]]});
+window.SIDEBAR_ITEMS = {"constant":[["RULE_HEADER_LEN",""]],"struct":[["RuleMessageBuffer",""]]};

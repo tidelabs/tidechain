@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/timing.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>timing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/timing.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>timing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -263,266 +258,265 @@
 <span id="258">258</span>
 <span id="259">259</span>
 <span id="260">260</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Pass timing.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This modules provides facilities for timing the execution of individual compilation passes.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Pass timing.
+//!
+//! This modules provides facilities for timing the execution of individual compilation passes.
 
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
+</span><span class="kw">use </span>core::fmt;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="self">self</span>::details</span>::{<span class="ident">add_to_current</span>, <span class="ident">take_current</span>, <span class="ident">PassTimes</span>, <span class="ident">TimingToken</span>};
+<span class="kw">pub use </span><span class="self">self</span>::details::{add_to_current, take_current, PassTimes, TimingToken};
 
-<span class="comment">// Each pass that can be timed is predefined with the `define_passes!` macro. Each pass has a</span>
-<span class="comment">// snake_case name and a plain text description used when printing out the timing report.</span>
-<span class="comment">//</span>
-<span class="comment">// This macro defines:</span>
-<span class="comment">//</span>
-<span class="comment">// - A C-style enum containing all the pass names and a `None` variant.</span>
-<span class="comment">// - A usize constant with the number of defined passes.</span>
-<span class="comment">// - A const array of pass descriptions.</span>
-<span class="comment">// - A public function per pass used to start the timing of that pass.</span>
-<span class="macro">macro_rules!</span> <span class="ident">define_passes</span> {
-    { <span class="macro-nonterminal">$</span><span class="kw">enum</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">num_passes</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">descriptions</span>:<span class="ident">ident</span>;
-      $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">pass</span>:<span class="ident">ident</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">desc</span>:<span class="ident">expr</span>,)<span class="op">+</span>
+<span class="comment">// Each pass that can be timed is predefined with the `define_passes!` macro. Each pass has a
+// snake_case name and a plain text description used when printing out the timing report.
+//
+// This macro defines:
+//
+// - A C-style enum containing all the pass names and a `None` variant.
+// - A usize constant with the number of defined passes.
+// - A const array of pass descriptions.
+// - A public function per pass used to start the timing of that pass.
+</span><span class="macro">macro_rules! </span>define_passes {
+    { <span class="macro-nonterminal">$</span><span class="kw">enum</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$num_passes</span>:ident, <span class="macro-nonterminal">$descriptions</span>:ident;
+      $(<span class="macro-nonterminal">$pass</span>:ident: <span class="macro-nonterminal">$desc</span>:expr,)+
     } =&gt; {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-        <span class="kw">enum</span> <span class="macro-nonterminal">$</span><span class="kw">enum</span> { $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">pass</span>,)<span class="op">+</span> <span class="prelude-val">None</span>}
+        <span class="attribute">#[allow(non_camel_case_types)]
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        </span><span class="kw">enum </span><span class="macro-nonterminal">$</span><span class="kw">enum </span>{ $(<span class="macro-nonterminal">$pass</span>,)+ <span class="prelude-val">None</span>}
 
-        <span class="kw">const</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">num_passes</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="kw">enum</span><span class="macro-nonterminal">::None</span> <span class="kw">as</span> <span class="ident">usize</span>;
+        <span class="kw">const </span><span class="macro-nonterminal">$num_passes</span>: usize = <span class="macro-nonterminal">$</span><span class="kw">enum</span><span class="macro-nonterminal">::None </span><span class="kw">as </span>usize;
 
-        <span class="kw">const</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">descriptions</span>: [<span class="kw-2">&amp;</span><span class="ident">str</span>; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">num_passes</span>] <span class="op">=</span> [ $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">desc</span>),<span class="op">+</span> ];
+        <span class="kw">const </span><span class="macro-nonterminal">$descriptions</span>: [<span class="kw-2">&amp;</span>str; <span class="macro-nonterminal">$num_passes</span>] = [ $(<span class="macro-nonterminal">$desc</span>),+ ];
 
         $(
-            <span class="attribute">#[<span class="ident">doc</span><span class="op">=</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">desc</span>]</span>
-            <span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">pass</span>() -&gt; <span class="ident">TimingToken</span> {
-                <span class="ident">details::start_pass</span>(<span class="macro-nonterminal">$</span><span class="kw">enum</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">pass</span>)
+            <span class="attribute">#[doc=<span class="macro-nonterminal">$desc</span>]
+            </span><span class="kw">pub fn </span><span class="macro-nonterminal">$pass</span>() -&gt; TimingToken {
+                details::start_pass(<span class="macro-nonterminal">$</span><span class="kw">enum</span>::<span class="macro-nonterminal">$pass</span>)
             }
-        )<span class="op">+</span>
+        )+
     }
 }
 
-<span class="comment">// Pass definitions.</span>
-<span class="macro">define_passes!</span> {
-    <span class="ident">Pass</span>, <span class="ident">NUM_PASSES</span>, <span class="ident">DESCRIPTIONS</span>;
+<span class="comment">// Pass definitions.
+</span><span class="macro">define_passes! </span>{
+    Pass, NUM_PASSES, DESCRIPTIONS;
 
-    <span class="ident">process_file</span>: <span class="string">&quot;Processing test file&quot;</span>,
-    <span class="ident">parse_text</span>: <span class="string">&quot;Parsing textual Cranelift IR&quot;</span>,
-    <span class="ident">wasm_translate_module</span>: <span class="string">&quot;Translate WASM module&quot;</span>,
-    <span class="ident">wasm_translate_function</span>: <span class="string">&quot;Translate WASM function&quot;</span>,
+    process_file: <span class="string">&quot;Processing test file&quot;</span>,
+    parse_text: <span class="string">&quot;Parsing textual Cranelift IR&quot;</span>,
+    wasm_translate_module: <span class="string">&quot;Translate WASM module&quot;</span>,
+    wasm_translate_function: <span class="string">&quot;Translate WASM function&quot;</span>,
 
-    <span class="ident">verifier</span>: <span class="string">&quot;Verify Cranelift IR&quot;</span>,
-    <span class="ident">verify_flags</span>: <span class="string">&quot;Verify CPU flags&quot;</span>,
+    verifier: <span class="string">&quot;Verify Cranelift IR&quot;</span>,
+    verify_flags: <span class="string">&quot;Verify CPU flags&quot;</span>,
 
-    <span class="ident">compile</span>: <span class="string">&quot;Compilation passes&quot;</span>,
-    <span class="ident">flowgraph</span>: <span class="string">&quot;Control flow graph&quot;</span>,
-    <span class="ident">domtree</span>: <span class="string">&quot;Dominator tree&quot;</span>,
-    <span class="ident">loop_analysis</span>: <span class="string">&quot;Loop analysis&quot;</span>,
-    <span class="ident">preopt</span>: <span class="string">&quot;Pre-legalization rewriting&quot;</span>,
-    <span class="ident">dce</span>: <span class="string">&quot;Dead code elimination&quot;</span>,
-    <span class="ident">gvn</span>: <span class="string">&quot;Global value numbering&quot;</span>,
-    <span class="ident">licm</span>: <span class="string">&quot;Loop invariant code motion&quot;</span>,
-    <span class="ident">unreachable_code</span>: <span class="string">&quot;Remove unreachable blocks&quot;</span>,
-    <span class="ident">remove_constant_phis</span>: <span class="string">&quot;Remove constant phi-nodes&quot;</span>,
+    compile: <span class="string">&quot;Compilation passes&quot;</span>,
+    flowgraph: <span class="string">&quot;Control flow graph&quot;</span>,
+    domtree: <span class="string">&quot;Dominator tree&quot;</span>,
+    loop_analysis: <span class="string">&quot;Loop analysis&quot;</span>,
+    preopt: <span class="string">&quot;Pre-legalization rewriting&quot;</span>,
+    dce: <span class="string">&quot;Dead code elimination&quot;</span>,
+    gvn: <span class="string">&quot;Global value numbering&quot;</span>,
+    licm: <span class="string">&quot;Loop invariant code motion&quot;</span>,
+    unreachable_code: <span class="string">&quot;Remove unreachable blocks&quot;</span>,
+    remove_constant_phis: <span class="string">&quot;Remove constant phi-nodes&quot;</span>,
 
-    <span class="ident">vcode_lower</span>: <span class="string">&quot;VCode lowering&quot;</span>,
-    <span class="ident">vcode_post_ra</span>: <span class="string">&quot;VCode post-register allocation finalization&quot;</span>,
-    <span class="ident">vcode_emit</span>: <span class="string">&quot;VCode emission&quot;</span>,
-    <span class="ident">vcode_emit_finish</span>: <span class="string">&quot;VCode emission finalization&quot;</span>,
+    vcode_lower: <span class="string">&quot;VCode lowering&quot;</span>,
+    vcode_post_ra: <span class="string">&quot;VCode post-register allocation finalization&quot;</span>,
+    vcode_emit: <span class="string">&quot;VCode emission&quot;</span>,
+    vcode_emit_finish: <span class="string">&quot;VCode emission finalization&quot;</span>,
 
-    <span class="ident">regalloc</span>: <span class="string">&quot;Register allocation&quot;</span>,
-    <span class="ident">binemit</span>: <span class="string">&quot;Binary machine code emission&quot;</span>,
-    <span class="ident">layout_renumber</span>: <span class="string">&quot;Layout full renumbering&quot;</span>,
+    regalloc: <span class="string">&quot;Register allocation&quot;</span>,
+    binemit: <span class="string">&quot;Binary machine code emission&quot;</span>,
+    layout_renumber: <span class="string">&quot;Layout full renumbering&quot;</span>,
 
-    <span class="ident">canonicalize_nans</span>: <span class="string">&quot;Canonicalization of NaNs&quot;</span>,
+    canonicalize_nans: <span class="string">&quot;Canonicalization of NaNs&quot;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">Pass</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">idx</span>(<span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span> <span class="kw">as</span> <span class="ident">usize</span>
+<span class="kw">impl </span>Pass {
+    <span class="kw">pub fn </span>idx(<span class="self">self</span>) -&gt; usize {
+        <span class="self">self </span><span class="kw">as </span>usize
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Pass</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="kw">match</span> <span class="ident">DESCRIPTIONS</span>.<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">idx</span>()) {
-            <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="ident">s</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;&lt;no pass&gt;&quot;</span>),
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>Pass {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="kw">match </span>DESCRIPTIONS.get(<span class="self">self</span>.idx()) {
+            <span class="prelude-val">Some</span>(s) =&gt; f.write_str(s),
+            <span class="prelude-val">None </span>=&gt; f.write_str(<span class="string">&quot;&lt;no pass&gt;&quot;</span>),
         }
     }
 }
 
-<span class="doccomment">/// Implementation details.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This whole module can be gated on a `cfg` feature to provide a dummy implementation for</span>
-<span class="doccomment">/// performance-sensitive builds or restricted environments. The dummy implementation must provide</span>
-<span class="doccomment">/// `TimingToken` and `PassTimes` types and `take_current`, `add_to_current`, and `start_pass` funcs</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">mod</span> <span class="ident">details</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Pass</span>, <span class="ident">DESCRIPTIONS</span>, <span class="ident">NUM_PASSES</span>};
-    <span class="kw">use</span> <span class="ident">std::cell</span>::{<span class="ident">Cell</span>, <span class="ident">RefCell</span>};
-    <span class="kw">use</span> <span class="ident">std::fmt</span>;
-    <span class="kw">use</span> <span class="ident">std::mem</span>;
-    <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
+<span class="doccomment">/// Implementation details.
+///
+/// This whole module can be gated on a `cfg` feature to provide a dummy implementation for
+/// performance-sensitive builds or restricted environments. The dummy implementation must provide
+/// `TimingToken` and `PassTimes` types and `take_current`, `add_to_current`, and `start_pass` funcs
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">mod </span>details {
+    <span class="kw">use super</span>::{Pass, DESCRIPTIONS, NUM_PASSES};
+    <span class="kw">use </span>std::cell::{Cell, RefCell};
+    <span class="kw">use </span>std::fmt;
+    <span class="kw">use </span>std::mem;
+    <span class="kw">use </span>std::time::{Duration, Instant};
 
-    <span class="doccomment">/// A timing token is responsible for timing the currently running pass. Timing starts when it</span>
-    <span class="doccomment">/// is created and ends when it is dropped.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Multiple passes can be active at the same time, but they must be started and stopped in a</span>
-    <span class="doccomment">/// LIFO fashion.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TimingToken</span> {
-        <span class="doccomment">/// Start time for this pass.</span>
-        <span class="ident">start</span>: <span class="ident">Instant</span>,
+    <span class="doccomment">/// A timing token is responsible for timing the currently running pass. Timing starts when it
+    /// is created and ends when it is dropped.
+    ///
+    /// Multiple passes can be active at the same time, but they must be started and stopped in a
+    /// LIFO fashion.
+    </span><span class="kw">pub struct </span>TimingToken {
+        <span class="doccomment">/// Start time for this pass.
+        </span>start: Instant,
 
-        <span class="comment">// Pass being timed by this token.</span>
-        <span class="ident">pass</span>: <span class="ident">Pass</span>,
+        <span class="comment">// Pass being timed by this token.
+        </span>pass: Pass,
 
-        <span class="comment">// The previously active pass which will be restored when this token is dropped.</span>
-        <span class="ident">prev</span>: <span class="ident">Pass</span>,
+        <span class="comment">// The previously active pass which will be restored when this token is dropped.
+        </span>prev: Pass,
     }
 
-    <span class="doccomment">/// Accumulated timing information for a single pass.</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">PassTime</span> {
-        <span class="doccomment">/// Total time spent running this pass including children.</span>
-        <span class="ident">total</span>: <span class="ident">Duration</span>,
+    <span class="doccomment">/// Accumulated timing information for a single pass.
+    </span><span class="attribute">#[derive(Default, Copy, Clone)]
+    </span><span class="kw">struct </span>PassTime {
+        <span class="doccomment">/// Total time spent running this pass including children.
+        </span>total: Duration,
 
-        <span class="doccomment">/// Time spent running in child passes.</span>
-        <span class="ident">child</span>: <span class="ident">Duration</span>,
+        <span class="doccomment">/// Time spent running in child passes.
+        </span>child: Duration,
     }
 
-    <span class="doccomment">/// Accumulated timing for all passes.</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PassTimes</span> {
-        <span class="ident">pass</span>: [<span class="ident">PassTime</span>; <span class="ident">NUM_PASSES</span>],
+    <span class="doccomment">/// Accumulated timing for all passes.
+    </span><span class="kw">pub struct </span>PassTimes {
+        pass: [PassTime; NUM_PASSES],
     }
 
-    <span class="kw">impl</span> <span class="ident">PassTimes</span> {
-        <span class="doccomment">/// Returns the total amount of time taken by all the passes measured.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">total</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Duration</span> {
-            <span class="self">self</span>.<span class="ident">pass</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">total</span> <span class="op">-</span> <span class="ident">p</span>.<span class="ident">child</span>).<span class="ident">sum</span>()
+    <span class="kw">impl </span>PassTimes {
+        <span class="doccomment">/// Returns the total amount of time taken by all the passes measured.
+        </span><span class="kw">pub fn </span>total(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Duration {
+            <span class="self">self</span>.pass.iter().map(|p| p.total - p.child).sum()
         }
     }
 
-    <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">PassTimes</span> {
-        <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-            <span class="self">Self</span> {
-                <span class="ident">pass</span>: [<span class="ident">Default::default</span>(); <span class="ident">NUM_PASSES</span>],
+    <span class="kw">impl </span>Default <span class="kw">for </span>PassTimes {
+        <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{
+                pass: [Default::default(); NUM_PASSES],
             }
         }
     }
 
-    <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">PassTimes</span> {
-        <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;======== ========  ==================================&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;   Total     Self  Pass&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;-------- --------  ----------------------------------&quot;</span>)<span class="question-mark">?</span>;
-            <span class="kw">for</span> (<span class="ident">time</span>, <span class="ident">desc</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">pass</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="kw-2">&amp;</span><span class="ident">DESCRIPTIONS</span>[..]) {
-                <span class="comment">// Omit passes that haven&#39;t run.</span>
-                <span class="kw">if</span> <span class="ident">time</span>.<span class="ident">total</span> <span class="op">==</span> <span class="ident">Duration::default</span>() {
+    <span class="kw">impl </span>fmt::Display <span class="kw">for </span>PassTimes {
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;======== ========  ==================================&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;   Total     Self  Pass&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;-------- --------  ----------------------------------&quot;</span>)<span class="question-mark">?</span>;
+            <span class="kw">for </span>(time, desc) <span class="kw">in </span><span class="self">self</span>.pass.iter().zip(<span class="kw-2">&amp;</span>DESCRIPTIONS[..]) {
+                <span class="comment">// Omit passes that haven&#39;t run.
+                </span><span class="kw">if </span>time.total == Duration::default() {
                     <span class="kw">continue</span>;
                 }
 
-                <span class="comment">// Write a duration as secs.millis, trailing space.</span>
-                <span class="kw">fn</span> <span class="ident">fmtdur</span>(<span class="kw-2">mut</span> <span class="ident">dur</span>: <span class="ident">Duration</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-                    <span class="comment">// Round to nearest ms by adding 500us.</span>
-                    <span class="ident">dur</span> <span class="op">+</span><span class="op">=</span> <span class="ident">Duration::new</span>(<span class="number">0</span>, <span class="number">500_000</span>);
-                    <span class="kw">let</span> <span class="ident">ms</span> <span class="op">=</span> <span class="ident">dur</span>.<span class="ident">subsec_millis</span>();
-                    <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{:4}.{:03} &quot;</span>, <span class="ident">dur</span>.<span class="ident">as_secs</span>(), <span class="ident">ms</span>)
+                <span class="comment">// Write a duration as secs.millis, trailing space.
+                </span><span class="kw">fn </span>fmtdur(<span class="kw-2">mut </span>dur: Duration, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+                    <span class="comment">// Round to nearest ms by adding 500us.
+                    </span>dur += Duration::new(<span class="number">0</span>, <span class="number">500_000</span>);
+                    <span class="kw">let </span>ms = dur.subsec_millis();
+                    <span class="macro">write!</span>(f, <span class="string">&quot;{:4}.{:03} &quot;</span>, dur.as_secs(), ms)
                 }
 
-                <span class="ident">fmtdur</span>(<span class="ident">time</span>.<span class="ident">total</span>, <span class="ident">f</span>)<span class="question-mark">?</span>;
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span> <span class="ident">time</span>.<span class="ident">total</span>.<span class="ident">checked_sub</span>(<span class="ident">time</span>.<span class="ident">child</span>) {
-                    <span class="ident">fmtdur</span>(<span class="ident">s</span>, <span class="ident">f</span>)<span class="question-mark">?</span>;
+                fmtdur(time.total, f)<span class="question-mark">?</span>;
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = time.total.checked_sub(time.child) {
+                    fmtdur(s, f)<span class="question-mark">?</span>;
                 }
-                <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot; {}&quot;</span>, <span class="ident">desc</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">&quot; {}&quot;</span>, desc)<span class="question-mark">?</span>;
             }
-            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;======== ========  ==================================&quot;</span>)
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;======== ========  ==================================&quot;</span>)
         }
     }
 
-    <span class="comment">// Information about passes in a single thread.</span>
-    <span class="macro">thread_local!</span> {
-        <span class="kw">static</span> <span class="ident">CURRENT_PASS</span>: <span class="ident">Cell</span><span class="op">&lt;</span><span class="ident">Pass</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Cell::new</span>(<span class="ident">Pass::None</span>);
-        <span class="kw">static</span> <span class="ident">PASS_TIME</span>: <span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">PassTimes</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">RefCell::new</span>(<span class="ident">Default::default</span>());
+    <span class="comment">// Information about passes in a single thread.
+    </span><span class="macro">thread_local! </span>{
+        <span class="kw">static </span>CURRENT_PASS: Cell&lt;Pass&gt; = Cell::new(Pass::None);
+        <span class="kw">static </span>PASS_TIME: RefCell&lt;PassTimes&gt; = RefCell::new(Default::default());
     }
 
-    <span class="doccomment">/// Start timing `pass` as a child of the currently running pass, if any.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function is called by the publicly exposed pass functions.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">start_pass</span>(<span class="ident">pass</span>: <span class="ident">Pass</span>) -&gt; <span class="ident">TimingToken</span> {
-        <span class="kw">let</span> <span class="ident">prev</span> <span class="op">=</span> <span class="ident">CURRENT_PASS</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">replace</span>(<span class="ident">pass</span>));
-        <span class="macro">log::debug!</span>(<span class="string">&quot;timing: Starting {}, (during {})&quot;</span>, <span class="ident">pass</span>, <span class="ident">prev</span>);
-        <span class="ident">TimingToken</span> {
-            <span class="ident">start</span>: <span class="ident">Instant::now</span>(),
-            <span class="ident">pass</span>,
-            <span class="ident">prev</span>,
+    <span class="doccomment">/// Start timing `pass` as a child of the currently running pass, if any.
+    ///
+    /// This function is called by the publicly exposed pass functions.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>start_pass(pass: Pass) -&gt; TimingToken {
+        <span class="kw">let </span>prev = CURRENT_PASS.with(|p| p.replace(pass));
+        <span class="macro">log::debug!</span>(<span class="string">&quot;timing: Starting {}, (during {})&quot;</span>, pass, prev);
+        TimingToken {
+            start: Instant::now(),
+            pass,
+            prev,
         }
     }
 
-    <span class="doccomment">/// Dropping a timing token indicated the end of the pass.</span>
-    <span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">TimingToken</span> {
-        <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-            <span class="kw">let</span> <span class="ident">duration</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">start</span>.<span class="ident">elapsed</span>();
-            <span class="macro">log::debug!</span>(<span class="string">&quot;timing: Ending {}&quot;</span>, <span class="self">self</span>.<span class="ident">pass</span>);
-            <span class="kw">let</span> <span class="ident">old_cur</span> <span class="op">=</span> <span class="ident">CURRENT_PASS</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">replace</span>(<span class="self">self</span>.<span class="ident">prev</span>));
-            <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.<span class="ident">pass</span>, <span class="ident">old_cur</span>, <span class="string">&quot;Timing tokens dropped out of order&quot;</span>);
-            <span class="ident">PASS_TIME</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">rc</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">table</span> <span class="op">=</span> <span class="ident">rc</span>.<span class="ident">borrow_mut</span>();
-                <span class="ident">table</span>.<span class="ident">pass</span>[<span class="self">self</span>.<span class="ident">pass</span>.<span class="ident">idx</span>()].<span class="ident">total</span> <span class="op">+</span><span class="op">=</span> <span class="ident">duration</span>;
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">parent</span>) <span class="op">=</span> <span class="ident">table</span>.<span class="ident">pass</span>.<span class="ident">get_mut</span>(<span class="self">self</span>.<span class="ident">prev</span>.<span class="ident">idx</span>()) {
-                    <span class="ident">parent</span>.<span class="ident">child</span> <span class="op">+</span><span class="op">=</span> <span class="ident">duration</span>;
+    <span class="doccomment">/// Dropping a timing token indicated the end of the pass.
+    </span><span class="kw">impl </span>Drop <span class="kw">for </span>TimingToken {
+        <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="kw">let </span>duration = <span class="self">self</span>.start.elapsed();
+            <span class="macro">log::debug!</span>(<span class="string">&quot;timing: Ending {}&quot;</span>, <span class="self">self</span>.pass);
+            <span class="kw">let </span>old_cur = CURRENT_PASS.with(|p| p.replace(<span class="self">self</span>.prev));
+            <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.pass, old_cur, <span class="string">&quot;Timing tokens dropped out of order&quot;</span>);
+            PASS_TIME.with(|rc| {
+                <span class="kw">let </span><span class="kw-2">mut </span>table = rc.borrow_mut();
+                table.pass[<span class="self">self</span>.pass.idx()].total += duration;
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(parent) = table.pass.get_mut(<span class="self">self</span>.prev.idx()) {
+                    parent.child += duration;
                 }
             })
         }
     }
 
-    <span class="doccomment">/// Take the current accumulated pass timings and reset the timings for the current thread.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">take_current</span>() -&gt; <span class="ident">PassTimes</span> {
-        <span class="ident">PASS_TIME</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">rc</span><span class="op">|</span> <span class="ident">mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">rc</span>.<span class="ident">borrow_mut</span>(), <span class="ident">Default::default</span>()))
+    <span class="doccomment">/// Take the current accumulated pass timings and reset the timings for the current thread.
+    </span><span class="kw">pub fn </span>take_current() -&gt; PassTimes {
+        PASS_TIME.with(|rc| mem::replace(<span class="kw-2">&amp;mut *</span>rc.borrow_mut(), Default::default()))
     }
 
-    <span class="doccomment">/// Add `timings` to the accumulated timings for the current thread.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_to_current</span>(<span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">PassTimes</span>) {
-        <span class="ident">PASS_TIME</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">rc</span><span class="op">|</span> {
-            <span class="kw">for</span> (<span class="ident">a</span>, <span class="ident">b</span>) <span class="kw">in</span> <span class="ident">rc</span>.<span class="ident">borrow_mut</span>().<span class="ident">pass</span>.<span class="ident">iter_mut</span>().<span class="ident">zip</span>(<span class="kw-2">&amp;</span><span class="ident">times</span>.<span class="ident">pass</span>[..]) {
-                <span class="ident">a</span>.<span class="ident">total</span> <span class="op">+</span><span class="op">=</span> <span class="ident">b</span>.<span class="ident">total</span>;
-                <span class="ident">a</span>.<span class="ident">child</span> <span class="op">+</span><span class="op">=</span> <span class="ident">b</span>.<span class="ident">child</span>;
+    <span class="doccomment">/// Add `timings` to the accumulated timings for the current thread.
+    </span><span class="kw">pub fn </span>add_to_current(times: <span class="kw-2">&amp;</span>PassTimes) {
+        PASS_TIME.with(|rc| {
+            <span class="kw">for </span>(a, b) <span class="kw">in </span>rc.borrow_mut().pass.iter_mut().zip(<span class="kw-2">&amp;</span>times.pass[..]) {
+                a.total += b.total;
+                a.child += b.child;
             }
         })
     }
 }
 
-<span class="doccomment">/// Dummy `debug` implementation</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">mod</span> <span class="ident">details</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Pass</span>;
-    <span class="doccomment">/// Dummy `TimingToken`</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TimingToken</span>;
-    <span class="doccomment">/// Dummy `PassTimes`</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PassTimes</span>;
-    <span class="doccomment">/// Returns dummy `PassTimes`</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">take_current</span>() -&gt; <span class="ident">PassTimes</span> {
-        <span class="ident">PassTimes</span>
+<span class="doccomment">/// Dummy `debug` implementation
+</span><span class="attribute">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">mod </span>details {
+    <span class="kw">use </span><span class="kw">super</span>::Pass;
+    <span class="doccomment">/// Dummy `TimingToken`
+    </span><span class="kw">pub struct </span>TimingToken;
+    <span class="doccomment">/// Dummy `PassTimes`
+    </span><span class="kw">pub struct </span>PassTimes;
+    <span class="doccomment">/// Returns dummy `PassTimes`
+    </span><span class="kw">pub fn </span>take_current() -&gt; PassTimes {
+        PassTimes
     }
-    <span class="doccomment">/// does nothing</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_to_current</span>(<span class="ident">_times</span>: <span class="ident">PassTimes</span>) {}
+    <span class="doccomment">/// does nothing
+    </span><span class="kw">pub fn </span>add_to_current(_times: PassTimes) {}
 
-    <span class="doccomment">/// does nothing</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">start_pass</span>(<span class="ident">_pass</span>: <span class="ident">Pass</span>) -&gt; <span class="ident">TimingToken</span> {
-        <span class="ident">TimingToken</span>
+    <span class="doccomment">/// does nothing
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>start_pass(_pass: Pass) -&gt; TimingToken {
+        TimingToken
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">alloc::string::ToString</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>alloc::string::ToString;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">display</span>() {
-        <span class="macro">assert_eq!</span>(<span class="ident">Pass::None</span>.<span class="ident">to_string</span>(), <span class="string">&quot;&lt;no pass&gt;&quot;</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">Pass::regalloc</span>.<span class="ident">to_string</span>(), <span class="string">&quot;Register allocation&quot;</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>display() {
+        <span class="macro">assert_eq!</span>(Pass::None.to_string(), <span class="string">&quot;&lt;no pass&gt;&quot;</span>);
+        <span class="macro">assert_eq!</span>(Pass::regalloc.to_string(), <span class="string">&quot;Register allocation&quot;</span>);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

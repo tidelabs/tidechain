@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/io/owned_fd.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>owned_fd.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/io/owned_fd.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>owned_fd.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -274,277 +269,276 @@
 <span id="269">269</span>
 <span id="270">270</span>
 <span id="271">271</span>
-</pre><pre class="rust"><code><span class="doccomment">//! A wrapper around `io_lifetimes::OwnedFd`.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! rustix needs to wrap `OwnedFd` so that it can call its own [`close`]</span>
-<span class="doccomment">//! function when the `OwnedFd` is dropped.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! [`close`]: crate::io::close</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Safety</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! We wrap an `OwnedFd` in a `ManuallyDrop` so that we can extract the</span>
-<span class="doccomment">//! file descriptor and close it ourselves.</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
+</pre><pre class="rust"><code><span class="doccomment">//! A wrapper around `io_lifetimes::OwnedFd`.
+//!
+//! rustix needs to wrap `OwnedFd` so that it can call its own [`close`]
+//! function when the `OwnedFd` is dropped.
+//!
+//! [`close`]: crate::io::close
+//!
+//! # Safety
+//!
+//! We wrap an `OwnedFd` in a `ManuallyDrop` so that we can extract the
+//! file descriptor and close it ourselves.
+</span><span class="attribute">#![allow(unsafe_code)]
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::imp::fd</span>::{<span class="ident">AsFd</span>, <span class="ident">AsRawFd</span>, <span class="ident">BorrowedFd</span>, <span class="ident">FromRawFd</span>, <span class="ident">IntoRawFd</span>, <span class="ident">RawFd</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">not</span>(<span class="ident">io_lifetimes_use_std</span>), <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::imp::fd</span>::{<span class="ident">FromFd</span>, <span class="ident">IntoFd</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io::close</span>;
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">core::mem</span>::{<span class="ident">forget</span>, <span class="ident">ManuallyDrop</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::imp::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, RawFd};
+<span class="attribute">#[cfg(all(not(io_lifetimes_use_std), feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">use </span><span class="kw">crate</span>::imp::fd::{FromFd, IntoFd};
+<span class="kw">use </span><span class="kw">crate</span>::io::close;
+<span class="kw">use </span>core::fmt;
+<span class="kw">use </span>core::mem::{forget, ManuallyDrop};
 
-<span class="doccomment">/// A wrapper around `io_lifetimes::OwnedFd` which closes the file descriptor</span>
-<span class="doccomment">/// using `rustix`&#39;s own [`close`] rather than libc&#39;s `close`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`close`]: crate::io::close</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OwnedFd</span> {
-    <span class="ident">inner</span>: <span class="ident">ManuallyDrop</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A wrapper around `io_lifetimes::OwnedFd` which closes the file descriptor
+/// using `rustix`&#39;s own [`close`] rather than libc&#39;s `close`.
+///
+/// [`close`]: crate::io::close
+</span><span class="attribute">#[repr(transparent)]
+</span><span class="kw">pub struct </span>OwnedFd {
+    inner: ManuallyDrop&lt;<span class="kw">crate</span>::imp::fd::OwnedFd&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">OwnedFd</span> {
-    <span class="doccomment">/// Creates a new `OwnedFd` instance that shares the same underlying file</span>
-    <span class="doccomment">/// handle as the existing `OwnedFd` instance.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">unix</span>, <span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;wasi&quot;</span>)))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="comment">// We want to atomically duplicate this file descriptor and set the</span>
-        <span class="comment">// CLOEXEC flag, and currently that&#39;s done via F_DUPFD_CLOEXEC. This</span>
-        <span class="comment">// is a POSIX flag that was added to Linux in 2.6.24.</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;espidf&quot;</span>))]</span>
-        <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::fs::fcntl_dupfd_cloexec</span>(<span class="self">self</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+<span class="kw">impl </span>OwnedFd {
+    <span class="doccomment">/// Creates a new `OwnedFd` instance that shares the same underlying file
+    /// handle as the existing `OwnedFd` instance.
+    </span><span class="attribute">#[cfg(all(unix, not(target_os = <span class="string">&quot;wasi&quot;</span>)))]
+    </span><span class="kw">pub fn </span>try_clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">crate</span>::io::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="comment">// We want to atomically duplicate this file descriptor and set the
+        // CLOEXEC flag, and currently that&#39;s done via F_DUPFD_CLOEXEC. This
+        // is a POSIX flag that was added to Linux in 2.6.24.
+        </span><span class="attribute">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
+        </span><span class="kw">let </span>fd = <span class="kw">crate</span>::fs::fcntl_dupfd_cloexec(<span class="self">self</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
 
-        <span class="comment">// For ESP-IDF, F_DUPFD is used instead, because the CLOEXEC semantics</span>
-        <span class="comment">// will never be supported, as this is a bare metal framework with</span>
-        <span class="comment">// no capabilities for multi-process execution. While F_DUPFD is also</span>
-        <span class="comment">// not supported yet, it might be (currently it returns ENOSYS).</span>
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;espidf&quot;</span>)]</span>
-        <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::fs::fcntl_dupfd</span>(<span class="self">self</span>)<span class="question-mark">?</span>;
+        <span class="comment">// For ESP-IDF, F_DUPFD is used instead, because the CLOEXEC semantics
+        // will never be supported, as this is a bare metal framework with
+        // no capabilities for multi-process execution. While F_DUPFD is also
+        // not supported yet, it might be (currently it returns ENOSYS).
+        </span><span class="attribute">#[cfg(target_os = <span class="string">&quot;espidf&quot;</span>)]
+        </span><span class="kw">let </span>fd = <span class="kw">crate</span>::fs::fcntl_dupfd(<span class="self">self</span>)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">fd</span>)
+        <span class="prelude-val">Ok</span>(fd)
     }
 
-    <span class="doccomment">/// Creates a new `OwnedFd` instance that shares the same underlying file</span>
-    <span class="doccomment">/// handle as the existing `OwnedFd` instance.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;wasi&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">std::io::Error::new</span>(
-            <span class="ident">std::io::ErrorKind::Unsupported</span>,
+    <span class="doccomment">/// Creates a new `OwnedFd` instance that shares the same underlying file
+    /// handle as the existing `OwnedFd` instance.
+    </span><span class="attribute">#[cfg(target_os = <span class="string">&quot;wasi&quot;</span>)]
+    </span><span class="kw">pub fn </span>try_clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::io::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="prelude-val">Err</span>(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
             <span class="string">&quot;operation not supported on WASI yet&quot;</span>,
         ))
     }
 
-    <span class="doccomment">/// Creates a new `OwnedFd` instance that shares the same underlying file</span>
-    <span class="doccomment">/// handle as the existing `OwnedFd` instance.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;windows&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident">winapi::um::processthreadsapi::GetCurrentProcessId</span>;
-        <span class="kw">use</span> <span class="ident">winapi::um::winsock2</span>::{
-            <span class="ident">WSADuplicateSocketW</span>, <span class="ident">WSAGetLastError</span>, <span class="ident">WSASocketW</span>, <span class="ident">INVALID_SOCKET</span>, <span class="ident">SOCKET_ERROR</span>,
-            <span class="ident">WSAEINVAL</span>, <span class="ident">WSAEPROTOTYPE</span>, <span class="ident">WSAPROTOCOL_INFOW</span>, <span class="ident">WSA_FLAG_NO_HANDLE_INHERIT</span>,
-            <span class="ident">WSA_FLAG_OVERLAPPED</span>,
+    <span class="doccomment">/// Creates a new `OwnedFd` instance that shares the same underlying file
+    /// handle as the existing `OwnedFd` instance.
+    </span><span class="attribute">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
+    </span><span class="kw">pub fn </span>try_clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::io::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">use </span>winapi::um::processthreadsapi::GetCurrentProcessId;
+        <span class="kw">use </span>winapi::um::winsock2::{
+            WSADuplicateSocketW, WSAGetLastError, WSASocketW, INVALID_SOCKET, SOCKET_ERROR,
+            WSAEINVAL, WSAEPROTOTYPE, WSAPROTOCOL_INFOW, WSA_FLAG_NO_HANDLE_INHERIT,
+            WSA_FLAG_OVERLAPPED,
         };
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">info</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">std::mem::zeroed</span>::<span class="op">&lt;</span><span class="ident">WSAPROTOCOL_INFOW</span><span class="op">&gt;</span>() };
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span>
-            <span class="kw">unsafe</span> { <span class="ident">WSADuplicateSocketW</span>(<span class="self">self</span>.<span class="ident">as_raw_fd</span>() <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">GetCurrentProcessId</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">info</span>) };
-        <span class="kw">match</span> <span class="ident">result</span> {
-            <span class="ident">SOCKET_ERROR</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">std::io::Error::last_os_error</span>()),
-            <span class="number">0</span> =&gt; (),
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(),
+        <span class="kw">let </span><span class="kw-2">mut </span>info = <span class="kw">unsafe </span>{ std::mem::zeroed::&lt;WSAPROTOCOL_INFOW&gt;() };
+        <span class="kw">let </span>result =
+            <span class="kw">unsafe </span>{ WSADuplicateSocketW(<span class="self">self</span>.as_raw_fd() <span class="kw">as _</span>, GetCurrentProcessId(), <span class="kw-2">&amp;mut </span>info) };
+        <span class="kw">match </span>result {
+            SOCKET_ERROR =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(std::io::Error::last_os_error()),
+            <span class="number">0 </span>=&gt; (),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(),
         }
-        <span class="kw">let</span> <span class="ident">socket</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="ident">WSASocketW</span>(
-                <span class="ident">info</span>.<span class="ident">iAddressFamily</span>,
-                <span class="ident">info</span>.<span class="ident">iSocketType</span>,
-                <span class="ident">info</span>.<span class="ident">iProtocol</span>,
-                <span class="kw-2">&amp;mut</span> <span class="ident">info</span>,
+        <span class="kw">let </span>socket = <span class="kw">unsafe </span>{
+            WSASocketW(
+                info.iAddressFamily,
+                info.iSocketType,
+                info.iProtocol,
+                <span class="kw-2">&amp;mut </span>info,
                 <span class="number">0</span>,
-                <span class="ident">WSA_FLAG_OVERLAPPED</span> <span class="op">|</span> <span class="ident">WSA_FLAG_NO_HANDLE_INHERIT</span>,
+                WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT,
             )
         };
 
-        <span class="kw">if</span> <span class="ident">socket</span> <span class="op">!</span><span class="op">=</span> <span class="ident">INVALID_SOCKET</span> {
-            <span class="kw">unsafe</span> { <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::from_raw_fd</span>(<span class="ident">socket</span> <span class="kw">as</span> <span class="kw">_</span>)) }
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">error</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">WSAGetLastError</span>() };
+        <span class="kw">if </span>socket != INVALID_SOCKET {
+            <span class="kw">unsafe </span>{ <span class="prelude-val">Ok</span>(<span class="self">Self</span>::from_raw_fd(socket <span class="kw">as _</span>)) }
+        } <span class="kw">else </span>{
+            <span class="kw">let </span>error = <span class="kw">unsafe </span>{ WSAGetLastError() };
 
-            <span class="kw">if</span> <span class="ident">error</span> <span class="op">!</span><span class="op">=</span> <span class="ident">WSAEPROTOTYPE</span> <span class="op">&amp;&amp;</span> <span class="ident">error</span> <span class="op">!</span><span class="op">=</span> <span class="ident">WSAEINVAL</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">std::io::Error::from_raw_os_error</span>(<span class="ident">error</span>));
+            <span class="kw">if </span>error != WSAEPROTOTYPE &amp;&amp; error != WSAEINVAL {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(std::io::Error::from_raw_os_error(error));
             }
 
-            <span class="kw">let</span> <span class="ident">socket</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-                <span class="ident">WSASocketW</span>(
-                    <span class="ident">info</span>.<span class="ident">iAddressFamily</span>,
-                    <span class="ident">info</span>.<span class="ident">iSocketType</span>,
-                    <span class="ident">info</span>.<span class="ident">iProtocol</span>,
-                    <span class="kw-2">&amp;mut</span> <span class="ident">info</span>,
+            <span class="kw">let </span>socket = <span class="kw">unsafe </span>{
+                WSASocketW(
+                    info.iAddressFamily,
+                    info.iSocketType,
+                    info.iProtocol,
+                    <span class="kw-2">&amp;mut </span>info,
                     <span class="number">0</span>,
-                    <span class="ident">WSA_FLAG_OVERLAPPED</span>,
+                    WSA_FLAG_OVERLAPPED,
                 )
             };
 
-            <span class="kw">if</span> <span class="ident">socket</span> <span class="op">==</span> <span class="ident">INVALID_SOCKET</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">std::io::Error::last_os_error</span>());
+            <span class="kw">if </span>socket == INVALID_SOCKET {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(std::io::Error::last_os_error());
             }
 
-            <span class="kw">unsafe</span> {
-                <span class="kw">let</span> <span class="ident">socket</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::from_raw_fd</span>(<span class="ident">socket</span> <span class="kw">as</span> <span class="kw">_</span>);
-                <span class="ident">socket</span>.<span class="ident">set_no_inherit</span>()<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="ident">socket</span>)
+            <span class="kw">unsafe </span>{
+                <span class="kw">let </span>socket = <span class="self">Self</span>::from_raw_fd(socket <span class="kw">as _</span>);
+                socket.set_no_inherit()<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(socket)
             }
         }
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;uwp&quot;</span>))]</span>
-    <span class="kw">fn</span> <span class="ident">set_no_inherit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident">winapi::um::handleapi::SetHandleInformation</span>;
-        <span class="kw">use</span> <span class="ident">winapi::um::winbase::HANDLE_FLAG_INHERIT</span>;
-        <span class="kw">use</span> <span class="ident">winapi::um::winnt::HANDLE</span>;
-        <span class="kw">match</span> <span class="kw">unsafe</span> { <span class="ident">SetHandleInformation</span>(<span class="self">self</span>.<span class="ident">as_raw_fd</span>() <span class="kw">as</span> <span class="ident">HANDLE</span>, <span class="ident">HANDLE_FLAG_INHERIT</span>, <span class="number">0</span>) } {
-            <span class="number">0</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">std::io::Error::last_os_error</span>()),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(()),
+    <span class="attribute">#[cfg(windows)]
+    #[cfg(not(target_vendor = <span class="string">&quot;uwp&quot;</span>))]
+    </span><span class="kw">fn </span>set_no_inherit(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::io::Result&lt;()&gt; {
+        <span class="kw">use </span>winapi::um::handleapi::SetHandleInformation;
+        <span class="kw">use </span>winapi::um::winbase::HANDLE_FLAG_INHERIT;
+        <span class="kw">use </span>winapi::um::winnt::HANDLE;
+        <span class="kw">match unsafe </span>{ SetHandleInformation(<span class="self">self</span>.as_raw_fd() <span class="kw">as </span>HANDLE, HANDLE_FLAG_INHERIT, <span class="number">0</span>) } {
+            <span class="number">0 </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(std::io::Error::last_os_error()),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(()),
         }
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;uwp&quot;</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">set_no_inherit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">std::io::Error::new</span>(
-            <span class="ident">std::io::ErrorKind::Unsupported</span>,
+    <span class="attribute">#[cfg(windows)]
+    #[cfg(target_vendor = <span class="string">&quot;uwp&quot;</span>)]
+    </span><span class="kw">fn </span>set_no_inherit(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::io::Result&lt;()&gt; {
+        <span class="prelude-val">Err</span>(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
             <span class="string">&quot;Unavailable on UWP&quot;</span>,
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">windows</span>))]</span>
-<span class="kw">impl</span> <span class="ident">AsFd</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_fd</span>()
+<span class="attribute">#[cfg(not(windows))]
+</span><span class="kw">impl </span>AsFd <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_fd(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="self">self</span>.inner.as_fd()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
-<span class="kw">impl</span> <span class="ident">io_lifetimes::AsSocket</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_socket</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_socket</span>()
+<span class="attribute">#[cfg(windows)]
+</span><span class="kw">impl </span>io_lifetimes::AsSocket <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_socket(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="self">self</span>.inner.as_socket()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">io_lifetimes_use_std</span>)]</span>
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">owned_fd</span>: <span class="ident">OwnedFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file</span>
-        <span class="comment">// descriptor from `self.inner`, and then `forget` `self` so</span>
-        <span class="comment">// that they remain valid until the new `OwnedFd` acquires them.</span>
-        <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="ident">owned_fd</span>.<span class="ident">inner</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>();
-        <span class="ident">forget</span>(<span class="ident">owned_fd</span>);
-        <span class="kw">unsafe</span> { <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd</span>(<span class="ident">raw_fd</span>) }
+<span class="attribute">#[cfg(io_lifetimes_use_std)]
+</span><span class="kw">impl </span>From&lt;OwnedFd&gt; <span class="kw">for </span><span class="kw">crate</span>::imp::fd::OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from(owned_fd: OwnedFd) -&gt; <span class="self">Self </span>{
+        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file
+        // descriptor from `self.inner`, and then `forget` `self` so
+        // that they remain valid until the new `OwnedFd` acquires them.
+        </span><span class="kw">let </span>raw_fd = owned_fd.inner.as_fd().as_raw_fd();
+        forget(owned_fd);
+        <span class="kw">unsafe </span>{ <span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd(raw_fd) }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">io_lifetimes_use_std</span>, <span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))))]</span>
-<span class="kw">impl</span> <span class="ident">IntoFd</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_fd</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span> {
-        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file</span>
-        <span class="comment">// descriptor from `self.inner`, and then `forget` `self` so</span>
-        <span class="comment">// that they remain valid until the new `OwnedFd` acquires them.</span>
-        <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>();
-        <span class="ident">forget</span>(<span class="self">self</span>);
-        <span class="kw">unsafe</span> { <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd</span>(<span class="ident">raw_fd</span>) }
+<span class="attribute">#[cfg(not(any(io_lifetimes_use_std, not(feature = <span class="string">&quot;std&quot;</span>))))]
+</span><span class="kw">impl </span>IntoFd <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_fd(<span class="self">self</span>) -&gt; <span class="kw">crate</span>::imp::fd::OwnedFd {
+        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file
+        // descriptor from `self.inner`, and then `forget` `self` so
+        // that they remain valid until the new `OwnedFd` acquires them.
+        </span><span class="kw">let </span>raw_fd = <span class="self">self</span>.inner.as_fd().as_raw_fd();
+        forget(<span class="self">self</span>);
+        <span class="kw">unsafe </span>{ <span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd(raw_fd) }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">io_lifetimes_use_std</span>, <span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">owned_fd</span>: <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">inner</span>: <span class="ident">ManuallyDrop::new</span>(<span class="ident">owned_fd</span>),
+<span class="attribute">#[cfg(any(io_lifetimes_use_std, not(feature = <span class="string">&quot;std&quot;</span>)))]
+</span><span class="kw">impl </span>From&lt;<span class="kw">crate</span>::imp::fd::OwnedFd&gt; <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from(owned_fd: <span class="kw">crate</span>::imp::fd::OwnedFd) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            inner: ManuallyDrop::new(owned_fd),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">not</span>(<span class="ident">io_lifetimes_use_std</span>), <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">impl</span> <span class="ident">FromFd</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from_fd</span>(<span class="ident">owned_fd</span>: <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">inner</span>: <span class="ident">ManuallyDrop::new</span>(<span class="ident">owned_fd</span>),
+<span class="attribute">#[cfg(all(not(io_lifetimes_use_std), feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="kw">impl </span>FromFd <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from_fd(owned_fd: <span class="kw">crate</span>::imp::fd::OwnedFd) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            inner: ManuallyDrop::new(owned_fd),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">io_lifetimes_use_std</span>, <span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))))]</span>
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">fd</span>: <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">inner</span>: <span class="ident">ManuallyDrop::new</span>(<span class="ident">fd</span>),
+<span class="attribute">#[cfg(not(any(io_lifetimes_use_std, not(feature = <span class="string">&quot;std&quot;</span>))))]
+</span><span class="kw">impl </span>From&lt;<span class="kw">crate</span>::imp::fd::OwnedFd&gt; <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from(fd: <span class="kw">crate</span>::imp::fd::OwnedFd) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            inner: ManuallyDrop::new(fd),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">io_lifetimes_use_std</span>, <span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))))]</span>
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">fd</span>: <span class="ident">OwnedFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file</span>
-        <span class="comment">// descriptor from `self.inner`, and then `forget` `self` so</span>
-        <span class="comment">// that they remain valid until the new `OwnedFd` acquires them.</span>
-        <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="ident">fd</span>.<span class="ident">inner</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>();
-        <span class="ident">forget</span>(<span class="ident">fd</span>);
-        <span class="kw">unsafe</span> { <span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd</span>(<span class="ident">raw_fd</span>) }
+<span class="attribute">#[cfg(not(any(io_lifetimes_use_std, not(feature = <span class="string">&quot;std&quot;</span>))))]
+</span><span class="kw">impl </span>From&lt;OwnedFd&gt; <span class="kw">for </span><span class="kw">crate</span>::imp::fd::OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from(fd: OwnedFd) -&gt; <span class="self">Self </span>{
+        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file
+        // descriptor from `self.inner`, and then `forget` `self` so
+        // that they remain valid until the new `OwnedFd` acquires them.
+        </span><span class="kw">let </span>raw_fd = fd.inner.as_fd().as_raw_fd();
+        forget(fd);
+        <span class="kw">unsafe </span>{ <span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd(raw_fd) }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">AsRawFd</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_raw_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">RawFd</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_raw_fd</span>()
+<span class="kw">impl </span>AsRawFd <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_raw_fd(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RawFd {
+        <span class="self">self</span>.inner.as_raw_fd()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">IntoRawFd</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_raw_fd</span>(<span class="self">self</span>) -&gt; <span class="ident">RawFd</span> {
-        <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>();
-        <span class="ident">forget</span>(<span class="self">self</span>);
-        <span class="ident">raw_fd</span>
+<span class="kw">impl </span>IntoRawFd <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_raw_fd(<span class="self">self</span>) -&gt; RawFd {
+        <span class="kw">let </span>raw_fd = <span class="self">self</span>.inner.as_fd().as_raw_fd();
+        forget(<span class="self">self</span>);
+        raw_fd
     }
 }
 
-<span class="kw">impl</span> <span class="ident">FromRawFd</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw_fd</span>(<span class="ident">raw_fd</span>: <span class="ident">RawFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">inner</span>: <span class="ident">ManuallyDrop::new</span>(<span class="ident"><span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd</span>(<span class="ident">raw_fd</span>)),
+<span class="kw">impl </span>FromRawFd <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">unsafe fn </span>from_raw_fd(raw_fd: RawFd) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            inner: ManuallyDrop::new(<span class="kw">crate</span>::imp::fd::OwnedFd::from_raw_fd(raw_fd)),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file</span>
-        <span class="comment">// descriptor from `self.inner`. `self.inner` is wrapped with</span>
-        <span class="comment">// `ManuallyDrop` so dropping it doesn&#39;t invalid them.</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">close</span>(<span class="self">self</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>());
+<span class="kw">impl </span>Drop <span class="kw">for </span>OwnedFd {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// Safety: We use `as_fd().as_raw_fd()` to extract the raw file
+        // descriptor from `self.inner`. `self.inner` is wrapped with
+        // `ManuallyDrop` so dropping it doesn&#39;t invalid them.
+        </span><span class="kw">unsafe </span>{
+            close(<span class="self">self</span>.as_fd().as_raw_fd());
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">fmt</span>(<span class="ident">f</span>)
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>OwnedFd {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="self">self</span>.inner.fmt(f)
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Gauge","Open Metrics [`Gauge`] to record current measurements."]],"trait":[["Atomic",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["Gauge","Open Metrics [`Gauge`] to record current measurements."]],"trait":[["Atomic",""]]};

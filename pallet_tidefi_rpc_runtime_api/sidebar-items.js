@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["TidefiApi",""]]});
+window.SIDEBAR_ITEMS = {"trait":[["TidefiApi",""]]};

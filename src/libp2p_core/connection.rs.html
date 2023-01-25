@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-core-0.33.0/src/connection.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>connection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../libp2p_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../libp2p_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../libp2p_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-core-0.33.0/src/connection.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>connection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../libp2p_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -246,249 +241,248 @@
 <span id="241">241</span>
 <span id="242">242</span>
 <span id="243">243</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies (UK) Ltd.</span>
-<span class="comment">//</span>
-<span class="comment">// Permission is hereby granted, free of charge, to any person obtaining a</span>
-<span class="comment">// copy of this software and associated documentation files (the &quot;Software&quot;),</span>
-<span class="comment">// to deal in the Software without restriction, including without limitation</span>
-<span class="comment">// the rights to use, copy, modify, merge, publish, distribute, sublicense,</span>
-<span class="comment">// and/or sell copies of the Software, and to permit persons to whom the</span>
-<span class="comment">// Software is furnished to do so, subject to the following conditions:</span>
-<span class="comment">//</span>
-<span class="comment">// The above copyright notice and this permission notice shall be included in</span>
-<span class="comment">// all copies or substantial portions of the Software.</span>
-<span class="comment">//</span>
-<span class="comment">// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS</span>
-<span class="comment">// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
-<span class="comment">// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
-<span class="comment">// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
-<span class="comment">// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING</span>
-<span class="comment">// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER</span>
-<span class="comment">// DEALINGS IN THE SOFTWARE.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies (UK) Ltd.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the &quot;Software&quot;),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multiaddr</span>::{<span class="ident">Multiaddr</span>, <span class="ident">Protocol</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::multiaddr::{Multiaddr, Protocol};
 
-<span class="doccomment">/// Connection identifier.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ConnectionId</span>(<span class="ident">usize</span>);
+<span class="doccomment">/// Connection identifier.
+</span><span class="attribute">#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+</span><span class="kw">pub struct </span>ConnectionId(usize);
 
-<span class="kw">impl</span> <span class="ident">ConnectionId</span> {
-    <span class="doccomment">/// Creates a `ConnectionId` from a non-negative integer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is primarily useful for creating connection IDs</span>
-    <span class="doccomment">/// in test environments. There is in general no guarantee</span>
-    <span class="doccomment">/// that all connection IDs are based on non-negative integers.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">id</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span>(<span class="ident">id</span>)
+<span class="kw">impl </span>ConnectionId {
+    <span class="doccomment">/// Creates a `ConnectionId` from a non-negative integer.
+    ///
+    /// This is primarily useful for creating connection IDs
+    /// in test environments. There is in general no guarantee
+    /// that all connection IDs are based on non-negative integers.
+    </span><span class="kw">pub fn </span>new(id: usize) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(id)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">std::ops::Add</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ConnectionId</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span>;
+<span class="kw">impl </span>std::ops::Add&lt;usize&gt; <span class="kw">for </span>ConnectionId {
+    <span class="kw">type </span>Output = <span class="self">Self</span>;
 
-    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span>(<span class="self">self</span>.<span class="number">0</span> <span class="op">+</span> <span class="ident">other</span>)
+    <span class="kw">fn </span>add(<span class="self">self</span>, other: usize) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(<span class="self">self</span>.<span class="number">0 </span>+ other)
     }
 }
 
-<span class="doccomment">/// The ID of a single listener.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ListenerId</span>(<span class="ident">u64</span>);
+<span class="doccomment">/// The ID of a single listener.
+</span><span class="attribute">#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+</span><span class="kw">pub struct </span>ListenerId(u64);
 
-<span class="kw">impl</span> <span class="ident">ListenerId</span> {
-    <span class="doccomment">/// Creates a `ListenerId` from a non-negative integer.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">id</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span>(<span class="ident">id</span>)
+<span class="kw">impl </span>ListenerId {
+    <span class="doccomment">/// Creates a `ListenerId` from a non-negative integer.
+    </span><span class="kw">pub fn </span>new(id: u64) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(id)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">std::ops::Add</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ListenerId</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span>;
+<span class="kw">impl </span>std::ops::Add&lt;u64&gt; <span class="kw">for </span>ListenerId {
+    <span class="kw">type </span>Output = <span class="self">Self</span>;
 
-    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span>(<span class="self">self</span>.<span class="number">0</span> <span class="op">+</span> <span class="ident">other</span>)
+    <span class="kw">fn </span>add(<span class="self">self</span>, other: u64) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(<span class="self">self</span>.<span class="number">0 </span>+ other)
     }
 }
 
-<span class="doccomment">/// The endpoint roles associated with a peer-to-peer communication channel.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Endpoint</span> {
-    <span class="doccomment">/// The socket comes from a dialer.</span>
-    <span class="ident">Dialer</span>,
-    <span class="doccomment">/// The socket comes from a listener.</span>
-    <span class="ident">Listener</span>,
+<span class="doccomment">/// The endpoint roles associated with a peer-to-peer communication channel.
+</span><span class="attribute">#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+</span><span class="kw">pub enum </span>Endpoint {
+    <span class="doccomment">/// The socket comes from a dialer.
+    </span>Dialer,
+    <span class="doccomment">/// The socket comes from a listener.
+    </span>Listener,
 }
 
-<span class="kw">impl</span> <span class="ident">std::ops::Not</span> <span class="kw">for</span> <span class="ident">Endpoint</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Endpoint</span>;
+<span class="kw">impl </span>std::ops::Not <span class="kw">for </span>Endpoint {
+    <span class="kw">type </span>Output = Endpoint;
 
-    <span class="kw">fn</span> <span class="ident">not</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Output</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Endpoint::Dialer</span> =&gt; <span class="ident">Endpoint::Listener</span>,
-            <span class="ident">Endpoint::Listener</span> =&gt; <span class="ident">Endpoint::Dialer</span>,
+    <span class="kw">fn </span>not(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Output {
+        <span class="kw">match </span><span class="self">self </span>{
+            Endpoint::Dialer =&gt; Endpoint::Listener,
+            Endpoint::Listener =&gt; Endpoint::Dialer,
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Endpoint</span> {
-    <span class="doccomment">/// Is this endpoint a dialer?</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_dialer</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">Endpoint::Dialer</span>)
+<span class="kw">impl </span>Endpoint {
+    <span class="doccomment">/// Is this endpoint a dialer?
+    </span><span class="kw">pub fn </span>is_dialer(<span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, Endpoint::Dialer)
     }
 
-    <span class="doccomment">/// Is this endpoint a listener?</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_listener</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">Endpoint::Listener</span>)
+    <span class="doccomment">/// Is this endpoint a listener?
+    </span><span class="kw">pub fn </span>is_listener(<span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, Endpoint::Listener)
     }
 }
 
-<span class="doccomment">/// The endpoint roles associated with a pending peer-to-peer connection.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PendingPoint</span> {
-    <span class="doccomment">/// The socket comes from a dialer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// There is no single address associated with the Dialer of a pending</span>
-    <span class="doccomment">/// connection. Addresses are dialed in parallel. Only once the first dial</span>
-    <span class="doccomment">/// is successful is the address of the connection known.</span>
-    <span class="ident">Dialer</span> {
-        <span class="doccomment">/// Same as [`ConnectedPoint::Dialer`] `role_override`.</span>
-        <span class="ident">role_override</span>: <span class="ident">Endpoint</span>,
+<span class="doccomment">/// The endpoint roles associated with a pending peer-to-peer connection.
+</span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+</span><span class="kw">pub enum </span>PendingPoint {
+    <span class="doccomment">/// The socket comes from a dialer.
+    ///
+    /// There is no single address associated with the Dialer of a pending
+    /// connection. Addresses are dialed in parallel. Only once the first dial
+    /// is successful is the address of the connection known.
+    </span>Dialer {
+        <span class="doccomment">/// Same as [`ConnectedPoint::Dialer`] `role_override`.
+        </span>role_override: Endpoint,
     },
-    <span class="doccomment">/// The socket comes from a listener.</span>
-    <span class="ident">Listener</span> {
-        <span class="doccomment">/// Local connection address.</span>
-        <span class="ident">local_addr</span>: <span class="ident">Multiaddr</span>,
-        <span class="doccomment">/// Address used to send back data to the remote.</span>
-        <span class="ident">send_back_addr</span>: <span class="ident">Multiaddr</span>,
+    <span class="doccomment">/// The socket comes from a listener.
+    </span>Listener {
+        <span class="doccomment">/// Local connection address.
+        </span>local_addr: Multiaddr,
+        <span class="doccomment">/// Address used to send back data to the remote.
+        </span>send_back_addr: Multiaddr,
     },
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ConnectedPoint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PendingPoint</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">endpoint</span>: <span class="ident">ConnectedPoint</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">endpoint</span> {
-            <span class="ident">ConnectedPoint::Dialer</span> { <span class="ident">role_override</span>, .. } =&gt; <span class="ident">PendingPoint::Dialer</span> { <span class="ident">role_override</span> },
-            <span class="ident">ConnectedPoint::Listener</span> {
-                <span class="ident">local_addr</span>,
-                <span class="ident">send_back_addr</span>,
-            } =&gt; <span class="ident">PendingPoint::Listener</span> {
-                <span class="ident">local_addr</span>,
-                <span class="ident">send_back_addr</span>,
+<span class="kw">impl </span>From&lt;ConnectedPoint&gt; <span class="kw">for </span>PendingPoint {
+    <span class="kw">fn </span>from(endpoint: ConnectedPoint) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>endpoint {
+            ConnectedPoint::Dialer { role_override, .. } =&gt; PendingPoint::Dialer { role_override },
+            ConnectedPoint::Listener {
+                local_addr,
+                send_back_addr,
+            } =&gt; PendingPoint::Listener {
+                local_addr,
+                send_back_addr,
             },
         }
     }
 }
 
-<span class="doccomment">/// The endpoint roles associated with an established peer-to-peer connection.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Hash</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ConnectedPoint</span> {
-    <span class="doccomment">/// We dialed the node.</span>
-    <span class="ident">Dialer</span> {
-        <span class="doccomment">/// Multiaddress that was successfully dialed.</span>
-        <span class="ident">address</span>: <span class="ident">Multiaddr</span>,
-        <span class="doccomment">/// Whether the role of the local node on the connection should be</span>
-        <span class="doccomment">/// overriden. I.e. whether the local node should act as a listener on</span>
-        <span class="doccomment">/// the outgoing connection.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// This option is needed for NAT and firewall hole punching.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// - [`Endpoint::Dialer`] represents the default non-overriding option.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// - [`Endpoint::Listener`] represents the overriding option.</span>
-        <span class="doccomment">///   Realization depends on the transport protocol. E.g. in the case of</span>
-        <span class="doccomment">///   TCP, both endpoints dial each other, resulting in a _simultaneous</span>
-        <span class="doccomment">///   open_ TCP connection. On this new connection both endpoints assume</span>
-        <span class="doccomment">///   to be the dialer of the connection. This is problematic during the</span>
-        <span class="doccomment">///   connection upgrade process where an upgrade assumes one side to be</span>
-        <span class="doccomment">///   the listener. With the help of this option, both peers can</span>
-        <span class="doccomment">///   negotiate the roles (dialer and listener) for the new connection</span>
-        <span class="doccomment">///   ahead of time, through some external channel, e.g. the DCUtR</span>
-        <span class="doccomment">///   protocol, and thus have one peer dial the other and upgrade the</span>
-        <span class="doccomment">///   connection as a dialer and one peer dial the other and upgrade the</span>
-        <span class="doccomment">///   connection _as a listener_ overriding its role.</span>
-        <span class="ident">role_override</span>: <span class="ident">Endpoint</span>,
+<span class="doccomment">/// The endpoint roles associated with an established peer-to-peer connection.
+</span><span class="attribute">#[derive(PartialEq, Eq, Debug, Clone, Hash)]
+</span><span class="kw">pub enum </span>ConnectedPoint {
+    <span class="doccomment">/// We dialed the node.
+    </span>Dialer {
+        <span class="doccomment">/// Multiaddress that was successfully dialed.
+        </span>address: Multiaddr,
+        <span class="doccomment">/// Whether the role of the local node on the connection should be
+        /// overriden. I.e. whether the local node should act as a listener on
+        /// the outgoing connection.
+        ///
+        /// This option is needed for NAT and firewall hole punching.
+        ///
+        /// - [`Endpoint::Dialer`] represents the default non-overriding option.
+        ///
+        /// - [`Endpoint::Listener`] represents the overriding option.
+        ///   Realization depends on the transport protocol. E.g. in the case of
+        ///   TCP, both endpoints dial each other, resulting in a _simultaneous
+        ///   open_ TCP connection. On this new connection both endpoints assume
+        ///   to be the dialer of the connection. This is problematic during the
+        ///   connection upgrade process where an upgrade assumes one side to be
+        ///   the listener. With the help of this option, both peers can
+        ///   negotiate the roles (dialer and listener) for the new connection
+        ///   ahead of time, through some external channel, e.g. the DCUtR
+        ///   protocol, and thus have one peer dial the other and upgrade the
+        ///   connection as a dialer and one peer dial the other and upgrade the
+        ///   connection _as a listener_ overriding its role.
+        </span>role_override: Endpoint,
     },
-    <span class="doccomment">/// We received the node.</span>
-    <span class="ident">Listener</span> {
-        <span class="doccomment">/// Local connection address.</span>
-        <span class="ident">local_addr</span>: <span class="ident">Multiaddr</span>,
-        <span class="doccomment">/// Address used to send back data to the remote.</span>
-        <span class="ident">send_back_addr</span>: <span class="ident">Multiaddr</span>,
+    <span class="doccomment">/// We received the node.
+    </span>Listener {
+        <span class="doccomment">/// Local connection address.
+        </span>local_addr: Multiaddr,
+        <span class="doccomment">/// Address used to send back data to the remote.
+        </span>send_back_addr: Multiaddr,
     },
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="ident">ConnectedPoint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Endpoint</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">endpoint</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="ident">ConnectedPoint</span>) -&gt; <span class="ident">Endpoint</span> {
-        <span class="ident">endpoint</span>.<span class="ident">to_endpoint</span>()
+<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>ConnectedPoint&gt; <span class="kw">for </span>Endpoint {
+    <span class="kw">fn </span>from(endpoint: <span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>ConnectedPoint) -&gt; Endpoint {
+        endpoint.to_endpoint()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ConnectedPoint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Endpoint</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">endpoint</span>: <span class="ident">ConnectedPoint</span>) -&gt; <span class="ident">Endpoint</span> {
-        <span class="ident">endpoint</span>.<span class="ident">to_endpoint</span>()
+<span class="kw">impl </span>From&lt;ConnectedPoint&gt; <span class="kw">for </span>Endpoint {
+    <span class="kw">fn </span>from(endpoint: ConnectedPoint) -&gt; Endpoint {
+        endpoint.to_endpoint()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">ConnectedPoint</span> {
-    <span class="doccomment">/// Turns the `ConnectedPoint` into the corresponding `Endpoint`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_endpoint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Endpoint</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ConnectedPoint::Dialer</span> { .. } =&gt; <span class="ident">Endpoint::Dialer</span>,
-            <span class="ident">ConnectedPoint::Listener</span> { .. } =&gt; <span class="ident">Endpoint::Listener</span>,
+<span class="kw">impl </span>ConnectedPoint {
+    <span class="doccomment">/// Turns the `ConnectedPoint` into the corresponding `Endpoint`.
+    </span><span class="kw">pub fn </span>to_endpoint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Endpoint {
+        <span class="kw">match </span><span class="self">self </span>{
+            ConnectedPoint::Dialer { .. } =&gt; Endpoint::Dialer,
+            ConnectedPoint::Listener { .. } =&gt; Endpoint::Listener,
         }
     }
 
-    <span class="doccomment">/// Returns true if we are `Dialer`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_dialer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ConnectedPoint::Dialer</span> { .. } =&gt; <span class="bool-val">true</span>,
-            <span class="ident">ConnectedPoint::Listener</span> { .. } =&gt; <span class="bool-val">false</span>,
+    <span class="doccomment">/// Returns true if we are `Dialer`.
+    </span><span class="kw">pub fn </span>is_dialer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self </span>{
+            ConnectedPoint::Dialer { .. } =&gt; <span class="bool-val">true</span>,
+            ConnectedPoint::Listener { .. } =&gt; <span class="bool-val">false</span>,
         }
     }
 
-    <span class="doccomment">/// Returns true if we are `Listener`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_listener</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ConnectedPoint::Dialer</span> { .. } =&gt; <span class="bool-val">false</span>,
-            <span class="ident">ConnectedPoint::Listener</span> { .. } =&gt; <span class="bool-val">true</span>,
+    <span class="doccomment">/// Returns true if we are `Listener`.
+    </span><span class="kw">pub fn </span>is_listener(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self </span>{
+            ConnectedPoint::Dialer { .. } =&gt; <span class="bool-val">false</span>,
+            ConnectedPoint::Listener { .. } =&gt; <span class="bool-val">true</span>,
         }
     }
 
-    <span class="doccomment">/// Returns true if the connection is relayed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_relayed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ConnectedPoint::Dialer</span> {
-                <span class="ident">address</span>,
-                <span class="ident">role_override</span>: <span class="kw">_</span>,
-            } =&gt; <span class="ident">address</span>,
-            <span class="ident">ConnectedPoint::Listener</span> { <span class="ident">local_addr</span>, .. } =&gt; <span class="ident">local_addr</span>,
+    <span class="doccomment">/// Returns true if the connection is relayed.
+    </span><span class="kw">pub fn </span>is_relayed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self </span>{
+            ConnectedPoint::Dialer {
+                address,
+                role_override: <span class="kw">_</span>,
+            } =&gt; address,
+            ConnectedPoint::Listener { local_addr, .. } =&gt; local_addr,
         }
-        .<span class="ident">iter</span>()
-        .<span class="ident">any</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span> <span class="op">==</span> <span class="ident">Protocol::P2pCircuit</span>)
+        .iter()
+        .any(|p| p == Protocol::P2pCircuit)
     }
 
-    <span class="doccomment">/// Returns the address of the remote stored in this struct.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For `Dialer`, this returns `address`. For `Listener`, this returns `send_back_addr`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that the remote node might not be listening on this address and hence the address might</span>
-    <span class="doccomment">/// not be usable to establish new connections.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_remote_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Multiaddr</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ConnectedPoint::Dialer</span> { <span class="ident">address</span>, .. } =&gt; <span class="ident">address</span>,
-            <span class="ident">ConnectedPoint::Listener</span> { <span class="ident">send_back_addr</span>, .. } =&gt; <span class="ident">send_back_addr</span>,
+    <span class="doccomment">/// Returns the address of the remote stored in this struct.
+    ///
+    /// For `Dialer`, this returns `address`. For `Listener`, this returns `send_back_addr`.
+    ///
+    /// Note that the remote node might not be listening on this address and hence the address might
+    /// not be usable to establish new connections.
+    </span><span class="kw">pub fn </span>get_remote_address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Multiaddr {
+        <span class="kw">match </span><span class="self">self </span>{
+            ConnectedPoint::Dialer { address, .. } =&gt; address,
+            ConnectedPoint::Listener { send_back_addr, .. } =&gt; send_back_addr,
         }
     }
 
-    <span class="doccomment">/// Modifies the address of the remote stored in this struct.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For `Dialer`, this modifies `address`. For `Listener`, this modifies `send_back_addr`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_remote_address</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">new_address</span>: <span class="ident">Multiaddr</span>) {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ConnectedPoint::Dialer</span> { <span class="ident">address</span>, .. } =&gt; <span class="kw-2">*</span><span class="ident">address</span> <span class="op">=</span> <span class="ident">new_address</span>,
-            <span class="ident">ConnectedPoint::Listener</span> { <span class="ident">send_back_addr</span>, .. } =&gt; <span class="kw-2">*</span><span class="ident">send_back_addr</span> <span class="op">=</span> <span class="ident">new_address</span>,
+    <span class="doccomment">/// Modifies the address of the remote stored in this struct.
+    ///
+    /// For `Dialer`, this modifies `address`. For `Listener`, this modifies `send_back_addr`.
+    </span><span class="kw">pub fn </span>set_remote_address(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new_address: Multiaddr) {
+        <span class="kw">match </span><span class="self">self </span>{
+            ConnectedPoint::Dialer { address, .. } =&gt; <span class="kw-2">*</span>address = new_address,
+            ConnectedPoint::Listener { send_back_addr, .. } =&gt; <span class="kw-2">*</span>send_back_addr = new_address,
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="libp2p_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="libp2p_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

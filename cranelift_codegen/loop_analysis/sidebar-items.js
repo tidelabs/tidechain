@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Loop","A opaque reference to a code loop."],["LoopAnalysis","Loop tree information for a single function."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Loop","A opaque reference to a code loop."],["LoopAnalysis","Loop tree information for a single function."]]};

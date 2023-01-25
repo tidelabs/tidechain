@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/io/mmap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/io/mmap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -234,237 +229,236 @@
 <span id="229">229</span>
 <span id="230">230</span>
 <span id="231">231</span>
-</pre><pre class="rust"><code><span class="doccomment">//! The `mmap` API.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Safety</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! `mmap` and related functions manipulate raw pointers and have special</span>
-<span class="doccomment">//! semantics and are wildly unsafe.</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
+</pre><pre class="rust"><code><span class="doccomment">//! The `mmap` API.
+//!
+//! # Safety
+//!
+//! `mmap` and related functions manipulate raw pointers and have special
+//! semantics and are wildly unsafe.
+</span><span class="attribute">#![allow(unsafe_code)]
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">imp</span>, <span class="ident">io</span>};
-<span class="kw">use</span> <span class="ident">core::ffi::c_void</span>;
-<span class="kw">use</span> <span class="ident">imp::fd::AsFd</span>;
+</span><span class="kw">use crate</span>::{imp, io};
+<span class="kw">use </span>core::ffi::c_void;
+<span class="kw">use </span>imp::fd::AsFd;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">linux_raw</span>, <span class="ident">all</span>(<span class="ident">libc</span>, <span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))))]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imp::io::MlockFlags</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">linux_raw</span>, <span class="ident">all</span>(<span class="ident">libc</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imp::io::MremapFlags</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">imp::io</span>::{<span class="ident">MapFlags</span>, <span class="ident">MprotectFlags</span>, <span class="ident">ProtFlags</span>};
+<span class="attribute">#[cfg(any(linux_raw, all(libc, any(target_os = <span class="string">&quot;android&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))))]
+</span><span class="kw">pub use </span>imp::io::MlockFlags;
+<span class="attribute">#[cfg(any(linux_raw, all(libc, target_os = <span class="string">&quot;linux&quot;</span>)))]
+</span><span class="kw">pub use </span>imp::io::MremapFlags;
+<span class="kw">pub use </span>imp::io::{MapFlags, MprotectFlags, ProtFlags};
 
-<span class="doccomment">/// `mmap(ptr, len, prot, flags, fd, offset)`—Create a file-backed memory</span>
-<span class="doccomment">/// mapping.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For anonymous mappings (`MAP_ANON`/`MAP_ANONYMOUS`), see</span>
-<span class="doccomment">/// [`mmap_anonymous`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Raw pointers and lots of special semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mmap.html</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/mmap.2.html</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mmap</span><span class="op">&lt;</span><span class="ident">Fd</span>: <span class="ident">AsFd</span><span class="op">&gt;</span>(
-    <span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
-    <span class="ident">prot</span>: <span class="ident">ProtFlags</span>,
-    <span class="ident">flags</span>: <span class="ident">MapFlags</span>,
-    <span class="ident">fd</span>: <span class="ident">Fd</span>,
-    <span class="ident">offset</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c_void</span><span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::mmap</span>(<span class="ident">ptr</span>, <span class="ident">len</span>, <span class="ident">prot</span>, <span class="ident">flags</span>, <span class="ident">fd</span>.<span class="ident">as_fd</span>(), <span class="ident">offset</span>)
+<span class="doccomment">/// `mmap(ptr, len, prot, flags, fd, offset)`—Create a file-backed memory
+/// mapping.
+///
+/// For anonymous mappings (`MAP_ANON`/`MAP_ANONYMOUS`), see
+/// [`mmap_anonymous`].
+///
+/// # Safety
+///
+/// Raw pointers and lots of special semantics.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mmap.html
+/// [Linux]: https://man7.org/linux/man-pages/man2/mmap.2.html
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub unsafe fn </span>mmap&lt;Fd: AsFd&gt;(
+    ptr: <span class="kw-2">*mut </span>c_void,
+    len: usize,
+    prot: ProtFlags,
+    flags: MapFlags,
+    fd: Fd,
+    offset: u64,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c_void&gt; {
+    imp::io::syscalls::mmap(ptr, len, prot, flags, fd.as_fd(), offset)
 }
 
-<span class="doccomment">/// `mmap(ptr, len, prot, MAP_ANONYMOUS | flags, -1, 0)`—Create an anonymous</span>
-<span class="doccomment">/// memory mapping.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For file-backed mappings, see [`mmap`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Raw pointers and lots of special semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mmap.html</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/mmap.2.html</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;mmap&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mmap_anonymous</span>(
-    <span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
-    <span class="ident">prot</span>: <span class="ident">ProtFlags</span>,
-    <span class="ident">flags</span>: <span class="ident">MapFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c_void</span><span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::mmap_anonymous</span>(<span class="ident">ptr</span>, <span class="ident">len</span>, <span class="ident">prot</span>, <span class="ident">flags</span>)
+<span class="doccomment">/// `mmap(ptr, len, prot, MAP_ANONYMOUS | flags, -1, 0)`—Create an anonymous
+/// memory mapping.
+///
+/// For file-backed mappings, see [`mmap`].
+///
+/// # Safety
+///
+/// Raw pointers and lots of special semantics.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mmap.html
+/// [Linux]: https://man7.org/linux/man-pages/man2/mmap.2.html
+</span><span class="attribute">#[inline]
+#[doc(alias = <span class="string">&quot;mmap&quot;</span>)]
+</span><span class="kw">pub unsafe fn </span>mmap_anonymous(
+    ptr: <span class="kw-2">*mut </span>c_void,
+    len: usize,
+    prot: ProtFlags,
+    flags: MapFlags,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c_void&gt; {
+    imp::io::syscalls::mmap_anonymous(ptr, len, prot, flags)
 }
 
-<span class="doccomment">/// `munmap(ptr, len)`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Raw pointers and lots of special semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/munmap.html</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/munmap.2.html</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">munmap</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>, <span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::munmap</span>(<span class="ident">ptr</span>, <span class="ident">len</span>)
+<span class="doccomment">/// `munmap(ptr, len)`
+///
+/// # Safety
+///
+/// Raw pointers and lots of special semantics.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/munmap.html
+/// [Linux]: https://man7.org/linux/man-pages/man2/munmap.2.html
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub unsafe fn </span>munmap(ptr: <span class="kw-2">*mut </span>c_void, len: usize) -&gt; io::Result&lt;()&gt; {
+    imp::io::syscalls::munmap(ptr, len)
 }
 
-<span class="doccomment">/// `mremap(old_address, old_size, new_size, flags)`—Resize, modify,</span>
-<span class="doccomment">/// and/or move a memory mapping.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For moving a mapping to a fixed address (`MREMAP_FIXED`), see</span>
-<span class="doccomment">/// [`mremap_fixed`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Raw pointers and lots of special semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/mremap.2.html</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">linux_raw</span>, <span class="ident">all</span>(<span class="ident">libc</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)))]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mremap</span>(
-    <span class="ident">old_address</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">old_size</span>: <span class="ident">usize</span>,
-    <span class="ident">new_size</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">MremapFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c_void</span><span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::mremap</span>(<span class="ident">old_address</span>, <span class="ident">old_size</span>, <span class="ident">new_size</span>, <span class="ident">flags</span>)
+<span class="doccomment">/// `mremap(old_address, old_size, new_size, flags)`—Resize, modify,
+/// and/or move a memory mapping.
+///
+/// For moving a mapping to a fixed address (`MREMAP_FIXED`), see
+/// [`mremap_fixed`].
+///
+/// # Safety
+///
+/// Raw pointers and lots of special semantics.
+///
+/// # References
+///  - [Linux]
+///
+/// [Linux]: https://man7.org/linux/man-pages/man2/mremap.2.html
+</span><span class="attribute">#[cfg(any(linux_raw, all(libc, target_os = <span class="string">&quot;linux&quot;</span>)))]
+#[inline]
+</span><span class="kw">pub unsafe fn </span>mremap(
+    old_address: <span class="kw-2">*mut </span>c_void,
+    old_size: usize,
+    new_size: usize,
+    flags: MremapFlags,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c_void&gt; {
+    imp::io::syscalls::mremap(old_address, old_size, new_size, flags)
 }
 
-<span class="doccomment">/// `mremap(old_address, old_size, new_size, MREMAP_FIXED | flags)`—Resize,</span>
-<span class="doccomment">/// modify, and/or move a memory mapping to a specific address.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For `mremap` without moving to a specific address, see [`mremap`].</span>
-<span class="doccomment">/// [`mremap_fixed`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Raw pointers and lots of special semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/mremap.2.html</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">linux_raw</span>, <span class="ident">all</span>(<span class="ident">libc</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)))]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;mremap&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mremap_fixed</span>(
-    <span class="ident">old_address</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">old_size</span>: <span class="ident">usize</span>,
-    <span class="ident">new_size</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">MremapFlags</span>,
-    <span class="ident">new_address</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c_void</span><span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::mremap_fixed</span>(<span class="ident">old_address</span>, <span class="ident">old_size</span>, <span class="ident">new_size</span>, <span class="ident">flags</span>, <span class="ident">new_address</span>)
+<span class="doccomment">/// `mremap(old_address, old_size, new_size, MREMAP_FIXED | flags)`—Resize,
+/// modify, and/or move a memory mapping to a specific address.
+///
+/// For `mremap` without moving to a specific address, see [`mremap`].
+/// [`mremap_fixed`].
+///
+/// # Safety
+///
+/// Raw pointers and lots of special semantics.
+///
+/// # References
+///  - [Linux]
+///
+/// [Linux]: https://man7.org/linux/man-pages/man2/mremap.2.html
+</span><span class="attribute">#[cfg(any(linux_raw, all(libc, target_os = <span class="string">&quot;linux&quot;</span>)))]
+#[inline]
+#[doc(alias = <span class="string">&quot;mremap&quot;</span>)]
+</span><span class="kw">pub unsafe fn </span>mremap_fixed(
+    old_address: <span class="kw-2">*mut </span>c_void,
+    old_size: usize,
+    new_size: usize,
+    flags: MremapFlags,
+    new_address: <span class="kw-2">*mut </span>c_void,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c_void&gt; {
+    imp::io::syscalls::mremap_fixed(old_address, old_size, new_size, flags, new_address)
 }
 
-<span class="doccomment">/// `mprotect(ptr, len, flags)`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Raw pointers and lots of special semantics.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mprotect.html</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/mprotect.2.html</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mprotect</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">flags</span>: <span class="ident">MprotectFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::mprotect</span>(<span class="ident">ptr</span>, <span class="ident">len</span>, <span class="ident">flags</span>)
+<span class="doccomment">/// `mprotect(ptr, len, flags)`
+///
+/// # Safety
+///
+/// Raw pointers and lots of special semantics.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mprotect.html
+/// [Linux]: https://man7.org/linux/man-pages/man2/mprotect.2.html
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub unsafe fn </span>mprotect(ptr: <span class="kw-2">*mut </span>c_void, len: usize, flags: MprotectFlags) -&gt; io::Result&lt;()&gt; {
+    imp::io::syscalls::mprotect(ptr, len, flags)
 }
 
-<span class="doccomment">/// `mlock(ptr, len)`—Lock memory into RAM.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function operates on raw pointers, but it should only be used on</span>
-<span class="doccomment">/// memory which the caller owns. Technically, locking memory shouldn&#39;t violate</span>
-<span class="doccomment">/// any invariants, but since unlocking it can violate invariants, this</span>
-<span class="doccomment">/// function is also unsafe for symmetry.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Some implementations implicitly round the memory region out to the nearest</span>
-<span class="doccomment">/// page boundaries, so this function may lock more memory than explicitly</span>
-<span class="doccomment">/// requested if the memory isn&#39;t page-aligned.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mlock.html</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/mlock.2.html</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mlock</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>, <span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::mlock</span>(<span class="ident">ptr</span>, <span class="ident">len</span>)
+<span class="doccomment">/// `mlock(ptr, len)`—Lock memory into RAM.
+///
+/// # Safety
+///
+/// This function operates on raw pointers, but it should only be used on
+/// memory which the caller owns. Technically, locking memory shouldn&#39;t violate
+/// any invariants, but since unlocking it can violate invariants, this
+/// function is also unsafe for symmetry.
+///
+/// Some implementations implicitly round the memory region out to the nearest
+/// page boundaries, so this function may lock more memory than explicitly
+/// requested if the memory isn&#39;t page-aligned.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mlock.html
+/// [Linux]: https://man7.org/linux/man-pages/man2/mlock.2.html
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub unsafe fn </span>mlock(ptr: <span class="kw-2">*mut </span>c_void, len: usize) -&gt; io::Result&lt;()&gt; {
+    imp::io::syscalls::mlock(ptr, len)
 }
 
-<span class="doccomment">/// `mlock2(ptr, len, flags)`—Lock memory into RAM, with</span>
-<span class="doccomment">/// flags.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `mlock_with` is the same as [`mlock`] but adds an additional flags operand.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function operates on raw pointers, but it should only be used on</span>
-<span class="doccomment">/// memory which the caller owns. Technically, locking memory shouldn&#39;t violate</span>
-<span class="doccomment">/// any invariants, but since unlocking it can violate invariants, this</span>
-<span class="doccomment">/// function is also unsafe for symmetry.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Some implementations implicitly round the memory region out to the nearest</span>
-<span class="doccomment">/// page boundaries, so this function may lock more memory than explicitly</span>
-<span class="doccomment">/// requested if the memory isn&#39;t page-aligned.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/mlock2.2.html</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">linux_raw</span>, <span class="ident">all</span>(<span class="ident">libc</span>, <span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))))]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;mlock2&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mlock_with</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">flags</span>: <span class="ident">MlockFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::mlock_with</span>(<span class="ident">ptr</span>, <span class="ident">len</span>, <span class="ident">flags</span>)
+<span class="doccomment">/// `mlock2(ptr, len, flags)`—Lock memory into RAM, with
+/// flags.
+///
+/// `mlock_with` is the same as [`mlock`] but adds an additional flags operand.
+///
+/// # Safety
+///
+/// This function operates on raw pointers, but it should only be used on
+/// memory which the caller owns. Technically, locking memory shouldn&#39;t violate
+/// any invariants, but since unlocking it can violate invariants, this
+/// function is also unsafe for symmetry.
+///
+/// Some implementations implicitly round the memory region out to the nearest
+/// page boundaries, so this function may lock more memory than explicitly
+/// requested if the memory isn&#39;t page-aligned.
+///
+/// # References
+///  - [Linux]
+///
+/// [Linux]: https://man7.org/linux/man-pages/man2/mlock2.2.html
+</span><span class="attribute">#[cfg(any(linux_raw, all(libc, any(target_os = <span class="string">&quot;android&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))))]
+#[inline]
+#[doc(alias = <span class="string">&quot;mlock2&quot;</span>)]
+</span><span class="kw">pub unsafe fn </span>mlock_with(ptr: <span class="kw-2">*mut </span>c_void, len: usize, flags: MlockFlags) -&gt; io::Result&lt;()&gt; {
+    imp::io::syscalls::mlock_with(ptr, len, flags)
 }
 
-<span class="doccomment">/// `munlock(ptr, len)`—Unlock memory.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function operates on raw pointers, but it should only be used on</span>
-<span class="doccomment">/// memory which the caller owns, to avoid compromising the `mlock` invariants</span>
-<span class="doccomment">/// of other unrelated code in the process.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Some implementations implicitly round the memory region out to the nearest</span>
-<span class="doccomment">/// page boundaries, so this function may unlock more memory than explicitly</span>
-<span class="doccomment">/// requested if the memory isn&#39;t page-aligned.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # References</span>
-<span class="doccomment">///  - [POSIX]</span>
-<span class="doccomment">///  - [Linux]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/munlock.html</span>
-<span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/munlock.2.html</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">munlock</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>, <span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">imp::io::syscalls::munlock</span>(<span class="ident">ptr</span>, <span class="ident">len</span>)
+<span class="doccomment">/// `munlock(ptr, len)`—Unlock memory.
+///
+/// # Safety
+///
+/// This function operates on raw pointers, but it should only be used on
+/// memory which the caller owns, to avoid compromising the `mlock` invariants
+/// of other unrelated code in the process.
+///
+/// Some implementations implicitly round the memory region out to the nearest
+/// page boundaries, so this function may unlock more memory than explicitly
+/// requested if the memory isn&#39;t page-aligned.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/munlock.html
+/// [Linux]: https://man7.org/linux/man-pages/man2/munlock.2.html
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub unsafe fn </span>munlock(ptr: <span class="kw-2">*mut </span>c_void, len: usize) -&gt; io::Result&lt;()&gt; {
+    imp::io::syscalls::munlock(ptr, len)
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

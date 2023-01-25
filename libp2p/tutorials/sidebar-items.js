@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["hole_punching","Hole Punching Tutorial"],["ping","Ping Tutorial - Getting started with rust-libp2p"]]});
+window.SIDEBAR_ITEMS = {"mod":[["hole_punching","Hole Punching Tutorial"],["ping","Ping Tutorial - Getting started with rust-libp2p"]]};

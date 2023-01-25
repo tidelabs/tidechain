@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DummyStream","Implementation of `AsyncRead` and `AsyncWrite`. Not meant to be instanciated."],["DummyTransport","Implementation of `Transport` that doesn’t support any multiaddr."]]});
+window.SIDEBAR_ITEMS = {"struct":[["DummyStream","Implementation of `AsyncRead` and `AsyncWrite`. Not meant to be instanciated."],["DummyTransport","Implementation of `Transport` that doesn’t support any multiaddr."]]};

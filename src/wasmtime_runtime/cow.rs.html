@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/cow.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cow.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/cow.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cow.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -694,697 +689,696 @@
 <span id="689">689</span>
 <span id="690">690</span>
 <span id="691">691</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Copy-on-write initialization support: creation of backing images for</span>
-<span class="doccomment">//! modules, and logic to support mapping these backing images into memory.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Copy-on-write initialization support: creation of backing images for
+//! modules, and logic to support mapping these backing images into memory.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::InstantiationError</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::MmapVec</span>;
-<span class="kw">use</span> <span class="ident">anyhow::Result</span>;
-<span class="kw">use</span> <span class="ident">libc::c_void</span>;
-<span class="kw">use</span> <span class="ident">rustix::fd::AsRawFd</span>;
-<span class="kw">use</span> <span class="ident">std::fs::File</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">convert::TryFrom</span>, <span class="ident">ops::Range</span>};
-<span class="kw">use</span> <span class="ident">wasmtime_environ</span>::{<span class="ident">DefinedMemoryIndex</span>, <span class="ident">MemoryInitialization</span>, <span class="ident">Module</span>, <span class="ident">PrimaryMap</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::InstantiationError;
+<span class="kw">use </span><span class="kw">crate</span>::MmapVec;
+<span class="kw">use </span>anyhow::Result;
+<span class="kw">use </span>libc::c_void;
+<span class="kw">use </span>rustix::fd::AsRawFd;
+<span class="kw">use </span>std::fs::File;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::{convert::TryFrom, ops::Range};
+<span class="kw">use </span>wasmtime_environ::{DefinedMemoryIndex, MemoryInitialization, Module, PrimaryMap};
 
-<span class="doccomment">/// Backing images for memories in a module.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is meant to be built once, when a module is first loaded/constructed,</span>
-<span class="doccomment">/// and then used many times for instantiation.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ModuleMemoryImages</span> {
-    <span class="ident">memories</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedMemoryIndex</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Backing images for memories in a module.
+///
+/// This is meant to be built once, when a module is first loaded/constructed,
+/// and then used many times for instantiation.
+</span><span class="kw">pub struct </span>ModuleMemoryImages {
+    memories: PrimaryMap&lt;DefinedMemoryIndex, <span class="prelude-ty">Option</span>&lt;Arc&lt;MemoryImage&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">ModuleMemoryImages</span> {
-    <span class="doccomment">/// Get the MemoryImage for a given memory.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_memory_image</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">defined_index</span>: <span class="ident">DefinedMemoryIndex</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">memories</span>[<span class="ident">defined_index</span>].<span class="ident">as_ref</span>()
+<span class="kw">impl </span>ModuleMemoryImages {
+    <span class="doccomment">/// Get the MemoryImage for a given memory.
+    </span><span class="kw">pub fn </span>get_memory_image(<span class="kw-2">&amp;</span><span class="self">self</span>, defined_index: DefinedMemoryIndex) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Arc&lt;MemoryImage&gt;&gt; {
+        <span class="self">self</span>.memories[defined_index].as_ref()
     }
 }
 
-<span class="doccomment">/// One backing image for one memory.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryImage</span> {
-    <span class="doccomment">/// The file descriptor source of this image.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This might be an mmaped `*.cwasm` file or on Linux it could also be a</span>
-    <span class="doccomment">/// `Memfd` as an anonymous file in memory. In either case this is used as</span>
-    <span class="doccomment">/// the backing-source for the CoW image.</span>
-    <span class="ident">fd</span>: <span class="ident">FdSource</span>,
+<span class="doccomment">/// One backing image for one memory.
+</span><span class="attribute">#[derive(Debug, PartialEq)]
+</span><span class="kw">pub struct </span>MemoryImage {
+    <span class="doccomment">/// The file descriptor source of this image.
+    ///
+    /// This might be an mmaped `*.cwasm` file or on Linux it could also be a
+    /// `Memfd` as an anonymous file in memory. In either case this is used as
+    /// the backing-source for the CoW image.
+    </span>fd: FdSource,
 
-    <span class="doccomment">/// Length of image, in bytes.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that initial memory size may be larger; leading and trailing zeroes</span>
-    <span class="doccomment">/// are truncated (handled by backing fd).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Must be a multiple of the system page size.</span>
-    <span class="ident">len</span>: <span class="ident">usize</span>,
+    <span class="doccomment">/// Length of image, in bytes.
+    ///
+    /// Note that initial memory size may be larger; leading and trailing zeroes
+    /// are truncated (handled by backing fd).
+    ///
+    /// Must be a multiple of the system page size.
+    </span>len: usize,
 
-    <span class="doccomment">/// Image starts this many bytes into `fd` source.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is 0 for anonymous-backed memfd files and is the offset of the data</span>
-    <span class="doccomment">/// section in a `*.cwasm` file for `*.cwasm`-backed images.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Must be a multiple of the system page size.</span>
-    <span class="ident">fd_offset</span>: <span class="ident">u64</span>,
+    <span class="doccomment">/// Image starts this many bytes into `fd` source.
+    ///
+    /// This is 0 for anonymous-backed memfd files and is the offset of the data
+    /// section in a `*.cwasm` file for `*.cwasm`-backed images.
+    ///
+    /// Must be a multiple of the system page size.
+    </span>fd_offset: u64,
 
-    <span class="doccomment">/// Image starts this many bytes into heap space.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Must be a multiple of the system page size.</span>
-    <span class="ident">linear_memory_offset</span>: <span class="ident">usize</span>,
+    <span class="doccomment">/// Image starts this many bytes into heap space.
+    ///
+    /// Must be a multiple of the system page size.
+    </span>linear_memory_offset: usize,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">enum</span> <span class="ident">FdSource</span> {
-    <span class="ident">Mmap</span>(<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">File</span><span class="op">&gt;</span>),
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span>
-    <span class="ident">Memfd</span>(<span class="ident">memfd::Memfd</span>),
+<span class="attribute">#[derive(Debug)]
+</span><span class="kw">enum </span>FdSource {
+    Mmap(Arc&lt;File&gt;),
+    <span class="attribute">#[cfg(target_os = <span class="string">&quot;linux&quot;</span>)]
+    </span>Memfd(memfd::Memfd),
 }
 
-<span class="kw">impl</span> <span class="ident">FdSource</span> {
-    <span class="kw">fn</span> <span class="ident">as_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">File</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">FdSource::Mmap</span>(<span class="ident">file</span>) =&gt; <span class="ident">file</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span>
-            <span class="ident">FdSource::Memfd</span>(<span class="ident">memfd</span>) =&gt; <span class="ident">memfd</span>.<span class="ident">as_file</span>(),
+<span class="kw">impl </span>FdSource {
+    <span class="kw">fn </span>as_file(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>File {
+        <span class="kw">match </span><span class="self">self </span>{
+            FdSource::Mmap(file) =&gt; file,
+            <span class="attribute">#[cfg(target_os = <span class="string">&quot;linux&quot;</span>)]
+            </span>FdSource::Memfd(memfd) =&gt; memfd.as_file(),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">FdSource</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">FdSource</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">as_file</span>().<span class="ident">as_raw_fd</span>() <span class="op">==</span> <span class="ident">other</span>.<span class="ident">as_file</span>().<span class="ident">as_raw_fd</span>()
+<span class="kw">impl </span>PartialEq <span class="kw">for </span>FdSource {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>FdSource) -&gt; bool {
+        <span class="self">self</span>.as_file().as_raw_fd() == other.as_file().as_raw_fd()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">MemoryImage</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">page_size</span>: <span class="ident">u32</span>,
-        <span class="ident">offset</span>: <span class="ident">u64</span>,
-        <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-        <span class="ident">mmap</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">MmapVec</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// Sanity-check that various parameters are page-aligned.</span>
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">len</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">offset</span> <span class="op">%</span> <span class="ident">u64::from</span>(<span class="ident">page_size</span>), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>((<span class="ident">len</span> <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">%</span> <span class="ident">page_size</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">linear_memory_offset</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">usize::try_from</span>(<span class="ident">offset</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">offset</span>) =&gt; <span class="ident">offset</span>,
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+<span class="kw">impl </span>MemoryImage {
+    <span class="kw">fn </span>new(
+        page_size: u32,
+        offset: u64,
+        data: <span class="kw-2">&amp;</span>[u8],
+        mmap: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MmapVec&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;MemoryImage&gt;&gt; {
+        <span class="comment">// Sanity-check that various parameters are page-aligned.
+        </span><span class="kw">let </span>len = data.len();
+        <span class="macro">assert_eq!</span>(offset % u64::from(page_size), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>((len <span class="kw">as </span>u32) % page_size, <span class="number">0</span>);
+        <span class="kw">let </span>linear_memory_offset = <span class="kw">match </span>usize::try_from(offset) {
+            <span class="prelude-val">Ok</span>(offset) =&gt; offset,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         };
 
-        <span class="comment">// If a backing `mmap` is present then `data` should be a sub-slice of</span>
-        <span class="comment">// the `mmap`. The sanity-checks here double-check that. Additionally</span>
-        <span class="comment">// compilation should have ensured that the `data` section is</span>
-        <span class="comment">// page-aligned within `mmap`, so that&#39;s also all double-checked here.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Finally if the `mmap` itself comes from a backing file on disk, such</span>
-        <span class="comment">// as a `*.cwasm` file, then that&#39;s a valid source of data for the</span>
-        <span class="comment">// memory image so we simply return referencing that.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Note that this path is platform-agnostic in the sense of all</span>
-        <span class="comment">// platforms we support support memory mapping copy-on-write data from</span>
-        <span class="comment">// files, but for now this is still a Linux-specific region of Wasmtime.</span>
-        <span class="comment">// Some work will be needed to get this file compiling for macOS and</span>
-        <span class="comment">// Windows.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">mmap</span>) <span class="op">=</span> <span class="ident">mmap</span> {
-            <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-            <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">start</span> <span class="op">+</span> <span class="ident">mmap</span>.<span class="ident">len</span>();
-            <span class="kw">let</span> <span class="ident">data_start</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-            <span class="kw">let</span> <span class="ident">data_end</span> <span class="op">=</span> <span class="ident">data_start</span> <span class="op">+</span> <span class="ident">data</span>.<span class="ident">len</span>();
-            <span class="macro">assert!</span>(<span class="ident">start</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">data_start</span> <span class="op">&amp;&amp;</span> <span class="ident">data_end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">end</span>);
-            <span class="macro">assert_eq!</span>((<span class="ident">start</span> <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">%</span> <span class="ident">page_size</span>, <span class="number">0</span>);
-            <span class="macro">assert_eq!</span>((<span class="ident">data_start</span> <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">%</span> <span class="ident">page_size</span>, <span class="number">0</span>);
-            <span class="macro">assert_eq!</span>((<span class="ident">data_end</span> <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">%</span> <span class="ident">page_size</span>, <span class="number">0</span>);
-            <span class="macro">assert_eq!</span>((<span class="ident">mmap</span>.<span class="ident">original_offset</span>() <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">%</span> <span class="ident">page_size</span>, <span class="number">0</span>);
+        <span class="comment">// If a backing `mmap` is present then `data` should be a sub-slice of
+        // the `mmap`. The sanity-checks here double-check that. Additionally
+        // compilation should have ensured that the `data` section is
+        // page-aligned within `mmap`, so that&#39;s also all double-checked here.
+        //
+        // Finally if the `mmap` itself comes from a backing file on disk, such
+        // as a `*.cwasm` file, then that&#39;s a valid source of data for the
+        // memory image so we simply return referencing that.
+        //
+        // Note that this path is platform-agnostic in the sense of all
+        // platforms we support support memory mapping copy-on-write data from
+        // files, but for now this is still a Linux-specific region of Wasmtime.
+        // Some work will be needed to get this file compiling for macOS and
+        // Windows.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(mmap) = mmap {
+            <span class="kw">let </span>start = mmap.as_ptr() <span class="kw">as </span>usize;
+            <span class="kw">let </span>end = start + mmap.len();
+            <span class="kw">let </span>data_start = data.as_ptr() <span class="kw">as </span>usize;
+            <span class="kw">let </span>data_end = data_start + data.len();
+            <span class="macro">assert!</span>(start &lt;= data_start &amp;&amp; data_end &lt;= end);
+            <span class="macro">assert_eq!</span>((start <span class="kw">as </span>u32) % page_size, <span class="number">0</span>);
+            <span class="macro">assert_eq!</span>((data_start <span class="kw">as </span>u32) % page_size, <span class="number">0</span>);
+            <span class="macro">assert_eq!</span>((data_end <span class="kw">as </span>u32) % page_size, <span class="number">0</span>);
+            <span class="macro">assert_eq!</span>((mmap.original_offset() <span class="kw">as </span>u32) % page_size, <span class="number">0</span>);
 
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">file</span>) <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">original_file</span>() {
-                <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">MemoryImage</span> {
-                    <span class="ident">fd</span>: <span class="ident">FdSource::Mmap</span>(<span class="ident">file</span>.<span class="ident">clone</span>()),
-                    <span class="ident">fd_offset</span>: <span class="ident">u64::try_from</span>(<span class="ident">mmap</span>.<span class="ident">original_offset</span>() <span class="op">+</span> (<span class="ident">data_start</span> <span class="op">-</span> <span class="ident">start</span>))
-                        .<span class="ident">unwrap</span>(),
-                    <span class="ident">linear_memory_offset</span>,
-                    <span class="ident">len</span>,
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = mmap.original_file() {
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(MemoryImage {
+                    fd: FdSource::Mmap(file.clone()),
+                    fd_offset: u64::try_from(mmap.original_offset() + (data_start - start))
+                        .unwrap(),
+                    linear_memory_offset,
+                    len,
                 }));
             }
         }
 
-        <span class="comment">// If `mmap` doesn&#39;t come from a file then platform-specific mechanisms</span>
-        <span class="comment">// may be used to place the data in a form that&#39;s amenable to an mmap.</span>
+        <span class="comment">// If `mmap` doesn&#39;t come from a file then platform-specific mechanisms
+        // may be used to place the data in a form that&#39;s amenable to an mmap.
 
-        <span class="macro">cfg_if::cfg_if!</span> {
-            <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span> {
-                <span class="comment">// On Linux `memfd_create` is used to create an anonymous</span>
-                <span class="comment">// in-memory file to represent the heap image. This anonymous</span>
-                <span class="comment">// file is then used as the basis for further mmaps.</span>
+        </span><span class="macro">cfg_if::cfg_if! </span>{
+            <span class="kw">if </span><span class="attribute">#[cfg(target_os = <span class="string">&quot;linux&quot;</span>)] </span>{
+                <span class="comment">// On Linux `memfd_create` is used to create an anonymous
+                // in-memory file to represent the heap image. This anonymous
+                // file is then used as the basis for further mmaps.
 
-                <span class="kw">use</span> <span class="ident">std::io::Write</span>;
+                </span><span class="kw">use </span>std::io::Write;
 
-                <span class="kw">let</span> <span class="ident">memfd</span> <span class="op">=</span> <span class="ident">create_memfd</span>()<span class="question-mark">?</span>;
-                <span class="ident">memfd</span>.<span class="ident">as_file</span>().<span class="ident">write_all</span>(<span class="ident">data</span>)<span class="question-mark">?</span>;
+                <span class="kw">let </span>memfd = create_memfd()<span class="question-mark">?</span>;
+                memfd.as_file().write_all(data)<span class="question-mark">?</span>;
 
-                <span class="comment">// Seal the memfd&#39;s data and length.</span>
-                <span class="comment">//</span>
-                <span class="comment">// This is a defense-in-depth security mitigation. The</span>
-                <span class="comment">// memfd will serve as the starting point for the heap of</span>
-                <span class="comment">// every instance of this module. If anything were to</span>
-                <span class="comment">// write to this, it could affect every execution. The</span>
-                <span class="comment">// memfd object itself is owned by the machinery here and</span>
-                <span class="comment">// not exposed elsewhere, but it is still an ambient open</span>
-                <span class="comment">// file descriptor at the syscall level, so some other</span>
-                <span class="comment">// vulnerability that allowed writes to arbitrary fds</span>
-                <span class="comment">// could modify it. Or we could have some issue with the</span>
-                <span class="comment">// way that we map it into each instance. To be</span>
-                <span class="comment">// extra-super-sure that it never changes, and because</span>
-                <span class="comment">// this costs very little, we use the kernel&#39;s &quot;seal&quot; API</span>
-                <span class="comment">// to make the memfd image permanently read-only.</span>
-                <span class="ident">memfd</span>.<span class="ident">add_seal</span>(<span class="ident">memfd::FileSeal::SealGrow</span>)<span class="question-mark">?</span>;
-                <span class="ident">memfd</span>.<span class="ident">add_seal</span>(<span class="ident">memfd::FileSeal::SealShrink</span>)<span class="question-mark">?</span>;
-                <span class="ident">memfd</span>.<span class="ident">add_seal</span>(<span class="ident">memfd::FileSeal::SealWrite</span>)<span class="question-mark">?</span>;
-                <span class="ident">memfd</span>.<span class="ident">add_seal</span>(<span class="ident">memfd::FileSeal::SealSeal</span>)<span class="question-mark">?</span>;
+                <span class="comment">// Seal the memfd&#39;s data and length.
+                //
+                // This is a defense-in-depth security mitigation. The
+                // memfd will serve as the starting point for the heap of
+                // every instance of this module. If anything were to
+                // write to this, it could affect every execution. The
+                // memfd object itself is owned by the machinery here and
+                // not exposed elsewhere, but it is still an ambient open
+                // file descriptor at the syscall level, so some other
+                // vulnerability that allowed writes to arbitrary fds
+                // could modify it. Or we could have some issue with the
+                // way that we map it into each instance. To be
+                // extra-super-sure that it never changes, and because
+                // this costs very little, we use the kernel&#39;s &quot;seal&quot; API
+                // to make the memfd image permanently read-only.
+                </span>memfd.add_seal(memfd::FileSeal::SealGrow)<span class="question-mark">?</span>;
+                memfd.add_seal(memfd::FileSeal::SealShrink)<span class="question-mark">?</span>;
+                memfd.add_seal(memfd::FileSeal::SealWrite)<span class="question-mark">?</span>;
+                memfd.add_seal(memfd::FileSeal::SealSeal)<span class="question-mark">?</span>;
 
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">MemoryImage</span> {
-                    <span class="ident">fd</span>: <span class="ident">FdSource::Memfd</span>(<span class="ident">memfd</span>),
-                    <span class="ident">fd_offset</span>: <span class="number">0</span>,
-                    <span class="ident">linear_memory_offset</span>,
-                    <span class="ident">len</span>,
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(MemoryImage {
+                    fd: FdSource::Memfd(memfd),
+                    fd_offset: <span class="number">0</span>,
+                    linear_memory_offset,
+                    len,
                 }))
-            } <span class="kw">else</span> {
-                <span class="comment">// Other platforms don&#39;t have an easily available way of</span>
-                <span class="comment">// representing the heap image as an mmap-source right now. We</span>
-                <span class="comment">// could theoretically create a file and immediately unlink it</span>
-                <span class="comment">// but that means that data may likely be preserved to disk</span>
-                <span class="comment">// which isn&#39;t what we want here.</span>
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+            } <span class="kw">else </span>{
+                <span class="comment">// Other platforms don&#39;t have an easily available way of
+                // representing the heap image as an mmap-source right now. We
+                // could theoretically create a file and immediately unlink it
+                // but that means that data may likely be preserved to disk
+                // which isn&#39;t what we want here.
+                </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             }
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span>
-<span class="kw">fn</span> <span class="ident">create_memfd</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">memfd::Memfd</span><span class="op">&gt;</span> {
-    <span class="comment">// Create the memfd. It needs a name, but the</span>
-    <span class="comment">// documentation for `memfd_create()` says that names can</span>
-    <span class="comment">// be duplicated with no issues.</span>
-    <span class="ident">memfd::MemfdOptions::new</span>()
-        .<span class="ident">allow_sealing</span>(<span class="bool-val">true</span>)
-        .<span class="ident">create</span>(<span class="string">&quot;wasm-memory-image&quot;</span>)
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into</span>())
+<span class="attribute">#[cfg(target_os = <span class="string">&quot;linux&quot;</span>)]
+</span><span class="kw">fn </span>create_memfd() -&gt; <span class="prelude-ty">Result</span>&lt;memfd::Memfd&gt; {
+    <span class="comment">// Create the memfd. It needs a name, but the
+    // documentation for `memfd_create()` says that names can
+    // be duplicated with no issues.
+    </span>memfd::MemfdOptions::new()
+        .allow_sealing(<span class="bool-val">true</span>)
+        .create(<span class="string">&quot;wasm-memory-image&quot;</span>)
+        .map_err(|e| e.into())
 }
 
-<span class="kw">impl</span> <span class="ident">ModuleMemoryImages</span> {
-    <span class="doccomment">/// Create a new `ModuleMemoryImages` for the given module. This can be</span>
-    <span class="doccomment">/// passed in as part of a `InstanceAllocationRequest` to speed up</span>
-    <span class="doccomment">/// instantiation and execution by using copy-on-write-backed memories.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-        <span class="ident">wasm_data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-        <span class="ident">mmap</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">MmapVec</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ModuleMemoryImages</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">map</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">module</span>.<span class="ident">memory_initialization</span> {
-            <span class="ident">MemoryInitialization::Static</span> { <span class="ident">map</span> } =&gt; <span class="ident">map</span>,
-            <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+<span class="kw">impl </span>ModuleMemoryImages {
+    <span class="doccomment">/// Create a new `ModuleMemoryImages` for the given module. This can be
+    /// passed in as part of a `InstanceAllocationRequest` to speed up
+    /// instantiation and execution by using copy-on-write-backed memories.
+    </span><span class="kw">pub fn </span>new(
+        module: <span class="kw-2">&amp;</span>Module,
+        wasm_data: <span class="kw-2">&amp;</span>[u8],
+        mmap: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>MmapVec&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ModuleMemoryImages&gt;&gt; {
+        <span class="kw">let </span>map = <span class="kw">match </span><span class="kw-2">&amp;</span>module.memory_initialization {
+            MemoryInitialization::Static { map } =&gt; map,
+            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         };
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memories</span> <span class="op">=</span> <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">map</span>.<span class="ident">len</span>());
-        <span class="kw">let</span> <span class="ident">page_size</span> <span class="op">=</span> <span class="ident">region::page::size</span>() <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">for</span> (<span class="ident">memory_index</span>, <span class="ident">init</span>) <span class="kw">in</span> <span class="ident">map</span> {
-            <span class="comment">// mmap-based-initialization only works for defined memories with a</span>
-            <span class="comment">// known starting point of all zeros, so bail out if the mmeory is</span>
-            <span class="comment">// imported.</span>
-            <span class="kw">let</span> <span class="ident">defined_memory</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">module</span>.<span class="ident">defined_memory_index</span>(<span class="ident">memory_index</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">idx</span>) =&gt; <span class="ident">idx</span>,
-                <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+        <span class="kw">let </span><span class="kw-2">mut </span>memories = PrimaryMap::with_capacity(map.len());
+        <span class="kw">let </span>page_size = region::page::size() <span class="kw">as </span>u32;
+        <span class="kw">for </span>(memory_index, init) <span class="kw">in </span>map {
+            <span class="comment">// mmap-based-initialization only works for defined memories with a
+            // known starting point of all zeros, so bail out if the mmeory is
+            // imported.
+            </span><span class="kw">let </span>defined_memory = <span class="kw">match </span>module.defined_memory_index(memory_index) {
+                <span class="prelude-val">Some</span>(idx) =&gt; idx,
+                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
             };
 
-            <span class="comment">// If there&#39;s no initialization for this memory known then we don&#39;t</span>
-            <span class="comment">// need an image for the memory so push `None` and move on.</span>
-            <span class="kw">let</span> <span class="ident">init</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">init</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">init</span>) =&gt; <span class="ident">init</span>,
-                <span class="prelude-val">None</span> =&gt; {
-                    <span class="ident">memories</span>.<span class="ident">push</span>(<span class="prelude-val">None</span>);
+            <span class="comment">// If there&#39;s no initialization for this memory known then we don&#39;t
+            // need an image for the memory so push `None` and move on.
+            </span><span class="kw">let </span>init = <span class="kw">match </span>init {
+                <span class="prelude-val">Some</span>(init) =&gt; init,
+                <span class="prelude-val">None </span>=&gt; {
+                    memories.push(<span class="prelude-val">None</span>);
                     <span class="kw">continue</span>;
                 }
             };
 
-            <span class="comment">// Get the image for this wasm module  as a subslice of `wasm_data`,</span>
-            <span class="comment">// and then use that to try to create the `MemoryImage`. If this</span>
-            <span class="comment">// creation files then we fail creating `ModuleMemoryImages` since this</span>
-            <span class="comment">// memory couldn&#39;t be represented.</span>
-            <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">wasm_data</span>[<span class="ident">init</span>.<span class="ident">data</span>.<span class="ident">start</span> <span class="kw">as</span> <span class="ident">usize</span>..<span class="ident">init</span>.<span class="ident">data</span>.<span class="ident">end</span> <span class="kw">as</span> <span class="ident">usize</span>];
-            <span class="kw">let</span> <span class="ident">image</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">MemoryImage::new</span>(<span class="ident">page_size</span>, <span class="ident">init</span>.<span class="ident">offset</span>, <span class="ident">data</span>, <span class="ident">mmap</span>)<span class="question-mark">?</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">image</span>) =&gt; <span class="ident">image</span>,
-                <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="comment">// Get the image for this wasm module  as a subslice of `wasm_data`,
+            // and then use that to try to create the `MemoryImage`. If this
+            // creation files then we fail creating `ModuleMemoryImages` since this
+            // memory couldn&#39;t be represented.
+            </span><span class="kw">let </span>data = <span class="kw-2">&amp;</span>wasm_data[init.data.start <span class="kw">as </span>usize..init.data.end <span class="kw">as </span>usize];
+            <span class="kw">let </span>image = <span class="kw">match </span>MemoryImage::new(page_size, init.offset, data, mmap)<span class="question-mark">? </span>{
+                <span class="prelude-val">Some</span>(image) =&gt; image,
+                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
             };
 
-            <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">memories</span>.<span class="ident">push</span>(<span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">image</span>)));
-            <span class="macro">assert_eq!</span>(<span class="ident">idx</span>, <span class="ident">defined_memory</span>);
+            <span class="kw">let </span>idx = memories.push(<span class="prelude-val">Some</span>(Arc::new(image)));
+            <span class="macro">assert_eq!</span>(idx, defined_memory);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">ModuleMemoryImages</span> { <span class="ident">memories</span> }))
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(ModuleMemoryImages { memories }))
     }
 }
 
-<span class="doccomment">/// A single slot handled by the copy-on-write memory initialization mechanism.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The mmap scheme is:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// base ==&gt; (points here)</span>
-<span class="doccomment">/// - (image.offset bytes)   anonymous zero memory, pre-image</span>
-<span class="doccomment">/// - (image.len bytes)      CoW mapping of memory image</span>
-<span class="doccomment">/// - (up to static_size)    anonymous zero memory, post-image</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The ordering of mmaps to set this up is:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - once, when pooling allocator is created:</span>
-<span class="doccomment">///   - one large mmap to create 8GiB * instances * memories slots</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - per instantiation of new image in a slot:</span>
-<span class="doccomment">///   - mmap of anonymous zero memory, from 0 to max heap size</span>
-<span class="doccomment">///     (static_size)</span>
-<span class="doccomment">///   - mmap of CoW&#39;d image, from `image.offset` to</span>
-<span class="doccomment">///     `image.offset + image.len`. This overwrites part of the</span>
-<span class="doccomment">///     anonymous zero memory, potentially splitting it into a pre-</span>
-<span class="doccomment">///     and post-region.</span>
-<span class="doccomment">///   - mprotect(PROT_NONE) on the part of the heap beyond the initial</span>
-<span class="doccomment">///     heap size; we re-mprotect it with R+W bits when the heap is</span>
-<span class="doccomment">///     grown.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryImageSlot</span> {
-    <span class="doccomment">/// The base of the actual heap memory. Bytes at this address are</span>
-    <span class="doccomment">/// what is seen by the Wasm guest code.</span>
-    <span class="ident">base</span>: <span class="ident">usize</span>,
-    <span class="doccomment">/// The maximum static memory size, plus post-guard.</span>
-    <span class="ident">static_size</span>: <span class="ident">usize</span>,
-    <span class="doccomment">/// The image that backs this memory. May be `None`, in</span>
-    <span class="doccomment">/// which case the memory is all zeroes.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The initial heap size.</span>
-    <span class="ident">initial_size</span>: <span class="ident">usize</span>,
-    <span class="doccomment">/// The current heap size. All memory above `base + cur_size`</span>
-    <span class="doccomment">/// should be PROT_NONE (mapped inaccessible).</span>
-    <span class="ident">cur_size</span>: <span class="ident">usize</span>,
-    <span class="doccomment">/// Whether this slot may have &quot;dirty&quot; pages (pages written by an</span>
-    <span class="doccomment">/// instantiation). Set by `instantiate()` and cleared by</span>
-    <span class="doccomment">/// `clear_and_remain_ready()`, and used in assertions to ensure</span>
-    <span class="doccomment">/// those methods are called properly.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Invariant: if !dirty, then this memory slot contains a clean</span>
-    <span class="doccomment">/// CoW mapping of `image`, if `Some(..)`, and anonymous-zero</span>
-    <span class="doccomment">/// memory beyond the image up to `static_size`. The addresses</span>
-    <span class="doccomment">/// from offset 0 to `initial_size` are accessible R+W and the</span>
-    <span class="doccomment">/// rest of the slot is inaccessible.</span>
-    <span class="ident">dirty</span>: <span class="ident">bool</span>,
-    <span class="doccomment">/// Whether this MemoryImageSlot is responsible for mapping anonymous</span>
-    <span class="doccomment">/// memory (to hold the reservation while overwriting mappings</span>
-    <span class="doccomment">/// specific to this slot) in place when it is dropped. Default</span>
-    <span class="doccomment">/// on, unless the caller knows what they are doing.</span>
-    <span class="ident">clear_on_drop</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// A single slot handled by the copy-on-write memory initialization mechanism.
+///
+/// The mmap scheme is:
+///
+/// base ==&gt; (points here)
+/// - (image.offset bytes)   anonymous zero memory, pre-image
+/// - (image.len bytes)      CoW mapping of memory image
+/// - (up to static_size)    anonymous zero memory, post-image
+///
+/// The ordering of mmaps to set this up is:
+///
+/// - once, when pooling allocator is created:
+///   - one large mmap to create 8GiB * instances * memories slots
+///
+/// - per instantiation of new image in a slot:
+///   - mmap of anonymous zero memory, from 0 to max heap size
+///     (static_size)
+///   - mmap of CoW&#39;d image, from `image.offset` to
+///     `image.offset + image.len`. This overwrites part of the
+///     anonymous zero memory, potentially splitting it into a pre-
+///     and post-region.
+///   - mprotect(PROT_NONE) on the part of the heap beyond the initial
+///     heap size; we re-mprotect it with R+W bits when the heap is
+///     grown.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>MemoryImageSlot {
+    <span class="doccomment">/// The base of the actual heap memory. Bytes at this address are
+    /// what is seen by the Wasm guest code.
+    </span>base: usize,
+    <span class="doccomment">/// The maximum static memory size, plus post-guard.
+    </span>static_size: usize,
+    <span class="doccomment">/// The image that backs this memory. May be `None`, in
+    /// which case the memory is all zeroes.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) image: <span class="prelude-ty">Option</span>&lt;Arc&lt;MemoryImage&gt;&gt;,
+    <span class="doccomment">/// The initial heap size.
+    </span>initial_size: usize,
+    <span class="doccomment">/// The current heap size. All memory above `base + cur_size`
+    /// should be PROT_NONE (mapped inaccessible).
+    </span>cur_size: usize,
+    <span class="doccomment">/// Whether this slot may have &quot;dirty&quot; pages (pages written by an
+    /// instantiation). Set by `instantiate()` and cleared by
+    /// `clear_and_remain_ready()`, and used in assertions to ensure
+    /// those methods are called properly.
+    ///
+    /// Invariant: if !dirty, then this memory slot contains a clean
+    /// CoW mapping of `image`, if `Some(..)`, and anonymous-zero
+    /// memory beyond the image up to `static_size`. The addresses
+    /// from offset 0 to `initial_size` are accessible R+W and the
+    /// rest of the slot is inaccessible.
+    </span>dirty: bool,
+    <span class="doccomment">/// Whether this MemoryImageSlot is responsible for mapping anonymous
+    /// memory (to hold the reservation while overwriting mappings
+    /// specific to this slot) in place when it is dropped. Default
+    /// on, unless the caller knows what they are doing.
+    </span>clear_on_drop: bool,
 }
 
-<span class="kw">impl</span> <span class="ident">MemoryImageSlot</span> {
-    <span class="doccomment">/// Create a new MemoryImageSlot. Assumes that there is an anonymous</span>
-    <span class="doccomment">/// mmap backing in the given range to start.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">create</span>(<span class="ident">base_addr</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>, <span class="ident">initial_size</span>: <span class="ident">usize</span>, <span class="ident">static_size</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="ident">base_addr</span> <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="ident">MemoryImageSlot</span> {
-            <span class="ident">base</span>,
-            <span class="ident">static_size</span>,
-            <span class="ident">initial_size</span>,
-            <span class="ident">cur_size</span>: <span class="ident">initial_size</span>,
-            <span class="ident">image</span>: <span class="prelude-val">None</span>,
-            <span class="ident">dirty</span>: <span class="bool-val">false</span>,
-            <span class="ident">clear_on_drop</span>: <span class="bool-val">true</span>,
+<span class="kw">impl </span>MemoryImageSlot {
+    <span class="doccomment">/// Create a new MemoryImageSlot. Assumes that there is an anonymous
+    /// mmap backing in the given range to start.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create(base_addr: <span class="kw-2">*mut </span>c_void, initial_size: usize, static_size: usize) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>base = base_addr <span class="kw">as </span>usize;
+        MemoryImageSlot {
+            base,
+            static_size,
+            initial_size,
+            cur_size: initial_size,
+            image: <span class="prelude-val">None</span>,
+            dirty: <span class="bool-val">false</span>,
+            clear_on_drop: <span class="bool-val">true</span>,
         }
     }
 
-    <span class="doccomment">/// Inform the MemoryImageSlot that it should *not* clear the underlying</span>
-    <span class="doccomment">/// address space when dropped. This should be used only when the</span>
-    <span class="doccomment">/// caller will clear or reuse the address space in some other</span>
-    <span class="doccomment">/// way.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">no_clear_on_drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">clear_on_drop</span> <span class="op">=</span> <span class="bool-val">false</span>;
+    <span class="doccomment">/// Inform the MemoryImageSlot that it should *not* clear the underlying
+    /// address space when dropped. This should be used only when the
+    /// caller will clear or reuse the address space in some other
+    /// way.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>no_clear_on_drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.clear_on_drop = <span class="bool-val">false</span>;
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">set_heap_limit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">size_bytes</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="comment">// mprotect the relevant region.</span>
-        <span class="self">self</span>.<span class="ident">set_protection</span>(
-            <span class="self">self</span>.<span class="ident">cur_size</span>..<span class="ident">size_bytes</span>,
-            <span class="ident">rustix::io::MprotectFlags::READ</span> <span class="op">|</span> <span class="ident">rustix::io::MprotectFlags::WRITE</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_heap_limit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, size_bytes: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="comment">// mprotect the relevant region.
+        </span><span class="self">self</span>.set_protection(
+            <span class="self">self</span>.cur_size..size_bytes,
+            rustix::io::MprotectFlags::READ | rustix::io::MprotectFlags::WRITE,
         )<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">cur_size</span> <span class="op">=</span> <span class="ident">size_bytes</span>;
+        <span class="self">self</span>.cur_size = size_bytes;
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">instantiate</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">initial_size_bytes</span>: <span class="ident">usize</span>,
-        <span class="ident">maybe_image</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">dirty</span>);
-        <span class="macro">assert_eq!</span>(<span class="self">self</span>.<span class="ident">cur_size</span>, <span class="self">self</span>.<span class="ident">initial_size</span>);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>instantiate(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        initial_size_bytes: usize,
+        maybe_image: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Arc&lt;MemoryImage&gt;&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+        <span class="macro">assert!</span>(!<span class="self">self</span>.dirty);
+        <span class="macro">assert_eq!</span>(<span class="self">self</span>.cur_size, <span class="self">self</span>.initial_size);
 
-        <span class="comment">// Fast-path: previously instantiated with the same image, or</span>
-        <span class="comment">// no image but the same initial size, so the mappings are</span>
-        <span class="comment">// already correct; there is no need to mmap anything. Given</span>
-        <span class="comment">// that we asserted not-dirty above, any dirty pages will have</span>
-        <span class="comment">// already been thrown away by madvise() during the previous</span>
-        <span class="comment">// termination. The `clear_and_remain_ready()` path also</span>
-        <span class="comment">// mprotects memory above the initial heap size back to</span>
-        <span class="comment">// PROT_NONE, so we don&#39;t need to do that here.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">image</span>.<span class="ident">as_ref</span>() <span class="op">==</span> <span class="ident">maybe_image</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">initial_size</span> <span class="op">==</span> <span class="ident">initial_size_bytes</span> {
-            <span class="self">self</span>.<span class="ident">dirty</span> <span class="op">=</span> <span class="bool-val">true</span>;
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+        <span class="comment">// Fast-path: previously instantiated with the same image, or
+        // no image but the same initial size, so the mappings are
+        // already correct; there is no need to mmap anything. Given
+        // that we asserted not-dirty above, any dirty pages will have
+        // already been thrown away by madvise() during the previous
+        // termination. The `clear_and_remain_ready()` path also
+        // mprotects memory above the initial heap size back to
+        // PROT_NONE, so we don&#39;t need to do that here.
+        </span><span class="kw">if </span><span class="self">self</span>.image.as_ref() == maybe_image &amp;&amp; <span class="self">self</span>.initial_size == initial_size_bytes {
+            <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
-        <span class="comment">// Otherwise, we need to transition from the previous state to the</span>
-        <span class="comment">// state now requested. An attempt is made here to minimize syscalls to</span>
-        <span class="comment">// the kernel to ideally reduce the overhead of this as it&#39;s fairly</span>
-        <span class="comment">// performance sensitive with memories. Note that the &quot;previous state&quot;</span>
-        <span class="comment">// is assumed to be post-initialization (e.g. after an mmap on-demand</span>
-        <span class="comment">// memory was created) or after `clear_and_remain_ready` was called</span>
-        <span class="comment">// which notably means that `madvise` has reset all the memory back to</span>
-        <span class="comment">// its original state.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Security/audit note: we map all of these MAP_PRIVATE, so</span>
-        <span class="comment">// all instance data is local to the mapping, not propagated</span>
-        <span class="comment">// to the backing fd. We throw away this CoW overlay with</span>
-        <span class="comment">// madvise() below, from base up to static_size (which is the</span>
-        <span class="comment">// whole slot) when terminating the instance.</span>
+        <span class="comment">// Otherwise, we need to transition from the previous state to the
+        // state now requested. An attempt is made here to minimize syscalls to
+        // the kernel to ideally reduce the overhead of this as it&#39;s fairly
+        // performance sensitive with memories. Note that the &quot;previous state&quot;
+        // is assumed to be post-initialization (e.g. after an mmap on-demand
+        // memory was created) or after `clear_and_remain_ready` was called
+        // which notably means that `madvise` has reset all the memory back to
+        // its original state.
+        //
+        // Security/audit note: we map all of these MAP_PRIVATE, so
+        // all instance data is local to the mapping, not propagated
+        // to the backing fd. We throw away this CoW overlay with
+        // madvise() below, from base up to static_size (which is the
+        // whole slot) when terminating the instance.
 
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">image</span>.<span class="ident">is_some</span>() {
-            <span class="comment">// In this case the state of memory at this time is that the memory</span>
-            <span class="comment">// from `0..self.initial_size` is reset back to its original state,</span>
-            <span class="comment">// but this memory contians a CoW image that is different from the</span>
-            <span class="comment">// one specified here. To reset state we first reset the mapping</span>
-            <span class="comment">// of memory to anonymous PROT_NONE memory, and then afterwards the</span>
-            <span class="comment">// heap is made visible with an mprotect.</span>
-            <span class="self">self</span>.<span class="ident">reset_with_anon_memory</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">InstantiationError::Resource</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-            <span class="self">self</span>.<span class="ident">set_protection</span>(
-                <span class="number">0</span>..<span class="ident">initial_size_bytes</span>,
-                <span class="ident">rustix::io::MprotectFlags::READ</span> <span class="op">|</span> <span class="ident">rustix::io::MprotectFlags::WRITE</span>,
+        </span><span class="kw">if </span><span class="self">self</span>.image.is_some() {
+            <span class="comment">// In this case the state of memory at this time is that the memory
+            // from `0..self.initial_size` is reset back to its original state,
+            // but this memory contians a CoW image that is different from the
+            // one specified here. To reset state we first reset the mapping
+            // of memory to anonymous PROT_NONE memory, and then afterwards the
+            // heap is made visible with an mprotect.
+            </span><span class="self">self</span>.reset_with_anon_memory()
+                .map_err(|e| InstantiationError::Resource(e.into()))<span class="question-mark">?</span>;
+            <span class="self">self</span>.set_protection(
+                <span class="number">0</span>..initial_size_bytes,
+                rustix::io::MprotectFlags::READ | rustix::io::MprotectFlags::WRITE,
             )
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">InstantiationError::Resource</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">initial_size_bytes</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">initial_size</span> {
-            <span class="comment">// In this case the previous module had now CoW image which means</span>
-            <span class="comment">// that the memory at `0..self.initial_size` is all zeros and</span>
-            <span class="comment">// read-write, everything afterwards being PROT_NONE.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Our requested heap size is smaller than the previous heap size</span>
-            <span class="comment">// so all that&#39;s needed now is to shrink the heap further to</span>
-            <span class="comment">// `initial_size_bytes`.</span>
-            <span class="comment">//</span>
-            <span class="comment">// So we come in with:</span>
-            <span class="comment">// - anon-zero memory, R+W,  [0, self.initial_size)</span>
-            <span class="comment">// - anon-zero memory, none, [self.initial_size, self.static_size)</span>
-            <span class="comment">// and we want:</span>
-            <span class="comment">// - anon-zero memory, R+W,  [0, initial_size_bytes)</span>
-            <span class="comment">// - anon-zero memory, none, [initial_size_bytes, self.static_size)</span>
-            <span class="comment">//</span>
-            <span class="comment">// so given initial_size_bytes &lt; self.initial_size we</span>
-            <span class="comment">// mprotect(NONE) the zone from the first to the second.</span>
-            <span class="self">self</span>.<span class="ident">set_protection</span>(
-                <span class="ident">initial_size_bytes</span>..<span class="self">self</span>.<span class="ident">initial_size</span>,
-                <span class="ident">rustix::io::MprotectFlags::empty</span>(),
+            .map_err(|e| InstantiationError::Resource(e.into()))<span class="question-mark">?</span>;
+        } <span class="kw">else if </span>initial_size_bytes &lt; <span class="self">self</span>.initial_size {
+            <span class="comment">// In this case the previous module had now CoW image which means
+            // that the memory at `0..self.initial_size` is all zeros and
+            // read-write, everything afterwards being PROT_NONE.
+            //
+            // Our requested heap size is smaller than the previous heap size
+            // so all that&#39;s needed now is to shrink the heap further to
+            // `initial_size_bytes`.
+            //
+            // So we come in with:
+            // - anon-zero memory, R+W,  [0, self.initial_size)
+            // - anon-zero memory, none, [self.initial_size, self.static_size)
+            // and we want:
+            // - anon-zero memory, R+W,  [0, initial_size_bytes)
+            // - anon-zero memory, none, [initial_size_bytes, self.static_size)
+            //
+            // so given initial_size_bytes &lt; self.initial_size we
+            // mprotect(NONE) the zone from the first to the second.
+            </span><span class="self">self</span>.set_protection(
+                initial_size_bytes..<span class="self">self</span>.initial_size,
+                rustix::io::MprotectFlags::empty(),
             )
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">InstantiationError::Resource</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">initial_size_bytes</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">initial_size</span> {
-            <span class="comment">// In this case, like the previous one, the previous module had no</span>
-            <span class="comment">// CoW image but had a smaller heap than desired for this module.</span>
-            <span class="comment">// That means that here `mprotect` is used to make the new pages</span>
-            <span class="comment">// read/write, and since they&#39;re all reset from before they&#39;ll be</span>
-            <span class="comment">// made visible as zeros.</span>
-            <span class="self">self</span>.<span class="ident">set_protection</span>(
-                <span class="self">self</span>.<span class="ident">initial_size</span>..<span class="ident">initial_size_bytes</span>,
-                <span class="ident">rustix::io::MprotectFlags::READ</span> <span class="op">|</span> <span class="ident">rustix::io::MprotectFlags::WRITE</span>,
+            .map_err(|e| InstantiationError::Resource(e.into()))<span class="question-mark">?</span>;
+        } <span class="kw">else if </span>initial_size_bytes &gt; <span class="self">self</span>.initial_size {
+            <span class="comment">// In this case, like the previous one, the previous module had no
+            // CoW image but had a smaller heap than desired for this module.
+            // That means that here `mprotect` is used to make the new pages
+            // read/write, and since they&#39;re all reset from before they&#39;ll be
+            // made visible as zeros.
+            </span><span class="self">self</span>.set_protection(
+                <span class="self">self</span>.initial_size..initial_size_bytes,
+                rustix::io::MprotectFlags::READ | rustix::io::MprotectFlags::WRITE,
             )
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">InstantiationError::Resource</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        } <span class="kw">else</span> {
-            <span class="comment">// The final case here is that the previous module has no CoW image</span>
-            <span class="comment">// so the previous heap is all zeros. The previous heap is the exact</span>
-            <span class="comment">// same size as the requested heap, so no syscalls are needed to do</span>
-            <span class="comment">// anything else.</span>
-        }
+            .map_err(|e| InstantiationError::Resource(e.into()))<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            <span class="comment">// The final case here is that the previous module has no CoW image
+            // so the previous heap is all zeros. The previous heap is the exact
+            // same size as the requested heap, so no syscalls are needed to do
+            // anything else.
+        </span>}
 
-        <span class="comment">// The memory image, at this point, should have `initial_size_bytes` of</span>
-        <span class="comment">// zeros starting at `self.base` followed by inaccessible memory to</span>
-        <span class="comment">// `self.static_size`. Update sizing fields to reflect this.</span>
-        <span class="self">self</span>.<span class="ident">initial_size</span> <span class="op">=</span> <span class="ident">initial_size_bytes</span>;
-        <span class="self">self</span>.<span class="ident">cur_size</span> <span class="op">=</span> <span class="ident">initial_size_bytes</span>;
+        <span class="comment">// The memory image, at this point, should have `initial_size_bytes` of
+        // zeros starting at `self.base` followed by inaccessible memory to
+        // `self.static_size`. Update sizing fields to reflect this.
+        </span><span class="self">self</span>.initial_size = initial_size_bytes;
+        <span class="self">self</span>.cur_size = initial_size_bytes;
 
-        <span class="comment">// The initial memory image, if given. If not, we just get a</span>
-        <span class="comment">// memory filled with zeroes.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">image</span>) <span class="op">=</span> <span class="ident">maybe_image</span>.<span class="ident">as_ref</span>() {
+        <span class="comment">// The initial memory image, if given. If not, we just get a
+        // memory filled with zeroes.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(image) = maybe_image.as_ref() {
             <span class="macro">assert!</span>(
-                <span class="ident">image</span>.<span class="ident">linear_memory_offset</span>.<span class="ident">checked_add</span>(<span class="ident">image</span>.<span class="ident">len</span>).<span class="ident">unwrap</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">initial_size_bytes</span>
+                image.linear_memory_offset.checked_add(image.len).unwrap() &lt;= initial_size_bytes
             );
-            <span class="kw">if</span> <span class="ident">image</span>.<span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                <span class="kw">unsafe</span> {
-                    <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">rustix::io::mmap</span>(
-                        (<span class="self">self</span>.<span class="ident">base</span> <span class="op">+</span> <span class="ident">image</span>.<span class="ident">linear_memory_offset</span>) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-                        <span class="ident">image</span>.<span class="ident">len</span>,
-                        <span class="ident">rustix::io::ProtFlags::READ</span> <span class="op">|</span> <span class="ident">rustix::io::ProtFlags::WRITE</span>,
-                        <span class="ident">rustix::io::MapFlags::PRIVATE</span> <span class="op">|</span> <span class="ident">rustix::io::MapFlags::FIXED</span>,
-                        <span class="ident">image</span>.<span class="ident">fd</span>.<span class="ident">as_file</span>(),
-                        <span class="ident">image</span>.<span class="ident">fd_offset</span>,
+            <span class="kw">if </span>image.len &gt; <span class="number">0 </span>{
+                <span class="kw">unsafe </span>{
+                    <span class="kw">let </span>ptr = rustix::io::mmap(
+                        (<span class="self">self</span>.base + image.linear_memory_offset) <span class="kw">as </span><span class="kw-2">*mut </span>c_void,
+                        image.len,
+                        rustix::io::ProtFlags::READ | rustix::io::ProtFlags::WRITE,
+                        rustix::io::MapFlags::PRIVATE | rustix::io::MapFlags::FIXED,
+                        image.fd.as_file(),
+                        image.fd_offset,
                     )
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">InstantiationError::Resource</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-                    <span class="macro">assert_eq!</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="self">self</span>.<span class="ident">base</span> <span class="op">+</span> <span class="ident">image</span>.<span class="ident">linear_memory_offset</span>);
+                    .map_err(|e| InstantiationError::Resource(e.into()))<span class="question-mark">?</span>;
+                    <span class="macro">assert_eq!</span>(ptr <span class="kw">as </span>usize, <span class="self">self</span>.base + image.linear_memory_offset);
                 }
             }
         }
 
-        <span class="self">self</span>.<span class="ident">image</span> <span class="op">=</span> <span class="ident">maybe_image</span>.<span class="ident">cloned</span>();
-        <span class="self">self</span>.<span class="ident">dirty</span> <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="self">self</span>.image = maybe_image.cloned();
+        <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span> <span class="comment">// ignore warnings as this is only used in some cfgs</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">clear_and_remain_ready</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="self">self</span>.<span class="ident">dirty</span>);
+    <span class="attribute">#[allow(dead_code)] </span><span class="comment">// ignore warnings as this is only used in some cfgs
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>clear_and_remain_ready(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="macro">assert!</span>(<span class="self">self</span>.dirty);
 
-        <span class="macro">cfg_if::cfg_if!</span> {
-            <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span> {
-                <span class="comment">// On Linux we can use `madvise` to reset the virtual memory</span>
-                <span class="comment">// back to its original state. This means back to all zeros for</span>
-                <span class="comment">// anonymous-backed pages and back to the original contents for</span>
-                <span class="comment">// CoW memory (the initial heap image). This has the precise</span>
-                <span class="comment">// semantics we want for reuse between instances, so it&#39;s all we</span>
-                <span class="comment">// need to do.</span>
-                <span class="kw">unsafe</span> {
-                    <span class="ident">rustix::io::madvise</span>(
-                        <span class="self">self</span>.<span class="ident">base</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-                        <span class="self">self</span>.<span class="ident">cur_size</span>,
-                        <span class="ident">rustix::io::Advice::LinuxDontNeed</span>,
+        <span class="macro">cfg_if::cfg_if! </span>{
+            <span class="kw">if </span><span class="attribute">#[cfg(target_os = <span class="string">&quot;linux&quot;</span>)] </span>{
+                <span class="comment">// On Linux we can use `madvise` to reset the virtual memory
+                // back to its original state. This means back to all zeros for
+                // anonymous-backed pages and back to the original contents for
+                // CoW memory (the initial heap image). This has the precise
+                // semantics we want for reuse between instances, so it&#39;s all we
+                // need to do.
+                </span><span class="kw">unsafe </span>{
+                    rustix::io::madvise(
+                        <span class="self">self</span>.base <span class="kw">as </span><span class="kw-2">*mut </span>c_void,
+                        <span class="self">self</span>.cur_size,
+                        rustix::io::Advice::LinuxDontNeed,
                     )<span class="question-mark">?</span>;
                 }
-            } <span class="kw">else</span> {
-                <span class="comment">// If we&#39;re not on Linux, however, then there&#39;s no generic</span>
-                <span class="comment">// platform way to reset memory back to its original state, so</span>
-                <span class="comment">// instead this is &quot;feigned&quot; by resetting memory back to</span>
-                <span class="comment">// entirely zeros with an anonymous backing.</span>
-                <span class="comment">//</span>
-                <span class="comment">// Additionally the previous image, if any, is dropped here</span>
-                <span class="comment">// since it&#39;s no longer applicable to this mapping.</span>
-                <span class="self">self</span>.<span class="ident">reset_with_anon_memory</span>()<span class="question-mark">?</span>;
-                <span class="self">self</span>.<span class="ident">image</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+            } <span class="kw">else </span>{
+                <span class="comment">// If we&#39;re not on Linux, however, then there&#39;s no generic
+                // platform way to reset memory back to its original state, so
+                // instead this is &quot;feigned&quot; by resetting memory back to
+                // entirely zeros with an anonymous backing.
+                //
+                // Additionally the previous image, if any, is dropped here
+                // since it&#39;s no longer applicable to this mapping.
+                </span><span class="self">self</span>.reset_with_anon_memory()<span class="question-mark">?</span>;
+                <span class="self">self</span>.image = <span class="prelude-val">None</span>;
             }
         }
 
-        <span class="comment">// mprotect the initial heap region beyond the initial heap size back to PROT_NONE.</span>
-        <span class="self">self</span>.<span class="ident">set_protection</span>(
-            <span class="self">self</span>.<span class="ident">initial_size</span>..<span class="self">self</span>.<span class="ident">cur_size</span>,
-            <span class="ident">rustix::io::MprotectFlags::empty</span>(),
+        <span class="comment">// mprotect the initial heap region beyond the initial heap size back to PROT_NONE.
+        </span><span class="self">self</span>.set_protection(
+            <span class="self">self</span>.initial_size..<span class="self">self</span>.cur_size,
+            rustix::io::MprotectFlags::empty(),
         )<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">cur_size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">initial_size</span>;
-        <span class="self">self</span>.<span class="ident">dirty</span> <span class="op">=</span> <span class="bool-val">false</span>;
+        <span class="self">self</span>.cur_size = <span class="self">self</span>.initial_size;
+        <span class="self">self</span>.dirty = <span class="bool-val">false</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">set_protection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">flags</span>: <span class="ident">rustix::io::MprotectFlags</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span>);
-        <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">static_size</span>);
-        <span class="kw">let</span> <span class="ident">mprotect_start</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">checked_add</span>(<span class="ident">range</span>.<span class="ident">start</span>).<span class="ident">unwrap</span>();
-        <span class="kw">if</span> <span class="ident">range</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="kw">unsafe</span> {
-                <span class="ident">rustix::io::mprotect</span>(<span class="ident">mprotect_start</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="kw">_</span>, <span class="ident">range</span>.<span class="ident">len</span>(), <span class="ident">flags</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>set_protection(<span class="kw-2">&amp;</span><span class="self">self</span>, range: Range&lt;usize&gt;, flags: rustix::io::MprotectFlags) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="macro">assert!</span>(range.start &lt;= range.end);
+        <span class="macro">assert!</span>(range.end &lt;= <span class="self">self</span>.static_size);
+        <span class="kw">let </span>mprotect_start = <span class="self">self</span>.base.checked_add(range.start).unwrap();
+        <span class="kw">if </span>range.len() &gt; <span class="number">0 </span>{
+            <span class="kw">unsafe </span>{
+                rustix::io::mprotect(mprotect_start <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>, range.len(), flags)<span class="question-mark">?</span>;
             }
         }
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">has_image</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">image</span>.<span class="ident">is_some</span>()
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>has_image(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.image.is_some()
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span> <span class="comment">// ignore warnings as this is only used in some cfgs</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_dirty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">dirty</span>
+    <span class="attribute">#[allow(dead_code)] </span><span class="comment">// ignore warnings as this is only used in some cfgs
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_dirty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.dirty
     }
 
-    <span class="doccomment">/// Map anonymous zeroed memory across the whole slot,</span>
-    <span class="doccomment">/// inaccessible. Used both during instantiate and during drop.</span>
-    <span class="kw">fn</span> <span class="ident">reset_with_anon_memory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">rustix::io::mmap_anonymous</span>(
-                <span class="self">self</span>.<span class="ident">base</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-                <span class="self">self</span>.<span class="ident">static_size</span>,
-                <span class="ident">rustix::io::ProtFlags::empty</span>(),
-                <span class="ident">rustix::io::MapFlags::PRIVATE</span> <span class="op">|</span> <span class="ident">rustix::io::MapFlags::FIXED</span>,
+    <span class="doccomment">/// Map anonymous zeroed memory across the whole slot,
+    /// inaccessible. Used both during instantiate and during drop.
+    </span><span class="kw">fn </span>reset_with_anon_memory(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>ptr = rustix::io::mmap_anonymous(
+                <span class="self">self</span>.base <span class="kw">as </span><span class="kw-2">*mut </span>c_void,
+                <span class="self">self</span>.static_size,
+                rustix::io::ProtFlags::empty(),
+                rustix::io::MapFlags::PRIVATE | rustix::io::MapFlags::FIXED,
             )<span class="question-mark">?</span>;
-            <span class="macro">assert_eq!</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="self">self</span>.<span class="ident">base</span>);
+            <span class="macro">assert_eq!</span>(ptr <span class="kw">as </span>usize, <span class="self">self</span>.base);
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">MemoryImageSlot</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// The MemoryImageSlot may be dropped if there is an error during</span>
-        <span class="comment">// instantiation: for example, if a memory-growth limiter</span>
-        <span class="comment">// disallows a guest from having a memory of a certain size,</span>
-        <span class="comment">// after we&#39;ve already initialized the MemoryImageSlot.</span>
-        <span class="comment">//</span>
-        <span class="comment">// We need to return this region of the large pool mmap to a</span>
-        <span class="comment">// safe state (with no module-specific mappings). The</span>
-        <span class="comment">// MemoryImageSlot will not be returned to the MemoryPool, so a new</span>
-        <span class="comment">// MemoryImageSlot will be created and overwrite the mappings anyway</span>
-        <span class="comment">// on the slot&#39;s next use; but for safety and to avoid</span>
-        <span class="comment">// resource leaks it&#39;s better not to have stale mappings to a</span>
-        <span class="comment">// possibly-otherwise-dead module&#39;s image.</span>
-        <span class="comment">//</span>
-        <span class="comment">// To &quot;wipe the slate clean&quot;, let&#39;s do a mmap of anonymous</span>
-        <span class="comment">// memory over the whole region, with PROT_NONE. Note that we</span>
-        <span class="comment">// *can&#39;t* simply munmap, because that leaves a hole in the</span>
-        <span class="comment">// middle of the pooling allocator&#39;s big memory area that some</span>
-        <span class="comment">// other random mmap may swoop in and take, to be trampled</span>
-        <span class="comment">// over by the next MemoryImageSlot later.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Since we&#39;re in drop(), we can&#39;t sanely return an error if</span>
-        <span class="comment">// this mmap fails. Instead though the result is unwrapped here to</span>
-        <span class="comment">// trigger a panic if something goes wrong. Otherwise if this</span>
-        <span class="comment">// reset-the-mapping fails then on reuse it might be possible, depending</span>
-        <span class="comment">// on precisely where errors happened, that stale memory could get</span>
-        <span class="comment">// leaked through.</span>
-        <span class="comment">//</span>
-        <span class="comment">// The exception to all of this is if the `clear_on_drop` flag</span>
-        <span class="comment">// (which is set by default) is false. If so, the owner of</span>
-        <span class="comment">// this MemoryImageSlot has indicated that it will clean up in some</span>
-        <span class="comment">// other way.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">clear_on_drop</span> {
-            <span class="self">self</span>.<span class="ident">reset_with_anon_memory</span>().<span class="ident">unwrap</span>();
+<span class="kw">impl </span>Drop <span class="kw">for </span>MemoryImageSlot {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// The MemoryImageSlot may be dropped if there is an error during
+        // instantiation: for example, if a memory-growth limiter
+        // disallows a guest from having a memory of a certain size,
+        // after we&#39;ve already initialized the MemoryImageSlot.
+        //
+        // We need to return this region of the large pool mmap to a
+        // safe state (with no module-specific mappings). The
+        // MemoryImageSlot will not be returned to the MemoryPool, so a new
+        // MemoryImageSlot will be created and overwrite the mappings anyway
+        // on the slot&#39;s next use; but for safety and to avoid
+        // resource leaks it&#39;s better not to have stale mappings to a
+        // possibly-otherwise-dead module&#39;s image.
+        //
+        // To &quot;wipe the slate clean&quot;, let&#39;s do a mmap of anonymous
+        // memory over the whole region, with PROT_NONE. Note that we
+        // *can&#39;t* simply munmap, because that leaves a hole in the
+        // middle of the pooling allocator&#39;s big memory area that some
+        // other random mmap may swoop in and take, to be trampled
+        // over by the next MemoryImageSlot later.
+        //
+        // Since we&#39;re in drop(), we can&#39;t sanely return an error if
+        // this mmap fails. Instead though the result is unwrapped here to
+        // trigger a panic if something goes wrong. Otherwise if this
+        // reset-the-mapping fails then on reuse it might be possible, depending
+        // on precisely where errors happened, that stale memory could get
+        // leaked through.
+        //
+        // The exception to all of this is if the `clear_on_drop` flag
+        // (which is set by default) is false. If so, the owner of
+        // this MemoryImageSlot has indicated that it will clean up in some
+        // other way.
+        </span><span class="kw">if </span><span class="self">self</span>.clear_on_drop {
+            <span class="self">self</span>.reset_with_anon_memory().unwrap();
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+<span class="attribute">#[cfg(all(test, target_os = <span class="string">&quot;linux&quot;</span>))]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use </span>std::sync::Arc;
 
-    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">create_memfd</span>, <span class="ident">FdSource</span>, <span class="ident">MemoryImage</span>, <span class="ident">MemoryImageSlot</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mmap::Mmap</span>;
-    <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
-    <span class="kw">use</span> <span class="ident">std::io::Write</span>;
+    <span class="kw">use super</span>::{create_memfd, FdSource, MemoryImage, MemoryImageSlot};
+    <span class="kw">use </span><span class="kw">crate</span>::mmap::Mmap;
+    <span class="kw">use </span>anyhow::Result;
+    <span class="kw">use </span>std::io::Write;
 
-    <span class="kw">fn</span> <span class="ident">create_memfd_with_data</span>(<span class="ident">offset</span>: <span class="ident">usize</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MemoryImage</span><span class="op">&gt;</span> {
-        <span class="comment">// Offset must be page-aligned.</span>
-        <span class="kw">let</span> <span class="ident">page_size</span> <span class="op">=</span> <span class="ident">region::page::size</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">offset</span> <span class="op">&amp;</span> (<span class="ident">page_size</span> <span class="op">-</span> <span class="number">1</span>), <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">memfd</span> <span class="op">=</span> <span class="ident">create_memfd</span>()<span class="question-mark">?</span>;
-        <span class="ident">memfd</span>.<span class="ident">as_file</span>().<span class="ident">write_all</span>(<span class="ident">data</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>create_memfd_with_data(offset: usize, data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;MemoryImage&gt; {
+        <span class="comment">// Offset must be page-aligned.
+        </span><span class="kw">let </span>page_size = region::page::size();
+        <span class="macro">assert_eq!</span>(offset &amp; (page_size - <span class="number">1</span>), <span class="number">0</span>);
+        <span class="kw">let </span>memfd = create_memfd()<span class="question-mark">?</span>;
+        memfd.as_file().write_all(data)<span class="question-mark">?</span>;
 
-        <span class="comment">// The image length is rounded up to the nearest page size</span>
-        <span class="kw">let</span> <span class="ident">image_len</span> <span class="op">=</span> (<span class="ident">data</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">page_size</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">&amp;</span> <span class="op">!</span>(<span class="ident">page_size</span> <span class="op">-</span> <span class="number">1</span>);
-        <span class="ident">memfd</span>.<span class="ident">as_file</span>().<span class="ident">set_len</span>(<span class="ident">image_len</span> <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
+        <span class="comment">// The image length is rounded up to the nearest page size
+        </span><span class="kw">let </span>image_len = (data.len() + page_size - <span class="number">1</span>) &amp; !(page_size - <span class="number">1</span>);
+        memfd.as_file().set_len(image_len <span class="kw">as </span>u64)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">MemoryImage</span> {
-            <span class="ident">fd</span>: <span class="ident">FdSource::Memfd</span>(<span class="ident">memfd</span>),
-            <span class="ident">len</span>: <span class="ident">image_len</span>,
-            <span class="ident">fd_offset</span>: <span class="number">0</span>,
-            <span class="ident">linear_memory_offset</span>: <span class="ident">offset</span>,
+        <span class="prelude-val">Ok</span>(MemoryImage {
+            fd: FdSource::Memfd(memfd),
+            len: image_len,
+            fd_offset: <span class="number">0</span>,
+            linear_memory_offset: offset,
         })
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">instantiate_no_image</span>() {
-        <span class="comment">// 4 MiB mmap&#39;d area, not accessible</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mmap</span> <span class="op">=</span> <span class="ident">Mmap::accessible_reserved</span>(<span class="number">0</span>, <span class="number">4</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">20</span>).<span class="ident">unwrap</span>();
-        <span class="comment">// Create a MemoryImageSlot on top of it</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memfd</span> <span class="op">=</span> <span class="ident">MemoryImageSlot::create</span>(<span class="ident">mmap</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="kw">_</span>, <span class="number">0</span>, <span class="number">4</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">20</span>);
-        <span class="ident">memfd</span>.<span class="ident">no_clear_on_drop</span>();
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">memfd</span>.<span class="ident">is_dirty</span>());
-        <span class="comment">// instantiate with 64 KiB initial size</span>
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="ident">memfd</span>.<span class="ident">is_dirty</span>());
-        <span class="comment">// We should be able to access this 64 KiB (try both ends) and</span>
-        <span class="comment">// it should consist of zeroes.</span>
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_mut_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, <span class="ident">slice</span>[<span class="number">0</span>]);
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, <span class="ident">slice</span>[<span class="number">65535</span>]);
-        <span class="ident">slice</span>[<span class="number">1024</span>] <span class="op">=</span> <span class="number">42</span>;
-        <span class="macro">assert_eq!</span>(<span class="number">42</span>, <span class="ident">slice</span>[<span class="number">1024</span>]);
-        <span class="comment">// grow the heap</span>
-        <span class="ident">memfd</span>.<span class="ident">set_heap_limit</span>(<span class="number">128</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="number">42</span>, <span class="ident">slice</span>[<span class="number">1024</span>]);
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, <span class="ident">slice</span>[<span class="number">131071</span>]);
-        <span class="comment">// instantiate again; we should see zeroes, even as the</span>
-        <span class="comment">// reuse-anon-mmap-opt kicks in</span>
-        <span class="ident">memfd</span>.<span class="ident">clear_and_remain_ready</span>().<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">memfd</span>.<span class="ident">is_dirty</span>());
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, <span class="ident">slice</span>[<span class="number">1024</span>]);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>instantiate_no_image() {
+        <span class="comment">// 4 MiB mmap&#39;d area, not accessible
+        </span><span class="kw">let </span><span class="kw-2">mut </span>mmap = Mmap::accessible_reserved(<span class="number">0</span>, <span class="number">4 </span>&lt;&lt; <span class="number">20</span>).unwrap();
+        <span class="comment">// Create a MemoryImageSlot on top of it
+        </span><span class="kw">let </span><span class="kw-2">mut </span>memfd = MemoryImageSlot::create(mmap.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>, <span class="number">0</span>, <span class="number">4 </span>&lt;&lt; <span class="number">20</span>);
+        memfd.no_clear_on_drop();
+        <span class="macro">assert!</span>(!memfd.is_dirty());
+        <span class="comment">// instantiate with 64 KiB initial size
+        </span>memfd.instantiate(<span class="number">64 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">None</span>).unwrap();
+        <span class="macro">assert!</span>(memfd.is_dirty());
+        <span class="comment">// We should be able to access this 64 KiB (try both ends) and
+        // it should consist of zeroes.
+        </span><span class="kw">let </span>slice = mmap.as_mut_slice();
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, slice[<span class="number">0</span>]);
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, slice[<span class="number">65535</span>]);
+        slice[<span class="number">1024</span>] = <span class="number">42</span>;
+        <span class="macro">assert_eq!</span>(<span class="number">42</span>, slice[<span class="number">1024</span>]);
+        <span class="comment">// grow the heap
+        </span>memfd.set_heap_limit(<span class="number">128 </span>&lt;&lt; <span class="number">10</span>).unwrap();
+        <span class="kw">let </span>slice = mmap.as_slice();
+        <span class="macro">assert_eq!</span>(<span class="number">42</span>, slice[<span class="number">1024</span>]);
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, slice[<span class="number">131071</span>]);
+        <span class="comment">// instantiate again; we should see zeroes, even as the
+        // reuse-anon-mmap-opt kicks in
+        </span>memfd.clear_and_remain_ready().unwrap();
+        <span class="macro">assert!</span>(!memfd.is_dirty());
+        memfd.instantiate(<span class="number">64 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">None</span>).unwrap();
+        <span class="kw">let </span>slice = mmap.as_slice();
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, slice[<span class="number">1024</span>]);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">instantiate_image</span>() {
-        <span class="comment">// 4 MiB mmap&#39;d area, not accessible</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mmap</span> <span class="op">=</span> <span class="ident">Mmap::accessible_reserved</span>(<span class="number">0</span>, <span class="number">4</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">20</span>).<span class="ident">unwrap</span>();
-        <span class="comment">// Create a MemoryImageSlot on top of it</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memfd</span> <span class="op">=</span> <span class="ident">MemoryImageSlot::create</span>(<span class="ident">mmap</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="kw">_</span>, <span class="number">0</span>, <span class="number">4</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">20</span>);
-        <span class="ident">memfd</span>.<span class="ident">no_clear_on_drop</span>();
-        <span class="comment">// Create an image with some data.</span>
-        <span class="kw">let</span> <span class="ident">image</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">create_memfd_with_data</span>(<span class="number">4096</span>, <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]).<span class="ident">unwrap</span>());
-        <span class="comment">// Instantiate with this image</span>
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">image</span>)).<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="ident">memfd</span>.<span class="ident">has_image</span>());
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_mut_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span><span class="ident">slice</span>[<span class="number">4096</span>..<span class="number">4100</span>]);
-        <span class="ident">slice</span>[<span class="number">4096</span>] <span class="op">=</span> <span class="number">5</span>;
-        <span class="comment">// Clear and re-instantiate same image</span>
-        <span class="ident">memfd</span>.<span class="ident">clear_and_remain_ready</span>().<span class="ident">unwrap</span>();
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">image</span>)).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_slice</span>();
-        <span class="comment">// Should not see mutation from above</span>
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span><span class="ident">slice</span>[<span class="number">4096</span>..<span class="number">4100</span>]);
-        <span class="comment">// Clear and re-instantiate no image</span>
-        <span class="ident">memfd</span>.<span class="ident">clear_and_remain_ready</span>().<span class="ident">unwrap</span>();
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">memfd</span>.<span class="ident">has_image</span>());
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>], <span class="kw-2">&amp;</span><span class="ident">slice</span>[<span class="number">4096</span>..<span class="number">4100</span>]);
-        <span class="comment">// Clear and re-instantiate image again</span>
-        <span class="ident">memfd</span>.<span class="ident">clear_and_remain_ready</span>().<span class="ident">unwrap</span>();
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">image</span>)).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span><span class="ident">slice</span>[<span class="number">4096</span>..<span class="number">4100</span>]);
-        <span class="comment">// Create another image with different data.</span>
-        <span class="kw">let</span> <span class="ident">image2</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">create_memfd_with_data</span>(<span class="number">4096</span>, <span class="kw-2">&amp;</span>[<span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>]).<span class="ident">unwrap</span>());
-        <span class="ident">memfd</span>.<span class="ident">clear_and_remain_ready</span>().<span class="ident">unwrap</span>();
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">128</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">image2</span>)).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>], <span class="kw-2">&amp;</span><span class="ident">slice</span>[<span class="number">4096</span>..<span class="number">4100</span>]);
-        <span class="comment">// Instantiate the original image again; we should notice it&#39;s</span>
-        <span class="comment">// a different image and not reuse the mappings.</span>
-        <span class="ident">memfd</span>.<span class="ident">clear_and_remain_ready</span>().<span class="ident">unwrap</span>();
-        <span class="ident">memfd</span>.<span class="ident">instantiate</span>(<span class="number">64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">image</span>)).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">mmap</span>.<span class="ident">as_slice</span>();
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span><span class="ident">slice</span>[<span class="number">4096</span>..<span class="number">4100</span>]);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>instantiate_image() {
+        <span class="comment">// 4 MiB mmap&#39;d area, not accessible
+        </span><span class="kw">let </span><span class="kw-2">mut </span>mmap = Mmap::accessible_reserved(<span class="number">0</span>, <span class="number">4 </span>&lt;&lt; <span class="number">20</span>).unwrap();
+        <span class="comment">// Create a MemoryImageSlot on top of it
+        </span><span class="kw">let </span><span class="kw-2">mut </span>memfd = MemoryImageSlot::create(mmap.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>, <span class="number">0</span>, <span class="number">4 </span>&lt;&lt; <span class="number">20</span>);
+        memfd.no_clear_on_drop();
+        <span class="comment">// Create an image with some data.
+        </span><span class="kw">let </span>image = Arc::new(create_memfd_with_data(<span class="number">4096</span>, <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]).unwrap());
+        <span class="comment">// Instantiate with this image
+        </span>memfd.instantiate(<span class="number">64 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>image)).unwrap();
+        <span class="macro">assert!</span>(memfd.has_image());
+        <span class="kw">let </span>slice = mmap.as_mut_slice();
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>slice[<span class="number">4096</span>..<span class="number">4100</span>]);
+        slice[<span class="number">4096</span>] = <span class="number">5</span>;
+        <span class="comment">// Clear and re-instantiate same image
+        </span>memfd.clear_and_remain_ready().unwrap();
+        memfd.instantiate(<span class="number">64 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>image)).unwrap();
+        <span class="kw">let </span>slice = mmap.as_slice();
+        <span class="comment">// Should not see mutation from above
+        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>slice[<span class="number">4096</span>..<span class="number">4100</span>]);
+        <span class="comment">// Clear and re-instantiate no image
+        </span>memfd.clear_and_remain_ready().unwrap();
+        memfd.instantiate(<span class="number">64 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">None</span>).unwrap();
+        <span class="macro">assert!</span>(!memfd.has_image());
+        <span class="kw">let </span>slice = mmap.as_slice();
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>], <span class="kw-2">&amp;</span>slice[<span class="number">4096</span>..<span class="number">4100</span>]);
+        <span class="comment">// Clear and re-instantiate image again
+        </span>memfd.clear_and_remain_ready().unwrap();
+        memfd.instantiate(<span class="number">64 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>image)).unwrap();
+        <span class="kw">let </span>slice = mmap.as_slice();
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>slice[<span class="number">4096</span>..<span class="number">4100</span>]);
+        <span class="comment">// Create another image with different data.
+        </span><span class="kw">let </span>image2 = Arc::new(create_memfd_with_data(<span class="number">4096</span>, <span class="kw-2">&amp;</span>[<span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>]).unwrap());
+        memfd.clear_and_remain_ready().unwrap();
+        memfd.instantiate(<span class="number">128 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>image2)).unwrap();
+        <span class="kw">let </span>slice = mmap.as_slice();
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>], <span class="kw-2">&amp;</span>slice[<span class="number">4096</span>..<span class="number">4100</span>]);
+        <span class="comment">// Instantiate the original image again; we should notice it&#39;s
+        // a different image and not reuse the mappings.
+        </span>memfd.clear_and_remain_ready().unwrap();
+        memfd.instantiate(<span class="number">64 </span>&lt;&lt; <span class="number">10</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>image)).unwrap();
+        <span class="kw">let </span>slice = mmap.as_slice();
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>slice[<span class="number">4096</span>..<span class="number">4100</span>]);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

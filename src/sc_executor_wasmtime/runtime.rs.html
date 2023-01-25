@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/wasmtime/src/runtime.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>runtime.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_executor_wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_executor_wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_executor_wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/wasmtime/src/runtime.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>runtime.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_executor_wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -784,787 +779,786 @@
 <span id="779">779</span>
 <span id="780">780</span>
 <span id="781">781</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Defines the compiled Wasm runtime that uses Wasmtime internally.</span>
+</span><span class="doccomment">//! Defines the compiled Wasm runtime that uses Wasmtime internally.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">host::HostState</span>,
-	<span class="ident">instance_wrapper</span>::{<span class="ident">EntryPoint</span>, <span class="ident">InstanceWrapper</span>},
-	<span class="ident">util</span>,
+</span><span class="kw">use crate</span>::{
+	host::HostState,
+	instance_wrapper::{EntryPoint, InstanceWrapper},
+	util,
 };
 
-<span class="kw">use</span> <span class="ident">sc_allocator::FreeingBumpHeapAllocator</span>;
-<span class="kw">use</span> <span class="ident">sc_executor_common</span>::{
-	<span class="ident">error</span>::{<span class="prelude-ty">Result</span>, <span class="ident">WasmError</span>},
-	<span class="ident">runtime_blob</span>::{
-		<span class="self">self</span>, <span class="ident">DataSegmentsSnapshot</span>, <span class="ident">ExposedMutableGlobalsSet</span>, <span class="ident">GlobalsSnapshot</span>, <span class="ident">RuntimeBlob</span>,
+<span class="kw">use </span>sc_allocator::FreeingBumpHeapAllocator;
+<span class="kw">use </span>sc_executor_common::{
+	error::{<span class="prelude-ty">Result</span>, WasmError},
+	runtime_blob::{
+		<span class="self">self</span>, DataSegmentsSnapshot, ExposedMutableGlobalsSet, GlobalsSnapshot, RuntimeBlob,
 	},
-	<span class="ident">wasm_runtime</span>::{<span class="ident">InvokeMethod</span>, <span class="ident">WasmInstance</span>, <span class="ident">WasmModule</span>},
+	wasm_runtime::{InvokeMethod, WasmInstance, WasmModule},
 };
-<span class="kw">use</span> <span class="ident">sp_runtime_interface::unpack_ptr_and_len</span>;
-<span class="kw">use</span> <span class="ident">sp_wasm_interface</span>::{<span class="ident">HostFunctions</span>, <span class="ident">Pointer</span>, <span class="ident">Value</span>, <span class="ident">WordSize</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>},
-	<span class="ident">sync</span>::{
-		<span class="ident">atomic</span>::{<span class="ident">AtomicBool</span>, <span class="ident">Ordering</span>},
-		<span class="ident">Arc</span>,
+<span class="kw">use </span>sp_runtime_interface::unpack_ptr_and_len;
+<span class="kw">use </span>sp_wasm_interface::{HostFunctions, Pointer, Value, WordSize};
+<span class="kw">use </span>std::{
+	path::{Path, PathBuf},
+	sync::{
+		atomic::{AtomicBool, Ordering},
+		Arc,
 	},
 };
-<span class="kw">use</span> <span class="ident">wasmtime</span>::{<span class="ident">Engine</span>, <span class="ident">Memory</span>, <span class="ident">StoreLimits</span>, <span class="ident">Table</span>};
+<span class="kw">use </span>wasmtime::{Engine, Memory, StoreLimits, Table};
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">StoreData</span> {
-	<span class="doccomment">/// The limits we apply to the store. We need to store it here to return a reference to this</span>
-	<span class="doccomment">/// object when we have the limits enabled.</span>
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">limits</span>: <span class="ident">StoreLimits</span>,
-	<span class="doccomment">/// This will only be set when we call into the runtime.</span>
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">host_state</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HostState</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// This will be always set once the store is initialized.</span>
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">memory</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Memory</span><span class="op">&gt;</span>,
-	<span class="doccomment">/// This will be set only if the runtime actually contains a table.</span>
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">table</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Table</span><span class="op">&gt;</span>,
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>StoreData {
+	<span class="doccomment">/// The limits we apply to the store. We need to store it here to return a reference to this
+	/// object when we have the limits enabled.
+	</span><span class="kw">pub</span>(<span class="kw">crate</span>) limits: StoreLimits,
+	<span class="doccomment">/// This will only be set when we call into the runtime.
+	</span><span class="kw">pub</span>(<span class="kw">crate</span>) host_state: <span class="prelude-ty">Option</span>&lt;HostState&gt;,
+	<span class="doccomment">/// This will be always set once the store is initialized.
+	</span><span class="kw">pub</span>(<span class="kw">crate</span>) memory: <span class="prelude-ty">Option</span>&lt;Memory&gt;,
+	<span class="doccomment">/// This will be set only if the runtime actually contains a table.
+	</span><span class="kw">pub</span>(<span class="kw">crate</span>) table: <span class="prelude-ty">Option</span>&lt;Table&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">StoreData</span> {
-	<span class="doccomment">/// Returns a reference to the host state.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">HostState</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">host_state</span>.<span class="ident">as_ref</span>()
+<span class="kw">impl </span>StoreData {
+	<span class="doccomment">/// Returns a reference to the host state.
+	</span><span class="kw">pub fn </span>host_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>HostState&gt; {
+		<span class="self">self</span>.host_state.as_ref()
 	}
 
-	<span class="doccomment">/// Returns a mutable reference to the host state.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host_state_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">HostState</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">host_state</span>.<span class="ident">as_mut</span>()
+	<span class="doccomment">/// Returns a mutable reference to the host state.
+	</span><span class="kw">pub fn </span>host_state_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>HostState&gt; {
+		<span class="self">self</span>.host_state.as_mut()
 	}
 
-	<span class="doccomment">/// Returns the host memory.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">memory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Memory</span> {
-		<span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">expect</span>(<span class="string">&quot;memory is always set; qed&quot;</span>)
+	<span class="doccomment">/// Returns the host memory.
+	</span><span class="kw">pub fn </span>memory(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Memory {
+		<span class="self">self</span>.memory.expect(<span class="string">&quot;memory is always set; qed&quot;</span>)
 	}
 
-	<span class="doccomment">/// Returns the host table.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">table</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Table</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">table</span>
+	<span class="doccomment">/// Returns the host table.
+	</span><span class="kw">pub fn </span>table(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Table&gt; {
+		<span class="self">self</span>.table
 	}
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">Store</span> <span class="op">=</span> <span class="ident">wasmtime::Store</span><span class="op">&lt;</span><span class="ident">StoreData</span><span class="op">&gt;</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>Store = wasmtime::Store&lt;StoreData&gt;;
 
-<span class="kw">enum</span> <span class="ident">Strategy</span> {
-	<span class="ident">LegacyInstanceReuse</span> {
-		<span class="ident">instance_wrapper</span>: <span class="ident">InstanceWrapper</span>,
-		<span class="ident">globals_snapshot</span>: <span class="ident">GlobalsSnapshot</span><span class="op">&lt;</span><span class="ident">wasmtime::Global</span><span class="op">&gt;</span>,
-		<span class="ident">data_segments_snapshot</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DataSegmentsSnapshot</span><span class="op">&gt;</span>,
-		<span class="ident">heap_base</span>: <span class="ident">u32</span>,
+<span class="kw">enum </span>Strategy {
+	LegacyInstanceReuse {
+		instance_wrapper: InstanceWrapper,
+		globals_snapshot: GlobalsSnapshot&lt;wasmtime::Global&gt;,
+		data_segments_snapshot: Arc&lt;DataSegmentsSnapshot&gt;,
+		heap_base: u32,
 	},
-	<span class="ident">RecreateInstance</span>(<span class="ident">InstanceCreator</span>),
+	RecreateInstance(InstanceCreator),
 }
 
-<span class="kw">struct</span> <span class="ident">InstanceCreator</span> {
-	<span class="ident">engine</span>: <span class="ident">wasmtime::Engine</span>,
-	<span class="ident">instance_pre</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">wasmtime::InstancePre</span><span class="op">&lt;</span><span class="ident">StoreData</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">max_memory_size</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>InstanceCreator {
+	engine: wasmtime::Engine,
+	instance_pre: Arc&lt;wasmtime::InstancePre&lt;StoreData&gt;&gt;,
+	max_memory_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">InstanceCreator</span> {
-	<span class="kw">fn</span> <span class="ident">instantiate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InstanceWrapper</span><span class="op">&gt;</span> {
-		<span class="ident">InstanceWrapper::new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">engine</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">instance_pre</span>, <span class="self">self</span>.<span class="ident">max_memory_size</span>)
+<span class="kw">impl </span>InstanceCreator {
+	<span class="kw">fn </span>instantiate(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;InstanceWrapper&gt; {
+		InstanceWrapper::new(<span class="kw-2">&amp;</span><span class="self">self</span>.engine, <span class="kw-2">&amp;</span><span class="self">self</span>.instance_pre, <span class="self">self</span>.max_memory_size)
 	}
 }
 
-<span class="kw">struct</span> <span class="ident">InstanceGlobals</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">InstanceWrapper</span>,
+<span class="kw">struct </span>InstanceGlobals&lt;<span class="lifetime">&#39;a</span>&gt; {
+	instance: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>InstanceWrapper,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">runtime_blob::InstanceGlobals</span> <span class="kw">for</span> <span class="ident">InstanceGlobals</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">type</span> <span class="ident">Global</span> <span class="op">=</span> <span class="ident">wasmtime::Global</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; runtime_blob::InstanceGlobals <span class="kw">for </span>InstanceGlobals&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">type </span>Global = wasmtime::Global;
 
-	<span class="kw">fn</span> <span class="ident">get_global</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">export_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident"><span class="self">Self</span>::Global</span> {
-		<span class="self">self</span>.<span class="ident">instance</span>
-			.<span class="ident">get_global</span>(<span class="ident">export_name</span>)
-			.<span class="ident">expect</span>(<span class="string">&quot;get_global is guaranteed to be called with an export name of a global; qed&quot;</span>)
+	<span class="kw">fn </span>get_global(<span class="kw-2">&amp;mut </span><span class="self">self</span>, export_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self</span>::Global {
+		<span class="self">self</span>.instance
+			.get_global(export_name)
+			.expect(<span class="string">&quot;get_global is guaranteed to be called with an export name of a global; qed&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">get_global_value</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">global</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Global</span>) -&gt; <span class="ident">Value</span> {
-		<span class="ident">util::from_wasmtime_val</span>(<span class="ident">global</span>.<span class="ident">get</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">instance</span>.<span class="ident">store_mut</span>()))
+	<span class="kw">fn </span>get_global_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, global: <span class="kw-2">&amp;</span><span class="self">Self</span>::Global) -&gt; Value {
+		util::from_wasmtime_val(global.get(<span class="kw-2">&amp;mut </span><span class="self">self</span>.instance.store_mut()))
 	}
 
-	<span class="kw">fn</span> <span class="ident">set_global_value</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">global</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Global</span>, <span class="ident">value</span>: <span class="ident">Value</span>) {
-		<span class="ident">global</span>.<span class="ident">set</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">instance</span>.<span class="ident">store_mut</span>(), <span class="ident">util::into_wasmtime_val</span>(<span class="ident">value</span>)).<span class="ident">expect</span>(
+	<span class="kw">fn </span>set_global_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, global: <span class="kw-2">&amp;</span><span class="self">Self</span>::Global, value: Value) {
+		global.set(<span class="kw-2">&amp;mut </span><span class="self">self</span>.instance.store_mut(), util::into_wasmtime_val(value)).expect(
 			<span class="string">&quot;the value is guaranteed to be of the same value; the global is guaranteed to be mutable; qed&quot;</span>,
 		);
 	}
 }
 
-<span class="doccomment">/// Data required for creating instances with the fast instance reuse strategy.</span>
-<span class="kw">struct</span> <span class="ident">InstanceSnapshotData</span> {
-	<span class="ident">mutable_globals</span>: <span class="ident">ExposedMutableGlobalsSet</span>,
-	<span class="ident">data_segments_snapshot</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DataSegmentsSnapshot</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Data required for creating instances with the fast instance reuse strategy.
+</span><span class="kw">struct </span>InstanceSnapshotData {
+	mutable_globals: ExposedMutableGlobalsSet,
+	data_segments_snapshot: Arc&lt;DataSegmentsSnapshot&gt;,
 }
 
-<span class="doccomment">/// A `WasmModule` implementation using wasmtime to compile the runtime module to machine code</span>
-<span class="doccomment">/// and execute the compiled code.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">WasmtimeRuntime</span> {
-	<span class="ident">engine</span>: <span class="ident">wasmtime::Engine</span>,
-	<span class="ident">instance_pre</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">wasmtime::InstancePre</span><span class="op">&lt;</span><span class="ident">StoreData</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">instantiation_strategy</span>: <span class="ident">InternalInstantiationStrategy</span>,
-	<span class="ident">config</span>: <span class="ident">Config</span>,
+<span class="doccomment">/// A `WasmModule` implementation using wasmtime to compile the runtime module to machine code
+/// and execute the compiled code.
+</span><span class="kw">pub struct </span>WasmtimeRuntime {
+	engine: wasmtime::Engine,
+	instance_pre: Arc&lt;wasmtime::InstancePre&lt;StoreData&gt;&gt;,
+	instantiation_strategy: InternalInstantiationStrategy,
+	config: Config,
 }
 
-<span class="kw">impl</span> <span class="ident">WasmModule</span> <span class="kw">for</span> <span class="ident">WasmtimeRuntime</span> {
-	<span class="kw">fn</span> <span class="ident">new_instance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">WasmInstance</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">strategy</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">instantiation_strategy</span> {
-			<span class="ident">InternalInstantiationStrategy::LegacyInstanceReuse</span>(<span class="kw-2">ref</span> <span class="ident">snapshot_data</span>) =&gt; {
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">instance_wrapper</span> <span class="op">=</span> <span class="ident">InstanceWrapper::new</span>(
-					<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">engine</span>,
-					<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">instance_pre</span>,
-					<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">semantics</span>.<span class="ident">max_memory_size</span>,
+<span class="kw">impl </span>WasmModule <span class="kw">for </span>WasmtimeRuntime {
+	<span class="kw">fn </span>new_instance(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>WasmInstance&gt;&gt; {
+		<span class="kw">let </span>strategy = <span class="kw">match </span><span class="self">self</span>.instantiation_strategy {
+			InternalInstantiationStrategy::LegacyInstanceReuse(<span class="kw-2">ref </span>snapshot_data) =&gt; {
+				<span class="kw">let </span><span class="kw-2">mut </span>instance_wrapper = InstanceWrapper::new(
+					<span class="kw-2">&amp;</span><span class="self">self</span>.engine,
+					<span class="kw-2">&amp;</span><span class="self">self</span>.instance_pre,
+					<span class="self">self</span>.config.semantics.max_memory_size,
 				)<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">heap_base</span> <span class="op">=</span> <span class="ident">instance_wrapper</span>.<span class="ident">extract_heap_base</span>()<span class="question-mark">?</span>;
+				<span class="kw">let </span>heap_base = instance_wrapper.extract_heap_base()<span class="question-mark">?</span>;
 
-				<span class="comment">// This function panics if the instance was created from a runtime blob different</span>
-				<span class="comment">// from which the mutable globals were collected. Here, it is easy to see that there</span>
-				<span class="comment">// is only a single runtime blob and thus it&#39;s the same that was used for both</span>
-				<span class="comment">// creating the instance and collecting the mutable globals.</span>
-				<span class="kw">let</span> <span class="ident">globals_snapshot</span> <span class="op">=</span> <span class="ident">GlobalsSnapshot::take</span>(
-					<span class="kw-2">&amp;</span><span class="ident">snapshot_data</span>.<span class="ident">mutable_globals</span>,
-					<span class="kw-2">&amp;mut</span> <span class="ident">InstanceGlobals</span> { <span class="ident">instance</span>: <span class="kw-2">&amp;mut</span> <span class="ident">instance_wrapper</span> },
+				<span class="comment">// This function panics if the instance was created from a runtime blob different
+				// from which the mutable globals were collected. Here, it is easy to see that there
+				// is only a single runtime blob and thus it&#39;s the same that was used for both
+				// creating the instance and collecting the mutable globals.
+				</span><span class="kw">let </span>globals_snapshot = GlobalsSnapshot::take(
+					<span class="kw-2">&amp;</span>snapshot_data.mutable_globals,
+					<span class="kw-2">&amp;mut </span>InstanceGlobals { instance: <span class="kw-2">&amp;mut </span>instance_wrapper },
 				);
 
-				<span class="ident">Strategy::LegacyInstanceReuse</span> {
-					<span class="ident">instance_wrapper</span>,
-					<span class="ident">globals_snapshot</span>,
-					<span class="ident">data_segments_snapshot</span>: <span class="ident">snapshot_data</span>.<span class="ident">data_segments_snapshot</span>.<span class="ident">clone</span>(),
-					<span class="ident">heap_base</span>,
+				Strategy::LegacyInstanceReuse {
+					instance_wrapper,
+					globals_snapshot,
+					data_segments_snapshot: snapshot_data.data_segments_snapshot.clone(),
+					heap_base,
 				}
 			},
-			<span class="ident">InternalInstantiationStrategy::Builtin</span> =&gt; <span class="ident">Strategy::RecreateInstance</span>(<span class="ident">InstanceCreator</span> {
-				<span class="ident">engine</span>: <span class="self">self</span>.<span class="ident">engine</span>.<span class="ident">clone</span>(),
-				<span class="ident">instance_pre</span>: <span class="self">self</span>.<span class="ident">instance_pre</span>.<span class="ident">clone</span>(),
-				<span class="ident">max_memory_size</span>: <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">semantics</span>.<span class="ident">max_memory_size</span>,
+			InternalInstantiationStrategy::Builtin =&gt; Strategy::RecreateInstance(InstanceCreator {
+				engine: <span class="self">self</span>.engine.clone(),
+				instance_pre: <span class="self">self</span>.instance_pre.clone(),
+				max_memory_size: <span class="self">self</span>.config.semantics.max_memory_size,
 			}),
 		};
 
-		<span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">WasmtimeInstance</span> { <span class="ident">strategy</span> }))
+		<span class="prelude-val">Ok</span>(Box::new(WasmtimeInstance { strategy }))
 	}
 }
 
-<span class="doccomment">/// A `WasmInstance` implementation that reuses compiled module and spawns instances</span>
-<span class="doccomment">/// to execute the compiled code.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">WasmtimeInstance</span> {
-	<span class="ident">strategy</span>: <span class="ident">Strategy</span>,
+<span class="doccomment">/// A `WasmInstance` implementation that reuses compiled module and spawns instances
+/// to execute the compiled code.
+</span><span class="kw">pub struct </span>WasmtimeInstance {
+	strategy: Strategy,
 }
 
-<span class="kw">impl</span> <span class="ident">WasmInstance</span> <span class="kw">for</span> <span class="ident">WasmtimeInstance</span> {
-	<span class="kw">fn</span> <span class="ident">call</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">method</span>: <span class="ident">InvokeMethod</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">match</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">strategy</span> {
-			<span class="ident">Strategy::LegacyInstanceReuse</span> {
-				<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">instance_wrapper</span>,
-				<span class="ident">globals_snapshot</span>,
-				<span class="ident">data_segments_snapshot</span>,
-				<span class="ident">heap_base</span>,
+<span class="kw">impl </span>WasmInstance <span class="kw">for </span>WasmtimeInstance {
+	<span class="kw">fn </span>call(<span class="kw-2">&amp;mut </span><span class="self">self</span>, method: InvokeMethod, data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+		<span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.strategy {
+			Strategy::LegacyInstanceReuse {
+				<span class="kw-2">ref mut </span>instance_wrapper,
+				globals_snapshot,
+				data_segments_snapshot,
+				heap_base,
 			} =&gt; {
-				<span class="kw">let</span> <span class="ident">entrypoint</span> <span class="op">=</span> <span class="ident">instance_wrapper</span>.<span class="ident">resolve_entrypoint</span>(<span class="ident">method</span>)<span class="question-mark">?</span>;
+				<span class="kw">let </span>entrypoint = instance_wrapper.resolve_entrypoint(method)<span class="question-mark">?</span>;
 
-				<span class="ident">data_segments_snapshot</span>.<span class="ident">apply</span>(<span class="op">|</span><span class="ident">offset</span>, <span class="ident">contents</span><span class="op">|</span> {
-					<span class="ident">util::write_memory_from</span>(
-						<span class="ident">instance_wrapper</span>.<span class="ident">store_mut</span>(),
-						<span class="ident">Pointer::new</span>(<span class="ident">offset</span>),
-						<span class="ident">contents</span>,
+				data_segments_snapshot.apply(|offset, contents| {
+					util::write_memory_from(
+						instance_wrapper.store_mut(),
+						Pointer::new(offset),
+						contents,
 					)
 				})<span class="question-mark">?</span>;
-				<span class="ident">globals_snapshot</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;mut</span> <span class="ident">InstanceGlobals</span> { <span class="ident">instance</span>: <span class="ident">instance_wrapper</span> });
-				<span class="kw">let</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="kw-2">*</span><span class="ident">heap_base</span>);
+				globals_snapshot.apply(<span class="kw-2">&amp;mut </span>InstanceGlobals { instance: instance_wrapper });
+				<span class="kw">let </span>allocator = FreeingBumpHeapAllocator::new(<span class="kw-2">*</span>heap_base);
 
-				<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">perform_call</span>(<span class="ident">data</span>, <span class="ident">instance_wrapper</span>, <span class="ident">entrypoint</span>, <span class="ident">allocator</span>);
+				<span class="kw">let </span>result = perform_call(data, instance_wrapper, entrypoint, allocator);
 
-				<span class="comment">// Signal to the OS that we are done with the linear memory and that it can be</span>
-				<span class="comment">// reclaimed.</span>
-				<span class="ident">instance_wrapper</span>.<span class="ident">decommit</span>();
+				<span class="comment">// Signal to the OS that we are done with the linear memory and that it can be
+				// reclaimed.
+				</span>instance_wrapper.decommit();
 
-				<span class="ident">result</span>
+				result
 			},
-			<span class="ident">Strategy::RecreateInstance</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">instance_creator</span>) =&gt; {
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">instance_wrapper</span> <span class="op">=</span> <span class="ident">instance_creator</span>.<span class="ident">instantiate</span>()<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">heap_base</span> <span class="op">=</span> <span class="ident">instance_wrapper</span>.<span class="ident">extract_heap_base</span>()<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">entrypoint</span> <span class="op">=</span> <span class="ident">instance_wrapper</span>.<span class="ident">resolve_entrypoint</span>(<span class="ident">method</span>)<span class="question-mark">?</span>;
+			Strategy::RecreateInstance(<span class="kw-2">ref mut </span>instance_creator) =&gt; {
+				<span class="kw">let </span><span class="kw-2">mut </span>instance_wrapper = instance_creator.instantiate()<span class="question-mark">?</span>;
+				<span class="kw">let </span>heap_base = instance_wrapper.extract_heap_base()<span class="question-mark">?</span>;
+				<span class="kw">let </span>entrypoint = instance_wrapper.resolve_entrypoint(method)<span class="question-mark">?</span>;
 
-				<span class="kw">let</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">FreeingBumpHeapAllocator::new</span>(<span class="ident">heap_base</span>);
-				<span class="ident">perform_call</span>(<span class="ident">data</span>, <span class="kw-2">&amp;mut</span> <span class="ident">instance_wrapper</span>, <span class="ident">entrypoint</span>, <span class="ident">allocator</span>)
+				<span class="kw">let </span>allocator = FreeingBumpHeapAllocator::new(heap_base);
+				perform_call(data, <span class="kw-2">&amp;mut </span>instance_wrapper, entrypoint, allocator)
 			},
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">get_global_const</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">match</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">strategy</span> {
-			<span class="ident">Strategy::LegacyInstanceReuse</span> { <span class="ident">instance_wrapper</span>, .. } =&gt;
-				<span class="ident">instance_wrapper</span>.<span class="ident">get_global_val</span>(<span class="ident">name</span>),
-			<span class="ident">Strategy::RecreateInstance</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">instance_creator</span>) =&gt;
-				<span class="ident">instance_creator</span>.<span class="ident">instantiate</span>()<span class="question-mark">?</span>.<span class="ident">get_global_val</span>(<span class="ident">name</span>),
+	<span class="kw">fn </span>get_global_const(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Value&gt;&gt; {
+		<span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.strategy {
+			Strategy::LegacyInstanceReuse { instance_wrapper, .. } =&gt;
+				instance_wrapper.get_global_val(name),
+			Strategy::RecreateInstance(<span class="kw-2">ref mut </span>instance_creator) =&gt;
+				instance_creator.instantiate()<span class="question-mark">?</span>.get_global_val(name),
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">linear_memory_base_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">*const</span> <span class="ident">u8</span><span class="op">&gt;</span> {
-		<span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">strategy</span> {
-			<span class="ident">Strategy::RecreateInstance</span>(<span class="kw">_</span>) =&gt; {
-				<span class="comment">// We do not keep the wasm instance around, therefore there is no linear memory</span>
-				<span class="comment">// associated with it.</span>
-				<span class="prelude-val">None</span>
-			},
-			<span class="ident">Strategy::LegacyInstanceReuse</span> { <span class="ident">instance_wrapper</span>, .. } =&gt;
-				<span class="prelude-val">Some</span>(<span class="ident">instance_wrapper</span>.<span class="ident">base_ptr</span>()),
+	<span class="kw">fn </span>linear_memory_base_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>u8&gt; {
+		<span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.strategy {
+			Strategy::RecreateInstance(<span class="kw">_</span>) =&gt; {
+				<span class="comment">// We do not keep the wasm instance around, therefore there is no linear memory
+				// associated with it.
+				</span><span class="prelude-val">None
+			</span>},
+			Strategy::LegacyInstanceReuse { instance_wrapper, .. } =&gt;
+				<span class="prelude-val">Some</span>(instance_wrapper.base_ptr()),
 		}
 	}
 }
 
-<span class="doccomment">/// Prepare a directory structure and a config file to enable wasmtime caching.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// In case of an error the caching will not be enabled.</span>
-<span class="kw">fn</span> <span class="ident">setup_wasmtime_caching</span>(
-	<span class="ident">cache_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
-	<span class="ident">config</span>: <span class="kw-2">&amp;mut</span> <span class="ident">wasmtime::Config</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span>(), <span class="ident">String</span><span class="op">&gt;</span> {
-	<span class="kw">use</span> <span class="ident">std::fs</span>;
+<span class="doccomment">/// Prepare a directory structure and a config file to enable wasmtime caching.
+///
+/// In case of an error the caching will not be enabled.
+</span><span class="kw">fn </span>setup_wasmtime_caching(
+	cache_path: <span class="kw-2">&amp;</span>Path,
+	config: <span class="kw-2">&amp;mut </span>wasmtime::Config,
+) -&gt; std::result::Result&lt;(), String&gt; {
+	<span class="kw">use </span>std::fs;
 
-	<span class="kw">let</span> <span class="ident">wasmtime_cache_root</span> <span class="op">=</span> <span class="ident">cache_path</span>.<span class="ident">join</span>(<span class="string">&quot;wasmtime&quot;</span>);
-	<span class="ident">fs::create_dir_all</span>(<span class="kw-2">&amp;</span><span class="ident">wasmtime_cache_root</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;cannot create the dirs to cache: {:?}&quot;</span>, <span class="ident">err</span>))<span class="question-mark">?</span>;
+	<span class="kw">let </span>wasmtime_cache_root = cache_path.join(<span class="string">&quot;wasmtime&quot;</span>);
+	fs::create_dir_all(<span class="kw-2">&amp;</span>wasmtime_cache_root)
+		.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;cannot create the dirs to cache: {:?}&quot;</span>, err))<span class="question-mark">?</span>;
 
-	<span class="comment">// Canonicalize the path after creating the directories.</span>
-	<span class="kw">let</span> <span class="ident">wasmtime_cache_root</span> <span class="op">=</span> <span class="ident">wasmtime_cache_root</span>
-		.<span class="ident">canonicalize</span>()
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;failed to canonicalize the path: {:?}&quot;</span>, <span class="ident">err</span>))<span class="question-mark">?</span>;
+	<span class="comment">// Canonicalize the path after creating the directories.
+	</span><span class="kw">let </span>wasmtime_cache_root = wasmtime_cache_root
+		.canonicalize()
+		.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;failed to canonicalize the path: {:?}&quot;</span>, err))<span class="question-mark">?</span>;
 
-	<span class="comment">// Write the cache config file</span>
-	<span class="kw">let</span> <span class="ident">cache_config_path</span> <span class="op">=</span> <span class="ident">wasmtime_cache_root</span>.<span class="ident">join</span>(<span class="string">&quot;cache-config.toml&quot;</span>);
-	<span class="kw">let</span> <span class="ident">config_content</span> <span class="op">=</span> <span class="macro">format!</span>(
+	<span class="comment">// Write the cache config file
+	</span><span class="kw">let </span>cache_config_path = wasmtime_cache_root.join(<span class="string">&quot;cache-config.toml&quot;</span>);
+	<span class="kw">let </span>config_content = <span class="macro">format!</span>(
 		<span class="string">&quot;\
 [cache]
 enabled = true
 directory = \&quot;{cache_dir}\&quot;
 &quot;</span>,
-		<span class="ident">cache_dir</span> <span class="op">=</span> <span class="ident">wasmtime_cache_root</span>.<span class="ident">display</span>()
+		cache_dir = wasmtime_cache_root.display()
 	);
-	<span class="ident">fs::write</span>(<span class="kw-2">&amp;</span><span class="ident">cache_config_path</span>, <span class="ident">config_content</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;cannot write the cache config: {:?}&quot;</span>, <span class="ident">err</span>))<span class="question-mark">?</span>;
+	fs::write(<span class="kw-2">&amp;</span>cache_config_path, config_content)
+		.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;cannot write the cache config: {:?}&quot;</span>, err))<span class="question-mark">?</span>;
 
-	<span class="ident">config</span>
-		.<span class="ident">cache_config_load</span>(<span class="ident">cache_config_path</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;failed to parse the config: {:?}&quot;</span>, <span class="ident">err</span>))<span class="question-mark">?</span>;
+	config
+		.cache_config_load(cache_config_path)
+		.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;failed to parse the config: {:?}&quot;</span>, err))<span class="question-mark">?</span>;
 
 	<span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">common_config</span>(<span class="ident">semantics</span>: <span class="kw-2">&amp;</span><span class="ident">Semantics</span>) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">wasmtime::Config</span>, <span class="ident">WasmError</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">wasmtime::Config::new</span>();
-	<span class="ident">config</span>.<span class="ident">cranelift_opt_level</span>(<span class="ident">wasmtime::OptLevel::SpeedAndSize</span>);
-	<span class="ident">config</span>.<span class="ident">cranelift_nan_canonicalization</span>(<span class="ident">semantics</span>.<span class="ident">canonicalize_nans</span>);
+<span class="kw">fn </span>common_config(semantics: <span class="kw-2">&amp;</span>Semantics) -&gt; std::result::Result&lt;wasmtime::Config, WasmError&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>config = wasmtime::Config::new();
+	config.cranelift_opt_level(wasmtime::OptLevel::SpeedAndSize);
+	config.cranelift_nan_canonicalization(semantics.canonicalize_nans);
 
-	<span class="kw">let</span> <span class="ident">profiler</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">std::env::var_os</span>(<span class="string">&quot;WASMTIME_PROFILING_STRATEGY&quot;</span>) {
-		<span class="prelude-val">Some</span>(<span class="ident">os_string</span>) <span class="kw">if</span> <span class="ident">os_string</span> <span class="op">==</span> <span class="string">&quot;jitdump&quot;</span> =&gt; <span class="ident">wasmtime::ProfilingStrategy::JitDump</span>,
-		<span class="prelude-val">None</span> =&gt; <span class="ident">wasmtime::ProfilingStrategy::None</span>,
+	<span class="kw">let </span>profiler = <span class="kw">match </span>std::env::var_os(<span class="string">&quot;WASMTIME_PROFILING_STRATEGY&quot;</span>) {
+		<span class="prelude-val">Some</span>(os_string) <span class="kw">if </span>os_string == <span class="string">&quot;jitdump&quot; </span>=&gt; wasmtime::ProfilingStrategy::JitDump,
+		<span class="prelude-val">None </span>=&gt; wasmtime::ProfilingStrategy::None,
 		<span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-			<span class="comment">// Remember if we have already logged a warning due to an unknown profiling strategy.</span>
-			<span class="kw">static</span> <span class="ident">UNKNOWN_PROFILING_STRATEGY</span>: <span class="ident">AtomicBool</span> <span class="op">=</span> <span class="ident">AtomicBool::new</span>(<span class="bool-val">false</span>);
-			<span class="comment">// Make sure that the warning will not be relogged regularly.</span>
-			<span class="kw">if</span> <span class="op">!</span><span class="ident">UNKNOWN_PROFILING_STRATEGY</span>.<span class="ident">swap</span>(<span class="bool-val">true</span>, <span class="ident">Ordering::Relaxed</span>) {
+			<span class="comment">// Remember if we have already logged a warning due to an unknown profiling strategy.
+			</span><span class="kw">static </span>UNKNOWN_PROFILING_STRATEGY: AtomicBool = AtomicBool::new(<span class="bool-val">false</span>);
+			<span class="comment">// Make sure that the warning will not be relogged regularly.
+			</span><span class="kw">if </span>!UNKNOWN_PROFILING_STRATEGY.swap(<span class="bool-val">true</span>, Ordering::Relaxed) {
 				<span class="macro">log::warn!</span>(<span class="string">&quot;WASMTIME_PROFILING_STRATEGY is set to unknown value, ignored.&quot;</span>);
 			}
-			<span class="ident">wasmtime::ProfilingStrategy::None</span>
+			wasmtime::ProfilingStrategy::None
 		},
 	};
-	<span class="ident">config</span>
-		.<span class="ident">profiler</span>(<span class="ident">profiler</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Instantiation</span>(<span class="macro">format!</span>(<span class="string">&quot;fail to set profiler: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
+	config
+		.profiler(profiler)
+		.map_err(|e| WasmError::Instantiation(<span class="macro">format!</span>(<span class="string">&quot;fail to set profiler: {}&quot;</span>, e)))<span class="question-mark">?</span>;
 
-	<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">DeterministicStackLimit</span> { <span class="ident">native_stack_max</span>, .. }) <span class="op">=</span>
-		<span class="ident">semantics</span>.<span class="ident">deterministic_stack_limit</span>
+	<span class="kw">if let </span><span class="prelude-val">Some</span>(DeterministicStackLimit { native_stack_max, .. }) =
+		semantics.deterministic_stack_limit
 	{
-		<span class="ident">config</span>
-			.<span class="ident">max_wasm_stack</span>(<span class="ident">native_stack_max</span> <span class="kw">as</span> <span class="ident">usize</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot set max wasm stack: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
+		config
+			.max_wasm_stack(native_stack_max <span class="kw">as </span>usize)
+			.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot set max wasm stack: {}&quot;</span>, e)))<span class="question-mark">?</span>;
 	}
 
-	<span class="ident">config</span>.<span class="ident">parallel_compilation</span>(<span class="ident">semantics</span>.<span class="ident">parallel_compilation</span>);
+	config.parallel_compilation(semantics.parallel_compilation);
 
-	<span class="comment">// Be clear and specific about the extensions we support. If an update brings new features</span>
-	<span class="comment">// they should be introduced here as well.</span>
-	<span class="ident">config</span>.<span class="ident">wasm_reference_types</span>(<span class="bool-val">false</span>);
-	<span class="ident">config</span>.<span class="ident">wasm_simd</span>(<span class="bool-val">false</span>);
-	<span class="ident">config</span>.<span class="ident">wasm_bulk_memory</span>(<span class="bool-val">false</span>);
-	<span class="ident">config</span>.<span class="ident">wasm_multi_value</span>(<span class="bool-val">false</span>);
-	<span class="ident">config</span>.<span class="ident">wasm_multi_memory</span>(<span class="bool-val">false</span>);
-	<span class="ident">config</span>.<span class="ident">wasm_module_linking</span>(<span class="bool-val">false</span>);
-	<span class="ident">config</span>.<span class="ident">wasm_threads</span>(<span class="bool-val">false</span>);
-	<span class="ident">config</span>.<span class="ident">wasm_memory64</span>(<span class="bool-val">false</span>);
+	<span class="comment">// Be clear and specific about the extensions we support. If an update brings new features
+	// they should be introduced here as well.
+	</span>config.wasm_reference_types(<span class="bool-val">false</span>);
+	config.wasm_simd(<span class="bool-val">false</span>);
+	config.wasm_bulk_memory(<span class="bool-val">false</span>);
+	config.wasm_multi_value(<span class="bool-val">false</span>);
+	config.wasm_multi_memory(<span class="bool-val">false</span>);
+	config.wasm_module_linking(<span class="bool-val">false</span>);
+	config.wasm_threads(<span class="bool-val">false</span>);
+	config.wasm_memory64(<span class="bool-val">false</span>);
 
-	<span class="kw">let</span> (<span class="ident">use_pooling</span>, <span class="ident">use_cow</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">semantics</span>.<span class="ident">instantiation_strategy</span> {
-		<span class="ident">InstantiationStrategy::PoolingCopyOnWrite</span> =&gt; (<span class="bool-val">true</span>, <span class="bool-val">true</span>),
-		<span class="ident">InstantiationStrategy::Pooling</span> =&gt; (<span class="bool-val">true</span>, <span class="bool-val">false</span>),
-		<span class="ident">InstantiationStrategy::RecreateInstanceCopyOnWrite</span> =&gt; (<span class="bool-val">false</span>, <span class="bool-val">true</span>),
-		<span class="ident">InstantiationStrategy::RecreateInstance</span> =&gt; (<span class="bool-val">false</span>, <span class="bool-val">false</span>),
-		<span class="ident">InstantiationStrategy::LegacyInstanceReuse</span> =&gt; (<span class="bool-val">false</span>, <span class="bool-val">false</span>),
+	<span class="kw">let </span>(use_pooling, use_cow) = <span class="kw">match </span>semantics.instantiation_strategy {
+		InstantiationStrategy::PoolingCopyOnWrite =&gt; (<span class="bool-val">true</span>, <span class="bool-val">true</span>),
+		InstantiationStrategy::Pooling =&gt; (<span class="bool-val">true</span>, <span class="bool-val">false</span>),
+		InstantiationStrategy::RecreateInstanceCopyOnWrite =&gt; (<span class="bool-val">false</span>, <span class="bool-val">true</span>),
+		InstantiationStrategy::RecreateInstance =&gt; (<span class="bool-val">false</span>, <span class="bool-val">false</span>),
+		InstantiationStrategy::LegacyInstanceReuse =&gt; (<span class="bool-val">false</span>, <span class="bool-val">false</span>),
 	};
 
-	<span class="ident">config</span>.<span class="ident">memory_init_cow</span>(<span class="ident">use_cow</span>);
-	<span class="ident">config</span>.<span class="ident">memory_guaranteed_dense_image_size</span>(
-		<span class="ident">semantics</span>.<span class="ident">max_memory_size</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">max</span><span class="op">|</span> <span class="ident">max</span> <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">unwrap_or</span>(<span class="ident">u64::MAX</span>),
+	config.memory_init_cow(use_cow);
+	config.memory_guaranteed_dense_image_size(
+		semantics.max_memory_size.map(|max| max <span class="kw">as </span>u64).unwrap_or(u64::MAX),
 	);
 
-	<span class="kw">if</span> <span class="ident">use_pooling</span> {
-		<span class="kw">const</span> <span class="ident">WASM_PAGE_SIZE</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">65536</span>;
-		<span class="kw">const</span> <span class="ident">MAX_WASM_PAGES</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0x10000</span>;
+	<span class="kw">if </span>use_pooling {
+		<span class="kw">const </span>WASM_PAGE_SIZE: u64 = <span class="number">65536</span>;
+		<span class="kw">const </span>MAX_WASM_PAGES: u64 = <span class="number">0x10000</span>;
 
-		<span class="kw">let</span> <span class="ident">memory_pages</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">max_memory_size</span>) <span class="op">=</span> <span class="ident">semantics</span>.<span class="ident">max_memory_size</span> {
-			<span class="kw">let</span> <span class="ident">max_memory_size</span> <span class="op">=</span> <span class="ident">max_memory_size</span> <span class="kw">as</span> <span class="ident">u64</span>;
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pages</span> <span class="op">=</span> <span class="ident">max_memory_size</span> <span class="op">/</span> <span class="ident">WASM_PAGE_SIZE</span>;
-			<span class="kw">if</span> <span class="ident">max_memory_size</span> <span class="op">%</span> <span class="ident">WASM_PAGE_SIZE</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-				<span class="ident">pages</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+		<span class="kw">let </span>memory_pages = <span class="kw">if let </span><span class="prelude-val">Some</span>(max_memory_size) = semantics.max_memory_size {
+			<span class="kw">let </span>max_memory_size = max_memory_size <span class="kw">as </span>u64;
+			<span class="kw">let </span><span class="kw-2">mut </span>pages = max_memory_size / WASM_PAGE_SIZE;
+			<span class="kw">if </span>max_memory_size % WASM_PAGE_SIZE != <span class="number">0 </span>{
+				pages += <span class="number">1</span>;
 			}
 
-			<span class="ident">std::cmp::min</span>(<span class="ident">MAX_WASM_PAGES</span>, <span class="ident">pages</span>)
-		} <span class="kw">else</span> {
-			<span class="ident">MAX_WASM_PAGES</span>
+			std::cmp::min(MAX_WASM_PAGES, pages)
+		} <span class="kw">else </span>{
+			MAX_WASM_PAGES
 		};
 
-		<span class="ident">config</span>.<span class="ident">allocation_strategy</span>(<span class="ident">wasmtime::InstanceAllocationStrategy::Pooling</span> {
-			<span class="ident">strategy</span>: <span class="ident">wasmtime::PoolingAllocationStrategy::ReuseAffinity</span>,
+		config.allocation_strategy(wasmtime::InstanceAllocationStrategy::Pooling {
+			strategy: wasmtime::PoolingAllocationStrategy::ReuseAffinity,
 
-			<span class="comment">// Pooling needs a bunch of hard limits to be set; if we go over</span>
-			<span class="comment">// any of these then the instantiation will fail.</span>
-			<span class="ident">instance_limits</span>: <span class="ident">wasmtime::InstanceLimits</span> {
-				<span class="comment">// Current minimum values for kusama (as of 2022-04-14):</span>
-				<span class="comment">//   size: 32384</span>
-				<span class="comment">//   table_elements: 1249</span>
-				<span class="comment">//   memory_pages: 2070</span>
-				<span class="ident">size</span>: <span class="number">64</span> <span class="op">*</span> <span class="number">1024</span>,
-				<span class="ident">table_elements</span>: <span class="number">2048</span>,
-				<span class="ident">memory_pages</span>,
+			<span class="comment">// Pooling needs a bunch of hard limits to be set; if we go over
+			// any of these then the instantiation will fail.
+			</span>instance_limits: wasmtime::InstanceLimits {
+				<span class="comment">// Current minimum values for kusama (as of 2022-04-14):
+				//   size: 32384
+				//   table_elements: 1249
+				//   memory_pages: 2070
+				</span>size: <span class="number">64 </span>* <span class="number">1024</span>,
+				table_elements: <span class="number">2048</span>,
+				memory_pages,
 
-				<span class="comment">// We can only have a single of those.</span>
-				<span class="ident">tables</span>: <span class="number">1</span>,
-				<span class="ident">memories</span>: <span class="number">1</span>,
+				<span class="comment">// We can only have a single of those.
+				</span>tables: <span class="number">1</span>,
+				memories: <span class="number">1</span>,
 
-				<span class="comment">// This determines how many instances of the module can be</span>
-				<span class="comment">// instantiated in parallel from the same `Module`.</span>
-				<span class="comment">//</span>
-				<span class="comment">// This includes nested instances spawned with `sp_tasks::spawn`</span>
-				<span class="comment">// from *within* the runtime.</span>
-				<span class="ident">count</span>: <span class="number">32</span>,
+				<span class="comment">// This determines how many instances of the module can be
+				// instantiated in parallel from the same `Module`.
+				//
+				// This includes nested instances spawned with `sp_tasks::spawn`
+				// from *within* the runtime.
+				</span>count: <span class="number">32</span>,
 			},
 		});
 	}
 
-	<span class="prelude-val">Ok</span>(<span class="ident">config</span>)
+	<span class="prelude-val">Ok</span>(config)
 }
 
-<span class="doccomment">/// Knobs for deterministic stack height limiting.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The WebAssembly standard defines a call/value stack but it doesn&#39;t say anything about its</span>
-<span class="doccomment">/// size except that it has to be finite. The implementations are free to choose their own notion</span>
-<span class="doccomment">/// of limit: some may count the number of calls or values, others would rely on the host machine</span>
-<span class="doccomment">/// stack and trap on reaching a guard page.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This obviously is a source of non-determinism during execution. This feature can be used</span>
-<span class="doccomment">/// to instrument the code so that it will count the depth of execution in some deterministic</span>
-<span class="doccomment">/// way (the machine stack limit should be so high that the deterministic limit always triggers</span>
-<span class="doccomment">/// first).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The deterministic stack height limiting feature allows to instrument the code so that it will</span>
-<span class="doccomment">/// count the number of items that may be on the stack. This counting will only act as an rough</span>
-<span class="doccomment">/// estimate of the actual stack limit in wasmtime. This is because wasmtime measures it&#39;s stack</span>
-<span class="doccomment">/// usage in bytes.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The actual number of bytes consumed by a function is not trivial to compute  without going</span>
-<span class="doccomment">/// through full compilation. Therefore, it&#39;s expected that `native_stack_max` is greatly</span>
-<span class="doccomment">/// overestimated and thus never reached in practice. The stack overflow check introduced by the</span>
-<span class="doccomment">/// instrumentation and that relies on the logical item count should be reached first.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// See [here][stack_height] for more details of the instrumentation</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [stack_height]: https://github.com/paritytech/wasm-utils/blob/d9432baf/src/stack_height/mod.rs#L1-L50</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DeterministicStackLimit</span> {
-	<span class="doccomment">/// A number of logical &quot;values&quot; that can be pushed on the wasm stack. A trap will be triggered</span>
-	<span class="doccomment">/// if exceeded.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// A logical value is a local, an argument or a value pushed on operand stack.</span>
-	<span class="kw">pub</span> <span class="ident">logical_max</span>: <span class="ident">u32</span>,
-	<span class="doccomment">/// The maximum number of bytes for stack used by wasmtime JITed code.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// It&#39;s not specified how much bytes will be consumed by a stack frame for a given wasm</span>
-	<span class="doccomment">/// function after translation into machine code. It is also not quite trivial.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Therefore, this number should be chosen conservatively. It must be so large so that it can</span>
-	<span class="doccomment">/// fit the [`logical_max`](Self::logical_max) logical values on the stack, according to the</span>
-	<span class="doccomment">/// current instrumentation algorithm.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This value cannot be 0.</span>
-	<span class="kw">pub</span> <span class="ident">native_stack_max</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Knobs for deterministic stack height limiting.
+///
+/// The WebAssembly standard defines a call/value stack but it doesn&#39;t say anything about its
+/// size except that it has to be finite. The implementations are free to choose their own notion
+/// of limit: some may count the number of calls or values, others would rely on the host machine
+/// stack and trap on reaching a guard page.
+///
+/// This obviously is a source of non-determinism during execution. This feature can be used
+/// to instrument the code so that it will count the depth of execution in some deterministic
+/// way (the machine stack limit should be so high that the deterministic limit always triggers
+/// first).
+///
+/// The deterministic stack height limiting feature allows to instrument the code so that it will
+/// count the number of items that may be on the stack. This counting will only act as an rough
+/// estimate of the actual stack limit in wasmtime. This is because wasmtime measures it&#39;s stack
+/// usage in bytes.
+///
+/// The actual number of bytes consumed by a function is not trivial to compute  without going
+/// through full compilation. Therefore, it&#39;s expected that `native_stack_max` is greatly
+/// overestimated and thus never reached in practice. The stack overflow check introduced by the
+/// instrumentation and that relies on the logical item count should be reached first.
+///
+/// See [here][stack_height] for more details of the instrumentation
+///
+/// [stack_height]: https://github.com/paritytech/wasm-utils/blob/d9432baf/src/stack_height/mod.rs#L1-L50
+</span><span class="kw">pub struct </span>DeterministicStackLimit {
+	<span class="doccomment">/// A number of logical &quot;values&quot; that can be pushed on the wasm stack. A trap will be triggered
+	/// if exceeded.
+	///
+	/// A logical value is a local, an argument or a value pushed on operand stack.
+	</span><span class="kw">pub </span>logical_max: u32,
+	<span class="doccomment">/// The maximum number of bytes for stack used by wasmtime JITed code.
+	///
+	/// It&#39;s not specified how much bytes will be consumed by a stack frame for a given wasm
+	/// function after translation into machine code. It is also not quite trivial.
+	///
+	/// Therefore, this number should be chosen conservatively. It must be so large so that it can
+	/// fit the [`logical_max`](Self::logical_max) logical values on the stack, according to the
+	/// current instrumentation algorithm.
+	///
+	/// This value cannot be 0.
+	</span><span class="kw">pub </span>native_stack_max: u32,
 }
 
-<span class="doccomment">/// The instantiation strategy to use for the WASM executor.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// All of the CoW strategies (with `CopyOnWrite` suffix) are only supported when either:</span>
-<span class="doccomment">///   a) we&#39;re running on Linux,</span>
-<span class="doccomment">///   b) we&#39;re running on an Unix-like system and we&#39;re precompiling</span>
-<span class="doccomment">///      our module beforehand.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If the CoW variant of a strategy is unsupported the executor will</span>
-<span class="doccomment">/// fall back to the non-CoW equivalent.</span>
-<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">InstantiationStrategy</span> {
-	<span class="doccomment">/// Pool the instances to avoid initializing everything from scratch</span>
-	<span class="doccomment">/// on each instantiation. Use copy-on-write memory when possible.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This is the fastest instantiation strategy.</span>
-	<span class="ident">PoolingCopyOnWrite</span>,
+<span class="doccomment">/// The instantiation strategy to use for the WASM executor.
+///
+/// All of the CoW strategies (with `CopyOnWrite` suffix) are only supported when either:
+///   a) we&#39;re running on Linux,
+///   b) we&#39;re running on an Unix-like system and we&#39;re precompiling
+///      our module beforehand.
+///
+/// If the CoW variant of a strategy is unsupported the executor will
+/// fall back to the non-CoW equivalent.
+</span><span class="attribute">#[non_exhaustive]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+</span><span class="kw">pub enum </span>InstantiationStrategy {
+	<span class="doccomment">/// Pool the instances to avoid initializing everything from scratch
+	/// on each instantiation. Use copy-on-write memory when possible.
+	///
+	/// This is the fastest instantiation strategy.
+	</span>PoolingCopyOnWrite,
 
-	<span class="doccomment">/// Recreate the instance from scratch on every instantiation.</span>
-	<span class="doccomment">/// Use copy-on-write memory when possible.</span>
-	<span class="ident">RecreateInstanceCopyOnWrite</span>,
+	<span class="doccomment">/// Recreate the instance from scratch on every instantiation.
+	/// Use copy-on-write memory when possible.
+	</span>RecreateInstanceCopyOnWrite,
 
-	<span class="doccomment">/// Pool the instances to avoid initializing everything from scratch</span>
-	<span class="doccomment">/// on each instantiation.</span>
-	<span class="ident">Pooling</span>,
+	<span class="doccomment">/// Pool the instances to avoid initializing everything from scratch
+	/// on each instantiation.
+	</span>Pooling,
 
-	<span class="doccomment">/// Recreate the instance from scratch on every instantiation. Very slow.</span>
-	<span class="ident">RecreateInstance</span>,
+	<span class="doccomment">/// Recreate the instance from scratch on every instantiation. Very slow.
+	</span>RecreateInstance,
 
-	<span class="doccomment">/// Legacy instance reuse mechanism. DEPRECATED. Will be removed. Do not use.</span>
-	<span class="ident">LegacyInstanceReuse</span>,
+	<span class="doccomment">/// Legacy instance reuse mechanism. DEPRECATED. Will be removed. Do not use.
+	</span>LegacyInstanceReuse,
 }
 
-<span class="kw">enum</span> <span class="ident">InternalInstantiationStrategy</span> {
-	<span class="ident">LegacyInstanceReuse</span>(<span class="ident">InstanceSnapshotData</span>),
-	<span class="ident">Builtin</span>,
+<span class="kw">enum </span>InternalInstantiationStrategy {
+	LegacyInstanceReuse(InstanceSnapshotData),
+	Builtin,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Semantics</span> {
-	<span class="doccomment">/// The instantiation strategy to use.</span>
-	<span class="kw">pub</span> <span class="ident">instantiation_strategy</span>: <span class="ident">InstantiationStrategy</span>,
+<span class="kw">pub struct </span>Semantics {
+	<span class="doccomment">/// The instantiation strategy to use.
+	</span><span class="kw">pub </span>instantiation_strategy: InstantiationStrategy,
 
-	<span class="doccomment">/// Specifying `Some` will enable deterministic stack height. That is, all executor</span>
-	<span class="doccomment">/// invocations will reach stack overflow at the exactly same point across different wasmtime</span>
-	<span class="doccomment">/// versions and architectures.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This is achieved by a combination of running an instrumentation pass on input code and</span>
-	<span class="doccomment">/// configuring wasmtime accordingly.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Since this feature depends on instrumentation, it can be set only if runtime is</span>
-	<span class="doccomment">/// instantiated using the runtime blob, e.g. using [`create_runtime`].</span>
-	<span class="comment">// I.e. if [`CodeSupplyMode::Verbatim`] is used.</span>
-	<span class="kw">pub</span> <span class="ident">deterministic_stack_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DeterministicStackLimit</span><span class="op">&gt;</span>,
+	<span class="doccomment">/// Specifying `Some` will enable deterministic stack height. That is, all executor
+	/// invocations will reach stack overflow at the exactly same point across different wasmtime
+	/// versions and architectures.
+	///
+	/// This is achieved by a combination of running an instrumentation pass on input code and
+	/// configuring wasmtime accordingly.
+	///
+	/// Since this feature depends on instrumentation, it can be set only if runtime is
+	/// instantiated using the runtime blob, e.g. using [`create_runtime`].
+	</span><span class="comment">// I.e. if [`CodeSupplyMode::Verbatim`] is used.
+	</span><span class="kw">pub </span>deterministic_stack_limit: <span class="prelude-ty">Option</span>&lt;DeterministicStackLimit&gt;,
 
-	<span class="doccomment">/// Controls whether wasmtime should compile floating point in a way that doesn&#39;t allow for</span>
-	<span class="doccomment">/// non-determinism.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// By default, the wasm spec allows some local non-determinism wrt. certain floating point</span>
-	<span class="doccomment">/// operations. Specifically, those operations that are not defined to operate on bits (e.g.</span>
-	<span class="doccomment">/// fneg) can produce NaN values. The exact bit pattern for those is not specified and may</span>
-	<span class="doccomment">/// depend on the particular machine that executes wasmtime generated JITed machine code. That</span>
-	<span class="doccomment">/// is a source of non-deterministic values.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The classical runtime environment for Substrate allowed it and punted this on the runtime</span>
-	<span class="doccomment">/// developers. For PVFs, we want to ensure that execution is deterministic though. Therefore,</span>
-	<span class="doccomment">/// for PVF execution this flag is meant to be turned on.</span>
-	<span class="kw">pub</span> <span class="ident">canonicalize_nans</span>: <span class="ident">bool</span>,
+	<span class="doccomment">/// Controls whether wasmtime should compile floating point in a way that doesn&#39;t allow for
+	/// non-determinism.
+	///
+	/// By default, the wasm spec allows some local non-determinism wrt. certain floating point
+	/// operations. Specifically, those operations that are not defined to operate on bits (e.g.
+	/// fneg) can produce NaN values. The exact bit pattern for those is not specified and may
+	/// depend on the particular machine that executes wasmtime generated JITed machine code. That
+	/// is a source of non-deterministic values.
+	///
+	/// The classical runtime environment for Substrate allowed it and punted this on the runtime
+	/// developers. For PVFs, we want to ensure that execution is deterministic though. Therefore,
+	/// for PVF execution this flag is meant to be turned on.
+	</span><span class="kw">pub </span>canonicalize_nans: bool,
 
-	<span class="doccomment">/// Configures wasmtime to use multiple threads for compiling.</span>
-	<span class="kw">pub</span> <span class="ident">parallel_compilation</span>: <span class="ident">bool</span>,
+	<span class="doccomment">/// Configures wasmtime to use multiple threads for compiling.
+	</span><span class="kw">pub </span>parallel_compilation: bool,
 
-	<span class="doccomment">/// The number of extra WASM pages which will be allocated</span>
-	<span class="doccomment">/// on top of what is requested by the WASM blob itself.</span>
-	<span class="kw">pub</span> <span class="ident">extra_heap_pages</span>: <span class="ident">u64</span>,
+	<span class="doccomment">/// The number of extra WASM pages which will be allocated
+	/// on top of what is requested by the WASM blob itself.
+	</span><span class="kw">pub </span>extra_heap_pages: u64,
 
-	<span class="doccomment">/// The total amount of memory in bytes an instance can request.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If specified, the runtime will be able to allocate only that much of wasm memory.</span>
-	<span class="doccomment">/// This is the total number and therefore the [`Semantics::extra_heap_pages`] is accounted</span>
-	<span class="doccomment">/// for.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// That means that the initial number of pages of a linear memory plus the</span>
-	<span class="doccomment">/// [`Semantics::extra_heap_pages`] multiplied by the wasm page size (64KiB) should be less</span>
-	<span class="doccomment">/// than or equal to `max_memory_size`, otherwise the instance won&#39;t be created.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Moreover, `memory.grow` will fail (return -1) if the sum of sizes of currently mounted</span>
-	<span class="doccomment">/// and additional pages exceeds `max_memory_size`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The default is `None`.</span>
-	<span class="kw">pub</span> <span class="ident">max_memory_size</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+	<span class="doccomment">/// The total amount of memory in bytes an instance can request.
+	///
+	/// If specified, the runtime will be able to allocate only that much of wasm memory.
+	/// This is the total number and therefore the [`Semantics::extra_heap_pages`] is accounted
+	/// for.
+	///
+	/// That means that the initial number of pages of a linear memory plus the
+	/// [`Semantics::extra_heap_pages`] multiplied by the wasm page size (64KiB) should be less
+	/// than or equal to `max_memory_size`, otherwise the instance won&#39;t be created.
+	///
+	/// Moreover, `memory.grow` will fail (return -1) if the sum of sizes of currently mounted
+	/// and additional pages exceeds `max_memory_size`.
+	///
+	/// The default is `None`.
+	</span><span class="kw">pub </span>max_memory_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Config</span> {
-	<span class="doccomment">/// The WebAssembly standard requires all imports of an instantiated module to be resolved,</span>
-	<span class="doccomment">/// otherwise, the instantiation fails. If this option is set to `true`, then this behavior is</span>
-	<span class="doccomment">/// overriden and imports that are requested by the module and not provided by the host</span>
-	<span class="doccomment">/// functions will be resolved using stubs. These stubs will trap upon a call.</span>
-	<span class="kw">pub</span> <span class="ident">allow_missing_func_imports</span>: <span class="ident">bool</span>,
+<span class="kw">pub struct </span>Config {
+	<span class="doccomment">/// The WebAssembly standard requires all imports of an instantiated module to be resolved,
+	/// otherwise, the instantiation fails. If this option is set to `true`, then this behavior is
+	/// overriden and imports that are requested by the module and not provided by the host
+	/// functions will be resolved using stubs. These stubs will trap upon a call.
+	</span><span class="kw">pub </span>allow_missing_func_imports: bool,
 
-	<span class="doccomment">/// A directory in which wasmtime can store its compiled artifacts cache.</span>
-	<span class="kw">pub</span> <span class="ident">cache_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+	<span class="doccomment">/// A directory in which wasmtime can store its compiled artifacts cache.
+	</span><span class="kw">pub </span>cache_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 
-	<span class="doccomment">/// Tuning of various semantics of the wasmtime executor.</span>
-	<span class="kw">pub</span> <span class="ident">semantics</span>: <span class="ident">Semantics</span>,
+	<span class="doccomment">/// Tuning of various semantics of the wasmtime executor.
+	</span><span class="kw">pub </span>semantics: Semantics,
 }
 
-<span class="kw">enum</span> <span class="ident">CodeSupplyMode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// The runtime is instantiated using the given runtime blob.</span>
-	<span class="ident">Fresh</span>(<span class="ident">RuntimeBlob</span>),
+<span class="kw">enum </span>CodeSupplyMode&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="doccomment">/// The runtime is instantiated using the given runtime blob.
+	</span>Fresh(RuntimeBlob),
 
-	<span class="doccomment">/// The runtime is instantiated using a precompiled module.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// This assumes that the code is already prepared for execution and the same `Config` was</span>
-	<span class="doccomment">/// used.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// We use a `Path` here instead of simply passing a byte slice to allow `wasmtime` to</span>
-	<span class="doccomment">/// map the runtime&#39;s linear memory on supported platforms in a copy-on-write fashion.</span>
-	<span class="ident">Precompiled</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>),
+	<span class="doccomment">/// The runtime is instantiated using a precompiled module.
+	///
+	/// This assumes that the code is already prepared for execution and the same `Config` was
+	/// used.
+	///
+	/// We use a `Path` here instead of simply passing a byte slice to allow `wasmtime` to
+	/// map the runtime&#39;s linear memory on supported platforms in a copy-on-write fashion.
+	</span>Precompiled(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Path),
 }
 
-<span class="doccomment">/// Create a new `WasmtimeRuntime` given the code. This function performs translation from Wasm to</span>
-<span class="doccomment">/// machine code, which can be computationally heavy.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The `H` generic parameter is used to statically pass a set of host functions which are exposed</span>
-<span class="doccomment">/// to the runtime.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_runtime</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(
-	<span class="ident">blob</span>: <span class="ident">RuntimeBlob</span>,
-	<span class="ident">config</span>: <span class="ident">Config</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">WasmtimeRuntime</span>, <span class="ident">WasmError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">H</span>: <span class="ident">HostFunctions</span>,
+<span class="doccomment">/// Create a new `WasmtimeRuntime` given the code. This function performs translation from Wasm to
+/// machine code, which can be computationally heavy.
+///
+/// The `H` generic parameter is used to statically pass a set of host functions which are exposed
+/// to the runtime.
+</span><span class="kw">pub fn </span>create_runtime&lt;H&gt;(
+	blob: RuntimeBlob,
+	config: Config,
+) -&gt; std::result::Result&lt;WasmtimeRuntime, WasmError&gt;
+<span class="kw">where
+	</span>H: HostFunctions,
 {
-	<span class="comment">// SAFETY: this is safe because it doesn&#39;t use `CodeSupplyMode::Precompiled`.</span>
-	<span class="kw">unsafe</span> { <span class="ident">do_create_runtime</span>::<span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">CodeSupplyMode::Fresh</span>(<span class="ident">blob</span>), <span class="ident">config</span>) }
+	<span class="comment">// SAFETY: this is safe because it doesn&#39;t use `CodeSupplyMode::Precompiled`.
+	</span><span class="kw">unsafe </span>{ do_create_runtime::&lt;H&gt;(CodeSupplyMode::Fresh(blob), config) }
 }
 
-<span class="doccomment">/// The same as [`create_runtime`] but takes a path to a precompiled artifact,</span>
-<span class="doccomment">/// which makes this function considerably faster than [`create_runtime`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The caller must ensure that the compiled artifact passed here was:</span>
-<span class="doccomment">///   1) produced by [`prepare_runtime_artifact`],</span>
-<span class="doccomment">///   2) written to the disk as a file,</span>
-<span class="doccomment">///   3) was not modified,</span>
-<span class="doccomment">///   4) will not be modified while any runtime using this artifact is alive, or is being</span>
-<span class="doccomment">///      instantiated.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Failure to adhere to these requirements might lead to crashes and arbitrary code execution.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// It is ok though if the compiled artifact was created by code of another version or with</span>
-<span class="doccomment">/// different configuration flags. In such case the caller will receive an `Err` deterministically.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">create_runtime_from_artifact</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(
-	<span class="ident">compiled_artifact_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
-	<span class="ident">config</span>: <span class="ident">Config</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">WasmtimeRuntime</span>, <span class="ident">WasmError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">H</span>: <span class="ident">HostFunctions</span>,
+<span class="doccomment">/// The same as [`create_runtime`] but takes a path to a precompiled artifact,
+/// which makes this function considerably faster than [`create_runtime`].
+///
+/// # Safety
+///
+/// The caller must ensure that the compiled artifact passed here was:
+///   1) produced by [`prepare_runtime_artifact`],
+///   2) written to the disk as a file,
+///   3) was not modified,
+///   4) will not be modified while any runtime using this artifact is alive, or is being
+///      instantiated.
+///
+/// Failure to adhere to these requirements might lead to crashes and arbitrary code execution.
+///
+/// It is ok though if the compiled artifact was created by code of another version or with
+/// different configuration flags. In such case the caller will receive an `Err` deterministically.
+</span><span class="kw">pub unsafe fn </span>create_runtime_from_artifact&lt;H&gt;(
+	compiled_artifact_path: <span class="kw-2">&amp;</span>Path,
+	config: Config,
+) -&gt; std::result::Result&lt;WasmtimeRuntime, WasmError&gt;
+<span class="kw">where
+	</span>H: HostFunctions,
 {
-	<span class="ident">do_create_runtime</span>::<span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">CodeSupplyMode::Precompiled</span>(<span class="ident">compiled_artifact_path</span>), <span class="ident">config</span>)
+	do_create_runtime::&lt;H&gt;(CodeSupplyMode::Precompiled(compiled_artifact_path), config)
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is only unsafe if called with [`CodeSupplyMode::Artifact`]. See</span>
-<span class="doccomment">/// [`create_runtime_from_artifact`] to get more details.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">do_create_runtime</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(
-	<span class="ident">code_supply_mode</span>: <span class="ident">CodeSupplyMode</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-	<span class="ident">config</span>: <span class="ident">Config</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">WasmtimeRuntime</span>, <span class="ident">WasmError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">H</span>: <span class="ident">HostFunctions</span>,
+<span class="doccomment">/// # Safety
+///
+/// This is only unsafe if called with [`CodeSupplyMode::Artifact`]. See
+/// [`create_runtime_from_artifact`] to get more details.
+</span><span class="kw">unsafe fn </span>do_create_runtime&lt;H&gt;(
+	code_supply_mode: CodeSupplyMode&lt;<span class="lifetime">&#39;_</span>&gt;,
+	config: Config,
+) -&gt; std::result::Result&lt;WasmtimeRuntime, WasmError&gt;
+<span class="kw">where
+	</span>H: HostFunctions,
 {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">wasmtime_config</span> <span class="op">=</span> <span class="ident">common_config</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">semantics</span>)<span class="question-mark">?</span>;
-	<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">cache_path</span>) <span class="op">=</span> <span class="ident">config</span>.<span class="ident">cache_path</span> {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">reason</span>) <span class="op">=</span> <span class="ident">setup_wasmtime_caching</span>(<span class="ident">cache_path</span>, <span class="kw-2">&amp;mut</span> <span class="ident">wasmtime_config</span>) {
+	<span class="kw">let </span><span class="kw-2">mut </span>wasmtime_config = common_config(<span class="kw-2">&amp;</span>config.semantics)<span class="question-mark">?</span>;
+	<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>cache_path) = config.cache_path {
+		<span class="kw">if let </span><span class="prelude-val">Err</span>(reason) = setup_wasmtime_caching(cache_path, <span class="kw-2">&amp;mut </span>wasmtime_config) {
 			<span class="macro">log::warn!</span>(
 				<span class="string">&quot;failed to setup wasmtime cache. Performance may degrade significantly: {}.&quot;</span>,
-				<span class="ident">reason</span>,
+				reason,
 			);
 		}
 	}
 
-	<span class="kw">let</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">Engine::new</span>(<span class="kw-2">&amp;</span><span class="ident">wasmtime_config</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot create the wasmtime engine: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
+	<span class="kw">let </span>engine = Engine::new(<span class="kw-2">&amp;</span>wasmtime_config)
+		.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot create the wasmtime engine: {}&quot;</span>, e)))<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> (<span class="ident">module</span>, <span class="ident">instantiation_strategy</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">code_supply_mode</span> {
-		<span class="ident">CodeSupplyMode::Fresh</span>(<span class="ident">blob</span>) =&gt; {
-			<span class="kw">let</span> <span class="ident">blob</span> <span class="op">=</span> <span class="ident">prepare_blob_for_compilation</span>(<span class="ident">blob</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">semantics</span>)<span class="question-mark">?</span>;
-			<span class="kw">let</span> <span class="ident">serialized_blob</span> <span class="op">=</span> <span class="ident">blob</span>.<span class="ident">clone</span>().<span class="ident">serialize</span>();
+	<span class="kw">let </span>(module, instantiation_strategy) = <span class="kw">match </span>code_supply_mode {
+		CodeSupplyMode::Fresh(blob) =&gt; {
+			<span class="kw">let </span>blob = prepare_blob_for_compilation(blob, <span class="kw-2">&amp;</span>config.semantics)<span class="question-mark">?</span>;
+			<span class="kw">let </span>serialized_blob = blob.clone().serialize();
 
-			<span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">wasmtime::Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="kw-2">&amp;</span><span class="ident">serialized_blob</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot create module: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
+			<span class="kw">let </span>module = wasmtime::Module::new(<span class="kw-2">&amp;</span>engine, <span class="kw-2">&amp;</span>serialized_blob)
+				.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot create module: {}&quot;</span>, e)))<span class="question-mark">?</span>;
 
-			<span class="kw">match</span> <span class="ident">config</span>.<span class="ident">semantics</span>.<span class="ident">instantiation_strategy</span> {
-				<span class="ident">InstantiationStrategy::LegacyInstanceReuse</span> =&gt; {
-					<span class="kw">let</span> <span class="ident">data_segments_snapshot</span> <span class="op">=</span>
-						<span class="ident">DataSegmentsSnapshot::take</span>(<span class="kw-2">&amp;</span><span class="ident">blob</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-							<span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot take data segments snapshot: {}&quot;</span>, <span class="ident">e</span>))
+			<span class="kw">match </span>config.semantics.instantiation_strategy {
+				InstantiationStrategy::LegacyInstanceReuse =&gt; {
+					<span class="kw">let </span>data_segments_snapshot =
+						DataSegmentsSnapshot::take(<span class="kw-2">&amp;</span>blob).map_err(|e| {
+							WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot take data segments snapshot: {}&quot;</span>, e))
 						})<span class="question-mark">?</span>;
-					<span class="kw">let</span> <span class="ident">data_segments_snapshot</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">data_segments_snapshot</span>);
-					<span class="kw">let</span> <span class="ident">mutable_globals</span> <span class="op">=</span> <span class="ident">ExposedMutableGlobalsSet::collect</span>(<span class="kw-2">&amp;</span><span class="ident">blob</span>);
+					<span class="kw">let </span>data_segments_snapshot = Arc::new(data_segments_snapshot);
+					<span class="kw">let </span>mutable_globals = ExposedMutableGlobalsSet::collect(<span class="kw-2">&amp;</span>blob);
 
 					(
-						<span class="ident">module</span>,
-						<span class="ident">InternalInstantiationStrategy::LegacyInstanceReuse</span>(<span class="ident">InstanceSnapshotData</span> {
-							<span class="ident">data_segments_snapshot</span>,
-							<span class="ident">mutable_globals</span>,
+						module,
+						InternalInstantiationStrategy::LegacyInstanceReuse(InstanceSnapshotData {
+							data_segments_snapshot,
+							mutable_globals,
 						}),
 					)
 				},
-				<span class="ident">InstantiationStrategy::Pooling</span> <span class="op">|</span>
-				<span class="ident">InstantiationStrategy::PoolingCopyOnWrite</span> <span class="op">|</span>
-				<span class="ident">InstantiationStrategy::RecreateInstance</span> <span class="op">|</span>
-				<span class="ident">InstantiationStrategy::RecreateInstanceCopyOnWrite</span> =&gt;
-					(<span class="ident">module</span>, <span class="ident">InternalInstantiationStrategy::Builtin</span>),
+				InstantiationStrategy::Pooling |
+				InstantiationStrategy::PoolingCopyOnWrite |
+				InstantiationStrategy::RecreateInstance |
+				InstantiationStrategy::RecreateInstanceCopyOnWrite =&gt;
+					(module, InternalInstantiationStrategy::Builtin),
 			}
 		},
-		<span class="ident">CodeSupplyMode::Precompiled</span>(<span class="ident">compiled_artifact_path</span>) =&gt; {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="ident">InstantiationStrategy::LegacyInstanceReuse</span> <span class="op">=</span>
-				<span class="ident">config</span>.<span class="ident">semantics</span>.<span class="ident">instantiation_strategy</span>
+		CodeSupplyMode::Precompiled(compiled_artifact_path) =&gt; {
+			<span class="kw">if let </span>InstantiationStrategy::LegacyInstanceReuse =
+				config.semantics.instantiation_strategy
 			{
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">WasmError::Other</span>(<span class="string">&quot;the legacy instance reuse instantiation strategy is incompatible with precompiled modules&quot;</span>.<span class="ident">into</span>()));
+				<span class="kw">return </span><span class="prelude-val">Err</span>(WasmError::Other(<span class="string">&quot;the legacy instance reuse instantiation strategy is incompatible with precompiled modules&quot;</span>.into()));
 			}
 
-			<span class="comment">// SAFETY: The unsafety of `deserialize_file` is covered by this function. The</span>
-			<span class="comment">//         responsibilities to maintain the invariants are passed to the caller.</span>
-			<span class="comment">//</span>
-			<span class="comment">//         See [`create_runtime_from_artifact`] for more details.</span>
-			<span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">wasmtime::Module::deserialize_file</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="ident">compiled_artifact_path</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot deserialize module: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
+			<span class="comment">// SAFETY: The unsafety of `deserialize_file` is covered by this function. The
+			//         responsibilities to maintain the invariants are passed to the caller.
+			//
+			//         See [`create_runtime_from_artifact`] for more details.
+			</span><span class="kw">let </span>module = wasmtime::Module::deserialize_file(<span class="kw-2">&amp;</span>engine, compiled_artifact_path)
+				.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot deserialize module: {}&quot;</span>, e)))<span class="question-mark">?</span>;
 
-			(<span class="ident">module</span>, <span class="ident">InternalInstantiationStrategy::Builtin</span>)
+			(module, InternalInstantiationStrategy::Builtin)
 		},
 	};
 
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">linker</span> <span class="op">=</span> <span class="ident">wasmtime::Linker::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>);
-	<span class="ident"><span class="kw">crate</span>::imports::prepare_imports</span>::<span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="ident">linker</span>, <span class="kw-2">&amp;</span><span class="ident">module</span>, <span class="ident">config</span>.<span class="ident">allow_missing_func_imports</span>)<span class="question-mark">?</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>linker = wasmtime::Linker::new(<span class="kw-2">&amp;</span>engine);
+	<span class="kw">crate</span>::imports::prepare_imports::&lt;H&gt;(<span class="kw-2">&amp;mut </span>linker, <span class="kw-2">&amp;</span>module, config.allow_missing_func_imports)<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span>
-		<span class="ident"><span class="kw">crate</span>::instance_wrapper::create_store</span>(<span class="ident">module</span>.<span class="ident">engine</span>(), <span class="ident">config</span>.<span class="ident">semantics</span>.<span class="ident">max_memory_size</span>);
-	<span class="kw">let</span> <span class="ident">instance_pre</span> <span class="op">=</span> <span class="ident">linker</span>
-		.<span class="ident">instantiate_pre</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>, <span class="kw-2">&amp;</span><span class="ident">module</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot preinstantiate module: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>store =
+		<span class="kw">crate</span>::instance_wrapper::create_store(module.engine(), config.semantics.max_memory_size);
+	<span class="kw">let </span>instance_pre = linker
+		.instantiate_pre(<span class="kw-2">&amp;mut </span>store, <span class="kw-2">&amp;</span>module)
+		.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot preinstantiate module: {}&quot;</span>, e)))<span class="question-mark">?</span>;
 
-	<span class="prelude-val">Ok</span>(<span class="ident">WasmtimeRuntime</span> {
-		<span class="ident">engine</span>,
-		<span class="ident">instance_pre</span>: <span class="ident">Arc::new</span>(<span class="ident">instance_pre</span>),
-		<span class="ident">instantiation_strategy</span>,
-		<span class="ident">config</span>,
+	<span class="prelude-val">Ok</span>(WasmtimeRuntime {
+		engine,
+		instance_pre: Arc::new(instance_pre),
+		instantiation_strategy,
+		config,
 	})
 }
 
-<span class="kw">fn</span> <span class="ident">prepare_blob_for_compilation</span>(
-	<span class="kw-2">mut</span> <span class="ident">blob</span>: <span class="ident">RuntimeBlob</span>,
-	<span class="ident">semantics</span>: <span class="kw-2">&amp;</span><span class="ident">Semantics</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">RuntimeBlob</span>, <span class="ident">WasmError</span><span class="op">&gt;</span> {
-	<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">DeterministicStackLimit</span> { <span class="ident">logical_max</span>, .. }) <span class="op">=</span> <span class="ident">semantics</span>.<span class="ident">deterministic_stack_limit</span> {
-		<span class="ident">blob</span> <span class="op">=</span> <span class="ident">blob</span>.<span class="ident">inject_stack_depth_metering</span>(<span class="ident">logical_max</span>)<span class="question-mark">?</span>;
+<span class="kw">fn </span>prepare_blob_for_compilation(
+	<span class="kw-2">mut </span>blob: RuntimeBlob,
+	semantics: <span class="kw-2">&amp;</span>Semantics,
+) -&gt; std::result::Result&lt;RuntimeBlob, WasmError&gt; {
+	<span class="kw">if let </span><span class="prelude-val">Some</span>(DeterministicStackLimit { logical_max, .. }) = semantics.deterministic_stack_limit {
+		blob = blob.inject_stack_depth_metering(logical_max)<span class="question-mark">?</span>;
 	}
 
-	<span class="kw">if</span> <span class="kw">let</span> <span class="ident">InstantiationStrategy::LegacyInstanceReuse</span> <span class="op">=</span> <span class="ident">semantics</span>.<span class="ident">instantiation_strategy</span> {
-		<span class="comment">// When this strategy is used this must be called after all other passes which may introduce</span>
-		<span class="comment">// new global variables, otherwise they will not be reset when we call into the runtime</span>
-		<span class="comment">// again.</span>
-		<span class="ident">blob</span>.<span class="ident">expose_mutable_globals</span>();
+	<span class="kw">if let </span>InstantiationStrategy::LegacyInstanceReuse = semantics.instantiation_strategy {
+		<span class="comment">// When this strategy is used this must be called after all other passes which may introduce
+		// new global variables, otherwise they will not be reset when we call into the runtime
+		// again.
+		</span>blob.expose_mutable_globals();
 	}
 
-	<span class="comment">// We don&#39;t actually need the memory to be imported so we can just convert any memory</span>
-	<span class="comment">// import into an export with impunity. This simplifies our code since `wasmtime` will</span>
-	<span class="comment">// now automatically take care of creating the memory for us, and it is also necessary</span>
-	<span class="comment">// to enable `wasmtime`&#39;s instance pooling. (Imported memories are ineligible for pooling.)</span>
-	<span class="ident">blob</span>.<span class="ident">convert_memory_import_into_export</span>()<span class="question-mark">?</span>;
-	<span class="ident">blob</span>.<span class="ident">add_extra_heap_pages_to_memory_section</span>(
-		<span class="ident">semantics</span>
-			.<span class="ident">extra_heap_pages</span>
-			.<span class="ident">try_into</span>()
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;invalid `extra_heap_pages`: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>,
+	<span class="comment">// We don&#39;t actually need the memory to be imported so we can just convert any memory
+	// import into an export with impunity. This simplifies our code since `wasmtime` will
+	// now automatically take care of creating the memory for us, and it is also necessary
+	// to enable `wasmtime`&#39;s instance pooling. (Imported memories are ineligible for pooling.)
+	</span>blob.convert_memory_import_into_export()<span class="question-mark">?</span>;
+	blob.add_extra_heap_pages_to_memory_section(
+		semantics
+			.extra_heap_pages
+			.try_into()
+			.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;invalid `extra_heap_pages`: {}&quot;</span>, e)))<span class="question-mark">?</span>,
 	)<span class="question-mark">?</span>;
 
-	<span class="prelude-val">Ok</span>(<span class="ident">blob</span>)
+	<span class="prelude-val">Ok</span>(blob)
 }
 
-<span class="doccomment">/// Takes a [`RuntimeBlob`] and precompiles it returning the serialized result of compilation. It</span>
-<span class="doccomment">/// can then be used for calling [`create_runtime`] avoiding long compilation times.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepare_runtime_artifact</span>(
-	<span class="ident">blob</span>: <span class="ident">RuntimeBlob</span>,
-	<span class="ident">semantics</span>: <span class="kw-2">&amp;</span><span class="ident">Semantics</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">WasmError</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">blob</span> <span class="op">=</span> <span class="ident">prepare_blob_for_compilation</span>(<span class="ident">blob</span>, <span class="ident">semantics</span>)<span class="question-mark">?</span>;
+<span class="doccomment">/// Takes a [`RuntimeBlob`] and precompiles it returning the serialized result of compilation. It
+/// can then be used for calling [`create_runtime`] avoiding long compilation times.
+</span><span class="kw">pub fn </span>prepare_runtime_artifact(
+	blob: RuntimeBlob,
+	semantics: <span class="kw-2">&amp;</span>Semantics,
+) -&gt; std::result::Result&lt;Vec&lt;u8&gt;, WasmError&gt; {
+	<span class="kw">let </span>blob = prepare_blob_for_compilation(blob, semantics)<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">Engine::new</span>(<span class="kw-2">&amp;</span><span class="ident">common_config</span>(<span class="ident">semantics</span>)<span class="question-mark">?</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot create the engine: {}&quot;</span>, <span class="ident">e</span>)))<span class="question-mark">?</span>;
+	<span class="kw">let </span>engine = Engine::new(<span class="kw-2">&amp;</span>common_config(semantics)<span class="question-mark">?</span>)
+		.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot create the engine: {}&quot;</span>, e)))<span class="question-mark">?</span>;
 
-	<span class="ident">engine</span>
-		.<span class="ident">precompile_module</span>(<span class="kw-2">&amp;</span><span class="ident">blob</span>.<span class="ident">serialize</span>())
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">WasmError::Other</span>(<span class="macro">format!</span>(<span class="string">&quot;cannot precompile module: {}&quot;</span>, <span class="ident">e</span>)))
+	engine
+		.precompile_module(<span class="kw-2">&amp;</span>blob.serialize())
+		.map_err(|e| WasmError::Other(<span class="macro">format!</span>(<span class="string">&quot;cannot precompile module: {}&quot;</span>, e)))
 }
 
-<span class="kw">fn</span> <span class="ident">perform_call</span>(
-	<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	<span class="ident">instance_wrapper</span>: <span class="kw-2">&amp;mut</span> <span class="ident">InstanceWrapper</span>,
-	<span class="ident">entrypoint</span>: <span class="ident">EntryPoint</span>,
-	<span class="kw-2">mut</span> <span class="ident">allocator</span>: <span class="ident">FreeingBumpHeapAllocator</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> (<span class="ident">data_ptr</span>, <span class="ident">data_len</span>) <span class="op">=</span> <span class="ident">inject_input_data</span>(<span class="ident">instance_wrapper</span>, <span class="kw-2">&amp;mut</span> <span class="ident">allocator</span>, <span class="ident">data</span>)<span class="question-mark">?</span>;
+<span class="kw">fn </span>perform_call(
+	data: <span class="kw-2">&amp;</span>[u8],
+	instance_wrapper: <span class="kw-2">&amp;mut </span>InstanceWrapper,
+	entrypoint: EntryPoint,
+	<span class="kw-2">mut </span>allocator: FreeingBumpHeapAllocator,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+	<span class="kw">let </span>(data_ptr, data_len) = inject_input_data(instance_wrapper, <span class="kw-2">&amp;mut </span>allocator, data)<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="ident">host_state</span> <span class="op">=</span> <span class="ident">HostState::new</span>(<span class="ident">allocator</span>);
+	<span class="kw">let </span>host_state = HostState::new(allocator);
 
-	<span class="comment">// Set the host state before calling into wasm.</span>
-	<span class="ident">instance_wrapper</span>.<span class="ident">store_mut</span>().<span class="ident">data_mut</span>().<span class="ident">host_state</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">host_state</span>);
+	<span class="comment">// Set the host state before calling into wasm.
+	</span>instance_wrapper.store_mut().data_mut().host_state = <span class="prelude-val">Some</span>(host_state);
 
-	<span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">entrypoint</span>
-		.<span class="ident">call</span>(<span class="ident">instance_wrapper</span>.<span class="ident">store_mut</span>(), <span class="ident">data_ptr</span>, <span class="ident">data_len</span>)
-		.<span class="ident">map</span>(<span class="ident">unpack_ptr_and_len</span>);
+	<span class="kw">let </span>ret = entrypoint
+		.call(instance_wrapper.store_mut(), data_ptr, data_len)
+		.map(unpack_ptr_and_len);
 
-	<span class="comment">// Reset the host state</span>
-	<span class="ident">instance_wrapper</span>.<span class="ident">store_mut</span>().<span class="ident">data_mut</span>().<span class="ident">host_state</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+	<span class="comment">// Reset the host state
+	</span>instance_wrapper.store_mut().data_mut().host_state = <span class="prelude-val">None</span>;
 
-	<span class="kw">let</span> (<span class="ident">output_ptr</span>, <span class="ident">output_len</span>) <span class="op">=</span> <span class="ident">ret</span><span class="question-mark">?</span>;
-	<span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">extract_output_data</span>(<span class="ident">instance_wrapper</span>, <span class="ident">output_ptr</span>, <span class="ident">output_len</span>)<span class="question-mark">?</span>;
+	<span class="kw">let </span>(output_ptr, output_len) = ret<span class="question-mark">?</span>;
+	<span class="kw">let </span>output = extract_output_data(instance_wrapper, output_ptr, output_len)<span class="question-mark">?</span>;
 
-	<span class="prelude-val">Ok</span>(<span class="ident">output</span>)
+	<span class="prelude-val">Ok</span>(output)
 }
 
-<span class="kw">fn</span> <span class="ident">inject_input_data</span>(
-	<span class="ident">instance</span>: <span class="kw-2">&amp;mut</span> <span class="ident">InstanceWrapper</span>,
-	<span class="ident">allocator</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FreeingBumpHeapAllocator</span>,
-	<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">WordSize</span>)<span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">store_mut</span>();
-	<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">data</span>().<span class="ident">memory</span>();
-	<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="ident">memory</span>.<span class="ident">data_mut</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ctx</span>);
-	<span class="kw">let</span> <span class="ident">data_len</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">WordSize</span>;
-	<span class="kw">let</span> <span class="ident">data_ptr</span> <span class="op">=</span> <span class="ident">allocator</span>.<span class="ident">allocate</span>(<span class="ident">memory</span>, <span class="ident">data_len</span>)<span class="question-mark">?</span>;
-	<span class="ident">util::write_memory_from</span>(<span class="ident">instance</span>.<span class="ident">store_mut</span>(), <span class="ident">data_ptr</span>, <span class="ident">data</span>)<span class="question-mark">?</span>;
-	<span class="prelude-val">Ok</span>((<span class="ident">data_ptr</span>, <span class="ident">data_len</span>))
+<span class="kw">fn </span>inject_input_data(
+	instance: <span class="kw-2">&amp;mut </span>InstanceWrapper,
+	allocator: <span class="kw-2">&amp;mut </span>FreeingBumpHeapAllocator,
+	data: <span class="kw-2">&amp;</span>[u8],
+) -&gt; <span class="prelude-ty">Result</span>&lt;(Pointer&lt;u8&gt;, WordSize)&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>ctx = instance.store_mut();
+	<span class="kw">let </span>memory = ctx.data().memory();
+	<span class="kw">let </span>memory = memory.data_mut(<span class="kw-2">&amp;mut </span>ctx);
+	<span class="kw">let </span>data_len = data.len() <span class="kw">as </span>WordSize;
+	<span class="kw">let </span>data_ptr = allocator.allocate(memory, data_len)<span class="question-mark">?</span>;
+	util::write_memory_from(instance.store_mut(), data_ptr, data)<span class="question-mark">?</span>;
+	<span class="prelude-val">Ok</span>((data_ptr, data_len))
 }
 
-<span class="kw">fn</span> <span class="ident">extract_output_data</span>(
-	<span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">InstanceWrapper</span>,
-	<span class="ident">output_ptr</span>: <span class="ident">u32</span>,
-	<span class="ident">output_len</span>: <span class="ident">u32</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0</span>; <span class="ident">output_len</span> <span class="kw">as</span> <span class="ident">usize</span>];
-	<span class="ident">util::read_memory_into</span>(<span class="ident">instance</span>.<span class="ident">store</span>(), <span class="ident">Pointer::new</span>(<span class="ident">output_ptr</span>), <span class="kw-2">&amp;mut</span> <span class="ident">output</span>)<span class="question-mark">?</span>;
-	<span class="prelude-val">Ok</span>(<span class="ident">output</span>)
+<span class="kw">fn </span>extract_output_data(
+	instance: <span class="kw-2">&amp;</span>InstanceWrapper,
+	output_ptr: u32,
+	output_len: u32,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>output = <span class="macro">vec!</span>[<span class="number">0</span>; output_len <span class="kw">as </span>usize];
+	util::read_memory_into(instance.store(), Pointer::new(output_ptr), <span class="kw-2">&amp;mut </span>output)<span class="question-mark">?</span>;
+	<span class="prelude-val">Ok</span>(output)
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_executor_wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_executor_wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/regalloc-0.0.34/src/analysis_reftypes.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>analysis_reftypes.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../regalloc/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../regalloc/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../regalloc/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/regalloc-0.0.34/src/analysis_reftypes.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>analysis_reftypes.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../regalloc/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -116,119 +111,118 @@
 <span id="111">111</span>
 <span id="112">112</span>
 <span id="113">113</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Performs a simple taint analysis, to find all live ranges that are reftyped.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Performs a simple taint analysis, to find all live ranges that are reftyped.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::data_structures</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::sparse_set</span>::{<span class="ident">SparseSet</span>, <span class="ident">SparseSetU</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fmt</span>, <span class="ident">hash::Hash</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::data_structures::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::sparse_set::{SparseSet, SparseSetU};
+<span class="kw">use </span>std::{fmt, hash::Hash};
 
-<span class="kw">use</span> <span class="ident">log::debug</span>;
-<span class="kw">use</span> <span class="ident">smallvec::SmallVec</span>;
+<span class="kw">use </span>log::debug;
+<span class="kw">use </span>smallvec::SmallVec;
 
-<span class="doccomment">/// Parameters to configure a reftype analysis.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait</span> <span class="ident">ReftypeAnalysis</span> {
-    <span class="doccomment">/// An unified representation of a range, for both virtual and real ranges.</span>
-    <span class="kw">type</span> <span class="ident">RangeId</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">fmt::Debug</span>;
+<span class="doccomment">/// Parameters to configure a reftype analysis.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>ReftypeAnalysis {
+    <span class="doccomment">/// An unified representation of a range, for both virtual and real ranges.
+    </span><span class="kw">type </span>RangeId: Eq + Hash + Copy + fmt::Debug;
 
-    <span class="doccomment">/// Find the RangeId related to `reg` and containing `pt`. May panic if the point isn&#39;t</span>
-    <span class="doccomment">/// actually present in any range of the given register.</span>
-    <span class="kw">fn</span> <span class="ident">find_range_id_for_reg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pt</span>: <span class="ident">InstPoint</span>, <span class="ident">reg</span>: <span class="ident">Reg</span>) -&gt; <span class="ident"><span class="self">Self</span>::RangeId</span>;
+    <span class="doccomment">/// Find the RangeId related to `reg` and containing `pt`. May panic if the point isn&#39;t
+    /// actually present in any range of the given register.
+    </span><span class="kw">fn </span>find_range_id_for_reg(<span class="kw-2">&amp;</span><span class="self">self</span>, pt: InstPoint, reg: Reg) -&gt; <span class="self">Self</span>::RangeId;
 
-    <span class="doccomment">/// Add all the ranges associated to this vreg into the set of reftyped ranges.</span>
-    <span class="kw">fn</span> <span class="ident">insert_reffy_ranges</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">vreg</span>: <span class="ident">VirtualReg</span>, <span class="ident">set</span>: <span class="kw-2">&amp;mut</span> <span class="ident">SparseSet</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::RangeId</span><span class="op">&gt;</span>);
+    <span class="doccomment">/// Add all the ranges associated to this vreg into the set of reftyped ranges.
+    </span><span class="kw">fn </span>insert_reffy_ranges(<span class="kw-2">&amp;</span><span class="self">self</span>, vreg: VirtualReg, set: <span class="kw-2">&amp;mut </span>SparseSet&lt;<span class="self">Self</span>::RangeId&gt;);
 
-    <span class="doccomment">/// Mark a given RangeId as being reffy.</span>
-    <span class="kw">fn</span> <span class="ident">mark_reffy</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">range_id</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::RangeId</span>);
+    <span class="doccomment">/// Mark a given RangeId as being reffy.
+    </span><span class="kw">fn </span>mark_reffy(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range_id: <span class="kw-2">&amp;</span><span class="self">Self</span>::RangeId);
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">core_reftypes_analysis</span><span class="op">&lt;</span><span class="ident">RA</span>: <span class="ident">ReftypeAnalysis</span><span class="op">&gt;</span>(
-    <span class="ident">analysis</span>: <span class="kw-2">&amp;mut</span> <span class="ident">RA</span>,
-    <span class="ident">move_info</span>: <span class="kw-2">&amp;</span><span class="ident">MoveInfo</span>,
-    <span class="comment">// As supplied by the client</span>
-    <span class="ident">reftype_class</span>: <span class="ident">RegClass</span>,
-    <span class="ident">reftyped_vregs</span>: <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VirtualReg</span><span class="op">&gt;</span>,
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>core_reftypes_analysis&lt;RA: ReftypeAnalysis&gt;(
+    analysis: <span class="kw-2">&amp;mut </span>RA,
+    move_info: <span class="kw-2">&amp;</span>MoveInfo,
+    <span class="comment">// As supplied by the client
+    </span>reftype_class: RegClass,
+    reftyped_vregs: <span class="kw-2">&amp;</span>Vec&lt;VirtualReg&gt;,
 ) {
-    <span class="comment">// The game here is: starting with `reftyped_vregs`, find *all* the VirtualRanges and</span>
-    <span class="comment">// RealRanges to which refness can flow, via instructions which the client&#39;s `is_move`</span>
-    <span class="comment">// function considers to be moves.</span>
+    <span class="comment">// The game here is: starting with `reftyped_vregs`, find *all* the VirtualRanges and
+    // RealRanges to which refness can flow, via instructions which the client&#39;s `is_move`
+    // function considers to be moves.
 
-    <span class="comment">// This is done in three stages:</span>
-    <span class="comment">//</span>
-    <span class="comment">// (1) Create a mapping from source (virtual or real) ranges to sets of destination ranges.</span>
-    <span class="comment">//     We have `move_info`, which tells us which (virtual or real) regs are connected by</span>
-    <span class="comment">//     moves.  However, that&#39;s not directly useful -- we need to know which *ranges* are</span>
-    <span class="comment">//     connected by moves.  `move_info` as supplied helpfully indicates both source and</span>
-    <span class="comment">//     destination regs and ranges, so we can simply use that.</span>
-    <span class="comment">//</span>
-    <span class="comment">// (2) Similarly, convert `reftyped_vregs` into a set of reftyped ranges by consulting</span>
-    <span class="comment">//     `reg_to_ranges_maps`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// (3) Compute the transitive closure of (1) starting from the ranges in (2).  This is done</span>
-    <span class="comment">//     by a depth first search of the graph implied by (1).</span>
+    // This is done in three stages:
+    //
+    // (1) Create a mapping from source (virtual or real) ranges to sets of destination ranges.
+    //     We have `move_info`, which tells us which (virtual or real) regs are connected by
+    //     moves.  However, that&#39;s not directly useful -- we need to know which *ranges* are
+    //     connected by moves.  `move_info` as supplied helpfully indicates both source and
+    //     destination regs and ranges, so we can simply use that.
+    //
+    // (2) Similarly, convert `reftyped_vregs` into a set of reftyped ranges by consulting
+    //     `reg_to_ranges_maps`.
+    //
+    // (3) Compute the transitive closure of (1) starting from the ranges in (2).  This is done
+    //     by a depth first search of the graph implied by (1).
 
-    <span class="comment">// ====== Compute (1) above ======</span>
-    <span class="comment">// Each entry in `succ` maps from `src` to a `SparseSet&lt;dsts&gt;`, so to speak.  That is, for</span>
-    <span class="comment">// `d1`, `d2`, etc, in `dsts`, the function contains moves `d1 := src`, `d2 := src`, etc.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">succ</span> <span class="op">=</span> <span class="ident">Map</span>::<span class="op">&lt;</span><span class="ident">RA::RangeId</span>, <span class="ident">SparseSetU</span><span class="op">&lt;</span>[<span class="ident">RA::RangeId</span>; <span class="number">4</span>]<span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::default</span>();
-    <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">MoveInfoElem</span> { <span class="ident">dst</span>, <span class="ident">src</span>, <span class="ident">iix</span>, .. } <span class="kw">in</span> <span class="ident">move_info</span>.<span class="ident">iter</span>() {
-        <span class="comment">// Don&#39;t waste time processing moves which can&#39;t possibly be of reftyped values.</span>
-        <span class="macro">debug_assert!</span>(<span class="ident">dst</span>.<span class="ident">get_class</span>() <span class="op">==</span> <span class="ident">src</span>.<span class="ident">get_class</span>());
-        <span class="kw">if</span> <span class="ident">dst</span>.<span class="ident">get_class</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">reftype_class</span> {
+    // ====== Compute (1) above ======
+    // Each entry in `succ` maps from `src` to a `SparseSet&lt;dsts&gt;`, so to speak.  That is, for
+    // `d1`, `d2`, etc, in `dsts`, the function contains moves `d1 := src`, `d2 := src`, etc.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>succ = Map::&lt;RA::RangeId, SparseSetU&lt;[RA::RangeId; <span class="number">4</span>]&gt;&gt;::default();
+    <span class="kw">for </span><span class="kw-2">&amp;</span>MoveInfoElem { dst, src, iix, .. } <span class="kw">in </span>move_info.iter() {
+        <span class="comment">// Don&#39;t waste time processing moves which can&#39;t possibly be of reftyped values.
+        </span><span class="macro">debug_assert!</span>(dst.get_class() == src.get_class());
+        <span class="kw">if </span>dst.get_class() != reftype_class {
             <span class="kw">continue</span>;
         }
-        <span class="kw">let</span> <span class="ident">src_range</span> <span class="op">=</span> <span class="ident">analysis</span>.<span class="ident">find_range_id_for_reg</span>(<span class="ident">InstPoint::new_use</span>(<span class="ident">iix</span>), <span class="ident">src</span>);
-        <span class="kw">let</span> <span class="ident">dst_range</span> <span class="op">=</span> <span class="ident">analysis</span>.<span class="ident">find_range_id_for_reg</span>(<span class="ident">InstPoint::new_def</span>(<span class="ident">iix</span>), <span class="ident">dst</span>);
+        <span class="kw">let </span>src_range = analysis.find_range_id_for_reg(InstPoint::new_use(iix), src);
+        <span class="kw">let </span>dst_range = analysis.find_range_id_for_reg(InstPoint::new_def(iix), dst);
         <span class="macro">debug!</span>(
             <span class="string">&quot;move from {:?} (range {:?}) to {:?} (range {:?}) at inst {:?}&quot;</span>,
-            <span class="ident">src</span>, <span class="ident">src_range</span>, <span class="ident">dst</span>, <span class="ident">dst_range</span>, <span class="ident">iix</span>
+            src, src_range, dst, dst_range, iix
         );
-        <span class="kw">match</span> <span class="ident">succ</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">src_range</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">dst_ranges</span>) =&gt; <span class="ident">dst_ranges</span>.<span class="ident">insert</span>(<span class="ident">dst_range</span>),
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="comment">// Re `; 4`: we expect most copies copy a register to only a few destinations.</span>
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dst_ranges</span> <span class="op">=</span> <span class="ident">SparseSetU</span>::<span class="op">&lt;</span>[<span class="ident">RA::RangeId</span>; <span class="number">4</span>]<span class="op">&gt;</span><span class="ident">::empty</span>();
-                <span class="ident">dst_ranges</span>.<span class="ident">insert</span>(<span class="ident">dst_range</span>);
-                <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">succ</span>.<span class="ident">insert</span>(<span class="ident">src_range</span>, <span class="ident">dst_ranges</span>);
-                <span class="macro">assert!</span>(<span class="ident">r</span>.<span class="ident">is_none</span>());
+        <span class="kw">match </span>succ.get_mut(<span class="kw-2">&amp;</span>src_range) {
+            <span class="prelude-val">Some</span>(dst_ranges) =&gt; dst_ranges.insert(dst_range),
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="comment">// Re `; 4`: we expect most copies copy a register to only a few destinations.
+                </span><span class="kw">let </span><span class="kw-2">mut </span>dst_ranges = SparseSetU::&lt;[RA::RangeId; <span class="number">4</span>]&gt;::empty();
+                dst_ranges.insert(dst_range);
+                <span class="kw">let </span>r = succ.insert(src_range, dst_ranges);
+                <span class="macro">assert!</span>(r.is_none());
             }
         }
     }
 
-    <span class="comment">// ====== Compute (2) above ======</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reftyped_ranges</span> <span class="op">=</span> <span class="ident">SparseSet</span>::<span class="op">&lt;</span><span class="ident">RA::RangeId</span><span class="op">&gt;</span><span class="ident">::empty</span>();
-    <span class="kw">for</span> <span class="ident">vreg</span> <span class="kw">in</span> <span class="ident">reftyped_vregs</span> {
-        <span class="comment">// If this fails, the client has been telling is that some virtual reg is reftyped, yet</span>
-        <span class="comment">// it doesn&#39;t belong to the class of regs that it claims can carry refs.  So the client</span>
-        <span class="comment">// is buggy.</span>
-        <span class="macro">debug_assert!</span>(<span class="ident">vreg</span>.<span class="ident">get_class</span>() <span class="op">==</span> <span class="ident">reftype_class</span>);
-        <span class="ident">analysis</span>.<span class="ident">insert_reffy_ranges</span>(<span class="kw-2">*</span><span class="ident">vreg</span>, <span class="kw-2">&amp;mut</span> <span class="ident">reftyped_ranges</span>);
+    <span class="comment">// ====== Compute (2) above ======
+    </span><span class="kw">let </span><span class="kw-2">mut </span>reftyped_ranges = SparseSet::&lt;RA::RangeId&gt;::empty();
+    <span class="kw">for </span>vreg <span class="kw">in </span>reftyped_vregs {
+        <span class="comment">// If this fails, the client has been telling is that some virtual reg is reftyped, yet
+        // it doesn&#39;t belong to the class of regs that it claims can carry refs.  So the client
+        // is buggy.
+        </span><span class="macro">debug_assert!</span>(vreg.get_class() == reftype_class);
+        analysis.insert_reffy_ranges(<span class="kw-2">*</span>vreg, <span class="kw-2">&amp;mut </span>reftyped_ranges);
     }
 
-    <span class="comment">// ====== Compute (3) above ======</span>
-    <span class="comment">// Almost all chains of copies will be less than 64 long, I would guess.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stack</span> <span class="op">=</span> <span class="ident">SmallVec</span>::<span class="op">&lt;</span>[<span class="ident">RA::RangeId</span>; <span class="number">64</span>]<span class="op">&gt;</span><span class="ident">::new</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">visited</span> <span class="op">=</span> <span class="ident">reftyped_ranges</span>.<span class="ident">clone</span>();
-    <span class="kw">for</span> <span class="ident">start_point_range</span> <span class="kw">in</span> <span class="ident">reftyped_ranges</span>.<span class="ident">iter</span>() {
-        <span class="comment">// Perform DFS from `start_point_range`.</span>
-        <span class="ident">stack</span>.<span class="ident">clear</span>();
-        <span class="ident">stack</span>.<span class="ident">push</span>(<span class="kw-2">*</span><span class="ident">start_point_range</span>);
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">src_range</span>) <span class="op">=</span> <span class="ident">stack</span>.<span class="ident">pop</span>() {
-            <span class="ident">visited</span>.<span class="ident">insert</span>(<span class="ident">src_range</span>);
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dst_ranges</span>) <span class="op">=</span> <span class="ident">succ</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">src_range</span>) {
-                <span class="kw">for</span> <span class="ident">dst_range</span> <span class="kw">in</span> <span class="ident">dst_ranges</span>.<span class="ident">iter</span>() {
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">visited</span>.<span class="ident">contains</span>(<span class="kw-2">*</span><span class="ident">dst_range</span>) {
-                        <span class="ident">stack</span>.<span class="ident">push</span>(<span class="kw-2">*</span><span class="ident">dst_range</span>);
+    <span class="comment">// ====== Compute (3) above ======
+    // Almost all chains of copies will be less than 64 long, I would guess.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>stack = SmallVec::&lt;[RA::RangeId; <span class="number">64</span>]&gt;::new();
+    <span class="kw">let </span><span class="kw-2">mut </span>visited = reftyped_ranges.clone();
+    <span class="kw">for </span>start_point_range <span class="kw">in </span>reftyped_ranges.iter() {
+        <span class="comment">// Perform DFS from `start_point_range`.
+        </span>stack.clear();
+        stack.push(<span class="kw-2">*</span>start_point_range);
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(src_range) = stack.pop() {
+            visited.insert(src_range);
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(dst_ranges) = succ.get(<span class="kw-2">&amp;</span>src_range) {
+                <span class="kw">for </span>dst_range <span class="kw">in </span>dst_ranges.iter() {
+                    <span class="kw">if </span>!visited.contains(<span class="kw-2">*</span>dst_range) {
+                        stack.push(<span class="kw-2">*</span>dst_range);
                     }
                 }
             }
         }
     }
 
-    <span class="comment">// Finally, annotate the results of the analysis.</span>
-    <span class="kw">for</span> <span class="ident">range</span> <span class="kw">in</span> <span class="ident">visited</span>.<span class="ident">iter</span>() {
-        <span class="ident">analysis</span>.<span class="ident">mark_reffy</span>(<span class="ident">range</span>);
+    <span class="comment">// Finally, annotate the results of the analysis.
+    </span><span class="kw">for </span>range <span class="kw">in </span>visited.iter() {
+        analysis.mark_reffy(range);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="regalloc" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="regalloc" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-tcp-0.33.0/src/provider/async_io.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_io.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../libp2p_tcp/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../libp2p_tcp/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../libp2p_tcp/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-tcp-0.33.0/src/provider/async_io.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_io.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../libp2p_tcp/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -100,103 +95,102 @@
 <span id="95">95</span>
 <span id="96">96</span>
 <span id="97">97</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies (UK) Ltd.</span>
-<span class="comment">//</span>
-<span class="comment">// Permission is hereby granted, free of charge, to any person obtaining a</span>
-<span class="comment">// copy of this software and associated documentation files (the &quot;Software&quot;),</span>
-<span class="comment">// to deal in the Software without restriction, including without limitation</span>
-<span class="comment">// the rights to use, copy, modify, merge, publish, distribute, sublicense,</span>
-<span class="comment">// and/or sell copies of the Software, and to permit persons to whom the</span>
-<span class="comment">// Software is furnished to do so, subject to the following conditions:</span>
-<span class="comment">//</span>
-<span class="comment">// The above copyright notice and this permission notice shall be included in</span>
-<span class="comment">// all copies or substantial portions of the Software.</span>
-<span class="comment">//</span>
-<span class="comment">// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS</span>
-<span class="comment">// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
-<span class="comment">// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
-<span class="comment">// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
-<span class="comment">// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING</span>
-<span class="comment">// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER</span>
-<span class="comment">// DEALINGS IN THE SOFTWARE.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2020 Parity Technologies (UK) Ltd.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the &quot;Software&quot;),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">IfEvent</span>, <span class="ident">Incoming</span>, <span class="ident">Provider</span>};
+</span><span class="kw">use super</span>::{IfEvent, Incoming, Provider};
 
-<span class="kw">use</span> <span class="ident">async_io_crate::Async</span>;
-<span class="kw">use</span> <span class="ident">futures::future</span>::{<span class="ident">BoxFuture</span>, <span class="ident">FutureExt</span>};
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">std::net</span>;
-<span class="kw">use</span> <span class="ident">std::task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>};
+<span class="kw">use </span>async_io_crate::Async;
+<span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::net;
+<span class="kw">use </span>std::task::{Context, Poll};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Tcp</span> {}
+<span class="attribute">#[derive(Copy, Clone)]
+</span><span class="kw">pub enum </span>Tcp {}
 
-<span class="kw">impl</span> <span class="ident">Provider</span> <span class="kw">for</span> <span class="ident">Tcp</span> {
-    <span class="kw">type</span> <span class="ident">Stream</span> <span class="op">=</span> <span class="ident">Async</span><span class="op">&lt;</span><span class="ident">net::TcpStream</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Listener</span> <span class="op">=</span> <span class="ident">Async</span><span class="op">&lt;</span><span class="ident">net::TcpListener</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">IfWatcher</span> <span class="op">=</span> <span class="ident">if_watch::IfWatcher</span>;
+<span class="kw">impl </span>Provider <span class="kw">for </span>Tcp {
+    <span class="kw">type </span>Stream = Async&lt;net::TcpStream&gt;;
+    <span class="kw">type </span>Listener = Async&lt;net::TcpListener&gt;;
+    <span class="kw">type </span>IfWatcher = if_watch::IfWatcher;
 
-    <span class="kw">fn</span> <span class="ident">if_watcher</span>() -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::IfWatcher</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">if_watch::IfWatcher::new</span>().<span class="ident">boxed</span>()
+    <span class="kw">fn </span>if_watcher() -&gt; BoxFuture&lt;<span class="lifetime">&#39;static</span>, io::Result&lt;<span class="self">Self</span>::IfWatcher&gt;&gt; {
+        if_watch::IfWatcher::new().boxed()
     }
 
-    <span class="kw">fn</span> <span class="ident">new_listener</span>(<span class="ident">l</span>: <span class="ident">net::TcpListener</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Listener</span><span class="op">&gt;</span> {
-        <span class="ident">Async::new</span>(<span class="ident">l</span>)
+    <span class="kw">fn </span>new_listener(l: net::TcpListener) -&gt; io::Result&lt;<span class="self">Self</span>::Listener&gt; {
+        Async::new(l)
     }
 
-    <span class="kw">fn</span> <span class="ident">new_stream</span>(<span class="ident">s</span>: <span class="ident">net::TcpStream</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Stream</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">async</span> <span class="kw">move</span> {
-            <span class="comment">// Taken from [`Async::connect`].</span>
+    <span class="kw">fn </span>new_stream(s: net::TcpStream) -&gt; BoxFuture&lt;<span class="lifetime">&#39;static</span>, io::Result&lt;<span class="self">Self</span>::Stream&gt;&gt; {
+        <span class="kw">async move </span>{
+            <span class="comment">// Taken from [`Async::connect`].
 
-            <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">Async::new</span>(<span class="ident">s</span>)<span class="question-mark">?</span>;
+            </span><span class="kw">let </span>stream = Async::new(s)<span class="question-mark">?</span>;
 
-            <span class="comment">// The stream becomes writable when connected.</span>
-            <span class="ident">stream</span>.<span class="ident">writable</span>().<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="comment">// The stream becomes writable when connected.
+            </span>stream.writable().<span class="kw">await</span><span class="question-mark">?</span>;
 
-            <span class="comment">// Check if there was an error while connecting.</span>
-            <span class="kw">match</span> <span class="ident">stream</span>.<span class="ident">get_ref</span>().<span class="ident">take_error</span>()<span class="question-mark">?</span> {
-                <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">stream</span>),
-                <span class="prelude-val">Some</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+            <span class="comment">// Check if there was an error while connecting.
+            </span><span class="kw">match </span>stream.get_ref().take_error()<span class="question-mark">? </span>{
+                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(stream),
+                <span class="prelude-val">Some</span>(err) =&gt; <span class="prelude-val">Err</span>(err),
             }
         }
-        .<span class="ident">boxed</span>()
+        .boxed()
     }
 
-    <span class="kw">fn</span> <span class="ident">poll_accept</span>(
-        <span class="ident">l</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Listener</span>,
-        <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Incoming</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Stream</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> (<span class="ident">stream</span>, <span class="ident">remote_addr</span>) <span class="op">=</span> <span class="kw">loop</span> {
-            <span class="kw">match</span> <span class="ident">l</span>.<span class="ident">poll_readable</span>(<span class="ident">cx</span>) {
-                <span class="ident">Poll::Pending</span> =&gt; <span class="kw">return</span> <span class="ident">Poll::Pending</span>,
-                <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)),
-                <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(())) =&gt; <span class="kw">match</span> <span class="ident">l</span>.<span class="ident">accept</span>().<span class="ident">now_or_never</span>() {
-                    <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)),
-                    <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">res</span>)) =&gt; <span class="kw">break</span> <span class="ident">res</span>,
-                    <span class="prelude-val">None</span> =&gt; {
-                        <span class="comment">// Since it doesn&#39;t do any harm, account for false positives of</span>
-                        <span class="comment">// `poll_readable` just in case, i.e. try again.</span>
-                    }
+    <span class="kw">fn </span>poll_accept(
+        l: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Listener,
+        cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+    ) -&gt; Poll&lt;io::Result&lt;Incoming&lt;<span class="self">Self</span>::Stream&gt;&gt;&gt; {
+        <span class="kw">let </span>(stream, remote_addr) = <span class="kw">loop </span>{
+            <span class="kw">match </span>l.poll_readable(cx) {
+                Poll::Pending =&gt; <span class="kw">return </span>Poll::Pending,
+                Poll::Ready(<span class="prelude-val">Err</span>(err)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(err)),
+                Poll::Ready(<span class="prelude-val">Ok</span>(())) =&gt; <span class="kw">match </span>l.accept().now_or_never() {
+                    <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(e)),
+                    <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(res)) =&gt; <span class="kw">break </span>res,
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="comment">// Since it doesn&#39;t do any harm, account for false positives of
+                        // `poll_readable` just in case, i.e. try again.
+                    </span>}
                 },
             }
         };
 
-        <span class="kw">let</span> <span class="ident">local_addr</span> <span class="op">=</span> <span class="ident">stream</span>.<span class="ident">get_ref</span>().<span class="ident">local_addr</span>()<span class="question-mark">?</span>;
+        <span class="kw">let </span>local_addr = stream.get_ref().local_addr()<span class="question-mark">?</span>;
 
-        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="ident">Incoming</span> {
-            <span class="ident">stream</span>,
-            <span class="ident">local_addr</span>,
-            <span class="ident">remote_addr</span>,
+        Poll::Ready(<span class="prelude-val">Ok</span>(Incoming {
+            stream,
+            local_addr,
+            remote_addr,
         }))
     }
 
-    <span class="kw">fn</span> <span class="ident">poll_interfaces</span>(<span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::IfWatcher</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">IfEvent</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">w</span>.<span class="ident">poll_unpin</span>(<span class="ident">cx</span>).<span class="ident">map_ok</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">e</span> {
-            <span class="ident">if_watch::IfEvent::Up</span>(<span class="ident">a</span>) =&gt; <span class="ident">IfEvent::Up</span>(<span class="ident">a</span>),
-            <span class="ident">if_watch::IfEvent::Down</span>(<span class="ident">a</span>) =&gt; <span class="ident">IfEvent::Down</span>(<span class="ident">a</span>),
+    <span class="kw">fn </span>poll_interfaces(w: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::IfWatcher, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;io::Result&lt;IfEvent&gt;&gt; {
+        w.poll_unpin(cx).map_ok(|e| <span class="kw">match </span>e {
+            if_watch::IfEvent::Up(a) =&gt; IfEvent::Up(a),
+            if_watch::IfEvent::Down(a) =&gt; IfEvent::Down(a),
         })
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="libp2p_tcp" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="libp2p_tcp" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

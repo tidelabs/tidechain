@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","State RPC errors."]],"type":[["Result","State RPC Result type."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","State RPC errors."]],"type":[["Result","State RPC Result type."]]};

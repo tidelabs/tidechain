@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["foreignkey","Provides foreign key conversion for String."]]});
+window.SIDEBAR_ITEMS = {"mod":[["foreignkey","Provides foreign key conversion for String."]]};

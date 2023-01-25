@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/trie/src/trie_stream.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trie_stream.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_trie/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sp_trie/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sp_trie/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/trie/src/trie_stream.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trie_stream.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sp_trie/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -151,154 +146,153 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2015-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: Apache-2.0</span>
+// Copyright (C) 2015-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
-<span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-<span class="comment">// you may not use this file except in compliance with the License.</span>
-<span class="comment">// You may obtain a copy of the License at</span>
-<span class="comment">//</span>
-<span class="comment">// 	http://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="comment">//</span>
-<span class="comment">// Unless required by applicable law or agreed to in writing, software</span>
-<span class="comment">// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
-<span class="comment">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
-<span class="comment">// See the License for the specific language governing permissions and</span>
-<span class="comment">// limitations under the License.</span>
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-<span class="doccomment">//! `TrieStream` implementation for Substrate&#39;s trie format.</span>
+</span><span class="doccomment">//! `TrieStream` implementation for Substrate&#39;s trie format.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">node_header</span>::{<span class="ident">size_and_prefix_iterator</span>, <span class="ident">NodeKind</span>},
-	<span class="ident">trie_constants</span>,
+</span><span class="kw">use crate</span>::{
+	node_header::{size_and_prefix_iterator, NodeKind},
+	trie_constants,
 };
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Compact</span>, <span class="ident">Encode</span>};
-<span class="kw">use</span> <span class="ident">hash_db::Hasher</span>;
-<span class="kw">use</span> <span class="ident">sp_std::vec::Vec</span>;
-<span class="kw">use</span> <span class="ident">trie_root</span>;
+<span class="kw">use </span>codec::{Compact, Encode};
+<span class="kw">use </span>hash_db::Hasher;
+<span class="kw">use </span>sp_std::vec::Vec;
+<span class="kw">use </span>trie_root;
 
-<span class="doccomment">/// Codec-flavored TrieStream.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrieStream</span> {
-	<span class="doccomment">/// Current node buffer.</span>
-	<span class="ident">buffer</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Codec-flavored TrieStream.
+</span><span class="attribute">#[derive(Default, Clone)]
+</span><span class="kw">pub struct </span>TrieStream {
+	<span class="doccomment">/// Current node buffer.
+	</span>buffer: Vec&lt;u8&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">TrieStream</span> {
-	<span class="comment">// useful for debugging but not used otherwise</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">buffer</span>
+<span class="kw">impl </span>TrieStream {
+	<span class="comment">// useful for debugging but not used otherwise
+	</span><span class="kw">pub fn </span>as_raw(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.buffer
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">branch_node_bit_mask</span>(<span class="ident">has_children</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">bool</span><span class="op">&gt;</span>) -&gt; (<span class="ident">u8</span>, <span class="ident">u8</span>) {
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bitmap</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0</span>;
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">1</span>;
-	<span class="kw">for</span> <span class="ident">v</span> <span class="kw">in</span> <span class="ident">has_children</span> {
-		<span class="kw">if</span> <span class="ident">v</span> {
-			<span class="ident">bitmap</span> <span class="op">|</span><span class="op">=</span> <span class="ident">cursor</span>
+<span class="kw">fn </span>branch_node_bit_mask(has_children: <span class="kw">impl </span>Iterator&lt;Item = bool&gt;) -&gt; (u8, u8) {
+	<span class="kw">let </span><span class="kw-2">mut </span>bitmap: u16 = <span class="number">0</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>cursor: u16 = <span class="number">1</span>;
+	<span class="kw">for </span>v <span class="kw">in </span>has_children {
+		<span class="kw">if </span>v {
+			bitmap |= cursor
 		}
-		<span class="ident">cursor</span> <span class="op">&lt;</span><span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>;
+		cursor &lt;&lt;= <span class="number">1</span>;
 	}
-	((<span class="ident">bitmap</span> <span class="op">%</span> <span class="number">256</span>) <span class="kw">as</span> <span class="ident">u8</span>, (<span class="ident">bitmap</span> <span class="op">/</span> <span class="number">256</span>) <span class="kw">as</span> <span class="ident">u8</span>)
+	((bitmap % <span class="number">256</span>) <span class="kw">as </span>u8, (bitmap / <span class="number">256</span>) <span class="kw">as </span>u8)
 }
 
-<span class="doccomment">/// Create a leaf/branch node, encoding a number of nibbles.</span>
-<span class="kw">fn</span> <span class="ident">fuse_nibbles_node</span>(<span class="ident">nibbles</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">kind</span>: <span class="ident">NodeKind</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">u8</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;_</span> {
-	<span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">sp_std::cmp::min</span>(<span class="ident">trie_constants::NIBBLE_SIZE_BOUND</span>, <span class="ident">nibbles</span>.<span class="ident">len</span>());
+<span class="doccomment">/// Create a leaf/branch node, encoding a number of nibbles.
+</span><span class="kw">fn </span>fuse_nibbles_node(nibbles: <span class="kw-2">&amp;</span>[u8], kind: NodeKind) -&gt; <span class="kw">impl </span>Iterator&lt;Item = u8&gt; + <span class="lifetime">&#39;_ </span>{
+	<span class="kw">let </span>size = sp_std::cmp::min(trie_constants::NIBBLE_SIZE_BOUND, nibbles.len());
 
-	<span class="kw">let</span> <span class="ident">iter_start</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">kind</span> {
-		<span class="ident">NodeKind::Leaf</span> =&gt; <span class="ident">size_and_prefix_iterator</span>(<span class="ident">size</span>, <span class="ident">trie_constants::LEAF_PREFIX_MASK</span>, <span class="number">2</span>),
-		<span class="ident">NodeKind::BranchNoValue</span> =&gt;
-			<span class="ident">size_and_prefix_iterator</span>(<span class="ident">size</span>, <span class="ident">trie_constants::BRANCH_WITHOUT_MASK</span>, <span class="number">2</span>),
-		<span class="ident">NodeKind::BranchWithValue</span> =&gt;
-			<span class="ident">size_and_prefix_iterator</span>(<span class="ident">size</span>, <span class="ident">trie_constants::BRANCH_WITH_MASK</span>, <span class="number">2</span>),
-		<span class="ident">NodeKind::HashedValueLeaf</span> =&gt;
-			<span class="ident">size_and_prefix_iterator</span>(<span class="ident">size</span>, <span class="ident">trie_constants::ALT_HASHING_LEAF_PREFIX_MASK</span>, <span class="number">3</span>),
-		<span class="ident">NodeKind::HashedValueBranch</span> =&gt;
-			<span class="ident">size_and_prefix_iterator</span>(<span class="ident">size</span>, <span class="ident">trie_constants::ALT_HASHING_BRANCH_WITH_MASK</span>, <span class="number">4</span>),
+	<span class="kw">let </span>iter_start = <span class="kw">match </span>kind {
+		NodeKind::Leaf =&gt; size_and_prefix_iterator(size, trie_constants::LEAF_PREFIX_MASK, <span class="number">2</span>),
+		NodeKind::BranchNoValue =&gt;
+			size_and_prefix_iterator(size, trie_constants::BRANCH_WITHOUT_MASK, <span class="number">2</span>),
+		NodeKind::BranchWithValue =&gt;
+			size_and_prefix_iterator(size, trie_constants::BRANCH_WITH_MASK, <span class="number">2</span>),
+		NodeKind::HashedValueLeaf =&gt;
+			size_and_prefix_iterator(size, trie_constants::ALT_HASHING_LEAF_PREFIX_MASK, <span class="number">3</span>),
+		NodeKind::HashedValueBranch =&gt;
+			size_and_prefix_iterator(size, trie_constants::ALT_HASHING_BRANCH_WITH_MASK, <span class="number">4</span>),
 	};
-	<span class="ident">iter_start</span>
-		.<span class="ident">chain</span>(<span class="kw">if</span> <span class="ident">nibbles</span>.<span class="ident">len</span>() <span class="op">%</span> <span class="number">2</span> <span class="op">==</span> <span class="number">1</span> { <span class="prelude-val">Some</span>(<span class="ident">nibbles</span>[<span class="number">0</span>]) } <span class="kw">else</span> { <span class="prelude-val">None</span> })
-		.<span class="ident">chain</span>(<span class="ident">nibbles</span>[<span class="ident">nibbles</span>.<span class="ident">len</span>() <span class="op">%</span> <span class="number">2</span>..].<span class="ident">chunks</span>(<span class="number">2</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">ch</span><span class="op">|</span> <span class="ident">ch</span>[<span class="number">0</span>] <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span> <span class="op">|</span> <span class="ident">ch</span>[<span class="number">1</span>]))
+	iter_start
+		.chain(<span class="kw">if </span>nibbles.len() % <span class="number">2 </span>== <span class="number">1 </span>{ <span class="prelude-val">Some</span>(nibbles[<span class="number">0</span>]) } <span class="kw">else </span>{ <span class="prelude-val">None </span>})
+		.chain(nibbles[nibbles.len() % <span class="number">2</span>..].chunks(<span class="number">2</span>).map(|ch| ch[<span class="number">0</span>] &lt;&lt; <span class="number">4 </span>| ch[<span class="number">1</span>]))
 }
 
-<span class="kw">use</span> <span class="ident">trie_root::Value</span> <span class="kw">as</span> <span class="ident">TrieStreamValue</span>;
-<span class="kw">impl</span> <span class="ident">trie_root::TrieStream</span> <span class="kw">for</span> <span class="ident">TrieStream</span> {
-	<span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">buffer</span>: <span class="ident">Vec::new</span>() }
+<span class="kw">use </span>trie_root::Value <span class="kw">as </span>TrieStreamValue;
+<span class="kw">impl </span>trie_root::TrieStream <span class="kw">for </span>TrieStream {
+	<span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ buffer: Vec::new() }
 	}
 
-	<span class="kw">fn</span> <span class="ident">append_empty_data</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">push</span>(<span class="ident">trie_constants::EMPTY_TRIE</span>);
+	<span class="kw">fn </span>append_empty_data(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="self">self</span>.buffer.push(trie_constants::EMPTY_TRIE);
 	}
 
-	<span class="kw">fn</span> <span class="ident">append_leaf</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">value</span>: <span class="ident">TrieStreamValue</span>) {
-		<span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">value</span> {
-			<span class="ident">TrieStreamValue::Inline</span>(..) =&gt; <span class="ident">NodeKind::Leaf</span>,
-			<span class="ident">TrieStreamValue::Node</span>(..) =&gt; <span class="ident">NodeKind::HashedValueLeaf</span>,
+	<span class="kw">fn </span>append_leaf(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], value: TrieStreamValue) {
+		<span class="kw">let </span>kind = <span class="kw">match </span><span class="kw-2">&amp;</span>value {
+			TrieStreamValue::Inline(..) =&gt; NodeKind::Leaf,
+			TrieStreamValue::Node(..) =&gt; NodeKind::HashedValueLeaf,
 		};
-		<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">extend</span>(<span class="ident">fuse_nibbles_node</span>(<span class="ident">key</span>, <span class="ident">kind</span>));
-		<span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">value</span> {
-			<span class="ident">TrieStreamValue::Inline</span>(<span class="ident">value</span>) =&gt; {
-				<span class="ident">Compact</span>(<span class="ident">value</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>).<span class="ident">encode_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">buffer</span>);
-				<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">extend_from_slice</span>(<span class="ident">value</span>);
+		<span class="self">self</span>.buffer.extend(fuse_nibbles_node(key, kind));
+		<span class="kw">match </span><span class="kw-2">&amp;</span>value {
+			TrieStreamValue::Inline(value) =&gt; {
+				Compact(value.len() <span class="kw">as </span>u32).encode_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>.buffer);
+				<span class="self">self</span>.buffer.extend_from_slice(value);
 			},
-			<span class="ident">TrieStreamValue::Node</span>(<span class="ident">hash</span>) =&gt; {
-				<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">extend_from_slice</span>(<span class="ident">hash</span>.<span class="ident">as_slice</span>());
+			TrieStreamValue::Node(hash) =&gt; {
+				<span class="self">self</span>.buffer.extend_from_slice(hash.as_slice());
 			},
 		};
 	}
 
-	<span class="kw">fn</span> <span class="ident">begin_branch</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">maybe_partial</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-		<span class="ident">maybe_value</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TrieStreamValue</span><span class="op">&gt;</span>,
-		<span class="ident">has_children</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">bool</span><span class="op">&gt;</span>,
+	<span class="kw">fn </span>begin_branch(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		maybe_partial: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+		maybe_value: <span class="prelude-ty">Option</span>&lt;TrieStreamValue&gt;,
+		has_children: <span class="kw">impl </span>Iterator&lt;Item = bool&gt;,
 	) {
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">partial</span>) <span class="op">=</span> <span class="ident">maybe_partial</span> {
-			<span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">maybe_value</span> {
-				<span class="prelude-val">None</span> =&gt; <span class="ident">NodeKind::BranchNoValue</span>,
-				<span class="prelude-val">Some</span>(<span class="ident">TrieStreamValue::Inline</span>(..)) =&gt; <span class="ident">NodeKind::BranchWithValue</span>,
-				<span class="prelude-val">Some</span>(<span class="ident">TrieStreamValue::Node</span>(..)) =&gt; <span class="ident">NodeKind::HashedValueBranch</span>,
+		<span class="kw">if let </span><span class="prelude-val">Some</span>(partial) = maybe_partial {
+			<span class="kw">let </span>kind = <span class="kw">match </span><span class="kw-2">&amp;</span>maybe_value {
+				<span class="prelude-val">None </span>=&gt; NodeKind::BranchNoValue,
+				<span class="prelude-val">Some</span>(TrieStreamValue::Inline(..)) =&gt; NodeKind::BranchWithValue,
+				<span class="prelude-val">Some</span>(TrieStreamValue::Node(..)) =&gt; NodeKind::HashedValueBranch,
 			};
 
-			<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">extend</span>(<span class="ident">fuse_nibbles_node</span>(<span class="ident">partial</span>, <span class="ident">kind</span>));
-			<span class="kw">let</span> <span class="ident">bm</span> <span class="op">=</span> <span class="ident">branch_node_bit_mask</span>(<span class="ident">has_children</span>);
-			<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">extend</span>([<span class="ident">bm</span>.<span class="number">0</span>, <span class="ident">bm</span>.<span class="number">1</span>].<span class="ident">iter</span>());
-		} <span class="kw">else</span> {
+			<span class="self">self</span>.buffer.extend(fuse_nibbles_node(partial, kind));
+			<span class="kw">let </span>bm = branch_node_bit_mask(has_children);
+			<span class="self">self</span>.buffer.extend([bm.<span class="number">0</span>, bm.<span class="number">1</span>].iter());
+		} <span class="kw">else </span>{
 			<span class="macro">unreachable!</span>(<span class="string">&quot;trie stream codec only for no extension trie&quot;</span>);
 		}
-		<span class="kw">match</span> <span class="ident">maybe_value</span> {
-			<span class="prelude-val">None</span> =&gt; (),
-			<span class="prelude-val">Some</span>(<span class="ident">TrieStreamValue::Inline</span>(<span class="ident">value</span>)) =&gt; {
-				<span class="ident">Compact</span>(<span class="ident">value</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>).<span class="ident">encode_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">buffer</span>);
-				<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">extend_from_slice</span>(<span class="ident">value</span>);
+		<span class="kw">match </span>maybe_value {
+			<span class="prelude-val">None </span>=&gt; (),
+			<span class="prelude-val">Some</span>(TrieStreamValue::Inline(value)) =&gt; {
+				Compact(value.len() <span class="kw">as </span>u32).encode_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>.buffer);
+				<span class="self">self</span>.buffer.extend_from_slice(value);
 			},
-			<span class="prelude-val">Some</span>(<span class="ident">TrieStreamValue::Node</span>(<span class="ident">hash</span>)) =&gt; {
-				<span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">extend_from_slice</span>(<span class="ident">hash</span>.<span class="ident">as_slice</span>());
+			<span class="prelude-val">Some</span>(TrieStreamValue::Node(hash)) =&gt; {
+				<span class="self">self</span>.buffer.extend_from_slice(hash.as_slice());
 			},
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">append_extension</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) {
+	<span class="kw">fn </span>append_extension(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _key: <span class="kw-2">&amp;</span>[u8]) {
 		<span class="macro">debug_assert!</span>(<span class="bool-val">false</span>, <span class="string">&quot;trie stream codec only for no extension trie&quot;</span>);
 	}
 
-	<span class="kw">fn</span> <span class="ident">append_substream</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="self">Self</span>) {
-		<span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">other</span>.<span class="ident">out</span>();
-		<span class="kw">match</span> <span class="ident">data</span>.<span class="ident">len</span>() {
-			<span class="number">0</span>..<span class="op">=</span><span class="number">31</span> =&gt; <span class="ident">data</span>.<span class="ident">encode_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">buffer</span>),
-			<span class="kw">_</span> =&gt; <span class="ident">H::hash</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>).<span class="ident">as_ref</span>().<span class="ident">encode_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">buffer</span>),
+	<span class="kw">fn </span>append_substream&lt;H: Hasher&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
+		<span class="kw">let </span>data = other.out();
+		<span class="kw">match </span>data.len() {
+			<span class="number">0</span>..=<span class="number">31 </span>=&gt; data.encode_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>.buffer),
+			<span class="kw">_ </span>=&gt; H::hash(<span class="kw-2">&amp;</span>data).as_ref().encode_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>.buffer),
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">out</span>(<span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">buffer</span>
+	<span class="kw">fn </span>out(<span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
+		<span class="self">self</span>.buffer
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_trie" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sp_trie" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

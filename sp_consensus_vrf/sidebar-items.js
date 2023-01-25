@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["schnorrkel","Schnorrkel-based VRF."]]});
+window.SIDEBAR_ITEMS = {"mod":[["schnorrkel","Schnorrkel-based VRF."]]};

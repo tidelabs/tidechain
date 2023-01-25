@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Error type."],["GenericTransportError","Generic transport error."],["SubscriptionClosed","A type to represent when a subscription gets closed by either the server or client side."]],"struct":[["Mismatch","Convenience type for displaying errors."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","Error type."],["GenericTransportError","Generic transport error."],["SubscriptionClosed","A type to represent when a subscription gets closed by either the server or client side."]],"struct":[["Mismatch","Convenience type for displaying errors."]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/gimli-0.26.1/src/write/cfi.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cfi.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../gimli/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../gimli/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../gimli/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/gimli-0.26.1/src/write/cfi.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cfi.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../gimli/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1015,928 +1010,928 @@
 <span id="1010">1010</span>
 <span id="1011">1011</span>
 <span id="1012">1012</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
-<span class="kw">use</span> <span class="ident">indexmap::IndexSet</span>;
-<span class="kw">use</span> <span class="ident">std::ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
+<span class="kw">use </span>indexmap::IndexSet;
+<span class="kw">use </span>std::ops::{Deref, DerefMut};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::common</span>::{<span class="ident">DebugFrameOffset</span>, <span class="ident">EhFrameOffset</span>, <span class="ident">Encoding</span>, <span class="ident">Format</span>, <span class="ident">Register</span>, <span class="ident">SectionId</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::constants</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::write</span>::{<span class="ident">Address</span>, <span class="ident">BaseId</span>, <span class="ident">Error</span>, <span class="ident">Expression</span>, <span class="prelude-ty">Result</span>, <span class="ident">Section</span>, <span class="ident">Writer</span>};
+<span class="kw">use </span><span class="kw">crate</span>::common::{DebugFrameOffset, EhFrameOffset, Encoding, Format, Register, SectionId};
+<span class="kw">use </span><span class="kw">crate</span>::constants;
+<span class="kw">use </span><span class="kw">crate</span>::write::{Address, BaseId, Error, Expression, <span class="prelude-ty">Result</span>, Section, Writer};
 
 <span class="macro">define_section!</span>(
-    <span class="ident">DebugFrame</span>,
-    <span class="ident">DebugFrameOffset</span>,
-    <span class="string">&quot;A writable `.debug_frame` section.&quot;</span>
-);
+    DebugFrame,
+    DebugFrameOffset,
+    <span class="string">&quot;A writable `.debug_frame` section.&quot;
+</span>);
 
-<span class="macro">define_section!</span>(<span class="ident">EhFrame</span>, <span class="ident">EhFrameOffset</span>, <span class="string">&quot;A writable `.eh_frame` section.&quot;</span>);
+<span class="macro">define_section!</span>(EhFrame, EhFrameOffset, <span class="string">&quot;A writable `.eh_frame` section.&quot;</span>);
 
-<span class="macro">define_id!</span>(<span class="ident">CieId</span>, <span class="string">&quot;An identifier for a CIE in a `FrameTable`.&quot;</span>);
+<span class="macro">define_id!</span>(CieId, <span class="string">&quot;An identifier for a CIE in a `FrameTable`.&quot;</span>);
 
-<span class="doccomment">/// A table of frame description entries.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FrameTable</span> {
-    <span class="doccomment">/// Base id for CIEs.</span>
-    <span class="ident">base_id</span>: <span class="ident">BaseId</span>,
-    <span class="doccomment">/// The common information entries.</span>
-    <span class="ident">cies</span>: <span class="ident">IndexSet</span><span class="op">&lt;</span><span class="ident">CommonInformationEntry</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The frame description entries.</span>
-    <span class="ident">fdes</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">CieId</span>, <span class="ident">FrameDescriptionEntry</span>)<span class="op">&gt;</span>,
+<span class="doccomment">/// A table of frame description entries.
+</span><span class="attribute">#[derive(Debug, Default)]
+</span><span class="kw">pub struct </span>FrameTable {
+    <span class="doccomment">/// Base id for CIEs.
+    </span>base_id: BaseId,
+    <span class="doccomment">/// The common information entries.
+    </span>cies: IndexSet&lt;CommonInformationEntry&gt;,
+    <span class="doccomment">/// The frame description entries.
+    </span>fdes: Vec&lt;(CieId, FrameDescriptionEntry)&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">FrameTable</span> {
-    <span class="doccomment">/// Add a CIE and return its id.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the CIE already exists, then return the id of the existing CIE.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_cie</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cie</span>: <span class="ident">CommonInformationEntry</span>) -&gt; <span class="ident">CieId</span> {
-        <span class="kw">let</span> (<span class="ident">index</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cies</span>.<span class="ident">insert_full</span>(<span class="ident">cie</span>);
-        <span class="ident">CieId::new</span>(<span class="self">self</span>.<span class="ident">base_id</span>, <span class="ident">index</span>)
+<span class="kw">impl </span>FrameTable {
+    <span class="doccomment">/// Add a CIE and return its id.
+    ///
+    /// If the CIE already exists, then return the id of the existing CIE.
+    </span><span class="kw">pub fn </span>add_cie(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cie: CommonInformationEntry) -&gt; CieId {
+        <span class="kw">let </span>(index, <span class="kw">_</span>) = <span class="self">self</span>.cies.insert_full(cie);
+        CieId::new(<span class="self">self</span>.base_id, index)
     }
 
-    <span class="doccomment">/// The number of CIEs.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cie_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">cies</span>.<span class="ident">len</span>()
+    <span class="doccomment">/// The number of CIEs.
+    </span><span class="kw">pub fn </span>cie_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.cies.len()
     }
 
-    <span class="doccomment">/// Add a FDE.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Does not check for duplicates.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if the CIE id is invalid.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_fde</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cie</span>: <span class="ident">CieId</span>, <span class="ident">fde</span>: <span class="ident">FrameDescriptionEntry</span>) {
-        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.<span class="ident">base_id</span>, <span class="ident">cie</span>.<span class="ident">base_id</span>);
-        <span class="self">self</span>.<span class="ident">fdes</span>.<span class="ident">push</span>((<span class="ident">cie</span>, <span class="ident">fde</span>));
+    <span class="doccomment">/// Add a FDE.
+    ///
+    /// Does not check for duplicates.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the CIE id is invalid.
+    </span><span class="kw">pub fn </span>add_fde(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cie: CieId, fde: FrameDescriptionEntry) {
+        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.base_id, cie.base_id);
+        <span class="self">self</span>.fdes.push((cie, fde));
     }
 
-    <span class="doccomment">/// The number of FDEs.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fde_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">fdes</span>.<span class="ident">len</span>()
+    <span class="doccomment">/// The number of FDEs.
+    </span><span class="kw">pub fn </span>fde_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.fdes.len()
     }
 
-    <span class="doccomment">/// Write the frame table entries to the given `.debug_frame` section.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_debug_frame</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">DebugFrame</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="ident">w</span>.<span class="number">0</span>, <span class="bool-val">false</span>)
+    <span class="doccomment">/// Write the frame table entries to the given `.debug_frame` section.
+    </span><span class="kw">pub fn </span>write_debug_frame&lt;W: Writer&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>DebugFrame&lt;W&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.write(<span class="kw-2">&amp;mut </span>w.<span class="number">0</span>, <span class="bool-val">false</span>)
     }
 
-    <span class="doccomment">/// Write the frame table entries to the given `.eh_frame` section.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_eh_frame</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">EhFrame</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="ident">w</span>.<span class="number">0</span>, <span class="bool-val">true</span>)
+    <span class="doccomment">/// Write the frame table entries to the given `.eh_frame` section.
+    </span><span class="kw">pub fn </span>write_eh_frame&lt;W: Writer&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>EhFrame&lt;W&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.write(<span class="kw-2">&amp;mut </span>w.<span class="number">0</span>, <span class="bool-val">true</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>, <span class="ident">eh_frame</span>: <span class="ident">bool</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cie_offsets</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="prelude-val">None</span>; <span class="self">self</span>.<span class="ident">cies</span>.<span class="ident">len</span>()];
-        <span class="kw">for</span> (<span class="ident">cie_id</span>, <span class="ident">fde</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">fdes</span> {
-            <span class="kw">let</span> <span class="ident">cie_index</span> <span class="op">=</span> <span class="ident">cie_id</span>.<span class="ident">index</span>;
-            <span class="kw">let</span> <span class="ident">cie</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cies</span>.<span class="ident">get_index</span>(<span class="ident">cie_index</span>).<span class="ident">unwrap</span>();
-            <span class="kw">let</span> <span class="ident">cie_offset</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">cie_offsets</span>[<span class="ident">cie_index</span>] {
-                <span class="prelude-val">Some</span>(<span class="ident">offset</span>) =&gt; <span class="ident">offset</span>,
-                <span class="prelude-val">None</span> =&gt; {
-                    <span class="comment">// Only write CIEs as they are referenced.</span>
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">cie</span>.<span class="ident">write</span>(<span class="ident">w</span>, <span class="ident">eh_frame</span>)<span class="question-mark">?</span>;
-                    <span class="ident">cie_offsets</span>[<span class="ident">cie_index</span>] <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">offset</span>);
-                    <span class="ident">offset</span>
+    <span class="kw">fn </span>write&lt;W: Writer&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>W, eh_frame: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>cie_offsets = <span class="macro">vec!</span>[<span class="prelude-val">None</span>; <span class="self">self</span>.cies.len()];
+        <span class="kw">for </span>(cie_id, fde) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.fdes {
+            <span class="kw">let </span>cie_index = cie_id.index;
+            <span class="kw">let </span>cie = <span class="self">self</span>.cies.get_index(cie_index).unwrap();
+            <span class="kw">let </span>cie_offset = <span class="kw">match </span>cie_offsets[cie_index] {
+                <span class="prelude-val">Some</span>(offset) =&gt; offset,
+                <span class="prelude-val">None </span>=&gt; {
+                    <span class="comment">// Only write CIEs as they are referenced.
+                    </span><span class="kw">let </span>offset = cie.write(w, eh_frame)<span class="question-mark">?</span>;
+                    cie_offsets[cie_index] = <span class="prelude-val">Some</span>(offset);
+                    offset
                 }
             };
 
-            <span class="ident">fde</span>.<span class="ident">write</span>(<span class="ident">w</span>, <span class="ident">eh_frame</span>, <span class="ident">cie_offset</span>, <span class="ident">cie</span>)<span class="question-mark">?</span>;
+            fde.write(w, eh_frame, cie_offset, cie)<span class="question-mark">?</span>;
         }
-        <span class="comment">// TODO: write length 0 terminator for eh_frame?</span>
-        <span class="prelude-val">Ok</span>(())
+        <span class="comment">// TODO: write length 0 terminator for eh_frame?
+        </span><span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="doccomment">/// A common information entry. This contains information that is shared between FDEs.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CommonInformationEntry</span> {
-    <span class="ident">encoding</span>: <span class="ident">Encoding</span>,
+<span class="doccomment">/// A common information entry. This contains information that is shared between FDEs.
+</span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+</span><span class="kw">pub struct </span>CommonInformationEntry {
+    encoding: Encoding,
 
-    <span class="doccomment">/// A constant that is factored out of code offsets.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This should be set to the minimum instruction length.</span>
-    <span class="doccomment">/// Writing a code offset that is not a multiple of this factor will generate an error.</span>
-    <span class="ident">code_alignment_factor</span>: <span class="ident">u8</span>,
+    <span class="doccomment">/// A constant that is factored out of code offsets.
+    ///
+    /// This should be set to the minimum instruction length.
+    /// Writing a code offset that is not a multiple of this factor will generate an error.
+    </span>code_alignment_factor: u8,
 
-    <span class="doccomment">/// A constant that is factored out of data offsets.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This should be set to the minimum data alignment for the frame.</span>
-    <span class="doccomment">/// Writing a data offset that is not a multiple of this factor will generate an error.</span>
-    <span class="ident">data_alignment_factor</span>: <span class="ident">i8</span>,
+    <span class="doccomment">/// A constant that is factored out of data offsets.
+    ///
+    /// This should be set to the minimum data alignment for the frame.
+    /// Writing a data offset that is not a multiple of this factor will generate an error.
+    </span>data_alignment_factor: i8,
 
-    <span class="doccomment">/// The return address register. This might not correspond to an actual machine register.</span>
-    <span class="ident">return_address_register</span>: <span class="ident">Register</span>,
+    <span class="doccomment">/// The return address register. This might not correspond to an actual machine register.
+    </span>return_address_register: Register,
 
-    <span class="doccomment">/// The address of the personality function and its encoding.</span>
-    <span class="kw">pub</span> <span class="ident">personality</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">constants::DwEhPe</span>, <span class="ident">Address</span>)<span class="op">&gt;</span>,
+    <span class="doccomment">/// The address of the personality function and its encoding.
+    </span><span class="kw">pub </span>personality: <span class="prelude-ty">Option</span>&lt;(constants::DwEhPe, Address)&gt;,
 
-    <span class="doccomment">/// The encoding to use for the LSDA address in FDEs.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If set then all FDEs which use this CIE must have a LSDA address.</span>
-    <span class="kw">pub</span> <span class="ident">lsda_encoding</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">constants::DwEhPe</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The encoding to use for the LSDA address in FDEs.
+    ///
+    /// If set then all FDEs which use this CIE must have a LSDA address.
+    </span><span class="kw">pub </span>lsda_encoding: <span class="prelude-ty">Option</span>&lt;constants::DwEhPe&gt;,
 
-    <span class="doccomment">/// The encoding to use for addresses in FDEs.</span>
-    <span class="kw">pub</span> <span class="ident">fde_address_encoding</span>: <span class="ident">constants::DwEhPe</span>,
+    <span class="doccomment">/// The encoding to use for addresses in FDEs.
+    </span><span class="kw">pub </span>fde_address_encoding: constants::DwEhPe,
 
-    <span class="doccomment">/// True for signal trampolines.</span>
-    <span class="kw">pub</span> <span class="ident">signal_trampoline</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// True for signal trampolines.
+    </span><span class="kw">pub </span>signal_trampoline: bool,
 
-    <span class="doccomment">/// The initial instructions upon entry to this function.</span>
-    <span class="ident">instructions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">CallFrameInstruction</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The initial instructions upon entry to this function.
+    </span>instructions: Vec&lt;CallFrameInstruction&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">CommonInformationEntry</span> {
-    <span class="doccomment">/// Create a new common information entry.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The encoding version must be a CFI version, not a DWARF version.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">encoding</span>: <span class="ident">Encoding</span>,
-        <span class="ident">code_alignment_factor</span>: <span class="ident">u8</span>,
-        <span class="ident">data_alignment_factor</span>: <span class="ident">i8</span>,
-        <span class="ident">return_address_register</span>: <span class="ident">Register</span>,
-    ) -&gt; <span class="self">Self</span> {
-        <span class="ident">CommonInformationEntry</span> {
-            <span class="ident">encoding</span>,
-            <span class="ident">code_alignment_factor</span>,
-            <span class="ident">data_alignment_factor</span>,
-            <span class="ident">return_address_register</span>,
-            <span class="ident">personality</span>: <span class="prelude-val">None</span>,
-            <span class="ident">lsda_encoding</span>: <span class="prelude-val">None</span>,
-            <span class="ident">fde_address_encoding</span>: <span class="ident">constants::DW_EH_PE_absptr</span>,
-            <span class="ident">signal_trampoline</span>: <span class="bool-val">false</span>,
-            <span class="ident">instructions</span>: <span class="ident">Vec::new</span>(),
+<span class="kw">impl </span>CommonInformationEntry {
+    <span class="doccomment">/// Create a new common information entry.
+    ///
+    /// The encoding version must be a CFI version, not a DWARF version.
+    </span><span class="kw">pub fn </span>new(
+        encoding: Encoding,
+        code_alignment_factor: u8,
+        data_alignment_factor: i8,
+        return_address_register: Register,
+    ) -&gt; <span class="self">Self </span>{
+        CommonInformationEntry {
+            encoding,
+            code_alignment_factor,
+            data_alignment_factor,
+            return_address_register,
+            personality: <span class="prelude-val">None</span>,
+            lsda_encoding: <span class="prelude-val">None</span>,
+            fde_address_encoding: constants::DW_EH_PE_absptr,
+            signal_trampoline: <span class="bool-val">false</span>,
+            instructions: Vec::new(),
         }
     }
 
-    <span class="doccomment">/// Add an initial instruction.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_instruction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">instruction</span>: <span class="ident">CallFrameInstruction</span>) {
-        <span class="self">self</span>.<span class="ident">instructions</span>.<span class="ident">push</span>(<span class="ident">instruction</span>);
+    <span class="doccomment">/// Add an initial instruction.
+    </span><span class="kw">pub fn </span>add_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>, instruction: CallFrameInstruction) {
+        <span class="self">self</span>.instructions.push(instruction);
     }
 
-    <span class="kw">fn</span> <span class="ident">has_augmentation</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">personality</span>.<span class="ident">is_some</span>()
-            <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">lsda_encoding</span>.<span class="ident">is_some</span>()
-            <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">signal_trampoline</span>
-            <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">fde_address_encoding</span> <span class="op">!</span><span class="op">=</span> <span class="ident">constants::DW_EH_PE_absptr</span>
+    <span class="kw">fn </span>has_augmentation(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.personality.is_some()
+            || <span class="self">self</span>.lsda_encoding.is_some()
+            || <span class="self">self</span>.signal_trampoline
+            || <span class="self">self</span>.fde_address_encoding != constants::DW_EH_PE_absptr
     }
 
-    <span class="doccomment">/// Returns the section offset of the CIE.</span>
-    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>, <span class="ident">eh_frame</span>: <span class="ident">bool</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">encoding</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">encoding</span>;
-        <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">len</span>();
+    <span class="doccomment">/// Returns the section offset of the CIE.
+    </span><span class="kw">fn </span>write&lt;W: Writer&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>W, eh_frame: bool) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
+        <span class="kw">let </span>encoding = <span class="self">self</span>.encoding;
+        <span class="kw">let </span>offset = w.len();
 
-        <span class="kw">let</span> <span class="ident">length_offset</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">write_initial_length</span>(<span class="ident">encoding</span>.<span class="ident">format</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">length_base</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">len</span>();
+        <span class="kw">let </span>length_offset = w.write_initial_length(encoding.format)<span class="question-mark">?</span>;
+        <span class="kw">let </span>length_base = w.len();
 
-        <span class="kw">if</span> <span class="ident">eh_frame</span> {
-            <span class="ident">w</span>.<span class="ident">write_u32</span>(<span class="number">0</span>)<span class="question-mark">?</span>;
-        } <span class="kw">else</span> {
-            <span class="kw">match</span> <span class="ident">encoding</span>.<span class="ident">format</span> {
-                <span class="ident">Format::Dwarf32</span> =&gt; <span class="ident">w</span>.<span class="ident">write_u32</span>(<span class="number">0xffff_ffff</span>)<span class="question-mark">?</span>,
-                <span class="ident">Format::Dwarf64</span> =&gt; <span class="ident">w</span>.<span class="ident">write_u64</span>(<span class="number">0xffff_ffff_ffff_ffff</span>)<span class="question-mark">?</span>,
+        <span class="kw">if </span>eh_frame {
+            w.write_u32(<span class="number">0</span>)<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            <span class="kw">match </span>encoding.format {
+                Format::Dwarf32 =&gt; w.write_u32(<span class="number">0xffff_ffff</span>)<span class="question-mark">?</span>,
+                Format::Dwarf64 =&gt; w.write_u64(<span class="number">0xffff_ffff_ffff_ffff</span>)<span class="question-mark">?</span>,
             }
         }
 
-        <span class="kw">if</span> <span class="ident">eh_frame</span> {
-            <span class="kw">if</span> <span class="ident">encoding</span>.<span class="ident">version</span> <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::UnsupportedVersion</span>(<span class="ident">encoding</span>.<span class="ident">version</span>));
+        <span class="kw">if </span>eh_frame {
+            <span class="kw">if </span>encoding.version != <span class="number">1 </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::UnsupportedVersion(encoding.version));
             };
-        } <span class="kw">else</span> {
-            <span class="kw">match</span> <span class="ident">encoding</span>.<span class="ident">version</span> {
-                <span class="number">1</span> <span class="op">|</span> <span class="number">3</span> <span class="op">|</span> <span class="number">4</span> =&gt; {}
-                <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::UnsupportedVersion</span>(<span class="ident">encoding</span>.<span class="ident">version</span>)),
+        } <span class="kw">else </span>{
+            <span class="kw">match </span>encoding.version {
+                <span class="number">1 </span>| <span class="number">3 </span>| <span class="number">4 </span>=&gt; {}
+                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::UnsupportedVersion(encoding.version)),
             };
         }
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">encoding</span>.<span class="ident">version</span> <span class="kw">as</span> <span class="ident">u8</span>)<span class="question-mark">?</span>;
+        w.write_u8(encoding.version <span class="kw">as </span>u8)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">augmentation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">has_augmentation</span>();
-        <span class="kw">if</span> <span class="ident">augmentation</span> {
-            <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="string">b&#39;z&#39;</span>)<span class="question-mark">?</span>;
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">lsda_encoding</span>.<span class="ident">is_some</span>() {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="string">b&#39;L&#39;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>augmentation = <span class="self">self</span>.has_augmentation();
+        <span class="kw">if </span>augmentation {
+            w.write_u8(<span class="string">b&#39;z&#39;</span>)<span class="question-mark">?</span>;
+            <span class="kw">if </span><span class="self">self</span>.lsda_encoding.is_some() {
+                w.write_u8(<span class="string">b&#39;L&#39;</span>)<span class="question-mark">?</span>;
             }
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">personality</span>.<span class="ident">is_some</span>() {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="string">b&#39;P&#39;</span>)<span class="question-mark">?</span>;
+            <span class="kw">if </span><span class="self">self</span>.personality.is_some() {
+                w.write_u8(<span class="string">b&#39;P&#39;</span>)<span class="question-mark">?</span>;
             }
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">fde_address_encoding</span> <span class="op">!</span><span class="op">=</span> <span class="ident">constants::DW_EH_PE_absptr</span> {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="string">b&#39;R&#39;</span>)<span class="question-mark">?</span>;
+            <span class="kw">if </span><span class="self">self</span>.fde_address_encoding != constants::DW_EH_PE_absptr {
+                w.write_u8(<span class="string">b&#39;R&#39;</span>)<span class="question-mark">?</span>;
             }
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">signal_trampoline</span> {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="string">b&#39;S&#39;</span>)<span class="question-mark">?</span>;
+            <span class="kw">if </span><span class="self">self</span>.signal_trampoline {
+                w.write_u8(<span class="string">b&#39;S&#39;</span>)<span class="question-mark">?</span>;
             }
         }
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="number">0</span>)<span class="question-mark">?</span>;
+        w.write_u8(<span class="number">0</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">if</span> <span class="ident">encoding</span>.<span class="ident">version</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">4</span> {
-            <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">encoding</span>.<span class="ident">address_size</span>)<span class="question-mark">?</span>;
-            <span class="comment">// TODO: segment_selector_size</span>
-            <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="number">0</span>)<span class="question-mark">?</span>;
+        <span class="kw">if </span>encoding.version &gt;= <span class="number">4 </span>{
+            w.write_u8(encoding.address_size)<span class="question-mark">?</span>;
+            <span class="comment">// TODO: segment_selector_size
+            </span>w.write_u8(<span class="number">0</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="self">self</span>.<span class="ident">code_alignment_factor</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-        <span class="ident">w</span>.<span class="ident">write_sleb128</span>(<span class="self">self</span>.<span class="ident">data_alignment_factor</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+        w.write_uleb128(<span class="self">self</span>.code_alignment_factor.into())<span class="question-mark">?</span>;
+        w.write_sleb128(<span class="self">self</span>.data_alignment_factor.into())<span class="question-mark">?</span>;
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">eh_frame</span> <span class="op">&amp;&amp;</span> <span class="ident">encoding</span>.<span class="ident">version</span> <span class="op">==</span> <span class="number">1</span> {
-            <span class="kw">let</span> <span class="ident">register</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">return_address_register</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u8</span>;
-            <span class="kw">if</span> <span class="ident">u16::from</span>(<span class="ident">register</span>) <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">return_address_register</span>.<span class="number">0</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::ValueTooLarge</span>);
+        <span class="kw">if </span>!eh_frame &amp;&amp; encoding.version == <span class="number">1 </span>{
+            <span class="kw">let </span>register = <span class="self">self</span>.return_address_register.<span class="number">0 </span><span class="kw">as </span>u8;
+            <span class="kw">if </span>u16::from(register) != <span class="self">self</span>.return_address_register.<span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::ValueTooLarge);
             }
-            <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">register</span>)<span class="question-mark">?</span>;
-        } <span class="kw">else</span> {
-            <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="self">self</span>.<span class="ident">return_address_register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            w.write_u8(register)<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            w.write_uleb128(<span class="self">self</span>.return_address_register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
         }
 
-        <span class="kw">if</span> <span class="ident">augmentation</span> {
-            <span class="kw">let</span> <span class="ident">augmentation_length_offset</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">len</span>();
-            <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="number">0</span>)<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">augmentation_length_base</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">len</span>();
+        <span class="kw">if </span>augmentation {
+            <span class="kw">let </span>augmentation_length_offset = w.len();
+            w.write_u8(<span class="number">0</span>)<span class="question-mark">?</span>;
+            <span class="kw">let </span>augmentation_length_base = w.len();
 
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">eh_pe</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">lsda_encoding</span> {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">eh_pe</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(eh_pe) = <span class="self">self</span>.lsda_encoding {
+                w.write_u8(eh_pe.<span class="number">0</span>)<span class="question-mark">?</span>;
             }
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">eh_pe</span>, <span class="ident">address</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">personality</span> {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">eh_pe</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_eh_pointer</span>(<span class="ident">address</span>, <span class="ident">constants::DW_EH_PE_absptr</span>, <span class="ident">encoding</span>.<span class="ident">address_size</span>)<span class="question-mark">?</span>;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>((eh_pe, address)) = <span class="self">self</span>.personality {
+                w.write_u8(eh_pe.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_eh_pointer(address, constants::DW_EH_PE_absptr, encoding.address_size)<span class="question-mark">?</span>;
             }
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">fde_address_encoding</span> <span class="op">!</span><span class="op">=</span> <span class="ident">constants::DW_EH_PE_absptr</span> {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="self">self</span>.<span class="ident">fde_address_encoding</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+            <span class="kw">if </span><span class="self">self</span>.fde_address_encoding != constants::DW_EH_PE_absptr {
+                w.write_u8(<span class="self">self</span>.fde_address_encoding.<span class="number">0</span>)<span class="question-mark">?</span>;
             }
 
-            <span class="kw">let</span> <span class="ident">augmentation_length</span> <span class="op">=</span> (<span class="ident">w</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">augmentation_length_base</span>) <span class="kw">as</span> <span class="ident">u64</span>;
-            <span class="macro">debug_assert!</span>(<span class="ident">augmentation_length</span> <span class="op">&lt;</span> <span class="number">0x80</span>);
-            <span class="ident">w</span>.<span class="ident">write_udata_at</span>(<span class="ident">augmentation_length_offset</span>, <span class="ident">augmentation_length</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
+            <span class="kw">let </span>augmentation_length = (w.len() - augmentation_length_base) <span class="kw">as </span>u64;
+            <span class="macro">debug_assert!</span>(augmentation_length &lt; <span class="number">0x80</span>);
+            w.write_udata_at(augmentation_length_offset, augmentation_length, <span class="number">1</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="kw">for</span> <span class="ident">instruction</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">instructions</span> {
-            <span class="ident">instruction</span>.<span class="ident">write</span>(<span class="ident">w</span>, <span class="ident">encoding</span>, <span class="self">self</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>instruction <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.instructions {
+            instruction.write(w, encoding, <span class="self">self</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="ident">write_nop</span>(
-            <span class="ident">w</span>,
-            <span class="ident">encoding</span>.<span class="ident">format</span>.<span class="ident">word_size</span>() <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="ident">w</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">length_base</span>,
-            <span class="ident">encoding</span>.<span class="ident">address_size</span>,
+        write_nop(
+            w,
+            encoding.format.word_size() <span class="kw">as </span>usize + w.len() - length_base,
+            encoding.address_size,
         )<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> (<span class="ident">w</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">length_base</span>) <span class="kw">as</span> <span class="ident">u64</span>;
-        <span class="ident">w</span>.<span class="ident">write_initial_length_at</span>(<span class="ident">length_offset</span>, <span class="ident">length</span>, <span class="ident">encoding</span>.<span class="ident">format</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>length = (w.len() - length_base) <span class="kw">as </span>u64;
+        w.write_initial_length_at(length_offset, length, encoding.format)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">offset</span>)
+        <span class="prelude-val">Ok</span>(offset)
     }
 }
 
-<span class="doccomment">/// A frame description entry. There should be one FDE per function.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FrameDescriptionEntry</span> {
-    <span class="doccomment">/// The initial address of the function.</span>
-    <span class="ident">address</span>: <span class="ident">Address</span>,
+<span class="doccomment">/// A frame description entry. There should be one FDE per function.
+</span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>FrameDescriptionEntry {
+    <span class="doccomment">/// The initial address of the function.
+    </span>address: Address,
 
-    <span class="doccomment">/// The length in bytes of the function.</span>
-    <span class="ident">length</span>: <span class="ident">u32</span>,
+    <span class="doccomment">/// The length in bytes of the function.
+    </span>length: u32,
 
-    <span class="doccomment">/// The address of the LSDA.</span>
-    <span class="kw">pub</span> <span class="ident">lsda</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The address of the LSDA.
+    </span><span class="kw">pub </span>lsda: <span class="prelude-ty">Option</span>&lt;Address&gt;,
 
-    <span class="doccomment">/// The instructions for this function, ordered by offset.</span>
-    <span class="ident">instructions</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">CallFrameInstruction</span>)<span class="op">&gt;</span>,
+    <span class="doccomment">/// The instructions for this function, ordered by offset.
+    </span>instructions: Vec&lt;(u32, CallFrameInstruction)&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">FrameDescriptionEntry</span> {
-    <span class="doccomment">/// Create a new frame description entry for a function.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">address</span>: <span class="ident">Address</span>, <span class="ident">length</span>: <span class="ident">u32</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">FrameDescriptionEntry</span> {
-            <span class="ident">address</span>,
-            <span class="ident">length</span>,
-            <span class="ident">lsda</span>: <span class="prelude-val">None</span>,
-            <span class="ident">instructions</span>: <span class="ident">Vec::new</span>(),
+<span class="kw">impl </span>FrameDescriptionEntry {
+    <span class="doccomment">/// Create a new frame description entry for a function.
+    </span><span class="kw">pub fn </span>new(address: Address, length: u32) -&gt; <span class="self">Self </span>{
+        FrameDescriptionEntry {
+            address,
+            length,
+            lsda: <span class="prelude-val">None</span>,
+            instructions: Vec::new(),
         }
     }
 
-    <span class="doccomment">/// Add an instruction.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Instructions must be added in increasing order of offset, or writing will fail.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_instruction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">u32</span>, <span class="ident">instruction</span>: <span class="ident">CallFrameInstruction</span>) {
-        <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">instructions</span>.<span class="ident">last</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="number">0</span>).<span class="ident">unwrap_or</span>(<span class="number">0</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="ident">offset</span>);
-        <span class="self">self</span>.<span class="ident">instructions</span>.<span class="ident">push</span>((<span class="ident">offset</span>, <span class="ident">instruction</span>));
+    <span class="doccomment">/// Add an instruction.
+    ///
+    /// Instructions must be added in increasing order of offset, or writing will fail.
+    </span><span class="kw">pub fn </span>add_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>, offset: u32, instruction: CallFrameInstruction) {
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.instructions.last().map(|x| x.<span class="number">0</span>).unwrap_or(<span class="number">0</span>) &lt;= offset);
+        <span class="self">self</span>.instructions.push((offset, instruction));
     }
 
-    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(
+    <span class="kw">fn </span>write&lt;W: Writer&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>,
-        <span class="ident">eh_frame</span>: <span class="ident">bool</span>,
-        <span class="ident">cie_offset</span>: <span class="ident">usize</span>,
-        <span class="ident">cie</span>: <span class="kw-2">&amp;</span><span class="ident">CommonInformationEntry</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">encoding</span> <span class="op">=</span> <span class="ident">cie</span>.<span class="ident">encoding</span>;
-        <span class="kw">let</span> <span class="ident">length_offset</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">write_initial_length</span>(<span class="ident">encoding</span>.<span class="ident">format</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">length_base</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">len</span>();
+        w: <span class="kw-2">&amp;mut </span>W,
+        eh_frame: bool,
+        cie_offset: usize,
+        cie: <span class="kw-2">&amp;</span>CommonInformationEntry,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>encoding = cie.encoding;
+        <span class="kw">let </span>length_offset = w.write_initial_length(encoding.format)<span class="question-mark">?</span>;
+        <span class="kw">let </span>length_base = w.len();
 
-        <span class="kw">if</span> <span class="ident">eh_frame</span> {
-            <span class="comment">// .eh_frame uses a relative offset which doesn&#39;t need relocation.</span>
-            <span class="ident">w</span>.<span class="ident">write_udata</span>((<span class="ident">w</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">cie_offset</span>) <span class="kw">as</span> <span class="ident">u64</span>, <span class="number">4</span>)<span class="question-mark">?</span>;
-        } <span class="kw">else</span> {
-            <span class="ident">w</span>.<span class="ident">write_offset</span>(
-                <span class="ident">cie_offset</span>,
-                <span class="ident">SectionId::DebugFrame</span>,
-                <span class="ident">encoding</span>.<span class="ident">format</span>.<span class="ident">word_size</span>(),
+        <span class="kw">if </span>eh_frame {
+            <span class="comment">// .eh_frame uses a relative offset which doesn&#39;t need relocation.
+            </span>w.write_udata((w.len() - cie_offset) <span class="kw">as </span>u64, <span class="number">4</span>)<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            w.write_offset(
+                cie_offset,
+                SectionId::DebugFrame,
+                encoding.format.word_size(),
             )<span class="question-mark">?</span>;
         }
 
-        <span class="kw">if</span> <span class="ident">cie</span>.<span class="ident">fde_address_encoding</span> <span class="op">!</span><span class="op">=</span> <span class="ident">constants::DW_EH_PE_absptr</span> {
-            <span class="ident">w</span>.<span class="ident">write_eh_pointer</span>(
-                <span class="self">self</span>.<span class="ident">address</span>,
-                <span class="ident">cie</span>.<span class="ident">fde_address_encoding</span>,
-                <span class="ident">encoding</span>.<span class="ident">address_size</span>,
+        <span class="kw">if </span>cie.fde_address_encoding != constants::DW_EH_PE_absptr {
+            w.write_eh_pointer(
+                <span class="self">self</span>.address,
+                cie.fde_address_encoding,
+                encoding.address_size,
             )<span class="question-mark">?</span>;
-            <span class="ident">w</span>.<span class="ident">write_eh_pointer_data</span>(
-                <span class="self">self</span>.<span class="ident">length</span>.<span class="ident">into</span>(),
-                <span class="ident">cie</span>.<span class="ident">fde_address_encoding</span>.<span class="ident">format</span>(),
-                <span class="ident">encoding</span>.<span class="ident">address_size</span>,
+            w.write_eh_pointer_data(
+                <span class="self">self</span>.length.into(),
+                cie.fde_address_encoding.format(),
+                encoding.address_size,
             )<span class="question-mark">?</span>;
-        } <span class="kw">else</span> {
-            <span class="ident">w</span>.<span class="ident">write_address</span>(<span class="self">self</span>.<span class="ident">address</span>, <span class="ident">encoding</span>.<span class="ident">address_size</span>)<span class="question-mark">?</span>;
-            <span class="ident">w</span>.<span class="ident">write_udata</span>(<span class="self">self</span>.<span class="ident">length</span>.<span class="ident">into</span>(), <span class="ident">encoding</span>.<span class="ident">address_size</span>)<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            w.write_address(<span class="self">self</span>.address, encoding.address_size)<span class="question-mark">?</span>;
+            w.write_udata(<span class="self">self</span>.length.into(), encoding.address_size)<span class="question-mark">?</span>;
         }
 
-        <span class="kw">if</span> <span class="ident">cie</span>.<span class="ident">has_augmentation</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">augmentation_length</span> <span class="op">=</span> <span class="number">0u64</span>;
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">lsda</span>.<span class="ident">is_some</span>() {
-                <span class="ident">augmentation_length</span> <span class="op">+</span><span class="op">=</span> <span class="ident">u64::from</span>(<span class="ident">encoding</span>.<span class="ident">address_size</span>);
+        <span class="kw">if </span>cie.has_augmentation() {
+            <span class="kw">let </span><span class="kw-2">mut </span>augmentation_length = <span class="number">0u64</span>;
+            <span class="kw">if </span><span class="self">self</span>.lsda.is_some() {
+                augmentation_length += u64::from(encoding.address_size);
             }
-            <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">augmentation_length</span>)<span class="question-mark">?</span>;
+            w.write_uleb128(augmentation_length)<span class="question-mark">?</span>;
 
-            <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.<span class="ident">lsda</span>.<span class="ident">is_some</span>(), <span class="ident">cie</span>.<span class="ident">lsda_encoding</span>.<span class="ident">is_some</span>());
-            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">lsda</span>), <span class="prelude-val">Some</span>(<span class="ident">lsda_encoding</span>)) <span class="op">=</span> (<span class="self">self</span>.<span class="ident">lsda</span>, <span class="ident">cie</span>.<span class="ident">lsda_encoding</span>) {
-                <span class="ident">w</span>.<span class="ident">write_eh_pointer</span>(<span class="ident">lsda</span>, <span class="ident">lsda_encoding</span>, <span class="ident">encoding</span>.<span class="ident">address_size</span>)<span class="question-mark">?</span>;
+            <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.lsda.is_some(), cie.lsda_encoding.is_some());
+            <span class="kw">if let </span>(<span class="prelude-val">Some</span>(lsda), <span class="prelude-val">Some</span>(lsda_encoding)) = (<span class="self">self</span>.lsda, cie.lsda_encoding) {
+                w.write_eh_pointer(lsda, lsda_encoding, encoding.address_size)<span class="question-mark">?</span>;
             }
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">prev_offset</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">for</span> (<span class="ident">offset</span>, <span class="ident">instruction</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">instructions</span> {
-            <span class="ident">write_advance_loc</span>(<span class="ident">w</span>, <span class="ident">cie</span>.<span class="ident">code_alignment_factor</span>, <span class="ident">prev_offset</span>, <span class="kw-2">*</span><span class="ident">offset</span>)<span class="question-mark">?</span>;
-            <span class="ident">prev_offset</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">offset</span>;
-            <span class="ident">instruction</span>.<span class="ident">write</span>(<span class="ident">w</span>, <span class="ident">encoding</span>, <span class="ident">cie</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>prev_offset = <span class="number">0</span>;
+        <span class="kw">for </span>(offset, instruction) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.instructions {
+            write_advance_loc(w, cie.code_alignment_factor, prev_offset, <span class="kw-2">*</span>offset)<span class="question-mark">?</span>;
+            prev_offset = <span class="kw-2">*</span>offset;
+            instruction.write(w, encoding, cie)<span class="question-mark">?</span>;
         }
 
-        <span class="ident">write_nop</span>(
-            <span class="ident">w</span>,
-            <span class="ident">encoding</span>.<span class="ident">format</span>.<span class="ident">word_size</span>() <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="ident">w</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">length_base</span>,
-            <span class="ident">encoding</span>.<span class="ident">address_size</span>,
+        write_nop(
+            w,
+            encoding.format.word_size() <span class="kw">as </span>usize + w.len() - length_base,
+            encoding.address_size,
         )<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> (<span class="ident">w</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">length_base</span>) <span class="kw">as</span> <span class="ident">u64</span>;
-        <span class="ident">w</span>.<span class="ident">write_initial_length_at</span>(<span class="ident">length_offset</span>, <span class="ident">length</span>, <span class="ident">encoding</span>.<span class="ident">format</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>length = (w.len() - length_base) <span class="kw">as </span>u64;
+        w.write_initial_length_at(length_offset, length, encoding.format)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="doccomment">/// An instruction in a frame description entry.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This may be a CFA definition, a register rule, or some other directive.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CallFrameInstruction</span> {
-    <span class="doccomment">/// Define the CFA rule to use the provided register and offset.</span>
-    <span class="ident">Cfa</span>(<span class="ident">Register</span>, <span class="ident">i32</span>),
-    <span class="doccomment">/// Update the CFA rule to use the provided register. The offset is unchanged.</span>
-    <span class="ident">CfaRegister</span>(<span class="ident">Register</span>),
-    <span class="doccomment">/// Update the CFA rule to use the provided offset. The register is unchanged.</span>
-    <span class="ident">CfaOffset</span>(<span class="ident">i32</span>),
-    <span class="doccomment">/// Define the CFA rule to use the provided expression.</span>
-    <span class="ident">CfaExpression</span>(<span class="ident">Expression</span>),
+<span class="doccomment">/// An instruction in a frame description entry.
+///
+/// This may be a CFA definition, a register rule, or some other directive.
+</span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+</span><span class="kw">pub enum </span>CallFrameInstruction {
+    <span class="doccomment">/// Define the CFA rule to use the provided register and offset.
+    </span>Cfa(Register, i32),
+    <span class="doccomment">/// Update the CFA rule to use the provided register. The offset is unchanged.
+    </span>CfaRegister(Register),
+    <span class="doccomment">/// Update the CFA rule to use the provided offset. The register is unchanged.
+    </span>CfaOffset(i32),
+    <span class="doccomment">/// Define the CFA rule to use the provided expression.
+    </span>CfaExpression(Expression),
 
-    <span class="doccomment">/// Restore the initial rule for the register.</span>
-    <span class="ident">Restore</span>(<span class="ident">Register</span>),
-    <span class="doccomment">/// The previous value of the register is not recoverable.</span>
-    <span class="ident">Undefined</span>(<span class="ident">Register</span>),
-    <span class="doccomment">/// The register has not been modified.</span>
-    <span class="ident">SameValue</span>(<span class="ident">Register</span>),
-    <span class="doccomment">/// The previous value of the register is saved at address CFA + offset.</span>
-    <span class="ident">Offset</span>(<span class="ident">Register</span>, <span class="ident">i32</span>),
-    <span class="doccomment">/// The previous value of the register is CFA + offset.</span>
-    <span class="ident">ValOffset</span>(<span class="ident">Register</span>, <span class="ident">i32</span>),
-    <span class="doccomment">/// The previous value of the register is stored in another register.</span>
-    <span class="ident">Register</span>(<span class="ident">Register</span>, <span class="ident">Register</span>),
-    <span class="doccomment">/// The previous value of the register is saved at address given by the expression.</span>
-    <span class="ident">Expression</span>(<span class="ident">Register</span>, <span class="ident">Expression</span>),
-    <span class="doccomment">/// The previous value of the register is given by the expression.</span>
-    <span class="ident">ValExpression</span>(<span class="ident">Register</span>, <span class="ident">Expression</span>),
+    <span class="doccomment">/// Restore the initial rule for the register.
+    </span>Restore(Register),
+    <span class="doccomment">/// The previous value of the register is not recoverable.
+    </span>Undefined(Register),
+    <span class="doccomment">/// The register has not been modified.
+    </span>SameValue(Register),
+    <span class="doccomment">/// The previous value of the register is saved at address CFA + offset.
+    </span>Offset(Register, i32),
+    <span class="doccomment">/// The previous value of the register is CFA + offset.
+    </span>ValOffset(Register, i32),
+    <span class="doccomment">/// The previous value of the register is stored in another register.
+    </span>Register(Register, Register),
+    <span class="doccomment">/// The previous value of the register is saved at address given by the expression.
+    </span>Expression(Register, Expression),
+    <span class="doccomment">/// The previous value of the register is given by the expression.
+    </span>ValExpression(Register, Expression),
 
-    <span class="doccomment">/// Push all register rules onto a stack.</span>
-    <span class="ident">RememberState</span>,
-    <span class="doccomment">/// Pop all register rules off the stack.</span>
-    <span class="ident">RestoreState</span>,
-    <span class="doccomment">/// The size of the arguments that have been pushed onto the stack.</span>
-    <span class="ident">ArgsSize</span>(<span class="ident">u32</span>),
+    <span class="doccomment">/// Push all register rules onto a stack.
+    </span>RememberState,
+    <span class="doccomment">/// Pop all register rules off the stack.
+    </span>RestoreState,
+    <span class="doccomment">/// The size of the arguments that have been pushed onto the stack.
+    </span>ArgsSize(u32),
 }
 
-<span class="kw">impl</span> <span class="ident">CallFrameInstruction</span> {
-    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(
+<span class="kw">impl </span>CallFrameInstruction {
+    <span class="kw">fn </span>write&lt;W: Writer&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>,
-        <span class="ident">encoding</span>: <span class="ident">Encoding</span>,
-        <span class="ident">cie</span>: <span class="kw-2">&amp;</span><span class="ident">CommonInformationEntry</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">CallFrameInstruction::Cfa</span>(<span class="ident">register</span>, <span class="ident">offset</span>) =&gt; {
-                <span class="kw">if</span> <span class="ident">offset</span> <span class="op">&lt;</span> <span class="number">0</span> {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_data_offset</span>(<span class="ident">offset</span>, <span class="ident">cie</span>.<span class="ident">data_alignment_factor</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_def_cfa_sf</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_sleb128</span>(<span class="ident">offset</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                } <span class="kw">else</span> {
-                    <span class="comment">// Unfactored offset.</span>
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_def_cfa</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
+        w: <span class="kw-2">&amp;mut </span>W,
+        encoding: Encoding,
+        cie: <span class="kw-2">&amp;</span>CommonInformationEntry,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+            CallFrameInstruction::Cfa(register, offset) =&gt; {
+                <span class="kw">if </span>offset &lt; <span class="number">0 </span>{
+                    <span class="kw">let </span>offset = factored_data_offset(offset, cie.data_alignment_factor)<span class="question-mark">?</span>;
+                    w.write_u8(constants::DW_CFA_def_cfa_sf.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                    w.write_sleb128(offset.into())<span class="question-mark">?</span>;
+                } <span class="kw">else </span>{
+                    <span class="comment">// Unfactored offset.
+                    </span>w.write_u8(constants::DW_CFA_def_cfa.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                    w.write_uleb128(offset <span class="kw">as </span>u64)<span class="question-mark">?</span>;
                 }
             }
-            <span class="ident">CallFrameInstruction::CfaRegister</span>(<span class="ident">register</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_def_cfa_register</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            CallFrameInstruction::CfaRegister(register) =&gt; {
+                w.write_u8(constants::DW_CFA_def_cfa_register.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::CfaOffset</span>(<span class="ident">offset</span>) =&gt; {
-                <span class="kw">if</span> <span class="ident">offset</span> <span class="op">&lt;</span> <span class="number">0</span> {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_data_offset</span>(<span class="ident">offset</span>, <span class="ident">cie</span>.<span class="ident">data_alignment_factor</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_def_cfa_offset_sf</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_sleb128</span>(<span class="ident">offset</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                } <span class="kw">else</span> {
-                    <span class="comment">// Unfactored offset.</span>
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_def_cfa_offset</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::CfaOffset(offset) =&gt; {
+                <span class="kw">if </span>offset &lt; <span class="number">0 </span>{
+                    <span class="kw">let </span>offset = factored_data_offset(offset, cie.data_alignment_factor)<span class="question-mark">?</span>;
+                    w.write_u8(constants::DW_CFA_def_cfa_offset_sf.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_sleb128(offset.into())<span class="question-mark">?</span>;
+                } <span class="kw">else </span>{
+                    <span class="comment">// Unfactored offset.
+                    </span>w.write_u8(constants::DW_CFA_def_cfa_offset.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(offset <span class="kw">as </span>u64)<span class="question-mark">?</span>;
                 }
             }
-            <span class="ident">CallFrameInstruction::CfaExpression</span>(<span class="kw-2">ref</span> <span class="ident">expression</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_def_cfa_expression</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">expression</span>.<span class="ident">size</span>(<span class="ident">encoding</span>, <span class="prelude-val">None</span>) <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
-                <span class="ident">expression</span>.<span class="ident">write</span>(<span class="ident">w</span>, <span class="prelude-val">None</span>, <span class="ident">encoding</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::CfaExpression(<span class="kw-2">ref </span>expression) =&gt; {
+                w.write_u8(constants::DW_CFA_def_cfa_expression.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(expression.size(encoding, <span class="prelude-val">None</span>) <span class="kw">as </span>u64)<span class="question-mark">?</span>;
+                expression.write(w, <span class="prelude-val">None</span>, encoding, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::Restore</span>(<span class="ident">register</span>) =&gt; {
-                <span class="kw">if</span> <span class="ident">register</span>.<span class="number">0</span> <span class="op">&lt;</span> <span class="number">0x40</span> {
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_restore</span>.<span class="number">0</span> <span class="op">|</span> <span class="ident">register</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u8</span>)<span class="question-mark">?</span>;
-                } <span class="kw">else</span> {
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_restore_extended</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            CallFrameInstruction::Restore(register) =&gt; {
+                <span class="kw">if </span>register.<span class="number">0 </span>&lt; <span class="number">0x40 </span>{
+                    w.write_u8(constants::DW_CFA_restore.<span class="number">0 </span>| register.<span class="number">0 </span><span class="kw">as </span>u8)<span class="question-mark">?</span>;
+                } <span class="kw">else </span>{
+                    w.write_u8(constants::DW_CFA_restore_extended.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
                 }
             }
-            <span class="ident">CallFrameInstruction::Undefined</span>(<span class="ident">register</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_undefined</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            CallFrameInstruction::Undefined(register) =&gt; {
+                w.write_u8(constants::DW_CFA_undefined.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::SameValue</span>(<span class="ident">register</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_same_value</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            CallFrameInstruction::SameValue(register) =&gt; {
+                w.write_u8(constants::DW_CFA_same_value.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::Offset</span>(<span class="ident">register</span>, <span class="ident">offset</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_data_offset</span>(<span class="ident">offset</span>, <span class="ident">cie</span>.<span class="ident">data_alignment_factor</span>)<span class="question-mark">?</span>;
-                <span class="kw">if</span> <span class="ident">offset</span> <span class="op">&lt;</span> <span class="number">0</span> {
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_offset_extended_sf</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_sleb128</span>(<span class="ident">offset</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">register</span>.<span class="number">0</span> <span class="op">&lt;</span> <span class="number">0x40</span> {
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_offset</span>.<span class="number">0</span> <span class="op">|</span> <span class="ident">register</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">u8</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
-                } <span class="kw">else</span> {
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_offset_extended</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::Offset(register, offset) =&gt; {
+                <span class="kw">let </span>offset = factored_data_offset(offset, cie.data_alignment_factor)<span class="question-mark">?</span>;
+                <span class="kw">if </span>offset &lt; <span class="number">0 </span>{
+                    w.write_u8(constants::DW_CFA_offset_extended_sf.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                    w.write_sleb128(offset.into())<span class="question-mark">?</span>;
+                } <span class="kw">else if </span>register.<span class="number">0 </span>&lt; <span class="number">0x40 </span>{
+                    w.write_u8(constants::DW_CFA_offset.<span class="number">0 </span>| register.<span class="number">0 </span><span class="kw">as </span>u8)<span class="question-mark">?</span>;
+                    w.write_uleb128(offset <span class="kw">as </span>u64)<span class="question-mark">?</span>;
+                } <span class="kw">else </span>{
+                    w.write_u8(constants::DW_CFA_offset_extended.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                    w.write_uleb128(offset <span class="kw">as </span>u64)<span class="question-mark">?</span>;
                 }
             }
-            <span class="ident">CallFrameInstruction::ValOffset</span>(<span class="ident">register</span>, <span class="ident">offset</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_data_offset</span>(<span class="ident">offset</span>, <span class="ident">cie</span>.<span class="ident">data_alignment_factor</span>)<span class="question-mark">?</span>;
-                <span class="kw">if</span> <span class="ident">offset</span> <span class="op">&lt;</span> <span class="number">0</span> {
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_val_offset_sf</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_sleb128</span>(<span class="ident">offset</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                } <span class="kw">else</span> {
-                    <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_val_offset</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                    <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::ValOffset(register, offset) =&gt; {
+                <span class="kw">let </span>offset = factored_data_offset(offset, cie.data_alignment_factor)<span class="question-mark">?</span>;
+                <span class="kw">if </span>offset &lt; <span class="number">0 </span>{
+                    w.write_u8(constants::DW_CFA_val_offset_sf.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                    w.write_sleb128(offset.into())<span class="question-mark">?</span>;
+                } <span class="kw">else </span>{
+                    w.write_u8(constants::DW_CFA_val_offset.<span class="number">0</span>)<span class="question-mark">?</span>;
+                    w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                    w.write_uleb128(offset <span class="kw">as </span>u64)<span class="question-mark">?</span>;
                 }
             }
-            <span class="ident">CallFrameInstruction::Register</span>(<span class="ident">register1</span>, <span class="ident">register2</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_register</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register1</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register2</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            CallFrameInstruction::Register(register1, register2) =&gt; {
+                w.write_u8(constants::DW_CFA_register.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(register1.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                w.write_uleb128(register2.<span class="number">0</span>.into())<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::Expression</span>(<span class="ident">register</span>, <span class="kw-2">ref</span> <span class="ident">expression</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_expression</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">expression</span>.<span class="ident">size</span>(<span class="ident">encoding</span>, <span class="prelude-val">None</span>) <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
-                <span class="ident">expression</span>.<span class="ident">write</span>(<span class="ident">w</span>, <span class="prelude-val">None</span>, <span class="ident">encoding</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::Expression(register, <span class="kw-2">ref </span>expression) =&gt; {
+                w.write_u8(constants::DW_CFA_expression.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                w.write_uleb128(expression.size(encoding, <span class="prelude-val">None</span>) <span class="kw">as </span>u64)<span class="question-mark">?</span>;
+                expression.write(w, <span class="prelude-val">None</span>, encoding, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::ValExpression</span>(<span class="ident">register</span>, <span class="kw-2">ref</span> <span class="ident">expression</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_val_expression</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">register</span>.<span class="number">0</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">expression</span>.<span class="ident">size</span>(<span class="ident">encoding</span>, <span class="prelude-val">None</span>) <span class="kw">as</span> <span class="ident">u64</span>)<span class="question-mark">?</span>;
-                <span class="ident">expression</span>.<span class="ident">write</span>(<span class="ident">w</span>, <span class="prelude-val">None</span>, <span class="ident">encoding</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::ValExpression(register, <span class="kw-2">ref </span>expression) =&gt; {
+                w.write_u8(constants::DW_CFA_val_expression.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(register.<span class="number">0</span>.into())<span class="question-mark">?</span>;
+                w.write_uleb128(expression.size(encoding, <span class="prelude-val">None</span>) <span class="kw">as </span>u64)<span class="question-mark">?</span>;
+                expression.write(w, <span class="prelude-val">None</span>, encoding, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::RememberState</span> =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_remember_state</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::RememberState =&gt; {
+                w.write_u8(constants::DW_CFA_remember_state.<span class="number">0</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::RestoreState</span> =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_restore_state</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+            CallFrameInstruction::RestoreState =&gt; {
+                w.write_u8(constants::DW_CFA_restore_state.<span class="number">0</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">CallFrameInstruction::ArgsSize</span>(<span class="ident">size</span>) =&gt; {
-                <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_GNU_args_size</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="ident">w</span>.<span class="ident">write_uleb128</span>(<span class="ident">size</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            CallFrameInstruction::ArgsSize(size) =&gt; {
+                w.write_u8(constants::DW_CFA_GNU_args_size.<span class="number">0</span>)<span class="question-mark">?</span>;
+                w.write_uleb128(size.into())<span class="question-mark">?</span>;
             }
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="kw">fn</span> <span class="ident">write_advance_loc</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(
-    <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>,
-    <span class="ident">code_alignment_factor</span>: <span class="ident">u8</span>,
-    <span class="ident">prev_offset</span>: <span class="ident">u32</span>,
-    <span class="ident">offset</span>: <span class="ident">u32</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">offset</span> <span class="op">==</span> <span class="ident">prev_offset</span> {
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+<span class="kw">fn </span>write_advance_loc&lt;W: Writer&gt;(
+    w: <span class="kw-2">&amp;mut </span>W,
+    code_alignment_factor: u8,
+    prev_offset: u32,
+    offset: u32,
+) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">if </span>offset == prev_offset {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
     }
-    <span class="kw">let</span> <span class="ident">delta</span> <span class="op">=</span> <span class="ident">factored_code_delta</span>(<span class="ident">prev_offset</span>, <span class="ident">offset</span>, <span class="ident">code_alignment_factor</span>)<span class="question-mark">?</span>;
-    <span class="kw">if</span> <span class="ident">delta</span> <span class="op">&lt;</span> <span class="number">0x40</span> {
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_advance_loc</span>.<span class="number">0</span> <span class="op">|</span> <span class="ident">delta</span> <span class="kw">as</span> <span class="ident">u8</span>)<span class="question-mark">?</span>;
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">delta</span> <span class="op">&lt;</span> <span class="number">0x100</span> {
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_advance_loc1</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">delta</span> <span class="kw">as</span> <span class="ident">u8</span>)<span class="question-mark">?</span>;
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">delta</span> <span class="op">&lt;</span> <span class="number">0x10000</span> {
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_advance_loc2</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-        <span class="ident">w</span>.<span class="ident">write_u16</span>(<span class="ident">delta</span> <span class="kw">as</span> <span class="ident">u16</span>)<span class="question-mark">?</span>;
-    } <span class="kw">else</span> {
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_advance_loc4</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-        <span class="ident">w</span>.<span class="ident">write_u32</span>(<span class="ident">delta</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>delta = factored_code_delta(prev_offset, offset, code_alignment_factor)<span class="question-mark">?</span>;
+    <span class="kw">if </span>delta &lt; <span class="number">0x40 </span>{
+        w.write_u8(constants::DW_CFA_advance_loc.<span class="number">0 </span>| delta <span class="kw">as </span>u8)<span class="question-mark">?</span>;
+    } <span class="kw">else if </span>delta &lt; <span class="number">0x100 </span>{
+        w.write_u8(constants::DW_CFA_advance_loc1.<span class="number">0</span>)<span class="question-mark">?</span>;
+        w.write_u8(delta <span class="kw">as </span>u8)<span class="question-mark">?</span>;
+    } <span class="kw">else if </span>delta &lt; <span class="number">0x10000 </span>{
+        w.write_u8(constants::DW_CFA_advance_loc2.<span class="number">0</span>)<span class="question-mark">?</span>;
+        w.write_u16(delta <span class="kw">as </span>u16)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        w.write_u8(constants::DW_CFA_advance_loc4.<span class="number">0</span>)<span class="question-mark">?</span>;
+        w.write_u32(delta)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">write_nop</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Writer</span><span class="op">&gt;</span>(<span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">align</span>: <span class="ident">u8</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="macro">debug_assert_eq!</span>(<span class="ident">align</span> <span class="op">&amp;</span> (<span class="ident">align</span> <span class="op">-</span> <span class="number">1</span>), <span class="number">0</span>);
-    <span class="kw">let</span> <span class="ident">tail_len</span> <span class="op">=</span> (<span class="op">!</span><span class="ident">len</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">&amp;</span> (<span class="ident">align</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="number">1</span>);
-    <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">tail_len</span> {
-        <span class="ident">w</span>.<span class="ident">write_u8</span>(<span class="ident">constants::DW_CFA_nop</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+<span class="kw">fn </span>write_nop&lt;W: Writer&gt;(w: <span class="kw-2">&amp;mut </span>W, len: usize, align: u8) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="macro">debug_assert_eq!</span>(align &amp; (align - <span class="number">1</span>), <span class="number">0</span>);
+    <span class="kw">let </span>tail_len = (!len + <span class="number">1</span>) &amp; (align <span class="kw">as </span>usize - <span class="number">1</span>);
+    <span class="kw">for _ in </span><span class="number">0</span>..tail_len {
+        w.write_u8(constants::DW_CFA_nop.<span class="number">0</span>)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">factored_code_delta</span>(<span class="ident">prev_offset</span>: <span class="ident">u32</span>, <span class="ident">offset</span>: <span class="ident">u32</span>, <span class="ident">factor</span>: <span class="ident">u8</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">offset</span> <span class="op">&lt;</span> <span class="ident">prev_offset</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidFrameCodeOffset</span>(<span class="ident">offset</span>));
+<span class="kw">fn </span>factored_code_delta(prev_offset: u32, offset: u32, factor: u8) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+    <span class="kw">if </span>offset &lt; prev_offset {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidFrameCodeOffset(offset));
     }
-    <span class="kw">let</span> <span class="ident">delta</span> <span class="op">=</span> <span class="ident">offset</span> <span class="op">-</span> <span class="ident">prev_offset</span>;
-    <span class="kw">let</span> <span class="ident">factor</span> <span class="op">=</span> <span class="ident">u32::from</span>(<span class="ident">factor</span>);
-    <span class="kw">let</span> <span class="ident">factored_delta</span> <span class="op">=</span> <span class="ident">delta</span> <span class="op">/</span> <span class="ident">factor</span>;
-    <span class="kw">if</span> <span class="ident">delta</span> <span class="op">!</span><span class="op">=</span> <span class="ident">factored_delta</span> <span class="op">*</span> <span class="ident">factor</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidFrameCodeOffset</span>(<span class="ident">offset</span>));
+    <span class="kw">let </span>delta = offset - prev_offset;
+    <span class="kw">let </span>factor = u32::from(factor);
+    <span class="kw">let </span>factored_delta = delta / factor;
+    <span class="kw">if </span>delta != factored_delta * factor {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidFrameCodeOffset(offset));
     }
-    <span class="prelude-val">Ok</span>(<span class="ident">factored_delta</span>)
+    <span class="prelude-val">Ok</span>(factored_delta)
 }
 
-<span class="kw">fn</span> <span class="ident">factored_data_offset</span>(<span class="ident">offset</span>: <span class="ident">i32</span>, <span class="ident">factor</span>: <span class="ident">i8</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">factor</span> <span class="op">=</span> <span class="ident">i32::from</span>(<span class="ident">factor</span>);
-    <span class="kw">let</span> <span class="ident">factored_offset</span> <span class="op">=</span> <span class="ident">offset</span> <span class="op">/</span> <span class="ident">factor</span>;
-    <span class="kw">if</span> <span class="ident">offset</span> <span class="op">!</span><span class="op">=</span> <span class="ident">factored_offset</span> <span class="op">*</span> <span class="ident">factor</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidFrameDataOffset</span>(<span class="ident">offset</span>));
+<span class="kw">fn </span>factored_data_offset(offset: i32, factor: i8) -&gt; <span class="prelude-ty">Result</span>&lt;i32&gt; {
+    <span class="kw">let </span>factor = i32::from(factor);
+    <span class="kw">let </span>factored_offset = offset / factor;
+    <span class="kw">if </span>offset != factored_offset * factor {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidFrameDataOffset(offset));
     }
-    <span class="prelude-val">Ok</span>(<span class="ident">factored_offset</span>)
+    <span class="prelude-val">Ok</span>(factored_offset)
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;read&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod</span> <span class="ident">convert</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::read</span>::{<span class="self">self</span>, <span class="ident">Reader</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::write</span>::{<span class="ident">ConvertError</span>, <span class="ident">ConvertResult</span>};
-    <span class="kw">use</span> <span class="ident">std::collections</span>::{<span class="ident">hash_map</span>, <span class="ident">HashMap</span>};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;read&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>convert {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::read::{<span class="self">self</span>, Reader};
+    <span class="kw">use </span><span class="kw">crate</span>::write::{ConvertError, ConvertResult};
+    <span class="kw">use </span>std::collections::{hash_map, HashMap};
 
-    <span class="kw">impl</span> <span class="ident">FrameTable</span> {
-        <span class="doccomment">/// Create a frame table by reading the data in the given section.</span>
-        <span class="doccomment">///</span>
-        <span class="doccomment">/// `convert_address` is a function to convert read addresses into the `Address`</span>
-        <span class="doccomment">/// type. For non-relocatable addresses, this function may simply return</span>
-        <span class="doccomment">/// `Address::Constant(address)`. For relocatable addresses, it is the caller&#39;s</span>
-        <span class="doccomment">/// responsibility to determine the symbol and addend corresponding to the address</span>
-        <span class="doccomment">/// and return `Address::Symbol { symbol, addend }`.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">Section</span><span class="op">&gt;</span>(
-            <span class="ident">frame</span>: <span class="kw-2">&amp;</span><span class="ident">Section</span>,
-            <span class="ident">convert_address</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
-        ) -&gt; <span class="ident">ConvertResult</span><span class="op">&lt;</span><span class="ident">FrameTable</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">R</span>: <span class="ident">Reader</span><span class="op">&lt;</span><span class="ident">Offset</span> <span class="op">=</span> <span class="ident">usize</span><span class="op">&gt;</span>,
-            <span class="ident">Section</span>: <span class="ident">read::UnwindSection</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-            <span class="ident">Section::Offset</span>: <span class="ident">read::UnwindOffset</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+    <span class="kw">impl </span>FrameTable {
+        <span class="doccomment">/// Create a frame table by reading the data in the given section.
+        ///
+        /// `convert_address` is a function to convert read addresses into the `Address`
+        /// type. For non-relocatable addresses, this function may simply return
+        /// `Address::Constant(address)`. For relocatable addresses, it is the caller&#39;s
+        /// responsibility to determine the symbol and addend corresponding to the address
+        /// and return `Address::Symbol { symbol, addend }`.
+        </span><span class="kw">pub fn </span>from&lt;R, Section&gt;(
+            frame: <span class="kw-2">&amp;</span>Section,
+            convert_address: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Fn(u64) -&gt; <span class="prelude-ty">Option</span>&lt;Address&gt;,
+        ) -&gt; ConvertResult&lt;FrameTable&gt;
+        <span class="kw">where
+            </span>R: Reader&lt;Offset = usize&gt;,
+            Section: read::UnwindSection&lt;R&gt;,
+            Section::Offset: read::UnwindOffset&lt;usize&gt;,
         {
-            <span class="kw">let</span> <span class="ident">bases</span> <span class="op">=</span> <span class="ident">read::BaseAddresses::default</span>().<span class="ident">set_eh_frame</span>(<span class="number">0</span>);
+            <span class="kw">let </span>bases = read::BaseAddresses::default().set_eh_frame(<span class="number">0</span>);
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">frame_table</span> <span class="op">=</span> <span class="ident">FrameTable::default</span>();
+            <span class="kw">let </span><span class="kw-2">mut </span>frame_table = FrameTable::default();
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cie_ids</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">entries</span> <span class="op">=</span> <span class="ident">frame</span>.<span class="ident">entries</span>(<span class="kw-2">&amp;</span><span class="ident">bases</span>);
-            <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">entry</span>) <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">next</span>()<span class="question-mark">?</span> {
-                <span class="kw">let</span> <span class="ident">partial</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">entry</span> {
-                    <span class="ident">read::CieOrFde::Cie</span>(<span class="kw">_</span>) =&gt; <span class="kw">continue</span>,
-                    <span class="ident">read::CieOrFde::Fde</span>(<span class="ident">partial</span>) =&gt; <span class="ident">partial</span>,
+            <span class="kw">let </span><span class="kw-2">mut </span>cie_ids = HashMap::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>entries = frame.entries(<span class="kw-2">&amp;</span>bases);
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(entry) = entries.next()<span class="question-mark">? </span>{
+                <span class="kw">let </span>partial = <span class="kw">match </span>entry {
+                    read::CieOrFde::Cie(<span class="kw">_</span>) =&gt; <span class="kw">continue</span>,
+                    read::CieOrFde::Fde(partial) =&gt; partial,
                 };
 
-                <span class="comment">// TODO: is it worth caching the parsed CIEs? It would be better if FDEs only</span>
-                <span class="comment">// stored a reference.</span>
-                <span class="kw">let</span> <span class="ident">from_fde</span> <span class="op">=</span> <span class="ident">partial</span>.<span class="ident">parse</span>(<span class="ident">Section::cie_from_offset</span>)<span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">from_cie</span> <span class="op">=</span> <span class="ident">from_fde</span>.<span class="ident">cie</span>();
-                <span class="kw">let</span> <span class="ident">cie_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">cie_ids</span>.<span class="ident">entry</span>(<span class="ident">from_cie</span>.<span class="ident">offset</span>()) {
-                    <span class="ident">hash_map::Entry::Occupied</span>(<span class="ident">o</span>) =&gt; <span class="kw-2">*</span><span class="ident">o</span>.<span class="ident">get</span>(),
-                    <span class="ident">hash_map::Entry::Vacant</span>(<span class="ident">e</span>) =&gt; {
-                        <span class="kw">let</span> <span class="ident">cie</span> <span class="op">=</span>
-                            <span class="ident">CommonInformationEntry::from</span>(<span class="ident">from_cie</span>, <span class="ident">frame</span>, <span class="kw-2">&amp;</span><span class="ident">bases</span>, <span class="ident">convert_address</span>)<span class="question-mark">?</span>;
-                        <span class="kw">let</span> <span class="ident">cie_id</span> <span class="op">=</span> <span class="ident">frame_table</span>.<span class="ident">add_cie</span>(<span class="ident">cie</span>);
-                        <span class="ident">e</span>.<span class="ident">insert</span>(<span class="ident">cie_id</span>);
-                        <span class="ident">cie_id</span>
+                <span class="comment">// TODO: is it worth caching the parsed CIEs? It would be better if FDEs only
+                // stored a reference.
+                </span><span class="kw">let </span>from_fde = partial.parse(Section::cie_from_offset)<span class="question-mark">?</span>;
+                <span class="kw">let </span>from_cie = from_fde.cie();
+                <span class="kw">let </span>cie_id = <span class="kw">match </span>cie_ids.entry(from_cie.offset()) {
+                    hash_map::Entry::Occupied(o) =&gt; <span class="kw-2">*</span>o.get(),
+                    hash_map::Entry::Vacant(e) =&gt; {
+                        <span class="kw">let </span>cie =
+                            CommonInformationEntry::from(from_cie, frame, <span class="kw-2">&amp;</span>bases, convert_address)<span class="question-mark">?</span>;
+                        <span class="kw">let </span>cie_id = frame_table.add_cie(cie);
+                        e.insert(cie_id);
+                        cie_id
                     }
                 };
-                <span class="kw">let</span> <span class="ident">fde</span> <span class="op">=</span> <span class="ident">FrameDescriptionEntry::from</span>(<span class="kw-2">&amp;</span><span class="ident">from_fde</span>, <span class="ident">frame</span>, <span class="kw-2">&amp;</span><span class="ident">bases</span>, <span class="ident">convert_address</span>)<span class="question-mark">?</span>;
-                <span class="ident">frame_table</span>.<span class="ident">add_fde</span>(<span class="ident">cie_id</span>, <span class="ident">fde</span>);
+                <span class="kw">let </span>fde = FrameDescriptionEntry::from(<span class="kw-2">&amp;</span>from_fde, frame, <span class="kw-2">&amp;</span>bases, convert_address)<span class="question-mark">?</span>;
+                frame_table.add_fde(cie_id, fde);
             }
 
-            <span class="prelude-val">Ok</span>(<span class="ident">frame_table</span>)
+            <span class="prelude-val">Ok</span>(frame_table)
         }
     }
 
-    <span class="kw">impl</span> <span class="ident">CommonInformationEntry</span> {
-        <span class="kw">fn</span> <span class="ident">from</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">Section</span><span class="op">&gt;</span>(
-            <span class="ident">from_cie</span>: <span class="kw-2">&amp;</span><span class="ident">read::CommonInformationEntry</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-            <span class="ident">frame</span>: <span class="kw-2">&amp;</span><span class="ident">Section</span>,
-            <span class="ident">bases</span>: <span class="kw-2">&amp;</span><span class="ident">read::BaseAddresses</span>,
-            <span class="ident">convert_address</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
-        ) -&gt; <span class="ident">ConvertResult</span><span class="op">&lt;</span><span class="ident">CommonInformationEntry</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">R</span>: <span class="ident">Reader</span><span class="op">&lt;</span><span class="ident">Offset</span> <span class="op">=</span> <span class="ident">usize</span><span class="op">&gt;</span>,
-            <span class="ident">Section</span>: <span class="ident">read::UnwindSection</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-            <span class="ident">Section::Offset</span>: <span class="ident">read::UnwindOffset</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+    <span class="kw">impl </span>CommonInformationEntry {
+        <span class="kw">fn </span>from&lt;R, Section&gt;(
+            from_cie: <span class="kw-2">&amp;</span>read::CommonInformationEntry&lt;R&gt;,
+            frame: <span class="kw-2">&amp;</span>Section,
+            bases: <span class="kw-2">&amp;</span>read::BaseAddresses,
+            convert_address: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Fn(u64) -&gt; <span class="prelude-ty">Option</span>&lt;Address&gt;,
+        ) -&gt; ConvertResult&lt;CommonInformationEntry&gt;
+        <span class="kw">where
+            </span>R: Reader&lt;Offset = usize&gt;,
+            Section: read::UnwindSection&lt;R&gt;,
+            Section::Offset: read::UnwindOffset&lt;usize&gt;,
         {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cie</span> <span class="op">=</span> <span class="ident">CommonInformationEntry::new</span>(
-                <span class="ident">from_cie</span>.<span class="ident">encoding</span>(),
-                <span class="ident">from_cie</span>.<span class="ident">code_alignment_factor</span>() <span class="kw">as</span> <span class="ident">u8</span>,
-                <span class="ident">from_cie</span>.<span class="ident">data_alignment_factor</span>() <span class="kw">as</span> <span class="ident">i8</span>,
-                <span class="ident">from_cie</span>.<span class="ident">return_address_register</span>(),
+            <span class="kw">let </span><span class="kw-2">mut </span>cie = CommonInformationEntry::new(
+                from_cie.encoding(),
+                from_cie.code_alignment_factor() <span class="kw">as </span>u8,
+                from_cie.data_alignment_factor() <span class="kw">as </span>i8,
+                from_cie.return_address_register(),
             );
 
-            <span class="ident">cie</span>.<span class="ident">personality</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">from_cie</span>.<span class="ident">personality_with_encoding</span>() {
-                <span class="comment">// We treat these the same because the encoding already determines</span>
-                <span class="comment">// whether it is indirect.</span>
-                <span class="prelude-val">Some</span>((<span class="ident">eh_pe</span>, <span class="ident">read::Pointer::Direct</span>(<span class="ident">p</span>)))
-                <span class="op">|</span> <span class="prelude-val">Some</span>((<span class="ident">eh_pe</span>, <span class="ident">read::Pointer::Indirect</span>(<span class="ident">p</span>))) =&gt; {
-                    <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">convert_address</span>(<span class="ident">p</span>).<span class="ident">ok_or</span>(<span class="ident">ConvertError::InvalidAddress</span>)<span class="question-mark">?</span>;
-                    <span class="prelude-val">Some</span>((<span class="ident">eh_pe</span>, <span class="ident">address</span>))
+            cie.personality = <span class="kw">match </span>from_cie.personality_with_encoding() {
+                <span class="comment">// We treat these the same because the encoding already determines
+                // whether it is indirect.
+                </span><span class="prelude-val">Some</span>((eh_pe, read::Pointer::Direct(p)))
+                | <span class="prelude-val">Some</span>((eh_pe, read::Pointer::Indirect(p))) =&gt; {
+                    <span class="kw">let </span>address = convert_address(p).ok_or(ConvertError::InvalidAddress)<span class="question-mark">?</span>;
+                    <span class="prelude-val">Some</span>((eh_pe, address))
                 }
-                <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
             };
-            <span class="ident">cie</span>.<span class="ident">lsda_encoding</span> <span class="op">=</span> <span class="ident">from_cie</span>.<span class="ident">lsda_encoding</span>();
-            <span class="ident">cie</span>.<span class="ident">fde_address_encoding</span> <span class="op">=</span> <span class="ident">from_cie</span>
-                .<span class="ident">fde_address_encoding</span>()
-                .<span class="ident">unwrap_or</span>(<span class="ident">constants::DW_EH_PE_absptr</span>);
-            <span class="ident">cie</span>.<span class="ident">signal_trampoline</span> <span class="op">=</span> <span class="ident">from_cie</span>.<span class="ident">is_signal_trampoline</span>();
+            cie.lsda_encoding = from_cie.lsda_encoding();
+            cie.fde_address_encoding = from_cie
+                .fde_address_encoding()
+                .unwrap_or(constants::DW_EH_PE_absptr);
+            cie.signal_trampoline = from_cie.is_signal_trampoline();
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">from_instructions</span> <span class="op">=</span> <span class="ident">from_cie</span>.<span class="ident">instructions</span>(<span class="ident">frame</span>, <span class="ident">bases</span>);
-            <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">from_instruction</span>) <span class="op">=</span> <span class="ident">from_instructions</span>.<span class="ident">next</span>()<span class="question-mark">?</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">instruction</span>) <span class="op">=</span> <span class="ident">CallFrameInstruction::from</span>(
-                    <span class="ident">from_instruction</span>,
-                    <span class="ident">from_cie</span>,
-                    <span class="ident">convert_address</span>,
-                    <span class="kw-2">&amp;mut</span> <span class="ident">offset</span>,
-                )<span class="question-mark">?</span> {
-                    <span class="ident">cie</span>.<span class="ident">instructions</span>.<span class="ident">push</span>(<span class="ident">instruction</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">0</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>from_instructions = from_cie.instructions(frame, bases);
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(from_instruction) = from_instructions.next()<span class="question-mark">? </span>{
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(instruction) = CallFrameInstruction::from(
+                    from_instruction,
+                    from_cie,
+                    convert_address,
+                    <span class="kw-2">&amp;mut </span>offset,
+                )<span class="question-mark">? </span>{
+                    cie.instructions.push(instruction);
                 }
             }
-            <span class="prelude-val">Ok</span>(<span class="ident">cie</span>)
+            <span class="prelude-val">Ok</span>(cie)
         }
     }
 
-    <span class="kw">impl</span> <span class="ident">FrameDescriptionEntry</span> {
-        <span class="kw">fn</span> <span class="ident">from</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">Section</span><span class="op">&gt;</span>(
-            <span class="ident">from_fde</span>: <span class="kw-2">&amp;</span><span class="ident">read::FrameDescriptionEntry</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-            <span class="ident">frame</span>: <span class="kw-2">&amp;</span><span class="ident">Section</span>,
-            <span class="ident">bases</span>: <span class="kw-2">&amp;</span><span class="ident">read::BaseAddresses</span>,
-            <span class="ident">convert_address</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
-        ) -&gt; <span class="ident">ConvertResult</span><span class="op">&lt;</span><span class="ident">FrameDescriptionEntry</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">R</span>: <span class="ident">Reader</span><span class="op">&lt;</span><span class="ident">Offset</span> <span class="op">=</span> <span class="ident">usize</span><span class="op">&gt;</span>,
-            <span class="ident">Section</span>: <span class="ident">read::UnwindSection</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-            <span class="ident">Section::Offset</span>: <span class="ident">read::UnwindOffset</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+    <span class="kw">impl </span>FrameDescriptionEntry {
+        <span class="kw">fn </span>from&lt;R, Section&gt;(
+            from_fde: <span class="kw-2">&amp;</span>read::FrameDescriptionEntry&lt;R&gt;,
+            frame: <span class="kw-2">&amp;</span>Section,
+            bases: <span class="kw-2">&amp;</span>read::BaseAddresses,
+            convert_address: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Fn(u64) -&gt; <span class="prelude-ty">Option</span>&lt;Address&gt;,
+        ) -&gt; ConvertResult&lt;FrameDescriptionEntry&gt;
+        <span class="kw">where
+            </span>R: Reader&lt;Offset = usize&gt;,
+            Section: read::UnwindSection&lt;R&gt;,
+            Section::Offset: read::UnwindOffset&lt;usize&gt;,
         {
-            <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span>
-                <span class="ident">convert_address</span>(<span class="ident">from_fde</span>.<span class="ident">initial_address</span>()).<span class="ident">ok_or</span>(<span class="ident">ConvertError::InvalidAddress</span>)<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> <span class="ident">from_fde</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fde</span> <span class="op">=</span> <span class="ident">FrameDescriptionEntry::new</span>(<span class="ident">address</span>, <span class="ident">length</span>);
+            <span class="kw">let </span>address =
+                convert_address(from_fde.initial_address()).ok_or(ConvertError::InvalidAddress)<span class="question-mark">?</span>;
+            <span class="kw">let </span>length = from_fde.len() <span class="kw">as </span>u32;
+            <span class="kw">let </span><span class="kw-2">mut </span>fde = FrameDescriptionEntry::new(address, length);
 
-            <span class="kw">match</span> <span class="ident">from_fde</span>.<span class="ident">lsda</span>() {
-                <span class="comment">// We treat these the same because the encoding already determines</span>
-                <span class="comment">// whether it is indirect.</span>
-                <span class="prelude-val">Some</span>(<span class="ident">read::Pointer::Direct</span>(<span class="ident">p</span>)) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">read::Pointer::Indirect</span>(<span class="ident">p</span>)) =&gt; {
-                    <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">convert_address</span>(<span class="ident">p</span>).<span class="ident">ok_or</span>(<span class="ident">ConvertError::InvalidAddress</span>)<span class="question-mark">?</span>;
-                    <span class="ident">fde</span>.<span class="ident">lsda</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">address</span>);
+            <span class="kw">match </span>from_fde.lsda() {
+                <span class="comment">// We treat these the same because the encoding already determines
+                // whether it is indirect.
+                </span><span class="prelude-val">Some</span>(read::Pointer::Direct(p)) | <span class="prelude-val">Some</span>(read::Pointer::Indirect(p)) =&gt; {
+                    <span class="kw">let </span>address = convert_address(p).ok_or(ConvertError::InvalidAddress)<span class="question-mark">?</span>;
+                    fde.lsda = <span class="prelude-val">Some</span>(address);
                 }
-                <span class="prelude-val">None</span> =&gt; {}
+                <span class="prelude-val">None </span>=&gt; {}
             }
 
-            <span class="kw">let</span> <span class="ident">from_cie</span> <span class="op">=</span> <span class="ident">from_fde</span>.<span class="ident">cie</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">from_instructions</span> <span class="op">=</span> <span class="ident">from_fde</span>.<span class="ident">instructions</span>(<span class="ident">frame</span>, <span class="ident">bases</span>);
-            <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">from_instruction</span>) <span class="op">=</span> <span class="ident">from_instructions</span>.<span class="ident">next</span>()<span class="question-mark">?</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">instruction</span>) <span class="op">=</span> <span class="ident">CallFrameInstruction::from</span>(
-                    <span class="ident">from_instruction</span>,
-                    <span class="ident">from_cie</span>,
-                    <span class="ident">convert_address</span>,
-                    <span class="kw-2">&amp;mut</span> <span class="ident">offset</span>,
-                )<span class="question-mark">?</span> {
-                    <span class="ident">fde</span>.<span class="ident">instructions</span>.<span class="ident">push</span>((<span class="ident">offset</span>, <span class="ident">instruction</span>));
+            <span class="kw">let </span>from_cie = from_fde.cie();
+            <span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">0</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>from_instructions = from_fde.instructions(frame, bases);
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(from_instruction) = from_instructions.next()<span class="question-mark">? </span>{
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(instruction) = CallFrameInstruction::from(
+                    from_instruction,
+                    from_cie,
+                    convert_address,
+                    <span class="kw-2">&amp;mut </span>offset,
+                )<span class="question-mark">? </span>{
+                    fde.instructions.push((offset, instruction));
                 }
             }
 
-            <span class="prelude-val">Ok</span>(<span class="ident">fde</span>)
+            <span class="prelude-val">Ok</span>(fde)
         }
     }
 
-    <span class="kw">impl</span> <span class="ident">CallFrameInstruction</span> {
-        <span class="kw">fn</span> <span class="ident">from</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Reader</span><span class="op">&lt;</span><span class="ident">Offset</span> <span class="op">=</span> <span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-            <span class="ident">from_instruction</span>: <span class="ident">read::CallFrameInstruction</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-            <span class="ident">from_cie</span>: <span class="kw-2">&amp;</span><span class="ident">read::CommonInformationEntry</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-            <span class="ident">convert_address</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Address</span><span class="op">&gt;</span>,
-            <span class="ident">offset</span>: <span class="kw-2">&amp;mut</span> <span class="ident">u32</span>,
-        ) -&gt; <span class="ident">ConvertResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CallFrameInstruction</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">convert_expression</span> <span class="op">=</span>
-                <span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">Expression::from</span>(<span class="ident">x</span>, <span class="ident">from_cie</span>.<span class="ident">encoding</span>(), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">convert_address</span>);
-            <span class="comment">// TODO: validate integer type conversions</span>
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw">match</span> <span class="ident">from_instruction</span> {
-                <span class="ident">read::CallFrameInstruction::SetLoc</span> { .. } =&gt; {
-                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ConvertError::UnsupportedCfiInstruction</span>);
+    <span class="kw">impl </span>CallFrameInstruction {
+        <span class="kw">fn </span>from&lt;R: Reader&lt;Offset = usize&gt;&gt;(
+            from_instruction: read::CallFrameInstruction&lt;R&gt;,
+            from_cie: <span class="kw-2">&amp;</span>read::CommonInformationEntry&lt;R&gt;,
+            convert_address: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Fn(u64) -&gt; <span class="prelude-ty">Option</span>&lt;Address&gt;,
+            offset: <span class="kw-2">&amp;mut </span>u32,
+        ) -&gt; ConvertResult&lt;<span class="prelude-ty">Option</span>&lt;CallFrameInstruction&gt;&gt; {
+            <span class="kw">let </span>convert_expression =
+                |x| Expression::from(x, from_cie.encoding(), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, convert_address);
+            <span class="comment">// TODO: validate integer type conversions
+            </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw">match </span>from_instruction {
+                read::CallFrameInstruction::SetLoc { .. } =&gt; {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(ConvertError::UnsupportedCfiInstruction);
                 }
-                <span class="ident">read::CallFrameInstruction::AdvanceLoc</span> { <span class="ident">delta</span> } =&gt; {
-                    <span class="kw-2">*</span><span class="ident">offset</span> <span class="op">+</span><span class="op">=</span> <span class="ident">delta</span> <span class="op">*</span> <span class="ident">from_cie</span>.<span class="ident">code_alignment_factor</span>() <span class="kw">as</span> <span class="ident">u32</span>;
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+                read::CallFrameInstruction::AdvanceLoc { delta } =&gt; {
+                    <span class="kw-2">*</span>offset += delta * from_cie.code_alignment_factor() <span class="kw">as </span>u32;
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 }
-                <span class="ident">read::CallFrameInstruction::DefCfa</span> { <span class="ident">register</span>, <span class="ident">offset</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::Cfa</span>(<span class="ident">register</span>, <span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                read::CallFrameInstruction::DefCfa { register, offset } =&gt; {
+                    CallFrameInstruction::Cfa(register, offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::DefCfaSf</span> {
-                    <span class="ident">register</span>,
-                    <span class="ident">factored_offset</span>,
+                read::CallFrameInstruction::DefCfaSf {
+                    register,
+                    factored_offset,
                 } =&gt; {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_offset</span> <span class="op">*</span> <span class="ident">from_cie</span>.<span class="ident">data_alignment_factor</span>();
-                    <span class="ident">CallFrameInstruction::Cfa</span>(<span class="ident">register</span>, <span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                    <span class="kw">let </span>offset = factored_offset * from_cie.data_alignment_factor();
+                    CallFrameInstruction::Cfa(register, offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::DefCfaRegister</span> { <span class="ident">register</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::CfaRegister</span>(<span class="ident">register</span>)
+                read::CallFrameInstruction::DefCfaRegister { register } =&gt; {
+                    CallFrameInstruction::CfaRegister(register)
                 }
 
-                <span class="ident">read::CallFrameInstruction::DefCfaOffset</span> { <span class="ident">offset</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::CfaOffset</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                read::CallFrameInstruction::DefCfaOffset { offset } =&gt; {
+                    CallFrameInstruction::CfaOffset(offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::DefCfaOffsetSf</span> { <span class="ident">factored_offset</span> } =&gt; {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_offset</span> <span class="op">*</span> <span class="ident">from_cie</span>.<span class="ident">data_alignment_factor</span>();
-                    <span class="ident">CallFrameInstruction::CfaOffset</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                read::CallFrameInstruction::DefCfaOffsetSf { factored_offset } =&gt; {
+                    <span class="kw">let </span>offset = factored_offset * from_cie.data_alignment_factor();
+                    CallFrameInstruction::CfaOffset(offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::DefCfaExpression</span> { <span class="ident">expression</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::CfaExpression</span>(<span class="ident">convert_expression</span>(<span class="ident">expression</span>)<span class="question-mark">?</span>)
+                read::CallFrameInstruction::DefCfaExpression { expression } =&gt; {
+                    CallFrameInstruction::CfaExpression(convert_expression(expression)<span class="question-mark">?</span>)
                 }
-                <span class="ident">read::CallFrameInstruction::Undefined</span> { <span class="ident">register</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::Undefined</span>(<span class="ident">register</span>)
+                read::CallFrameInstruction::Undefined { register } =&gt; {
+                    CallFrameInstruction::Undefined(register)
                 }
-                <span class="ident">read::CallFrameInstruction::SameValue</span> { <span class="ident">register</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::SameValue</span>(<span class="ident">register</span>)
+                read::CallFrameInstruction::SameValue { register } =&gt; {
+                    CallFrameInstruction::SameValue(register)
                 }
-                <span class="ident">read::CallFrameInstruction::Offset</span> {
-                    <span class="ident">register</span>,
-                    <span class="ident">factored_offset</span>,
+                read::CallFrameInstruction::Offset {
+                    register,
+                    factored_offset,
                 } =&gt; {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_offset</span> <span class="kw">as</span> <span class="ident">i64</span> <span class="op">*</span> <span class="ident">from_cie</span>.<span class="ident">data_alignment_factor</span>();
-                    <span class="ident">CallFrameInstruction::Offset</span>(<span class="ident">register</span>, <span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                    <span class="kw">let </span>offset = factored_offset <span class="kw">as </span>i64 * from_cie.data_alignment_factor();
+                    CallFrameInstruction::Offset(register, offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::OffsetExtendedSf</span> {
-                    <span class="ident">register</span>,
-                    <span class="ident">factored_offset</span>,
+                read::CallFrameInstruction::OffsetExtendedSf {
+                    register,
+                    factored_offset,
                 } =&gt; {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_offset</span> <span class="op">*</span> <span class="ident">from_cie</span>.<span class="ident">data_alignment_factor</span>();
-                    <span class="ident">CallFrameInstruction::Offset</span>(<span class="ident">register</span>, <span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                    <span class="kw">let </span>offset = factored_offset * from_cie.data_alignment_factor();
+                    CallFrameInstruction::Offset(register, offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::ValOffset</span> {
-                    <span class="ident">register</span>,
-                    <span class="ident">factored_offset</span>,
+                read::CallFrameInstruction::ValOffset {
+                    register,
+                    factored_offset,
                 } =&gt; {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_offset</span> <span class="kw">as</span> <span class="ident">i64</span> <span class="op">*</span> <span class="ident">from_cie</span>.<span class="ident">data_alignment_factor</span>();
-                    <span class="ident">CallFrameInstruction::ValOffset</span>(<span class="ident">register</span>, <span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                    <span class="kw">let </span>offset = factored_offset <span class="kw">as </span>i64 * from_cie.data_alignment_factor();
+                    CallFrameInstruction::ValOffset(register, offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::ValOffsetSf</span> {
-                    <span class="ident">register</span>,
-                    <span class="ident">factored_offset</span>,
+                read::CallFrameInstruction::ValOffsetSf {
+                    register,
+                    factored_offset,
                 } =&gt; {
-                    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">factored_offset</span> <span class="op">*</span> <span class="ident">from_cie</span>.<span class="ident">data_alignment_factor</span>();
-                    <span class="ident">CallFrameInstruction::ValOffset</span>(<span class="ident">register</span>, <span class="ident">offset</span> <span class="kw">as</span> <span class="ident">i32</span>)
+                    <span class="kw">let </span>offset = factored_offset * from_cie.data_alignment_factor();
+                    CallFrameInstruction::ValOffset(register, offset <span class="kw">as </span>i32)
                 }
-                <span class="ident">read::CallFrameInstruction::Register</span> {
-                    <span class="ident">dest_register</span>,
-                    <span class="ident">src_register</span>,
-                } =&gt; <span class="ident">CallFrameInstruction::Register</span>(<span class="ident">dest_register</span>, <span class="ident">src_register</span>),
-                <span class="ident">read::CallFrameInstruction::Expression</span> {
-                    <span class="ident">register</span>,
-                    <span class="ident">expression</span>,
-                } =&gt; <span class="ident">CallFrameInstruction::Expression</span>(<span class="ident">register</span>, <span class="ident">convert_expression</span>(<span class="ident">expression</span>)<span class="question-mark">?</span>),
-                <span class="ident">read::CallFrameInstruction::ValExpression</span> {
-                    <span class="ident">register</span>,
-                    <span class="ident">expression</span>,
-                } =&gt; <span class="ident">CallFrameInstruction::ValExpression</span>(<span class="ident">register</span>, <span class="ident">convert_expression</span>(<span class="ident">expression</span>)<span class="question-mark">?</span>),
-                <span class="ident">read::CallFrameInstruction::Restore</span> { <span class="ident">register</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::Restore</span>(<span class="ident">register</span>)
+                read::CallFrameInstruction::Register {
+                    dest_register,
+                    src_register,
+                } =&gt; CallFrameInstruction::Register(dest_register, src_register),
+                read::CallFrameInstruction::Expression {
+                    register,
+                    expression,
+                } =&gt; CallFrameInstruction::Expression(register, convert_expression(expression)<span class="question-mark">?</span>),
+                read::CallFrameInstruction::ValExpression {
+                    register,
+                    expression,
+                } =&gt; CallFrameInstruction::ValExpression(register, convert_expression(expression)<span class="question-mark">?</span>),
+                read::CallFrameInstruction::Restore { register } =&gt; {
+                    CallFrameInstruction::Restore(register)
                 }
-                <span class="ident">read::CallFrameInstruction::RememberState</span> =&gt; <span class="ident">CallFrameInstruction::RememberState</span>,
-                <span class="ident">read::CallFrameInstruction::RestoreState</span> =&gt; <span class="ident">CallFrameInstruction::RestoreState</span>,
-                <span class="ident">read::CallFrameInstruction::ArgsSize</span> { <span class="ident">size</span> } =&gt; {
-                    <span class="ident">CallFrameInstruction::ArgsSize</span>(<span class="ident">size</span> <span class="kw">as</span> <span class="ident">u32</span>)
+                read::CallFrameInstruction::RememberState =&gt; CallFrameInstruction::RememberState,
+                read::CallFrameInstruction::RestoreState =&gt; CallFrameInstruction::RestoreState,
+                read::CallFrameInstruction::ArgsSize { size } =&gt; {
+                    CallFrameInstruction::ArgsSize(size <span class="kw">as </span>u32)
                 }
-                <span class="ident">read::CallFrameInstruction::Nop</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+                read::CallFrameInstruction::Nop =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
             }))
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;read&quot;</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::arch::X86_64</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::read</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::write::EndianVec</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::LittleEndian</span>;
+<span class="attribute">#[cfg(test)]
+#[cfg(feature = <span class="string">&quot;read&quot;</span>)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::arch::X86_64;
+    <span class="kw">use </span><span class="kw">crate</span>::read;
+    <span class="kw">use </span><span class="kw">crate</span>::write::EndianVec;
+    <span class="kw">use </span><span class="kw">crate</span>::LittleEndian;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_frame_table</span>() {
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">version</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>, <span class="number">4</span>] {
-            <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">address_size</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="number">4</span>, <span class="number">8</span>] {
-                <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">format</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="ident">Format::Dwarf32</span>, <span class="ident">Format::Dwarf64</span>] {
-                    <span class="kw">let</span> <span class="ident">encoding</span> <span class="op">=</span> <span class="ident">Encoding</span> {
-                        <span class="ident">format</span>,
-                        <span class="ident">version</span>,
-                        <span class="ident">address_size</span>,
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_frame_table() {
+        <span class="kw">for </span><span class="kw-2">&amp;</span>version <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>, <span class="number">4</span>] {
+            <span class="kw">for </span><span class="kw-2">&amp;</span>address_size <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="number">4</span>, <span class="number">8</span>] {
+                <span class="kw">for </span><span class="kw-2">&amp;</span>format <span class="kw">in </span><span class="kw-2">&amp;</span>[Format::Dwarf32, Format::Dwarf64] {
+                    <span class="kw">let </span>encoding = Encoding {
+                        format,
+                        version,
+                        address_size,
                     };
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">frames</span> <span class="op">=</span> <span class="ident">FrameTable::default</span>();
+                    <span class="kw">let </span><span class="kw-2">mut </span>frames = FrameTable::default();
 
-                    <span class="kw">let</span> <span class="ident">cie1</span> <span class="op">=</span> <span class="ident">CommonInformationEntry::new</span>(<span class="ident">encoding</span>, <span class="number">1</span>, <span class="number">8</span>, <span class="ident">X86_64::RA</span>);
-                    <span class="kw">let</span> <span class="ident">cie1_id</span> <span class="op">=</span> <span class="ident">frames</span>.<span class="ident">add_cie</span>(<span class="ident">cie1</span>.<span class="ident">clone</span>());
-                    <span class="macro">assert_eq!</span>(<span class="ident">cie1_id</span>, <span class="ident">frames</span>.<span class="ident">add_cie</span>(<span class="ident">cie1</span>.<span class="ident">clone</span>()));
+                    <span class="kw">let </span>cie1 = CommonInformationEntry::new(encoding, <span class="number">1</span>, <span class="number">8</span>, X86_64::RA);
+                    <span class="kw">let </span>cie1_id = frames.add_cie(cie1.clone());
+                    <span class="macro">assert_eq!</span>(cie1_id, frames.add_cie(cie1.clone()));
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cie2</span> <span class="op">=</span> <span class="ident">CommonInformationEntry::new</span>(<span class="ident">encoding</span>, <span class="number">1</span>, <span class="number">8</span>, <span class="ident">X86_64::RA</span>);
-                    <span class="ident">cie2</span>.<span class="ident">lsda_encoding</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">constants::DW_EH_PE_absptr</span>);
-                    <span class="ident">cie2</span>.<span class="ident">personality</span> <span class="op">=</span>
-                        <span class="prelude-val">Some</span>((<span class="ident">constants::DW_EH_PE_absptr</span>, <span class="ident">Address::Constant</span>(<span class="number">0x1234</span>)));
-                    <span class="ident">cie2</span>.<span class="ident">signal_trampoline</span> <span class="op">=</span> <span class="bool-val">true</span>;
-                    <span class="kw">let</span> <span class="ident">cie2_id</span> <span class="op">=</span> <span class="ident">frames</span>.<span class="ident">add_cie</span>(<span class="ident">cie2</span>.<span class="ident">clone</span>());
-                    <span class="macro">assert_ne!</span>(<span class="ident">cie1_id</span>, <span class="ident">cie2_id</span>);
-                    <span class="macro">assert_eq!</span>(<span class="ident">cie2_id</span>, <span class="ident">frames</span>.<span class="ident">add_cie</span>(<span class="ident">cie2</span>.<span class="ident">clone</span>()));
+                    <span class="kw">let </span><span class="kw-2">mut </span>cie2 = CommonInformationEntry::new(encoding, <span class="number">1</span>, <span class="number">8</span>, X86_64::RA);
+                    cie2.lsda_encoding = <span class="prelude-val">Some</span>(constants::DW_EH_PE_absptr);
+                    cie2.personality =
+                        <span class="prelude-val">Some</span>((constants::DW_EH_PE_absptr, Address::Constant(<span class="number">0x1234</span>)));
+                    cie2.signal_trampoline = <span class="bool-val">true</span>;
+                    <span class="kw">let </span>cie2_id = frames.add_cie(cie2.clone());
+                    <span class="macro">assert_ne!</span>(cie1_id, cie2_id);
+                    <span class="macro">assert_eq!</span>(cie2_id, frames.add_cie(cie2.clone()));
 
-                    <span class="kw">let</span> <span class="ident">fde1</span> <span class="op">=</span> <span class="ident">FrameDescriptionEntry::new</span>(<span class="ident">Address::Constant</span>(<span class="number">0x1000</span>), <span class="number">0x10</span>);
-                    <span class="ident">frames</span>.<span class="ident">add_fde</span>(<span class="ident">cie1_id</span>, <span class="ident">fde1</span>.<span class="ident">clone</span>());
+                    <span class="kw">let </span>fde1 = FrameDescriptionEntry::new(Address::Constant(<span class="number">0x1000</span>), <span class="number">0x10</span>);
+                    frames.add_fde(cie1_id, fde1.clone());
 
-                    <span class="kw">let</span> <span class="ident">fde2</span> <span class="op">=</span> <span class="ident">FrameDescriptionEntry::new</span>(<span class="ident">Address::Constant</span>(<span class="number">0x2000</span>), <span class="number">0x20</span>);
-                    <span class="ident">frames</span>.<span class="ident">add_fde</span>(<span class="ident">cie1_id</span>, <span class="ident">fde2</span>.<span class="ident">clone</span>());
+                    <span class="kw">let </span>fde2 = FrameDescriptionEntry::new(Address::Constant(<span class="number">0x2000</span>), <span class="number">0x20</span>);
+                    frames.add_fde(cie1_id, fde2.clone());
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fde3</span> <span class="op">=</span> <span class="ident">FrameDescriptionEntry::new</span>(<span class="ident">Address::Constant</span>(<span class="number">0x3000</span>), <span class="number">0x30</span>);
-                    <span class="ident">fde3</span>.<span class="ident">lsda</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Address::Constant</span>(<span class="number">0x3300</span>));
-                    <span class="ident">frames</span>.<span class="ident">add_fde</span>(<span class="ident">cie2_id</span>, <span class="ident">fde3</span>.<span class="ident">clone</span>());
+                    <span class="kw">let </span><span class="kw-2">mut </span>fde3 = FrameDescriptionEntry::new(Address::Constant(<span class="number">0x3000</span>), <span class="number">0x30</span>);
+                    fde3.lsda = <span class="prelude-val">Some</span>(Address::Constant(<span class="number">0x3300</span>));
+                    frames.add_fde(cie2_id, fde3.clone());
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fde4</span> <span class="op">=</span> <span class="ident">FrameDescriptionEntry::new</span>(<span class="ident">Address::Constant</span>(<span class="number">0x4000</span>), <span class="number">0x40</span>);
-                    <span class="ident">fde4</span>.<span class="ident">lsda</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Address::Constant</span>(<span class="number">0x4400</span>));
-                    <span class="ident">frames</span>.<span class="ident">add_fde</span>(<span class="ident">cie2_id</span>, <span class="ident">fde4</span>.<span class="ident">clone</span>());
+                    <span class="kw">let </span><span class="kw-2">mut </span>fde4 = FrameDescriptionEntry::new(Address::Constant(<span class="number">0x4000</span>), <span class="number">0x40</span>);
+                    fde4.lsda = <span class="prelude-val">Some</span>(Address::Constant(<span class="number">0x4400</span>));
+                    frames.add_fde(cie2_id, fde4.clone());
 
-                    <span class="comment">// Test writing `.debug_frame`.</span>
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">debug_frame</span> <span class="op">=</span> <span class="ident">DebugFrame::from</span>(<span class="ident">EndianVec::new</span>(<span class="ident">LittleEndian</span>));
-                    <span class="ident">frames</span>.<span class="ident">write_debug_frame</span>(<span class="kw-2">&amp;mut</span> <span class="ident">debug_frame</span>).<span class="ident">unwrap</span>();
+                    <span class="comment">// Test writing `.debug_frame`.
+                    </span><span class="kw">let </span><span class="kw-2">mut </span>debug_frame = DebugFrame::from(EndianVec::new(LittleEndian));
+                    frames.write_debug_frame(<span class="kw-2">&amp;mut </span>debug_frame).unwrap();
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">read_debug_frame</span> <span class="op">=</span>
-                        <span class="ident">read::DebugFrame::new</span>(<span class="ident">debug_frame</span>.<span class="ident">slice</span>(), <span class="ident">LittleEndian</span>);
-                    <span class="ident">read_debug_frame</span>.<span class="ident">set_address_size</span>(<span class="ident">address_size</span>);
-                    <span class="kw">let</span> <span class="ident">convert_frames</span> <span class="op">=</span> <span class="ident">FrameTable::from</span>(<span class="kw-2">&amp;</span><span class="ident">read_debug_frame</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">address</span><span class="op">|</span> {
-                        <span class="prelude-val">Some</span>(<span class="ident">Address::Constant</span>(<span class="ident">address</span>))
+                    <span class="kw">let </span><span class="kw-2">mut </span>read_debug_frame =
+                        read::DebugFrame::new(debug_frame.slice(), LittleEndian);
+                    read_debug_frame.set_address_size(address_size);
+                    <span class="kw">let </span>convert_frames = FrameTable::from(<span class="kw-2">&amp;</span>read_debug_frame, <span class="kw-2">&amp;</span>|address| {
+                        <span class="prelude-val">Some</span>(Address::Constant(address))
                     })
-                    .<span class="ident">unwrap</span>();
-                    <span class="macro">assert_eq!</span>(<span class="ident">frames</span>.<span class="ident">cies</span>, <span class="ident">convert_frames</span>.<span class="ident">cies</span>);
-                    <span class="macro">assert_eq!</span>(<span class="ident">frames</span>.<span class="ident">fdes</span>.<span class="ident">len</span>(), <span class="ident">convert_frames</span>.<span class="ident">fdes</span>.<span class="ident">len</span>());
-                    <span class="kw">for</span> (<span class="ident">a</span>, <span class="ident">b</span>) <span class="kw">in</span> <span class="ident">frames</span>.<span class="ident">fdes</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="ident">convert_frames</span>.<span class="ident">fdes</span>.<span class="ident">iter</span>()) {
-                        <span class="macro">assert_eq!</span>(<span class="ident">a</span>.<span class="number">1</span>, <span class="ident">b</span>.<span class="number">1</span>);
+                    .unwrap();
+                    <span class="macro">assert_eq!</span>(frames.cies, convert_frames.cies);
+                    <span class="macro">assert_eq!</span>(frames.fdes.len(), convert_frames.fdes.len());
+                    <span class="kw">for </span>(a, b) <span class="kw">in </span>frames.fdes.iter().zip(convert_frames.fdes.iter()) {
+                        <span class="macro">assert_eq!</span>(a.<span class="number">1</span>, b.<span class="number">1</span>);
                     }
 
-                    <span class="kw">if</span> <span class="ident">version</span> <span class="op">==</span> <span class="number">1</span> {
-                        <span class="comment">// Test writing `.eh_frame`.</span>
-                        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">eh_frame</span> <span class="op">=</span> <span class="ident">EhFrame::from</span>(<span class="ident">EndianVec::new</span>(<span class="ident">LittleEndian</span>));
-                        <span class="ident">frames</span>.<span class="ident">write_eh_frame</span>(<span class="kw-2">&amp;mut</span> <span class="ident">eh_frame</span>).<span class="ident">unwrap</span>();
+                    <span class="kw">if </span>version == <span class="number">1 </span>{
+                        <span class="comment">// Test writing `.eh_frame`.
+                        </span><span class="kw">let </span><span class="kw-2">mut </span>eh_frame = EhFrame::from(EndianVec::new(LittleEndian));
+                        frames.write_eh_frame(<span class="kw-2">&amp;mut </span>eh_frame).unwrap();
 
-                        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">read_eh_frame</span> <span class="op">=</span> <span class="ident">read::EhFrame::new</span>(<span class="ident">eh_frame</span>.<span class="ident">slice</span>(), <span class="ident">LittleEndian</span>);
-                        <span class="ident">read_eh_frame</span>.<span class="ident">set_address_size</span>(<span class="ident">address_size</span>);
-                        <span class="kw">let</span> <span class="ident">convert_frames</span> <span class="op">=</span> <span class="ident">FrameTable::from</span>(<span class="kw-2">&amp;</span><span class="ident">read_eh_frame</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">address</span><span class="op">|</span> {
-                            <span class="prelude-val">Some</span>(<span class="ident">Address::Constant</span>(<span class="ident">address</span>))
+                        <span class="kw">let </span><span class="kw-2">mut </span>read_eh_frame = read::EhFrame::new(eh_frame.slice(), LittleEndian);
+                        read_eh_frame.set_address_size(address_size);
+                        <span class="kw">let </span>convert_frames = FrameTable::from(<span class="kw-2">&amp;</span>read_eh_frame, <span class="kw-2">&amp;</span>|address| {
+                            <span class="prelude-val">Some</span>(Address::Constant(address))
                         })
-                        .<span class="ident">unwrap</span>();
-                        <span class="macro">assert_eq!</span>(<span class="ident">frames</span>.<span class="ident">cies</span>, <span class="ident">convert_frames</span>.<span class="ident">cies</span>);
-                        <span class="macro">assert_eq!</span>(<span class="ident">frames</span>.<span class="ident">fdes</span>.<span class="ident">len</span>(), <span class="ident">convert_frames</span>.<span class="ident">fdes</span>.<span class="ident">len</span>());
-                        <span class="kw">for</span> (<span class="ident">a</span>, <span class="ident">b</span>) <span class="kw">in</span> <span class="ident">frames</span>.<span class="ident">fdes</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="ident">convert_frames</span>.<span class="ident">fdes</span>.<span class="ident">iter</span>()) {
-                            <span class="macro">assert_eq!</span>(<span class="ident">a</span>.<span class="number">1</span>, <span class="ident">b</span>.<span class="number">1</span>);
+                        .unwrap();
+                        <span class="macro">assert_eq!</span>(frames.cies, convert_frames.cies);
+                        <span class="macro">assert_eq!</span>(frames.fdes.len(), convert_frames.fdes.len());
+                        <span class="kw">for </span>(a, b) <span class="kw">in </span>frames.fdes.iter().zip(convert_frames.fdes.iter()) {
+                            <span class="macro">assert_eq!</span>(a.<span class="number">1</span>, b.<span class="number">1</span>);
                         }
                     }
                 }
@@ -1944,89 +1939,88 @@
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_frame_instruction</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expression</span> <span class="op">=</span> <span class="ident">Expression::new</span>();
-        <span class="ident">expression</span>.<span class="ident">op_constu</span>(<span class="number">0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_frame_instruction() {
+        <span class="kw">let </span><span class="kw-2">mut </span>expression = Expression::new();
+        expression.op_constu(<span class="number">0</span>);
 
-        <span class="kw">let</span> <span class="ident">cie_instructions</span> <span class="op">=</span> [
-            <span class="ident">CallFrameInstruction::Cfa</span>(<span class="ident">X86_64::RSP</span>, <span class="number">8</span>),
-            <span class="ident">CallFrameInstruction::Offset</span>(<span class="ident">X86_64::RA</span>, <span class="op">-</span><span class="number">8</span>),
+        <span class="kw">let </span>cie_instructions = [
+            CallFrameInstruction::Cfa(X86_64::RSP, <span class="number">8</span>),
+            CallFrameInstruction::Offset(X86_64::RA, -<span class="number">8</span>),
         ];
 
-        <span class="kw">let</span> <span class="ident">fde_instructions</span> <span class="op">=</span> [
-            (<span class="number">0</span>, <span class="ident">CallFrameInstruction::Cfa</span>(<span class="ident">X86_64::RSP</span>, <span class="number">0</span>)),
-            (<span class="number">0</span>, <span class="ident">CallFrameInstruction::Cfa</span>(<span class="ident">X86_64::RSP</span>, <span class="op">-</span><span class="number">8</span>)),
-            (<span class="number">2</span>, <span class="ident">CallFrameInstruction::CfaRegister</span>(<span class="ident">X86_64::RBP</span>)),
-            (<span class="number">4</span>, <span class="ident">CallFrameInstruction::CfaOffset</span>(<span class="number">8</span>)),
-            (<span class="number">4</span>, <span class="ident">CallFrameInstruction::CfaOffset</span>(<span class="number">0</span>)),
-            (<span class="number">4</span>, <span class="ident">CallFrameInstruction::CfaOffset</span>(<span class="op">-</span><span class="number">8</span>)),
-            (<span class="number">6</span>, <span class="ident">CallFrameInstruction::CfaExpression</span>(<span class="ident">expression</span>.<span class="ident">clone</span>())),
-            (<span class="number">8</span>, <span class="ident">CallFrameInstruction::Restore</span>(<span class="ident">Register</span>(<span class="number">1</span>))),
-            (<span class="number">8</span>, <span class="ident">CallFrameInstruction::Restore</span>(<span class="ident">Register</span>(<span class="number">101</span>))),
-            (<span class="number">10</span>, <span class="ident">CallFrameInstruction::Undefined</span>(<span class="ident">Register</span>(<span class="number">2</span>))),
-            (<span class="number">12</span>, <span class="ident">CallFrameInstruction::SameValue</span>(<span class="ident">Register</span>(<span class="number">3</span>))),
-            (<span class="number">14</span>, <span class="ident">CallFrameInstruction::Offset</span>(<span class="ident">Register</span>(<span class="number">4</span>), <span class="number">16</span>)),
-            (<span class="number">14</span>, <span class="ident">CallFrameInstruction::Offset</span>(<span class="ident">Register</span>(<span class="number">104</span>), <span class="number">16</span>)),
-            (<span class="number">16</span>, <span class="ident">CallFrameInstruction::ValOffset</span>(<span class="ident">Register</span>(<span class="number">5</span>), <span class="op">-</span><span class="number">24</span>)),
-            (<span class="number">16</span>, <span class="ident">CallFrameInstruction::ValOffset</span>(<span class="ident">Register</span>(<span class="number">5</span>), <span class="number">24</span>)),
-            (<span class="number">18</span>, <span class="ident">CallFrameInstruction::Register</span>(<span class="ident">Register</span>(<span class="number">6</span>), <span class="ident">Register</span>(<span class="number">7</span>))),
+        <span class="kw">let </span>fde_instructions = [
+            (<span class="number">0</span>, CallFrameInstruction::Cfa(X86_64::RSP, <span class="number">0</span>)),
+            (<span class="number">0</span>, CallFrameInstruction::Cfa(X86_64::RSP, -<span class="number">8</span>)),
+            (<span class="number">2</span>, CallFrameInstruction::CfaRegister(X86_64::RBP)),
+            (<span class="number">4</span>, CallFrameInstruction::CfaOffset(<span class="number">8</span>)),
+            (<span class="number">4</span>, CallFrameInstruction::CfaOffset(<span class="number">0</span>)),
+            (<span class="number">4</span>, CallFrameInstruction::CfaOffset(-<span class="number">8</span>)),
+            (<span class="number">6</span>, CallFrameInstruction::CfaExpression(expression.clone())),
+            (<span class="number">8</span>, CallFrameInstruction::Restore(Register(<span class="number">1</span>))),
+            (<span class="number">8</span>, CallFrameInstruction::Restore(Register(<span class="number">101</span>))),
+            (<span class="number">10</span>, CallFrameInstruction::Undefined(Register(<span class="number">2</span>))),
+            (<span class="number">12</span>, CallFrameInstruction::SameValue(Register(<span class="number">3</span>))),
+            (<span class="number">14</span>, CallFrameInstruction::Offset(Register(<span class="number">4</span>), <span class="number">16</span>)),
+            (<span class="number">14</span>, CallFrameInstruction::Offset(Register(<span class="number">104</span>), <span class="number">16</span>)),
+            (<span class="number">16</span>, CallFrameInstruction::ValOffset(Register(<span class="number">5</span>), -<span class="number">24</span>)),
+            (<span class="number">16</span>, CallFrameInstruction::ValOffset(Register(<span class="number">5</span>), <span class="number">24</span>)),
+            (<span class="number">18</span>, CallFrameInstruction::Register(Register(<span class="number">6</span>), Register(<span class="number">7</span>))),
             (
                 <span class="number">20</span>,
-                <span class="ident">CallFrameInstruction::Expression</span>(<span class="ident">Register</span>(<span class="number">8</span>), <span class="ident">expression</span>.<span class="ident">clone</span>()),
+                CallFrameInstruction::Expression(Register(<span class="number">8</span>), expression.clone()),
             ),
             (
                 <span class="number">22</span>,
-                <span class="ident">CallFrameInstruction::ValExpression</span>(<span class="ident">Register</span>(<span class="number">9</span>), <span class="ident">expression</span>.<span class="ident">clone</span>()),
+                CallFrameInstruction::ValExpression(Register(<span class="number">9</span>), expression.clone()),
             ),
-            (<span class="number">24</span> <span class="op">+</span> <span class="number">0x80</span>, <span class="ident">CallFrameInstruction::RememberState</span>),
-            (<span class="number">26</span> <span class="op">+</span> <span class="number">0x280</span>, <span class="ident">CallFrameInstruction::RestoreState</span>),
-            (<span class="number">28</span> <span class="op">+</span> <span class="number">0x20280</span>, <span class="ident">CallFrameInstruction::ArgsSize</span>(<span class="number">23</span>)),
+            (<span class="number">24 </span>+ <span class="number">0x80</span>, CallFrameInstruction::RememberState),
+            (<span class="number">26 </span>+ <span class="number">0x280</span>, CallFrameInstruction::RestoreState),
+            (<span class="number">28 </span>+ <span class="number">0x20280</span>, CallFrameInstruction::ArgsSize(<span class="number">23</span>)),
         ];
 
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">version</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>, <span class="number">4</span>] {
-            <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">address_size</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="number">4</span>, <span class="number">8</span>] {
-                <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">format</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="ident">Format::Dwarf32</span>, <span class="ident">Format::Dwarf64</span>] {
-                    <span class="kw">let</span> <span class="ident">encoding</span> <span class="op">=</span> <span class="ident">Encoding</span> {
-                        <span class="ident">format</span>,
-                        <span class="ident">version</span>,
-                        <span class="ident">address_size</span>,
+        <span class="kw">for </span><span class="kw-2">&amp;</span>version <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">3</span>, <span class="number">4</span>] {
+            <span class="kw">for </span><span class="kw-2">&amp;</span>address_size <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="number">4</span>, <span class="number">8</span>] {
+                <span class="kw">for </span><span class="kw-2">&amp;</span>format <span class="kw">in </span><span class="kw-2">&amp;</span>[Format::Dwarf32, Format::Dwarf64] {
+                    <span class="kw">let </span>encoding = Encoding {
+                        format,
+                        version,
+                        address_size,
                     };
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">frames</span> <span class="op">=</span> <span class="ident">FrameTable::default</span>();
+                    <span class="kw">let </span><span class="kw-2">mut </span>frames = FrameTable::default();
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cie</span> <span class="op">=</span> <span class="ident">CommonInformationEntry::new</span>(<span class="ident">encoding</span>, <span class="number">2</span>, <span class="number">8</span>, <span class="ident">X86_64::RA</span>);
-                    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">cie_instructions</span> {
-                        <span class="ident">cie</span>.<span class="ident">add_instruction</span>(<span class="ident">i</span>.<span class="ident">clone</span>());
+                    <span class="kw">let </span><span class="kw-2">mut </span>cie = CommonInformationEntry::new(encoding, <span class="number">2</span>, <span class="number">8</span>, X86_64::RA);
+                    <span class="kw">for </span>i <span class="kw">in </span><span class="kw-2">&amp;</span>cie_instructions {
+                        cie.add_instruction(i.clone());
                     }
-                    <span class="kw">let</span> <span class="ident">cie_id</span> <span class="op">=</span> <span class="ident">frames</span>.<span class="ident">add_cie</span>(<span class="ident">cie</span>);
+                    <span class="kw">let </span>cie_id = frames.add_cie(cie);
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fde</span> <span class="op">=</span> <span class="ident">FrameDescriptionEntry::new</span>(<span class="ident">Address::Constant</span>(<span class="number">0x1000</span>), <span class="number">0x10</span>);
-                    <span class="kw">for</span> (<span class="ident">o</span>, <span class="ident">i</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">fde_instructions</span> {
-                        <span class="ident">fde</span>.<span class="ident">add_instruction</span>(<span class="kw-2">*</span><span class="ident">o</span>, <span class="ident">i</span>.<span class="ident">clone</span>());
+                    <span class="kw">let </span><span class="kw-2">mut </span>fde = FrameDescriptionEntry::new(Address::Constant(<span class="number">0x1000</span>), <span class="number">0x10</span>);
+                    <span class="kw">for </span>(o, i) <span class="kw">in </span><span class="kw-2">&amp;</span>fde_instructions {
+                        fde.add_instruction(<span class="kw-2">*</span>o, i.clone());
                     }
-                    <span class="ident">frames</span>.<span class="ident">add_fde</span>(<span class="ident">cie_id</span>, <span class="ident">fde</span>);
+                    frames.add_fde(cie_id, fde);
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">debug_frame</span> <span class="op">=</span> <span class="ident">DebugFrame::from</span>(<span class="ident">EndianVec::new</span>(<span class="ident">LittleEndian</span>));
-                    <span class="ident">frames</span>.<span class="ident">write_debug_frame</span>(<span class="kw-2">&amp;mut</span> <span class="ident">debug_frame</span>).<span class="ident">unwrap</span>();
+                    <span class="kw">let </span><span class="kw-2">mut </span>debug_frame = DebugFrame::from(EndianVec::new(LittleEndian));
+                    frames.write_debug_frame(<span class="kw-2">&amp;mut </span>debug_frame).unwrap();
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">read_debug_frame</span> <span class="op">=</span>
-                        <span class="ident">read::DebugFrame::new</span>(<span class="ident">debug_frame</span>.<span class="ident">slice</span>(), <span class="ident">LittleEndian</span>);
-                    <span class="ident">read_debug_frame</span>.<span class="ident">set_address_size</span>(<span class="ident">address_size</span>);
-                    <span class="kw">let</span> <span class="ident">frames</span> <span class="op">=</span> <span class="ident">FrameTable::from</span>(<span class="kw-2">&amp;</span><span class="ident">read_debug_frame</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">address</span><span class="op">|</span> {
-                        <span class="prelude-val">Some</span>(<span class="ident">Address::Constant</span>(<span class="ident">address</span>))
+                    <span class="kw">let </span><span class="kw-2">mut </span>read_debug_frame =
+                        read::DebugFrame::new(debug_frame.slice(), LittleEndian);
+                    read_debug_frame.set_address_size(address_size);
+                    <span class="kw">let </span>frames = FrameTable::from(<span class="kw-2">&amp;</span>read_debug_frame, <span class="kw-2">&amp;</span>|address| {
+                        <span class="prelude-val">Some</span>(Address::Constant(address))
                     })
-                    .<span class="ident">unwrap</span>();
+                    .unwrap();
 
                     <span class="macro">assert_eq!</span>(
-                        <span class="kw-2">&amp;</span><span class="ident">frames</span>.<span class="ident">cies</span>.<span class="ident">get_index</span>(<span class="number">0</span>).<span class="ident">unwrap</span>().<span class="ident">instructions</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">cie_instructions</span>
+                        <span class="kw-2">&amp;</span>frames.cies.get_index(<span class="number">0</span>).unwrap().instructions,
+                        <span class="kw-2">&amp;</span>cie_instructions
                     );
-                    <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="ident">frames</span>.<span class="ident">fdes</span>[<span class="number">0</span>].<span class="number">1</span>.<span class="ident">instructions</span>, <span class="kw-2">&amp;</span><span class="ident">fde_instructions</span>);
+                    <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>frames.fdes[<span class="number">0</span>].<span class="number">1</span>.instructions, <span class="kw-2">&amp;</span>fde_instructions);
                 }
             }
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="gimli" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="gimli" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/async-lock-2.5.0/src/semaphore.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>semaphore.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../async_lock/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../async_lock/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../async_lock/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/async-lock-2.5.0/src/semaphore.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>semaphore.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../async_lock/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -197,200 +192,199 @@
 <span id="192">192</span>
 <span id="193">193</span>
 <span id="194">194</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::future::Future</span>;
-<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>std::future::Future;
+<span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
+<span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use</span> <span class="ident">event_listener::Event</span>;
+<span class="kw">use </span>event_listener::Event;
 
-<span class="doccomment">/// A counter for limiting the number of concurrent operations.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Semaphore</span> {
-    <span class="ident">count</span>: <span class="ident">AtomicUsize</span>,
-    <span class="ident">event</span>: <span class="ident">Event</span>,
+<span class="doccomment">/// A counter for limiting the number of concurrent operations.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>Semaphore {
+    count: AtomicUsize,
+    event: Event,
 }
 
-<span class="kw">impl</span> <span class="ident">Semaphore</span> {
-    <span class="doccomment">/// Creates a new semaphore with a limit of `n` concurrent operations.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use async_lock::Semaphore;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let s = Semaphore::new(5);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Semaphore</span> {
-        <span class="ident">Semaphore</span> {
-            <span class="ident">count</span>: <span class="ident">AtomicUsize::new</span>(<span class="ident">n</span>),
-            <span class="ident">event</span>: <span class="ident">Event::new</span>(),
+<span class="kw">impl </span>Semaphore {
+    <span class="doccomment">/// Creates a new semaphore with a limit of `n` concurrent operations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use async_lock::Semaphore;
+    ///
+    /// let s = Semaphore::new(5);
+    /// ```
+    </span><span class="kw">pub const fn </span>new(n: usize) -&gt; Semaphore {
+        Semaphore {
+            count: AtomicUsize::new(n),
+            event: Event::new(),
         }
     }
 
-    <span class="doccomment">/// Attempts to get a permit for a concurrent operation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the permit could not be acquired at this time, then [`None`] is returned. Otherwise, a</span>
-    <span class="doccomment">/// guard is returned that releases the mutex when dropped.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use async_lock::Semaphore;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let s = Semaphore::new(2);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let g1 = s.try_acquire().unwrap();</span>
-    <span class="doccomment">/// let g2 = s.try_acquire().unwrap();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert!(s.try_acquire().is_none());</span>
-    <span class="doccomment">/// drop(g2);</span>
-    <span class="doccomment">/// assert!(s.try_acquire().is_some());</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_acquire</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SemaphoreGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">count</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> <span class="ident">count</span> <span class="op">==</span> <span class="number">0</span> {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+    <span class="doccomment">/// Attempts to get a permit for a concurrent operation.
+    ///
+    /// If the permit could not be acquired at this time, then [`None`] is returned. Otherwise, a
+    /// guard is returned that releases the mutex when dropped.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use async_lock::Semaphore;
+    ///
+    /// let s = Semaphore::new(2);
+    ///
+    /// let g1 = s.try_acquire().unwrap();
+    /// let g2 = s.try_acquire().unwrap();
+    ///
+    /// assert!(s.try_acquire().is_none());
+    /// drop(g2);
+    /// assert!(s.try_acquire().is_some());
+    /// ```
+    </span><span class="kw">pub fn </span>try_acquire(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;SemaphoreGuard&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>count = <span class="self">self</span>.count.load(Ordering::Acquire);
+        <span class="kw">loop </span>{
+            <span class="kw">if </span>count == <span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">None</span>;
             }
 
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">count</span>.<span class="ident">compare_exchange_weak</span>(
-                <span class="ident">count</span>,
-                <span class="ident">count</span> <span class="op">-</span> <span class="number">1</span>,
-                <span class="ident">Ordering::AcqRel</span>,
-                <span class="ident">Ordering::Acquire</span>,
+            <span class="kw">match </span><span class="self">self</span>.count.compare_exchange_weak(
+                count,
+                count - <span class="number">1</span>,
+                Ordering::AcqRel,
+                Ordering::Acquire,
             ) {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">SemaphoreGuard</span>(<span class="self">self</span>)),
-                <span class="prelude-val">Err</span>(<span class="ident">c</span>) =&gt; <span class="ident">count</span> <span class="op">=</span> <span class="ident">c</span>,
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(SemaphoreGuard(<span class="self">self</span>)),
+                <span class="prelude-val">Err</span>(c) =&gt; count = c,
             }
         }
     }
 
-    <span class="doccomment">/// Waits for a permit for a concurrent operation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns a guard that releases the permit when dropped.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # futures_lite::future::block_on(async {</span>
-    <span class="doccomment">/// use async_lock::Semaphore;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let s = Semaphore::new(2);</span>
-    <span class="doccomment">/// let guard = s.acquire().await;</span>
-    <span class="doccomment">/// # });</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">acquire</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">SemaphoreGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+    <span class="doccomment">/// Waits for a permit for a concurrent operation.
+    ///
+    /// Returns a guard that releases the permit when dropped.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # futures_lite::future::block_on(async {
+    /// use async_lock::Semaphore;
+    ///
+    /// let s = Semaphore::new(2);
+    /// let guard = s.acquire().await;
+    /// # });
+    /// ```
+    </span><span class="kw">pub async fn </span>acquire(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SemaphoreGuard&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="prelude-val">None</span>;
 
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">guard</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">try_acquire</span>() {
-                <span class="kw">return</span> <span class="ident">guard</span>;
+        <span class="kw">loop </span>{
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(guard) = <span class="self">self</span>.try_acquire() {
+                <span class="kw">return </span>guard;
             }
 
-            <span class="kw">match</span> <span class="ident">listener</span>.<span class="ident">take</span>() {
-                <span class="prelude-val">None</span> =&gt; <span class="ident">listener</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">event</span>.<span class="ident">listen</span>()),
-                <span class="prelude-val">Some</span>(<span class="ident">l</span>) =&gt; <span class="ident">l</span>.<span class="kw">await</span>,
+            <span class="kw">match </span>listener.take() {
+                <span class="prelude-val">None </span>=&gt; listener = <span class="prelude-val">Some</span>(<span class="self">self</span>.event.listen()),
+                <span class="prelude-val">Some</span>(l) =&gt; l.<span class="kw">await</span>,
             }
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Semaphore</span> {
-    <span class="doccomment">/// Attempts to get an owned permit for a concurrent operation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If the permit could not be acquired at this time, then [`None`] is returned. Otherwise, an</span>
-    <span class="doccomment">/// owned guard is returned that releases the mutex when dropped.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use async_lock::Semaphore;</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let s = Arc::new(Semaphore::new(2));</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let g1 = s.try_acquire_arc().unwrap();</span>
-    <span class="doccomment">/// let g2 = s.try_acquire_arc().unwrap();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert!(s.try_acquire_arc().is_none());</span>
-    <span class="doccomment">/// drop(g2);</span>
-    <span class="doccomment">/// assert!(s.try_acquire_arc().is_some());</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_acquire_arc</span>(<span class="self">self</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SemaphoreGuardArc</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">count</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> <span class="ident">count</span> <span class="op">==</span> <span class="number">0</span> {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+<span class="kw">impl </span>Semaphore {
+    <span class="doccomment">/// Attempts to get an owned permit for a concurrent operation.
+    ///
+    /// If the permit could not be acquired at this time, then [`None`] is returned. Otherwise, an
+    /// owned guard is returned that releases the mutex when dropped.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use async_lock::Semaphore;
+    /// use std::sync::Arc;
+    ///
+    /// let s = Arc::new(Semaphore::new(2));
+    ///
+    /// let g1 = s.try_acquire_arc().unwrap();
+    /// let g2 = s.try_acquire_arc().unwrap();
+    ///
+    /// assert!(s.try_acquire_arc().is_none());
+    /// drop(g2);
+    /// assert!(s.try_acquire_arc().is_some());
+    /// ```
+    </span><span class="kw">pub fn </span>try_acquire_arc(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;SemaphoreGuardArc&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>count = <span class="self">self</span>.count.load(Ordering::Acquire);
+        <span class="kw">loop </span>{
+            <span class="kw">if </span>count == <span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">None</span>;
             }
 
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">count</span>.<span class="ident">compare_exchange_weak</span>(
-                <span class="ident">count</span>,
-                <span class="ident">count</span> <span class="op">-</span> <span class="number">1</span>,
-                <span class="ident">Ordering::AcqRel</span>,
-                <span class="ident">Ordering::Acquire</span>,
+            <span class="kw">match </span><span class="self">self</span>.count.compare_exchange_weak(
+                count,
+                count - <span class="number">1</span>,
+                Ordering::AcqRel,
+                Ordering::Acquire,
             ) {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">SemaphoreGuardArc</span>(<span class="self">self</span>.<span class="ident">clone</span>())),
-                <span class="prelude-val">Err</span>(<span class="ident">c</span>) =&gt; <span class="ident">count</span> <span class="op">=</span> <span class="ident">c</span>,
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(SemaphoreGuardArc(<span class="self">self</span>.clone())),
+                <span class="prelude-val">Err</span>(c) =&gt; count = c,
             }
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">acquire_arc_impl</span>(<span class="self">self</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) -&gt; <span class="ident">SemaphoreGuardArc</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+    <span class="kw">async fn </span>acquire_arc_impl(<span class="self">self</span>: Arc&lt;<span class="self">Self</span>&gt;) -&gt; SemaphoreGuardArc {
+        <span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="prelude-val">None</span>;
 
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">guard</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">try_acquire_arc</span>() {
-                <span class="kw">return</span> <span class="ident">guard</span>;
+        <span class="kw">loop </span>{
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(guard) = <span class="self">self</span>.try_acquire_arc() {
+                <span class="kw">return </span>guard;
             }
 
-            <span class="kw">match</span> <span class="ident">listener</span>.<span class="ident">take</span>() {
-                <span class="prelude-val">None</span> =&gt; <span class="ident">listener</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">event</span>.<span class="ident">listen</span>()),
-                <span class="prelude-val">Some</span>(<span class="ident">l</span>) =&gt; <span class="ident">l</span>.<span class="kw">await</span>,
+            <span class="kw">match </span>listener.take() {
+                <span class="prelude-val">None </span>=&gt; listener = <span class="prelude-val">Some</span>(<span class="self">self</span>.event.listen()),
+                <span class="prelude-val">Some</span>(l) =&gt; l.<span class="kw">await</span>,
             }
         }
     }
 
-    <span class="doccomment">/// Waits for an owned permit for a concurrent operation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns a guard that releases the permit when dropped.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # futures_lite::future::block_on(async {</span>
-    <span class="doccomment">/// use async_lock::Semaphore;</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let s = Arc::new(Semaphore::new(2));</span>
-    <span class="doccomment">/// let guard = s.acquire_arc().await;</span>
-    <span class="doccomment">/// # });</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">acquire_arc</span>(<span class="self">self</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) -&gt; <span class="kw">impl</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">SemaphoreGuardArc</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">clone</span>().<span class="ident">acquire_arc_impl</span>()
+    <span class="doccomment">/// Waits for an owned permit for a concurrent operation.
+    ///
+    /// Returns a guard that releases the permit when dropped.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # futures_lite::future::block_on(async {
+    /// use async_lock::Semaphore;
+    /// use std::sync::Arc;
+    ///
+    /// let s = Arc::new(Semaphore::new(2));
+    /// let guard = s.acquire_arc().await;
+    /// # });
+    /// ```
+    </span><span class="kw">pub fn </span>acquire_arc(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;) -&gt; <span class="kw">impl </span>Future&lt;Output = SemaphoreGuardArc&gt; {
+        <span class="self">self</span>.clone().acquire_arc_impl()
     }
 }
 
-<span class="doccomment">/// A guard that releases the acquired permit.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SemaphoreGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Semaphore</span>);
+<span class="doccomment">/// A guard that releases the acquired permit.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>SemaphoreGuard&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Semaphore);
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">SemaphoreGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">count</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::AcqRel</span>);
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">event</span>.<span class="ident">notify</span>(<span class="number">1</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>SemaphoreGuard&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.<span class="number">0</span>.count.fetch_add(<span class="number">1</span>, Ordering::AcqRel);
+        <span class="self">self</span>.<span class="number">0</span>.event.notify(<span class="number">1</span>);
     }
 }
 
-<span class="doccomment">/// An owned guard that releases the acquired permit.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SemaphoreGuardArc</span>(<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Semaphore</span><span class="op">&gt;</span>);
+<span class="doccomment">/// An owned guard that releases the acquired permit.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>SemaphoreGuardArc(Arc&lt;Semaphore&gt;);
 
-<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">SemaphoreGuardArc</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">count</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::AcqRel</span>);
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">event</span>.<span class="ident">notify</span>(<span class="number">1</span>);
+<span class="kw">impl </span>Drop <span class="kw">for </span>SemaphoreGuardArc {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.<span class="number">0</span>.count.fetch_add(<span class="number">1</span>, Ordering::AcqRel);
+        <span class="self">self</span>.<span class="number">0</span>.event.notify(<span class="number">1</span>);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="async_lock" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="async_lock" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

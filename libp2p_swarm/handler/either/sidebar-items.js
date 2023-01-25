@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["IntoEitherHandler",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["IntoEitherHandler",""]]};

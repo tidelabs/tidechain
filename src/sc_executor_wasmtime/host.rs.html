@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/wasmtime/src/host.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>host.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_executor_wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_executor_wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_executor_wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/wasmtime/src/host.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>host.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_executor_wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -376,379 +371,378 @@
 <span id="371">371</span>
 <span id="372">372</span>
 <span id="373">373</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! This module defines `HostState` and `HostContext` structs which provide logic and state</span>
-<span class="doccomment">//! required for execution of host.</span>
+</span><span class="doccomment">//! This module defines `HostState` and `HostContext` structs which provide logic and state
+//! required for execution of host.
 
-<span class="kw">use</span> <span class="ident">log::trace</span>;
-<span class="kw">use</span> <span class="ident">wasmtime</span>::{<span class="ident">Caller</span>, <span class="ident">Func</span>, <span class="ident">Val</span>};
+</span><span class="kw">use </span>log::trace;
+<span class="kw">use </span>wasmtime::{Caller, Func, Val};
 
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
-<span class="kw">use</span> <span class="ident">sc_allocator::FreeingBumpHeapAllocator</span>;
-<span class="kw">use</span> <span class="ident">sc_executor_common</span>::{
-	<span class="ident">error::Result</span>,
-	<span class="ident">sandbox</span>::{<span class="self">self</span>, <span class="ident">SupervisorFuncIndex</span>},
-	<span class="ident">util::MemoryTransfer</span>,
+<span class="kw">use </span>codec::{Decode, Encode};
+<span class="kw">use </span>sc_allocator::FreeingBumpHeapAllocator;
+<span class="kw">use </span>sc_executor_common::{
+	error::Result,
+	sandbox::{<span class="self">self</span>, SupervisorFuncIndex},
+	util::MemoryTransfer,
 };
-<span class="kw">use</span> <span class="ident">sp_sandbox::env</span> <span class="kw">as</span> <span class="ident">sandbox_env</span>;
-<span class="kw">use</span> <span class="ident">sp_wasm_interface</span>::{<span class="ident">FunctionContext</span>, <span class="ident">MemoryId</span>, <span class="ident">Pointer</span>, <span class="ident">Sandbox</span>, <span class="ident">WordSize</span>};
+<span class="kw">use </span>sp_sandbox::env <span class="kw">as </span>sandbox_env;
+<span class="kw">use </span>sp_wasm_interface::{FunctionContext, MemoryId, Pointer, Sandbox, WordSize};
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">runtime::StoreData</span>, <span class="ident">util</span>};
+<span class="kw">use crate</span>::{runtime::StoreData, util};
 
-<span class="comment">// The sandbox store is inside of a Option&lt;Box&lt;..&gt;&gt;&gt; so that we can temporarily borrow it.</span>
-<span class="kw">struct</span> <span class="ident">SandboxStore</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">sandbox::Store</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>);
+<span class="comment">// The sandbox store is inside of a Option&lt;Box&lt;..&gt;&gt;&gt; so that we can temporarily borrow it.
+</span><span class="kw">struct </span>SandboxStore(<span class="prelude-ty">Option</span>&lt;Box&lt;sandbox::Store&lt;Func&gt;&gt;&gt;);
 
-<span class="comment">// There are a bunch of `Rc`s within the sandbox store, however we only manipulate</span>
-<span class="comment">// those within one thread so this should be safe.</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">SandboxStore</span> {}
+<span class="comment">// There are a bunch of `Rc`s within the sandbox store, however we only manipulate
+// those within one thread so this should be safe.
+</span><span class="kw">unsafe impl </span>Send <span class="kw">for </span>SandboxStore {}
 
-<span class="doccomment">/// The state required to construct a HostContext context. The context only lasts for one host</span>
-<span class="doccomment">/// call, whereas the state is maintained for the duration of a Wasm runtime call, which may make</span>
-<span class="doccomment">/// many different host calls that must share state.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HostState</span> {
-	<span class="ident">sandbox_store</span>: <span class="ident">SandboxStore</span>,
-	<span class="ident">allocator</span>: <span class="ident">FreeingBumpHeapAllocator</span>,
-	<span class="ident">panic_message</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+<span class="doccomment">/// The state required to construct a HostContext context. The context only lasts for one host
+/// call, whereas the state is maintained for the duration of a Wasm runtime call, which may make
+/// many different host calls that must share state.
+</span><span class="kw">pub struct </span>HostState {
+	sandbox_store: SandboxStore,
+	allocator: FreeingBumpHeapAllocator,
+	panic_message: <span class="prelude-ty">Option</span>&lt;String&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">HostState</span> {
-	<span class="doccomment">/// Constructs a new `HostState`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">allocator</span>: <span class="ident">FreeingBumpHeapAllocator</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">HostState</span> {
-			<span class="ident">sandbox_store</span>: <span class="ident">SandboxStore</span>(<span class="prelude-val">Some</span>(<span class="ident">Box::new</span>(<span class="ident">sandbox::Store::new</span>(
-				<span class="ident">sandbox::SandboxBackend::TryWasmer</span>,
+<span class="kw">impl </span>HostState {
+	<span class="doccomment">/// Constructs a new `HostState`.
+	</span><span class="kw">pub fn </span>new(allocator: FreeingBumpHeapAllocator) -&gt; <span class="self">Self </span>{
+		HostState {
+			sandbox_store: SandboxStore(<span class="prelude-val">Some</span>(Box::new(sandbox::Store::new(
+				sandbox::SandboxBackend::TryWasmer,
 			)))),
-			<span class="ident">allocator</span>,
-			<span class="ident">panic_message</span>: <span class="prelude-val">None</span>,
+			allocator,
+			panic_message: <span class="prelude-val">None</span>,
 		}
 	}
 
-	<span class="doccomment">/// Takes the error message out of the host state, leaving a `None` in its place.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">take_panic_message</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">panic_message</span>.<span class="ident">take</span>()
+	<span class="doccomment">/// Takes the error message out of the host state, leaving a `None` in its place.
+	</span><span class="kw">pub fn </span>take_panic_message(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+		<span class="self">self</span>.panic_message.take()
 	}
 }
 
-<span class="doccomment">/// A `HostContext` implements `FunctionContext` for making host calls from a Wasmtime</span>
-<span class="doccomment">/// runtime. The `HostContext` exists only for the lifetime of the call and borrows state from</span>
-<span class="doccomment">/// a longer-living `HostState`.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">HostContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">caller</span>: <span class="ident">Caller</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">StoreData</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A `HostContext` implements `FunctionContext` for making host calls from a Wasmtime
+/// runtime. The `HostContext` exists only for the lifetime of the call and borrows state from
+/// a longer-living `HostState`.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>HostContext&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">pub</span>(<span class="kw">crate</span>) caller: Caller&lt;<span class="lifetime">&#39;a</span>, StoreData&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">HostContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">host_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">HostState</span> {
-		<span class="self">self</span>.<span class="ident">caller</span>
-			.<span class="ident">data</span>()
-			.<span class="ident">host_state</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; HostContext&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">fn </span>host_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>HostState {
+		<span class="self">self</span>.caller
+			.data()
+			.host_state()
+			.expect(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">host_state_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">HostState</span> {
-		<span class="self">self</span>.<span class="ident">caller</span>
-			.<span class="ident">data_mut</span>()
-			.<span class="ident">host_state_mut</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
+	<span class="kw">fn </span>host_state_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>HostState {
+		<span class="self">self</span>.caller
+			.data_mut()
+			.host_state_mut()
+			.expect(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">sandbox_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">sandbox::Store</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">host_state</span>()
-			.<span class="ident">sandbox_store</span>
-			.<span class="number">0</span>
-			.<span class="ident">as_ref</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;sandbox store is only empty when temporarily borrowed&quot;</span>)
+	<span class="kw">fn </span>sandbox_store(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>sandbox::Store&lt;Func&gt; {
+		<span class="self">self</span>.host_state()
+			.sandbox_store
+			.<span class="number">0
+			</span>.as_ref()
+			.expect(<span class="string">&quot;sandbox store is only empty when temporarily borrowed&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">sandbox_store_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">sandbox::Store</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">host_state_mut</span>()
-			.<span class="ident">sandbox_store</span>
-			.<span class="number">0</span>
-			.<span class="ident">as_mut</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;sandbox store is only empty when temporarily borrowed&quot;</span>)
+	<span class="kw">fn </span>sandbox_store_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>sandbox::Store&lt;Func&gt; {
+		<span class="self">self</span>.host_state_mut()
+			.sandbox_store
+			.<span class="number">0
+			</span>.as_mut()
+			.expect(<span class="string">&quot;sandbox store is only empty when temporarily borrowed&quot;</span>)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">sp_wasm_interface::FunctionContext</span> <span class="kw">for</span> <span class="ident">HostContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">read_memory_into</span>(
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; sp_wasm_interface::FunctionContext <span class="kw">for </span>HostContext&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">fn </span>read_memory_into(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">address</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">dest</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>],
-	) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="ident">util::read_memory_into</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">caller</span>, <span class="ident">address</span>, <span class="ident">dest</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+		address: Pointer&lt;u8&gt;,
+		dest: <span class="kw-2">&amp;mut </span>[u8],
+	) -&gt; sp_wasm_interface::Result&lt;()&gt; {
+		util::read_memory_into(<span class="kw-2">&amp;</span><span class="self">self</span>.caller, address, dest).map_err(|e| e.to_string())
 	}
 
-	<span class="kw">fn</span> <span class="ident">write_memory</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">address</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="ident">util::write_memory_from</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">caller</span>, <span class="ident">address</span>, <span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+	<span class="kw">fn </span>write_memory(<span class="kw-2">&amp;mut </span><span class="self">self</span>, address: Pointer&lt;u8&gt;, data: <span class="kw-2">&amp;</span>[u8]) -&gt; sp_wasm_interface::Result&lt;()&gt; {
+		util::write_memory_from(<span class="kw-2">&amp;mut </span><span class="self">self</span>.caller, address, data).map_err(|e| e.to_string())
 	}
 
-	<span class="kw">fn</span> <span class="ident">allocate_memory</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">size</span>: <span class="ident">WordSize</span>) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span><span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">caller</span>.<span class="ident">data</span>().<span class="ident">memory</span>();
-		<span class="kw">let</span> (<span class="ident">memory</span>, <span class="ident">data</span>) <span class="op">=</span> <span class="ident">memory</span>.<span class="ident">data_and_store_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">caller</span>);
-		<span class="ident">data</span>.<span class="ident">host_state_mut</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
-			.<span class="ident">allocator</span>
-			.<span class="ident">allocate</span>(<span class="ident">memory</span>, <span class="ident">size</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+	<span class="kw">fn </span>allocate_memory(<span class="kw-2">&amp;mut </span><span class="self">self</span>, size: WordSize) -&gt; sp_wasm_interface::Result&lt;Pointer&lt;u8&gt;&gt; {
+		<span class="kw">let </span>memory = <span class="self">self</span>.caller.data().memory();
+		<span class="kw">let </span>(memory, data) = memory.data_and_store_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>.caller);
+		data.host_state_mut()
+			.expect(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
+			.allocator
+			.allocate(memory, size)
+			.map_err(|e| e.to_string())
 	}
 
-	<span class="kw">fn</span> <span class="ident">deallocate_memory</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ptr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">caller</span>.<span class="ident">data</span>().<span class="ident">memory</span>();
-		<span class="kw">let</span> (<span class="ident">memory</span>, <span class="ident">data</span>) <span class="op">=</span> <span class="ident">memory</span>.<span class="ident">data_and_store_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">caller</span>);
-		<span class="ident">data</span>.<span class="ident">host_state_mut</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
-			.<span class="ident">allocator</span>
-			.<span class="ident">deallocate</span>(<span class="ident">memory</span>, <span class="ident">ptr</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+	<span class="kw">fn </span>deallocate_memory(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: Pointer&lt;u8&gt;) -&gt; sp_wasm_interface::Result&lt;()&gt; {
+		<span class="kw">let </span>memory = <span class="self">self</span>.caller.data().memory();
+		<span class="kw">let </span>(memory, data) = memory.data_and_store_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>.caller);
+		data.host_state_mut()
+			.expect(<span class="string">&quot;host state is not empty when calling a function in wasm; qed&quot;</span>)
+			.allocator
+			.deallocate(memory, ptr)
+			.map_err(|e| e.to_string())
 	}
 
-	<span class="kw">fn</span> <span class="ident">sandbox</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Sandbox</span> {
-		<span class="self">self</span>
-	}
+	<span class="kw">fn </span>sandbox(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Sandbox {
+		<span class="self">self
+	</span>}
 
-	<span class="kw">fn</span> <span class="ident">register_panic_error_message</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
-		<span class="self">self</span>.<span class="ident">host_state_mut</span>().<span class="ident">panic_message</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">message</span>.<span class="ident">to_owned</span>());
+	<span class="kw">fn </span>register_panic_error_message(<span class="kw-2">&amp;mut </span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>str) {
+		<span class="self">self</span>.host_state_mut().panic_message = <span class="prelude-val">Some</span>(message.to_owned());
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sandbox</span> <span class="kw">for</span> <span class="ident">HostContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">memory_get</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">memory_id</span>: <span class="ident">MemoryId</span>,
-		<span class="ident">offset</span>: <span class="ident">WordSize</span>,
-		<span class="ident">buf_ptr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">buf_len</span>: <span class="ident">WordSize</span>,
-	) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">sandboxed_memory</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sandbox_store</span>().<span class="ident">memory</span>(<span class="ident">memory_id</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Sandbox <span class="kw">for </span>HostContext&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">fn </span>memory_get(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		memory_id: MemoryId,
+		offset: WordSize,
+		buf_ptr: Pointer&lt;u8&gt;,
+		buf_len: WordSize,
+	) -&gt; sp_wasm_interface::Result&lt;u32&gt; {
+		<span class="kw">let </span>sandboxed_memory = <span class="self">self</span>.sandbox_store().memory(memory_id).map_err(|e| e.to_string())<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">buf_len</span> <span class="kw">as</span> <span class="ident">usize</span>;
+		<span class="kw">let </span>len = buf_len <span class="kw">as </span>usize;
 
-		<span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sandboxed_memory</span>.<span class="ident">read</span>(<span class="ident">Pointer::new</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u32</span>), <span class="ident">len</span>) {
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>),
-			<span class="prelude-val">Ok</span>(<span class="ident">buffer</span>) =&gt; <span class="ident">buffer</span>,
+		<span class="kw">let </span>buffer = <span class="kw">match </span>sandboxed_memory.read(Pointer::new(offset <span class="kw">as </span>u32), len) {
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(sandbox_env::ERR_OUT_OF_BOUNDS),
+			<span class="prelude-val">Ok</span>(buffer) =&gt; buffer,
 		};
 
-		<span class="kw">if</span> <span class="ident">util::write_memory_from</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">caller</span>, <span class="ident">buf_ptr</span>, <span class="kw-2">&amp;</span><span class="ident">buffer</span>).<span class="ident">is_err</span>() {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>)
+		<span class="kw">if </span>util::write_memory_from(<span class="kw-2">&amp;mut </span><span class="self">self</span>.caller, buf_ptr, <span class="kw-2">&amp;</span>buffer).is_err() {
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(sandbox_env::ERR_OUT_OF_BOUNDS)
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>)
+		<span class="prelude-val">Ok</span>(sandbox_env::ERR_OK)
 	}
 
-	<span class="kw">fn</span> <span class="ident">memory_set</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">memory_id</span>: <span class="ident">MemoryId</span>,
-		<span class="ident">offset</span>: <span class="ident">WordSize</span>,
-		<span class="ident">val_ptr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">val_len</span>: <span class="ident">WordSize</span>,
-	) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">sandboxed_memory</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sandbox_store</span>().<span class="ident">memory</span>(<span class="ident">memory_id</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+	<span class="kw">fn </span>memory_set(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		memory_id: MemoryId,
+		offset: WordSize,
+		val_ptr: Pointer&lt;u8&gt;,
+		val_len: WordSize,
+	) -&gt; sp_wasm_interface::Result&lt;u32&gt; {
+		<span class="kw">let </span>sandboxed_memory = <span class="self">self</span>.sandbox_store().memory(memory_id).map_err(|e| e.to_string())<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">val_len</span> <span class="kw">as</span> <span class="ident">usize</span>;
+		<span class="kw">let </span>len = val_len <span class="kw">as </span>usize;
 
-		<span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">util::read_memory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">caller</span>, <span class="ident">val_ptr</span>, <span class="ident">len</span>) {
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>),
-			<span class="prelude-val">Ok</span>(<span class="ident">buffer</span>) =&gt; <span class="ident">buffer</span>,
+		<span class="kw">let </span>buffer = <span class="kw">match </span>util::read_memory(<span class="kw-2">&amp;</span><span class="self">self</span>.caller, val_ptr, len) {
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(sandbox_env::ERR_OUT_OF_BOUNDS),
+			<span class="prelude-val">Ok</span>(buffer) =&gt; buffer,
 		};
 
-		<span class="kw">if</span> <span class="ident">sandboxed_memory</span>.<span class="ident">write_from</span>(<span class="ident">Pointer::new</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u32</span>), <span class="kw-2">&amp;</span><span class="ident">buffer</span>).<span class="ident">is_err</span>() {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>)
+		<span class="kw">if </span>sandboxed_memory.write_from(Pointer::new(offset <span class="kw">as </span>u32), <span class="kw-2">&amp;</span>buffer).is_err() {
+			<span class="kw">return </span><span class="prelude-val">Ok</span>(sandbox_env::ERR_OUT_OF_BOUNDS)
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>)
+		<span class="prelude-val">Ok</span>(sandbox_env::ERR_OK)
 	}
 
-	<span class="kw">fn</span> <span class="ident">memory_teardown</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">memory_id</span>: <span class="ident">MemoryId</span>) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">sandbox_store_mut</span>().<span class="ident">memory_teardown</span>(<span class="ident">memory_id</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+	<span class="kw">fn </span>memory_teardown(<span class="kw-2">&amp;mut </span><span class="self">self</span>, memory_id: MemoryId) -&gt; sp_wasm_interface::Result&lt;()&gt; {
+		<span class="self">self</span>.sandbox_store_mut().memory_teardown(memory_id).map_err(|e| e.to_string())
 	}
 
-	<span class="kw">fn</span> <span class="ident">memory_new</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">initial</span>: <span class="ident">u32</span>, <span class="ident">maximum</span>: <span class="ident">u32</span>) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">sandbox_store_mut</span>().<span class="ident">new_memory</span>(<span class="ident">initial</span>, <span class="ident">maximum</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+	<span class="kw">fn </span>memory_new(<span class="kw-2">&amp;mut </span><span class="self">self</span>, initial: u32, maximum: u32) -&gt; sp_wasm_interface::Result&lt;u32&gt; {
+		<span class="self">self</span>.sandbox_store_mut().new_memory(initial, maximum).map_err(|e| e.to_string())
 	}
 
-	<span class="kw">fn</span> <span class="ident">invoke</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">instance_id</span>: <span class="ident">u32</span>,
-		<span class="ident">export_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="kw-2">mut</span> <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">return_val</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">return_val_len</span>: <span class="ident">u32</span>,
-		<span class="ident">state</span>: <span class="ident">u32</span>,
-	) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-		<span class="macro">trace!</span>(<span class="ident">target</span>: <span class="string">&quot;sp-sandbox&quot;</span>, <span class="string">&quot;invoke, instance_idx={}&quot;</span>, <span class="ident">instance_id</span>);
+	<span class="kw">fn </span>invoke(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		instance_id: u32,
+		export_name: <span class="kw-2">&amp;</span>str,
+		<span class="kw-2">mut </span>args: <span class="kw-2">&amp;</span>[u8],
+		return_val: Pointer&lt;u8&gt;,
+		return_val_len: u32,
+		state: u32,
+	) -&gt; sp_wasm_interface::Result&lt;u32&gt; {
+		<span class="macro">trace!</span>(target: <span class="string">&quot;sp-sandbox&quot;</span>, <span class="string">&quot;invoke, instance_idx={}&quot;</span>, instance_id);
 
-		<span class="comment">// Deserialize arguments and convert them into wasmi types.</span>
-		<span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">sp_wasm_interface::Value</span><span class="op">&gt;</span><span class="ident">::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">args</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;Can&#39;t decode serialized arguments for the invocation&quot;</span>)<span class="question-mark">?</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		<span class="comment">// Deserialize arguments and convert them into wasmi types.
+		</span><span class="kw">let </span>args = Vec::&lt;sp_wasm_interface::Value&gt;::decode(<span class="kw-2">&amp;mut </span>args)
+			.map_err(|<span class="kw">_</span>| <span class="string">&quot;Can&#39;t decode serialized arguments for the invocation&quot;</span>)<span class="question-mark">?
+			</span>.into_iter()
+			.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sandbox_store</span>().<span class="ident">instance</span>(<span class="ident">instance_id</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+		<span class="kw">let </span>instance = <span class="self">self</span>.sandbox_store().instance(instance_id).map_err(|e| e.to_string())<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">dispatch_thunk</span> <span class="op">=</span>
-			<span class="self">self</span>.<span class="ident">sandbox_store</span>().<span class="ident">dispatch_thunk</span>(<span class="ident">instance_id</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+		<span class="kw">let </span>dispatch_thunk =
+			<span class="self">self</span>.sandbox_store().dispatch_thunk(instance_id).map_err(|e| e.to_string())<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">invoke</span>(
-			<span class="ident">export_name</span>,
-			<span class="kw-2">&amp;</span><span class="ident">args</span>,
-			<span class="ident">state</span>,
-			<span class="kw-2">&amp;mut</span> <span class="ident">SandboxContext</span> { <span class="ident">host_context</span>: <span class="self">self</span>, <span class="ident">dispatch_thunk</span> },
+		<span class="kw">let </span>result = instance.invoke(
+			export_name,
+			<span class="kw-2">&amp;</span>args,
+			state,
+			<span class="kw-2">&amp;mut </span>SandboxContext { host_context: <span class="self">self</span>, dispatch_thunk },
 		);
 
-		<span class="kw">match</span> <span class="ident">result</span> {
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>),
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">val</span>)) =&gt; {
-				<span class="comment">// Serialize return value and write it back into the memory.</span>
-				<span class="ident">sp_wasm_interface::ReturnValue::Value</span>(<span class="ident">val</span>.<span class="ident">into</span>()).<span class="ident">using_encoded</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> {
-					<span class="kw">if</span> <span class="ident">val</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">return_val_len</span> <span class="kw">as</span> <span class="ident">usize</span> {
-						<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;Return value buffer is too small&quot;</span>.<span class="ident">into</span>())
+		<span class="kw">match </span>result {
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(sandbox_env::ERR_OK),
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(val)) =&gt; {
+				<span class="comment">// Serialize return value and write it back into the memory.
+				</span>sp_wasm_interface::ReturnValue::Value(val.into()).using_encoded(|val| {
+					<span class="kw">if </span>val.len() &gt; return_val_len <span class="kw">as </span>usize {
+						<span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;Return value buffer is too small&quot;</span>.into())
 					}
-					<span class="op">&lt;</span><span class="ident">HostContext</span> <span class="kw">as</span> <span class="ident">FunctionContext</span><span class="op">&gt;</span><span class="ident">::write_memory</span>(<span class="self">self</span>, <span class="ident">return_val</span>, <span class="ident">val</span>)
-						.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;can&#39;t write return value&quot;</span>)<span class="question-mark">?</span>;
-					<span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>)
+					&lt;HostContext <span class="kw">as </span>FunctionContext&gt;::write_memory(<span class="self">self</span>, return_val, val)
+						.map_err(|<span class="kw">_</span>| <span class="string">&quot;can&#39;t write return value&quot;</span>)<span class="question-mark">?</span>;
+					<span class="prelude-val">Ok</span>(sandbox_env::ERR_OK)
 				})
 			},
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_EXECUTION</span>),
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(sandbox_env::ERR_EXECUTION),
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">instance_teardown</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">instance_id</span>: <span class="ident">u32</span>) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">sandbox_store_mut</span>()
-			.<span class="ident">instance_teardown</span>(<span class="ident">instance_id</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+	<span class="kw">fn </span>instance_teardown(<span class="kw-2">&amp;mut </span><span class="self">self</span>, instance_id: u32) -&gt; sp_wasm_interface::Result&lt;()&gt; {
+		<span class="self">self</span>.sandbox_store_mut()
+			.instance_teardown(instance_id)
+			.map_err(|e| e.to_string())
 	}
 
-	<span class="kw">fn</span> <span class="ident">instance_new</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">dispatch_thunk_id</span>: <span class="ident">u32</span>,
-		<span class="ident">wasm</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">raw_env_def</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">state</span>: <span class="ident">u32</span>,
-	) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-		<span class="comment">// Extract a dispatch thunk from the instance&#39;s table by the specified index.</span>
-		<span class="kw">let</span> <span class="ident">dispatch_thunk</span> <span class="op">=</span> {
-			<span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="self">self</span>
-				.<span class="ident">caller</span>
-				.<span class="ident">data</span>()
-				.<span class="ident">table</span>()
-				.<span class="ident">ok_or</span>(<span class="string">&quot;Runtime doesn&#39;t have a table; sandbox is unavailable&quot;</span>)<span class="question-mark">?</span>;
-			<span class="kw">let</span> <span class="ident">table_item</span> <span class="op">=</span> <span class="ident">table</span>.<span class="ident">get</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">caller</span>, <span class="ident">dispatch_thunk_id</span>);
+	<span class="kw">fn </span>instance_new(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		dispatch_thunk_id: u32,
+		wasm: <span class="kw-2">&amp;</span>[u8],
+		raw_env_def: <span class="kw-2">&amp;</span>[u8],
+		state: u32,
+	) -&gt; sp_wasm_interface::Result&lt;u32&gt; {
+		<span class="comment">// Extract a dispatch thunk from the instance&#39;s table by the specified index.
+		</span><span class="kw">let </span>dispatch_thunk = {
+			<span class="kw">let </span>table = <span class="self">self
+				</span>.caller
+				.data()
+				.table()
+				.ok_or(<span class="string">&quot;Runtime doesn&#39;t have a table; sandbox is unavailable&quot;</span>)<span class="question-mark">?</span>;
+			<span class="kw">let </span>table_item = table.get(<span class="kw-2">&amp;mut </span><span class="self">self</span>.caller, dispatch_thunk_id);
 
-			<span class="ident">table_item</span>
-				.<span class="ident">ok_or</span>(<span class="string">&quot;dispatch_thunk_id is out of bounds&quot;</span>)<span class="question-mark">?</span>
-				.<span class="ident">funcref</span>()
-				.<span class="ident">ok_or</span>(<span class="string">&quot;dispatch_thunk_idx should be a funcref&quot;</span>)<span class="question-mark">?</span>
-				.<span class="ident">ok_or</span>(<span class="string">&quot;dispatch_thunk_idx should point to actual func&quot;</span>)<span class="question-mark">?</span>
-				.<span class="ident">clone</span>()
+			table_item
+				.ok_or(<span class="string">&quot;dispatch_thunk_id is out of bounds&quot;</span>)<span class="question-mark">?
+				</span>.funcref()
+				.ok_or(<span class="string">&quot;dispatch_thunk_idx should be a funcref&quot;</span>)<span class="question-mark">?
+				</span>.ok_or(<span class="string">&quot;dispatch_thunk_idx should point to actual func&quot;</span>)<span class="question-mark">?
+				</span>.clone()
 		};
 
-		<span class="kw">let</span> <span class="ident">guest_env</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sandbox::GuestEnvironment::decode</span>(<span class="self">self</span>.<span class="ident">sandbox_store</span>(), <span class="ident">raw_env_def</span>) {
-			<span class="prelude-val">Ok</span>(<span class="ident">guest_env</span>) =&gt; <span class="ident">guest_env</span>,
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_MODULE</span> <span class="kw">as</span> <span class="ident">u32</span>),
+		<span class="kw">let </span>guest_env = <span class="kw">match </span>sandbox::GuestEnvironment::decode(<span class="self">self</span>.sandbox_store(), raw_env_def) {
+			<span class="prelude-val">Ok</span>(guest_env) =&gt; guest_env,
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(sandbox_env::ERR_MODULE <span class="kw">as </span>u32),
 		};
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">host_state_mut</span>()
-			.<span class="ident">sandbox_store</span>
-			.<span class="number">0</span>
-			.<span class="ident">take</span>()
-			.<span class="ident">expect</span>(<span class="string">&quot;sandbox store is only empty when borrowed&quot;</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>store = <span class="self">self
+			</span>.host_state_mut()
+			.sandbox_store
+			.<span class="number">0
+			</span>.take()
+			.expect(<span class="string">&quot;sandbox store is only empty when borrowed&quot;</span>);
 
-		<span class="comment">// Catch any potential panics so that we can properly restore the sandbox store</span>
-		<span class="comment">// which we&#39;ve destructively borrowed.</span>
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">std::panic::catch_unwind</span>(<span class="ident">std::panic::AssertUnwindSafe</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">store</span>.<span class="ident">instantiate</span>(
-				<span class="ident">wasm</span>,
-				<span class="ident">guest_env</span>,
-				<span class="ident">state</span>,
-				<span class="kw-2">&amp;mut</span> <span class="ident">SandboxContext</span> { <span class="ident">host_context</span>: <span class="self">self</span>, <span class="ident">dispatch_thunk</span> },
+		<span class="comment">// Catch any potential panics so that we can properly restore the sandbox store
+		// which we&#39;ve destructively borrowed.
+		</span><span class="kw">let </span>result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+			store.instantiate(
+				wasm,
+				guest_env,
+				state,
+				<span class="kw-2">&amp;mut </span>SandboxContext { host_context: <span class="self">self</span>, dispatch_thunk },
 			)
 		}));
 
-		<span class="self">self</span>.<span class="ident">host_state_mut</span>().<span class="ident">sandbox_store</span>.<span class="number">0</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">store</span>);
+		<span class="self">self</span>.host_state_mut().sandbox_store.<span class="number">0 </span>= <span class="prelude-val">Some</span>(store);
 
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">result</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">result</span>) =&gt; <span class="ident">result</span>,
-			<span class="prelude-val">Err</span>(<span class="ident">error</span>) =&gt; <span class="ident">std::panic::resume_unwind</span>(<span class="ident">error</span>),
+		<span class="kw">let </span>result = <span class="kw">match </span>result {
+			<span class="prelude-val">Ok</span>(result) =&gt; result,
+			<span class="prelude-val">Err</span>(error) =&gt; std::panic::resume_unwind(error),
 		};
 
-		<span class="kw">let</span> <span class="ident">instance_idx_or_err_code</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">result</span> {
-			<span class="prelude-val">Ok</span>(<span class="ident">instance</span>) =&gt; <span class="ident">instance</span>.<span class="ident">register</span>(<span class="self">self</span>.<span class="ident">sandbox_store_mut</span>(), <span class="ident">dispatch_thunk</span>),
-			<span class="prelude-val">Err</span>(<span class="ident">sandbox::InstantiationError::StartTrapped</span>) =&gt; <span class="ident">sandbox_env::ERR_EXECUTION</span>,
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="ident">sandbox_env::ERR_MODULE</span>,
+		<span class="kw">let </span>instance_idx_or_err_code = <span class="kw">match </span>result {
+			<span class="prelude-val">Ok</span>(instance) =&gt; instance.register(<span class="self">self</span>.sandbox_store_mut(), dispatch_thunk),
+			<span class="prelude-val">Err</span>(sandbox::InstantiationError::StartTrapped) =&gt; sandbox_env::ERR_EXECUTION,
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; sandbox_env::ERR_MODULE,
 		};
 
-		<span class="prelude-val">Ok</span>(<span class="ident">instance_idx_or_err_code</span> <span class="kw">as</span> <span class="ident">u32</span>)
+		<span class="prelude-val">Ok</span>(instance_idx_or_err_code <span class="kw">as </span>u32)
 	}
 
-	<span class="kw">fn</span> <span class="ident">get_global_val</span>(
+	<span class="kw">fn </span>get_global_val(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">instance_idx</span>: <span class="ident">u32</span>,
-		<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-	) -&gt; <span class="ident">sp_wasm_interface::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">sp_wasm_interface::Value</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">sandbox_store</span>()
-			.<span class="ident">instance</span>(<span class="ident">instance_idx</span>)
-			.<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">get_global_val</span>(<span class="ident">name</span>))
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+		instance_idx: u32,
+		name: <span class="kw-2">&amp;</span>str,
+	) -&gt; sp_wasm_interface::Result&lt;<span class="prelude-ty">Option</span>&lt;sp_wasm_interface::Value&gt;&gt; {
+		<span class="self">self</span>.sandbox_store()
+			.instance(instance_idx)
+			.map(|i| i.get_global_val(name))
+			.map_err(|e| e.to_string())
 	}
 }
 
-<span class="kw">struct</span> <span class="ident">SandboxContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
-	<span class="ident">host_context</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">HostContext</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>,
-	<span class="ident">dispatch_thunk</span>: <span class="ident">Func</span>,
+<span class="kw">struct </span>SandboxContext&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; {
+	host_context: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HostContext&lt;<span class="lifetime">&#39;b</span>&gt;,
+	dispatch_thunk: Func,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">sandbox::SandboxContext</span> <span class="kw">for</span> <span class="ident">SandboxContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">invoke</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">invoke_args_ptr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">invoke_args_len</span>: <span class="ident">WordSize</span>,
-		<span class="ident">state</span>: <span class="ident">u32</span>,
-		<span class="ident">func_idx</span>: <span class="ident">SupervisorFuncIndex</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret_vals</span> <span class="op">=</span> [<span class="ident">Val::null</span>()];
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dispatch_thunk</span>.<span class="ident">call</span>(
-			<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">host_context</span>.<span class="ident">caller</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; sandbox::SandboxContext <span class="kw">for </span>SandboxContext&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; {
+	<span class="kw">fn </span>invoke(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		invoke_args_ptr: Pointer&lt;u8&gt;,
+		invoke_args_len: WordSize,
+		state: u32,
+		func_idx: SupervisorFuncIndex,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;i64&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>ret_vals = [Val::null()];
+		<span class="kw">let </span>result = <span class="self">self</span>.dispatch_thunk.call(
+			<span class="kw-2">&amp;mut </span><span class="self">self</span>.host_context.caller,
 			<span class="kw-2">&amp;</span>[
-				<span class="ident">Val::I32</span>(<span class="ident">u32::from</span>(<span class="ident">invoke_args_ptr</span>) <span class="kw">as</span> <span class="ident">i32</span>),
-				<span class="ident">Val::I32</span>(<span class="ident">invoke_args_len</span> <span class="kw">as</span> <span class="ident">i32</span>),
-				<span class="ident">Val::I32</span>(<span class="ident">state</span> <span class="kw">as</span> <span class="ident">i32</span>),
-				<span class="ident">Val::I32</span>(<span class="ident">usize::from</span>(<span class="ident">func_idx</span>) <span class="kw">as</span> <span class="ident">i32</span>),
+				Val::I32(u32::from(invoke_args_ptr) <span class="kw">as </span>i32),
+				Val::I32(invoke_args_len <span class="kw">as </span>i32),
+				Val::I32(state <span class="kw">as </span>i32),
+				Val::I32(usize::from(func_idx) <span class="kw">as </span>i32),
 			],
-			<span class="kw-2">&amp;mut</span> <span class="ident">ret_vals</span>,
+			<span class="kw-2">&amp;mut </span>ret_vals,
 		);
 
-		<span class="kw">match</span> <span class="ident">result</span> {
+		<span class="kw">match </span>result {
 			<span class="prelude-val">Ok</span>(()) =&gt;
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">ret_val</span>) <span class="op">=</span> <span class="ident">ret_vals</span>[<span class="number">0</span>].<span class="ident">i64</span>() {
-					<span class="prelude-val">Ok</span>(<span class="ident">ret_val</span>)
-				} <span class="kw">else</span> {
-					<span class="prelude-val">Err</span>(<span class="string">&quot;Supervisor function returned unexpected result!&quot;</span>.<span class="ident">into</span>())
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(ret_val) = ret_vals[<span class="number">0</span>].i64() {
+					<span class="prelude-val">Ok</span>(ret_val)
+				} <span class="kw">else </span>{
+					<span class="prelude-val">Err</span>(<span class="string">&quot;Supervisor function returned unexpected result!&quot;</span>.into())
 				},
-			<span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()),
+			<span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(err.to_string().into()),
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">supervisor_context</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">FunctionContext</span> {
-		<span class="self">self</span>.<span class="ident">host_context</span>
+	<span class="kw">fn </span>supervisor_context(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FunctionContext {
+		<span class="self">self</span>.host_context
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_executor_wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_executor_wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

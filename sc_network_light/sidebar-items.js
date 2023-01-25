@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["light_client_requests","Helpers for outgoing and incoming light client requests."]]});
+window.SIDEBAR_ITEMS = {"mod":[["light_client_requests","Helpers for outgoing and incoming light client requests."]]};

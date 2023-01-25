@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-wasm-0.82.3/src/state/module_state.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>module_state.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_wasm/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_wasm/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_wasm/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-wasm-0.82.3/src/state/module_state.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>module_state.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_wasm/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -72,75 +67,74 @@
 <span id="67">67</span>
 <span id="68">68</span>
 <span id="69">69</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">SignatureIndex</span>, <span class="ident">WasmError</span>, <span class="ident">WasmResult</span>};
-<span class="kw">use</span> <span class="ident">cranelift_codegen::ir</span>::{<span class="ident">types</span>, <span class="ident">Type</span>};
-<span class="kw">use</span> <span class="ident">cranelift_entity::PrimaryMap</span>;
-<span class="kw">use</span> <span class="ident">std::boxed::Box</span>;
-<span class="kw">use</span> <span class="ident">std::vec::Vec</span>;
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{SignatureIndex, WasmError, WasmResult};
+<span class="kw">use </span>cranelift_codegen::ir::{types, Type};
+<span class="kw">use </span>cranelift_entity::PrimaryMap;
+<span class="kw">use </span>std::boxed::Box;
+<span class="kw">use </span>std::vec::Vec;
 
-<span class="doccomment">/// Map of signatures to a function&#39;s parameter and return types.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">WasmTypes</span> <span class="op">=</span>
-    <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">SignatureIndex</span>, (<span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">wasmparser::Type</span>]<span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">wasmparser::Type</span>]<span class="op">&gt;</span>)<span class="op">&gt;</span>;
+<span class="doccomment">/// Map of signatures to a function&#39;s parameter and return types.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>WasmTypes =
+    PrimaryMap&lt;SignatureIndex, (Box&lt;[wasmparser::Type]&gt;, Box&lt;[wasmparser::Type]&gt;)&gt;;
 
-<span class="doccomment">/// Contains information decoded from the Wasm module that must be referenced</span>
-<span class="doccomment">/// during each Wasm function&#39;s translation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is only for data that is maintained by `cranelift-wasm` itself, as</span>
-<span class="doccomment">/// opposed to being maintained by the embedder. Data that is maintained by the</span>
-<span class="doccomment">/// embedder is represented with `ModuleEnvironment`.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ModuleTranslationState</span> {
-    <span class="doccomment">/// A map containing a Wasm module&#39;s original, raw signatures.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is used for translating multi-value Wasm blocks inside functions,</span>
-    <span class="doccomment">/// which are encoded to refer to their type signature via index.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">wasm_types</span>: <span class="ident">WasmTypes</span>,
+<span class="doccomment">/// Contains information decoded from the Wasm module that must be referenced
+/// during each Wasm function&#39;s translation.
+///
+/// This is only for data that is maintained by `cranelift-wasm` itself, as
+/// opposed to being maintained by the embedder. Data that is maintained by the
+/// embedder is represented with `ModuleEnvironment`.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>ModuleTranslationState {
+    <span class="doccomment">/// A map containing a Wasm module&#39;s original, raw signatures.
+    ///
+    /// This is used for translating multi-value Wasm blocks inside functions,
+    /// which are encoded to refer to their type signature via index.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) wasm_types: WasmTypes,
 }
 
-<span class="kw">fn</span> <span class="ident">cranelift_to_wasmparser_type</span>(<span class="ident">ty</span>: <span class="ident">Type</span>) -&gt; <span class="ident">WasmResult</span><span class="op">&lt;</span><span class="ident">wasmparser::Type</span><span class="op">&gt;</span> {
-    <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">ty</span> {
-        <span class="ident">types::I32</span> =&gt; <span class="ident">wasmparser::Type::I32</span>,
-        <span class="ident">types::I64</span> =&gt; <span class="ident">wasmparser::Type::I64</span>,
-        <span class="ident">types::F32</span> =&gt; <span class="ident">wasmparser::Type::F32</span>,
-        <span class="ident">types::F64</span> =&gt; <span class="ident">wasmparser::Type::F64</span>,
-        <span class="ident">types::R32</span> <span class="op">|</span> <span class="ident">types::R64</span> =&gt; <span class="ident">wasmparser::Type::ExternRef</span>,
-        <span class="kw">_</span> =&gt; {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">WasmError::Unsupported</span>(<span class="macro">format!</span>(
+<span class="kw">fn </span>cranelift_to_wasmparser_type(ty: Type) -&gt; WasmResult&lt;wasmparser::Type&gt; {
+    <span class="prelude-val">Ok</span>(<span class="kw">match </span>ty {
+        types::I32 =&gt; wasmparser::Type::I32,
+        types::I64 =&gt; wasmparser::Type::I64,
+        types::F32 =&gt; wasmparser::Type::F32,
+        types::F64 =&gt; wasmparser::Type::F64,
+        types::R32 | types::R64 =&gt; wasmparser::Type::ExternRef,
+        <span class="kw">_ </span>=&gt; {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(WasmError::Unsupported(<span class="macro">format!</span>(
                 <span class="string">&quot;Cannot convert Cranelift type to Wasm signature: {:?}&quot;</span>,
-                <span class="ident">ty</span>
+                ty
             )));
         }
     })
 }
 
-<span class="kw">impl</span> <span class="ident">ModuleTranslationState</span> {
-    <span class="doccomment">/// Creates a new empty ModuleTranslationState.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">wasm_types</span>: <span class="ident">PrimaryMap::new</span>(),
+<span class="kw">impl </span>ModuleTranslationState {
+    <span class="doccomment">/// Creates a new empty ModuleTranslationState.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            wasm_types: PrimaryMap::new(),
         }
     }
 
-    <span class="doccomment">/// Create a new ModuleTranslationState with the given function signatures,</span>
-    <span class="doccomment">/// provided in terms of Cranelift types. The provided slice of signatures</span>
-    <span class="doccomment">/// is indexed by signature number, and contains pairs of (args, results)</span>
-    <span class="doccomment">/// slices.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_func_sigs</span>(<span class="ident">sigs</span>: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>[<span class="ident">Type</span>], <span class="kw-2">&amp;</span>[<span class="ident">Type</span>])]) -&gt; <span class="ident">WasmResult</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">wasm_types</span> <span class="op">=</span> <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">sigs</span>.<span class="ident">len</span>());
-        <span class="kw">for</span> <span class="kw-2">&amp;</span>(<span class="kw-2">ref</span> <span class="ident">args</span>, <span class="kw-2">ref</span> <span class="ident">results</span>) <span class="kw">in</span> <span class="ident">sigs</span> {
-            <span class="kw">let</span> <span class="ident">args</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">wasmparser::Type</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">args</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">ty</span><span class="op">|</span> <span class="ident">cranelift_to_wasmparser_type</span>(<span class="ident">ty</span>))
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">results</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">wasmparser::Type</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">results</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">ty</span><span class="op">|</span> <span class="ident">cranelift_to_wasmparser_type</span>(<span class="ident">ty</span>))
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
-            <span class="ident">wasm_types</span>.<span class="ident">push</span>((<span class="ident">args</span>.<span class="ident">into_boxed_slice</span>(), <span class="ident">results</span>.<span class="ident">into_boxed_slice</span>()));
+    <span class="doccomment">/// Create a new ModuleTranslationState with the given function signatures,
+    /// provided in terms of Cranelift types. The provided slice of signatures
+    /// is indexed by signature number, and contains pairs of (args, results)
+    /// slices.
+    </span><span class="kw">pub fn </span>from_func_sigs(sigs: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>[Type], <span class="kw-2">&amp;</span>[Type])]) -&gt; WasmResult&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>wasm_types = PrimaryMap::with_capacity(sigs.len());
+        <span class="kw">for </span><span class="kw-2">&amp;</span>(<span class="kw-2">ref </span>args, <span class="kw-2">ref </span>results) <span class="kw">in </span>sigs {
+            <span class="kw">let </span>args: Vec&lt;wasmparser::Type&gt; = args
+                .iter()
+                .map(|<span class="kw-2">&amp;</span>ty| cranelift_to_wasmparser_type(ty))
+                .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
+            <span class="kw">let </span>results: Vec&lt;wasmparser::Type&gt; = results
+                .iter()
+                .map(|<span class="kw-2">&amp;</span>ty| cranelift_to_wasmparser_type(ty))
+                .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
+            wasm_types.push((args.into_boxed_slice(), results.into_boxed_slice()));
         }
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">wasm_types</span> })
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ wasm_types })
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_wasm" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_wasm" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

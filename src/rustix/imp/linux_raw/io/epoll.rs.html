@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/io/epoll.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>epoll.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/io/epoll.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>epoll.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../../normalize.css"><link rel="stylesheet" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../../dark.css" disabled><link rel="stylesheet" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -550,553 +545,552 @@
 <span id="545">545</span>
 <span id="546">546</span>
 <span id="547">547</span>
-</pre><pre class="rust"><code><span class="doccomment">//! epoll support.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This is an experiment, and it isn&#39;t yet clear whether epoll is the right</span>
-<span class="doccomment">//! level of abstraction at which to introduce safety. But it works fairly well</span>
-<span class="doccomment">//! in simple examples 🙂.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Examples</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```rust,no_run</span>
-<span class="doccomment">//! # #![cfg_attr(io_lifetimes_use_std, feature(io_safety))]</span>
-<span class="doccomment">//! # fn main() -&gt; std::io::Result&lt;()&gt; {</span>
-<span class="doccomment">//! use io_lifetimes::AsFd;</span>
-<span class="doccomment">//! use rustix::io::epoll::{self, Epoll};</span>
-<span class="doccomment">//! use rustix::io::{ioctl_fionbio, read, write};</span>
-<span class="doccomment">//! use rustix::net::{</span>
-<span class="doccomment">//!     accept, bind_v4, listen, socket, AddressFamily, Ipv4Addr, Protocol, SocketAddrV4,</span>
-<span class="doccomment">//!     SocketType,</span>
-<span class="doccomment">//! };</span>
-<span class="doccomment">//! use std::os::unix::io::AsRawFd;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! // Create a socket and listen on it.</span>
-<span class="doccomment">//! let listen_sock = socket(AddressFamily::INET, SocketType::STREAM, Protocol::default())?;</span>
-<span class="doccomment">//! bind_v4(&amp;listen_sock, &amp;SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0))?;</span>
-<span class="doccomment">//! listen(&amp;listen_sock, 1)?;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! // Create an epoll object. Using `Owning` here means the epoll object will</span>
-<span class="doccomment">//! // take ownership of the file descriptors registered with it.</span>
-<span class="doccomment">//! let epoll = Epoll::new(epoll::CreateFlags::CLOEXEC, epoll::Owning::new())?;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! // Remember the socket raw fd, which we use for comparisons only.</span>
-<span class="doccomment">//! let raw_listen_sock = listen_sock.as_fd().as_raw_fd();</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! // Register the socket with the epoll object.</span>
-<span class="doccomment">//! epoll.add(listen_sock, epoll::EventFlags::IN)?;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! // Process events.</span>
-<span class="doccomment">//! let mut event_list = epoll::EventVec::with_capacity(4);</span>
-<span class="doccomment">//! loop {</span>
-<span class="doccomment">//!     epoll.wait(&amp;mut event_list, -1)?;</span>
-<span class="doccomment">//!     for (_event_flags, target) in &amp;event_list {</span>
-<span class="doccomment">//!         if target.as_raw_fd() == raw_listen_sock {</span>
-<span class="doccomment">//!             // Accept a new connection, set it to non-blocking, and</span>
-<span class="doccomment">//!             // register to be notified when it&#39;s ready to write to.</span>
-<span class="doccomment">//!             let conn_sock = accept(&amp;*target)?;</span>
-<span class="doccomment">//!             ioctl_fionbio(&amp;conn_sock, true)?;</span>
-<span class="doccomment">//!             epoll.add(conn_sock, epoll::EventFlags::OUT | epoll::EventFlags::ET)?;</span>
-<span class="doccomment">//!         } else {</span>
-<span class="doccomment">//!             // Write a message to the stream and then unregister it.</span>
-<span class="doccomment">//!             write(&amp;*target, b&quot;hello\n&quot;)?;</span>
-<span class="doccomment">//!             let _ = epoll.del(target)?;</span>
-<span class="doccomment">//!         }</span>
-<span class="doccomment">//!     }</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! # }</span>
-<span class="doccomment">//! ```</span>
+</pre><pre class="rust"><code><span class="doccomment">//! epoll support.
+//!
+//! This is an experiment, and it isn&#39;t yet clear whether epoll is the right
+//! level of abstraction at which to introduce safety. But it works fairly well
+//! in simple examples 🙂.
+//!
+//! # Examples
+//!
+//! ```rust,no_run
+//! # #![cfg_attr(io_lifetimes_use_std, feature(io_safety))]
+//! # fn main() -&gt; std::io::Result&lt;()&gt; {
+//! use io_lifetimes::AsFd;
+//! use rustix::io::epoll::{self, Epoll};
+//! use rustix::io::{ioctl_fionbio, read, write};
+//! use rustix::net::{
+//!     accept, bind_v4, listen, socket, AddressFamily, Ipv4Addr, Protocol, SocketAddrV4,
+//!     SocketType,
+//! };
+//! use std::os::unix::io::AsRawFd;
+//!
+//! // Create a socket and listen on it.
+//! let listen_sock = socket(AddressFamily::INET, SocketType::STREAM, Protocol::default())?;
+//! bind_v4(&amp;listen_sock, &amp;SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0))?;
+//! listen(&amp;listen_sock, 1)?;
+//!
+//! // Create an epoll object. Using `Owning` here means the epoll object will
+//! // take ownership of the file descriptors registered with it.
+//! let epoll = Epoll::new(epoll::CreateFlags::CLOEXEC, epoll::Owning::new())?;
+//!
+//! // Remember the socket raw fd, which we use for comparisons only.
+//! let raw_listen_sock = listen_sock.as_fd().as_raw_fd();
+//!
+//! // Register the socket with the epoll object.
+//! epoll.add(listen_sock, epoll::EventFlags::IN)?;
+//!
+//! // Process events.
+//! let mut event_list = epoll::EventVec::with_capacity(4);
+//! loop {
+//!     epoll.wait(&amp;mut event_list, -1)?;
+//!     for (_event_flags, target) in &amp;event_list {
+//!         if target.as_raw_fd() == raw_listen_sock {
+//!             // Accept a new connection, set it to non-blocking, and
+//!             // register to be notified when it&#39;s ready to write to.
+//!             let conn_sock = accept(&amp;*target)?;
+//!             ioctl_fionbio(&amp;conn_sock, true)?;
+//!             epoll.add(conn_sock, epoll::EventFlags::OUT | epoll::EventFlags::ET)?;
+//!         } else {
+//!             // Write a message to the stream and then unregister it.
+//!             write(&amp;*target, b&quot;hello\n&quot;)?;
+//!             let _ = epoll.del(target)?;
+//!         }
+//!     }
+//! }
+//! # }
+//! ```
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
+</span><span class="attribute">#![allow(unsafe_code)]
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::c</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fd</span>::{<span class="ident">AsFd</span>, <span class="ident">AsRawFd</span>, <span class="ident">BorrowedFd</span>, <span class="ident">RawFd</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fd</span>::{<span class="ident">FromFd</span>, <span class="ident">FromRawFd</span>, <span class="ident">IntoFd</span>, <span class="ident">IntoRawFd</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::imp::io::syscalls</span>::{<span class="ident">epoll_add</span>, <span class="ident">epoll_create</span>, <span class="ident">epoll_del</span>, <span class="ident">epoll_mod</span>, <span class="ident">epoll_wait</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>::{<span class="self">self</span>, <span class="ident">OwnedFd</span>};
-<span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
-<span class="kw">use</span> <span class="ident">bitflags::bitflags</span>;
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">core::marker::PhantomData</span>;
-<span class="kw">use</span> <span class="ident">core::ops::Deref</span>;
-<span class="kw">use</span> <span class="ident">core::ptr::null</span>;
+</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::c;
+<span class="kw">use </span><span class="kw">crate</span>::fd::{AsFd, AsRawFd, BorrowedFd, RawFd};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::fd::{FromFd, FromRawFd, IntoFd, IntoRawFd};
+<span class="kw">use </span><span class="kw">crate</span>::imp::io::syscalls::{epoll_add, epoll_create, epoll_del, epoll_mod, epoll_wait};
+<span class="kw">use </span><span class="kw">crate</span>::io::{<span class="self">self</span>, OwnedFd};
+<span class="kw">use </span>alloc::vec::Vec;
+<span class="kw">use </span>bitflags::bitflags;
+<span class="kw">use </span>core::fmt;
+<span class="kw">use </span>core::marker::PhantomData;
+<span class="kw">use </span>core::ops::Deref;
+<span class="kw">use </span>core::ptr::null;
 
-<span class="macro">bitflags!</span> {
-    <span class="doccomment">/// `EPOLL_*` for use with [`Epoll::new`].</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CreateFlags</span>: <span class="ident">c::c_uint</span> {
-        <span class="doccomment">/// `EPOLL_CLOEXEC`</span>
-        <span class="kw">const</span> <span class="ident">CLOEXEC</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLL_CLOEXEC</span>;
+<span class="macro">bitflags! </span>{
+    <span class="doccomment">/// `EPOLL_*` for use with [`Epoll::new`].
+    </span><span class="kw">pub struct </span>CreateFlags: c::c_uint {
+        <span class="doccomment">/// `EPOLL_CLOEXEC`
+        </span><span class="kw">const </span>CLOEXEC = linux_raw_sys::general::EPOLL_CLOEXEC;
     }
 }
 
-<span class="macro">bitflags!</span> {
-    <span class="doccomment">/// `EPOLL*` for use with [`Epoll::add`].</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventFlags</span>: <span class="ident">u32</span> {
-        <span class="doccomment">/// `EPOLLIN`</span>
-        <span class="kw">const</span> <span class="ident">IN</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLIN</span> <span class="kw">as</span> <span class="ident">u32</span>;
+<span class="macro">bitflags! </span>{
+    <span class="doccomment">/// `EPOLL*` for use with [`Epoll::add`].
+    </span><span class="attribute">#[derive(Default)]
+    </span><span class="kw">pub struct </span>EventFlags: u32 {
+        <span class="doccomment">/// `EPOLLIN`
+        </span><span class="kw">const </span>IN = linux_raw_sys::general::EPOLLIN <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLOUT`</span>
-        <span class="kw">const</span> <span class="ident">OUT</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLOUT</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLOUT`
+        </span><span class="kw">const </span>OUT = linux_raw_sys::general::EPOLLOUT <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLPRI`</span>
-        <span class="kw">const</span> <span class="ident">PRI</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLPRI</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLPRI`
+        </span><span class="kw">const </span>PRI = linux_raw_sys::general::EPOLLPRI <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLERR`</span>
-        <span class="kw">const</span> <span class="ident">ERR</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLERR</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLERR`
+        </span><span class="kw">const </span>ERR = linux_raw_sys::general::EPOLLERR <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLHUP`</span>
-        <span class="kw">const</span> <span class="ident">HUP</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLHUP</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLHUP`
+        </span><span class="kw">const </span>HUP = linux_raw_sys::general::EPOLLHUP <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLET`</span>
-        <span class="kw">const</span> <span class="ident">ET</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLET</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLET`
+        </span><span class="kw">const </span>ET = linux_raw_sys::general::EPOLLET <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLONESHOT`</span>
-        <span class="kw">const</span> <span class="ident">ONESHOT</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLONESHOT</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLONESHOT`
+        </span><span class="kw">const </span>ONESHOT = linux_raw_sys::general::EPOLLONESHOT <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLWAKEUP`</span>
-        <span class="kw">const</span> <span class="ident">WAKEUP</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLWAKEUP</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLWAKEUP`
+        </span><span class="kw">const </span>WAKEUP = linux_raw_sys::general::EPOLLWAKEUP <span class="kw">as </span>u32;
 
-        <span class="doccomment">/// `EPOLLEXCLUSIVE`</span>
-        <span class="kw">const</span> <span class="ident">EXCLUSIVE</span> <span class="op">=</span> <span class="ident">linux_raw_sys::general::EPOLLEXCLUSIVE</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="doccomment">/// `EPOLLEXCLUSIVE`
+        </span><span class="kw">const </span>EXCLUSIVE = linux_raw_sys::general::EPOLLEXCLUSIVE <span class="kw">as </span>u32;
     }
 }
 
-<span class="doccomment">/// A reference to a `T`.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">t</span>: <span class="ident">T</span>,
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A reference to a `T`.
+</span><span class="kw">pub struct </span>Ref&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    t: T,
+    _phantom: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">t</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">t</span>,
-            <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Ref&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>new(t: T) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            t,
+            _phantom: PhantomData,
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">consume</span>(<span class="self">self</span>) -&gt; <span class="ident">T</span> {
-        <span class="self">self</span>.<span class="ident">t</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>consume(<span class="self">self</span>) -&gt; T {
+        <span class="self">self</span>.t
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">T</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Deref <span class="kw">for </span>Ref&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">type </span>Target = T;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">T</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">t</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.t
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">fmt::Debug</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="self">self</span>.<span class="ident">t</span>.<span class="ident">fmt</span>(<span class="ident">fmt</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>Ref&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, fmt: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="self">self</span>.t.fmt(fmt)
     }
 }
 
-<span class="doccomment">/// A trait for data stored within an [`Epoll`] instance.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Context</span> {
-    <span class="doccomment">/// The type of an element owned by this context.</span>
-    <span class="kw">type</span> <span class="ident">Data</span>;
+<span class="doccomment">/// A trait for data stored within an [`Epoll`] instance.
+</span><span class="kw">pub trait </span>Context {
+    <span class="doccomment">/// The type of an element owned by this context.
+    </span><span class="kw">type </span>Data;
 
-    <span class="doccomment">/// The type of a value used to refer to an element owned by this context.</span>
-    <span class="kw">type</span> <span class="ident">Target</span>: <span class="ident">AsFd</span>;
+    <span class="doccomment">/// The type of a value used to refer to an element owned by this context.
+    </span><span class="kw">type </span>Target: AsFd;
 
-    <span class="doccomment">/// Assume ownership of `data`, and returning a `Target`.</span>
-    <span class="kw">fn</span> <span class="ident">acquire</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">data</span>: <span class="ident"><span class="self">Self</span>::Data</span>) -&gt; <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Assume ownership of `data`, and returning a `Target`.
+    </span><span class="kw">fn </span>acquire&lt;<span class="lifetime">&#39;call</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="self">Self</span>::Data) -&gt; Ref&lt;<span class="lifetime">&#39;call</span>, <span class="self">Self</span>::Target&gt;;
 
-    <span class="doccomment">/// Encode `target` as a `u64`. The only requirement on this value is that</span>
-    <span class="doccomment">/// it be decodable by `decode`.</span>
-    <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>) -&gt; <span class="ident">u64</span>;
+    <span class="doccomment">/// Encode `target` as a `u64`. The only requirement on this value is that
+    /// it be decodable by `decode`.
+    </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, target: Ref&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Target&gt;) -&gt; u64;
 
-    <span class="doccomment">/// Decode `raw`, which is a value encoded by `encode`, into a `Target`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `raw` must be a `u64` value returned from `encode`, from the same</span>
-    <span class="doccomment">/// context, and within the context&#39;s lifetime.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">decode</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">raw</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Decode `raw`, which is a value encoded by `encode`, into a `Target`.
+    ///
+    /// # Safety
+    ///
+    /// `raw` must be a `u64` value returned from `encode`, from the same
+    /// context, and within the context&#39;s lifetime.
+    </span><span class="kw">unsafe fn </span>decode&lt;<span class="lifetime">&#39;call</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, raw: u64) -&gt; Ref&lt;<span class="lifetime">&#39;call</span>, <span class="self">Self</span>::Target&gt;;
 
-    <span class="doccomment">/// Release ownership of the value referred to by `target` and return it.</span>
-    <span class="kw">fn</span> <span class="ident">release</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="self">Self</span>::Data</span>;
+    <span class="doccomment">/// Release ownership of the value referred to by `target` and return it.
+    </span><span class="kw">fn </span>release(<span class="kw-2">&amp;</span><span class="self">self</span>, target: Ref&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Target&gt;) -&gt; <span class="self">Self</span>::Data;
 }
 
-<span class="doccomment">/// A type implementing [`Context`] where the `Data` type is `BorrowedFd&lt;&#39;a&gt;`.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Borrowing</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A type implementing [`Context`] where the `Data` type is `BorrowedFd&lt;&#39;a&gt;`.
+</span><span class="kw">pub struct </span>Borrowing&lt;<span class="lifetime">&#39;a</span>&gt; {
+    _phantom: PhantomData&lt;BorrowedFd&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Context</span> <span class="kw">for</span> <span class="ident">Borrowing</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Context <span class="kw">for </span>Borrowing&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">type </span>Data = BorrowedFd&lt;<span class="lifetime">&#39;a</span>&gt;;
+    <span class="kw">type </span>Target = BorrowedFd&lt;<span class="lifetime">&#39;a</span>&gt;;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">acquire</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">data</span>: <span class="ident"><span class="self">Self</span>::Data</span>) -&gt; <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span> {
-        <span class="ident">Ref::new</span>(<span class="ident">data</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>acquire&lt;<span class="lifetime">&#39;call</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="self">Self</span>::Data) -&gt; Ref&lt;<span class="lifetime">&#39;call</span>, <span class="self">Self</span>::Target&gt; {
+        Ref::new(data)
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>) -&gt; <span class="ident">u64</span> {
-        <span class="ident">target</span>.<span class="ident">as_raw_fd</span>() <span class="kw">as</span> <span class="ident">u64</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, target: Ref&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Target&gt;) -&gt; u64 {
+        target.as_raw_fd() <span class="kw">as </span>u64
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">decode</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">raw</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span> {
-        <span class="ident">Ref::new</span>(<span class="ident">BorrowedFd</span>::<span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="ident">::borrow_raw_fd</span>(<span class="ident">raw</span> <span class="kw">as</span> <span class="ident">RawFd</span>))
+    <span class="attribute">#[inline]
+    </span><span class="kw">unsafe fn </span>decode&lt;<span class="lifetime">&#39;call</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, raw: u64) -&gt; Ref&lt;<span class="lifetime">&#39;call</span>, <span class="self">Self</span>::Target&gt; {
+        Ref::new(BorrowedFd::&lt;<span class="lifetime">&#39;a</span>&gt;::borrow_raw_fd(raw <span class="kw">as </span>RawFd))
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">release</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="self">Self</span>::Data</span> {
-        <span class="ident">target</span>.<span class="ident">consume</span>()
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>release(<span class="kw-2">&amp;</span><span class="self">self</span>, target: Ref&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Target&gt;) -&gt; <span class="self">Self</span>::Data {
+        target.consume()
     }
 }
 
-<span class="doccomment">/// A type implementing [`Context`] where the `Data` type is `T`, a type</span>
-<span class="doccomment">/// implementing `IntoFd` and `FromFd`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This may be used with [`OwnedFd`], or higher-level types like</span>
-<span class="doccomment">/// [`std::fs::File`] or [`std::net::TcpStream`].</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> {
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;context</span> <span class="ident">T</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A type implementing [`Context`] where the `Data` type is `T`, a type
+/// implementing `IntoFd` and `FromFd`.
+///
+/// This may be used with [`OwnedFd`], or higher-level types like
+/// [`std::fs::File`] or [`std::net::TcpStream`].
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub struct </span>Owning&lt;<span class="lifetime">&#39;context</span>, T: IntoFd + FromFd&gt; {
+    _phantom: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;context </span>T&gt;,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new empty `Owning`.</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::new_without_default</span>)]</span> <span class="comment">// This is a specialized type that doesn&#39;t need to be generically constructible.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: IntoFd + FromFd&gt; Owning&lt;<span class="lifetime">&#39;context</span>, T&gt; {
+    <span class="doccomment">/// Creates a new empty `Owning`.
+    </span><span class="attribute">#[allow(clippy::new_without_default)] </span><span class="comment">// This is a specialized type that doesn&#39;t need to be generically constructible.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            _phantom: PhantomData,
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">AsFd</span> <span class="op">+</span> <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">Context</span> <span class="kw">for</span> <span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span>;
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span><span class="op">&gt;</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: AsFd + IntoFd + FromFd&gt; Context <span class="kw">for </span>Owning&lt;<span class="lifetime">&#39;context</span>, T&gt; {
+    <span class="kw">type </span>Data = T;
+    <span class="kw">type </span>Target = BorrowedFd&lt;<span class="lifetime">&#39;context</span>&gt;;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">acquire</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">data</span>: <span class="ident"><span class="self">Self</span>::Data</span>) -&gt; <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">into_fd</span>().<span class="ident">into_raw_fd</span>();
-        <span class="comment">// Safety: `epoll` will assign ownership of the file descriptor to the</span>
-        <span class="comment">// kernel epoll object. We use `IntoFd`+`IntoRawFd` to consume the</span>
-        <span class="comment">// `Data` and extract the raw file descriptor and then &quot;borrow&quot; it</span>
-        <span class="comment">// with `borrow_raw_fd` knowing that the borrow won&#39;t outlive the</span>
-        <span class="comment">// kernel epoll object.</span>
-        <span class="kw">unsafe</span> { <span class="ident">Ref::new</span>(<span class="ident">BorrowedFd</span>::<span class="op">&lt;</span><span class="lifetime">&#39;context</span><span class="op">&gt;</span><span class="ident">::borrow_raw_fd</span>(<span class="ident">raw_fd</span>)) }
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>acquire&lt;<span class="lifetime">&#39;call</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="self">Self</span>::Data) -&gt; Ref&lt;<span class="lifetime">&#39;call</span>, <span class="self">Self</span>::Target&gt; {
+        <span class="kw">let </span>raw_fd = data.into_fd().into_raw_fd();
+        <span class="comment">// Safety: `epoll` will assign ownership of the file descriptor to the
+        // kernel epoll object. We use `IntoFd`+`IntoRawFd` to consume the
+        // `Data` and extract the raw file descriptor and then &quot;borrow&quot; it
+        // with `borrow_raw_fd` knowing that the borrow won&#39;t outlive the
+        // kernel epoll object.
+        </span><span class="kw">unsafe </span>{ Ref::new(BorrowedFd::&lt;<span class="lifetime">&#39;context</span>&gt;::borrow_raw_fd(raw_fd)) }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>) -&gt; <span class="ident">u64</span> {
-        <span class="ident">target</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>() <span class="kw">as</span> <span class="ident">u64</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, target: Ref&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Target&gt;) -&gt; u64 {
+        target.as_fd().as_raw_fd() <span class="kw">as </span>u64
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">decode</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">raw</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;call</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span> {
-        <span class="ident">Ref::new</span>(<span class="ident">BorrowedFd</span>::<span class="op">&lt;</span><span class="lifetime">&#39;context</span><span class="op">&gt;</span><span class="ident">::borrow_raw_fd</span>(<span class="ident">raw</span> <span class="kw">as</span> <span class="ident">RawFd</span>))
+    <span class="attribute">#[inline]
+    </span><span class="kw">unsafe fn </span>decode&lt;<span class="lifetime">&#39;call</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, raw: u64) -&gt; Ref&lt;<span class="lifetime">&#39;call</span>, <span class="self">Self</span>::Target&gt; {
+        Ref::new(BorrowedFd::&lt;<span class="lifetime">&#39;context</span>&gt;::borrow_raw_fd(raw <span class="kw">as </span>RawFd))
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">release</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident"><span class="self">Self</span>::Target</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="self">Self</span>::Data</span> {
-        <span class="comment">// Safety: The file descriptor was held by the kernel epoll object and</span>
-        <span class="comment">// is now being released, so we can create a new `OwnedFd` that assumes</span>
-        <span class="comment">// ownership.</span>
-        <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">consume</span>().<span class="ident">as_raw_fd</span>();
-        <span class="kw">unsafe</span> { <span class="ident">T::from_fd</span>(<span class="ident">io_lifetimes::OwnedFd::from_raw_fd</span>(<span class="ident">raw_fd</span>)) }
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>release(<span class="kw-2">&amp;</span><span class="self">self</span>, target: Ref&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Target&gt;) -&gt; <span class="self">Self</span>::Data {
+        <span class="comment">// Safety: The file descriptor was held by the kernel epoll object and
+        // is now being released, so we can create a new `OwnedFd` that assumes
+        // ownership.
+        </span><span class="kw">let </span>raw_fd = target.consume().as_raw_fd();
+        <span class="kw">unsafe </span>{ T::from_fd(io_lifetimes::OwnedFd::from_raw_fd(raw_fd)) }
     }
 }
 
-<span class="doccomment">/// An &quot;epoll&quot;, an interface to an OS object allowing one to repeatedly wait</span>
-<span class="doccomment">/// for events from a set of file descriptors efficiently.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Context</span>: <span class="ident"><span class="self">self</span>::Context</span><span class="op">&gt;</span> {
-    <span class="ident">epoll_fd</span>: <span class="ident">OwnedFd</span>,
-    <span class="ident">context</span>: <span class="ident">Context</span>,
+<span class="doccomment">/// An &quot;epoll&quot;, an interface to an OS object allowing one to repeatedly wait
+/// for events from a set of file descriptors efficiently.
+</span><span class="kw">pub struct </span>Epoll&lt;Context: <span class="self">self</span>::Context&gt; {
+    epoll_fd: OwnedFd,
+    context: Context,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Context</span>: <span class="ident"><span class="self">self</span>::Context</span><span class="op">&gt;</span> <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Context</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// `epoll_create1(flags)`—Creates a new `Epoll`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Use the [`CreateFlags::CLOEXEC`] flag to prevent the resulting file</span>
-    <span class="doccomment">/// descriptor from being implicitly passed across `exec` boundaries.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;epoll_create1&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">flags</span>: <span class="ident">CreateFlags</span>, <span class="ident">context</span>: <span class="ident">Context</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="comment">// Safety: We&#39;re calling `epoll_create1` via FFI and we know how it</span>
-        <span class="comment">// behaves.</span>
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">epoll_fd</span>: <span class="ident">epoll_create</span>(<span class="ident">flags</span>)<span class="question-mark">?</span>,
-            <span class="ident">context</span>,
+<span class="kw">impl</span>&lt;Context: <span class="self">self</span>::Context&gt; Epoll&lt;Context&gt; {
+    <span class="doccomment">/// `epoll_create1(flags)`—Creates a new `Epoll`.
+    ///
+    /// Use the [`CreateFlags::CLOEXEC`] flag to prevent the resulting file
+    /// descriptor from being implicitly passed across `exec` boundaries.
+    </span><span class="attribute">#[inline]
+    #[doc(alias = <span class="string">&quot;epoll_create1&quot;</span>)]
+    </span><span class="kw">pub fn </span>new(flags: CreateFlags, context: Context) -&gt; io::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="comment">// Safety: We&#39;re calling `epoll_create1` via FFI and we know how it
+        // behaves.
+        </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            epoll_fd: epoll_create(flags)<span class="question-mark">?</span>,
+            context,
         })
     }
 
-    <span class="doccomment">/// `epoll_ctl(self, EPOLL_CTL_ADD, data, event)`—Adds an element to an</span>
-    <span class="doccomment">/// `Epoll`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This registers interest in any of the events set in `events` occurring</span>
-    <span class="doccomment">/// on the file descriptor associated with `data`.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;epoll_ctl&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add</span>(
+    <span class="doccomment">/// `epoll_ctl(self, EPOLL_CTL_ADD, data, event)`—Adds an element to an
+    /// `Epoll`.
+    ///
+    /// This registers interest in any of the events set in `events` occurring
+    /// on the file descriptor associated with `data`.
+    </span><span class="attribute">#[doc(alias = <span class="string">&quot;epoll_ctl&quot;</span>)]
+    </span><span class="kw">pub fn </span>add(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">data</span>: <span class="ident">Context::Data</span>,
-        <span class="ident">event_flags</span>: <span class="ident">EventFlags</span>,
-    ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">Context::Target</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// Safety: We&#39;re calling `epoll_ctl` via FFI and we know how it</span>
-        <span class="comment">// behaves.</span>
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">target</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">context</span>.<span class="ident">acquire</span>(<span class="ident">data</span>);
-            <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>();
-            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">context</span>.<span class="ident">encode</span>(<span class="ident">target</span>);
-            <span class="ident">epoll_add</span>(
-                <span class="self">self</span>.<span class="ident">epoll_fd</span>.<span class="ident">as_fd</span>(),
-                <span class="ident">raw_fd</span>,
-                <span class="kw-2">&amp;</span><span class="ident">linux_raw_sys::general::epoll_event</span> {
-                    <span class="ident">events</span>: <span class="ident">event_flags</span>.<span class="ident">bits</span>(),
-                    <span class="ident">data</span>: <span class="ident">encoded</span>,
+        data: Context::Data,
+        event_flags: EventFlags,
+    ) -&gt; io::Result&lt;Ref&lt;<span class="lifetime">&#39;_</span>, Context::Target&gt;&gt; {
+        <span class="comment">// Safety: We&#39;re calling `epoll_ctl` via FFI and we know how it
+        // behaves.
+        </span><span class="kw">unsafe </span>{
+            <span class="kw">let </span>target = <span class="self">self</span>.context.acquire(data);
+            <span class="kw">let </span>raw_fd = target.as_fd().as_raw_fd();
+            <span class="kw">let </span>encoded = <span class="self">self</span>.context.encode(target);
+            epoll_add(
+                <span class="self">self</span>.epoll_fd.as_fd(),
+                raw_fd,
+                <span class="kw-2">&amp;</span>linux_raw_sys::general::epoll_event {
+                    events: event_flags.bits(),
+                    data: encoded,
                 },
             )<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">context</span>.<span class="ident">decode</span>(<span class="ident">encoded</span>))
+            <span class="prelude-val">Ok</span>(<span class="self">self</span>.context.decode(encoded))
         }
     }
 
-    <span class="doccomment">/// `epoll_ctl(self, EPOLL_CTL_MOD, target, event)`—Modifies an element in</span>
-    <span class="doccomment">/// this `Epoll`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This sets the events of interest with `target` to `events`.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;epoll_ctl&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mod_</span>(
+    <span class="doccomment">/// `epoll_ctl(self, EPOLL_CTL_MOD, target, event)`—Modifies an element in
+    /// this `Epoll`.
+    ///
+    /// This sets the events of interest with `target` to `events`.
+    </span><span class="attribute">#[doc(alias = <span class="string">&quot;epoll_ctl&quot;</span>)]
+    </span><span class="kw">pub fn </span>mod_(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">Context::Target</span><span class="op">&gt;</span>,
-        <span class="ident">event_flags</span>: <span class="ident">EventFlags</span>,
-    ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>();
-        <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">context</span>.<span class="ident">encode</span>(<span class="ident">target</span>);
-        <span class="comment">// Safety: We&#39;re calling `epoll_ctl` via FFI and we know how it</span>
-        <span class="comment">// behaves.</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">epoll_mod</span>(
-                <span class="self">self</span>.<span class="ident">epoll_fd</span>.<span class="ident">as_fd</span>(),
-                <span class="ident">raw_fd</span>,
-                <span class="kw-2">&amp;</span><span class="ident">linux_raw_sys::general::epoll_event</span> {
-                    <span class="ident">events</span>: <span class="ident">event_flags</span>.<span class="ident">bits</span>(),
-                    <span class="ident">data</span>: <span class="ident">encoded</span>,
+        target: Ref&lt;<span class="lifetime">&#39;_</span>, Context::Target&gt;,
+        event_flags: EventFlags,
+    ) -&gt; io::Result&lt;()&gt; {
+        <span class="kw">let </span>raw_fd = target.as_fd().as_raw_fd();
+        <span class="kw">let </span>encoded = <span class="self">self</span>.context.encode(target);
+        <span class="comment">// Safety: We&#39;re calling `epoll_ctl` via FFI and we know how it
+        // behaves.
+        </span><span class="kw">unsafe </span>{
+            epoll_mod(
+                <span class="self">self</span>.epoll_fd.as_fd(),
+                raw_fd,
+                <span class="kw-2">&amp;</span>linux_raw_sys::general::epoll_event {
+                    events: event_flags.bits(),
+                    data: encoded,
                 },
             )
         }
     }
 
-    <span class="doccomment">/// `epoll_ctl(self, EPOLL_CTL_DEL, target, NULL)`—Removes an element in</span>
-    <span class="doccomment">/// this `Epoll`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This also returns the owning `Data`.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;epoll_ctl&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">del</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">target</span>: <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">Context::Target</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Context::Data</span><span class="op">&gt;</span> {
-        <span class="comment">// Safety: We&#39;re calling `epoll_ctl` via FFI and we know how it</span>
-        <span class="comment">// behaves.</span>
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">raw_fd</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">as_fd</span>().<span class="ident">as_raw_fd</span>();
-            <span class="ident">epoll_del</span>(<span class="self">self</span>.<span class="ident">epoll_fd</span>.<span class="ident">as_fd</span>(), <span class="ident">raw_fd</span>)<span class="question-mark">?</span>;
+    <span class="doccomment">/// `epoll_ctl(self, EPOLL_CTL_DEL, target, NULL)`—Removes an element in
+    /// this `Epoll`.
+    ///
+    /// This also returns the owning `Data`.
+    </span><span class="attribute">#[doc(alias = <span class="string">&quot;epoll_ctl&quot;</span>)]
+    </span><span class="kw">pub fn </span>del(<span class="kw-2">&amp;</span><span class="self">self</span>, target: Ref&lt;<span class="lifetime">&#39;_</span>, Context::Target&gt;) -&gt; io::Result&lt;Context::Data&gt; {
+        <span class="comment">// Safety: We&#39;re calling `epoll_ctl` via FFI and we know how it
+        // behaves.
+        </span><span class="kw">unsafe </span>{
+            <span class="kw">let </span>raw_fd = target.as_fd().as_raw_fd();
+            epoll_del(<span class="self">self</span>.epoll_fd.as_fd(), raw_fd)<span class="question-mark">?</span>;
         }
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">context</span>.<span class="ident">release</span>(<span class="ident">target</span>))
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.context.release(target))
     }
 
-    <span class="doccomment">/// `epoll_wait(self, events, timeout)`—Waits for registered events of</span>
-    <span class="doccomment">/// interest.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For each event of interest, an element is written to `events`. On</span>
-    <span class="doccomment">/// success, this returns the number of written elements.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;epoll_wait&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;context</span> <span class="self">self</span>,
-        <span class="ident">event_list</span>: <span class="kw-2">&amp;mut</span> <span class="ident">EventVec</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span><span class="op">&gt;</span>,
-        <span class="ident">timeout</span>: <span class="ident">c::c_int</span>,
-    ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="comment">// Safety: We&#39;re calling `epoll_wait` via FFI and we know how it</span>
-        <span class="comment">// behaves.</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">event_list</span>.<span class="ident">events</span>.<span class="ident">set_len</span>(<span class="number">0</span>);
-            <span class="kw">let</span> <span class="ident">nfds</span> <span class="op">=</span> <span class="ident">epoll_wait</span>(
-                <span class="self">self</span>.<span class="ident">epoll_fd</span>.<span class="ident">as_fd</span>(),
-                <span class="ident">event_list</span>.<span class="ident">events</span>[..].<span class="ident">as_mut_ptr</span>().<span class="ident">cast</span>(),
-                <span class="ident">event_list</span>.<span class="ident">events</span>.<span class="ident">capacity</span>(),
-                <span class="ident">timeout</span>,
+    <span class="doccomment">/// `epoll_wait(self, events, timeout)`—Waits for registered events of
+    /// interest.
+    ///
+    /// For each event of interest, an element is written to `events`. On
+    /// success, this returns the number of written elements.
+    </span><span class="attribute">#[doc(alias = <span class="string">&quot;epoll_wait&quot;</span>)]
+    </span><span class="kw">pub fn </span>wait&lt;<span class="lifetime">&#39;context</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;context </span><span class="self">self</span>,
+        event_list: <span class="kw-2">&amp;mut </span>EventVec&lt;<span class="lifetime">&#39;context</span>, Context&gt;,
+        timeout: c::c_int,
+    ) -&gt; io::Result&lt;()&gt; {
+        <span class="comment">// Safety: We&#39;re calling `epoll_wait` via FFI and we know how it
+        // behaves.
+        </span><span class="kw">unsafe </span>{
+            event_list.events.set_len(<span class="number">0</span>);
+            <span class="kw">let </span>nfds = epoll_wait(
+                <span class="self">self</span>.epoll_fd.as_fd(),
+                event_list.events[..].as_mut_ptr().cast(),
+                event_list.events.capacity(),
+                timeout,
             )<span class="question-mark">?</span>;
-            <span class="ident">event_list</span>.<span class="ident">events</span>.<span class="ident">set_len</span>(<span class="ident">nfds</span>);
-            <span class="ident">event_list</span>.<span class="ident">context</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">context</span>;
+            event_list.events.set_len(nfds);
+            event_list.context = <span class="kw-2">&amp;</span><span class="self">self</span>.context;
         }
 
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">AsFd</span> <span class="op">+</span> <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">AsRawFd</span> <span class="kw">for</span> <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">as_raw_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">RawFd</span> {
-        <span class="self">self</span>.<span class="ident">epoll_fd</span>.<span class="ident">as_raw_fd</span>()
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: AsFd + IntoFd + FromFd&gt; AsRawFd <span class="kw">for </span>Epoll&lt;Owning&lt;<span class="lifetime">&#39;context</span>, T&gt;&gt; {
+    <span class="kw">fn </span>as_raw_fd(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RawFd {
+        <span class="self">self</span>.epoll_fd.as_raw_fd()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">AsFd</span> <span class="op">+</span> <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">IntoRawFd</span> <span class="kw">for</span> <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_raw_fd</span>(<span class="self">self</span>) -&gt; <span class="ident">RawFd</span> {
-        <span class="self">self</span>.<span class="ident">epoll_fd</span>.<span class="ident">into_raw_fd</span>()
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: AsFd + IntoFd + FromFd&gt; IntoRawFd <span class="kw">for </span>Epoll&lt;Owning&lt;<span class="lifetime">&#39;context</span>, T&gt;&gt; {
+    <span class="kw">fn </span>into_raw_fd(<span class="self">self</span>) -&gt; RawFd {
+        <span class="self">self</span>.epoll_fd.into_raw_fd()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">AsFd</span> <span class="op">+</span> <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">FromRawFd</span> <span class="kw">for</span> <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw_fd</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">epoll_fd</span>: <span class="ident">OwnedFd::from_raw_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">context</span>: <span class="ident">Owning::new</span>(),
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: AsFd + IntoFd + FromFd&gt; FromRawFd <span class="kw">for </span>Epoll&lt;Owning&lt;<span class="lifetime">&#39;context</span>, T&gt;&gt; {
+    <span class="kw">unsafe fn </span>from_raw_fd(fd: RawFd) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            epoll_fd: OwnedFd::from_raw_fd(fd),
+            context: Owning::new(),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">AsFd</span> <span class="op">+</span> <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">AsFd</span> <span class="kw">for</span> <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">as_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">epoll_fd</span>.<span class="ident">as_fd</span>()
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: AsFd + IntoFd + FromFd&gt; AsFd <span class="kw">for </span>Epoll&lt;Owning&lt;<span class="lifetime">&#39;context</span>, T&gt;&gt; {
+    <span class="kw">fn </span>as_fd(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="self">self</span>.epoll_fd.as_fd()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">AsFd</span> <span class="op">+</span> <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">OwnedFd</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">epoll</span>: <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">epoll</span>.<span class="ident">epoll_fd</span>
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: AsFd + IntoFd + FromFd&gt; From&lt;Epoll&lt;Owning&lt;<span class="lifetime">&#39;context</span>, T&gt;&gt;&gt; <span class="kw">for </span>OwnedFd {
+    <span class="kw">fn </span>from(epoll: Epoll&lt;Owning&lt;<span class="lifetime">&#39;context</span>, T&gt;&gt;) -&gt; <span class="self">Self </span>{
+        epoll.epoll_fd
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span>: <span class="ident">AsFd</span> <span class="op">+</span> <span class="ident">IntoFd</span> <span class="op">+</span> <span class="ident">FromFd</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Epoll</span><span class="op">&lt;</span><span class="ident">Owning</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">fd</span>: <span class="ident">OwnedFd</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">epoll_fd</span>: <span class="ident">fd</span>,
-            <span class="ident">context</span>: <span class="ident">Owning::new</span>(),
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, T: AsFd + IntoFd + FromFd&gt; From&lt;OwnedFd&gt; <span class="kw">for </span>Epoll&lt;Owning&lt;<span class="lifetime">&#39;context</span>, T&gt;&gt; {
+    <span class="kw">fn </span>from(fd: OwnedFd) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            epoll_fd: fd,
+            context: Owning::new(),
         }
     }
 }
 
-<span class="doccomment">/// An iterator over the `Event`s in an `EventVec`.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span>: <span class="ident"><span class="self">self</span>::Context</span><span class="op">&gt;</span> {
-    <span class="ident">iter</span>: <span class="ident">core::slice::Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Event</span><span class="op">&gt;</span>,
-    <span class="ident">context</span>: <span class="kw-2">*const</span> <span class="ident">Context</span>,
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;context</span> <span class="ident">Context</span><span class="op">&gt;</span>,
+<span class="doccomment">/// An iterator over the `Event`s in an `EventVec`.
+</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;context</span>, Context: <span class="self">self</span>::Context&gt; {
+    iter: core::slice::Iter&lt;<span class="lifetime">&#39;context</span>, Event&gt;,
+    context: <span class="kw-2">*const </span>Context,
+    _phantom: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;context </span>Context&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span>: <span class="ident"><span class="self">self</span>::Context</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="ident">EventFlags</span>, <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context::Target</span><span class="op">&gt;</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, Context: <span class="self">self</span>::Context&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;context</span>, Context&gt; {
+    <span class="kw">type </span>Item = (EventFlags, Ref&lt;<span class="lifetime">&#39;context</span>, Context::Target&gt;);
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="comment">// Safety: `self.context` is guaranteed to be valid because we hold</span>
-        <span class="comment">// `&#39;context` for it. And we know this event is associated with this</span>
-        <span class="comment">// context because `wait` sets both.</span>
-        <span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">next</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
-            (<span class="ident">event</span>.<span class="ident">event_flags</span>, <span class="kw">unsafe</span> {
-                (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">context</span>).<span class="ident">decode</span>(<span class="ident">event</span>.<span class="ident">encoded</span>)
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="comment">// Safety: `self.context` is guaranteed to be valid because we hold
+        // `&#39;context` for it. And we know this event is associated with this
+        // context because `wait` sets both.
+        </span><span class="self">self</span>.iter.next().map(|event| {
+            (event.event_flags, <span class="kw">unsafe </span>{
+                (<span class="kw-2">*</span><span class="self">self</span>.context).decode(event.encoded)
             })
         })
     }
 }
 
-<span class="doccomment">/// A record of an event that occurred.</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">repr</span>(<span class="ident">packed</span>))]</span>
-<span class="kw">struct</span> <span class="ident">Event</span> {
-    <span class="comment">// Match the layout of `linux_raw_sys::general::epoll_event`. We just use a</span>
-    <span class="comment">// `u64` instead of the full union; `Context` implementations will simply</span>
-    <span class="comment">// need to deal with casting the value into and out of the `u64`</span>
-    <span class="comment">// themselves.</span>
-    <span class="ident">event_flags</span>: <span class="ident">EventFlags</span>,
-    <span class="ident">encoded</span>: <span class="ident">u64</span>,
+<span class="doccomment">/// A record of an event that occurred.
+</span><span class="attribute">#[repr(C)]
+#[cfg_attr(target_arch = <span class="string">&quot;x86_64&quot;</span>, repr(packed))]
+</span><span class="kw">struct </span>Event {
+    <span class="comment">// Match the layout of `linux_raw_sys::general::epoll_event`. We just use a
+    // `u64` instead of the full union; `Context` implementations will simply
+    // need to deal with casting the value into and out of the `u64`
+    // themselves.
+    </span>event_flags: EventFlags,
+    encoded: u64,
 }
 
-<span class="doccomment">/// A vector of `Event`s, plus context for interpreting them.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventVec</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span>: <span class="ident"><span class="self">self</span>::Context</span><span class="op">&gt;</span> {
-    <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Event</span><span class="op">&gt;</span>,
-    <span class="ident">context</span>: <span class="kw-2">*const</span> <span class="ident">Context</span>,
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;context</span> <span class="ident">Context</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A vector of `Event`s, plus context for interpreting them.
+</span><span class="kw">pub struct </span>EventVec&lt;<span class="lifetime">&#39;context</span>, Context: <span class="self">self</span>::Context&gt; {
+    events: Vec&lt;Event&gt;,
+    context: <span class="kw-2">*const </span>Context,
+    _phantom: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;context </span>Context&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span>: <span class="ident"><span class="self">self</span>::Context</span><span class="op">&gt;</span> <span class="ident">EventVec</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Constructs an `EventVec` with memory for `capacity` `Event`s.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_capacity</span>(<span class="ident">capacity</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">events</span>: <span class="ident">Vec::with_capacity</span>(<span class="ident">capacity</span>),
-            <span class="ident">context</span>: <span class="ident">null</span>(),
-            <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, Context: <span class="self">self</span>::Context&gt; EventVec&lt;<span class="lifetime">&#39;context</span>, Context&gt; {
+    <span class="doccomment">/// Constructs an `EventVec` with memory for `capacity` `Event`s.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>with_capacity(capacity: usize) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            events: Vec::with_capacity(capacity),
+            context: null(),
+            _phantom: PhantomData,
         }
     }
 
-    <span class="doccomment">/// Returns the current `Event` capacity of this `EventVec`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">capacity</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">capacity</span>()
+    <span class="doccomment">/// Returns the current `Event` capacity of this `EventVec`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>capacity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.events.capacity()
     }
 
-    <span class="doccomment">/// Reserves enough memory for at least `additional` more `Event`s.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reserve</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">additional</span>: <span class="ident">usize</span>) {
-        <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">reserve</span>(<span class="ident">additional</span>);
+    <span class="doccomment">/// Reserves enough memory for at least `additional` more `Event`s.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>reserve(<span class="kw-2">&amp;mut </span><span class="self">self</span>, additional: usize) {
+        <span class="self">self</span>.events.reserve(additional);
     }
 
-    <span class="doccomment">/// Reserves enough memory for exactly `additional` more `Event`s.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reserve_exact</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">additional</span>: <span class="ident">usize</span>) {
-        <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">reserve_exact</span>(<span class="ident">additional</span>);
+    <span class="doccomment">/// Reserves enough memory for exactly `additional` more `Event`s.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>reserve_exact(<span class="kw-2">&amp;mut </span><span class="self">self</span>, additional: usize) {
+        <span class="self">self</span>.events.reserve_exact(additional);
     }
 
-    <span class="doccomment">/// Clears all the `Events` out of this `EventVec`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">clear</span>();
+    <span class="doccomment">/// Clears all the `Events` out of this `EventVec`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.events.clear();
     }
 
-    <span class="doccomment">/// Shrinks the capacity of this `EventVec` as much as possible.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">shrink_to_fit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">shrink_to_fit</span>();
+    <span class="doccomment">/// Shrinks the capacity of this `EventVec` as much as possible.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>shrink_to_fit(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.events.shrink_to_fit();
     }
 
-    <span class="doccomment">/// Returns an iterator over the `Event`s in this `EventVec`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">Context</span><span class="op">&gt;</span> {
-        <span class="ident">Iter</span> {
-            <span class="ident">iter</span>: <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">iter</span>(),
-            <span class="ident">context</span>: <span class="self">self</span>.<span class="ident">context</span>,
-            <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+    <span class="doccomment">/// Returns an iterator over the `Event`s in this `EventVec`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, Context&gt; {
+        Iter {
+            iter: <span class="self">self</span>.events.iter(),
+            context: <span class="self">self</span>.context,
+            _phantom: PhantomData,
         }
     }
 
-    <span class="doccomment">/// Returns the number of `Event`s logically contained in this `EventVec`.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">len</span>()
+    <span class="doccomment">/// Returns the number of `Event`s logically contained in this `EventVec`.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.events.len()
     }
 
-    <span class="doccomment">/// Tests whether this `EventVec` is logically empty.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">is_empty</span>()
+    <span class="doccomment">/// Tests whether this `EventVec` is logically empty.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.events.is_empty()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span>: <span class="ident"><span class="self">self</span>::Context</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;context</span> <span class="ident">EventVec</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="ident">EventFlags</span>, <span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;context</span>, <span class="ident">Context::Target</span><span class="op">&gt;</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;context</span>, Context: <span class="self">self</span>::Context&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;context </span>EventVec&lt;<span class="lifetime">&#39;context</span>, Context&gt; {
+    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;context</span>, Context&gt;;
+    <span class="kw">type </span>Item = (EventFlags, Ref&lt;<span class="lifetime">&#39;context</span>, Context::Target&gt;);
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="self">self</span>.<span class="ident">iter</span>()
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.iter()
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

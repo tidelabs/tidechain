@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/dominator_tree.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dominator_tree.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/dominator_tree.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dominator_tree.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -840,843 +835,842 @@
 <span id="835">835</span>
 <span id="836">836</span>
 <span id="837">837</span>
-</pre><pre class="rust"><code><span class="doccomment">//! A Dominator Tree represented as mappings of Blocks to their immediate dominator.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! A Dominator Tree represented as mappings of Blocks to their immediate dominator.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entity::SecondaryMap</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::flowgraph</span>::{<span class="ident">BlockPredecessor</span>, <span class="ident">ControlFlowGraph</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::instructions::BranchInfo</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="ident">Block</span>, <span class="ident">ExpandedProgramPoint</span>, <span class="ident">Function</span>, <span class="ident">Inst</span>, <span class="ident">Layout</span>, <span class="ident">ProgramOrder</span>, <span class="ident">Value</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::packed_option::PackedOption</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timing</span>;
-<span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
-<span class="kw">use</span> <span class="ident">core::cmp</span>;
-<span class="kw">use</span> <span class="ident">core::cmp::Ordering</span>;
-<span class="kw">use</span> <span class="ident">core::mem</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::entity::SecondaryMap;
+<span class="kw">use </span><span class="kw">crate</span>::flowgraph::{BlockPredecessor, ControlFlowGraph};
+<span class="kw">use </span><span class="kw">crate</span>::ir::instructions::BranchInfo;
+<span class="kw">use </span><span class="kw">crate</span>::ir::{Block, ExpandedProgramPoint, Function, Inst, Layout, ProgramOrder, Value};
+<span class="kw">use </span><span class="kw">crate</span>::packed_option::PackedOption;
+<span class="kw">use </span><span class="kw">crate</span>::timing;
+<span class="kw">use </span>alloc::vec::Vec;
+<span class="kw">use </span>core::cmp;
+<span class="kw">use </span>core::cmp::Ordering;
+<span class="kw">use </span>core::mem;
 
-<span class="doccomment">/// RPO numbers are not first assigned in a contiguous way but as multiples of STRIDE, to leave</span>
-<span class="doccomment">/// room for modifications of the dominator tree.</span>
-<span class="kw">const</span> <span class="ident">STRIDE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">4</span>;
+<span class="doccomment">/// RPO numbers are not first assigned in a contiguous way but as multiples of STRIDE, to leave
+/// room for modifications of the dominator tree.
+</span><span class="kw">const </span>STRIDE: u32 = <span class="number">4</span>;
 
-<span class="doccomment">/// Special RPO numbers used during `compute_postorder`.</span>
-<span class="kw">const</span> <span class="ident">DONE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="kw">const</span> <span class="ident">SEEN</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">2</span>;
+<span class="doccomment">/// Special RPO numbers used during `compute_postorder`.
+</span><span class="kw">const </span>DONE: u32 = <span class="number">1</span>;
+<span class="kw">const </span>SEEN: u32 = <span class="number">2</span>;
 
-<span class="doccomment">/// Dominator tree node. We keep one of these per block.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">struct</span> <span class="ident">DomNode</span> {
-    <span class="doccomment">/// Number of this node in a reverse post-order traversal of the CFG, starting from 1.</span>
-    <span class="doccomment">/// This number is monotonic in the reverse postorder but not contiguous, since we leave</span>
-    <span class="doccomment">/// holes for later localized modifications of the dominator tree.</span>
-    <span class="doccomment">/// Unreachable nodes get number 0, all others are positive.</span>
-    <span class="ident">rpo_number</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Dominator tree node. We keep one of these per block.
+</span><span class="attribute">#[derive(Clone, Default)]
+</span><span class="kw">struct </span>DomNode {
+    <span class="doccomment">/// Number of this node in a reverse post-order traversal of the CFG, starting from 1.
+    /// This number is monotonic in the reverse postorder but not contiguous, since we leave
+    /// holes for later localized modifications of the dominator tree.
+    /// Unreachable nodes get number 0, all others are positive.
+    </span>rpo_number: u32,
 
-    <span class="doccomment">/// The immediate dominator of this block, represented as the branch or jump instruction at the</span>
-    <span class="doccomment">/// end of the dominating basic block.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is `None` for unreachable blocks and the entry block which doesn&#39;t have an immediate</span>
-    <span class="doccomment">/// dominator.</span>
-    <span class="ident">idom</span>: <span class="ident">PackedOption</span><span class="op">&lt;</span><span class="ident">Inst</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The immediate dominator of this block, represented as the branch or jump instruction at the
+    /// end of the dominating basic block.
+    ///
+    /// This is `None` for unreachable blocks and the entry block which doesn&#39;t have an immediate
+    /// dominator.
+    </span>idom: PackedOption&lt;Inst&gt;,
 }
 
-<span class="doccomment">/// The dominator tree for a single function.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DominatorTree</span> {
-    <span class="ident">nodes</span>: <span class="ident">SecondaryMap</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">DomNode</span><span class="op">&gt;</span>,
+<span class="doccomment">/// The dominator tree for a single function.
+</span><span class="kw">pub struct </span>DominatorTree {
+    nodes: SecondaryMap&lt;Block, DomNode&gt;,
 
-    <span class="doccomment">/// CFG post-order of all reachable blocks.</span>
-    <span class="ident">postorder</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// CFG post-order of all reachable blocks.
+    </span>postorder: Vec&lt;Block&gt;,
 
-    <span class="doccomment">/// Scratch memory used by `compute_postorder()`.</span>
-    <span class="ident">stack</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Scratch memory used by `compute_postorder()`.
+    </span>stack: Vec&lt;Block&gt;,
 
-    <span class="ident">valid</span>: <span class="ident">bool</span>,
+    valid: bool,
 }
 
-<span class="doccomment">/// Methods for querying the dominator tree.</span>
-<span class="kw">impl</span> <span class="ident">DominatorTree</span> {
-    <span class="doccomment">/// Is `block` reachable from the entry block?</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_reachable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">block</span>: <span class="ident">Block</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">rpo_number</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
+<span class="doccomment">/// Methods for querying the dominator tree.
+</span><span class="kw">impl </span>DominatorTree {
+    <span class="doccomment">/// Is `block` reachable from the entry block?
+    </span><span class="kw">pub fn </span>is_reachable(<span class="kw-2">&amp;</span><span class="self">self</span>, block: Block) -&gt; bool {
+        <span class="self">self</span>.nodes[block].rpo_number != <span class="number">0
+    </span>}
+
+    <span class="doccomment">/// Get the CFG post-order of blocks that was used to compute the dominator tree.
+    ///
+    /// Note that this post-order is not updated automatically when the CFG is modified. It is
+    /// computed from scratch and cached by `compute()`.
+    </span><span class="kw">pub fn </span>cfg_postorder(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Block] {
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.is_valid());
+        <span class="kw-2">&amp;</span><span class="self">self</span>.postorder
     }
 
-    <span class="doccomment">/// Get the CFG post-order of blocks that was used to compute the dominator tree.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this post-order is not updated automatically when the CFG is modified. It is</span>
-    <span class="doccomment">/// computed from scratch and cached by `compute()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cfg_postorder</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">Block</span>] {
-        <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">is_valid</span>());
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">postorder</span>
+    <span class="doccomment">/// Returns the immediate dominator of `block`.
+    ///
+    /// The immediate dominator of a basic block is a basic block which we represent by
+    /// the branch or jump instruction at the end of the basic block. This does not have to be the
+    /// terminator of its block.
+    ///
+    /// A branch or jump is said to *dominate* `block` if all control flow paths from the function
+    /// entry to `block` must go through the branch.
+    ///
+    /// The *immediate dominator* is the dominator that is closest to `block`. All other dominators
+    /// also dominate the immediate dominator.
+    ///
+    /// This returns `None` if `block` is not reachable from the entry block, or if it is the entry block
+    /// which has no dominators.
+    </span><span class="kw">pub fn </span>idom(<span class="kw-2">&amp;</span><span class="self">self</span>, block: Block) -&gt; <span class="prelude-ty">Option</span>&lt;Inst&gt; {
+        <span class="self">self</span>.nodes[block].idom.into()
     }
 
-    <span class="doccomment">/// Returns the immediate dominator of `block`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The immediate dominator of a basic block is a basic block which we represent by</span>
-    <span class="doccomment">/// the branch or jump instruction at the end of the basic block. This does not have to be the</span>
-    <span class="doccomment">/// terminator of its block.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// A branch or jump is said to *dominate* `block` if all control flow paths from the function</span>
-    <span class="doccomment">/// entry to `block` must go through the branch.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The *immediate dominator* is the dominator that is closest to `block`. All other dominators</span>
-    <span class="doccomment">/// also dominate the immediate dominator.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This returns `None` if `block` is not reachable from the entry block, or if it is the entry block</span>
-    <span class="doccomment">/// which has no dominators.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">idom</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">block</span>: <span class="ident">Block</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Inst</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">idom</span>.<span class="ident">into</span>()
+    <span class="doccomment">/// Compare two blocks relative to the reverse post-order.
+    </span><span class="kw">fn </span>rpo_cmp_block(<span class="kw-2">&amp;</span><span class="self">self</span>, a: Block, b: Block) -&gt; Ordering {
+        <span class="self">self</span>.nodes[a].rpo_number.cmp(<span class="kw-2">&amp;</span><span class="self">self</span>.nodes[b].rpo_number)
     }
 
-    <span class="doccomment">/// Compare two blocks relative to the reverse post-order.</span>
-    <span class="kw">fn</span> <span class="ident">rpo_cmp_block</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">Block</span>, <span class="ident">b</span>: <span class="ident">Block</span>) -&gt; <span class="ident">Ordering</span> {
-        <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">a</span>].<span class="ident">rpo_number</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">b</span>].<span class="ident">rpo_number</span>)
-    }
-
-    <span class="doccomment">/// Compare two program points relative to a reverse post-order traversal of the control-flow</span>
-    <span class="doccomment">/// graph.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Return `Ordering::Less` if `a` comes before `b` in the RPO.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If `a` and `b` belong to the same block, compare their relative position in the block.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rpo_cmp</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">A</span>, <span class="ident">b</span>: <span class="ident">B</span>, <span class="ident">layout</span>: <span class="kw-2">&amp;</span><span class="ident">Layout</span>) -&gt; <span class="ident">Ordering</span>
-    <span class="kw">where</span>
-        <span class="ident">A</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">ExpandedProgramPoint</span><span class="op">&gt;</span>,
-        <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">ExpandedProgramPoint</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Compare two program points relative to a reverse post-order traversal of the control-flow
+    /// graph.
+    ///
+    /// Return `Ordering::Less` if `a` comes before `b` in the RPO.
+    ///
+    /// If `a` and `b` belong to the same block, compare their relative position in the block.
+    </span><span class="kw">pub fn </span>rpo_cmp&lt;A, B&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, a: A, b: B, layout: <span class="kw-2">&amp;</span>Layout) -&gt; Ordering
+    <span class="kw">where
+        </span>A: Into&lt;ExpandedProgramPoint&gt;,
+        B: Into&lt;ExpandedProgramPoint&gt;,
     {
-        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">into</span>();
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">into</span>();
-        <span class="self">self</span>.<span class="ident">rpo_cmp_block</span>(<span class="ident">layout</span>.<span class="ident">pp_block</span>(<span class="ident">a</span>), <span class="ident">layout</span>.<span class="ident">pp_block</span>(<span class="ident">b</span>))
-            .<span class="ident">then</span>(<span class="ident">layout</span>.<span class="ident">cmp</span>(<span class="ident">a</span>, <span class="ident">b</span>))
+        <span class="kw">let </span>a = a.into();
+        <span class="kw">let </span>b = b.into();
+        <span class="self">self</span>.rpo_cmp_block(layout.pp_block(a), layout.pp_block(b))
+            .then(layout.cmp(a, b))
     }
 
-    <span class="doccomment">/// Returns `true` if `a` dominates `b`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This means that every control-flow path from the function entry to `b` must go through `a`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Dominance is ill defined for unreachable blocks. This function can always determine</span>
-    <span class="doccomment">/// dominance for instructions in the same block, but otherwise returns `false` if either block</span>
-    <span class="doccomment">/// is unreachable.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// An instruction is considered to dominate itself.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dominates</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">A</span>, <span class="ident">b</span>: <span class="ident">B</span>, <span class="ident">layout</span>: <span class="kw-2">&amp;</span><span class="ident">Layout</span>) -&gt; <span class="ident">bool</span>
-    <span class="kw">where</span>
-        <span class="ident">A</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">ExpandedProgramPoint</span><span class="op">&gt;</span>,
-        <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">ExpandedProgramPoint</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Returns `true` if `a` dominates `b`.
+    ///
+    /// This means that every control-flow path from the function entry to `b` must go through `a`.
+    ///
+    /// Dominance is ill defined for unreachable blocks. This function can always determine
+    /// dominance for instructions in the same block, but otherwise returns `false` if either block
+    /// is unreachable.
+    ///
+    /// An instruction is considered to dominate itself.
+    </span><span class="kw">pub fn </span>dominates&lt;A, B&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, a: A, b: B, layout: <span class="kw-2">&amp;</span>Layout) -&gt; bool
+    <span class="kw">where
+        </span>A: Into&lt;ExpandedProgramPoint&gt;,
+        B: Into&lt;ExpandedProgramPoint&gt;,
     {
-        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">into</span>();
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">into</span>();
-        <span class="kw">match</span> <span class="ident">a</span> {
-            <span class="ident">ExpandedProgramPoint::Block</span>(<span class="ident">block_a</span>) =&gt; {
-                <span class="ident">a</span> <span class="op">==</span> <span class="ident">b</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">last_dominator</span>(<span class="ident">block_a</span>, <span class="ident">b</span>, <span class="ident">layout</span>).<span class="ident">is_some</span>()
+        <span class="kw">let </span>a = a.into();
+        <span class="kw">let </span>b = b.into();
+        <span class="kw">match </span>a {
+            ExpandedProgramPoint::Block(block_a) =&gt; {
+                a == b || <span class="self">self</span>.last_dominator(block_a, b, layout).is_some()
             }
-            <span class="ident">ExpandedProgramPoint::Inst</span>(<span class="ident">inst_a</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">block_a</span> <span class="op">=</span> <span class="ident">layout</span>
-                    .<span class="ident">inst_block</span>(<span class="ident">inst_a</span>)
-                    .<span class="ident">expect</span>(<span class="string">&quot;Instruction not in layout.&quot;</span>);
-                <span class="kw">match</span> <span class="self">self</span>.<span class="ident">last_dominator</span>(<span class="ident">block_a</span>, <span class="ident">b</span>, <span class="ident">layout</span>) {
-                    <span class="prelude-val">Some</span>(<span class="ident">last</span>) =&gt; <span class="ident">layout</span>.<span class="ident">cmp</span>(<span class="ident">inst_a</span>, <span class="ident">last</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">Ordering::Greater</span>,
-                    <span class="prelude-val">None</span> =&gt; <span class="bool-val">false</span>,
+            ExpandedProgramPoint::Inst(inst_a) =&gt; {
+                <span class="kw">let </span>block_a = layout
+                    .inst_block(inst_a)
+                    .expect(<span class="string">&quot;Instruction not in layout.&quot;</span>);
+                <span class="kw">match </span><span class="self">self</span>.last_dominator(block_a, b, layout) {
+                    <span class="prelude-val">Some</span>(last) =&gt; layout.cmp(inst_a, last) != Ordering::Greater,
+                    <span class="prelude-val">None </span>=&gt; <span class="bool-val">false</span>,
                 }
             }
         }
     }
 
-    <span class="doccomment">/// Find the last instruction in `a` that dominates `b`.</span>
-    <span class="doccomment">/// If no instructions in `a` dominate `b`, return `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">last_dominator</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">Block</span>, <span class="ident">b</span>: <span class="ident">B</span>, <span class="ident">layout</span>: <span class="kw-2">&amp;</span><span class="ident">Layout</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Inst</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">ExpandedProgramPoint</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Find the last instruction in `a` that dominates `b`.
+    /// If no instructions in `a` dominate `b`, return `None`.
+    </span><span class="kw">pub fn </span>last_dominator&lt;B&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, a: Block, b: B, layout: <span class="kw-2">&amp;</span>Layout) -&gt; <span class="prelude-ty">Option</span>&lt;Inst&gt;
+    <span class="kw">where
+        </span>B: Into&lt;ExpandedProgramPoint&gt;,
     {
-        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">block_b</span>, <span class="kw-2">mut</span> <span class="ident">inst_b</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">b</span>.<span class="ident">into</span>() {
-            <span class="ident">ExpandedProgramPoint::Block</span>(<span class="ident">block</span>) =&gt; (<span class="ident">block</span>, <span class="prelude-val">None</span>),
-            <span class="ident">ExpandedProgramPoint::Inst</span>(<span class="ident">inst</span>) =&gt; (
-                <span class="ident">layout</span>.<span class="ident">inst_block</span>(<span class="ident">inst</span>).<span class="ident">expect</span>(<span class="string">&quot;Instruction not in layout.&quot;</span>),
-                <span class="prelude-val">Some</span>(<span class="ident">inst</span>),
+        <span class="kw">let </span>(<span class="kw-2">mut </span>block_b, <span class="kw-2">mut </span>inst_b) = <span class="kw">match </span>b.into() {
+            ExpandedProgramPoint::Block(block) =&gt; (block, <span class="prelude-val">None</span>),
+            ExpandedProgramPoint::Inst(inst) =&gt; (
+                layout.inst_block(inst).expect(<span class="string">&quot;Instruction not in layout.&quot;</span>),
+                <span class="prelude-val">Some</span>(inst),
             ),
         };
-        <span class="kw">let</span> <span class="ident">rpo_a</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">a</span>].<span class="ident">rpo_number</span>;
+        <span class="kw">let </span>rpo_a = <span class="self">self</span>.nodes[a].rpo_number;
 
-        <span class="comment">// Run a finger up the dominator tree from b until we see a.</span>
-        <span class="comment">// Do nothing if b is unreachable.</span>
-        <span class="kw">while</span> <span class="ident">rpo_a</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block_b</span>].<span class="ident">rpo_number</span> {
-            <span class="kw">let</span> <span class="ident">idom</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">idom</span>(<span class="ident">block_b</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">idom</span>) =&gt; <span class="ident">idom</span>,
-                <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>, <span class="comment">// a is unreachable, so we climbed past the entry</span>
-            };
-            <span class="ident">block_b</span> <span class="op">=</span> <span class="ident">layout</span>.<span class="ident">inst_block</span>(<span class="ident">idom</span>).<span class="ident">expect</span>(<span class="string">&quot;Dominator got removed.&quot;</span>);
-            <span class="ident">inst_b</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">idom</span>);
+        <span class="comment">// Run a finger up the dominator tree from b until we see a.
+        // Do nothing if b is unreachable.
+        </span><span class="kw">while </span>rpo_a &lt; <span class="self">self</span>.nodes[block_b].rpo_number {
+            <span class="kw">let </span>idom = <span class="kw">match </span><span class="self">self</span>.idom(block_b) {
+                <span class="prelude-val">Some</span>(idom) =&gt; idom,
+                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>, <span class="comment">// a is unreachable, so we climbed past the entry
+            </span>};
+            block_b = layout.inst_block(idom).expect(<span class="string">&quot;Dominator got removed.&quot;</span>);
+            inst_b = <span class="prelude-val">Some</span>(idom);
         }
-        <span class="kw">if</span> <span class="ident">a</span> <span class="op">==</span> <span class="ident">block_b</span> {
-            <span class="ident">inst_b</span>
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        }
+        <span class="kw">if </span>a == block_b {
+            inst_b
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
     }
 
-    <span class="doccomment">/// Compute the common dominator of two basic blocks.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Both basic blocks are assumed to be reachable.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">common_dominator</span>(
+    <span class="doccomment">/// Compute the common dominator of two basic blocks.
+    ///
+    /// Both basic blocks are assumed to be reachable.
+    </span><span class="kw">pub fn </span>common_dominator(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">a</span>: <span class="ident">BlockPredecessor</span>,
-        <span class="kw-2">mut</span> <span class="ident">b</span>: <span class="ident">BlockPredecessor</span>,
-        <span class="ident">layout</span>: <span class="kw-2">&amp;</span><span class="ident">Layout</span>,
-    ) -&gt; <span class="ident">BlockPredecessor</span> {
-        <span class="kw">loop</span> {
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">rpo_cmp_block</span>(<span class="ident">a</span>.<span class="ident">block</span>, <span class="ident">b</span>.<span class="ident">block</span>) {
-                <span class="ident">Ordering::Less</span> =&gt; {
-                    <span class="comment">// `a` comes before `b` in the RPO. Move `b` up.</span>
-                    <span class="kw">let</span> <span class="ident">idom</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">b</span>.<span class="ident">block</span>].<span class="ident">idom</span>.<span class="ident">expect</span>(<span class="string">&quot;Unreachable basic block?&quot;</span>);
-                    <span class="ident">b</span> <span class="op">=</span> <span class="ident">BlockPredecessor::new</span>(
-                        <span class="ident">layout</span>.<span class="ident">inst_block</span>(<span class="ident">idom</span>).<span class="ident">expect</span>(<span class="string">&quot;Dangling idom instruction&quot;</span>),
-                        <span class="ident">idom</span>,
+        <span class="kw-2">mut </span>a: BlockPredecessor,
+        <span class="kw-2">mut </span>b: BlockPredecessor,
+        layout: <span class="kw-2">&amp;</span>Layout,
+    ) -&gt; BlockPredecessor {
+        <span class="kw">loop </span>{
+            <span class="kw">match </span><span class="self">self</span>.rpo_cmp_block(a.block, b.block) {
+                Ordering::Less =&gt; {
+                    <span class="comment">// `a` comes before `b` in the RPO. Move `b` up.
+                    </span><span class="kw">let </span>idom = <span class="self">self</span>.nodes[b.block].idom.expect(<span class="string">&quot;Unreachable basic block?&quot;</span>);
+                    b = BlockPredecessor::new(
+                        layout.inst_block(idom).expect(<span class="string">&quot;Dangling idom instruction&quot;</span>),
+                        idom,
                     );
                 }
-                <span class="ident">Ordering::Greater</span> =&gt; {
-                    <span class="comment">// `b` comes before `a` in the RPO. Move `a` up.</span>
-                    <span class="kw">let</span> <span class="ident">idom</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">a</span>.<span class="ident">block</span>].<span class="ident">idom</span>.<span class="ident">expect</span>(<span class="string">&quot;Unreachable basic block?&quot;</span>);
-                    <span class="ident">a</span> <span class="op">=</span> <span class="ident">BlockPredecessor::new</span>(
-                        <span class="ident">layout</span>.<span class="ident">inst_block</span>(<span class="ident">idom</span>).<span class="ident">expect</span>(<span class="string">&quot;Dangling idom instruction&quot;</span>),
-                        <span class="ident">idom</span>,
+                Ordering::Greater =&gt; {
+                    <span class="comment">// `b` comes before `a` in the RPO. Move `a` up.
+                    </span><span class="kw">let </span>idom = <span class="self">self</span>.nodes[a.block].idom.expect(<span class="string">&quot;Unreachable basic block?&quot;</span>);
+                    a = BlockPredecessor::new(
+                        layout.inst_block(idom).expect(<span class="string">&quot;Dangling idom instruction&quot;</span>),
+                        idom,
                     );
                 }
-                <span class="ident">Ordering::Equal</span> =&gt; <span class="kw">break</span>,
+                Ordering::Equal =&gt; <span class="kw">break</span>,
             }
         }
 
         <span class="macro">debug_assert_eq!</span>(
-            <span class="ident">a</span>.<span class="ident">block</span>, <span class="ident">b</span>.<span class="ident">block</span>,
-            <span class="string">&quot;Unreachable block passed to common_dominator?&quot;</span>
-        );
+            a.block, b.block,
+            <span class="string">&quot;Unreachable block passed to common_dominator?&quot;
+        </span>);
 
-        <span class="comment">// We&#39;re in the same block. The common dominator is the earlier instruction.</span>
-        <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">cmp</span>(<span class="ident">a</span>.<span class="ident">inst</span>, <span class="ident">b</span>.<span class="ident">inst</span>) <span class="op">==</span> <span class="ident">Ordering::Less</span> {
-            <span class="ident">a</span>
-        } <span class="kw">else</span> {
-            <span class="ident">b</span>
+        <span class="comment">// We&#39;re in the same block. The common dominator is the earlier instruction.
+        </span><span class="kw">if </span>layout.cmp(a.inst, b.inst) == Ordering::Less {
+            a
+        } <span class="kw">else </span>{
+            b
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">DominatorTree</span> {
-    <span class="doccomment">/// Allocate a new blank dominator tree. Use `compute` to compute the dominator tree for a</span>
-    <span class="doccomment">/// function.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">nodes</span>: <span class="ident">SecondaryMap::new</span>(),
-            <span class="ident">postorder</span>: <span class="ident">Vec::new</span>(),
-            <span class="ident">stack</span>: <span class="ident">Vec::new</span>(),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+<span class="kw">impl </span>DominatorTree {
+    <span class="doccomment">/// Allocate a new blank dominator tree. Use `compute` to compute the dominator tree for a
+    /// function.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            nodes: SecondaryMap::new(),
+            postorder: Vec::new(),
+            stack: Vec::new(),
+            valid: <span class="bool-val">false</span>,
         }
     }
 
-    <span class="doccomment">/// Allocate and compute a dominator tree.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_function</span>(<span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>, <span class="ident">cfg</span>: <span class="kw-2">&amp;</span><span class="ident">ControlFlowGraph</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">block_capacity</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">layout</span>.<span class="ident">block_capacity</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">domtree</span> <span class="op">=</span> <span class="self">Self</span> {
-            <span class="ident">nodes</span>: <span class="ident">SecondaryMap::with_capacity</span>(<span class="ident">block_capacity</span>),
-            <span class="ident">postorder</span>: <span class="ident">Vec::with_capacity</span>(<span class="ident">block_capacity</span>),
-            <span class="ident">stack</span>: <span class="ident">Vec::new</span>(),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+    <span class="doccomment">/// Allocate and compute a dominator tree.
+    </span><span class="kw">pub fn </span>with_function(func: <span class="kw-2">&amp;</span>Function, cfg: <span class="kw-2">&amp;</span>ControlFlowGraph) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>block_capacity = func.layout.block_capacity();
+        <span class="kw">let </span><span class="kw-2">mut </span>domtree = <span class="self">Self </span>{
+            nodes: SecondaryMap::with_capacity(block_capacity),
+            postorder: Vec::with_capacity(block_capacity),
+            stack: Vec::new(),
+            valid: <span class="bool-val">false</span>,
         };
-        <span class="ident">domtree</span>.<span class="ident">compute</span>(<span class="ident">func</span>, <span class="ident">cfg</span>);
-        <span class="ident">domtree</span>
+        domtree.compute(func, cfg);
+        domtree
     }
 
-    <span class="doccomment">/// Reset and compute a CFG post-order and dominator tree.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compute</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>, <span class="ident">cfg</span>: <span class="kw-2">&amp;</span><span class="ident">ControlFlowGraph</span>) {
-        <span class="kw">let</span> <span class="ident">_tt</span> <span class="op">=</span> <span class="ident">timing::domtree</span>();
-        <span class="macro">debug_assert!</span>(<span class="ident">cfg</span>.<span class="ident">is_valid</span>());
-        <span class="self">self</span>.<span class="ident">compute_postorder</span>(<span class="ident">func</span>);
-        <span class="self">self</span>.<span class="ident">compute_domtree</span>(<span class="ident">func</span>, <span class="ident">cfg</span>);
-        <span class="self">self</span>.<span class="ident">valid</span> <span class="op">=</span> <span class="bool-val">true</span>;
+    <span class="doccomment">/// Reset and compute a CFG post-order and dominator tree.
+    </span><span class="kw">pub fn </span>compute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span>Function, cfg: <span class="kw-2">&amp;</span>ControlFlowGraph) {
+        <span class="kw">let </span>_tt = timing::domtree();
+        <span class="macro">debug_assert!</span>(cfg.is_valid());
+        <span class="self">self</span>.compute_postorder(func);
+        <span class="self">self</span>.compute_domtree(func, cfg);
+        <span class="self">self</span>.valid = <span class="bool-val">true</span>;
     }
 
-    <span class="doccomment">/// Clear the data structures used to represent the dominator tree. This will leave the tree in</span>
-    <span class="doccomment">/// a state where `is_valid()` returns false.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">clear</span>();
-        <span class="self">self</span>.<span class="ident">postorder</span>.<span class="ident">clear</span>();
-        <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">is_empty</span>());
-        <span class="self">self</span>.<span class="ident">valid</span> <span class="op">=</span> <span class="bool-val">false</span>;
+    <span class="doccomment">/// Clear the data structures used to represent the dominator tree. This will leave the tree in
+    /// a state where `is_valid()` returns false.
+    </span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.nodes.clear();
+        <span class="self">self</span>.postorder.clear();
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.stack.is_empty());
+        <span class="self">self</span>.valid = <span class="bool-val">false</span>;
     }
 
-    <span class="doccomment">/// Check if the dominator tree is in a valid state.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this doesn&#39;t perform any kind of validity checks. It simply checks if the</span>
-    <span class="doccomment">/// `compute()` method has been called since the last `clear()`. It does not check that the</span>
-    <span class="doccomment">/// dominator tree is consistent with the CFG.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">valid</span>
+    <span class="doccomment">/// Check if the dominator tree is in a valid state.
+    ///
+    /// Note that this doesn&#39;t perform any kind of validity checks. It simply checks if the
+    /// `compute()` method has been called since the last `clear()`. It does not check that the
+    /// dominator tree is consistent with the CFG.
+    </span><span class="kw">pub fn </span>is_valid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.valid
     }
 
-    <span class="doccomment">/// Reset all internal data structures and compute a post-order of the control flow graph.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This leaves `rpo_number == 1` for all reachable blocks, 0 for unreachable ones.</span>
-    <span class="kw">fn</span> <span class="ident">compute_postorder</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>) {
-        <span class="self">self</span>.<span class="ident">clear</span>();
-        <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">resize</span>(<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">num_blocks</span>());
+    <span class="doccomment">/// Reset all internal data structures and compute a post-order of the control flow graph.
+    ///
+    /// This leaves `rpo_number == 1` for all reachable blocks, 0 for unreachable ones.
+    </span><span class="kw">fn </span>compute_postorder(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span>Function) {
+        <span class="self">self</span>.clear();
+        <span class="self">self</span>.nodes.resize(func.dfg.num_blocks());
 
-        <span class="comment">// This algorithm is a depth first traversal (DFT) of the control flow graph, computing a</span>
-        <span class="comment">// post-order of the blocks that are reachable form the entry block. A DFT post-order is not</span>
-        <span class="comment">// unique. The specific order we get is controlled by two factors:</span>
-        <span class="comment">//</span>
-        <span class="comment">// 1. The order each node&#39;s children are visited, and</span>
-        <span class="comment">// 2. The method used for pruning graph edges to get a tree.</span>
-        <span class="comment">//</span>
-        <span class="comment">// There are two ways of viewing the CFG as a graph:</span>
-        <span class="comment">//</span>
-        <span class="comment">// 1. Each block is a node, with outgoing edges for all the branches in the block.</span>
-        <span class="comment">// 2. Each basic block is a node, with outgoing edges for the single branch at the end of</span>
-        <span class="comment">//    the BB. (A block is a linear sequence of basic blocks).</span>
-        <span class="comment">//</span>
-        <span class="comment">// The first graph is a contraction of the second one. We want to compute a block post-order</span>
-        <span class="comment">// that is compatible both graph interpretations. That is, if you compute a BB post-order</span>
-        <span class="comment">// and then remove those BBs that do not correspond to block headers, you get a post-order of</span>
-        <span class="comment">// the block graph.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Node child order:</span>
-        <span class="comment">//</span>
-        <span class="comment">//     In the BB graph, we always go down the fall-through path first and follow the branch</span>
-        <span class="comment">//     destination second.</span>
-        <span class="comment">//</span>
-        <span class="comment">//     In the block graph, this is equivalent to visiting block successors in a bottom-up</span>
-        <span class="comment">//     order, starting from the destination of the block&#39;s terminating jump, ending at the</span>
-        <span class="comment">//     destination of the first branch in the block.</span>
-        <span class="comment">//</span>
-        <span class="comment">// Edge pruning:</span>
-        <span class="comment">//</span>
-        <span class="comment">//     In the BB graph, we keep an edge to a block the first time we visit the *source* side</span>
-        <span class="comment">//     of the edge. Any subsequent edges to the same block are pruned.</span>
-        <span class="comment">//</span>
-        <span class="comment">//     The equivalent tree is reached in the block graph by keeping the first edge to a block</span>
-        <span class="comment">//     in a top-down traversal of the successors. (And then visiting edges in a bottom-up</span>
-        <span class="comment">//     order).</span>
-        <span class="comment">//</span>
-        <span class="comment">// This pruning method makes it possible to compute the DFT without storing lots of</span>
-        <span class="comment">// information about the progress through a block.</span>
+        <span class="comment">// This algorithm is a depth first traversal (DFT) of the control flow graph, computing a
+        // post-order of the blocks that are reachable form the entry block. A DFT post-order is not
+        // unique. The specific order we get is controlled by two factors:
+        //
+        // 1. The order each node&#39;s children are visited, and
+        // 2. The method used for pruning graph edges to get a tree.
+        //
+        // There are two ways of viewing the CFG as a graph:
+        //
+        // 1. Each block is a node, with outgoing edges for all the branches in the block.
+        // 2. Each basic block is a node, with outgoing edges for the single branch at the end of
+        //    the BB. (A block is a linear sequence of basic blocks).
+        //
+        // The first graph is a contraction of the second one. We want to compute a block post-order
+        // that is compatible both graph interpretations. That is, if you compute a BB post-order
+        // and then remove those BBs that do not correspond to block headers, you get a post-order of
+        // the block graph.
+        //
+        // Node child order:
+        //
+        //     In the BB graph, we always go down the fall-through path first and follow the branch
+        //     destination second.
+        //
+        //     In the block graph, this is equivalent to visiting block successors in a bottom-up
+        //     order, starting from the destination of the block&#39;s terminating jump, ending at the
+        //     destination of the first branch in the block.
+        //
+        // Edge pruning:
+        //
+        //     In the BB graph, we keep an edge to a block the first time we visit the *source* side
+        //     of the edge. Any subsequent edges to the same block are pruned.
+        //
+        //     The equivalent tree is reached in the block graph by keeping the first edge to a block
+        //     in a top-down traversal of the successors. (And then visiting edges in a bottom-up
+        //     order).
+        //
+        // This pruning method makes it possible to compute the DFT without storing lots of
+        // information about the progress through a block.
 
-        <span class="comment">// During this algorithm only, use `rpo_number` to hold the following state:</span>
-        <span class="comment">//</span>
-        <span class="comment">//   0:    block has not yet been reached in the pre-order.</span>
-        <span class="comment">//   SEEN: block has been pushed on the stack but successors not yet pushed.</span>
-        <span class="comment">//   DONE: Successors pushed.</span>
+        // During this algorithm only, use `rpo_number` to hold the following state:
+        //
+        //   0:    block has not yet been reached in the pre-order.
+        //   SEEN: block has been pushed on the stack but successors not yet pushed.
+        //   DONE: Successors pushed.
 
-        <span class="kw">match</span> <span class="ident">func</span>.<span class="ident">layout</span>.<span class="ident">entry_block</span>() {
-            <span class="prelude-val">Some</span>(<span class="ident">block</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">block</span>);
-                <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">rpo_number</span> <span class="op">=</span> <span class="ident">SEEN</span>;
+        </span><span class="kw">match </span>func.layout.entry_block() {
+            <span class="prelude-val">Some</span>(block) =&gt; {
+                <span class="self">self</span>.stack.push(block);
+                <span class="self">self</span>.nodes[block].rpo_number = SEEN;
             }
-            <span class="prelude-val">None</span> =&gt; <span class="kw">return</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return</span>,
         }
 
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">block</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">pop</span>() {
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">rpo_number</span> {
-                <span class="ident">SEEN</span> =&gt; {
-                    <span class="comment">// This is the first time we pop the block, so we need to scan its successors and</span>
-                    <span class="comment">// then revisit it.</span>
-                    <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">rpo_number</span> <span class="op">=</span> <span class="ident">DONE</span>;
-                    <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">block</span>);
-                    <span class="self">self</span>.<span class="ident">push_successors</span>(<span class="ident">func</span>, <span class="ident">block</span>);
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(block) = <span class="self">self</span>.stack.pop() {
+            <span class="kw">match </span><span class="self">self</span>.nodes[block].rpo_number {
+                SEEN =&gt; {
+                    <span class="comment">// This is the first time we pop the block, so we need to scan its successors and
+                    // then revisit it.
+                    </span><span class="self">self</span>.nodes[block].rpo_number = DONE;
+                    <span class="self">self</span>.stack.push(block);
+                    <span class="self">self</span>.push_successors(func, block);
                 }
-                <span class="ident">DONE</span> =&gt; {
-                    <span class="comment">// This is the second time we pop the block, so all successors have been</span>
-                    <span class="comment">// processed.</span>
-                    <span class="self">self</span>.<span class="ident">postorder</span>.<span class="ident">push</span>(<span class="ident">block</span>);
+                DONE =&gt; {
+                    <span class="comment">// This is the second time we pop the block, so all successors have been
+                    // processed.
+                    </span><span class="self">self</span>.postorder.push(block);
                 }
-                <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             }
         }
     }
 
-    <span class="doccomment">/// Push `block` successors onto `self.stack`, filtering out those that have already been seen.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The successors are pushed in program order which is important to get a split-invariant</span>
-    <span class="doccomment">/// post-order. Split-invariant means that if a block is split in two, we get the same</span>
-    <span class="doccomment">/// post-order except for the insertion of the new block header at the split point.</span>
-    <span class="kw">fn</span> <span class="ident">push_successors</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>, <span class="ident">block</span>: <span class="ident">Block</span>) {
-        <span class="kw">for</span> <span class="ident">inst</span> <span class="kw">in</span> <span class="ident">func</span>.<span class="ident">layout</span>.<span class="ident">block_likely_branches</span>(<span class="ident">block</span>) {
-            <span class="kw">match</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">analyze_branch</span>(<span class="ident">inst</span>) {
-                <span class="ident">BranchInfo::SingleDest</span>(<span class="ident">succ</span>, <span class="kw">_</span>) =&gt; <span class="self">self</span>.<span class="ident">push_if_unseen</span>(<span class="ident">succ</span>),
-                <span class="ident">BranchInfo::Table</span>(<span class="ident">jt</span>, <span class="ident">dest</span>) =&gt; {
-                    <span class="kw">for</span> <span class="ident">succ</span> <span class="kw">in</span> <span class="ident">func</span>.<span class="ident">jump_tables</span>[<span class="ident">jt</span>].<span class="ident">iter</span>() {
-                        <span class="self">self</span>.<span class="ident">push_if_unseen</span>(<span class="kw-2">*</span><span class="ident">succ</span>);
+    <span class="doccomment">/// Push `block` successors onto `self.stack`, filtering out those that have already been seen.
+    ///
+    /// The successors are pushed in program order which is important to get a split-invariant
+    /// post-order. Split-invariant means that if a block is split in two, we get the same
+    /// post-order except for the insertion of the new block header at the split point.
+    </span><span class="kw">fn </span>push_successors(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span>Function, block: Block) {
+        <span class="kw">for </span>inst <span class="kw">in </span>func.layout.block_likely_branches(block) {
+            <span class="kw">match </span>func.dfg.analyze_branch(inst) {
+                BranchInfo::SingleDest(succ, <span class="kw">_</span>) =&gt; <span class="self">self</span>.push_if_unseen(succ),
+                BranchInfo::Table(jt, dest) =&gt; {
+                    <span class="kw">for </span>succ <span class="kw">in </span>func.jump_tables[jt].iter() {
+                        <span class="self">self</span>.push_if_unseen(<span class="kw-2">*</span>succ);
                     }
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dest</span>) <span class="op">=</span> <span class="ident">dest</span> {
-                        <span class="self">self</span>.<span class="ident">push_if_unseen</span>(<span class="ident">dest</span>);
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(dest) = dest {
+                        <span class="self">self</span>.push_if_unseen(dest);
                     }
                 }
-                <span class="ident">BranchInfo::NotABranch</span> =&gt; {}
+                BranchInfo::NotABranch =&gt; {}
             }
         }
     }
 
-    <span class="doccomment">/// Push `block` onto `self.stack` if it has not already been seen.</span>
-    <span class="kw">fn</span> <span class="ident">push_if_unseen</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">block</span>: <span class="ident">Block</span>) {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">rpo_number</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">rpo_number</span> <span class="op">=</span> <span class="ident">SEEN</span>;
-            <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">block</span>);
+    <span class="doccomment">/// Push `block` onto `self.stack` if it has not already been seen.
+    </span><span class="kw">fn </span>push_if_unseen(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block: Block) {
+        <span class="kw">if </span><span class="self">self</span>.nodes[block].rpo_number == <span class="number">0 </span>{
+            <span class="self">self</span>.nodes[block].rpo_number = SEEN;
+            <span class="self">self</span>.stack.push(block);
         }
     }
 
-    <span class="doccomment">/// Build a dominator tree from a control flow graph using Keith D. Cooper&#39;s</span>
-    <span class="doccomment">/// &quot;Simple, Fast Dominator Algorithm.&quot;</span>
-    <span class="kw">fn</span> <span class="ident">compute_domtree</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>, <span class="ident">cfg</span>: <span class="kw-2">&amp;</span><span class="ident">ControlFlowGraph</span>) {
-        <span class="comment">// During this algorithm, `rpo_number` has the following values:</span>
-        <span class="comment">//</span>
-        <span class="comment">// 0: block is not reachable.</span>
-        <span class="comment">// 1: block is reachable, but has not yet been visited during the first pass. This is set by</span>
-        <span class="comment">// `compute_postorder`.</span>
-        <span class="comment">// 2+: block is reachable and has an assigned RPO number.</span>
+    <span class="doccomment">/// Build a dominator tree from a control flow graph using Keith D. Cooper&#39;s
+    /// &quot;Simple, Fast Dominator Algorithm.&quot;
+    </span><span class="kw">fn </span>compute_domtree(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span>Function, cfg: <span class="kw-2">&amp;</span>ControlFlowGraph) {
+        <span class="comment">// During this algorithm, `rpo_number` has the following values:
+        //
+        // 0: block is not reachable.
+        // 1: block is reachable, but has not yet been visited during the first pass. This is set by
+        // `compute_postorder`.
+        // 2+: block is reachable and has an assigned RPO number.
 
-        <span class="comment">// We&#39;ll be iterating over a reverse post-order of the CFG, skipping the entry block.</span>
-        <span class="kw">let</span> (<span class="ident">entry_block</span>, <span class="ident">postorder</span>) <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">postorder</span>.<span class="ident">as_slice</span>().<span class="ident">split_last</span>() {
-            <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span><span class="ident">eb</span>, <span class="ident">rest</span>)) =&gt; (<span class="ident">eb</span>, <span class="ident">rest</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="kw">return</span>,
+        // We&#39;ll be iterating over a reverse post-order of the CFG, skipping the entry block.
+        </span><span class="kw">let </span>(entry_block, postorder) = <span class="kw">match </span><span class="self">self</span>.postorder.as_slice().split_last() {
+            <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>eb, rest)) =&gt; (eb, rest),
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return</span>,
         };
-        <span class="macro">debug_assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">entry_block</span>), <span class="ident">func</span>.<span class="ident">layout</span>.<span class="ident">entry_block</span>());
+        <span class="macro">debug_assert_eq!</span>(<span class="prelude-val">Some</span>(entry_block), func.layout.entry_block());
 
-        <span class="comment">// Do a first pass where we assign RPO numbers to all reachable nodes.</span>
-        <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">entry_block</span>].<span class="ident">rpo_number</span> <span class="op">=</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">STRIDE</span>;
-        <span class="kw">for</span> (<span class="ident">rpo_idx</span>, <span class="kw-2">&amp;</span><span class="ident">block</span>) <span class="kw">in</span> <span class="ident">postorder</span>.<span class="ident">iter</span>().<span class="ident">rev</span>().<span class="ident">enumerate</span>() {
-            <span class="comment">// Update the current node and give it an RPO number.</span>
-            <span class="comment">// The entry block got 2, the rest start at 3 by multiples of STRIDE to leave</span>
-            <span class="comment">// room for future dominator tree modifications.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Since `compute_idom` will only look at nodes with an assigned RPO number, the</span>
-            <span class="comment">// function will never see an uninitialized predecessor.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Due to the nature of the post-order traversal, every node we visit will have at</span>
-            <span class="comment">// least one predecessor that has previously been visited during this RPO.</span>
-            <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>] <span class="op">=</span> <span class="ident">DomNode</span> {
-                <span class="ident">idom</span>: <span class="self">self</span>.<span class="ident">compute_idom</span>(<span class="ident">block</span>, <span class="ident">cfg</span>, <span class="kw-2">&amp;</span><span class="ident">func</span>.<span class="ident">layout</span>).<span class="ident">into</span>(),
-                <span class="ident">rpo_number</span>: (<span class="ident">rpo_idx</span> <span class="kw">as</span> <span class="ident">u32</span> <span class="op">+</span> <span class="number">3</span>) <span class="op">*</span> <span class="ident">STRIDE</span>,
+        <span class="comment">// Do a first pass where we assign RPO numbers to all reachable nodes.
+        </span><span class="self">self</span>.nodes[entry_block].rpo_number = <span class="number">2 </span>* STRIDE;
+        <span class="kw">for </span>(rpo_idx, <span class="kw-2">&amp;</span>block) <span class="kw">in </span>postorder.iter().rev().enumerate() {
+            <span class="comment">// Update the current node and give it an RPO number.
+            // The entry block got 2, the rest start at 3 by multiples of STRIDE to leave
+            // room for future dominator tree modifications.
+            //
+            // Since `compute_idom` will only look at nodes with an assigned RPO number, the
+            // function will never see an uninitialized predecessor.
+            //
+            // Due to the nature of the post-order traversal, every node we visit will have at
+            // least one predecessor that has previously been visited during this RPO.
+            </span><span class="self">self</span>.nodes[block] = DomNode {
+                idom: <span class="self">self</span>.compute_idom(block, cfg, <span class="kw-2">&amp;</span>func.layout).into(),
+                rpo_number: (rpo_idx <span class="kw">as </span>u32 + <span class="number">3</span>) * STRIDE,
             }
         }
 
-        <span class="comment">// Now that we have RPO numbers for everything and initial immediate dominator estimates,</span>
-        <span class="comment">// iterate until convergence.</span>
-        <span class="comment">//</span>
-        <span class="comment">// If the function is free of irreducible control flow, this will exit after one iteration.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
-        <span class="kw">while</span> <span class="ident">changed</span> {
-            <span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">false</span>;
-            <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">block</span> <span class="kw">in</span> <span class="ident">postorder</span>.<span class="ident">iter</span>().<span class="ident">rev</span>() {
-                <span class="kw">let</span> <span class="ident">idom</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">compute_idom</span>(<span class="ident">block</span>, <span class="ident">cfg</span>, <span class="kw-2">&amp;</span><span class="ident">func</span>.<span class="ident">layout</span>).<span class="ident">into</span>();
-                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">idom</span> <span class="op">!</span><span class="op">=</span> <span class="ident">idom</span> {
-                    <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">idom</span> <span class="op">=</span> <span class="ident">idom</span>;
-                    <span class="ident">changed</span> <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="comment">// Now that we have RPO numbers for everything and initial immediate dominator estimates,
+        // iterate until convergence.
+        //
+        // If the function is free of irreducible control flow, this will exit after one iteration.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>changed = <span class="bool-val">true</span>;
+        <span class="kw">while </span>changed {
+            changed = <span class="bool-val">false</span>;
+            <span class="kw">for </span><span class="kw-2">&amp;</span>block <span class="kw">in </span>postorder.iter().rev() {
+                <span class="kw">let </span>idom = <span class="self">self</span>.compute_idom(block, cfg, <span class="kw-2">&amp;</span>func.layout).into();
+                <span class="kw">if </span><span class="self">self</span>.nodes[block].idom != idom {
+                    <span class="self">self</span>.nodes[block].idom = idom;
+                    changed = <span class="bool-val">true</span>;
                 }
             }
         }
     }
 
-    <span class="comment">// Compute the immediate dominator for `block` using the current `idom` states for the reachable</span>
-    <span class="comment">// nodes.</span>
-    <span class="kw">fn</span> <span class="ident">compute_idom</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">block</span>: <span class="ident">Block</span>, <span class="ident">cfg</span>: <span class="kw-2">&amp;</span><span class="ident">ControlFlowGraph</span>, <span class="ident">layout</span>: <span class="kw-2">&amp;</span><span class="ident">Layout</span>) -&gt; <span class="ident">Inst</span> {
-        <span class="comment">// Get an iterator with just the reachable, already visited predecessors to `block`.</span>
-        <span class="comment">// Note that during the first pass, `rpo_number` is 1 for reachable blocks that haven&#39;t</span>
-        <span class="comment">// been visited yet, 0 for unreachable blocks.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reachable_preds</span> <span class="op">=</span> <span class="ident">cfg</span>
-            .<span class="ident">pred_iter</span>(<span class="ident">block</span>)
-            .<span class="ident">filter</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">BlockPredecessor</span> { <span class="ident">block</span>: <span class="ident">pred</span>, .. }<span class="op">|</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">pred</span>].<span class="ident">rpo_number</span> <span class="op">&gt;</span> <span class="number">1</span>);
+    <span class="comment">// Compute the immediate dominator for `block` using the current `idom` states for the reachable
+    // nodes.
+    </span><span class="kw">fn </span>compute_idom(<span class="kw-2">&amp;</span><span class="self">self</span>, block: Block, cfg: <span class="kw-2">&amp;</span>ControlFlowGraph, layout: <span class="kw-2">&amp;</span>Layout) -&gt; Inst {
+        <span class="comment">// Get an iterator with just the reachable, already visited predecessors to `block`.
+        // Note that during the first pass, `rpo_number` is 1 for reachable blocks that haven&#39;t
+        // been visited yet, 0 for unreachable blocks.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>reachable_preds = cfg
+            .pred_iter(block)
+            .filter(|<span class="kw-2">&amp;</span>BlockPredecessor { block: pred, .. }| <span class="self">self</span>.nodes[pred].rpo_number &gt; <span class="number">1</span>);
 
-        <span class="comment">// The RPO must visit at least one predecessor before this node.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">idom</span> <span class="op">=</span> <span class="ident">reachable_preds</span>
-            .<span class="ident">next</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;block node must have one reachable predecessor&quot;</span>);
+        <span class="comment">// The RPO must visit at least one predecessor before this node.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>idom = reachable_preds
+            .next()
+            .expect(<span class="string">&quot;block node must have one reachable predecessor&quot;</span>);
 
-        <span class="kw">for</span> <span class="ident">pred</span> <span class="kw">in</span> <span class="ident">reachable_preds</span> {
-            <span class="ident">idom</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">common_dominator</span>(<span class="ident">idom</span>, <span class="ident">pred</span>, <span class="ident">layout</span>);
+        <span class="kw">for </span>pred <span class="kw">in </span>reachable_preds {
+            idom = <span class="self">self</span>.common_dominator(idom, pred, layout);
         }
 
-        <span class="ident">idom</span>.<span class="ident">inst</span>
+        idom.inst
     }
 }
 
-<span class="doccomment">/// Optional pre-order information that can be computed for a dominator tree.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This data structure is computed from a `DominatorTree` and provides:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - A forward traversable dominator tree through the `children()` iterator.</span>
-<span class="doccomment">/// - An ordering of blocks according to a dominator tree pre-order.</span>
-<span class="doccomment">/// - Constant time dominance checks at the block granularity.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The information in this auxiliary data structure is not easy to update when the control flow</span>
-<span class="doccomment">/// graph changes, which is why it is kept separate.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DominatorTreePreorder</span> {
-    <span class="ident">nodes</span>: <span class="ident">SecondaryMap</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">ExtraNode</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Optional pre-order information that can be computed for a dominator tree.
+///
+/// This data structure is computed from a `DominatorTree` and provides:
+///
+/// - A forward traversable dominator tree through the `children()` iterator.
+/// - An ordering of blocks according to a dominator tree pre-order.
+/// - Constant time dominance checks at the block granularity.
+///
+/// The information in this auxiliary data structure is not easy to update when the control flow
+/// graph changes, which is why it is kept separate.
+</span><span class="kw">pub struct </span>DominatorTreePreorder {
+    nodes: SecondaryMap&lt;Block, ExtraNode&gt;,
 
-    <span class="comment">// Scratch memory used by `compute_postorder()`.</span>
-    <span class="ident">stack</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+    <span class="comment">// Scratch memory used by `compute_postorder()`.
+    </span>stack: Vec&lt;Block&gt;,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">struct</span> <span class="ident">ExtraNode</span> {
-    <span class="doccomment">/// First child node in the domtree.</span>
-    <span class="ident">child</span>: <span class="ident">PackedOption</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Default, Clone)]
+</span><span class="kw">struct </span>ExtraNode {
+    <span class="doccomment">/// First child node in the domtree.
+    </span>child: PackedOption&lt;Block&gt;,
 
-    <span class="doccomment">/// Next sibling node in the domtree. This linked list is ordered according to the CFG RPO.</span>
-    <span class="ident">sibling</span>: <span class="ident">PackedOption</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Next sibling node in the domtree. This linked list is ordered according to the CFG RPO.
+    </span>sibling: PackedOption&lt;Block&gt;,
 
-    <span class="doccomment">/// Sequence number for this node in a pre-order traversal of the dominator tree.</span>
-    <span class="doccomment">/// Unreachable blocks have number 0, the entry block is 1.</span>
-    <span class="ident">pre_number</span>: <span class="ident">u32</span>,
+    <span class="doccomment">/// Sequence number for this node in a pre-order traversal of the dominator tree.
+    /// Unreachable blocks have number 0, the entry block is 1.
+    </span>pre_number: u32,
 
-    <span class="doccomment">/// Maximum `pre_number` for the sub-tree of the dominator tree that is rooted at this node.</span>
-    <span class="doccomment">/// This is always &gt;= `pre_number`.</span>
-    <span class="ident">pre_max</span>: <span class="ident">u32</span>,
+    <span class="doccomment">/// Maximum `pre_number` for the sub-tree of the dominator tree that is rooted at this node.
+    /// This is always &gt;= `pre_number`.
+    </span>pre_max: u32,
 }
 
-<span class="doccomment">/// Creating and computing the dominator tree pre-order.</span>
-<span class="kw">impl</span> <span class="ident">DominatorTreePreorder</span> {
-    <span class="doccomment">/// Create a new blank `DominatorTreePreorder`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">nodes</span>: <span class="ident">SecondaryMap::new</span>(),
-            <span class="ident">stack</span>: <span class="ident">Vec::new</span>(),
+<span class="doccomment">/// Creating and computing the dominator tree pre-order.
+</span><span class="kw">impl </span>DominatorTreePreorder {
+    <span class="doccomment">/// Create a new blank `DominatorTreePreorder`.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            nodes: SecondaryMap::new(),
+            stack: Vec::new(),
         }
     }
 
-    <span class="doccomment">/// Recompute this data structure to match `domtree`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compute</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">domtree</span>: <span class="kw-2">&amp;</span><span class="ident">DominatorTree</span>, <span class="ident">layout</span>: <span class="kw-2">&amp;</span><span class="ident">Layout</span>) {
-        <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">clear</span>();
-        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">len</span>(), <span class="number">0</span>);
+    <span class="doccomment">/// Recompute this data structure to match `domtree`.
+    </span><span class="kw">pub fn </span>compute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, domtree: <span class="kw-2">&amp;</span>DominatorTree, layout: <span class="kw-2">&amp;</span>Layout) {
+        <span class="self">self</span>.nodes.clear();
+        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.stack.len(), <span class="number">0</span>);
 
-        <span class="comment">// Step 1: Populate the child and sibling links.</span>
-        <span class="comment">//</span>
-        <span class="comment">// By following the CFG post-order and pushing to the front of the lists, we make sure that</span>
-        <span class="comment">// sibling lists are ordered according to the CFG reverse post-order.</span>
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">block</span> <span class="kw">in</span> <span class="ident">domtree</span>.<span class="ident">cfg_postorder</span>() {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">idom_inst</span>) <span class="op">=</span> <span class="ident">domtree</span>.<span class="ident">idom</span>(<span class="ident">block</span>) {
-                <span class="kw">let</span> <span class="ident">idom</span> <span class="op">=</span> <span class="ident">layout</span>.<span class="ident">pp_block</span>(<span class="ident">idom_inst</span>);
-                <span class="kw">let</span> <span class="ident">sib</span> <span class="op">=</span> <span class="ident">mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">idom</span>].<span class="ident">child</span>, <span class="ident">block</span>.<span class="ident">into</span>());
-                <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">sibling</span> <span class="op">=</span> <span class="ident">sib</span>;
-            } <span class="kw">else</span> {
-                <span class="comment">// The only block without an immediate dominator is the entry.</span>
-                <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">block</span>);
+        <span class="comment">// Step 1: Populate the child and sibling links.
+        //
+        // By following the CFG post-order and pushing to the front of the lists, we make sure that
+        // sibling lists are ordered according to the CFG reverse post-order.
+        </span><span class="kw">for </span><span class="kw-2">&amp;</span>block <span class="kw">in </span>domtree.cfg_postorder() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(idom_inst) = domtree.idom(block) {
+                <span class="kw">let </span>idom = layout.pp_block(idom_inst);
+                <span class="kw">let </span>sib = mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.nodes[idom].child, block.into());
+                <span class="self">self</span>.nodes[block].sibling = sib;
+            } <span class="kw">else </span>{
+                <span class="comment">// The only block without an immediate dominator is the entry.
+                </span><span class="self">self</span>.stack.push(block);
             }
         }
 
-        <span class="comment">// Step 2. Assign pre-order numbers from a DFS of the dominator tree.</span>
-        <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">block</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">pop</span>() {
-            <span class="ident">n</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>];
-            <span class="ident">node</span>.<span class="ident">pre_number</span> <span class="op">=</span> <span class="ident">n</span>;
-            <span class="ident">node</span>.<span class="ident">pre_max</span> <span class="op">=</span> <span class="ident">n</span>;
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">n</span>) <span class="op">=</span> <span class="ident">node</span>.<span class="ident">sibling</span>.<span class="ident">expand</span>() {
-                <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">n</span>);
+        <span class="comment">// Step 2. Assign pre-order numbers from a DFS of the dominator tree.
+        </span><span class="macro">debug_assert!</span>(<span class="self">self</span>.stack.len() &lt;= <span class="number">1</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>n = <span class="number">0</span>;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(block) = <span class="self">self</span>.stack.pop() {
+            n += <span class="number">1</span>;
+            <span class="kw">let </span>node = <span class="kw-2">&amp;mut </span><span class="self">self</span>.nodes[block];
+            node.pre_number = n;
+            node.pre_max = n;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(n) = node.sibling.expand() {
+                <span class="self">self</span>.stack.push(n);
             }
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">n</span>) <span class="op">=</span> <span class="ident">node</span>.<span class="ident">child</span>.<span class="ident">expand</span>() {
-                <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">n</span>);
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(n) = node.child.expand() {
+                <span class="self">self</span>.stack.push(n);
             }
         }
 
-        <span class="comment">// Step 3. Propagate the `pre_max` numbers up the tree.</span>
-        <span class="comment">// The CFG post-order is topologically ordered w.r.t. dominance so a node comes after all</span>
-        <span class="comment">// its dominator tree children.</span>
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">block</span> <span class="kw">in</span> <span class="ident">domtree</span>.<span class="ident">cfg_postorder</span>() {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">idom_inst</span>) <span class="op">=</span> <span class="ident">domtree</span>.<span class="ident">idom</span>(<span class="ident">block</span>) {
-                <span class="kw">let</span> <span class="ident">idom</span> <span class="op">=</span> <span class="ident">layout</span>.<span class="ident">pp_block</span>(<span class="ident">idom_inst</span>);
-                <span class="kw">let</span> <span class="ident">pre_max</span> <span class="op">=</span> <span class="ident">cmp::max</span>(<span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">pre_max</span>, <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">idom</span>].<span class="ident">pre_max</span>);
-                <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">idom</span>].<span class="ident">pre_max</span> <span class="op">=</span> <span class="ident">pre_max</span>;
+        <span class="comment">// Step 3. Propagate the `pre_max` numbers up the tree.
+        // The CFG post-order is topologically ordered w.r.t. dominance so a node comes after all
+        // its dominator tree children.
+        </span><span class="kw">for </span><span class="kw-2">&amp;</span>block <span class="kw">in </span>domtree.cfg_postorder() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(idom_inst) = domtree.idom(block) {
+                <span class="kw">let </span>idom = layout.pp_block(idom_inst);
+                <span class="kw">let </span>pre_max = cmp::max(<span class="self">self</span>.nodes[block].pre_max, <span class="self">self</span>.nodes[idom].pre_max);
+                <span class="self">self</span>.nodes[idom].pre_max = pre_max;
             }
         }
     }
 }
 
-<span class="doccomment">/// An iterator that enumerates the direct children of a block in the dominator tree.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ChildIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">dtpo</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">DominatorTreePreorder</span>,
-    <span class="ident">next</span>: <span class="ident">PackedOption</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+<span class="doccomment">/// An iterator that enumerates the direct children of a block in the dominator tree.
+</span><span class="kw">pub struct </span>ChildIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    dtpo: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>DominatorTreePreorder,
+    next: PackedOption&lt;Block&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">ChildIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Block</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>ChildIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">type </span>Item = Block;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">next</span>.<span class="ident">expand</span>();
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">block</span>) <span class="op">=</span> <span class="ident">n</span> {
-            <span class="self">self</span>.<span class="ident">next</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dtpo</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">sibling</span>;
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Block&gt; {
+        <span class="kw">let </span>n = <span class="self">self</span>.next.expand();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(block) = n {
+            <span class="self">self</span>.next = <span class="self">self</span>.dtpo.nodes[block].sibling;
         }
-        <span class="ident">n</span>
+        n
     }
 }
 
-<span class="doccomment">/// Query interface for the dominator tree pre-order.</span>
-<span class="kw">impl</span> <span class="ident">DominatorTreePreorder</span> {
-    <span class="doccomment">/// Get an iterator over the direct children of `block` in the dominator tree.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// These are the block&#39;s whose immediate dominator is an instruction in `block`, ordered according</span>
-    <span class="doccomment">/// to the CFG reverse post-order.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">children</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">block</span>: <span class="ident">Block</span>) -&gt; <span class="ident">ChildIter</span> {
-        <span class="ident">ChildIter</span> {
-            <span class="ident">dtpo</span>: <span class="self">self</span>,
-            <span class="ident">next</span>: <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">block</span>].<span class="ident">child</span>,
+<span class="doccomment">/// Query interface for the dominator tree pre-order.
+</span><span class="kw">impl </span>DominatorTreePreorder {
+    <span class="doccomment">/// Get an iterator over the direct children of `block` in the dominator tree.
+    ///
+    /// These are the block&#39;s whose immediate dominator is an instruction in `block`, ordered according
+    /// to the CFG reverse post-order.
+    </span><span class="kw">pub fn </span>children(<span class="kw-2">&amp;</span><span class="self">self</span>, block: Block) -&gt; ChildIter {
+        ChildIter {
+            dtpo: <span class="self">self</span>,
+            next: <span class="self">self</span>.nodes[block].child,
         }
     }
 
-    <span class="doccomment">/// Fast, constant time dominance check with block granularity.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This computes the same result as `domtree.dominates(a, b)`, but in guaranteed fast constant</span>
-    <span class="doccomment">/// time. This is less general than the `DominatorTree` method because it only works with block</span>
-    <span class="doccomment">/// program points.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// A block is considered to dominate itself.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dominates</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">Block</span>, <span class="ident">b</span>: <span class="ident">Block</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">na</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">a</span>];
-        <span class="kw">let</span> <span class="ident">nb</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">b</span>];
-        <span class="ident">na</span>.<span class="ident">pre_number</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">nb</span>.<span class="ident">pre_number</span> <span class="op">&amp;&amp;</span> <span class="ident">na</span>.<span class="ident">pre_max</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">nb</span>.<span class="ident">pre_max</span>
+    <span class="doccomment">/// Fast, constant time dominance check with block granularity.
+    ///
+    /// This computes the same result as `domtree.dominates(a, b)`, but in guaranteed fast constant
+    /// time. This is less general than the `DominatorTree` method because it only works with block
+    /// program points.
+    ///
+    /// A block is considered to dominate itself.
+    </span><span class="kw">pub fn </span>dominates(<span class="kw-2">&amp;</span><span class="self">self</span>, a: Block, b: Block) -&gt; bool {
+        <span class="kw">let </span>na = <span class="kw-2">&amp;</span><span class="self">self</span>.nodes[a];
+        <span class="kw">let </span>nb = <span class="kw-2">&amp;</span><span class="self">self</span>.nodes[b];
+        na.pre_number &lt;= nb.pre_number &amp;&amp; na.pre_max &gt;= nb.pre_max
     }
 
-    <span class="doccomment">/// Compare two blocks according to the dominator pre-order.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pre_cmp_block</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">Block</span>, <span class="ident">b</span>: <span class="ident">Block</span>) -&gt; <span class="ident">Ordering</span> {
-        <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">a</span>].<span class="ident">pre_number</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">b</span>].<span class="ident">pre_number</span>)
+    <span class="doccomment">/// Compare two blocks according to the dominator pre-order.
+    </span><span class="kw">pub fn </span>pre_cmp_block(<span class="kw-2">&amp;</span><span class="self">self</span>, a: Block, b: Block) -&gt; Ordering {
+        <span class="self">self</span>.nodes[a].pre_number.cmp(<span class="kw-2">&amp;</span><span class="self">self</span>.nodes[b].pre_number)
     }
 
-    <span class="doccomment">/// Compare two program points according to the dominator tree pre-order.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This ordering of program points have the property that given a program point, pp, all the</span>
-    <span class="doccomment">/// program points dominated by pp follow immediately and contiguously after pp in the order.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pre_cmp</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">A</span>, <span class="ident">b</span>: <span class="ident">B</span>, <span class="ident">layout</span>: <span class="kw-2">&amp;</span><span class="ident">Layout</span>) -&gt; <span class="ident">Ordering</span>
-    <span class="kw">where</span>
-        <span class="ident">A</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">ExpandedProgramPoint</span><span class="op">&gt;</span>,
-        <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">ExpandedProgramPoint</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Compare two program points according to the dominator tree pre-order.
+    ///
+    /// This ordering of program points have the property that given a program point, pp, all the
+    /// program points dominated by pp follow immediately and contiguously after pp in the order.
+    </span><span class="kw">pub fn </span>pre_cmp&lt;A, B&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, a: A, b: B, layout: <span class="kw-2">&amp;</span>Layout) -&gt; Ordering
+    <span class="kw">where
+        </span>A: Into&lt;ExpandedProgramPoint&gt;,
+        B: Into&lt;ExpandedProgramPoint&gt;,
     {
-        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">into</span>();
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">into</span>();
-        <span class="self">self</span>.<span class="ident">pre_cmp_block</span>(<span class="ident">layout</span>.<span class="ident">pp_block</span>(<span class="ident">a</span>), <span class="ident">layout</span>.<span class="ident">pp_block</span>(<span class="ident">b</span>))
-            .<span class="ident">then</span>(<span class="ident">layout</span>.<span class="ident">cmp</span>(<span class="ident">a</span>, <span class="ident">b</span>))
+        <span class="kw">let </span>a = a.into();
+        <span class="kw">let </span>b = b.into();
+        <span class="self">self</span>.pre_cmp_block(layout.pp_block(a), layout.pp_block(b))
+            .then(layout.cmp(a, b))
     }
 
-    <span class="doccomment">/// Compare two value defs according to the dominator tree pre-order.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Two values defined at the same program point are compared according to their parameter or</span>
-    <span class="doccomment">/// result order.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is a total ordering of the values in the function.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pre_cmp_def</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">Value</span>, <span class="ident">b</span>: <span class="ident">Value</span>, <span class="ident">func</span>: <span class="kw-2">&amp;</span><span class="ident">Function</span>) -&gt; <span class="ident">Ordering</span> {
-        <span class="kw">let</span> <span class="ident">da</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_def</span>(<span class="ident">a</span>);
-        <span class="kw">let</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_def</span>(<span class="ident">b</span>);
-        <span class="self">self</span>.<span class="ident">pre_cmp</span>(<span class="ident">da</span>, <span class="ident">db</span>, <span class="kw-2">&amp;</span><span class="ident">func</span>.<span class="ident">layout</span>)
-            .<span class="ident">then_with</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">da</span>.<span class="ident">num</span>().<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">db</span>.<span class="ident">num</span>()))
+    <span class="doccomment">/// Compare two value defs according to the dominator tree pre-order.
+    ///
+    /// Two values defined at the same program point are compared according to their parameter or
+    /// result order.
+    ///
+    /// This is a total ordering of the values in the function.
+    </span><span class="kw">pub fn </span>pre_cmp_def(<span class="kw-2">&amp;</span><span class="self">self</span>, a: Value, b: Value, func: <span class="kw-2">&amp;</span>Function) -&gt; Ordering {
+        <span class="kw">let </span>da = func.dfg.value_def(a);
+        <span class="kw">let </span>db = func.dfg.value_def(b);
+        <span class="self">self</span>.pre_cmp(da, db, <span class="kw-2">&amp;</span>func.layout)
+            .then_with(|| da.num().cmp(<span class="kw-2">&amp;</span>db.num()))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cursor</span>::{<span class="ident">Cursor</span>, <span class="ident">FuncCursor</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::flowgraph::ControlFlowGraph</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::types</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="ident">Function</span>, <span class="ident">InstBuilder</span>, <span class="ident">TrapCode</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::cursor::{Cursor, FuncCursor};
+    <span class="kw">use </span><span class="kw">crate</span>::flowgraph::ControlFlowGraph;
+    <span class="kw">use </span><span class="kw">crate</span>::ir::types::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::ir::{Function, InstBuilder, TrapCode};
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">empty</span>() {
-        <span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">Function::new</span>();
-        <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">ControlFlowGraph::with_function</span>(<span class="kw-2">&amp;</span><span class="ident">func</span>);
-        <span class="macro">debug_assert!</span>(<span class="ident">cfg</span>.<span class="ident">is_valid</span>());
-        <span class="kw">let</span> <span class="ident">dtree</span> <span class="op">=</span> <span class="ident">DominatorTree::with_function</span>(<span class="kw-2">&amp;</span><span class="ident">func</span>, <span class="kw-2">&amp;</span><span class="ident">cfg</span>);
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, <span class="ident">dtree</span>.<span class="ident">nodes</span>.<span class="ident">keys</span>().<span class="ident">count</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">dtree</span>.<span class="ident">cfg_postorder</span>(), <span class="kw-2">&amp;</span>[]);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>empty() {
+        <span class="kw">let </span>func = Function::new();
+        <span class="kw">let </span>cfg = ControlFlowGraph::with_function(<span class="kw-2">&amp;</span>func);
+        <span class="macro">debug_assert!</span>(cfg.is_valid());
+        <span class="kw">let </span>dtree = DominatorTree::with_function(<span class="kw-2">&amp;</span>func, <span class="kw-2">&amp;</span>cfg);
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, dtree.nodes.keys().count());
+        <span class="macro">assert_eq!</span>(dtree.cfg_postorder(), <span class="kw-2">&amp;</span>[]);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dtpo</span> <span class="op">=</span> <span class="ident">DominatorTreePreorder::new</span>();
-        <span class="ident">dtpo</span>.<span class="ident">compute</span>(<span class="kw-2">&amp;</span><span class="ident">dtree</span>, <span class="kw-2">&amp;</span><span class="ident">func</span>.<span class="ident">layout</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>dtpo = DominatorTreePreorder::new();
+        dtpo.compute(<span class="kw-2">&amp;</span>dtree, <span class="kw-2">&amp;</span>func.layout);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">unreachable_node</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">Function::new</span>();
-        <span class="kw">let</span> <span class="ident">block0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">v0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">append_block_param</span>(<span class="ident">block0</span>, <span class="ident">I32</span>);
-        <span class="kw">let</span> <span class="ident">block1</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">block2</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>unreachable_node() {
+        <span class="kw">let </span><span class="kw-2">mut </span>func = Function::new();
+        <span class="kw">let </span>block0 = func.dfg.make_block();
+        <span class="kw">let </span>v0 = func.dfg.append_block_param(block0, I32);
+        <span class="kw">let </span>block1 = func.dfg.make_block();
+        <span class="kw">let </span>block2 = func.dfg.make_block();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cur</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">func</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>cur = FuncCursor::new(<span class="kw-2">&amp;mut </span>func);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block0</span>);
-        <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">brnz</span>(<span class="ident">v0</span>, <span class="ident">block2</span>, <span class="kw-2">&amp;</span>[]);
-        <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">trap</span>(<span class="ident">TrapCode::User</span>(<span class="number">0</span>));
+        cur.insert_block(block0);
+        cur.ins().brnz(v0, block2, <span class="kw-2">&amp;</span>[]);
+        cur.ins().trap(TrapCode::User(<span class="number">0</span>));
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block1</span>);
-        <span class="kw">let</span> <span class="ident">v1</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">I32</span>, <span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">v2</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">iadd</span>(<span class="ident">v0</span>, <span class="ident">v1</span>);
-        <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">jump</span>(<span class="ident">block0</span>, <span class="kw-2">&amp;</span>[<span class="ident">v2</span>]);
+        cur.insert_block(block1);
+        <span class="kw">let </span>v1 = cur.ins().iconst(I32, <span class="number">1</span>);
+        <span class="kw">let </span>v2 = cur.ins().iadd(v0, v1);
+        cur.ins().jump(block0, <span class="kw-2">&amp;</span>[v2]);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block2</span>);
-        <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">return_</span>(<span class="kw-2">&amp;</span>[<span class="ident">v0</span>]);
+        cur.insert_block(block2);
+        cur.ins().return_(<span class="kw-2">&amp;</span>[v0]);
 
-        <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">ControlFlowGraph::with_function</span>(<span class="ident">cur</span>.<span class="ident">func</span>);
-        <span class="kw">let</span> <span class="ident">dt</span> <span class="op">=</span> <span class="ident">DominatorTree::with_function</span>(<span class="ident">cur</span>.<span class="ident">func</span>, <span class="kw-2">&amp;</span><span class="ident">cfg</span>);
+        <span class="kw">let </span>cfg = ControlFlowGraph::with_function(cur.func);
+        <span class="kw">let </span>dt = DominatorTree::with_function(cur.func, <span class="kw-2">&amp;</span>cfg);
 
-        <span class="comment">// Fall-through-first, prune-at-source DFT:</span>
-        <span class="comment">//</span>
-        <span class="comment">// block0 {</span>
-        <span class="comment">//   brnz block2 {</span>
-        <span class="comment">//     trap</span>
-        <span class="comment">//     block2 {</span>
-        <span class="comment">//       return</span>
-        <span class="comment">//     } block2</span>
-        <span class="comment">// } block0</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">cfg_postorder</span>(), <span class="kw-2">&amp;</span>[<span class="ident">block2</span>, <span class="ident">block0</span>]);
+        <span class="comment">// Fall-through-first, prune-at-source DFT:
+        //
+        // block0 {
+        //   brnz block2 {
+        //     trap
+        //     block2 {
+        //       return
+        //     } block2
+        // } block0
+        </span><span class="macro">assert_eq!</span>(dt.cfg_postorder(), <span class="kw-2">&amp;</span>[block2, block0]);
 
-        <span class="kw">let</span> <span class="ident">v2_def</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_def</span>(<span class="ident">v2</span>).<span class="ident">unwrap_inst</span>();
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">v2_def</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">v2_def</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="kw">let </span>v2_def = cur.func.dfg.value_def(v2).unwrap_inst();
+        <span class="macro">assert!</span>(!dt.dominates(v2_def, block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(block0, v2_def, <span class="kw-2">&amp;</span>cur.func.layout));
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dtpo</span> <span class="op">=</span> <span class="ident">DominatorTreePreorder::new</span>();
-        <span class="ident">dtpo</span>.<span class="ident">compute</span>(<span class="kw-2">&amp;</span><span class="ident">dt</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>);
-        <span class="macro">assert!</span>(<span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">block0</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">block1</span>));
-        <span class="macro">assert!</span>(<span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">block2</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">block0</span>));
-        <span class="macro">assert!</span>(<span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">block1</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">block2</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">block0</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">block1</span>));
-        <span class="macro">assert!</span>(<span class="ident">dtpo</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">block2</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>dtpo = DominatorTreePreorder::new();
+        dtpo.compute(<span class="kw-2">&amp;</span>dt, <span class="kw-2">&amp;</span>cur.func.layout);
+        <span class="macro">assert!</span>(dtpo.dominates(block0, block0));
+        <span class="macro">assert!</span>(!dtpo.dominates(block0, block1));
+        <span class="macro">assert!</span>(dtpo.dominates(block0, block2));
+        <span class="macro">assert!</span>(!dtpo.dominates(block1, block0));
+        <span class="macro">assert!</span>(dtpo.dominates(block1, block1));
+        <span class="macro">assert!</span>(!dtpo.dominates(block1, block2));
+        <span class="macro">assert!</span>(!dtpo.dominates(block2, block0));
+        <span class="macro">assert!</span>(!dtpo.dominates(block2, block1));
+        <span class="macro">assert!</span>(dtpo.dominates(block2, block2));
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">non_zero_entry_block</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">Function::new</span>();
-        <span class="kw">let</span> <span class="ident">block0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">block1</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">block2</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">block3</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">cond</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">append_block_param</span>(<span class="ident">block3</span>, <span class="ident">I32</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>non_zero_entry_block() {
+        <span class="kw">let </span><span class="kw-2">mut </span>func = Function::new();
+        <span class="kw">let </span>block0 = func.dfg.make_block();
+        <span class="kw">let </span>block1 = func.dfg.make_block();
+        <span class="kw">let </span>block2 = func.dfg.make_block();
+        <span class="kw">let </span>block3 = func.dfg.make_block();
+        <span class="kw">let </span>cond = func.dfg.append_block_param(block3, I32);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cur</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">func</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>cur = FuncCursor::new(<span class="kw-2">&amp;mut </span>func);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block3</span>);
-        <span class="kw">let</span> <span class="ident">jmp_block3_block1</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">jump</span>(<span class="ident">block1</span>, <span class="kw-2">&amp;</span>[]);
+        cur.insert_block(block3);
+        <span class="kw">let </span>jmp_block3_block1 = cur.ins().jump(block1, <span class="kw-2">&amp;</span>[]);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block1</span>);
-        <span class="kw">let</span> <span class="ident">br_block1_block0</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">brnz</span>(<span class="ident">cond</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span>[]);
-        <span class="kw">let</span> <span class="ident">jmp_block1_block2</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">jump</span>(<span class="ident">block2</span>, <span class="kw-2">&amp;</span>[]);
+        cur.insert_block(block1);
+        <span class="kw">let </span>br_block1_block0 = cur.ins().brnz(cond, block0, <span class="kw-2">&amp;</span>[]);
+        <span class="kw">let </span>jmp_block1_block2 = cur.ins().jump(block2, <span class="kw-2">&amp;</span>[]);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block2</span>);
-        <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">jump</span>(<span class="ident">block0</span>, <span class="kw-2">&amp;</span>[]);
+        cur.insert_block(block2);
+        cur.ins().jump(block0, <span class="kw-2">&amp;</span>[]);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block0</span>);
+        cur.insert_block(block0);
 
-        <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">ControlFlowGraph::with_function</span>(<span class="ident">cur</span>.<span class="ident">func</span>);
-        <span class="kw">let</span> <span class="ident">dt</span> <span class="op">=</span> <span class="ident">DominatorTree::with_function</span>(<span class="ident">cur</span>.<span class="ident">func</span>, <span class="kw-2">&amp;</span><span class="ident">cfg</span>);
+        <span class="kw">let </span>cfg = ControlFlowGraph::with_function(cur.func);
+        <span class="kw">let </span>dt = DominatorTree::with_function(cur.func, <span class="kw-2">&amp;</span>cfg);
 
-        <span class="comment">// Fall-through-first, prune-at-source DFT:</span>
-        <span class="comment">//</span>
-        <span class="comment">// block3 {</span>
-        <span class="comment">//   block3:jump block1 {</span>
-        <span class="comment">//     block1 {</span>
-        <span class="comment">//       block1:brnz block0 {</span>
-        <span class="comment">//         block1:jump block2 {</span>
-        <span class="comment">//           block2 {</span>
-        <span class="comment">//             block2:jump block0 (seen)</span>
-        <span class="comment">//           } block2</span>
-        <span class="comment">//         } block1:jump block2</span>
-        <span class="comment">//         block0 {</span>
-        <span class="comment">//         } block0</span>
-        <span class="comment">//       } block1:brnz block0</span>
-        <span class="comment">//     } block1</span>
-        <span class="comment">//   } block3:jump block1</span>
-        <span class="comment">// } block3</span>
+        <span class="comment">// Fall-through-first, prune-at-source DFT:
+        //
+        // block3 {
+        //   block3:jump block1 {
+        //     block1 {
+        //       block1:brnz block0 {
+        //         block1:jump block2 {
+        //           block2 {
+        //             block2:jump block0 (seen)
+        //           } block2
+        //         } block1:jump block2
+        //         block0 {
+        //         } block0
+        //       } block1:brnz block0
+        //     } block1
+        //   } block3:jump block1
+        // } block3
 
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">cfg_postorder</span>(), <span class="kw-2">&amp;</span>[<span class="ident">block2</span>, <span class="ident">block0</span>, <span class="ident">block1</span>, <span class="ident">block3</span>]);
+        </span><span class="macro">assert_eq!</span>(dt.cfg_postorder(), <span class="kw-2">&amp;</span>[block2, block0, block1, block3]);
 
-        <span class="macro">assert_eq!</span>(<span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>.<span class="ident">entry_block</span>().<span class="ident">unwrap</span>(), <span class="ident">block3</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">idom</span>(<span class="ident">block3</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">idom</span>(<span class="ident">block1</span>).<span class="ident">unwrap</span>(), <span class="ident">jmp_block3_block1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">idom</span>(<span class="ident">block2</span>).<span class="ident">unwrap</span>(), <span class="ident">jmp_block1_block2</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">idom</span>(<span class="ident">block0</span>).<span class="ident">unwrap</span>(), <span class="ident">br_block1_block0</span>);
+        <span class="macro">assert_eq!</span>(cur.func.layout.entry_block().unwrap(), block3);
+        <span class="macro">assert_eq!</span>(dt.idom(block3), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(dt.idom(block1).unwrap(), jmp_block3_block1);
+        <span class="macro">assert_eq!</span>(dt.idom(block2).unwrap(), jmp_block1_block2);
+        <span class="macro">assert_eq!</span>(dt.idom(block0).unwrap(), br_block1_block0);
 
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">br_block1_block0</span>, <span class="ident">br_block1_block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">br_block1_block0</span>, <span class="ident">jmp_block3_block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp_block3_block1</span>, <span class="ident">br_block1_block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="macro">assert!</span>(dt.dominates(br_block1_block0, br_block1_block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(br_block1_block0, jmp_block3_block1, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp_block3_block1, br_block1_block0, <span class="kw-2">&amp;</span>cur.func.layout));
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">dt</span>.<span class="ident">rpo_cmp</span>(<span class="ident">block3</span>, <span class="ident">block3</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>),
-            <span class="ident">Ordering::Equal</span>
+            dt.rpo_cmp(block3, block3, <span class="kw-2">&amp;</span>cur.func.layout),
+            Ordering::Equal
         );
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">rpo_cmp</span>(<span class="ident">block3</span>, <span class="ident">block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>), <span class="ident">Ordering::Less</span>);
+        <span class="macro">assert_eq!</span>(dt.rpo_cmp(block3, block1, <span class="kw-2">&amp;</span>cur.func.layout), Ordering::Less);
         <span class="macro">assert_eq!</span>(
-            <span class="ident">dt</span>.<span class="ident">rpo_cmp</span>(<span class="ident">block3</span>, <span class="ident">jmp_block3_block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>),
-            <span class="ident">Ordering::Less</span>
+            dt.rpo_cmp(block3, jmp_block3_block1, <span class="kw-2">&amp;</span>cur.func.layout),
+            Ordering::Less
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">dt</span>.<span class="ident">rpo_cmp</span>(<span class="ident">jmp_block3_block1</span>, <span class="ident">jmp_block1_block2</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>),
-            <span class="ident">Ordering::Less</span>
+            dt.rpo_cmp(jmp_block3_block1, jmp_block1_block2, <span class="kw-2">&amp;</span>cur.func.layout),
+            Ordering::Less
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">backwards_layout</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">Function::new</span>();
-        <span class="kw">let</span> <span class="ident">block0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">block1</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">block2</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>backwards_layout() {
+        <span class="kw">let </span><span class="kw-2">mut </span>func = Function::new();
+        <span class="kw">let </span>block0 = func.dfg.make_block();
+        <span class="kw">let </span>block1 = func.dfg.make_block();
+        <span class="kw">let </span>block2 = func.dfg.make_block();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cur</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">func</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>cur = FuncCursor::new(<span class="kw-2">&amp;mut </span>func);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block0</span>);
-        <span class="kw">let</span> <span class="ident">jmp02</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">jump</span>(<span class="ident">block2</span>, <span class="kw-2">&amp;</span>[]);
+        cur.insert_block(block0);
+        <span class="kw">let </span>jmp02 = cur.ins().jump(block2, <span class="kw-2">&amp;</span>[]);
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block1</span>);
-        <span class="kw">let</span> <span class="ident">trap</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">trap</span>(<span class="ident">TrapCode::User</span>(<span class="number">5</span>));
+        cur.insert_block(block1);
+        <span class="kw">let </span>trap = cur.ins().trap(TrapCode::User(<span class="number">5</span>));
 
-        <span class="ident">cur</span>.<span class="ident">insert_block</span>(<span class="ident">block2</span>);
-        <span class="kw">let</span> <span class="ident">jmp21</span> <span class="op">=</span> <span class="ident">cur</span>.<span class="ident">ins</span>().<span class="ident">jump</span>(<span class="ident">block1</span>, <span class="kw-2">&amp;</span>[]);
+        cur.insert_block(block2);
+        <span class="kw">let </span>jmp21 = cur.ins().jump(block1, <span class="kw-2">&amp;</span>[]);
 
-        <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">ControlFlowGraph::with_function</span>(<span class="ident">cur</span>.<span class="ident">func</span>);
-        <span class="kw">let</span> <span class="ident">dt</span> <span class="op">=</span> <span class="ident">DominatorTree::with_function</span>(<span class="ident">cur</span>.<span class="ident">func</span>, <span class="kw-2">&amp;</span><span class="ident">cfg</span>);
+        <span class="kw">let </span>cfg = ControlFlowGraph::with_function(cur.func);
+        <span class="kw">let </span>dt = DominatorTree::with_function(cur.func, <span class="kw-2">&amp;</span>cfg);
 
-        <span class="macro">assert_eq!</span>(<span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>.<span class="ident">entry_block</span>(), <span class="prelude-val">Some</span>(<span class="ident">block0</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">idom</span>(<span class="ident">block0</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">idom</span>(<span class="ident">block1</span>), <span class="prelude-val">Some</span>(<span class="ident">jmp21</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">dt</span>.<span class="ident">idom</span>(<span class="ident">block2</span>), <span class="prelude-val">Some</span>(<span class="ident">jmp02</span>));
+        <span class="macro">assert_eq!</span>(cur.func.layout.entry_block(), <span class="prelude-val">Some</span>(block0));
+        <span class="macro">assert_eq!</span>(dt.idom(block0), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(dt.idom(block1), <span class="prelude-val">Some</span>(jmp21));
+        <span class="macro">assert_eq!</span>(dt.idom(block2), <span class="prelude-val">Some</span>(jmp02));
 
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">jmp02</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">trap</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">block2</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block0</span>, <span class="ident">jmp21</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="macro">assert!</span>(dt.dominates(block0, block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block0, jmp02, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block0, block1, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block0, trap, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block0, block2, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block0, jmp21, <span class="kw-2">&amp;</span>cur.func.layout));
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp02</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp02</span>, <span class="ident">jmp02</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp02</span>, <span class="ident">block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp02</span>, <span class="ident">trap</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp02</span>, <span class="ident">block2</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp02</span>, <span class="ident">jmp21</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="macro">assert!</span>(!dt.dominates(jmp02, block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp02, jmp02, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp02, block1, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp02, trap, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp02, block2, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp02, jmp21, <span class="kw-2">&amp;</span>cur.func.layout));
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">jmp02</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">trap</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">block2</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block1</span>, <span class="ident">jmp21</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="macro">assert!</span>(!dt.dominates(block1, block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(block1, jmp02, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block1, block1, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block1, trap, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(block1, block2, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(block1, jmp21, <span class="kw-2">&amp;</span>cur.func.layout));
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">trap</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">trap</span>, <span class="ident">jmp02</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">trap</span>, <span class="ident">block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">trap</span>, <span class="ident">trap</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">trap</span>, <span class="ident">block2</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">trap</span>, <span class="ident">jmp21</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="macro">assert!</span>(!dt.dominates(trap, block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(trap, jmp02, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(trap, block1, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(trap, trap, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(trap, block2, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(trap, jmp21, <span class="kw-2">&amp;</span>cur.func.layout));
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">jmp02</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">trap</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">block2</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">block2</span>, <span class="ident">jmp21</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="macro">assert!</span>(!dt.dominates(block2, block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(block2, jmp02, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block2, block1, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block2, trap, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block2, block2, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(block2, jmp21, <span class="kw-2">&amp;</span>cur.func.layout));
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp21</span>, <span class="ident">block0</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp21</span>, <span class="ident">jmp02</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp21</span>, <span class="ident">block1</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp21</span>, <span class="ident">trap</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp21</span>, <span class="ident">block2</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
-        <span class="macro">assert!</span>(<span class="ident">dt</span>.<span class="ident">dominates</span>(<span class="ident">jmp21</span>, <span class="ident">jmp21</span>, <span class="kw-2">&amp;</span><span class="ident">cur</span>.<span class="ident">func</span>.<span class="ident">layout</span>));
+        <span class="macro">assert!</span>(!dt.dominates(jmp21, block0, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(jmp21, jmp02, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp21, block1, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp21, trap, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(!dt.dominates(jmp21, block2, <span class="kw-2">&amp;</span>cur.func.layout));
+        <span class="macro">assert!</span>(dt.dominates(jmp21, jmp21, <span class="kw-2">&amp;</span>cur.func.layout));
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

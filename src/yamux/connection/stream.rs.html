@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/yamux-0.10.1/src/connection/stream.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>stream.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../yamux/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../yamux/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../yamux/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/yamux-0.10.1/src/connection/stream.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>stream.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../yamux/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -453,456 +448,455 @@
 <span id="448">448</span>
 <span id="449">449</span>
 <span id="450">450</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright (c) 2018-2019 Parity Technologies (UK) Ltd.</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 or MIT license, at your option.</span>
-<span class="comment">//</span>
-<span class="comment">// A copy of the Apache License, Version 2.0 is included in the software as</span>
-<span class="comment">// LICENSE-APACHE and a copy of the MIT license is included in the software</span>
-<span class="comment">// as LICENSE-MIT. You may also obtain a copy of the Apache License, Version 2.0</span>
-<span class="comment">// at https://www.apache.org/licenses/LICENSE-2.0 and a copy of the MIT license</span>
-<span class="comment">// at https://opensource.org/licenses/MIT.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright (c) 2018-2019 Parity Technologies (UK) Ltd.
+//
+// Licensed under the Apache License, Version 2.0 or MIT license, at your option.
+//
+// A copy of the Apache License, Version 2.0 is included in the software as
+// LICENSE-APACHE and a copy of the MIT license is included in the software
+// as LICENSE-MIT. You may also obtain a copy of the Apache License, Version 2.0
+// at https://www.apache.org/licenses/LICENSE-2.0 and a copy of the MIT license
+// at https://opensource.org/licenses/MIT.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">Config</span>,
-    <span class="ident">WindowUpdateMode</span>,
-    <span class="ident">chunks::Chunks</span>,
-    <span class="ident">connection</span>::{<span class="self">self</span>, <span class="ident">StreamCommand</span>},
-    <span class="ident">frame</span>::{
-        <span class="ident">Frame</span>,
-        <span class="ident">header</span>::{<span class="ident">Header</span>, <span class="ident">StreamId</span>, <span class="ident">Data</span>, <span class="ident">WindowUpdate</span>}
+</span><span class="kw">use crate</span>::{
+    Config,
+    WindowUpdateMode,
+    chunks::Chunks,
+    connection::{<span class="self">self</span>, StreamCommand},
+    frame::{
+        Frame,
+        header::{Header, StreamId, Data, WindowUpdate}
     }
 };
-<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">future::Either</span>, <span class="ident">ready</span>, <span class="ident">channel::mpsc</span>, <span class="ident">io</span>::{<span class="ident">AsyncRead</span>, <span class="ident">AsyncWrite</span>}};
-<span class="kw">use</span> <span class="ident">parking_lot</span>::{<span class="ident">Mutex</span>, <span class="ident">MutexGuard</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fmt</span>, <span class="ident">io</span>, <span class="ident">pin::Pin</span>, <span class="ident">sync::Arc</span>, <span class="ident">task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>, <span class="ident">Waker</span>}};
-<span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
+<span class="kw">use </span>futures::{future::Either, ready, channel::mpsc, io::{AsyncRead, AsyncWrite}};
+<span class="kw">use </span>parking_lot::{Mutex, MutexGuard};
+<span class="kw">use </span>std::{fmt, io, pin::Pin, sync::Arc, task::{Context, Poll, Waker}};
+<span class="kw">use </span>std::convert::TryInto;
 
-<span class="doccomment">/// The state of a Yamux stream.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">State</span> {
-    <span class="doccomment">/// Open bidirectionally.</span>
-    <span class="ident">Open</span>,
-    <span class="doccomment">/// Open for incoming messages.</span>
-    <span class="ident">SendClosed</span>,
-    <span class="doccomment">/// Open for outgoing messages.</span>
-    <span class="ident">RecvClosed</span>,
-    <span class="doccomment">/// Closed (terminal state).</span>
-    <span class="ident">Closed</span>
+<span class="doccomment">/// The state of a Yamux stream.
+</span><span class="attribute">#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>State {
+    <span class="doccomment">/// Open bidirectionally.
+    </span>Open,
+    <span class="doccomment">/// Open for incoming messages.
+    </span>SendClosed,
+    <span class="doccomment">/// Open for outgoing messages.
+    </span>RecvClosed,
+    <span class="doccomment">/// Closed (terminal state).
+    </span>Closed
 }
 
-<span class="kw">impl</span> <span class="ident">State</span> {
-    <span class="doccomment">/// Can we receive messages over this stream?</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">can_read</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">State::RecvClosed</span> <span class="op">|</span> <span class="ident">State::Closed</span> <span class="op">=</span> <span class="self">self</span> {
-            <span class="bool-val">false</span>
-        } <span class="kw">else</span> {
-            <span class="bool-val">true</span>
+<span class="kw">impl </span>State {
+    <span class="doccomment">/// Can we receive messages over this stream?
+    </span><span class="kw">pub fn </span>can_read(<span class="self">self</span>) -&gt; bool {
+        <span class="kw">if let </span>State::RecvClosed | State::Closed = <span class="self">self </span>{
+            <span class="bool-val">false
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">true
+        </span>}
+    }
+
+    <span class="doccomment">/// Can we send messages over this stream?
+    </span><span class="kw">pub fn </span>can_write(<span class="self">self</span>) -&gt; bool {
+        <span class="kw">if let </span>State::SendClosed | State::Closed = <span class="self">self </span>{
+            <span class="bool-val">false
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">true
+        </span>}
+    }
+}
+
+<span class="doccomment">/// Indicate if a flag still needs to be set on an outbound header.
+</span><span class="attribute">#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>Flag {
+    <span class="doccomment">/// No flag needs to be set.
+    </span><span class="prelude-val">None</span>,
+    <span class="doccomment">/// The stream was opened lazily, so set the initial SYN flag.
+    </span>Syn,
+    <span class="doccomment">/// The stream still needs acknowledgement, so set the ACK flag.
+    </span>Ack
+}
+
+<span class="doccomment">/// A multiplexed Yamux stream.
+///
+/// Streams are created either outbound via [`crate::Control::open_stream`]
+/// or inbound via [`crate::Connection::next_stream`].
+///
+/// `Stream` implements [`AsyncRead`] and [`AsyncWrite`] and also
+/// [`futures::stream::Stream`].
+</span><span class="kw">pub struct </span>Stream {
+    id: StreamId,
+    conn: connection::Id,
+    config: Arc&lt;Config&gt;,
+    sender: mpsc::Sender&lt;StreamCommand&gt;,
+    flag: Flag,
+    shared: Arc&lt;Mutex&lt;Shared&gt;&gt;
+}
+
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Stream {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Stream&quot;</span>)
+            .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id.val())
+            .field(<span class="string">&quot;connection&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.conn)
+            .finish()
+    }
+}
+
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>Stream {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">&quot;(Stream {}/{})&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id.val())
+    }
+}
+
+<span class="kw">impl </span>Stream {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new
+        ( id: StreamId
+        , conn: connection::Id
+        , config: Arc&lt;Config&gt;
+        , window: u32
+        , credit: u32
+        , sender: mpsc::Sender&lt;StreamCommand&gt;
+        ) -&gt; <span class="self">Self
+    </span>{
+        Stream {
+            id,
+            conn,
+            config: config.clone(),
+            sender,
+            flag: Flag::None,
+            shared: Arc::new(Mutex::new(Shared::new(window, credit, config))),
         }
     }
 
-    <span class="doccomment">/// Can we send messages over this stream?</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">can_write</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">State::SendClosed</span> <span class="op">|</span> <span class="ident">State::Closed</span> <span class="op">=</span> <span class="self">self</span> {
-            <span class="bool-val">false</span>
-        } <span class="kw">else</span> {
-            <span class="bool-val">true</span>
-        }
+    <span class="doccomment">/// Get this stream&#39;s identifier.
+    </span><span class="kw">pub fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StreamId {
+        <span class="self">self</span>.id
     }
-}
 
-<span class="doccomment">/// Indicate if a flag still needs to be set on an outbound header.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">Flag</span> {
-    <span class="doccomment">/// No flag needs to be set.</span>
-    <span class="prelude-val">None</span>,
-    <span class="doccomment">/// The stream was opened lazily, so set the initial SYN flag.</span>
-    <span class="ident">Syn</span>,
-    <span class="doccomment">/// The stream still needs acknowledgement, so set the ACK flag.</span>
-    <span class="ident">Ack</span>
-}
-
-<span class="doccomment">/// A multiplexed Yamux stream.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Streams are created either outbound via [`crate::Control::open_stream`]</span>
-<span class="doccomment">/// or inbound via [`crate::Connection::next_stream`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `Stream` implements [`AsyncRead`] and [`AsyncWrite`] and also</span>
-<span class="doccomment">/// [`futures::stream::Stream`].</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Stream</span> {
-    <span class="ident">id</span>: <span class="ident">StreamId</span>,
-    <span class="ident">conn</span>: <span class="ident">connection::Id</span>,
-    <span class="ident">config</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Config</span><span class="op">&gt;</span>,
-    <span class="ident">sender</span>: <span class="ident">mpsc::Sender</span><span class="op">&lt;</span><span class="ident">StreamCommand</span><span class="op">&gt;</span>,
-    <span class="ident">flag</span>: <span class="ident">Flag</span>,
-    <span class="ident">shared</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Shared</span><span class="op">&gt;</span><span class="op">&gt;</span>
-}
-
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Stream</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Stream&quot;</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>.<span class="ident">val</span>())
-            .<span class="ident">field</span>(<span class="string">&quot;connection&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">conn</span>)
-            .<span class="ident">finish</span>()
+    <span class="doccomment">/// Set the flag that should be set on the next outbound frame header.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_flag(<span class="kw-2">&amp;mut </span><span class="self">self</span>, flag: Flag) {
+        <span class="self">self</span>.flag = flag
     }
-}
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Stream</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;(Stream {}/{})&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">val</span>())
+    <span class="doccomment">/// Get this stream&#39;s state.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; State {
+        <span class="self">self</span>.shared().state()
     }
-}
 
-<span class="kw">impl</span> <span class="ident">Stream</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>
-        ( <span class="ident">id</span>: <span class="ident">StreamId</span>
-        , <span class="ident">conn</span>: <span class="ident">connection::Id</span>
-        , <span class="ident">config</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Config</span><span class="op">&gt;</span>
-        , <span class="ident">window</span>: <span class="ident">u32</span>
-        , <span class="ident">credit</span>: <span class="ident">u32</span>
-        , <span class="ident">sender</span>: <span class="ident">mpsc::Sender</span><span class="op">&lt;</span><span class="ident">StreamCommand</span><span class="op">&gt;</span>
-        ) -&gt; <span class="self">Self</span>
-    {
-        <span class="ident">Stream</span> {
-            <span class="ident">id</span>,
-            <span class="ident">conn</span>,
-            <span class="ident">config</span>: <span class="ident">config</span>.<span class="ident">clone</span>(),
-            <span class="ident">sender</span>,
-            <span class="ident">flag</span>: <span class="ident">Flag::None</span>,
-            <span class="ident">shared</span>: <span class="ident">Arc::new</span>(<span class="ident">Mutex::new</span>(<span class="ident">Shared::new</span>(<span class="ident">window</span>, <span class="ident">credit</span>, <span class="ident">config</span>))),
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>strong_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        Arc::strong_count(<span class="kw-2">&amp;</span><span class="self">self</span>.shared)
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shared(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;<span class="lifetime">&#39;_</span>, Shared&gt; {
+        <span class="self">self</span>.shared.lock()
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        Stream {
+            id: <span class="self">self</span>.id,
+            conn: <span class="self">self</span>.conn,
+            config: <span class="self">self</span>.config.clone(),
+            sender: <span class="self">self</span>.sender.clone(),
+            flag: <span class="self">self</span>.flag,
+            shared: <span class="self">self</span>.shared.clone()
         }
     }
 
-    <span class="doccomment">/// Get this stream&#39;s identifier.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StreamId</span> {
-        <span class="self">self</span>.<span class="ident">id</span>
+    <span class="kw">fn </span>write_zero_err(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; io::Error {
+        <span class="kw">let </span>msg = <span class="macro">format!</span>(<span class="string">&quot;{}/{}: connection is closed&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id);
+        io::Error::new(io::ErrorKind::WriteZero, msg)
     }
 
-    <span class="doccomment">/// Set the flag that should be set on the next outbound frame header.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">set_flag</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">flag</span>: <span class="ident">Flag</span>) {
-        <span class="self">self</span>.<span class="ident">flag</span> <span class="op">=</span> <span class="ident">flag</span>
-    }
-
-    <span class="doccomment">/// Get this stream&#39;s state.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">State</span> {
-        <span class="self">self</span>.<span class="ident">shared</span>().<span class="ident">state</span>()
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">strong_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">Arc::strong_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">shared</span>)
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">shared</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">Shared</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">shared</span>.<span class="ident">lock</span>()
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Stream</span> {
-            <span class="ident">id</span>: <span class="self">self</span>.<span class="ident">id</span>,
-            <span class="ident">conn</span>: <span class="self">self</span>.<span class="ident">conn</span>,
-            <span class="ident">config</span>: <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">clone</span>(),
-            <span class="ident">sender</span>: <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">clone</span>(),
-            <span class="ident">flag</span>: <span class="self">self</span>.<span class="ident">flag</span>,
-            <span class="ident">shared</span>: <span class="self">self</span>.<span class="ident">shared</span>.<span class="ident">clone</span>()
-        }
-    }
-
-    <span class="kw">fn</span> <span class="ident">write_zero_err</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">io::Error</span> {
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}/{}: connection is closed&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>);
-        <span class="ident">io::Error::new</span>(<span class="ident">io::ErrorKind::WriteZero</span>, <span class="ident">msg</span>)
-    }
-
-    <span class="doccomment">/// Set ACK or SYN flag if necessary.</span>
-    <span class="kw">fn</span> <span class="ident">add_flag</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">header</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Header</span><span class="op">&lt;</span><span class="ident">Either</span><span class="op">&lt;</span><span class="ident">Data</span>, <span class="ident">WindowUpdate</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">flag</span> {
-            <span class="ident">Flag::None</span> =&gt; (),
-            <span class="ident">Flag::Syn</span> =&gt; {
-                <span class="ident">header</span>.<span class="ident">syn</span>();
-                <span class="self">self</span>.<span class="ident">flag</span> <span class="op">=</span> <span class="ident">Flag::None</span>
+    <span class="doccomment">/// Set ACK or SYN flag if necessary.
+    </span><span class="kw">fn </span>add_flag(<span class="kw-2">&amp;mut </span><span class="self">self</span>, header: <span class="kw-2">&amp;mut </span>Header&lt;Either&lt;Data, WindowUpdate&gt;&gt;) {
+        <span class="kw">match </span><span class="self">self</span>.flag {
+            Flag::None =&gt; (),
+            Flag::Syn =&gt; {
+                header.syn();
+                <span class="self">self</span>.flag = Flag::None
             }
-            <span class="ident">Flag::Ack</span> =&gt; {
-                <span class="ident">header</span>.<span class="ident">ack</span>();
-                <span class="self">self</span>.<span class="ident">flag</span> <span class="op">=</span> <span class="ident">Flag::None</span>
-            }
-        }
-    }
-
-    <span class="doccomment">/// Send new credit to the sending side via a window update message if</span>
-    <span class="doccomment">/// permitted.</span>
-    <span class="kw">fn</span> <span class="ident">send_window_update</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// When using [`WindowUpdateMode::OnReceive`] window update messages are</span>
-        <span class="comment">// send early on data receival (see [`crate::Connection::on_frame`]).</span>
-        <span class="kw">if</span> <span class="macro">matches!</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">window_update_mode</span>, <span class="ident">WindowUpdateMode::OnReceive</span>) {
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(()));
-        }
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shared</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">shared</span>.<span class="ident">lock</span>();
-
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">credit</span>) <span class="op">=</span> <span class="ident">shared</span>.<span class="ident">next_window_update</span>() {
-            <span class="macro">ready!</span>(<span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">poll_ready</span>(<span class="ident">cx</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">write_zero_err</span>())<span class="question-mark">?</span>);
-
-            <span class="ident">shared</span>.<span class="ident">window</span> <span class="op">+</span><span class="op">=</span> <span class="ident">credit</span>;
-            <span class="ident">drop</span>(<span class="ident">shared</span>);
-
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">frame</span> <span class="op">=</span> <span class="ident">Frame::window_update</span>(<span class="self">self</span>.<span class="ident">id</span>, <span class="ident">credit</span>).<span class="ident">right</span>();
-            <span class="self">self</span>.<span class="ident">add_flag</span>(<span class="ident">frame</span>.<span class="ident">header_mut</span>());
-            <span class="kw">let</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">StreamCommand::SendFrame</span>(<span class="ident">frame</span>);
-            <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">start_send</span>(<span class="ident">cmd</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">write_zero_err</span>())<span class="question-mark">?</span>;
-        }
-
-        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(()))
-    }
-}
-
-<span class="doccomment">/// Byte data produced by the [`futures::stream::Stream`] impl of [`Stream`].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Packet</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>);
-
-<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Packet</span> {
-    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ref</span>()
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">futures::stream::Stream</span> <span class="kw">for</span> <span class="ident">Stream</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Packet</span><span class="op">&gt;</span>;
-
-    <span class="kw">fn</span> <span class="ident">poll_next</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">read_after_close</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">is_closed</span>() {
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>)
-        }
-
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">send_window_update</span>(<span class="ident">cx</span>) {
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(())) =&gt; {},
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>))),
-            <span class="comment">// Continue reading buffered data even though sending a window update blocked.</span>
-            <span class="ident">Poll::Pending</span> =&gt; {},
-        }
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shared</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">shared</span>();
-
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">bytes</span>) <span class="op">=</span> <span class="ident">shared</span>.<span class="ident">buffer</span>.<span class="ident">pop</span>() {
-            <span class="kw">let</span> <span class="ident">off</span> <span class="op">=</span> <span class="ident">bytes</span>.<span class="ident">offset</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vec</span> <span class="op">=</span> <span class="ident">bytes</span>.<span class="ident">into_vec</span>();
-            <span class="kw">if</span> <span class="ident">off</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-                <span class="comment">// This should generally not happen when the stream is used only as</span>
-                <span class="comment">// a `futures::stream::Stream` since the whole point of this impl is</span>
-                <span class="comment">// to consume chunks atomically. It may perhaps happen when mixing</span>
-                <span class="comment">// this impl and the `AsyncRead` one.</span>
-                <span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: chunk has been partially consumed&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>);
-                <span class="ident">vec</span> <span class="op">=</span> <span class="ident">vec</span>.<span class="ident">split_off</span>(<span class="ident">off</span>)
-            }
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">Packet</span>(<span class="ident">vec</span>))))
-        }
-
-        <span class="comment">// Buffer is empty, let&#39;s check if we can expect to read more data.</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">shared</span>.<span class="ident">state</span>().<span class="ident">can_read</span>() {
-            <span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: eof&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>);
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>) <span class="comment">// stream has been reset</span>
-        }
-
-        <span class="comment">// Since we have no more data at this point, we want to be woken up</span>
-        <span class="comment">// by the connection when more becomes available for us.</span>
-        <span class="ident">shared</span>.<span class="ident">reader</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">clone</span>());
-
-        <span class="ident">Poll::Pending</span>
-    }
-}
-
-<span class="comment">// Like the `futures::stream::Stream` impl above, but copies bytes into the</span>
-<span class="comment">// provided mutable slice.</span>
-<span class="kw">impl</span> <span class="ident">AsyncRead</span> <span class="kw">for</span> <span class="ident">Stream</span> {
-    <span class="kw">fn</span> <span class="ident">poll_read</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">read_after_close</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">is_closed</span>() {
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="number">0</span>))
-        }
-
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">send_window_update</span>(<span class="ident">cx</span>) {
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(())) =&gt; {},
-            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)),
-            <span class="comment">// Continue reading buffered data even though sending a window update blocked.</span>
-            <span class="ident">Poll::Pending</span> =&gt; {},
-        }
-
-        <span class="comment">// Copy data from stream buffer.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shared</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">shared</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">chunk</span>) <span class="op">=</span> <span class="ident">shared</span>.<span class="ident">buffer</span>.<span class="ident">front_mut</span>() {
-            <span class="kw">if</span> <span class="ident">chunk</span>.<span class="ident">is_empty</span>() {
-                <span class="ident">shared</span>.<span class="ident">buffer</span>.<span class="ident">pop</span>();
-                <span class="kw">continue</span>
-            }
-            <span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">std::cmp::min</span>(<span class="ident">chunk</span>.<span class="ident">len</span>(), <span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">n</span>);
-            (<span class="kw-2">&amp;mut</span> <span class="ident">buf</span>[<span class="ident">n</span> .. <span class="ident">n</span> <span class="op">+</span> <span class="ident">k</span>]).<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">chunk</span>.<span class="ident">as_ref</span>()[.. <span class="ident">k</span>]);
-            <span class="ident">n</span> <span class="op">+</span><span class="op">=</span> <span class="ident">k</span>;
-            <span class="ident">chunk</span>.<span class="ident">advance</span>(<span class="ident">k</span>);
-            <span class="kw">if</span> <span class="ident">n</span> <span class="op">==</span> <span class="ident">buf</span>.<span class="ident">len</span>() {
-                <span class="kw">break</span>
+            Flag::Ack =&gt; {
+                header.ack();
+                <span class="self">self</span>.flag = Flag::None
             }
         }
+    }
 
-        <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: read {} bytes&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">n</span>);
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="ident">n</span>))
+    <span class="doccomment">/// Send new credit to the sending side via a window update message if
+    /// permitted.
+    </span><span class="kw">fn </span>send_window_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>Context) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+        <span class="comment">// When using [`WindowUpdateMode::OnReceive`] window update messages are
+        // send early on data receival (see [`crate::Connection::on_frame`]).
+        </span><span class="kw">if </span><span class="macro">matches!</span>(<span class="self">self</span>.config.window_update_mode, WindowUpdateMode::OnReceive) {
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(()));
         }
 
-        <span class="comment">// Buffer is empty, let&#39;s check if we can expect to read more data.</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">shared</span>.<span class="ident">state</span>().<span class="ident">can_read</span>() {
-            <span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: eof&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>);
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="number">0</span>)) <span class="comment">// stream has been reset</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>shared = <span class="self">self</span>.shared.lock();
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(credit) = shared.next_window_update() {
+            <span class="macro">ready!</span>(<span class="self">self</span>.sender.poll_ready(cx).map_err(|<span class="kw">_</span>| <span class="self">self</span>.write_zero_err())<span class="question-mark">?</span>);
+
+            shared.window += credit;
+            drop(shared);
+
+            <span class="kw">let </span><span class="kw-2">mut </span>frame = Frame::window_update(<span class="self">self</span>.id, credit).right();
+            <span class="self">self</span>.add_flag(frame.header_mut());
+            <span class="kw">let </span>cmd = StreamCommand::SendFrame(frame);
+            <span class="self">self</span>.sender.start_send(cmd).map_err(|<span class="kw">_</span>| <span class="self">self</span>.write_zero_err())<span class="question-mark">?</span>;
         }
 
-        <span class="comment">// Since we have no more data at this point, we want to be woken up</span>
-        <span class="comment">// by the connection when more becomes available for us.</span>
-        <span class="ident">shared</span>.<span class="ident">reader</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">clone</span>());
-
-        <span class="ident">Poll::Pending</span>
+        Poll::Ready(<span class="prelude-val">Ok</span>(()))
     }
 }
 
-<span class="kw">impl</span> <span class="ident">AsyncWrite</span> <span class="kw">for</span> <span class="ident">Stream</span> {
-    <span class="kw">fn</span> <span class="ident">poll_write</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="macro">ready!</span>(<span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">poll_ready</span>(<span class="ident">cx</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">write_zero_err</span>())<span class="question-mark">?</span>);
-        <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shared</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">shared</span>();
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">shared</span>.<span class="ident">state</span>().<span class="ident">can_write</span>() {
-                <span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: can no longer write&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>);
-                <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="self">self</span>.<span class="ident">write_zero_err</span>()))
+<span class="doccomment">/// Byte data produced by the [`futures::stream::Stream`] impl of [`Stream`].
+</span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+</span><span class="kw">pub struct </span>Packet(Vec&lt;u8&gt;);
+
+<span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Packet {
+    <span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="self">self</span>.<span class="number">0</span>.as_ref()
+    }
+}
+
+<span class="kw">impl </span>futures::stream::Stream <span class="kw">for </span>Stream {
+    <span class="kw">type </span>Item = io::Result&lt;Packet&gt;;
+
+    <span class="kw">fn </span>poll_next(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context) -&gt; Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
+        <span class="kw">if </span>!<span class="self">self</span>.config.read_after_close &amp;&amp; <span class="self">self</span>.sender.is_closed() {
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">None</span>)
+        }
+
+        <span class="kw">match </span><span class="self">self</span>.send_window_update(cx) {
+            Poll::Ready(<span class="prelude-val">Ok</span>(())) =&gt; {},
+            Poll::Ready(<span class="prelude-val">Err</span>(e)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e))),
+            <span class="comment">// Continue reading buffered data even though sending a window update blocked.
+            </span>Poll::Pending =&gt; {},
+        }
+
+        <span class="kw">let </span><span class="kw-2">mut </span>shared = <span class="self">self</span>.shared();
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(bytes) = shared.buffer.pop() {
+            <span class="kw">let </span>off = bytes.offset();
+            <span class="kw">let </span><span class="kw-2">mut </span>vec = bytes.into_vec();
+            <span class="kw">if </span>off != <span class="number">0 </span>{
+                <span class="comment">// This should generally not happen when the stream is used only as
+                // a `futures::stream::Stream` since the whole point of this impl is
+                // to consume chunks atomically. It may perhaps happen when mixing
+                // this impl and the `AsyncRead` one.
+                </span><span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: chunk has been partially consumed&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id);
+                vec = vec.split_off(off)
             }
-            <span class="kw">if</span> <span class="ident">shared</span>.<span class="ident">credit</span> <span class="op">==</span> <span class="number">0</span> {
-                <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: no more credit left&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>);
-                <span class="ident">shared</span>.<span class="ident">writer</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">clone</span>());
-                <span class="kw">return</span> <span class="ident">Poll::Pending</span>
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(Packet(vec))))
+        }
+
+        <span class="comment">// Buffer is empty, let&#39;s check if we can expect to read more data.
+        </span><span class="kw">if </span>!shared.state().can_read() {
+            <span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: eof&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id);
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">None</span>) <span class="comment">// stream has been reset
+        </span>}
+
+        <span class="comment">// Since we have no more data at this point, we want to be woken up
+        // by the connection when more becomes available for us.
+        </span>shared.reader = <span class="prelude-val">Some</span>(cx.waker().clone());
+
+        Poll::Pending
+    }
+}
+
+<span class="comment">// Like the `futures::stream::Stream` impl above, but copies bytes into the
+// provided mutable slice.
+</span><span class="kw">impl </span>AsyncRead <span class="kw">for </span>Stream {
+    <span class="kw">fn </span>poll_read(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+        <span class="kw">if </span>!<span class="self">self</span>.config.read_after_close &amp;&amp; <span class="self">self</span>.sender.is_closed() {
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>))
+        }
+
+        <span class="kw">match </span><span class="self">self</span>.send_window_update(cx) {
+            Poll::Ready(<span class="prelude-val">Ok</span>(())) =&gt; {},
+            Poll::Ready(<span class="prelude-val">Err</span>(e)) =&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(e)),
+            <span class="comment">// Continue reading buffered data even though sending a window update blocked.
+            </span>Poll::Pending =&gt; {},
+        }
+
+        <span class="comment">// Copy data from stream buffer.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>shared = <span class="self">self</span>.shared();
+        <span class="kw">let </span><span class="kw-2">mut </span>n = <span class="number">0</span>;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(chunk) = shared.buffer.front_mut() {
+            <span class="kw">if </span>chunk.is_empty() {
+                shared.buffer.pop();
+                <span class="kw">continue
+            </span>}
+            <span class="kw">let </span>k = std::cmp::min(chunk.len(), buf.len() - n);
+            (<span class="kw-2">&amp;mut </span>buf[n .. n + k]).copy_from_slice(<span class="kw-2">&amp;</span>chunk.as_ref()[.. k]);
+            n += k;
+            chunk.advance(k);
+            <span class="kw">if </span>n == buf.len() {
+                <span class="kw">break
+            </span>}
+        }
+
+        <span class="kw">if </span>n &gt; <span class="number">0 </span>{
+            <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: read {} bytes&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id, n);
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(n))
+        }
+
+        <span class="comment">// Buffer is empty, let&#39;s check if we can expect to read more data.
+        </span><span class="kw">if </span>!shared.state().can_read() {
+            <span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: eof&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id);
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(<span class="number">0</span>)) <span class="comment">// stream has been reset
+        </span>}
+
+        <span class="comment">// Since we have no more data at this point, we want to be woken up
+        // by the connection when more becomes available for us.
+        </span>shared.reader = <span class="prelude-val">Some</span>(cx.waker().clone());
+
+        Poll::Pending
+    }
+}
+
+<span class="kw">impl </span>AsyncWrite <span class="kw">for </span>Stream {
+    <span class="kw">fn </span>poll_write(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
+        <span class="macro">ready!</span>(<span class="self">self</span>.sender.poll_ready(cx).map_err(|<span class="kw">_</span>| <span class="self">self</span>.write_zero_err())<span class="question-mark">?</span>);
+        <span class="kw">let </span>body = {
+            <span class="kw">let </span><span class="kw-2">mut </span>shared = <span class="self">self</span>.shared();
+            <span class="kw">if </span>!shared.state().can_write() {
+                <span class="macro">log::debug!</span>(<span class="string">&quot;{}/{}: can no longer write&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id);
+                <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(<span class="self">self</span>.write_zero_err()))
             }
-            <span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">std::cmp::min</span>(<span class="ident">shared</span>.<span class="ident">credit</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">buf</span>.<span class="ident">len</span>());
-            <span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">std::cmp::min</span>(<span class="ident">k</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">split_send_size</span>);
-            <span class="ident">shared</span>.<span class="ident">credit</span> <span class="op">=</span> <span class="ident">shared</span>.<span class="ident">credit</span>.<span class="ident">saturating_sub</span>(<span class="ident">k</span> <span class="kw">as</span> <span class="ident">u32</span>);
-            <span class="ident">Vec::from</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[.. <span class="ident">k</span>])
+            <span class="kw">if </span>shared.credit == <span class="number">0 </span>{
+                <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: no more credit left&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id);
+                shared.writer = <span class="prelude-val">Some</span>(cx.waker().clone());
+                <span class="kw">return </span>Poll::Pending
+            }
+            <span class="kw">let </span>k = std::cmp::min(shared.credit <span class="kw">as </span>usize, buf.len());
+            <span class="kw">let </span>k = std::cmp::min(k, <span class="self">self</span>.config.split_send_size);
+            shared.credit = shared.credit.saturating_sub(k <span class="kw">as </span>u32);
+            Vec::from(<span class="kw-2">&amp;</span>buf[.. k])
         };
-        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">len</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">frame</span> <span class="op">=</span> <span class="ident">Frame::data</span>(<span class="self">self</span>.<span class="ident">id</span>, <span class="ident">body</span>).<span class="ident">expect</span>(<span class="string">&quot;body &lt;= u32::MAX&quot;</span>).<span class="ident">left</span>();
-        <span class="self">self</span>.<span class="ident">add_flag</span>(<span class="ident">frame</span>.<span class="ident">header_mut</span>());
-        <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: write {} bytes&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">n</span>);
-        <span class="kw">let</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">StreamCommand::SendFrame</span>(<span class="ident">frame</span>);
-        <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">start_send</span>(<span class="ident">cmd</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">write_zero_err</span>())<span class="question-mark">?</span>;
-        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="ident">n</span>))
+        <span class="kw">let </span>n = body.len();
+        <span class="kw">let </span><span class="kw-2">mut </span>frame = Frame::data(<span class="self">self</span>.id, body).expect(<span class="string">&quot;body &lt;= u32::MAX&quot;</span>).left();
+        <span class="self">self</span>.add_flag(frame.header_mut());
+        <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: write {} bytes&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id, n);
+        <span class="kw">let </span>cmd = StreamCommand::SendFrame(frame);
+        <span class="self">self</span>.sender.start_send(cmd).map_err(|<span class="kw">_</span>| <span class="self">self</span>.write_zero_err())<span class="question-mark">?</span>;
+        Poll::Ready(<span class="prelude-val">Ok</span>(n))
     }
 
-    <span class="kw">fn</span> <span class="ident">poll_flush</span>(<span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(()))
+    <span class="kw">fn </span>poll_flush(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>Context) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+        Poll::Ready(<span class="prelude-val">Ok</span>(()))
     }
 
-    <span class="kw">fn</span> <span class="ident">poll_close</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span>) -&gt; <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">state</span>() <span class="op">==</span> <span class="ident">State::Closed</span> {
-            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(()))
+    <span class="kw">fn </span>poll_close(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context) -&gt; Poll&lt;io::Result&lt;()&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.state() == State::Closed {
+            <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Ok</span>(()))
         }
-        <span class="macro">ready!</span>(<span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">poll_ready</span>(<span class="ident">cx</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">write_zero_err</span>())<span class="question-mark">?</span>);
-        <span class="kw">let</span> <span class="ident">ack</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">flag</span> <span class="op">==</span> <span class="ident">Flag::Ack</span> {
-            <span class="self">self</span>.<span class="ident">flag</span> <span class="op">=</span> <span class="ident">Flag::None</span>;
-            <span class="bool-val">true</span>
-        } <span class="kw">else</span> {
-            <span class="bool-val">false</span>
-        };
-        <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: close&quot;</span>, <span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>);
-        <span class="kw">let</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">StreamCommand::CloseStream</span> { <span class="ident">id</span>: <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">ack</span> };
-        <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">start_send</span>(<span class="ident">cmd</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">write_zero_err</span>())<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">shared</span>().<span class="ident">update_state</span>(<span class="self">self</span>.<span class="ident">conn</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">State::SendClosed</span>);
-        <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(()))
+        <span class="macro">ready!</span>(<span class="self">self</span>.sender.poll_ready(cx).map_err(|<span class="kw">_</span>| <span class="self">self</span>.write_zero_err())<span class="question-mark">?</span>);
+        <span class="kw">let </span>ack = <span class="kw">if </span><span class="self">self</span>.flag == Flag::Ack {
+            <span class="self">self</span>.flag = Flag::None;
+            <span class="bool-val">true
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>};
+        <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: close&quot;</span>, <span class="self">self</span>.conn, <span class="self">self</span>.id);
+        <span class="kw">let </span>cmd = StreamCommand::CloseStream { id: <span class="self">self</span>.id, ack };
+        <span class="self">self</span>.sender.start_send(cmd).map_err(|<span class="kw">_</span>| <span class="self">self</span>.write_zero_err())<span class="question-mark">?</span>;
+        <span class="self">self</span>.shared().update_state(<span class="self">self</span>.conn, <span class="self">self</span>.id, State::SendClosed);
+        Poll::Ready(<span class="prelude-val">Ok</span>(()))
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Shared</span> {
-    <span class="ident">state</span>: <span class="ident">State</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">window</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">credit</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">buffer</span>: <span class="ident">Chunks</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">reader</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Waker</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">writer</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Waker</span><span class="op">&gt;</span>,
-    <span class="ident">config</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Config</span><span class="op">&gt;</span>
+<span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Shared {
+    state: State,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) window: u32,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) credit: u32,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) buffer: Chunks,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) reader: <span class="prelude-ty">Option</span>&lt;Waker&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) writer: <span class="prelude-ty">Option</span>&lt;Waker&gt;,
+    config: Arc&lt;Config&gt;
 }
 
-<span class="kw">impl</span> <span class="ident">Shared</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">window</span>: <span class="ident">u32</span>, <span class="ident">credit</span>: <span class="ident">u32</span>, <span class="ident">config</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Config</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Shared</span> {
-            <span class="ident">state</span>: <span class="ident">State::Open</span>,
-            <span class="ident">window</span>,
-            <span class="ident">credit</span>,
-            <span class="ident">buffer</span>: <span class="ident">Chunks::new</span>(),
-            <span class="ident">reader</span>: <span class="prelude-val">None</span>,
-            <span class="ident">writer</span>: <span class="prelude-val">None</span>,
-            <span class="ident">config</span>
+<span class="kw">impl </span>Shared {
+    <span class="kw">fn </span>new(window: u32, credit: u32, config: Arc&lt;Config&gt;) -&gt; <span class="self">Self </span>{
+        Shared {
+            state: State::Open,
+            window,
+            credit,
+            buffer: Chunks::new(),
+            reader: <span class="prelude-val">None</span>,
+            writer: <span class="prelude-val">None</span>,
+            config
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">State</span> {
-        <span class="self">self</span>.<span class="ident">state</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; State {
+        <span class="self">self</span>.state
     }
 
-    <span class="doccomment">/// Update the stream state and return the state before it was updated.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">update_state</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cid</span>: <span class="ident">connection::Id</span>, <span class="ident">sid</span>: <span class="ident">StreamId</span>, <span class="ident">next</span>: <span class="ident">State</span>) -&gt; <span class="ident">State</span> {
-        <span class="kw">use</span> <span class="ident"><span class="self">self</span>::State</span>::<span class="kw-2">*</span>;
+    <span class="doccomment">/// Update the stream state and return the state before it was updated.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>update_state(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cid: connection::Id, sid: StreamId, next: State) -&gt; State {
+        <span class="kw">use </span><span class="self">self</span>::State::<span class="kw-2">*</span>;
 
-        <span class="kw">let</span> <span class="ident">current</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>;
+        <span class="kw">let </span>current = <span class="self">self</span>.state;
 
-        <span class="kw">match</span> (<span class="ident">current</span>, <span class="ident">next</span>) {
-            (<span class="ident">Closed</span>,              <span class="kw">_</span>) =&gt; {}
-            (<span class="ident">Open</span>,                <span class="kw">_</span>) =&gt; <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">next</span>,
-            (<span class="ident">RecvClosed</span>,     <span class="ident">Closed</span>) =&gt; <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">Closed</span>,
-            (<span class="ident">RecvClosed</span>,       <span class="ident">Open</span>) =&gt; {}
-            (<span class="ident">RecvClosed</span>, <span class="ident">RecvClosed</span>) =&gt; {}
-            (<span class="ident">RecvClosed</span>, <span class="ident">SendClosed</span>) =&gt; <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">Closed</span>,
-            (<span class="ident">SendClosed</span>,     <span class="ident">Closed</span>) =&gt; <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">Closed</span>,
-            (<span class="ident">SendClosed</span>,       <span class="ident">Open</span>) =&gt; {}
-            (<span class="ident">SendClosed</span>, <span class="ident">RecvClosed</span>) =&gt; <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">Closed</span>,
-            (<span class="ident">SendClosed</span>, <span class="ident">SendClosed</span>) =&gt; {}
+        <span class="kw">match </span>(current, next) {
+            (Closed,              <span class="kw">_</span>) =&gt; {}
+            (Open,                <span class="kw">_</span>) =&gt; <span class="self">self</span>.state = next,
+            (RecvClosed,     Closed) =&gt; <span class="self">self</span>.state = Closed,
+            (RecvClosed,       Open) =&gt; {}
+            (RecvClosed, RecvClosed) =&gt; {}
+            (RecvClosed, SendClosed) =&gt; <span class="self">self</span>.state = Closed,
+            (SendClosed,     Closed) =&gt; <span class="self">self</span>.state = Closed,
+            (SendClosed,       Open) =&gt; {}
+            (SendClosed, RecvClosed) =&gt; <span class="self">self</span>.state = Closed,
+            (SendClosed, SendClosed) =&gt; {}
         }
 
-        <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: update state: ({:?} {:?} {:?})&quot;</span>, <span class="ident">cid</span>, <span class="ident">sid</span>, <span class="ident">current</span>, <span class="ident">next</span>, <span class="self">self</span>.<span class="ident">state</span>);
+        <span class="macro">log::trace!</span>(<span class="string">&quot;{}/{}: update state: ({:?} {:?} {:?})&quot;</span>, cid, sid, current, next, <span class="self">self</span>.state);
 
-        <span class="ident">current</span> <span class="comment">// Return the previous stream state for informational purposes.</span>
-    }
+        current <span class="comment">// Return the previous stream state for informational purposes.
+    </span>}
 
-    <span class="doccomment">/// Calculate the number of additional window bytes the receiving side</span>
-    <span class="doccomment">/// should grant the sending side via a window update message.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if too small to justify a window update message.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note: Once a caller successfully sent a window update message, the</span>
-    <span class="doccomment">/// locally tracked window size needs to be updated manually by the caller.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">next_window_update</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">can_read</span>() {
-            <span class="kw">return</span> <span class="prelude-val">None</span>;
+    <span class="doccomment">/// Calculate the number of additional window bytes the receiving side
+    /// should grant the sending side via a window update message.
+    ///
+    /// Returns `None` if too small to justify a window update message.
+    ///
+    /// Note: Once a caller successfully sent a window update message, the
+    /// locally tracked window size needs to be updated manually by the caller.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>next_window_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;u32&gt; {
+        <span class="kw">if </span>!<span class="self">self</span>.state.can_read() {
+            <span class="kw">return </span><span class="prelude-val">None</span>;
         }
 
-        <span class="kw">let</span> <span class="ident">new_credit</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">window_update_mode</span> {
-            <span class="ident">WindowUpdateMode::OnReceive</span> =&gt; {
-                <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">receive_window</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">window</span>);
-                <span class="kw">let</span> <span class="ident">bytes_received</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">receive_window</span>.<span class="ident">saturating_sub</span>(<span class="self">self</span>.<span class="ident">window</span>);
-                <span class="ident">bytes_received</span>
+        <span class="kw">let </span>new_credit = <span class="kw">match </span><span class="self">self</span>.config.window_update_mode {
+            WindowUpdateMode::OnReceive =&gt; {
+                <span class="macro">debug_assert!</span>(<span class="self">self</span>.config.receive_window &gt;= <span class="self">self</span>.window);
+                <span class="kw">let </span>bytes_received = <span class="self">self</span>.config.receive_window.saturating_sub(<span class="self">self</span>.window);
+                bytes_received
             },
-            <span class="ident">WindowUpdateMode::OnRead</span> =&gt; {
-                <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">receive_window</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">window</span>);
-                <span class="kw">let</span> <span class="ident">bytes_received</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">receive_window</span>.<span class="ident">saturating_sub</span>(<span class="self">self</span>.<span class="ident">window</span>);
-                <span class="kw">let</span> <span class="ident">buffer_len</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">len</span>().<span class="ident">try_into</span>().<span class="ident">unwrap_or</span>(<span class="ident">std::u32::MAX</span>);
-                <span class="kw">let</span> <span class="ident">bytes_read</span> <span class="op">=</span> <span class="ident">bytes_received</span>.<span class="ident">saturating_sub</span>(<span class="ident">buffer_len</span>);
-                <span class="ident">bytes_read</span>
+            WindowUpdateMode::OnRead =&gt; {
+                <span class="macro">debug_assert!</span>(<span class="self">self</span>.config.receive_window &gt;= <span class="self">self</span>.window);
+                <span class="kw">let </span>bytes_received = <span class="self">self</span>.config.receive_window.saturating_sub(<span class="self">self</span>.window);
+                <span class="kw">let </span>buffer_len: u32 = <span class="self">self</span>.buffer.len().try_into().unwrap_or(std::u32::MAX);
+                <span class="kw">let </span>bytes_read = bytes_received.saturating_sub(buffer_len);
+                bytes_read
             }
         };
 
-        <span class="comment">// Send WindowUpdate message when half or more of the configured receive</span>
-        <span class="comment">// window can be granted as additional credit to the sender.</span>
-        <span class="comment">//</span>
-        <span class="comment">// See https://github.com/paritytech/yamux/issues/100 for a detailed</span>
-        <span class="comment">// discussion.</span>
-        <span class="kw">if</span> <span class="ident">new_credit</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">receive_window</span> <span class="op">/</span> <span class="number">2</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">new_credit</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        }
+        <span class="comment">// Send WindowUpdate message when half or more of the configured receive
+        // window can be granted as additional credit to the sender.
+        //
+        // See https://github.com/paritytech/yamux/issues/100 for a detailed
+        // discussion.
+        </span><span class="kw">if </span>new_credit &gt;= <span class="self">self</span>.config.receive_window / <span class="number">2 </span>{
+            <span class="prelude-val">Some</span>(new_credit)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
     }
 }
 
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="yamux" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="yamux" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

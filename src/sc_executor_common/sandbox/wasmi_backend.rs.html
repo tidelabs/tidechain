@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/common/src/sandbox/wasmi_backend.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>wasmi_backend.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_executor_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_executor_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_executor_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/common/src/sandbox/wasmi_backend.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>wasmi_backend.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_executor_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -331,334 +326,333 @@
 <span id="326">326</span>
 <span id="327">327</span>
 <span id="328">328</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2021 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2019-2021 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Wasmi specific impls for sandbox</span>
+</span><span class="doccomment">//! Wasmi specific impls for sandbox
 
-<span class="kw">use</span> <span class="ident">std::rc::Rc</span>;
+</span><span class="kw">use </span>std::rc::Rc;
 
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
-<span class="kw">use</span> <span class="ident">sp_sandbox::HostError</span>;
-<span class="kw">use</span> <span class="ident">sp_wasm_interface</span>::{<span class="ident">FunctionContext</span>, <span class="ident">Pointer</span>, <span class="ident">ReturnValue</span>, <span class="ident">Value</span>, <span class="ident">WordSize</span>};
-<span class="kw">use</span> <span class="ident">wasmi</span>::{
-	<span class="ident">memory_units::Pages</span>, <span class="ident">ImportResolver</span>, <span class="ident">MemoryInstance</span>, <span class="ident">Module</span>, <span class="ident">ModuleInstance</span>, <span class="ident">RuntimeArgs</span>,
-	<span class="ident">RuntimeValue</span>, <span class="ident">Trap</span>, <span class="ident">TrapKind</span>,
+<span class="kw">use </span>codec::{Decode, Encode};
+<span class="kw">use </span>sp_sandbox::HostError;
+<span class="kw">use </span>sp_wasm_interface::{FunctionContext, Pointer, ReturnValue, Value, WordSize};
+<span class="kw">use </span>wasmi::{
+	memory_units::Pages, ImportResolver, MemoryInstance, Module, ModuleInstance, RuntimeArgs,
+	RuntimeValue, Trap, TrapKind,
 };
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-	<span class="ident">error</span>::{<span class="self">self</span>, <span class="ident">Error</span>},
-	<span class="ident">sandbox</span>::{
-		<span class="ident">BackendInstance</span>, <span class="ident">GuestEnvironment</span>, <span class="ident">GuestExternals</span>, <span class="ident">GuestFuncIndex</span>, <span class="ident">Imports</span>,
-		<span class="ident">InstantiationError</span>, <span class="ident">Memory</span>, <span class="ident">SandboxContext</span>, <span class="ident">SandboxInstance</span>,
+<span class="kw">use crate</span>::{
+	error::{<span class="self">self</span>, Error},
+	sandbox::{
+		BackendInstance, GuestEnvironment, GuestExternals, GuestFuncIndex, Imports,
+		InstantiationError, Memory, SandboxContext, SandboxInstance,
 	},
-	<span class="ident">util</span>::{<span class="ident">checked_range</span>, <span class="ident">MemoryTransfer</span>},
+	util::{checked_range, MemoryTransfer},
 };
 
-<span class="macro">environmental::environmental!</span>(<span class="ident">SandboxContextStore</span>: <span class="kw">trait</span> <span class="ident">SandboxContext</span>);
+<span class="macro">environmental::environmental!</span>(SandboxContextStore: <span class="kw">trait </span>SandboxContext);
 
-<span class="doccomment">/// Construct trap error from specified message</span>
-<span class="kw">fn</span> <span class="ident">trap</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>) -&gt; <span class="ident">Trap</span> {
-	<span class="ident">TrapKind::Host</span>(<span class="ident">Box::new</span>(<span class="ident">Error::Other</span>(<span class="ident">msg</span>.<span class="ident">into</span>()))).<span class="ident">into</span>()
+<span class="doccomment">/// Construct trap error from specified message
+</span><span class="kw">fn </span>trap(msg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; Trap {
+	TrapKind::Host(Box::new(Error::Other(msg.into()))).into()
 }
 
-<span class="kw">impl</span> <span class="ident">ImportResolver</span> <span class="kw">for</span> <span class="ident">Imports</span> {
-	<span class="kw">fn</span> <span class="ident">resolve_func</span>(
+<span class="kw">impl </span>ImportResolver <span class="kw">for </span>Imports {
+	<span class="kw">fn </span>resolve_func(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">signature</span>: <span class="kw-2">&amp;</span><span class="ident">wasmi::Signature</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">wasmi::FuncRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">func_by_name</span>(<span class="ident">module_name</span>, <span class="ident">field_name</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">wasmi::Error::Instantiation</span>(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, <span class="ident">module_name</span>, <span class="ident">field_name</span>))
+		module_name: <span class="kw-2">&amp;</span>str,
+		field_name: <span class="kw-2">&amp;</span>str,
+		signature: <span class="kw-2">&amp;</span>wasmi::Signature,
+	) -&gt; std::result::Result&lt;wasmi::FuncRef, wasmi::Error&gt; {
+		<span class="kw">let </span>idx = <span class="self">self</span>.func_by_name(module_name, field_name).ok_or_else(|| {
+			wasmi::Error::Instantiation(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, module_name, field_name))
 		})<span class="question-mark">?</span>;
 
-		<span class="prelude-val">Ok</span>(<span class="ident">wasmi::FuncInstance::alloc_host</span>(<span class="ident">signature</span>.<span class="ident">clone</span>(), <span class="ident">idx</span>.<span class="number">0</span>))
+		<span class="prelude-val">Ok</span>(wasmi::FuncInstance::alloc_host(signature.clone(), idx.<span class="number">0</span>))
 	}
 
-	<span class="kw">fn</span> <span class="ident">resolve_memory</span>(
+	<span class="kw">fn </span>resolve_memory(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_memory_type</span>: <span class="kw-2">&amp;</span><span class="ident">wasmi::MemoryDescriptor</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">wasmi::MemoryRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">mem</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">memory_by_name</span>(<span class="ident">module_name</span>, <span class="ident">field_name</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">wasmi::Error::Instantiation</span>(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, <span class="ident">module_name</span>, <span class="ident">field_name</span>))
+		module_name: <span class="kw-2">&amp;</span>str,
+		field_name: <span class="kw-2">&amp;</span>str,
+		_memory_type: <span class="kw-2">&amp;</span>wasmi::MemoryDescriptor,
+	) -&gt; std::result::Result&lt;wasmi::MemoryRef, wasmi::Error&gt; {
+		<span class="kw">let </span>mem = <span class="self">self</span>.memory_by_name(module_name, field_name).ok_or_else(|| {
+			wasmi::Error::Instantiation(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, module_name, field_name))
 		})<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">wrapper</span> <span class="op">=</span> <span class="ident">mem</span>.<span class="ident">as_wasmi</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">wasmi::Error::Instantiation</span>(<span class="macro">format!</span>(
+		<span class="kw">let </span>wrapper = mem.as_wasmi().ok_or_else(|| {
+			wasmi::Error::Instantiation(<span class="macro">format!</span>(
 				<span class="string">&quot;Unsupported non-wasmi export {}:{}&quot;</span>,
-				<span class="ident">module_name</span>, <span class="ident">field_name</span>
+				module_name, field_name
 			))
 		})<span class="question-mark">?</span>;
 
-		<span class="comment">// Here we use inner memory reference only to resolve the imports</span>
-		<span class="comment">// without accessing the memory contents. All subsequent memory accesses</span>
-		<span class="comment">// should happen through the wrapper, that enforces the memory access protocol.</span>
-		<span class="kw">let</span> <span class="ident">mem</span> <span class="op">=</span> <span class="ident">wrapper</span>.<span class="number">0</span>;
+		<span class="comment">// Here we use inner memory reference only to resolve the imports
+		// without accessing the memory contents. All subsequent memory accesses
+		// should happen through the wrapper, that enforces the memory access protocol.
+		</span><span class="kw">let </span>mem = wrapper.<span class="number">0</span>;
 
-		<span class="prelude-val">Ok</span>(<span class="ident">mem</span>)
+		<span class="prelude-val">Ok</span>(mem)
 	}
 
-	<span class="kw">fn</span> <span class="ident">resolve_global</span>(
+	<span class="kw">fn </span>resolve_global(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_global_type</span>: <span class="kw-2">&amp;</span><span class="ident">wasmi::GlobalDescriptor</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">wasmi::GlobalRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
-		<span class="prelude-val">Err</span>(<span class="ident">wasmi::Error::Instantiation</span>(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, <span class="ident">module_name</span>, <span class="ident">field_name</span>)))
+		module_name: <span class="kw-2">&amp;</span>str,
+		field_name: <span class="kw-2">&amp;</span>str,
+		_global_type: <span class="kw-2">&amp;</span>wasmi::GlobalDescriptor,
+	) -&gt; std::result::Result&lt;wasmi::GlobalRef, wasmi::Error&gt; {
+		<span class="prelude-val">Err</span>(wasmi::Error::Instantiation(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, module_name, field_name)))
 	}
 
-	<span class="kw">fn</span> <span class="ident">resolve_table</span>(
+	<span class="kw">fn </span>resolve_table(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">module_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">field_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">_table_type</span>: <span class="kw-2">&amp;</span><span class="ident">wasmi::TableDescriptor</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">wasmi::TableRef</span>, <span class="ident">wasmi::Error</span><span class="op">&gt;</span> {
-		<span class="prelude-val">Err</span>(<span class="ident">wasmi::Error::Instantiation</span>(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, <span class="ident">module_name</span>, <span class="ident">field_name</span>)))
+		module_name: <span class="kw-2">&amp;</span>str,
+		field_name: <span class="kw-2">&amp;</span>str,
+		_table_type: <span class="kw-2">&amp;</span>wasmi::TableDescriptor,
+	) -&gt; std::result::Result&lt;wasmi::TableRef, wasmi::Error&gt; {
+		<span class="prelude-val">Err</span>(wasmi::Error::Instantiation(<span class="macro">format!</span>(<span class="string">&quot;Export {}:{} not found&quot;</span>, module_name, field_name)))
 	}
 }
 
-<span class="doccomment">/// Allocate new memory region</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_memory</span>(<span class="ident">initial</span>: <span class="ident">u32</span>, <span class="ident">maximum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="kw">crate</span>::error::Result</span><span class="op">&lt;</span><span class="ident">Memory</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="ident">Memory::Wasmi</span>(<span class="ident">MemoryWrapper::new</span>(
-		<span class="ident">MemoryInstance::alloc</span>(<span class="ident">Pages</span>(<span class="ident">initial</span> <span class="kw">as</span> <span class="ident">usize</span>), <span class="ident">maximum</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> <span class="ident">Pages</span>(<span class="ident">m</span> <span class="kw">as</span> <span class="ident">usize</span>)))
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">error</span><span class="op">|</span> <span class="ident">Error::Sandbox</span>(<span class="ident">error</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>,
+<span class="doccomment">/// Allocate new memory region
+</span><span class="kw">pub fn </span>new_memory(initial: u32, maximum: <span class="prelude-ty">Option</span>&lt;u32&gt;) -&gt; <span class="kw">crate</span>::error::Result&lt;Memory&gt; {
+	<span class="kw">let </span>memory = Memory::Wasmi(MemoryWrapper::new(
+		MemoryInstance::alloc(Pages(initial <span class="kw">as </span>usize), maximum.map(|m| Pages(m <span class="kw">as </span>usize)))
+			.map_err(|error| Error::Sandbox(error.to_string()))<span class="question-mark">?</span>,
 	));
 
-	<span class="prelude-val">Ok</span>(<span class="ident">memory</span>)
+	<span class="prelude-val">Ok</span>(memory)
 }
 
-<span class="doccomment">/// Wasmi provides direct access to its memory using slices.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This wrapper limits the scope where the slice can be taken to</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryWrapper</span>(<span class="ident">wasmi::MemoryRef</span>);
+<span class="doccomment">/// Wasmi provides direct access to its memory using slices.
+///
+/// This wrapper limits the scope where the slice can be taken to
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>MemoryWrapper(wasmi::MemoryRef);
 
-<span class="kw">impl</span> <span class="ident">MemoryWrapper</span> {
-	<span class="doccomment">/// Take ownership of the memory region and return a wrapper object</span>
-	<span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">memory</span>: <span class="ident">wasmi::MemoryRef</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span>(<span class="ident">memory</span>)
+<span class="kw">impl </span>MemoryWrapper {
+	<span class="doccomment">/// Take ownership of the memory region and return a wrapper object
+	</span><span class="kw">fn </span>new(memory: wasmi::MemoryRef) -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>(memory)
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">MemoryTransfer</span> <span class="kw">for</span> <span class="ident">MemoryWrapper</span> {
-	<span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">source_addr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="ident">error::Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">with_direct_access</span>(<span class="op">|</span><span class="ident">source</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">checked_range</span>(<span class="ident">source_addr</span>.<span class="ident">into</span>(), <span class="ident">size</span>, <span class="ident">source</span>.<span class="ident">len</span>())
-				.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error::Error::Other</span>(<span class="string">&quot;memory read is out of bounds&quot;</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+<span class="kw">impl </span>MemoryTransfer <span class="kw">for </span>MemoryWrapper {
+	<span class="kw">fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>, source_addr: Pointer&lt;u8&gt;, size: usize) -&gt; error::Result&lt;Vec&lt;u8&gt;&gt; {
+		<span class="self">self</span>.<span class="number">0</span>.with_direct_access(|source| {
+			<span class="kw">let </span>range = checked_range(source_addr.into(), size, source.len())
+				.ok_or_else(|| error::Error::Other(<span class="string">&quot;memory read is out of bounds&quot;</span>.into()))<span class="question-mark">?</span>;
 
-			<span class="prelude-val">Ok</span>(<span class="ident">Vec::from</span>(<span class="kw-2">&amp;</span><span class="ident">source</span>[<span class="ident">range</span>]))
+			<span class="prelude-val">Ok</span>(Vec::from(<span class="kw-2">&amp;</span>source[range]))
 		})
 	}
 
-	<span class="kw">fn</span> <span class="ident">read_into</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">source_addr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">destination</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">error::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">with_direct_access</span>(<span class="op">|</span><span class="ident">source</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">checked_range</span>(<span class="ident">source_addr</span>.<span class="ident">into</span>(), <span class="ident">destination</span>.<span class="ident">len</span>(), <span class="ident">source</span>.<span class="ident">len</span>())
-				.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error::Error::Other</span>(<span class="string">&quot;memory read is out of bounds&quot;</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+	<span class="kw">fn </span>read_into(<span class="kw-2">&amp;</span><span class="self">self</span>, source_addr: Pointer&lt;u8&gt;, destination: <span class="kw-2">&amp;mut </span>[u8]) -&gt; error::Result&lt;()&gt; {
+		<span class="self">self</span>.<span class="number">0</span>.with_direct_access(|source| {
+			<span class="kw">let </span>range = checked_range(source_addr.into(), destination.len(), source.len())
+				.ok_or_else(|| error::Error::Other(<span class="string">&quot;memory read is out of bounds&quot;</span>.into()))<span class="question-mark">?</span>;
 
-			<span class="ident">destination</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">source</span>[<span class="ident">range</span>]);
+			destination.copy_from_slice(<span class="kw-2">&amp;</span>source[range]);
 			<span class="prelude-val">Ok</span>(())
 		})
 	}
 
-	<span class="kw">fn</span> <span class="ident">write_from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">dest_addr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">source</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">error::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="number">0</span>.<span class="ident">with_direct_access_mut</span>(<span class="op">|</span><span class="ident">destination</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">checked_range</span>(<span class="ident">dest_addr</span>.<span class="ident">into</span>(), <span class="ident">source</span>.<span class="ident">len</span>(), <span class="ident">destination</span>.<span class="ident">len</span>())
-				.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error::Error::Other</span>(<span class="string">&quot;memory write is out of bounds&quot;</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+	<span class="kw">fn </span>write_from(<span class="kw-2">&amp;</span><span class="self">self</span>, dest_addr: Pointer&lt;u8&gt;, source: <span class="kw-2">&amp;</span>[u8]) -&gt; error::Result&lt;()&gt; {
+		<span class="self">self</span>.<span class="number">0</span>.with_direct_access_mut(|destination| {
+			<span class="kw">let </span>range = checked_range(dest_addr.into(), source.len(), destination.len())
+				.ok_or_else(|| error::Error::Other(<span class="string">&quot;memory write is out of bounds&quot;</span>.into()))<span class="question-mark">?</span>;
 
-			<span class="ident">destination</span>[<span class="ident">range</span>].<span class="ident">copy_from_slice</span>(<span class="ident">source</span>);
+			destination[range].copy_from_slice(source);
 			<span class="prelude-val">Ok</span>(())
 		})
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">wasmi::Externals</span> <span class="kw">for</span> <span class="ident">GuestExternals</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">invoke_index</span>(
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-		<span class="ident">index</span>: <span class="ident">usize</span>,
-		<span class="ident">args</span>: <span class="ident">RuntimeArgs</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RuntimeValue</span><span class="op">&gt;</span>, <span class="ident">Trap</span><span class="op">&gt;</span> {
-		<span class="ident">SandboxContextStore::with</span>(<span class="op">|</span><span class="ident">sandbox_context</span><span class="op">|</span> {
-			<span class="comment">// Make `index` typesafe again.</span>
-			<span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">GuestFuncIndex</span>(<span class="ident">index</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; wasmi::Externals <span class="kw">for </span>GuestExternals&lt;<span class="lifetime">&#39;a</span>&gt; {
+	<span class="kw">fn </span>invoke_index(
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>,
+		index: usize,
+		args: RuntimeArgs,
+	) -&gt; std::result::Result&lt;<span class="prelude-ty">Option</span>&lt;RuntimeValue&gt;, Trap&gt; {
+		SandboxContextStore::with(|sandbox_context| {
+			<span class="comment">// Make `index` typesafe again.
+			</span><span class="kw">let </span>index = GuestFuncIndex(index);
 
-			<span class="comment">// Convert function index from guest to supervisor space</span>
-			<span class="kw">let</span> <span class="ident">func_idx</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sandbox_instance</span>
-				.<span class="ident">guest_to_supervisor_mapping</span>
-				.<span class="ident">func_by_guest_index</span>(<span class="ident">index</span>)
-				.<span class="ident">expect</span>(
+			<span class="comment">// Convert function index from guest to supervisor space
+			</span><span class="kw">let </span>func_idx = <span class="self">self</span>.sandbox_instance
+				.guest_to_supervisor_mapping
+				.func_by_guest_index(index)
+				.expect(
 					<span class="string">&quot;`invoke_index` is called with indexes registered via `FuncInstance::alloc_host`;
 					`FuncInstance::alloc_host` is called with indexes that were obtained from `guest_to_supervisor_mapping`;
 					`func_by_guest_index` called with `index` can&#39;t return `None`;
-					qed&quot;</span>
-				);
+					qed&quot;
+				</span>);
 
-			<span class="comment">// Serialize arguments into a byte vector.</span>
-			<span class="kw">let</span> <span class="ident">invoke_args_data</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">args</span>
-				.<span class="ident">as_ref</span>()
-				.<span class="ident">iter</span>()
-				.<span class="ident">cloned</span>()
-				.<span class="ident">map</span>(<span class="ident">sp_wasm_interface::Value::from</span>)
-				.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-				.<span class="ident">encode</span>();
+			<span class="comment">// Serialize arguments into a byte vector.
+			</span><span class="kw">let </span>invoke_args_data: Vec&lt;u8&gt; = args
+				.as_ref()
+				.iter()
+				.cloned()
+				.map(sp_wasm_interface::Value::from)
+				.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+				.encode();
 
-			<span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>;
+			<span class="kw">let </span>state = <span class="self">self</span>.state;
 
-			<span class="comment">// Move serialized arguments inside the memory, invoke dispatch thunk and</span>
-			<span class="comment">// then free allocated memory.</span>
-			<span class="kw">let</span> <span class="ident">invoke_args_len</span> <span class="op">=</span> <span class="ident">invoke_args_data</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">WordSize</span>;
-			<span class="kw">let</span> <span class="ident">invoke_args_ptr</span> <span class="op">=</span> <span class="ident">sandbox_context</span>
-				.<span class="ident">supervisor_context</span>()
-				.<span class="ident">allocate_memory</span>(<span class="ident">invoke_args_len</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">trap</span>(<span class="string">&quot;Can&#39;t allocate memory in supervisor for the arguments&quot;</span>))<span class="question-mark">?</span>;
+			<span class="comment">// Move serialized arguments inside the memory, invoke dispatch thunk and
+			// then free allocated memory.
+			</span><span class="kw">let </span>invoke_args_len = invoke_args_data.len() <span class="kw">as </span>WordSize;
+			<span class="kw">let </span>invoke_args_ptr = sandbox_context
+				.supervisor_context()
+				.allocate_memory(invoke_args_len)
+				.map_err(|<span class="kw">_</span>| trap(<span class="string">&quot;Can&#39;t allocate memory in supervisor for the arguments&quot;</span>))<span class="question-mark">?</span>;
 
-			<span class="kw">let</span> <span class="ident">deallocate</span> <span class="op">=</span> <span class="op">|</span><span class="ident">supervisor_context</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">FunctionContext</span>, <span class="ident">ptr</span>, <span class="ident">fail_msg</span><span class="op">|</span> {
-				<span class="ident">supervisor_context</span>.<span class="ident">deallocate_memory</span>(<span class="ident">ptr</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">trap</span>(<span class="ident">fail_msg</span>))
+			<span class="kw">let </span>deallocate = |supervisor_context: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FunctionContext, ptr, fail_msg| {
+				supervisor_context.deallocate_memory(ptr).map_err(|<span class="kw">_</span>| trap(fail_msg))
 			};
 
-			<span class="kw">if</span> <span class="ident">sandbox_context</span>
-				.<span class="ident">supervisor_context</span>()
-				.<span class="ident">write_memory</span>(<span class="ident">invoke_args_ptr</span>, <span class="kw-2">&amp;</span><span class="ident">invoke_args_data</span>)
-				.<span class="ident">is_err</span>()
+			<span class="kw">if </span>sandbox_context
+				.supervisor_context()
+				.write_memory(invoke_args_ptr, <span class="kw-2">&amp;</span>invoke_args_data)
+				.is_err()
 			{
-				<span class="ident">deallocate</span>(
-					<span class="ident">sandbox_context</span>.<span class="ident">supervisor_context</span>(),
-					<span class="ident">invoke_args_ptr</span>,
+				deallocate(
+					sandbox_context.supervisor_context(),
+					invoke_args_ptr,
 					<span class="string">&quot;Failed dealloction after failed write of invoke arguments&quot;</span>,
 				)<span class="question-mark">?</span>;
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">trap</span>(<span class="string">&quot;Can&#39;t write invoke args into memory&quot;</span>))
+				<span class="kw">return </span><span class="prelude-val">Err</span>(trap(<span class="string">&quot;Can&#39;t write invoke args into memory&quot;</span>))
 			}
 
-			<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">sandbox_context</span>.<span class="ident">invoke</span>(
-				<span class="ident">invoke_args_ptr</span>,
-				<span class="ident">invoke_args_len</span>,
-				<span class="ident">state</span>,
-				<span class="ident">func_idx</span>,
+			<span class="kw">let </span>result = sandbox_context.invoke(
+				invoke_args_ptr,
+				invoke_args_len,
+				state,
+				func_idx,
 			);
 
-			<span class="ident">deallocate</span>(
-				<span class="ident">sandbox_context</span>.<span class="ident">supervisor_context</span>(),
-				<span class="ident">invoke_args_ptr</span>,
+			deallocate(
+				sandbox_context.supervisor_context(),
+				invoke_args_ptr,
 				<span class="string">&quot;Can&#39;t deallocate memory for dispatch thunk&#39;s invoke arguments&quot;</span>,
 			)<span class="question-mark">?</span>;
-			<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">result</span><span class="question-mark">?</span>;
+			<span class="kw">let </span>result = result<span class="question-mark">?</span>;
 
-			<span class="comment">// dispatch_thunk returns pointer to serialized arguments.</span>
-			<span class="comment">// Unpack pointer and len of the serialized result data.</span>
-			<span class="kw">let</span> (<span class="ident">serialized_result_val_ptr</span>, <span class="ident">serialized_result_val_len</span>) <span class="op">=</span> {
-				<span class="comment">// Cast to u64 to use zero-extension.</span>
-				<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">result</span> <span class="kw">as</span> <span class="ident">u64</span>;
-				<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> (<span class="ident">v</span> <span class="kw">as</span> <span class="ident">u64</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">32</span>) <span class="kw">as</span> <span class="ident">u32</span>;
-				<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> (<span class="ident">v</span> <span class="op">&amp;</span> <span class="number">0xFFFFFFFF</span>) <span class="kw">as</span> <span class="ident">u32</span>;
-				(<span class="ident">Pointer::new</span>(<span class="ident">ptr</span>), <span class="ident">len</span>)
+			<span class="comment">// dispatch_thunk returns pointer to serialized arguments.
+			// Unpack pointer and len of the serialized result data.
+			</span><span class="kw">let </span>(serialized_result_val_ptr, serialized_result_val_len) = {
+				<span class="comment">// Cast to u64 to use zero-extension.
+				</span><span class="kw">let </span>v = result <span class="kw">as </span>u64;
+				<span class="kw">let </span>ptr = (v <span class="kw">as </span>u64 &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>u32;
+				<span class="kw">let </span>len = (v &amp; <span class="number">0xFFFFFFFF</span>) <span class="kw">as </span>u32;
+				(Pointer::new(ptr), len)
 			};
 
-			<span class="kw">let</span> <span class="ident">serialized_result_val</span> <span class="op">=</span> <span class="ident">sandbox_context</span>
-				.<span class="ident">supervisor_context</span>()
-				.<span class="ident">read_memory</span>(<span class="ident">serialized_result_val_ptr</span>, <span class="ident">serialized_result_val_len</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">trap</span>(<span class="string">&quot;Can&#39;t read the serialized result from dispatch thunk&quot;</span>));
+			<span class="kw">let </span>serialized_result_val = sandbox_context
+				.supervisor_context()
+				.read_memory(serialized_result_val_ptr, serialized_result_val_len)
+				.map_err(|<span class="kw">_</span>| trap(<span class="string">&quot;Can&#39;t read the serialized result from dispatch thunk&quot;</span>));
 
-			<span class="ident">deallocate</span>(
-				<span class="ident">sandbox_context</span>.<span class="ident">supervisor_context</span>(),
-				<span class="ident">serialized_result_val_ptr</span>,
+			deallocate(
+				sandbox_context.supervisor_context(),
+				serialized_result_val_ptr,
 				<span class="string">&quot;Can&#39;t deallocate memory for dispatch thunk&#39;s result&quot;</span>,
 			)
-			.<span class="ident">and</span>(<span class="ident">serialized_result_val</span>)
-			.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">serialized_result_val</span><span class="op">|</span> {
-				<span class="kw">let</span> <span class="ident">result_val</span> <span class="op">=</span> <span class="ident">std::result::Result</span>::<span class="op">&lt;</span><span class="ident">ReturnValue</span>, <span class="ident">HostError</span><span class="op">&gt;</span><span class="ident">::decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">serialized_result_val</span>.<span class="ident">as_slice</span>())
-					.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">trap</span>(<span class="string">&quot;Decoding Result&lt;ReturnValue, HostError&gt; failed!&quot;</span>))<span class="question-mark">?</span>;
+			.and(serialized_result_val)
+			.and_then(|serialized_result_val| {
+				<span class="kw">let </span>result_val = std::result::Result::&lt;ReturnValue, HostError&gt;::decode(<span class="kw-2">&amp;mut </span>serialized_result_val.as_slice())
+					.map_err(|<span class="kw">_</span>| trap(<span class="string">&quot;Decoding Result&lt;ReturnValue, HostError&gt; failed!&quot;</span>))<span class="question-mark">?</span>;
 
-				<span class="kw">match</span> <span class="ident">result_val</span> {
-					<span class="prelude-val">Ok</span>(<span class="ident">return_value</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">return_value</span> {
-						<span class="ident">ReturnValue::Unit</span> =&gt; <span class="prelude-val">None</span>,
-						<span class="ident">ReturnValue::Value</span>(<span class="ident">typed_value</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">RuntimeValue::from</span>(<span class="ident">typed_value</span>)),
+				<span class="kw">match </span>result_val {
+					<span class="prelude-val">Ok</span>(return_value) =&gt; <span class="prelude-val">Ok</span>(<span class="kw">match </span>return_value {
+						ReturnValue::Unit =&gt; <span class="prelude-val">None</span>,
+						ReturnValue::Value(typed_value) =&gt; <span class="prelude-val">Some</span>(RuntimeValue::from(typed_value)),
 					}),
-					<span class="prelude-val">Err</span>(<span class="ident">HostError</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">trap</span>(<span class="string">&quot;Supervisor function returned sandbox::HostError&quot;</span>)),
+					<span class="prelude-val">Err</span>(HostError) =&gt; <span class="prelude-val">Err</span>(trap(<span class="string">&quot;Supervisor function returned sandbox::HostError&quot;</span>)),
 				}
 			})
-		}).<span class="ident">expect</span>(<span class="string">&quot;SandboxContextStore is set when invoking sandboxed functions; qed&quot;</span>)
+		}).expect(<span class="string">&quot;SandboxContextStore is set when invoking sandboxed functions; qed&quot;</span>)
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">with_guest_externals</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">sandbox_instance</span>: <span class="kw-2">&amp;</span><span class="ident">SandboxInstance</span>, <span class="ident">state</span>: <span class="ident">u32</span>, <span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="ident">R</span>
-<span class="kw">where</span>
-	<span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;mut</span> <span class="ident">GuestExternals</span>) -&gt; <span class="ident">R</span>,
+<span class="kw">fn </span>with_guest_externals&lt;R, F&gt;(sandbox_instance: <span class="kw-2">&amp;</span>SandboxInstance, state: u32, f: F) -&gt; R
+<span class="kw">where
+	</span>F: FnOnce(<span class="kw-2">&amp;mut </span>GuestExternals) -&gt; R,
 {
-	<span class="ident">f</span>(<span class="kw-2">&amp;mut</span> <span class="ident">GuestExternals</span> { <span class="ident">sandbox_instance</span>, <span class="ident">state</span> })
+	f(<span class="kw-2">&amp;mut </span>GuestExternals { sandbox_instance, state })
 }
 
-<span class="doccomment">/// Instantiate a module within a sandbox context</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">instantiate</span>(
-	<span class="ident">wasm</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	<span class="ident">guest_env</span>: <span class="ident">GuestEnvironment</span>,
-	<span class="ident">state</span>: <span class="ident">u32</span>,
-	<span class="ident">sandbox_context</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">SandboxContext</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">SandboxInstance</span><span class="op">&gt;</span>, <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">wasmi_module</span> <span class="op">=</span> <span class="ident">Module::from_buffer</span>(<span class="ident">wasm</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">InstantiationError::ModuleDecoding</span>)<span class="question-mark">?</span>;
-	<span class="kw">let</span> <span class="ident">wasmi_instance</span> <span class="op">=</span> <span class="ident">ModuleInstance::new</span>(<span class="kw-2">&amp;</span><span class="ident">wasmi_module</span>, <span class="kw-2">&amp;</span><span class="ident">guest_env</span>.<span class="ident">imports</span>)
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">InstantiationError::Instantiation</span>)<span class="question-mark">?</span>;
+<span class="doccomment">/// Instantiate a module within a sandbox context
+</span><span class="kw">pub fn </span>instantiate(
+	wasm: <span class="kw-2">&amp;</span>[u8],
+	guest_env: GuestEnvironment,
+	state: u32,
+	sandbox_context: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>SandboxContext,
+) -&gt; std::result::Result&lt;Rc&lt;SandboxInstance&gt;, InstantiationError&gt; {
+	<span class="kw">let </span>wasmi_module = Module::from_buffer(wasm).map_err(|<span class="kw">_</span>| InstantiationError::ModuleDecoding)<span class="question-mark">?</span>;
+	<span class="kw">let </span>wasmi_instance = ModuleInstance::new(<span class="kw-2">&amp;</span>wasmi_module, <span class="kw-2">&amp;</span>guest_env.imports)
+		.map_err(|<span class="kw">_</span>| InstantiationError::Instantiation)<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="ident">sandbox_instance</span> <span class="op">=</span> <span class="ident">Rc::new</span>(<span class="ident">SandboxInstance</span> {
-		<span class="comment">// In general, it&#39;s not a very good idea to use `.not_started_instance()` for</span>
-		<span class="comment">// anything but for extracting memory and tables. But in this particular case, we</span>
-		<span class="comment">// are extracting for the purpose of running `start` function which should be ok.</span>
-		<span class="ident">backend_instance</span>: <span class="ident">BackendInstance::Wasmi</span>(<span class="ident">wasmi_instance</span>.<span class="ident">not_started_instance</span>().<span class="ident">clone</span>()),
-		<span class="ident">guest_to_supervisor_mapping</span>: <span class="ident">guest_env</span>.<span class="ident">guest_to_supervisor_mapping</span>,
+	<span class="kw">let </span>sandbox_instance = Rc::new(SandboxInstance {
+		<span class="comment">// In general, it&#39;s not a very good idea to use `.not_started_instance()` for
+		// anything but for extracting memory and tables. But in this particular case, we
+		// are extracting for the purpose of running `start` function which should be ok.
+		</span>backend_instance: BackendInstance::Wasmi(wasmi_instance.not_started_instance().clone()),
+		guest_to_supervisor_mapping: guest_env.guest_to_supervisor_mapping,
 	});
 
-	<span class="ident">with_guest_externals</span>(<span class="kw-2">&amp;</span><span class="ident">sandbox_instance</span>, <span class="ident">state</span>, <span class="op">|</span><span class="ident">guest_externals</span><span class="op">|</span> {
-		<span class="ident">SandboxContextStore::using</span>(<span class="ident">sandbox_context</span>, <span class="op">|</span><span class="op">|</span> {
-			<span class="ident">wasmi_instance</span>
-				.<span class="ident">run_start</span>(<span class="ident">guest_externals</span>)
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">InstantiationError::StartTrapped</span>)
+	with_guest_externals(<span class="kw-2">&amp;</span>sandbox_instance, state, |guest_externals| {
+		SandboxContextStore::using(sandbox_context, || {
+			wasmi_instance
+				.run_start(guest_externals)
+				.map_err(|<span class="kw">_</span>| InstantiationError::StartTrapped)
 		})
 	})<span class="question-mark">?</span>;
 
-	<span class="prelude-val">Ok</span>(<span class="ident">sandbox_instance</span>)
+	<span class="prelude-val">Ok</span>(sandbox_instance)
 }
 
-<span class="doccomment">/// Invoke a function within a sandboxed module</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">invoke</span>(
-	<span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">SandboxInstance</span>,
-	<span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">wasmi::ModuleRef</span>,
-	<span class="ident">export_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-	<span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">Value</span>],
-	<span class="ident">state</span>: <span class="ident">u32</span>,
-	<span class="ident">sandbox_context</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">SandboxContext</span>,
-) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>, <span class="ident">error::Error</span><span class="op">&gt;</span> {
-	<span class="ident">with_guest_externals</span>(<span class="ident">instance</span>, <span class="ident">state</span>, <span class="op">|</span><span class="ident">guest_externals</span><span class="op">|</span> {
-		<span class="ident">SandboxContextStore::using</span>(<span class="ident">sandbox_context</span>, <span class="op">|</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">args</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+<span class="doccomment">/// Invoke a function within a sandboxed module
+</span><span class="kw">pub fn </span>invoke(
+	instance: <span class="kw-2">&amp;</span>SandboxInstance,
+	module: <span class="kw-2">&amp;</span>wasmi::ModuleRef,
+	export_name: <span class="kw-2">&amp;</span>str,
+	args: <span class="kw-2">&amp;</span>[Value],
+	state: u32,
+	sandbox_context: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>SandboxContext,
+) -&gt; std::result::Result&lt;<span class="prelude-ty">Option</span>&lt;Value&gt;, error::Error&gt; {
+	with_guest_externals(instance, state, |guest_externals| {
+		SandboxContextStore::using(sandbox_context, || {
+			<span class="kw">let </span>args = args.iter().cloned().map(Into::into).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-			<span class="ident">module</span>
-				.<span class="ident">invoke_export</span>(<span class="ident">export_name</span>, <span class="kw-2">&amp;</span><span class="ident">args</span>, <span class="ident">guest_externals</span>)
-				.<span class="ident">map</span>(<span class="op">|</span><span class="ident">result</span><span class="op">|</span> <span class="ident">result</span>.<span class="ident">map</span>(<span class="ident">Into::into</span>))
-				.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">error</span><span class="op">|</span> <span class="ident">error::Error::Sandbox</span>(<span class="ident">error</span>.<span class="ident">to_string</span>()))
+			module
+				.invoke_export(export_name, <span class="kw-2">&amp;</span>args, guest_externals)
+				.map(|result| result.map(Into::into))
+				.map_err(|error| error::Error::Sandbox(error.to_string()))
 		})
 	})
 }
 
-<span class="doccomment">/// Get global value by name</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_global</span>(<span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">wasmi::ModuleRef</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span> {
-	<span class="prelude-val">Some</span>(<span class="ident">instance</span>.<span class="ident">export_by_name</span>(<span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">as_global</span>()<span class="question-mark">?</span>.<span class="ident">get</span>().<span class="ident">into</span>())
+<span class="doccomment">/// Get global value by name
+</span><span class="kw">pub fn </span>get_global(instance: <span class="kw-2">&amp;</span>wasmi::ModuleRef, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Value&gt; {
+	<span class="prelude-val">Some</span>(instance.export_by_name(name)<span class="question-mark">?</span>.as_global()<span class="question-mark">?</span>.get().into())
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_executor_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_executor_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

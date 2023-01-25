@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["simple_hash","A primitive hash function for matching opcodes."]]});
+window.SIDEBAR_ITEMS = {"fn":[["simple_hash","A primitive hash function for matching opcodes."]]};

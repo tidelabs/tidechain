@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/engine.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>engine.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/engine.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>engine.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -300,303 +295,302 @@
 <span id="295">295</span>
 <span id="296">296</span>
 <span id="297">297</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::signatures::SignatureRegistry</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Config</span>, <span class="ident">Trap</span>};
-<span class="kw">use</span> <span class="ident">anyhow::Result</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;parallel-compilation&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">rayon::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicU64</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cache&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">wasmtime_cache::CacheConfig</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_runtime</span>::{<span class="ident">debug_builtins</span>, <span class="ident">CompiledModuleIdAllocator</span>, <span class="ident">InstanceAllocator</span>};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::signatures::SignatureRegistry;
+<span class="kw">use crate</span>::{Config, Trap};
+<span class="kw">use </span>anyhow::Result;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;parallel-compilation&quot;</span>)]
+</span><span class="kw">use </span>rayon::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::sync::atomic::{AtomicU64, Ordering};
+<span class="kw">use </span>std::sync::Arc;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;cache&quot;</span>)]
+</span><span class="kw">use </span>wasmtime_cache::CacheConfig;
+<span class="kw">use </span>wasmtime_runtime::{debug_builtins, CompiledModuleIdAllocator, InstanceAllocator};
 
-<span class="doccomment">/// An `Engine` which is a global context for compilation and management of wasm</span>
-<span class="doccomment">/// modules.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An engine can be safely shared across threads and is a cheap cloneable</span>
-<span class="doccomment">/// handle to the actual engine. The engine itself will be deallocated once all</span>
-<span class="doccomment">/// references to it have gone away.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Engines store global configuration preferences such as compilation settings,</span>
-<span class="doccomment">/// enabled features, etc. You&#39;ll likely only need at most one of these for a</span>
-<span class="doccomment">/// program.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ## Engines and `Clone`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Using `clone` on an `Engine` is a cheap operation. It will not create an</span>
-<span class="doccomment">/// entirely new engine, but rather just a new reference to the existing engine.</span>
-<span class="doccomment">/// In other words it&#39;s a shallow copy, not a deep copy.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ## Engines and `Default`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// You can create an engine with default configuration settings using</span>
-<span class="doccomment">/// `Engine::default()`. Be sure to consult the documentation of [`Config`] for</span>
-<span class="doccomment">/// default settings.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Engine</span> {
-    <span class="ident">inner</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">EngineInner</span><span class="op">&gt;</span>,
+<span class="doccomment">/// An `Engine` which is a global context for compilation and management of wasm
+/// modules.
+///
+/// An engine can be safely shared across threads and is a cheap cloneable
+/// handle to the actual engine. The engine itself will be deallocated once all
+/// references to it have gone away.
+///
+/// Engines store global configuration preferences such as compilation settings,
+/// enabled features, etc. You&#39;ll likely only need at most one of these for a
+/// program.
+///
+/// ## Engines and `Clone`
+///
+/// Using `clone` on an `Engine` is a cheap operation. It will not create an
+/// entirely new engine, but rather just a new reference to the existing engine.
+/// In other words it&#39;s a shallow copy, not a deep copy.
+///
+/// ## Engines and `Default`
+///
+/// You can create an engine with default configuration settings using
+/// `Engine::default()`. Be sure to consult the documentation of [`Config`] for
+/// default settings.
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>Engine {
+    inner: Arc&lt;EngineInner&gt;,
 }
 
-<span class="kw">struct</span> <span class="ident">EngineInner</span> {
-    <span class="ident">config</span>: <span class="ident">Config</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">compiler</span>)]</span>
-    <span class="ident">compiler</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">wasmtime_environ::Compiler</span><span class="op">&gt;</span>,
-    <span class="ident">allocator</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">InstanceAllocator</span><span class="op">&gt;</span>,
-    <span class="ident">signatures</span>: <span class="ident">SignatureRegistry</span>,
-    <span class="ident">epoch</span>: <span class="ident">AtomicU64</span>,
-    <span class="ident">unique_id_allocator</span>: <span class="ident">CompiledModuleIdAllocator</span>,
+<span class="kw">struct </span>EngineInner {
+    config: Config,
+    <span class="attribute">#[cfg(compiler)]
+    </span>compiler: Box&lt;<span class="kw">dyn </span>wasmtime_environ::Compiler&gt;,
+    allocator: Box&lt;<span class="kw">dyn </span>InstanceAllocator&gt;,
+    signatures: SignatureRegistry,
+    epoch: AtomicU64,
+    unique_id_allocator: CompiledModuleIdAllocator,
 }
 
-<span class="kw">impl</span> <span class="ident">Engine</span> {
-    <span class="doccomment">/// Creates a new [`Engine`] with the specified compilation and</span>
-    <span class="doccomment">/// configuration settings.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Engine</span><span class="op">&gt;</span> {
-        <span class="comment">// Ensure that wasmtime_runtime&#39;s signal handlers are configured. This</span>
-        <span class="comment">// is the per-program initialization required for handling traps, such</span>
-        <span class="comment">// as configuring signals, vectored exception handlers, etc.</span>
-        <span class="ident">wasmtime_runtime::init_traps</span>(<span class="ident"><span class="kw">crate</span>::module::GlobalModuleRegistry::is_wasm_trap_pc</span>);
-        <span class="ident">debug_builtins::ensure_exported</span>();
+<span class="kw">impl </span>Engine {
+    <span class="doccomment">/// Creates a new [`Engine`] with the specified compilation and
+    /// configuration settings.
+    </span><span class="kw">pub fn </span>new(config: <span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;Engine&gt; {
+        <span class="comment">// Ensure that wasmtime_runtime&#39;s signal handlers are configured. This
+        // is the per-program initialization required for handling traps, such
+        // as configuring signals, vectored exception handlers, etc.
+        </span>wasmtime_runtime::init_traps(<span class="kw">crate</span>::module::GlobalModuleRegistry::is_wasm_trap_pc);
+        debug_builtins::ensure_exported();
 
-        <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">SignatureRegistry::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">build_allocator</span>()<span class="question-mark">?</span>;
-        <span class="ident">allocator</span>.<span class="ident">adjust_tunables</span>(<span class="kw-2">&amp;mut</span> <span class="ident">config</span>.<span class="ident">tunables</span>);
+        <span class="kw">let </span>registry = SignatureRegistry::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>config = config.clone();
+        <span class="kw">let </span>allocator = config.build_allocator()<span class="question-mark">?</span>;
+        allocator.adjust_tunables(<span class="kw-2">&amp;mut </span>config.tunables);
 
-        <span class="prelude-val">Ok</span>(<span class="ident">Engine</span> {
-            <span class="ident">inner</span>: <span class="ident">Arc::new</span>(<span class="ident">EngineInner</span> {
-                <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">compiler</span>)]</span>
-                <span class="ident">compiler</span>: <span class="ident">config</span>.<span class="ident">compiler</span>.<span class="ident">build</span>()<span class="question-mark">?</span>,
-                <span class="ident">config</span>,
-                <span class="ident">allocator</span>,
-                <span class="ident">signatures</span>: <span class="ident">registry</span>,
-                <span class="ident">epoch</span>: <span class="ident">AtomicU64::new</span>(<span class="number">0</span>),
-                <span class="ident">unique_id_allocator</span>: <span class="ident">CompiledModuleIdAllocator::new</span>(),
+        <span class="prelude-val">Ok</span>(Engine {
+            inner: Arc::new(EngineInner {
+                <span class="attribute">#[cfg(compiler)]
+                </span>compiler: config.compiler.build()<span class="question-mark">?</span>,
+                config,
+                allocator,
+                signatures: registry,
+                epoch: AtomicU64::new(<span class="number">0</span>),
+                unique_id_allocator: CompiledModuleIdAllocator::new(),
             }),
         })
     }
 
-    <span class="doccomment">/// Eagerly initialize thread-local functionality shared by all [`Engine`]s.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Wasmtime&#39;s implementation on some platforms may involve per-thread</span>
-    <span class="doccomment">/// setup that needs to happen whenever WebAssembly is invoked. This setup</span>
-    <span class="doccomment">/// can take on the order of a few hundred microseconds, whereas the</span>
-    <span class="doccomment">/// overhead of calling WebAssembly is otherwise on the order of a few</span>
-    <span class="doccomment">/// nanoseconds. This setup cost is paid once per-OS-thread. If your</span>
-    <span class="doccomment">/// application is sensitive to the latencies of WebAssembly function</span>
-    <span class="doccomment">/// calls, even those that happen first on a thread, then this function</span>
-    <span class="doccomment">/// can be used to improve the consistency of each call into WebAssembly</span>
-    <span class="doccomment">/// by explicitly frontloading the cost of the one-time setup per-thread.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this function is not required to be called in any embedding.</span>
-    <span class="doccomment">/// Wasmtime will automatically initialize thread-local-state as necessary</span>
-    <span class="doccomment">/// on calls into WebAssembly. This is provided for use cases where the</span>
-    <span class="doccomment">/// latency of WebAssembly calls are extra-important, which is not</span>
-    <span class="doccomment">/// necessarily true of all embeddings.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tls_eager_initialize</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Trap</span><span class="op">&gt;</span> {
-        <span class="ident">wasmtime_runtime::tls_eager_initialize</span>().<span class="ident">map_err</span>(<span class="ident">Trap::from_runtime_box</span>)
+    <span class="doccomment">/// Eagerly initialize thread-local functionality shared by all [`Engine`]s.
+    ///
+    /// Wasmtime&#39;s implementation on some platforms may involve per-thread
+    /// setup that needs to happen whenever WebAssembly is invoked. This setup
+    /// can take on the order of a few hundred microseconds, whereas the
+    /// overhead of calling WebAssembly is otherwise on the order of a few
+    /// nanoseconds. This setup cost is paid once per-OS-thread. If your
+    /// application is sensitive to the latencies of WebAssembly function
+    /// calls, even those that happen first on a thread, then this function
+    /// can be used to improve the consistency of each call into WebAssembly
+    /// by explicitly frontloading the cost of the one-time setup per-thread.
+    ///
+    /// Note that this function is not required to be called in any embedding.
+    /// Wasmtime will automatically initialize thread-local-state as necessary
+    /// on calls into WebAssembly. This is provided for use cases where the
+    /// latency of WebAssembly calls are extra-important, which is not
+    /// necessarily true of all embeddings.
+    </span><span class="kw">pub fn </span>tls_eager_initialize() -&gt; <span class="prelude-ty">Result</span>&lt;(), Trap&gt; {
+        wasmtime_runtime::tls_eager_initialize().map_err(Trap::from_runtime_box)
     }
 
-    <span class="doccomment">/// Returns the configuration settings that this engine is using.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">config</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Config</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">config</span>
+    <span class="doccomment">/// Returns the configuration settings that this engine is using.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Config {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.inner.config
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">compiler</span>)]</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">compiler</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">wasmtime_environ::Compiler</span> {
-        <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">compiler</span>
+    <span class="attribute">#[cfg(compiler)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compiler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>wasmtime_environ::Compiler {
+        <span class="kw-2">&amp;*</span><span class="self">self</span>.inner.compiler
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">allocator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">InstanceAllocator</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">allocator</span>.<span class="ident">as_ref</span>()
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>allocator(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>InstanceAllocator {
+        <span class="self">self</span>.inner.allocator.as_ref()
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cache&quot;</span>)]</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">cache_config</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CacheConfig</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>
+    <span class="attribute">#[cfg(feature = <span class="string">&quot;cache&quot;</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cache_config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CacheConfig {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.config().cache_config
     }
 
-    <span class="doccomment">/// Returns whether the engine `a` and `b` refer to the same configuration.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">same</span>(<span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="ident">Engine</span>, <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="ident">Engine</span>) -&gt; <span class="ident">bool</span> {
-        <span class="ident">Arc::ptr_eq</span>(<span class="kw-2">&amp;</span><span class="ident">a</span>.<span class="ident">inner</span>, <span class="kw-2">&amp;</span><span class="ident">b</span>.<span class="ident">inner</span>)
+    <span class="doccomment">/// Returns whether the engine `a` and `b` refer to the same configuration.
+    </span><span class="kw">pub fn </span>same(a: <span class="kw-2">&amp;</span>Engine, b: <span class="kw-2">&amp;</span>Engine) -&gt; bool {
+        Arc::ptr_eq(<span class="kw-2">&amp;</span>a.inner, <span class="kw-2">&amp;</span>b.inner)
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">signatures</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">SignatureRegistry</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">signatures</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>signatures(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>SignatureRegistry {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.inner.signatures
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">epoch_counter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">AtomicU64</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">epoch</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>epoch_counter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>AtomicU64 {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.inner.epoch
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">current_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="self">self</span>.<span class="ident">epoch_counter</span>().<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>)
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>current_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="self">self</span>.epoch_counter().load(Ordering::Relaxed)
     }
 
-    <span class="doccomment">/// Increments the epoch.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// When using epoch-based interruption, currently-executing Wasm</span>
-    <span class="doccomment">/// code within this engine will trap or yield &quot;soon&quot; when the</span>
-    <span class="doccomment">/// epoch deadline is reached or exceeded. (The configuration, and</span>
-    <span class="doccomment">/// the deadline, are set on the `Store`.) The intent of the</span>
-    <span class="doccomment">/// design is for this method to be called by the embedder at some</span>
-    <span class="doccomment">/// regular cadence, for example by a thread that wakes up at some</span>
-    <span class="doccomment">/// interval, or by a signal handler.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// See [`Config::epoch_interruption`](crate::Config::epoch_interruption)</span>
-    <span class="doccomment">/// for an introduction to epoch-based interruption and pointers</span>
-    <span class="doccomment">/// to the other relevant methods.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Signal Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method is signal-safe: it does not make any syscalls, and</span>
-    <span class="doccomment">/// performs only an atomic increment to the epoch value in</span>
-    <span class="doccomment">/// memory.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">increment_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">epoch</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="doccomment">/// Increments the epoch.
+    ///
+    /// When using epoch-based interruption, currently-executing Wasm
+    /// code within this engine will trap or yield &quot;soon&quot; when the
+    /// epoch deadline is reached or exceeded. (The configuration, and
+    /// the deadline, are set on the `Store`.) The intent of the
+    /// design is for this method to be called by the embedder at some
+    /// regular cadence, for example by a thread that wakes up at some
+    /// interval, or by a signal handler.
+    ///
+    /// See [`Config::epoch_interruption`](crate::Config::epoch_interruption)
+    /// for an introduction to epoch-based interruption and pointers
+    /// to the other relevant methods.
+    ///
+    /// ## Signal Safety
+    ///
+    /// This method is signal-safe: it does not make any syscalls, and
+    /// performs only an atomic increment to the epoch value in
+    /// memory.
+    </span><span class="kw">pub fn </span>increment_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.inner.epoch.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unique_id_allocator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CompiledModuleIdAllocator</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">unique_id_allocator</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unique_id_allocator(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CompiledModuleIdAllocator {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.inner.unique_id_allocator
     }
 
-    <span class="doccomment">/// Ahead-of-time (AOT) compiles a WebAssembly module.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The `bytes` provided must be in one of two formats:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * A [binary-encoded][binary] WebAssembly module. This is always supported.</span>
-    <span class="doccomment">/// * A [text-encoded][text] instance of the WebAssembly text format.</span>
-    <span class="doccomment">///   This is only supported when the `wat` feature of this crate is enabled.</span>
-    <span class="doccomment">///   If this is supplied then the text format will be parsed before validation.</span>
-    <span class="doccomment">///   Note that the `wat` feature is enabled by default.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method may be used to compile a module for use with a different target</span>
-    <span class="doccomment">/// host. The output of this method may be used with</span>
-    <span class="doccomment">/// [`Module::deserialize`](crate::Module::deserialize) on hosts compatible</span>
-    <span class="doccomment">/// with the [`Config`] associated with this [`Engine`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The output of this method is safe to send to another host machine for later</span>
-    <span class="doccomment">/// execution. As the output is already a compiled module, translation and code</span>
-    <span class="doccomment">/// generation will be skipped and this will improve the performance of constructing</span>
-    <span class="doccomment">/// a [`Module`](crate::Module) from the output of this method.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// [binary]: https://webassembly.github.io/spec/core/binary/index.html</span>
-    <span class="doccomment">/// [text]: https://webassembly.github.io/spec/core/text/index.html</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">compiler</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">nightlydoc</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cranelift&quot;</span>)))]</span> <span class="comment">// see build.rs</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">precompile_module</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;wat&quot;</span>)]</span>
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">wat::parse_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">artifacts</span>, <span class="ident">types</span>) <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::Module::build_artifacts</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="ident">bytes</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">artifacts</span> <span class="op">=</span> <span class="ident">artifacts</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">i</span>.<span class="number">0</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="ident"><span class="kw">crate</span>::module::SerializedModule::from_artifacts</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="ident">artifacts</span>, <span class="kw-2">&amp;</span><span class="ident">types</span>)
-            .<span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>().<span class="ident">module_version</span>)
+    <span class="doccomment">/// Ahead-of-time (AOT) compiles a WebAssembly module.
+    ///
+    /// The `bytes` provided must be in one of two formats:
+    ///
+    /// * A [binary-encoded][binary] WebAssembly module. This is always supported.
+    /// * A [text-encoded][text] instance of the WebAssembly text format.
+    ///   This is only supported when the `wat` feature of this crate is enabled.
+    ///   If this is supplied then the text format will be parsed before validation.
+    ///   Note that the `wat` feature is enabled by default.
+    ///
+    /// This method may be used to compile a module for use with a different target
+    /// host. The output of this method may be used with
+    /// [`Module::deserialize`](crate::Module::deserialize) on hosts compatible
+    /// with the [`Config`] associated with this [`Engine`].
+    ///
+    /// The output of this method is safe to send to another host machine for later
+    /// execution. As the output is already a compiled module, translation and code
+    /// generation will be skipped and this will improve the performance of constructing
+    /// a [`Module`](crate::Module) from the output of this method.
+    ///
+    /// [binary]: https://webassembly.github.io/spec/core/binary/index.html
+    /// [text]: https://webassembly.github.io/spec/core/text/index.html
+    </span><span class="attribute">#[cfg(compiler)]
+    #[cfg_attr(nightlydoc, doc(cfg(feature = <span class="string">&quot;cranelift&quot;</span>)))] </span><span class="comment">// see build.rs
+    </span><span class="kw">pub fn </span>precompile_module(<span class="kw-2">&amp;</span><span class="self">self</span>, bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+        <span class="attribute">#[cfg(feature = <span class="string">&quot;wat&quot;</span>)]
+        </span><span class="kw">let </span>bytes = wat::parse_bytes(<span class="kw-2">&amp;</span>bytes)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(<span class="kw">_</span>, artifacts, types) = <span class="kw">crate</span>::Module::build_artifacts(<span class="self">self</span>, <span class="kw-2">&amp;</span>bytes)<span class="question-mark">?</span>;
+        <span class="kw">let </span>artifacts = artifacts.into_iter().map(|i| i.<span class="number">0</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">crate</span>::module::SerializedModule::from_artifacts(<span class="self">self</span>, <span class="kw-2">&amp;</span>artifacts, <span class="kw-2">&amp;</span>types)
+            .to_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>.config().module_version)
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">run_maybe_parallel</span><span class="op">&lt;</span>
-        <span class="ident">A</span>: <span class="ident">Send</span>,
-        <span class="ident">B</span>: <span class="ident">Send</span>,
-        <span class="ident">E</span>: <span class="ident">Send</span>,
-        <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">A</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="op">&gt;</span>(
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>run_maybe_parallel&lt;
+        A: Send,
+        B: Send,
+        E: Send,
+        F: Fn(A) -&gt; <span class="prelude-ty">Result</span>&lt;B, E&gt; + Send + Sync,
+    &gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">input</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>,
-        <span class="ident">f</span>: <span class="ident">F</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">config</span>().<span class="ident">parallel_compilation</span> {
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;parallel-compilation&quot;</span>)]</span>
-            <span class="kw">return</span> <span class="ident">input</span>
-                .<span class="ident">into_par_iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">a</span><span class="op">|</span> <span class="ident">f</span>(<span class="ident">a</span>))
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        input: Vec&lt;A&gt;,
+        f: F,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;B&gt;, E&gt; {
+        <span class="kw">if </span><span class="self">self</span>.config().parallel_compilation {
+            <span class="attribute">#[cfg(feature = <span class="string">&quot;parallel-compilation&quot;</span>)]
+            </span><span class="kw">return </span>input
+                .into_par_iter()
+                .map(|a| f(a))
+                .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;B&gt;, E&gt;&gt;();
         }
 
-        <span class="comment">// In case the parallel-compilation feature is disabled or the parallel_compilation config</span>
-        <span class="comment">// was turned off dynamically fallback to the non-parallel version.</span>
-        <span class="ident">input</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">a</span><span class="op">|</span> <span class="ident">f</span>(<span class="ident">a</span>))
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+        <span class="comment">// In case the parallel-compilation feature is disabled or the parallel_compilation config
+        // was turned off dynamically fallback to the non-parallel version.
+        </span>input
+            .into_iter()
+            .map(|a| f(a))
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;B&gt;, E&gt;&gt;()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Engine</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="ident">Engine</span> {
-        <span class="ident">Engine::new</span>(<span class="kw-2">&amp;</span><span class="ident">Config::default</span>()).<span class="ident">unwrap</span>()
+<span class="kw">impl </span>Default <span class="kw">for </span>Engine {
+    <span class="kw">fn </span>default() -&gt; Engine {
+        Engine::new(<span class="kw-2">&amp;</span>Config::default()).unwrap()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Config</span>, <span class="ident">Engine</span>, <span class="ident">Module</span>, <span class="ident">OptLevel</span>};
-    <span class="kw">use</span> <span class="ident">anyhow::Result</span>;
-    <span class="kw">use</span> <span class="ident">tempfile::TempDir</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use crate</span>::{Config, Engine, Module, OptLevel};
+    <span class="kw">use </span>anyhow::Result;
+    <span class="kw">use </span>tempfile::TempDir;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">cache_accounts_for_opt_level</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">td</span> <span class="op">=</span> <span class="ident">TempDir::new</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">config_path</span> <span class="op">=</span> <span class="ident">td</span>.<span class="ident">path</span>().<span class="ident">join</span>(<span class="string">&quot;config.toml&quot;</span>);
-        <span class="ident">std::fs::write</span>(
-            <span class="kw-2">&amp;</span><span class="ident">config_path</span>,
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>cache_accounts_for_opt_level() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>td = TempDir::new()<span class="question-mark">?</span>;
+        <span class="kw">let </span>config_path = td.path().join(<span class="string">&quot;config.toml&quot;</span>);
+        std::fs::write(
+            <span class="kw-2">&amp;</span>config_path,
             <span class="kw-2">&amp;</span><span class="macro">format!</span>(
                 <span class="string">&quot;
                     [cache]
                     enabled = true
                     directory = &#39;{}&#39;
                 &quot;</span>,
-                <span class="ident">td</span>.<span class="ident">path</span>().<span class="ident">join</span>(<span class="string">&quot;cache&quot;</span>).<span class="ident">display</span>()
+                td.path().join(<span class="string">&quot;cache&quot;</span>).display()
             ),
         )<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">Config::new</span>();
-        <span class="ident">cfg</span>.<span class="ident">cranelift_opt_level</span>(<span class="ident">OptLevel::None</span>)
-            .<span class="ident">cache_config_load</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">Engine::new</span>(<span class="kw-2">&amp;</span><span class="ident">cfg</span>)<span class="question-mark">?</span>;
-        <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
-        <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>cfg = Config::new();
+        cfg.cranelift_opt_level(OptLevel::None)
+            .cache_config_load(<span class="kw-2">&amp;</span>config_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>engine = Engine::new(<span class="kw-2">&amp;</span>cfg)<span class="question-mark">?</span>;
+        Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
+        Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">Config::new</span>();
-        <span class="ident">cfg</span>.<span class="ident">cranelift_opt_level</span>(<span class="ident">OptLevel::Speed</span>)
-            .<span class="ident">cache_config_load</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">Engine::new</span>(<span class="kw-2">&amp;</span><span class="ident">cfg</span>)<span class="question-mark">?</span>;
-        <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
-        <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>cfg = Config::new();
+        cfg.cranelift_opt_level(OptLevel::Speed)
+            .cache_config_load(<span class="kw-2">&amp;</span>config_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>engine = Engine::new(<span class="kw-2">&amp;</span>cfg)<span class="question-mark">?</span>;
+        Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
+        Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">Config::new</span>();
-        <span class="ident">cfg</span>.<span class="ident">cranelift_opt_level</span>(<span class="ident">OptLevel::SpeedAndSize</span>)
-            .<span class="ident">cache_config_load</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">Engine::new</span>(<span class="kw-2">&amp;</span><span class="ident">cfg</span>)<span class="question-mark">?</span>;
-        <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
-        <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>cfg = Config::new();
+        cfg.cranelift_opt_level(OptLevel::SpeedAndSize)
+            .cache_config_load(<span class="kw-2">&amp;</span>config_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>engine = Engine::new(<span class="kw-2">&amp;</span>cfg)<span class="question-mark">?</span>;
+        Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
+        Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
 
-        <span class="comment">// FIXME(#1523) need debuginfo on aarch64 before we run this test there</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="macro">cfg!</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>) {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">Config::new</span>();
-            <span class="ident">cfg</span>.<span class="ident">debug_info</span>(<span class="bool-val">true</span>).<span class="ident">cache_config_load</span>(<span class="kw-2">&amp;</span><span class="ident">config_path</span>)<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">Engine::new</span>(<span class="kw-2">&amp;</span><span class="ident">cfg</span>)<span class="question-mark">?</span>;
-            <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">0</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
-            <span class="ident">Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_hits</span>(), <span class="number">1</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">engine</span>.<span class="ident">config</span>().<span class="ident">cache_config</span>.<span class="ident">cache_misses</span>(), <span class="number">1</span>);
+        <span class="comment">// FIXME(#1523) need debuginfo on aarch64 before we run this test there
+        </span><span class="kw">if </span>!<span class="macro">cfg!</span>(target_arch = <span class="string">&quot;aarch64&quot;</span>) {
+            <span class="kw">let </span><span class="kw-2">mut </span>cfg = Config::new();
+            cfg.debug_info(<span class="bool-val">true</span>).cache_config_load(<span class="kw-2">&amp;</span>config_path)<span class="question-mark">?</span>;
+            <span class="kw">let </span>engine = Engine::new(<span class="kw-2">&amp;</span>cfg)<span class="question-mark">?</span>;
+            Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">0</span>);
+            <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
+            Module::new(<span class="kw-2">&amp;</span>engine, <span class="string">&quot;(module (func))&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_hits(), <span class="number">1</span>);
+            <span class="macro">assert_eq!</span>(engine.config().cache_config.cache_misses(), <span class="number">1</span>);
         }
 
         <span class="prelude-val">Ok</span>(())
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

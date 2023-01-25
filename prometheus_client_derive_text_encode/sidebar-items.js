@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["Encode",""]]});
+window.SIDEBAR_ITEMS = {"derive":[["Encode",""]]};

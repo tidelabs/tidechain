@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/prometheus-client-0.16.0/src/metrics/histogram.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>histogram.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../prometheus_client/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../prometheus_client/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../prometheus_client/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/prometheus-client-0.16.0/src/metrics/histogram.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>histogram.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../prometheus_client/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -140,143 +135,142 @@
 <span id="135">135</span>
 <span id="136">136</span>
 <span id="137">137</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Module implementing an Open Metrics histogram.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See [`Histogram`] for details.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Module implementing an Open Metrics histogram.
+//!
+//! See [`Histogram`] for details.
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">MetricType</span>, <span class="ident">TypedMetric</span>};
-<span class="kw">use</span> <span class="ident">owning_ref::OwningRef</span>;
-<span class="kw">use</span> <span class="ident">std::iter</span>::{<span class="self">self</span>, <span class="ident">once</span>};
-<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>, <span class="ident">MutexGuard</span>};
+</span><span class="kw">use super</span>::{MetricType, TypedMetric};
+<span class="kw">use </span>owning_ref::OwningRef;
+<span class="kw">use </span>std::iter::{<span class="self">self</span>, once};
+<span class="kw">use </span>std::sync::{Arc, Mutex, MutexGuard};
 
-<span class="doccomment">/// Open Metrics [`Histogram`] to measure distributions of discrete events.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// # use prometheus_client::metrics::histogram::{Histogram, exponential_buckets};</span>
-<span class="doccomment">/// let histogram = Histogram::new(exponential_buckets(1.0, 2.0, 10));</span>
-<span class="doccomment">/// histogram.observe(4.2);</span>
-<span class="doccomment">/// ```</span>
-<span class="comment">// TODO: Consider using atomics. See</span>
-<span class="comment">// https://github.com/tikv/rust-prometheus/pull/314.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Histogram</span> {
-    <span class="ident">inner</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Inner</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Open Metrics [`Histogram`] to measure distributions of discrete events.
+///
+/// ```
+/// # use prometheus_client::metrics::histogram::{Histogram, exponential_buckets};
+/// let histogram = Histogram::new(exponential_buckets(1.0, 2.0, 10));
+/// histogram.observe(4.2);
+/// ```
+</span><span class="comment">// TODO: Consider using atomics. See
+// https://github.com/tikv/rust-prometheus/pull/314.
+</span><span class="kw">pub struct </span>Histogram {
+    inner: Arc&lt;Mutex&lt;Inner&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">Histogram</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Histogram</span> {
-            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>(),
+<span class="kw">impl </span>Clone <span class="kw">for </span>Histogram {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        Histogram {
+            inner: <span class="self">self</span>.inner.clone(),
         }
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Inner</span> {
-    <span class="comment">// TODO: Consider allowing integer observe values.</span>
-    <span class="ident">sum</span>: <span class="ident">f64</span>,
-    <span class="ident">count</span>: <span class="ident">u64</span>,
-    <span class="comment">// TODO: Consider being generic over the bucket length.</span>
-    <span class="ident">buckets</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">f64</span>, <span class="ident">u64</span>)<span class="op">&gt;</span>,
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Inner {
+    <span class="comment">// TODO: Consider allowing integer observe values.
+    </span>sum: f64,
+    count: u64,
+    <span class="comment">// TODO: Consider being generic over the bucket length.
+    </span>buckets: Vec&lt;(f64, u64)&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Histogram</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">buckets</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">f64</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">inner</span>: <span class="ident">Arc::new</span>(<span class="ident">Mutex::new</span>(<span class="ident">Inner</span> {
-                <span class="ident">sum</span>: <span class="ident">Default::default</span>(),
-                <span class="ident">count</span>: <span class="ident">Default::default</span>(),
-                <span class="ident">buckets</span>: <span class="ident">buckets</span>
-                    .<span class="ident">into_iter</span>()
-                    .<span class="ident">chain</span>(<span class="ident">once</span>(<span class="ident">f64::MAX</span>))
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">upper_bound</span><span class="op">|</span> (<span class="ident">upper_bound</span>, <span class="number">0</span>))
-                    .<span class="ident">collect</span>(),
+<span class="kw">impl </span>Histogram {
+    <span class="kw">pub fn </span>new(buckets: <span class="kw">impl </span>Iterator&lt;Item = f64&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            inner: Arc::new(Mutex::new(Inner {
+                sum: Default::default(),
+                count: Default::default(),
+                buckets: buckets
+                    .into_iter()
+                    .chain(once(f64::MAX))
+                    .map(|upper_bound| (upper_bound, <span class="number">0</span>))
+                    .collect(),
             })),
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">v</span>: <span class="ident">f64</span>) {
-        <span class="self">self</span>.<span class="ident">observe_and_bucket</span>(<span class="ident">v</span>);
+    <span class="kw">pub fn </span>observe(<span class="kw-2">&amp;</span><span class="self">self</span>, v: f64) {
+        <span class="self">self</span>.observe_and_bucket(v);
     }
 
-    <span class="doccomment">/// Observes the given value, returning the index of the first bucket the</span>
-    <span class="doccomment">/// value is added to.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Needed in</span>
-    <span class="doccomment">/// [`HistogramWithExemplars`](crate::metrics::exemplar::HistogramWithExemplars).</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">observe_and_bucket</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">v</span>: <span class="ident">f64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
-        <span class="ident">inner</span>.<span class="ident">sum</span> <span class="op">+</span><span class="op">=</span> <span class="ident">v</span>;
-        <span class="ident">inner</span>.<span class="ident">count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    <span class="doccomment">/// Observes the given value, returning the index of the first bucket the
+    /// value is added to.
+    ///
+    /// Needed in
+    /// [`HistogramWithExemplars`](crate::metrics::exemplar::HistogramWithExemplars).
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>observe_and_bucket(<span class="kw-2">&amp;</span><span class="self">self</span>, v: f64) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().unwrap();
+        inner.sum += v;
+        inner.count += <span class="number">1</span>;
 
-        <span class="kw">let</span> <span class="ident">first_bucket</span> <span class="op">=</span> <span class="ident">inner</span>
-            .<span class="ident">buckets</span>
-            .<span class="ident">iter_mut</span>()
-            .<span class="ident">enumerate</span>()
-            .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">_i</span>, (<span class="ident">upper_bound</span>, <span class="ident">_value</span>))<span class="op">|</span> <span class="ident">upper_bound</span> <span class="op">&gt;</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">v</span>);
+        <span class="kw">let </span>first_bucket = inner
+            .buckets
+            .iter_mut()
+            .enumerate()
+            .find(|(_i, (upper_bound, _value))| upper_bound &gt;= <span class="kw-2">&amp;</span>v);
 
-        <span class="kw">match</span> <span class="ident">first_bucket</span> {
-            <span class="prelude-val">Some</span>((<span class="ident">i</span>, (<span class="ident">_upper_bound</span>, <span class="ident">value</span>))) =&gt; {
-                <span class="kw-2">*</span><span class="ident">value</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                <span class="prelude-val">Some</span>(<span class="ident">i</span>)
+        <span class="kw">match </span>first_bucket {
+            <span class="prelude-val">Some</span>((i, (_upper_bound, value))) =&gt; {
+                <span class="kw-2">*</span>value += <span class="number">1</span>;
+                <span class="prelude-val">Some</span>(i)
             }
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">f64</span>, <span class="ident">u64</span>, <span class="ident">MutexGuardedBuckets</span>) {
-        <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">sum</span> <span class="op">=</span> <span class="ident">inner</span>.<span class="ident">sum</span>;
-        <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">inner</span>.<span class="ident">count</span>;
-        <span class="kw">let</span> <span class="ident">buckets</span> <span class="op">=</span> <span class="ident">OwningRef::new</span>(<span class="ident">inner</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">inner</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">inner</span>.<span class="ident">buckets</span>);
-        (<span class="ident">sum</span>, <span class="ident">count</span>, <span class="ident">buckets</span>)
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (f64, u64, MutexGuardedBuckets) {
+        <span class="kw">let </span>inner = <span class="self">self</span>.inner.lock().unwrap();
+        <span class="kw">let </span>sum = inner.sum;
+        <span class="kw">let </span>count = inner.count;
+        <span class="kw">let </span>buckets = OwningRef::new(inner).map(|inner| <span class="kw-2">&amp;</span>inner.buckets);
+        (sum, count, buckets)
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">MutexGuardedBuckets</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">OwningRef</span><span class="op">&lt;</span><span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Inner</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">f64</span>, <span class="ident">u64</span>)<span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>MutexGuardedBuckets&lt;<span class="lifetime">&#39;a</span>&gt; = OwningRef&lt;MutexGuard&lt;<span class="lifetime">&#39;a</span>, Inner&gt;, Vec&lt;(f64, u64)&gt;&gt;;
 
-<span class="kw">impl</span> <span class="ident">TypedMetric</span> <span class="kw">for</span> <span class="ident">Histogram</span> {
-    <span class="kw">const</span> <span class="ident">TYPE</span>: <span class="ident">MetricType</span> <span class="op">=</span> <span class="ident">MetricType::Histogram</span>;
+<span class="kw">impl </span>TypedMetric <span class="kw">for </span>Histogram {
+    <span class="kw">const </span>TYPE: MetricType = MetricType::Histogram;
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exponential_buckets</span>(<span class="ident">start</span>: <span class="ident">f64</span>, <span class="ident">factor</span>: <span class="ident">f64</span>, <span class="ident">length</span>: <span class="ident">u16</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">f64</span><span class="op">&gt;</span> {
-    <span class="ident">iter::repeat</span>(())
-        .<span class="ident">enumerate</span>()
-        .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">i</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">start</span> <span class="op">*</span> <span class="ident">factor</span>.<span class="ident">powf</span>(<span class="ident">i</span> <span class="kw">as</span> <span class="ident">f64</span>))
-        .<span class="ident">take</span>(<span class="ident">length</span>.<span class="ident">into</span>())
+<span class="kw">pub fn </span>exponential_buckets(start: f64, factor: f64, length: u16) -&gt; <span class="kw">impl </span>Iterator&lt;Item = f64&gt; {
+    iter::repeat(())
+        .enumerate()
+        .map(<span class="kw">move </span>|(i, <span class="kw">_</span>)| start * factor.powf(i <span class="kw">as </span>f64))
+        .take(length.into())
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">linear_buckets</span>(<span class="ident">start</span>: <span class="ident">f64</span>, <span class="ident">width</span>: <span class="ident">f64</span>, <span class="ident">length</span>: <span class="ident">u16</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">f64</span><span class="op">&gt;</span> {
-    <span class="ident">iter::repeat</span>(())
-        .<span class="ident">enumerate</span>()
-        .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">i</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">start</span> <span class="op">+</span> (<span class="ident">width</span> <span class="op">*</span> (<span class="ident">i</span> <span class="kw">as</span> <span class="ident">f64</span>)))
-        .<span class="ident">take</span>(<span class="ident">length</span>.<span class="ident">into</span>())
+<span class="kw">pub fn </span>linear_buckets(start: f64, width: f64, length: u16) -&gt; <span class="kw">impl </span>Iterator&lt;Item = f64&gt; {
+    iter::repeat(())
+        .enumerate()
+        .map(<span class="kw">move </span>|(i, <span class="kw">_</span>)| start + (width * (i <span class="kw">as </span>f64)))
+        .take(length.into())
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">histogram</span>() {
-        <span class="kw">let</span> <span class="ident">histogram</span> <span class="op">=</span> <span class="ident">Histogram::new</span>(<span class="ident">exponential_buckets</span>(<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">10</span>));
-        <span class="ident">histogram</span>.<span class="ident">observe</span>(<span class="number">1.0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>histogram() {
+        <span class="kw">let </span>histogram = Histogram::new(exponential_buckets(<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">10</span>));
+        histogram.observe(<span class="number">1.0</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">exponential</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>exponential() {
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">4.0</span>, <span class="number">8.0</span>, <span class="number">16.0</span>, <span class="number">32.0</span>, <span class="number">64.0</span>, <span class="number">128.0</span>, <span class="number">256.0</span>, <span class="number">512.0</span>],
-            <span class="ident">exponential_buckets</span>(<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">10</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+            exponential_buckets(<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">10</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">linear</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>linear() {
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[<span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>, <span class="number">4.0</span>, <span class="number">5.0</span>, <span class="number">6.0</span>, <span class="number">7.0</span>, <span class="number">8.0</span>, <span class="number">9.0</span>],
-            <span class="ident">linear_buckets</span>(<span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">10</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+            linear_buckets(<span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">10</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
         );
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="prometheus_client" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="prometheus_client" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

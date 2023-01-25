@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/io/syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/io/syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../../normalize.css"><link rel="stylesheet" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../../dark.css" disabled><link rel="stylesheet" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -987,990 +982,989 @@
 <span id="982">982</span>
 <span id="983">983</span>
 <span id="984">984</span>
-</pre><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::io`.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Safety</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See the `rustix::imp::syscalls` module documentation for details.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::io`.
+//!
+//! # Safety
+//!
+//! See the `rustix::imp::syscalls` module documentation for details.
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
+</span><span class="attribute">#![allow(unsafe_code)]
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>,
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>,
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips64&quot;</span>,
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>
-)))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall1</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose</span>::{
-    <span class="ident">syscall1_readonly</span>, <span class="ident">syscall2</span>, <span class="ident">syscall2_readonly</span>, <span class="ident">syscall3</span>, <span class="ident">syscall3_readonly</span>, <span class="ident">syscall4</span>,
-    <span class="ident">syscall4_readonly</span>, <span class="ident">syscall5</span>, <span class="ident">syscall5_readonly</span>, <span class="ident">syscall6</span>,
+#[cfg(not(any(
+    target_arch = <span class="string">&quot;aarch64&quot;</span>,
+    target_arch = <span class="string">&quot;mips&quot;</span>,
+    target_arch = <span class="string">&quot;mips64&quot;</span>,
+    target_arch = <span class="string">&quot;riscv64&quot;
+</span>)))]
+</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall1;
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::{
+    syscall1_readonly, syscall2, syscall2_readonly, syscall3, syscall3_readonly, syscall4,
+    syscall4_readonly, syscall5, syscall5_readonly, syscall6,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::c</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{
-    <span class="ident">borrowed_fd</span>, <span class="ident">by_ref</span>, <span class="ident">c_int</span>, <span class="ident">c_uint</span>, <span class="ident">no_fd</span>, <span class="ident">out</span>, <span class="ident">pass_usize</span>, <span class="ident">raw_fd</span>, <span class="ident">ret</span>, <span class="ident">ret_discarded_fd</span>,
-    <span class="ident">ret_owned_fd</span>, <span class="ident">ret_usize</span>, <span class="ident">ret_void_star</span>, <span class="ident">slice</span>, <span class="ident">slice_mut</span>, <span class="ident">void_star</span>, <span class="ident">zero</span>,
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::c;
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::conv::{
+    borrowed_fd, by_ref, c_int, c_uint, no_fd, out, pass_usize, raw_fd, ret, ret_discarded_fd,
+    ret_owned_fd, ret_usize, ret_void_star, slice, slice_mut, void_star, zero,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::reg::nr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fd</span>::{<span class="ident">AsFd</span>, <span class="ident">BorrowedFd</span>, <span class="ident">RawFd</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>::{
-    <span class="self">self</span>, <span class="ident">epoll</span>, <span class="ident">Advice</span>, <span class="ident">DupFlags</span>, <span class="ident">EventfdFlags</span>, <span class="ident">IoSlice</span>, <span class="ident">IoSliceMut</span>, <span class="ident">MapFlags</span>, <span class="ident">MlockFlags</span>,
-    <span class="ident">MprotectFlags</span>, <span class="ident">MremapFlags</span>, <span class="ident">MsyncFlags</span>, <span class="ident">OwnedFd</span>, <span class="ident">PipeFlags</span>, <span class="ident">PollFd</span>, <span class="ident">ProtFlags</span>, <span class="ident">ReadWriteFlags</span>,
-    <span class="ident">Termios</span>, <span class="ident">UserfaultfdFlags</span>, <span class="ident">Winsize</span>,
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::reg::nr;
+<span class="kw">use </span><span class="kw">crate</span>::fd::{AsFd, BorrowedFd, RawFd};
+<span class="kw">use </span><span class="kw">crate</span>::io::{
+    <span class="self">self</span>, epoll, Advice, DupFlags, EventfdFlags, IoSlice, IoSliceMut, MapFlags, MlockFlags,
+    MprotectFlags, MremapFlags, MsyncFlags, OwnedFd, PipeFlags, PollFd, ProtFlags, ReadWriteFlags,
+    Termios, UserfaultfdFlags, Winsize,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::net</span>::{<span class="ident">RecvFlags</span>, <span class="ident">SendFlags</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;procfs&quot;</span>)]</span>
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">ffi::ZStr</span>, <span class="ident">fs::FileType</span>, <span class="ident">path::DecInt</span>};
-<span class="kw">use</span> <span class="ident">core::cmp</span>;
-<span class="kw">use</span> <span class="ident">core::mem::MaybeUninit</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_mmap2</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>,
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>,
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips64&quot;</span>,
-    <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>
-)))]</span>
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_pipe</span>;
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general</span>::{
-    <span class="ident">__NR_close</span>, <span class="ident">__NR_dup</span>, <span class="ident">__NR_dup3</span>, <span class="ident">__NR_epoll_create1</span>, <span class="ident">__NR_epoll_ctl</span>, <span class="ident">__NR_eventfd2</span>, <span class="ident">__NR_ioctl</span>,
-    <span class="ident">__NR_madvise</span>, <span class="ident">__NR_mlock</span>, <span class="ident">__NR_mlock2</span>, <span class="ident">__NR_mprotect</span>, <span class="ident">__NR_mremap</span>, <span class="ident">__NR_msync</span>, <span class="ident">__NR_munlock</span>,
-    <span class="ident">__NR_munmap</span>, <span class="ident">__NR_pipe2</span>, <span class="ident">__NR_pread64</span>, <span class="ident">__NR_preadv</span>, <span class="ident">__NR_preadv2</span>, <span class="ident">__NR_pwrite64</span>, <span class="ident">__NR_pwritev</span>,
-    <span class="ident">__NR_pwritev2</span>, <span class="ident">__NR_read</span>, <span class="ident">__NR_readv</span>, <span class="ident">__NR_userfaultfd</span>, <span class="ident">__NR_write</span>, <span class="ident">__NR_writev</span>, <span class="ident">epoll_event</span>,
-    <span class="ident">EPOLL_CTL_ADD</span>, <span class="ident">EPOLL_CTL_DEL</span>, <span class="ident">EPOLL_CTL_MOD</span>,
+<span class="kw">use </span><span class="kw">crate</span>::net::{RecvFlags, SendFlags};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;procfs&quot;</span>)]
+</span><span class="kw">use crate</span>::{ffi::ZStr, fs::FileType, path::DecInt};
+<span class="kw">use </span>core::cmp;
+<span class="kw">use </span>core::mem::MaybeUninit;
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;x86&quot;</span>))]
+</span><span class="kw">use </span>linux_raw_sys::general::__NR_mmap2;
+<span class="attribute">#[cfg(not(any(
+    target_arch = <span class="string">&quot;aarch64&quot;</span>,
+    target_arch = <span class="string">&quot;mips&quot;</span>,
+    target_arch = <span class="string">&quot;mips64&quot;</span>,
+    target_arch = <span class="string">&quot;riscv64&quot;
+</span>)))]
+</span><span class="kw">use </span>linux_raw_sys::general::__NR_pipe;
+<span class="kw">use </span>linux_raw_sys::general::{
+    __NR_close, __NR_dup, __NR_dup3, __NR_epoll_create1, __NR_epoll_ctl, __NR_eventfd2, __NR_ioctl,
+    __NR_madvise, __NR_mlock, __NR_mlock2, __NR_mprotect, __NR_mremap, __NR_msync, __NR_munlock,
+    __NR_munmap, __NR_pipe2, __NR_pread64, __NR_preadv, __NR_preadv2, __NR_pwrite64, __NR_pwritev,
+    __NR_pwritev2, __NR_read, __NR_readv, __NR_userfaultfd, __NR_write, __NR_writev, epoll_event,
+    EPOLL_CTL_ADD, EPOLL_CTL_DEL, EPOLL_CTL_MOD,
 };
-<span class="kw">use</span> <span class="ident">linux_raw_sys::ioctl</span>::{
-    <span class="ident">BLKPBSZGET</span>, <span class="ident">BLKSSZGET</span>, <span class="ident">FIONBIO</span>, <span class="ident">FIONREAD</span>, <span class="ident">TCGETS</span>, <span class="ident">TIOCEXCL</span>, <span class="ident">TIOCGWINSZ</span>, <span class="ident">TIOCNXCL</span>,
+<span class="kw">use </span>linux_raw_sys::ioctl::{
+    BLKPBSZGET, BLKSSZGET, FIONBIO, FIONREAD, TCGETS, TIOCEXCL, TIOCGWINSZ, TIOCNXCL,
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">use</span> {
-    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall6_readonly</span>,
-    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{<span class="ident">hi</span>, <span class="ident">lo</span>},
-    <span class="ident">core::convert::TryInto</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">use </span>{
+    <span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall6_readonly,
+    <span class="kw">super</span>::<span class="kw">super</span>::conv::{hi, lo},
+    core::convert::TryInto,
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">use</span> {<span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv::loff_t_from_u64</span>, <span class="ident">linux_raw_sys::general::__NR_mmap</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-<span class="kw">use</span> {
-    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{<span class="ident">opt_ref</span>, <span class="ident">size_of</span>},
-    <span class="ident">linux_raw_sys::general::__NR_epoll_pwait</span>,
-    <span class="ident">linux_raw_sys::general</span>::{<span class="ident">__NR_ppoll</span>, <span class="ident">__kernel_timespec</span>, <span class="ident">sigset_t</span>},
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+</span><span class="kw">use </span>{<span class="kw">super</span>::<span class="kw">super</span>::conv::loff_t_from_u64, linux_raw_sys::general::__NR_mmap};
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+</span><span class="kw">use </span>{
+    <span class="kw">super</span>::<span class="kw">super</span>::conv::{opt_ref, size_of},
+    linux_raw_sys::general::__NR_epoll_pwait,
+    linux_raw_sys::general::{__NR_ppoll, __kernel_timespec, sigset_t},
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
-<span class="kw">use</span> {
-    <span class="ident">linux_raw_sys::general::__NR_epoll_wait</span>,
-    <span class="ident">linux_raw_sys::general</span>::{<span class="ident">__NR_dup2</span>, <span class="ident">__NR_poll</span>},
+<span class="attribute">#[cfg(not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>)))]
+</span><span class="kw">use </span>{
+    linux_raw_sys::general::__NR_epoll_wait,
+    linux_raw_sys::general::{__NR_dup2, __NR_poll},
 };
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">read</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">buf_addr_mut</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">buf</span>);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(buf_addr_mut, buf_len) = slice_mut(buf);
 
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_read</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr_mut</span>,
-            <span class="ident">buf_len</span>,
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall3(
+            nr(__NR_read),
+            borrowed_fd(fd),
+            buf_addr_mut,
+            buf_len,
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">pread</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>], <span class="ident">pos</span>: <span class="ident">u64</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">buf_addr_mut</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">buf</span>);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pread(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">&amp;mut </span>[u8], pos: u64) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(buf_addr_mut, buf_len) = slice_mut(buf);
 
-    <span class="comment">// &lt;https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L75&gt;</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;power&quot;</span>)
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pread64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr_mut</span>,
-            <span class="ident">buf_len</span>,
-            <span class="ident">zero</span>(),
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
+    <span class="comment">// &lt;https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L75&gt;
+    </span><span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;power&quot;</span>)
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall6(
+            nr(__NR_pread64),
+            borrowed_fd(fd),
+            buf_addr_mut,
+            buf_len,
+            zero(),
+            hi(pos),
+            lo(pos),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;power&quot;</span>))
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pread64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr_mut</span>,
-            <span class="ident">buf_len</span>,
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
+    <span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        not(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;power&quot;</span>))
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall5(
+            nr(__NR_pread64),
+            borrowed_fd(fd),
+            buf_addr_mut,
+            buf_len,
+            hi(pos),
+            lo(pos),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pread64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr_mut</span>,
-            <span class="ident">buf_len</span>,
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">readv</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">bufs</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">IoSliceMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">bufs_addr</span>, <span class="ident">bufs_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="kw-2">&amp;</span><span class="ident">bufs</span>[..<span class="ident">cmp::min</span>(<span class="ident">bufs</span>.<span class="ident">len</span>(), <span class="ident">max_iov</span>())]);
-
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_readv</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall4(
+            nr(__NR_pread64),
+            borrowed_fd(fd),
+            buf_addr_mut,
+            buf_len,
+            loff_t_from_u64(pos),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">preadv</span>(
-    <span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">bufs</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">IoSliceMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>],
-    <span class="ident">pos</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">bufs_addr</span>, <span class="ident">bufs_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="kw-2">&amp;</span><span class="ident">bufs</span>[..<span class="ident">cmp::min</span>(<span class="ident">bufs</span>.<span class="ident">len</span>(), <span class="ident">max_iov</span>())]);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>readv(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">&#39;_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(bufs_addr, bufs_len) = slice(<span class="kw-2">&amp;</span>bufs[..cmp::min(bufs.len(), max_iov())]);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_preadv</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_preadv</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall3(
+            nr(__NR_readv),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">preadv2</span>(
-    <span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">bufs</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">IoSliceMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>],
-    <span class="ident">pos</span>: <span class="ident">u64</span>,
-    <span class="ident">flags</span>: <span class="ident">ReadWriteFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">bufs_addr</span>, <span class="ident">bufs_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="kw-2">&amp;</span><span class="ident">bufs</span>[..<span class="ident">cmp::min</span>(<span class="ident">bufs</span>.<span class="ident">len</span>(), <span class="ident">max_iov</span>())]);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>preadv(
+    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">&#39;_</span>&gt;],
+    pos: u64,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(bufs_addr, bufs_len) = slice(<span class="kw-2">&amp;</span>bufs[..cmp::min(bufs.len(), max_iov())]);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_preadv2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall5(
+            nr(__NR_preadv),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            hi(pos),
+            lo(pos),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_preadv2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall4(
+            nr(__NR_preadv),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            loff_t_from_u64(pos),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">write</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">buf_addr</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="ident">buf</span>);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>preadv2(
+    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">&#39;_</span>&gt;],
+    pos: u64,
+    flags: ReadWriteFlags,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(bufs_addr, bufs_len) = slice(<span class="kw-2">&amp;</span>bufs[..cmp::min(bufs.len(), max_iov())]);
 
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_write</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr</span>,
-            <span class="ident">buf_len</span>,
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall6(
+            nr(__NR_preadv2),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            hi(pos),
+            lo(pos),
+            c_uint(flags.bits()),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall5(
+            nr(__NR_preadv2),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            loff_t_from_u64(pos),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">pwrite</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">pos</span>: <span class="ident">u64</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">buf_addr</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="ident">buf</span>);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(buf_addr, buf_len) = slice(buf);
 
-    <span class="comment">// &lt;https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L81-L83&gt;</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;power&quot;</span>)
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall6_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pwrite64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr</span>,
-            <span class="ident">buf_len</span>,
-            <span class="ident">zero</span>(),
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;power&quot;</span>))
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pwrite64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr</span>,
-            <span class="ident">buf_len</span>,
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pwrite64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">buf_addr</span>,
-            <span class="ident">buf_len</span>,
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall3_readonly(
+            nr(__NR_write),
+            borrowed_fd(fd),
+            buf_addr,
+            buf_len,
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">writev</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">bufs</span>: <span class="kw-2">&amp;</span>[<span class="ident">IoSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">bufs_addr</span>, <span class="ident">bufs_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="kw-2">&amp;</span><span class="ident">bufs</span>[..<span class="ident">cmp::min</span>(<span class="ident">bufs</span>.<span class="ident">len</span>(), <span class="ident">max_iov</span>())]);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwrite(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">&amp;</span>[u8], pos: u64) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(buf_addr, buf_len) = slice(buf);
 
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_writev</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
+    <span class="comment">// &lt;https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L81-L83&gt;
+    </span><span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;power&quot;</span>)
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall6_readonly(
+            nr(__NR_pwrite64),
+            borrowed_fd(fd),
+            buf_addr,
+            buf_len,
+            zero(),
+            hi(pos),
+            lo(pos),
+        ))
+    }
+    <span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        not(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;power&quot;</span>))
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall5_readonly(
+            nr(__NR_pwrite64),
+            borrowed_fd(fd),
+            buf_addr,
+            buf_len,
+            hi(pos),
+            lo(pos),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall4_readonly(
+            nr(__NR_pwrite64),
+            borrowed_fd(fd),
+            buf_addr,
+            buf_len,
+            loff_t_from_u64(pos),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">pwritev</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">bufs</span>: <span class="kw-2">&amp;</span>[<span class="ident">IoSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>], <span class="ident">pos</span>: <span class="ident">u64</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">bufs_addr</span>, <span class="ident">bufs_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="kw-2">&amp;</span><span class="ident">bufs</span>[..<span class="ident">cmp::min</span>(<span class="ident">bufs</span>.<span class="ident">len</span>(), <span class="ident">max_iov</span>())]);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>writev(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(bufs_addr, bufs_len) = slice(<span class="kw-2">&amp;</span>bufs[..cmp::min(bufs.len(), max_iov())]);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pwritev</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pwritev</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall3_readonly(
+            nr(__NR_writev),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">pwritev2</span>(
-    <span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">bufs</span>: <span class="kw-2">&amp;</span>[<span class="ident">IoSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>],
-    <span class="ident">pos</span>: <span class="ident">u64</span>,
-    <span class="ident">flags</span>: <span class="ident">ReadWriteFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">bufs_addr</span>, <span class="ident">bufs_len</span>) <span class="op">=</span> <span class="ident">slice</span>(<span class="kw-2">&amp;</span><span class="ident">bufs</span>[..<span class="ident">cmp::min</span>(<span class="ident">bufs</span>.<span class="ident">len</span>(), <span class="ident">max_iov</span>())]);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwritev(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;], pos: u64) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(bufs_addr, bufs_len) = slice(<span class="kw-2">&amp;</span>bufs[..cmp::min(bufs.len(), max_iov())]);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall6_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pwritev2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall5_readonly(
+            nr(__NR_pwritev),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            hi(pos),
+            lo(pos),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pwritev2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">bufs_addr</span>,
-            <span class="ident">bufs_len</span>,
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall4_readonly(
+            nr(__NR_pwritev),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            loff_t_from_u64(pos),
         ))
     }
 }
 
-<span class="kw">const</span> <span class="kw">fn</span> <span class="ident">max_iov</span>() -&gt; <span class="ident">usize</span> {
-    <span class="ident">linux_raw_sys::general::UIO_MAXIOV</span> <span class="kw">as</span> <span class="ident">usize</span>
-}
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwritev2(
+    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;],
+    pos: u64,
+    flags: ReadWriteFlags,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(bufs_addr, bufs_len) = slice(<span class="kw-2">&amp;</span>bufs[..cmp::min(bufs.len(), max_iov())]);
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>) {
-    <span class="comment">// See the docunentation for [`io::close`] for why errors are ignored.</span>
-    <span class="ident">syscall1_readonly</span>(<span class="ident">nr</span>(<span class="ident">__NR_close</span>), <span class="ident">raw_fd</span>(<span class="ident">fd</span>)).<span class="ident">decode_void</span>();
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">madvise</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">advice</span>: <span class="ident">Advice</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_madvise</span>),
-            <span class="ident">void_star</span>(<span class="ident">addr</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">len</span>),
-            <span class="ident">c_uint</span>(<span class="ident">advice</span> <span class="kw">as</span> <span class="ident">c::c_uint</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall6_readonly(
+            nr(__NR_pwritev2),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            hi(pos),
+            lo(pos),
+            c_uint(flags.bits()),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall5_readonly(
+            nr(__NR_pwritev2),
+            borrowed_fd(fd),
+            bufs_addr,
+            bufs_len,
+            loff_t_from_u64(pos),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">msync</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">flags</span>: <span class="ident">MsyncFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_msync</span>),
-        <span class="ident">void_star</span>(<span class="ident">addr</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">len</span>),
-        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="kw">const fn </span>max_iov() -&gt; usize {
+    linux_raw_sys::general::UIO_MAXIOV <span class="kw">as </span>usize
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>close(fd: RawFd) {
+    <span class="comment">// See the docunentation for [`io::close`] for why errors are ignored.
+    </span>syscall1_readonly(nr(__NR_close), raw_fd(fd)).decode_void();
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>madvise(addr: <span class="kw-2">*mut </span>c::c_void, len: usize, advice: Advice) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3(
+            nr(__NR_madvise),
+            void_star(addr),
+            pass_usize(len),
+            c_uint(advice <span class="kw">as </span>c::c_uint),
+        ))
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>msync(addr: <span class="kw-2">*mut </span>c::c_void, len: usize, flags: MsyncFlags) -&gt; io::Result&lt;()&gt; {
+    ret(syscall3(
+        nr(__NR_msync),
+        void_star(addr),
+        pass_usize(len),
+        c_uint(flags.bits()),
     ))
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">eventfd</span>(<span class="ident">initval</span>: <span class="ident">u32</span>, <span class="ident">flags</span>: <span class="ident">EventfdFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_eventfd2</span>),
-            <span class="ident">c_uint</span>(<span class="ident">initval</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>eventfd(initval: u32, flags: EventfdFlags) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="kw">unsafe </span>{
+        ret_owned_fd(syscall2_readonly(
+            nr(__NR_eventfd2),
+            c_uint(initval),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_fionread</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">c::c_int</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">FIONREAD</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_fionread(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;u64&gt; {
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;c::c_int&gt;::uninit();
+        ret(syscall3(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(FIONREAD),
+            out(<span class="kw-2">&amp;mut </span>result),
         ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>() <span class="kw">as</span> <span class="ident">u64</span>)
+        .map(|()| result.assume_init() <span class="kw">as </span>u64)
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_fionbio</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">value</span>: <span class="ident">bool</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">value</span> <span class="kw">as</span> <span class="ident">c::c_int</span>;
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">FIONBIO</span>),
-            <span class="ident">by_ref</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_tiocgwinsz</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Winsize</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Winsize</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">TIOCGWINSZ</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_tiocexcl</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">TIOCEXCL</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_fionbio(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, value: bool) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span>data = value <span class="kw">as </span>c::c_int;
+        ret(syscall3_readonly(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(FIONBIO),
+            by_ref(<span class="kw-2">&amp;</span>data),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_tiocnxcl</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">TIOCNXCL</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_tiocgwinsz(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;Winsize&gt; {
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Winsize&gt;::uninit();
+        ret(syscall3(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(TIOCGWINSZ),
+            out(<span class="kw-2">&amp;mut </span>result),
+        ))
+        .map(|()| result.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_tiocexcl(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall2_readonly(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(TIOCEXCL),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_tcgets</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Termios</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Termios</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">TCGETS</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_tiocnxcl(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall2_readonly(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(TIOCNXCL),
         ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_blksszget</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">c::c_uint</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">BLKSSZGET</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_tcgets(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;Termios&gt; {
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Termios&gt;::uninit();
+        ret(syscall3(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(TCGETS),
+            out(<span class="kw-2">&amp;mut </span>result),
         ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>() <span class="kw">as</span> <span class="ident">u32</span>)
+        .map(|()| result.assume_init())
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ioctl_blkpbszget</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">c::c_uint</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ioctl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">BLKPBSZGET</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_blksszget(fd: BorrowedFd) -&gt; io::Result&lt;u32&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;c::c_uint&gt;::uninit();
+    <span class="kw">unsafe </span>{
+        ret(syscall3(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(BLKSSZGET),
+            out(<span class="kw-2">&amp;mut </span>result),
         ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>() <span class="kw">as</span> <span class="ident">u32</span>)
+        .map(|()| result.assume_init() <span class="kw">as </span>u32)
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">isatty</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
-    <span class="comment">// On error, Linux will return either `EINVAL` (2.6.32) or `ENOTTY`</span>
-    <span class="comment">// (otherwise), because we assume we&#39;re never passing an invalid</span>
-    <span class="comment">// file descriptor (which would get `EBADF`). Either way, an error</span>
-    <span class="comment">// means we don&#39;t have a tty.</span>
-    <span class="ident">ioctl_tiocgwinsz</span>(<span class="ident">fd</span>).<span class="ident">is_ok</span>()
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ioctl_blkpbszget(fd: BorrowedFd) -&gt; io::Result&lt;u32&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;c::c_uint&gt;::uninit();
+    <span class="kw">unsafe </span>{
+        ret(syscall3(
+            nr(__NR_ioctl),
+            borrowed_fd(fd),
+            c_uint(BLKPBSZGET),
+            out(<span class="kw-2">&amp;mut </span>result),
+        ))
+        .map(|()| result.assume_init() <span class="kw">as </span>u32)
+    }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_read_write</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>(<span class="ident">bool</span>, <span class="ident">bool</span>)<span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">read</span>, <span class="kw-2">mut</span> <span class="ident">write</span>) <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::fs::fd::_is_file_read_write</span>(<span class="ident">fd</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">not_socket</span> <span class="op">=</span> <span class="bool-val">false</span>;
-    <span class="kw">if</span> <span class="ident">read</span> {
-        <span class="comment">// Do a `recv` with `PEEK` and `DONTWAIT` for 1 byte. A 0 indicates</span>
-        <span class="comment">// the read side is shut down; an `EWOULDBLOCK` indicates the read</span>
-        <span class="comment">// side is still open.</span>
-        <span class="comment">//</span>
-        <span class="comment">// TODO: This code would benefit from having a better way to read into</span>
-        <span class="comment">// uninitialized memory.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> [<span class="number">0</span>];
-        <span class="kw">match</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::net::syscalls::recv</span>(<span class="ident">fd</span>, <span class="kw-2">&amp;mut</span> <span class="ident">buf</span>, <span class="ident">RecvFlags::PEEK</span> <span class="op">|</span> <span class="ident">RecvFlags::DONTWAIT</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>isatty(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    <span class="comment">// On error, Linux will return either `EINVAL` (2.6.32) or `ENOTTY`
+    // (otherwise), because we assume we&#39;re never passing an invalid
+    // file descriptor (which would get `EBADF`). Either way, an error
+    // means we don&#39;t have a tty.
+    </span>ioctl_tiocgwinsz(fd).is_ok()
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_read_write(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;(bool, bool)&gt; {
+    <span class="kw">let </span>(<span class="kw-2">mut </span>read, <span class="kw-2">mut </span>write) = <span class="kw">crate</span>::fs::fd::_is_file_read_write(fd)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>not_socket = <span class="bool-val">false</span>;
+    <span class="kw">if </span>read {
+        <span class="comment">// Do a `recv` with `PEEK` and `DONTWAIT` for 1 byte. A 0 indicates
+        // the read side is shut down; an `EWOULDBLOCK` indicates the read
+        // side is still open.
+        //
+        // TODO: This code would benefit from having a better way to read into
+        // uninitialized memory.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0</span>];
+        <span class="kw">match </span><span class="kw">super</span>::<span class="kw">super</span>::net::syscalls::recv(fd, <span class="kw-2">&amp;mut </span>buf, RecvFlags::PEEK | RecvFlags::DONTWAIT)
         {
-            <span class="prelude-val">Ok</span>(<span class="number">0</span>) =&gt; <span class="ident">read</span> <span class="op">=</span> <span class="bool-val">false</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
-                <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unreachable_patterns</span>)]</span> <span class="comment">// `EAGAIN` may equal `EWOULDBLOCK`</span>
-                <span class="kw">match</span> <span class="ident">err</span> {
-                    <span class="ident">io::Error::AGAIN</span> <span class="op">|</span> <span class="ident">io::Error::WOULDBLOCK</span> =&gt; (),
-                    <span class="ident">io::Error::NOTSOCK</span> =&gt; <span class="ident">not_socket</span> <span class="op">=</span> <span class="bool-val">true</span>,
-                    <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+            <span class="prelude-val">Ok</span>(<span class="number">0</span>) =&gt; read = <span class="bool-val">false</span>,
+            <span class="prelude-val">Err</span>(err) =&gt; {
+                <span class="attribute">#[allow(unreachable_patterns)] </span><span class="comment">// `EAGAIN` may equal `EWOULDBLOCK`
+                </span><span class="kw">match </span>err {
+                    io::Error::AGAIN | io::Error::WOULDBLOCK =&gt; (),
+                    io::Error::NOTSOCK =&gt; not_socket = <span class="bool-val">true</span>,
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(err),
                 }
             }
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
         }
     }
-    <span class="kw">if</span> <span class="ident">write</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">not_socket</span> {
-        <span class="comment">// Do a `send` with `DONTWAIT` for 0 bytes. An `EPIPE` indicates</span>
-        <span class="comment">// the write side is shut down.</span>
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unreachable_patterns</span>)]</span> <span class="comment">// `EAGAIN` equals `EWOULDBLOCK`</span>
-        <span class="kw">match</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::net::syscalls::send</span>(<span class="ident">fd</span>, <span class="kw-2">&amp;</span>[], <span class="ident">SendFlags::DONTWAIT</span>) {
-            <span class="comment">// TODO or-patterns when we don&#39;t need 1.51</span>
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::AGAIN</span>) =&gt; (),
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::WOULDBLOCK</span>) =&gt; (),
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::NOTSOCK</span>) =&gt; (),
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::PIPE</span>) =&gt; <span class="ident">write</span> <span class="op">=</span> <span class="bool-val">false</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+    <span class="kw">if </span>write &amp;&amp; !not_socket {
+        <span class="comment">// Do a `send` with `DONTWAIT` for 0 bytes. An `EPIPE` indicates
+        // the write side is shut down.
+        </span><span class="attribute">#[allow(unreachable_patterns)] </span><span class="comment">// `EAGAIN` equals `EWOULDBLOCK`
+        </span><span class="kw">match </span><span class="kw">super</span>::<span class="kw">super</span>::net::syscalls::send(fd, <span class="kw-2">&amp;</span>[], SendFlags::DONTWAIT) {
+            <span class="comment">// TODO or-patterns when we don&#39;t need 1.51
+            </span><span class="prelude-val">Err</span>(io::Error::AGAIN) =&gt; (),
+            <span class="prelude-val">Err</span>(io::Error::WOULDBLOCK) =&gt; (),
+            <span class="prelude-val">Err</span>(io::Error::NOTSOCK) =&gt; (),
+            <span class="prelude-val">Err</span>(io::Error::PIPE) =&gt; write = <span class="bool-val">false</span>,
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(err),
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
         }
     }
-    <span class="prelude-val">Ok</span>((<span class="ident">read</span>, <span class="ident">write</span>))
+    <span class="prelude-val">Ok</span>((read, write))
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">dup</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> { <span class="ident">ret_owned_fd</span>(<span class="ident">syscall1_readonly</span>(<span class="ident">nr</span>(<span class="ident">__NR_dup</span>), <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>))) }
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="kw">unsafe </span>{ ret_owned_fd(syscall1_readonly(nr(__NR_dup), borrowed_fd(fd))) }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">dup2</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">new</span>: <span class="kw-2">&amp;</span><span class="ident">OwnedFd</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-    {
-        <span class="comment">// `dup3` fails if the old and new file descriptors have the same</span>
-        <span class="comment">// value, so emulate the `dup2` behvior.</span>
-        <span class="kw">use</span> <span class="ident">std::os::unix::io::AsRawFd</span>;
-        <span class="kw">if</span> <span class="ident">fd</span>.<span class="ident">as_raw_fd</span>() <span class="op">==</span> <span class="ident">new</span>.<span class="ident">as_raw_fd</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup2(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, new: <span class="kw-2">&amp;</span>OwnedFd) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+    </span>{
+        <span class="comment">// `dup3` fails if the old and new file descriptors have the same
+        // value, so emulate the `dup2` behvior.
+        </span><span class="kw">use </span>std::os::unix::io::AsRawFd;
+        <span class="kw">if </span>fd.as_raw_fd() == new.as_raw_fd() {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
-        <span class="ident">dup2_with</span>(<span class="ident">fd</span>, <span class="ident">new</span>, <span class="ident">DupFlags::empty</span>())
+        dup2_with(fd, new, DupFlags::empty())
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_discarded_fd</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_dup2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">new</span>.<span class="ident">as_fd</span>()),
+    <span class="attribute">#[cfg(not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>)))]
+    </span><span class="kw">unsafe </span>{
+        ret_discarded_fd(syscall2_readonly(
+            nr(__NR_dup2),
+            borrowed_fd(fd),
+            borrowed_fd(new.as_fd()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">dup2_with</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">new</span>: <span class="kw-2">&amp;</span><span class="ident">OwnedFd</span>, <span class="ident">flags</span>: <span class="ident">DupFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_discarded_fd</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_dup3</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">new</span>.<span class="ident">as_fd</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup2_with(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, new: <span class="kw-2">&amp;</span>OwnedFd, flags: DupFlags) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret_discarded_fd(syscall3_readonly(
+            nr(__NR_dup3),
+            borrowed_fd(fd),
+            borrowed_fd(new.as_fd()),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;procfs&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ttyname</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">fd_stat</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::fstat</span>(<span class="ident">fd</span>)<span class="question-mark">?</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;procfs&quot;</span>)]
+#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ttyname(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>fd_stat = <span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::fstat(fd)<span class="question-mark">?</span>;
 
-    <span class="comment">// Quick check: if `fd` isn&#39;t a character device, it&#39;s not a tty.</span>
-    <span class="kw">if</span> <span class="ident">FileType::from_raw_mode</span>(<span class="ident">fd_stat</span>.<span class="ident">st_mode</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">FileType::CharacterDevice</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">crate</span>::io::Error::NOTTY</span>);
+    <span class="comment">// Quick check: if `fd` isn&#39;t a character device, it&#39;s not a tty.
+    </span><span class="kw">if </span>FileType::from_raw_mode(fd_stat.st_mode) != FileType::CharacterDevice {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="kw">crate</span>::io::Error::NOTTY);
     }
 
-    <span class="comment">// Check that `fd` is really a tty.</span>
-    <span class="ident">ioctl_tiocgwinsz</span>(<span class="ident">fd</span>)<span class="question-mark">?</span>;
+    <span class="comment">// Check that `fd` is really a tty.
+    </span>ioctl_tiocgwinsz(fd)<span class="question-mark">?</span>;
 
-    <span class="comment">// Get a fd to &#39;/proc/self/fd&#39;.</span>
-    <span class="kw">let</span> <span class="ident">proc_self_fd</span> <span class="op">=</span> <span class="ident">io::proc_self_fd</span>()<span class="question-mark">?</span>;
+    <span class="comment">// Get a fd to &#39;/proc/self/fd&#39;.
+    </span><span class="kw">let </span>proc_self_fd = io::proc_self_fd()<span class="question-mark">?</span>;
 
-    <span class="comment">// Gather the ttyname by reading the &#39;fd&#39; file inside &#39;proc_self_fd&#39;.</span>
-    <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span>
-        <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::readlinkat</span>(<span class="ident">proc_self_fd</span>, <span class="ident">DecInt::from_fd</span>(<span class="kw-2">&amp;</span><span class="ident">fd</span>).<span class="ident">as_c_str</span>(), <span class="ident">buf</span>)<span class="question-mark">?</span>;
+    <span class="comment">// Gather the ttyname by reading the &#39;fd&#39; file inside &#39;proc_self_fd&#39;.
+    </span><span class="kw">let </span>r =
+        <span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::readlinkat(proc_self_fd, DecInt::from_fd(<span class="kw-2">&amp;</span>fd).as_c_str(), buf)<span class="question-mark">?</span>;
 
-    <span class="comment">// If the number of bytes is equal to the buffer length, truncation may</span>
-    <span class="comment">// have occurred. This check also ensures that we have enough space for</span>
-    <span class="comment">// adding a NUL terminator.</span>
-    <span class="kw">if</span> <span class="ident">r</span> <span class="op">==</span> <span class="ident">buf</span>.<span class="ident">len</span>() {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">io::Error::RANGE</span>);
+    <span class="comment">// If the number of bytes is equal to the buffer length, truncation may
+    // have occurred. This check also ensures that we have enough space for
+    // adding a NUL terminator.
+    </span><span class="kw">if </span>r == buf.len() {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::RANGE);
     }
-    <span class="ident">buf</span>[<span class="ident">r</span>] <span class="op">=</span> <span class="string">b&#39;\0&#39;</span>;
+    buf[r] = <span class="string">b&#39;\0&#39;</span>;
 
-    <span class="comment">// Check that the path we read refers to the same file as `fd`.</span>
-    <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">ZStr::from_bytes_with_nul</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="op">=</span><span class="ident">r</span>]).<span class="ident">unwrap</span>();
+    <span class="comment">// Check that the path we read refers to the same file as `fd`.
+    </span><span class="kw">let </span>path = ZStr::from_bytes_with_nul(<span class="kw-2">&amp;</span>buf[..=r]).unwrap();
 
-    <span class="kw">let</span> <span class="ident">path_stat</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::stat</span>(<span class="ident">path</span>)<span class="question-mark">?</span>;
-    <span class="kw">if</span> <span class="ident">path_stat</span>.<span class="ident">st_dev</span> <span class="op">!</span><span class="op">=</span> <span class="ident">fd_stat</span>.<span class="ident">st_dev</span> <span class="op">|</span><span class="op">|</span> <span class="ident">path_stat</span>.<span class="ident">st_ino</span> <span class="op">!</span><span class="op">=</span> <span class="ident">fd_stat</span>.<span class="ident">st_ino</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">crate</span>::io::Error::NODEV</span>);
+    <span class="kw">let </span>path_stat = <span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::stat(path)<span class="question-mark">?</span>;
+    <span class="kw">if </span>path_stat.st_dev != fd_stat.st_dev || path_stat.st_ino != fd_stat.st_ino {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="kw">crate</span>::io::Error::NODEV);
     }
 
-    <span class="prelude-val">Ok</span>(<span class="ident">r</span>)
+    <span class="prelude-val">Ok</span>(r)
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `mmap` is primarily unsafe due to the `addr` parameter, as anything working</span>
-<span class="doccomment">/// with memory pointed to by raw pointers is unsafe.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mmap</span>(
-    <span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-    <span class="ident">length</span>: <span class="ident">usize</span>,
-    <span class="ident">prot</span>: <span class="ident">ProtFlags</span>,
-    <span class="ident">flags</span>: <span class="ident">MapFlags</span>,
-    <span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">offset</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c::c_void</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    {
-        <span class="ident">ret_void_star</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mmap2</span>),
-            <span class="ident">void_star</span>(<span class="ident">addr</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">length</span>),
-            <span class="ident">c_uint</span>(<span class="ident">prot</span>.<span class="ident">bits</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            (<span class="ident">offset</span> <span class="op">/</span> <span class="number">4096</span>)
-                .<span class="ident">try_into</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">scaled_offset</span><span class="op">|</span> <span class="ident">pass_usize</span>(<span class="ident">scaled_offset</span>))
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+<span class="doccomment">/// # Safety
+///
+/// `mmap` is primarily unsafe due to the `addr` parameter, as anything working
+/// with memory pointed to by raw pointers is unsafe.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>mmap(
+    addr: <span class="kw-2">*mut </span>c::c_void,
+    length: usize,
+    prot: ProtFlags,
+    flags: MapFlags,
+    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    offset: u64,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c::c_void&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span>{
+        ret_void_star(syscall6(
+            nr(__NR_mmap2),
+            void_star(addr),
+            pass_usize(length),
+            c_uint(prot.bits()),
+            c_uint(flags.bits()),
+            borrowed_fd(fd),
+            (offset / <span class="number">4096</span>)
+                .try_into()
+                .map(|scaled_offset| pass_usize(scaled_offset))
+                .map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    {
-        <span class="ident">ret_void_star</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mmap</span>),
-            <span class="ident">void_star</span>(<span class="ident">addr</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">length</span>),
-            <span class="ident">c_uint</span>(<span class="ident">prot</span>.<span class="ident">bits</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">offset</span>),
-        ))
-    }
-}
-
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `mmap` is primarily unsafe due to the `addr` parameter, as anything working</span>
-<span class="doccomment">/// with memory pointed to by raw pointers is unsafe.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mmap_anonymous</span>(
-    <span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-    <span class="ident">length</span>: <span class="ident">usize</span>,
-    <span class="ident">prot</span>: <span class="ident">ProtFlags</span>,
-    <span class="ident">flags</span>: <span class="ident">MapFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c::c_void</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    {
-        <span class="ident">ret_void_star</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mmap2</span>),
-            <span class="ident">void_star</span>(<span class="ident">addr</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">length</span>),
-            <span class="ident">c_uint</span>(<span class="ident">prot</span>.<span class="ident">bits</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">|</span> <span class="ident">linux_raw_sys::general::MAP_ANONYMOUS</span>),
-            <span class="ident">no_fd</span>(),
-            <span class="ident">pass_usize</span>(<span class="number">0</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    {
-        <span class="ident">ret_void_star</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mmap</span>),
-            <span class="ident">void_star</span>(<span class="ident">addr</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">length</span>),
-            <span class="ident">c_uint</span>(<span class="ident">prot</span>.<span class="ident">bits</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">|</span> <span class="ident">linux_raw_sys::general::MAP_ANONYMOUS</span>),
-            <span class="ident">no_fd</span>(),
-            <span class="ident">loff_t_from_u64</span>(<span class="number">0</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span>{
+        ret_void_star(syscall6(
+            nr(__NR_mmap),
+            void_star(addr),
+            pass_usize(length),
+            c_uint(prot.bits()),
+            c_uint(flags.bits()),
+            borrowed_fd(fd),
+            loff_t_from_u64(offset),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mprotect</span>(
-    <span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">MprotectFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_mprotect</span>),
-        <span class="ident">void_star</span>(<span class="ident">ptr</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">len</span>),
-        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="doccomment">/// # Safety
+///
+/// `mmap` is primarily unsafe due to the `addr` parameter, as anything working
+/// with memory pointed to by raw pointers is unsafe.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>mmap_anonymous(
+    addr: <span class="kw-2">*mut </span>c::c_void,
+    length: usize,
+    prot: ProtFlags,
+    flags: MapFlags,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c::c_void&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span>{
+        ret_void_star(syscall6(
+            nr(__NR_mmap2),
+            void_star(addr),
+            pass_usize(length),
+            c_uint(prot.bits()),
+            c_uint(flags.bits() | linux_raw_sys::general::MAP_ANONYMOUS),
+            no_fd(),
+            pass_usize(<span class="number">0</span>),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span>{
+        ret_void_star(syscall6(
+            nr(__NR_mmap),
+            void_star(addr),
+            pass_usize(length),
+            c_uint(prot.bits()),
+            c_uint(flags.bits() | linux_raw_sys::general::MAP_ANONYMOUS),
+            no_fd(),
+            loff_t_from_u64(<span class="number">0</span>),
+        ))
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>mprotect(
+    ptr: <span class="kw-2">*mut </span>c::c_void,
+    len: usize,
+    flags: MprotectFlags,
+) -&gt; io::Result&lt;()&gt; {
+    ret(syscall3(
+        nr(__NR_mprotect),
+        void_star(ptr),
+        pass_usize(len),
+        c_uint(flags.bits()),
     ))
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `munmap` is primarily unsafe due to the `addr` parameter, as anything</span>
-<span class="doccomment">/// working with memory pointed to by raw pointers is unsafe.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">munmap</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>, <span class="ident">length</span>: <span class="ident">usize</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_munmap</span>),
-        <span class="ident">void_star</span>(<span class="ident">addr</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">length</span>),
+<span class="doccomment">/// # Safety
+///
+/// `munmap` is primarily unsafe due to the `addr` parameter, as anything
+/// working with memory pointed to by raw pointers is unsafe.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>munmap(addr: <span class="kw-2">*mut </span>c::c_void, length: usize) -&gt; io::Result&lt;()&gt; {
+    ret(syscall2(
+        nr(__NR_munmap),
+        void_star(addr),
+        pass_usize(length),
     ))
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `mremap` is primarily unsafe due to the `old_address` parameter, as</span>
-<span class="doccomment">/// anything working with memory pointed to by raw pointers is unsafe.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mremap</span>(
-    <span class="ident">old_address</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-    <span class="ident">old_size</span>: <span class="ident">usize</span>,
-    <span class="ident">new_size</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">MremapFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c::c_void</span><span class="op">&gt;</span> {
-    <span class="ident">ret_void_star</span>(<span class="ident">syscall4</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_mremap</span>),
-        <span class="ident">void_star</span>(<span class="ident">old_address</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">old_size</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">new_size</span>),
-        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="doccomment">/// # Safety
+///
+/// `mremap` is primarily unsafe due to the `old_address` parameter, as
+/// anything working with memory pointed to by raw pointers is unsafe.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>mremap(
+    old_address: <span class="kw-2">*mut </span>c::c_void,
+    old_size: usize,
+    new_size: usize,
+    flags: MremapFlags,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c::c_void&gt; {
+    ret_void_star(syscall4(
+        nr(__NR_mremap),
+        void_star(old_address),
+        pass_usize(old_size),
+        pass_usize(new_size),
+        c_uint(flags.bits()),
     ))
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `mremap_fixed` is primarily unsafe due to the `old_address` and</span>
-<span class="doccomment">/// `new_address` parameters, as anything working with memory pointed to by raw</span>
-<span class="doccomment">/// pointers is unsafe.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mremap_fixed</span>(
-    <span class="ident">old_address</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-    <span class="ident">old_size</span>: <span class="ident">usize</span>,
-    <span class="ident">new_size</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">MremapFlags</span>,
-    <span class="ident">new_address</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="ident">c::c_void</span><span class="op">&gt;</span> {
-    <span class="ident">ret_void_star</span>(<span class="ident">syscall5</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_mremap</span>),
-        <span class="ident">void_star</span>(<span class="ident">old_address</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">old_size</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">new_size</span>),
-        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-        <span class="ident">void_star</span>(<span class="ident">new_address</span>),
+<span class="doccomment">/// # Safety
+///
+/// `mremap_fixed` is primarily unsafe due to the `old_address` and
+/// `new_address` parameters, as anything working with memory pointed to by raw
+/// pointers is unsafe.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>mremap_fixed(
+    old_address: <span class="kw-2">*mut </span>c::c_void,
+    old_size: usize,
+    new_size: usize,
+    flags: MremapFlags,
+    new_address: <span class="kw-2">*mut </span>c::c_void,
+) -&gt; io::Result&lt;<span class="kw-2">*mut </span>c::c_void&gt; {
+    ret_void_star(syscall5(
+        nr(__NR_mremap),
+        void_star(old_address),
+        pass_usize(old_size),
+        pass_usize(new_size),
+        c_uint(flags.bits()),
+        void_star(new_address),
     ))
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `mlock` operates on raw pointers and may round out to the nearest page</span>
-<span class="doccomment">/// boundaries.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mlock</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>, <span class="ident">length</span>: <span class="ident">usize</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_mlock</span>),
-        <span class="ident">void_star</span>(<span class="ident">addr</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">length</span>),
+<span class="doccomment">/// # Safety
+///
+/// `mlock` operates on raw pointers and may round out to the nearest page
+/// boundaries.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>mlock(addr: <span class="kw-2">*mut </span>c::c_void, length: usize) -&gt; io::Result&lt;()&gt; {
+    ret(syscall2(
+        nr(__NR_mlock),
+        void_star(addr),
+        pass_usize(length),
     ))
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `mlock_with` operates on raw pointers and may round out to the nearest page</span>
-<span class="doccomment">/// boundaries.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mlock_with</span>(
-    <span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>,
-    <span class="ident">length</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">MlockFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_mlock2</span>),
-        <span class="ident">void_star</span>(<span class="ident">addr</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">length</span>),
-        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="doccomment">/// # Safety
+///
+/// `mlock_with` operates on raw pointers and may round out to the nearest page
+/// boundaries.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>mlock_with(
+    addr: <span class="kw-2">*mut </span>c::c_void,
+    length: usize,
+    flags: MlockFlags,
+) -&gt; io::Result&lt;()&gt; {
+    ret(syscall3(
+        nr(__NR_mlock2),
+        void_star(addr),
+        pass_usize(length),
+        c_uint(flags.bits()),
     ))
 }
 
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `munlock` operates on raw pointers and may round out to the nearest page</span>
-<span class="doccomment">/// boundaries.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">munlock</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">c::c_void</span>, <span class="ident">length</span>: <span class="ident">usize</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_munlock</span>),
-        <span class="ident">void_star</span>(<span class="ident">addr</span>),
-        <span class="ident">pass_usize</span>(<span class="ident">length</span>),
+<span class="doccomment">/// # Safety
+///
+/// `munlock` operates on raw pointers and may round out to the nearest page
+/// boundaries.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>munlock(addr: <span class="kw-2">*mut </span>c::c_void, length: usize) -&gt; io::Result&lt;()&gt; {
+    ret(syscall2(
+        nr(__NR_munlock),
+        void_star(addr),
+        pass_usize(length),
     ))
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">pipe_with</span>(<span class="ident">flags</span>: <span class="ident">PipeFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>(<span class="ident">OwnedFd</span>, <span class="ident">OwnedFd</span>)<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span>[<span class="ident">OwnedFd</span>; <span class="number">2</span>]<span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_pipe2</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pipe_with(flags: PipeFlags) -&gt; io::Result&lt;(OwnedFd, OwnedFd)&gt; {
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;[OwnedFd; <span class="number">2</span>]&gt;::uninit();
+        ret(syscall2(
+            nr(__NR_pipe2),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(flags.bits()),
         ))<span class="question-mark">?</span>;
-        <span class="kw">let</span> [<span class="ident">p0</span>, <span class="ident">p1</span>] <span class="op">=</span> <span class="ident">result</span>.<span class="ident">assume_init</span>();
-        <span class="prelude-val">Ok</span>((<span class="ident">p0</span>, <span class="ident">p1</span>))
+        <span class="kw">let </span>[p0, p1] = result.assume_init();
+        <span class="prelude-val">Ok</span>((p0, p1))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">pipe</span>() -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>(<span class="ident">OwnedFd</span>, <span class="ident">OwnedFd</span>)<span class="op">&gt;</span> {
-    <span class="comment">// aarch64 and risc64 omit `__NR_pipe`. On mips, `__NR_pipe` uses a special</span>
-    <span class="comment">// calling convention, but using it is not worth complicating our syscall</span>
-    <span class="comment">// wrapping infrastructure at this time.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>,
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>,
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips64&quot;</span>,
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>
-    ))]</span>
-    {
-        <span class="ident">pipe_with</span>(<span class="ident">PipeFlags::empty</span>())
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pipe() -&gt; io::Result&lt;(OwnedFd, OwnedFd)&gt; {
+    <span class="comment">// aarch64 and risc64 omit `__NR_pipe`. On mips, `__NR_pipe` uses a special
+    // calling convention, but using it is not worth complicating our syscall
+    // wrapping infrastructure at this time.
+    </span><span class="attribute">#[cfg(any(
+        target_arch = <span class="string">&quot;aarch64&quot;</span>,
+        target_arch = <span class="string">&quot;mips&quot;</span>,
+        target_arch = <span class="string">&quot;mips64&quot;</span>,
+        target_arch = <span class="string">&quot;riscv64&quot;
+    </span>))]
+    </span>{
+        pipe_with(PipeFlags::empty())
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>,
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>,
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips64&quot;</span>,
-        <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>
-    )))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span>[<span class="ident">OwnedFd</span>; <span class="number">2</span>]<span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall1</span>(<span class="ident">nr</span>(<span class="ident">__NR_pipe</span>), <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>)))<span class="question-mark">?</span>;
-        <span class="kw">let</span> [<span class="ident">p0</span>, <span class="ident">p1</span>] <span class="op">=</span> <span class="ident">result</span>.<span class="ident">assume_init</span>();
-        <span class="prelude-val">Ok</span>((<span class="ident">p0</span>, <span class="ident">p1</span>))
+    <span class="attribute">#[cfg(not(any(
+        target_arch = <span class="string">&quot;aarch64&quot;</span>,
+        target_arch = <span class="string">&quot;mips&quot;</span>,
+        target_arch = <span class="string">&quot;mips64&quot;</span>,
+        target_arch = <span class="string">&quot;riscv64&quot;
+    </span>)))]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;[OwnedFd; <span class="number">2</span>]&gt;::uninit();
+        ret(syscall1(nr(__NR_pipe), out(<span class="kw-2">&amp;mut </span>result)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>[p0, p1] = result.assume_init();
+        <span class="prelude-val">Ok</span>((p0, p1))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">poll</span>(<span class="ident">fds</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">PollFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>], <span class="ident">timeout</span>: <span class="ident">c::c_int</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">fds_addr_mut</span>, <span class="ident">fds_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">fds</span>);
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>poll(fds: <span class="kw-2">&amp;mut </span>[PollFd&lt;<span class="lifetime">&#39;_</span>&gt;], timeout: c::c_int) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(fds_addr_mut, fds_len) = slice_mut(fds);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="ident">timeout</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">timeout</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">__kernel_timespec</span> {
-                <span class="ident">tv_sec</span>: (<span class="ident">timeout</span> <span class="kw">as</span> <span class="ident">i64</span>) <span class="op">/</span> <span class="number">1000</span>,
-                <span class="ident">tv_nsec</span>: (<span class="ident">timeout</span> <span class="kw">as</span> <span class="ident">i64</span>) <span class="op">%</span> <span class="number">1000</span> <span class="op">*</span> <span class="number">1000000</span>,
+    <span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span>timeout = <span class="kw">if </span>timeout &gt;= <span class="number">0 </span>{
+            <span class="prelude-val">Some</span>(__kernel_timespec {
+                tv_sec: (timeout <span class="kw">as </span>i64) / <span class="number">1000</span>,
+                tv_nsec: (timeout <span class="kw">as </span>i64) % <span class="number">1000 </span>* <span class="number">1000000</span>,
             })
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        };
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ppoll</span>),
-            <span class="ident">fds_addr_mut</span>,
-            <span class="ident">fds_len</span>,
-            <span class="ident">opt_ref</span>(<span class="ident">timeout</span>.<span class="ident">as_ref</span>()),
-            <span class="ident">zero</span>(),
-            <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">sigset_t</span>, <span class="kw">_</span><span class="op">&gt;</span>(),
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
+        ret_usize(syscall5(
+            nr(__NR_ppoll),
+            fds_addr_mut,
+            fds_len,
+            opt_ref(timeout.as_ref()),
+            zero(),
+            size_of::&lt;sigset_t, <span class="kw">_</span>&gt;(),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_poll</span>),
-            <span class="ident">fds_addr_mut</span>,
-            <span class="ident">fds_len</span>,
-            <span class="ident">c_int</span>(<span class="ident">timeout</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">userfaultfd</span>(<span class="ident">flags</span>: <span class="ident">UserfaultfdFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="ident">ret_owned_fd</span>(<span class="ident">syscall1_readonly</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_userfaultfd</span>),
-        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-    ))
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">epoll_create</span>(<span class="ident">flags</span>: <span class="ident">epoll::CreateFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall1_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_epoll_create1</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>)))]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall3(
+            nr(__NR_poll),
+            fds_addr_mut,
+            fds_len,
+            c_int(timeout),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">epoll_add</span>(
-    <span class="ident">epfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">fd</span>: <span class="ident">c::c_int</span>,
-    <span class="ident">event</span>: <span class="kw-2">&amp;</span><span class="ident">epoll_event</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_epoll_ctl</span>),
-        <span class="ident">borrowed_fd</span>(<span class="ident">epfd</span>),
-        <span class="ident">c_uint</span>(<span class="ident">EPOLL_CTL_ADD</span>),
-        <span class="ident">raw_fd</span>(<span class="ident">fd</span>),
-        <span class="ident">by_ref</span>(<span class="ident">event</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>userfaultfd(flags: UserfaultfdFlags) -&gt; io::Result&lt;OwnedFd&gt; {
+    ret_owned_fd(syscall1_readonly(
+        nr(__NR_userfaultfd),
+        c_uint(flags.bits()),
     ))
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">epoll_mod</span>(
-    <span class="ident">epfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">fd</span>: <span class="ident">c::c_int</span>,
-    <span class="ident">event</span>: <span class="kw-2">&amp;</span><span class="ident">epoll_event</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_epoll_ctl</span>),
-        <span class="ident">borrowed_fd</span>(<span class="ident">epfd</span>),
-        <span class="ident">c_uint</span>(<span class="ident">EPOLL_CTL_MOD</span>),
-        <span class="ident">raw_fd</span>(<span class="ident">fd</span>),
-        <span class="ident">by_ref</span>(<span class="ident">event</span>),
-    ))
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">epoll_del</span>(<span class="ident">epfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">fd</span>: <span class="ident">c::c_int</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_epoll_ctl</span>),
-        <span class="ident">borrowed_fd</span>(<span class="ident">epfd</span>),
-        <span class="ident">c_uint</span>(<span class="ident">EPOLL_CTL_DEL</span>),
-        <span class="ident">raw_fd</span>(<span class="ident">fd</span>),
-        <span class="ident">zero</span>(),
-    ))
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">epoll_wait</span>(
-    <span class="ident">epfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">events</span>: <span class="kw-2">*mut</span> <span class="ident">epoll_event</span>,
-    <span class="ident">num_events</span>: <span class="ident">usize</span>,
-    <span class="ident">timeout</span>: <span class="ident">c::c_int</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_epoll_wait</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">epfd</span>),
-            <span class="ident">void_star</span>(<span class="ident">events</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">c::c_void</span><span class="op">&gt;</span>()),
-            <span class="ident">pass_usize</span>(<span class="ident">num_events</span>),
-            <span class="ident">c_int</span>(<span class="ident">timeout</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>epoll_create(flags: epoll::CreateFlags) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="kw">unsafe </span>{
+        ret_owned_fd(syscall1_readonly(
+            nr(__NR_epoll_create1),
+            c_uint(flags.bits()),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall5</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_epoll_pwait</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">epfd</span>),
-            <span class="ident">void_star</span>(<span class="ident">events</span>.<span class="ident">cast</span>::<span class="op">&lt;</span><span class="ident">c::c_void</span><span class="op">&gt;</span>()),
-            <span class="ident">pass_usize</span>(<span class="ident">num_events</span>),
-            <span class="ident">c_int</span>(<span class="ident">timeout</span>),
-            <span class="ident">zero</span>(),
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>epoll_add(
+    epfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    fd: c::c_int,
+    event: <span class="kw-2">&amp;</span>epoll_event,
+) -&gt; io::Result&lt;()&gt; {
+    ret(syscall4_readonly(
+        nr(__NR_epoll_ctl),
+        borrowed_fd(epfd),
+        c_uint(EPOLL_CTL_ADD),
+        raw_fd(fd),
+        by_ref(event),
+    ))
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>epoll_mod(
+    epfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    fd: c::c_int,
+    event: <span class="kw-2">&amp;</span>epoll_event,
+) -&gt; io::Result&lt;()&gt; {
+    ret(syscall4_readonly(
+        nr(__NR_epoll_ctl),
+        borrowed_fd(epfd),
+        c_uint(EPOLL_CTL_MOD),
+        raw_fd(fd),
+        by_ref(event),
+    ))
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>epoll_del(epfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, fd: c::c_int) -&gt; io::Result&lt;()&gt; {
+    ret(syscall4_readonly(
+        nr(__NR_epoll_ctl),
+        borrowed_fd(epfd),
+        c_uint(EPOLL_CTL_DEL),
+        raw_fd(fd),
+        zero(),
+    ))
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>epoll_wait(
+    epfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    events: <span class="kw-2">*mut </span>epoll_event,
+    num_events: usize,
+    timeout: c::c_int,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="attribute">#[cfg(not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>)))]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall4(
+            nr(__NR_epoll_wait),
+            borrowed_fd(epfd),
+            void_star(events.cast::&lt;c::c_void&gt;()),
+            pass_usize(num_events),
+            c_int(timeout),
+        ))
+    }
+    <span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall5(
+            nr(__NR_epoll_pwait),
+            borrowed_fd(epfd),
+            void_star(events.cast::&lt;c::c_void&gt;()),
+            pass_usize(num_events),
+            c_int(timeout),
+            zero(),
         ))
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

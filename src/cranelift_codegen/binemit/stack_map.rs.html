@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/binemit/stack_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>stack_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/binemit/stack_map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>stack_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -155,158 +150,157 @@
 <span id="150">150</span>
 <span id="151">151</span>
 <span id="152">152</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::bitset::BitSet</span>;
-<span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::bitset::BitSet;
+<span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">type</span> <span class="ident">Num</span> <span class="op">=</span> <span class="ident">u32</span>;
-<span class="kw">const</span> <span class="ident">NUM_BITS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">core::mem::size_of</span>::<span class="op">&lt;</span><span class="ident">Num</span><span class="op">&gt;</span>() <span class="op">*</span> <span class="number">8</span>;
+<span class="kw">type </span>Num = u32;
+<span class="kw">const </span>NUM_BITS: usize = core::mem::size_of::&lt;Num&gt;() * <span class="number">8</span>;
 
-<span class="doccomment">/// Stack maps record which words in a stack frame contain live GC references at</span>
-<span class="doccomment">/// a given instruction pointer.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Logically, a set of stack maps for a function record a table of the form:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```text</span>
-<span class="doccomment">/// +---------------------+-------------------------------------------+</span>
-<span class="doccomment">/// | Instruction Pointer | SP-Relative Offsets of Live GC References |</span>
-<span class="doccomment">/// +---------------------+-------------------------------------------+</span>
-<span class="doccomment">/// | 0x12345678          | 2, 6, 12                                  |</span>
-<span class="doccomment">/// | 0x1234abcd          | 2, 6                                      |</span>
-<span class="doccomment">/// | ...                 | ...                                       |</span>
-<span class="doccomment">/// +---------------------+-------------------------------------------+</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Where &quot;instruction pointer&quot; is an instruction pointer within the function,</span>
-<span class="doccomment">/// and &quot;offsets of live GC references&quot; contains the offsets (in units of words)</span>
-<span class="doccomment">/// from the frame&#39;s stack pointer where live GC references are stored on the</span>
-<span class="doccomment">/// stack. Instruction pointers within the function that do not have an entry in</span>
-<span class="doccomment">/// this table are not GC safepoints.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Because</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * offsets of live GC references are relative from the stack pointer, and</span>
-<span class="doccomment">/// * stack frames grow down from higher addresses to lower addresses,</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// to get a pointer to a live reference at offset `x` within a stack frame, you</span>
-<span class="doccomment">/// add `x` from the frame&#39;s stack pointer.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For example, to calculate the pointer to the live GC reference inside &quot;frame</span>
-<span class="doccomment">/// 1&quot; below, you would do `frame_1_sp + x`:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```text</span>
-<span class="doccomment">///           Stack</span>
-<span class="doccomment">///         +-------------------+</span>
-<span class="doccomment">///         | Frame 0           |</span>
-<span class="doccomment">///         |                   |</span>
-<span class="doccomment">///    |    |                   |</span>
-<span class="doccomment">///    |    +-------------------+ &lt;--- Frame 0&#39;s SP</span>
-<span class="doccomment">///    |    | Frame 1           |</span>
-<span class="doccomment">///  Grows  |                   |</span>
-<span class="doccomment">///  down   |                   |</span>
-<span class="doccomment">///    |    | Live GC reference | --+--</span>
-<span class="doccomment">///    |    |                   |   |</span>
-<span class="doccomment">///    |    |                   |   |</span>
-<span class="doccomment">///    V    |                   |   x = offset of live GC reference</span>
-<span class="doccomment">///         |                   |   |</span>
-<span class="doccomment">///         |                   |   |</span>
-<span class="doccomment">///         +-------------------+ --+--  &lt;--- Frame 1&#39;s SP</span>
-<span class="doccomment">///         | Frame 2           |</span>
-<span class="doccomment">///         | ...               |</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An individual `StackMap` is associated with just one instruction pointer</span>
-<span class="doccomment">/// within the function, contains the size of the stack frame, and represents</span>
-<span class="doccomment">/// the stack frame as a bitmap. There is one bit per word in the stack frame,</span>
-<span class="doccomment">/// and if the bit is set, then the word contains a live GC reference.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that a caller&#39;s `OutgoingArg` stack slots and callee&#39;s `IncomingArg`</span>
-<span class="doccomment">/// stack slots overlap, so we must choose which function&#39;s stack maps record</span>
-<span class="doccomment">/// live GC references in these slots. We record the `IncomingArg`s in the</span>
-<span class="doccomment">/// callee&#39;s stack map.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;enable-serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">serde::Deserialize</span>, <span class="ident">serde::Serialize</span>))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StackMap</span> {
-    <span class="ident">bitmap</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">Num</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">mapped_words</span>: <span class="ident">u32</span>,
+<span class="doccomment">/// Stack maps record which words in a stack frame contain live GC references at
+/// a given instruction pointer.
+///
+/// Logically, a set of stack maps for a function record a table of the form:
+///
+/// ```text
+/// +---------------------+-------------------------------------------+
+/// | Instruction Pointer | SP-Relative Offsets of Live GC References |
+/// +---------------------+-------------------------------------------+
+/// | 0x12345678          | 2, 6, 12                                  |
+/// | 0x1234abcd          | 2, 6                                      |
+/// | ...                 | ...                                       |
+/// +---------------------+-------------------------------------------+
+/// ```
+///
+/// Where &quot;instruction pointer&quot; is an instruction pointer within the function,
+/// and &quot;offsets of live GC references&quot; contains the offsets (in units of words)
+/// from the frame&#39;s stack pointer where live GC references are stored on the
+/// stack. Instruction pointers within the function that do not have an entry in
+/// this table are not GC safepoints.
+///
+/// Because
+///
+/// * offsets of live GC references are relative from the stack pointer, and
+/// * stack frames grow down from higher addresses to lower addresses,
+///
+/// to get a pointer to a live reference at offset `x` within a stack frame, you
+/// add `x` from the frame&#39;s stack pointer.
+///
+/// For example, to calculate the pointer to the live GC reference inside &quot;frame
+/// 1&quot; below, you would do `frame_1_sp + x`:
+///
+/// ```text
+///           Stack
+///         +-------------------+
+///         | Frame 0           |
+///         |                   |
+///    |    |                   |
+///    |    +-------------------+ &lt;--- Frame 0&#39;s SP
+///    |    | Frame 1           |
+///  Grows  |                   |
+///  down   |                   |
+///    |    | Live GC reference | --+--
+///    |    |                   |   |
+///    |    |                   |   |
+///    V    |                   |   x = offset of live GC reference
+///         |                   |   |
+///         |                   |   |
+///         +-------------------+ --+--  &lt;--- Frame 1&#39;s SP
+///         | Frame 2           |
+///         | ...               |
+/// ```
+///
+/// An individual `StackMap` is associated with just one instruction pointer
+/// within the function, contains the size of the stack frame, and represents
+/// the stack frame as a bitmap. There is one bit per word in the stack frame,
+/// and if the bit is set, then the word contains a live GC reference.
+///
+/// Note that a caller&#39;s `OutgoingArg` stack slots and callee&#39;s `IncomingArg`
+/// stack slots overlap, so we must choose which function&#39;s stack maps record
+/// live GC references in these slots. We record the `IncomingArg`s in the
+/// callee&#39;s stack map.
+</span><span class="attribute">#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = <span class="string">&quot;enable-serde&quot;</span>, derive(serde::Deserialize, serde::Serialize))]
+</span><span class="kw">pub struct </span>StackMap {
+    bitmap: Vec&lt;BitSet&lt;Num&gt;&gt;,
+    mapped_words: u32,
 }
 
-<span class="kw">impl</span> <span class="ident">StackMap</span> {
-    <span class="doccomment">/// Create a vec of Bitsets from a slice of bools.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_slice</span>(<span class="ident">vec</span>: <span class="kw-2">&amp;</span>[<span class="ident">bool</span>]) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">vec</span>.<span class="ident">len</span>();
-        <span class="kw">let</span> <span class="ident">num_word</span> <span class="op">=</span> <span class="ident">len</span> <span class="op">/</span> <span class="ident">NUM_BITS</span> <span class="op">+</span> (<span class="ident">len</span> <span class="op">%</span> <span class="ident">NUM_BITS</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bitmap</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">num_word</span>);
+<span class="kw">impl </span>StackMap {
+    <span class="doccomment">/// Create a vec of Bitsets from a slice of bools.
+    </span><span class="kw">pub fn </span>from_slice(vec: <span class="kw-2">&amp;</span>[bool]) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>len = vec.len();
+        <span class="kw">let </span>num_word = len / NUM_BITS + (len % NUM_BITS != <span class="number">0</span>) <span class="kw">as </span>usize;
+        <span class="kw">let </span><span class="kw-2">mut </span>bitmap = Vec::with_capacity(num_word);
 
-        <span class="kw">for</span> <span class="ident">segment</span> <span class="kw">in</span> <span class="ident">vec</span>.<span class="ident">chunks</span>(<span class="ident">NUM_BITS</span>) {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">curr_word</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">set</span>) <span class="kw">in</span> <span class="ident">segment</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-                <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">set</span> {
-                    <span class="ident">curr_word</span> <span class="op">|</span><span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">i</span>;
+        <span class="kw">for </span>segment <span class="kw">in </span>vec.chunks(NUM_BITS) {
+            <span class="kw">let </span><span class="kw-2">mut </span>curr_word = <span class="number">0</span>;
+            <span class="kw">for </span>(i, set) <span class="kw">in </span>segment.iter().enumerate() {
+                <span class="kw">if </span><span class="kw-2">*</span>set {
+                    curr_word |= <span class="number">1 </span>&lt;&lt; i;
                 }
             }
-            <span class="ident">bitmap</span>.<span class="ident">push</span>(<span class="ident">BitSet</span>(<span class="ident">curr_word</span>));
+            bitmap.push(BitSet(curr_word));
         }
-        <span class="self">Self</span> {
-            <span class="ident">mapped_words</span>: <span class="ident">len</span> <span class="kw">as</span> <span class="ident">u32</span>,
-            <span class="ident">bitmap</span>,
+        <span class="self">Self </span>{
+            mapped_words: len <span class="kw">as </span>u32,
+            bitmap,
         }
     }
 
-    <span class="doccomment">/// Returns a specified bit.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit_index</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
-        <span class="macro">assert!</span>(<span class="ident">bit_index</span> <span class="op">&lt;</span> <span class="ident">NUM_BITS</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">bitmap</span>.<span class="ident">len</span>());
-        <span class="kw">let</span> <span class="ident">word_index</span> <span class="op">=</span> <span class="ident">bit_index</span> <span class="op">/</span> <span class="ident">NUM_BITS</span>;
-        <span class="kw">let</span> <span class="ident">word_offset</span> <span class="op">=</span> (<span class="ident">bit_index</span> <span class="op">%</span> <span class="ident">NUM_BITS</span>) <span class="kw">as</span> <span class="ident">u8</span>;
-        <span class="self">self</span>.<span class="ident">bitmap</span>[<span class="ident">word_index</span>].<span class="ident">contains</span>(<span class="ident">word_offset</span>)
+    <span class="doccomment">/// Returns a specified bit.
+    </span><span class="kw">pub fn </span>get_bit(<span class="kw-2">&amp;</span><span class="self">self</span>, bit_index: usize) -&gt; bool {
+        <span class="macro">assert!</span>(bit_index &lt; NUM_BITS * <span class="self">self</span>.bitmap.len());
+        <span class="kw">let </span>word_index = bit_index / NUM_BITS;
+        <span class="kw">let </span>word_offset = (bit_index % NUM_BITS) <span class="kw">as </span>u8;
+        <span class="self">self</span>.bitmap[word_index].contains(word_offset)
     }
 
-    <span class="doccomment">/// Returns the raw bitmap that represents this stack map.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bitmap</span>
+    <span class="doccomment">/// Returns the raw bitmap that represents this stack map.
+    </span><span class="kw">pub fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[BitSet&lt;u32&gt;] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.bitmap
     }
 
-    <span class="doccomment">/// Returns the number of words represented by this stack map.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mapped_words</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="self">self</span>.<span class="ident">mapped_words</span>
+    <span class="doccomment">/// Returns the number of words represented by this stack map.
+    </span><span class="kw">pub fn </span>mapped_words(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="self">self</span>.mapped_words
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">stack_maps</span>() {
-        <span class="kw">let</span> <span class="ident">vec</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="macro">assert!</span>(<span class="ident">StackMap::from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">vec</span>).<span class="ident">bitmap</span>.<span class="ident">is_empty</span>());
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>stack_maps() {
+        <span class="kw">let </span>vec: Vec&lt;bool&gt; = Vec::new();
+        <span class="macro">assert!</span>(StackMap::from_slice(<span class="kw-2">&amp;</span>vec).bitmap.is_empty());
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vec</span>: [<span class="ident">bool</span>; <span class="ident">NUM_BITS</span>] <span class="op">=</span> <span class="ident">Default::default</span>();
-        <span class="kw">let</span> <span class="ident">set_true_idx</span> <span class="op">=</span> [<span class="number">5</span>, <span class="number">7</span>, <span class="number">24</span>, <span class="number">31</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>vec: [bool; NUM_BITS] = Default::default();
+        <span class="kw">let </span>set_true_idx = [<span class="number">5</span>, <span class="number">7</span>, <span class="number">24</span>, <span class="number">31</span>];
 
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">idx</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">set_true_idx</span> {
-            <span class="ident">vec</span>[<span class="ident">idx</span>] <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="kw">for </span><span class="kw-2">&amp;</span>idx <span class="kw">in </span><span class="kw-2">&amp;</span>set_true_idx {
+            vec[idx] = <span class="bool-val">true</span>;
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vec</span> <span class="op">=</span> <span class="ident">vec</span>.<span class="ident">to_vec</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>vec = vec.to_vec();
         <span class="macro">assert_eq!</span>(
-            <span class="macro">vec!</span>[<span class="ident">BitSet</span>::<span class="op">&lt;</span><span class="ident">Num</span><span class="op">&gt;</span>(<span class="number">2164261024</span>)],
-            <span class="ident">StackMap::from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">vec</span>).<span class="ident">bitmap</span>
+            <span class="macro">vec!</span>[BitSet::&lt;Num&gt;(<span class="number">2164261024</span>)],
+            StackMap::from_slice(<span class="kw-2">&amp;</span>vec).bitmap
         );
 
-        <span class="ident">vec</span>.<span class="ident">push</span>(<span class="bool-val">false</span>);
-        <span class="ident">vec</span>.<span class="ident">push</span>(<span class="bool-val">true</span>);
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">StackMap::from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">vec</span>);
+        vec.push(<span class="bool-val">false</span>);
+        vec.push(<span class="bool-val">true</span>);
+        <span class="kw">let </span>res = StackMap::from_slice(<span class="kw-2">&amp;</span>vec);
         <span class="macro">assert_eq!</span>(
-            <span class="macro">vec!</span>[<span class="ident">BitSet</span>::<span class="op">&lt;</span><span class="ident">Num</span><span class="op">&gt;</span>(<span class="number">2164261024</span>), <span class="ident">BitSet</span>::<span class="op">&lt;</span><span class="ident">Num</span><span class="op">&gt;</span>(<span class="number">2</span>)],
-            <span class="ident">res</span>.<span class="ident">bitmap</span>
+            <span class="macro">vec!</span>[BitSet::&lt;Num&gt;(<span class="number">2164261024</span>), BitSet::&lt;Num&gt;(<span class="number">2</span>)],
+            res.bitmap
         );
 
-        <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">get_bit</span>(<span class="number">5</span>));
-        <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">get_bit</span>(<span class="number">31</span>));
-        <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">get_bit</span>(<span class="number">33</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">res</span>.<span class="ident">get_bit</span>(<span class="number">1</span>));
+        <span class="macro">assert!</span>(res.get_bit(<span class="number">5</span>));
+        <span class="macro">assert!</span>(res.get_bit(<span class="number">31</span>));
+        <span class="macro">assert!</span>(res.get_bit(<span class="number">33</span>));
+        <span class="macro">assert!</span>(!res.get_bit(<span class="number">1</span>));
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

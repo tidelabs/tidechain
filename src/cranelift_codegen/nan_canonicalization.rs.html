@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/nan_canonicalization.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>nan_canonicalization.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/nan_canonicalization.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>nan_canonicalization.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../cranelift_codegen/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -109,112 +104,111 @@
 <span id="104">104</span>
 <span id="105">105</span>
 <span id="106">106</span>
-</pre><pre class="rust"><code><span class="doccomment">//! A NaN-canonicalizing rewriting pass. Patch floating point arithmetic</span>
-<span class="doccomment">//! instructions that may return a NaN result with a sequence of operations</span>
-<span class="doccomment">//! that will replace nondeterministic NaN&#39;s with a single canonical NaN value.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! A NaN-canonicalizing rewriting pass. Patch floating point arithmetic
+//! instructions that may return a NaN result with a sequence of operations
+//! that will replace nondeterministic NaN&#39;s with a single canonical NaN value.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cursor</span>::{<span class="ident">Cursor</span>, <span class="ident">FuncCursor</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::condcodes::FloatCC</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::immediates</span>::{<span class="ident">Ieee32</span>, <span class="ident">Ieee64</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::types</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="ident">Function</span>, <span class="ident">Inst</span>, <span class="ident">InstBuilder</span>, <span class="ident">InstructionData</span>, <span class="ident">Opcode</span>, <span class="ident">Value</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timing</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::cursor::{Cursor, FuncCursor};
+<span class="kw">use </span><span class="kw">crate</span>::ir::condcodes::FloatCC;
+<span class="kw">use </span><span class="kw">crate</span>::ir::immediates::{Ieee32, Ieee64};
+<span class="kw">use </span><span class="kw">crate</span>::ir::types;
+<span class="kw">use </span><span class="kw">crate</span>::ir::{Function, Inst, InstBuilder, InstructionData, Opcode, Value};
+<span class="kw">use </span><span class="kw">crate</span>::timing;
 
-<span class="comment">// Canonical 32-bit and 64-bit NaN values.</span>
-<span class="kw">static</span> <span class="ident">CANON_32BIT_NAN</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0b01111111110000000000000000000000</span>;
-<span class="kw">static</span> <span class="ident">CANON_64BIT_NAN</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0b0111111111111000000000000000000000000000000000000000000000000000</span>;
+<span class="comment">// Canonical 32-bit and 64-bit NaN values.
+</span><span class="kw">static </span>CANON_32BIT_NAN: u32 = <span class="number">0b01111111110000000000000000000000</span>;
+<span class="kw">static </span>CANON_64BIT_NAN: u64 = <span class="number">0b0111111111111000000000000000000000000000000000000000000000000000</span>;
 
-<span class="doccomment">/// Perform the NaN canonicalization pass.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">do_nan_canonicalization</span>(<span class="ident">func</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Function</span>) {
-    <span class="kw">let</span> <span class="ident">_tt</span> <span class="op">=</span> <span class="ident">timing::canonicalize_nans</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="ident">func</span>);
-    <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">_block</span>) <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">next_block</span>() {
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">inst</span>) <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">next_inst</span>() {
-            <span class="kw">if</span> <span class="ident">is_fp_arith</span>(<span class="kw-2">&amp;mut</span> <span class="ident">pos</span>, <span class="ident">inst</span>) {
-                <span class="ident">add_nan_canon_seq</span>(<span class="kw-2">&amp;mut</span> <span class="ident">pos</span>, <span class="ident">inst</span>);
+<span class="doccomment">/// Perform the NaN canonicalization pass.
+</span><span class="kw">pub fn </span>do_nan_canonicalization(func: <span class="kw-2">&amp;mut </span>Function) {
+    <span class="kw">let </span>_tt = timing::canonicalize_nans();
+    <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(func);
+    <span class="kw">while let </span><span class="prelude-val">Some</span>(_block) = pos.next_block() {
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(inst) = pos.next_inst() {
+            <span class="kw">if </span>is_fp_arith(<span class="kw-2">&amp;mut </span>pos, inst) {
+                add_nan_canon_seq(<span class="kw-2">&amp;mut </span>pos, inst);
             }
         }
     }
 }
 
-<span class="doccomment">/// Returns true/false based on whether the instruction is a floating-point</span>
-<span class="doccomment">/// arithmetic operation. This ignores operations like `fneg`, `fabs`, or</span>
-<span class="doccomment">/// `fcopysign` that only operate on the sign bit of a floating point value.</span>
-<span class="kw">fn</span> <span class="ident">is_fp_arith</span>(<span class="ident">pos</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FuncCursor</span>, <span class="ident">inst</span>: <span class="ident">Inst</span>) -&gt; <span class="ident">bool</span> {
-    <span class="kw">match</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>[<span class="ident">inst</span>] {
-        <span class="ident">InstructionData::Unary</span> { <span class="ident">opcode</span>, .. } =&gt; {
-            <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Ceil</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Floor</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Nearest</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Sqrt</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Trunc</span>
+<span class="doccomment">/// Returns true/false based on whether the instruction is a floating-point
+/// arithmetic operation. This ignores operations like `fneg`, `fabs`, or
+/// `fcopysign` that only operate on the sign bit of a floating point value.
+</span><span class="kw">fn </span>is_fp_arith(pos: <span class="kw-2">&amp;mut </span>FuncCursor, inst: Inst) -&gt; bool {
+    <span class="kw">match </span>pos.func.dfg[inst] {
+        InstructionData::Unary { opcode, .. } =&gt; {
+            opcode == Opcode::Ceil
+                || opcode == Opcode::Floor
+                || opcode == Opcode::Nearest
+                || opcode == Opcode::Sqrt
+                || opcode == Opcode::Trunc
         }
-        <span class="ident">InstructionData::Binary</span> { <span class="ident">opcode</span>, .. } =&gt; {
-            <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Fadd</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Fdiv</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Fmax</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Fmin</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Fmul</span>
-                <span class="op">|</span><span class="op">|</span> <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Fsub</span>
+        InstructionData::Binary { opcode, .. } =&gt; {
+            opcode == Opcode::Fadd
+                || opcode == Opcode::Fdiv
+                || opcode == Opcode::Fmax
+                || opcode == Opcode::Fmin
+                || opcode == Opcode::Fmul
+                || opcode == Opcode::Fsub
         }
-        <span class="ident">InstructionData::Ternary</span> { <span class="ident">opcode</span>, .. } =&gt; <span class="ident">opcode</span> <span class="op">==</span> <span class="ident">Opcode::Fma</span>,
-        <span class="kw">_</span> =&gt; <span class="bool-val">false</span>,
+        InstructionData::Ternary { opcode, .. } =&gt; opcode == Opcode::Fma,
+        <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
     }
 }
 
-<span class="doccomment">/// Append a sequence of canonicalizing instructions after the given instruction.</span>
-<span class="kw">fn</span> <span class="ident">add_nan_canon_seq</span>(<span class="ident">pos</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FuncCursor</span>, <span class="ident">inst</span>: <span class="ident">Inst</span>) {
-    <span class="comment">// Select the instruction result, result type. Replace the instruction</span>
-    <span class="comment">// result and step forward before inserting the canonicalization sequence.</span>
-    <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">first_result</span>(<span class="ident">inst</span>);
-    <span class="kw">let</span> <span class="ident">val_type</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">val</span>);
-    <span class="kw">let</span> <span class="ident">new_res</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">replace_result</span>(<span class="ident">val</span>, <span class="ident">val_type</span>);
-    <span class="kw">let</span> <span class="ident">_next_inst</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">next_inst</span>().<span class="ident">expect</span>(<span class="string">&quot;block missing terminator!&quot;</span>);
+<span class="doccomment">/// Append a sequence of canonicalizing instructions after the given instruction.
+</span><span class="kw">fn </span>add_nan_canon_seq(pos: <span class="kw-2">&amp;mut </span>FuncCursor, inst: Inst) {
+    <span class="comment">// Select the instruction result, result type. Replace the instruction
+    // result and step forward before inserting the canonicalization sequence.
+    </span><span class="kw">let </span>val = pos.func.dfg.first_result(inst);
+    <span class="kw">let </span>val_type = pos.func.dfg.value_type(val);
+    <span class="kw">let </span>new_res = pos.func.dfg.replace_result(val, val_type);
+    <span class="kw">let </span>_next_inst = pos.next_inst().expect(<span class="string">&quot;block missing terminator!&quot;</span>);
 
-    <span class="comment">// Insert a comparison instruction, to check if `inst_res` is NaN. Select</span>
-    <span class="comment">// the canonical NaN value if `val` is NaN, assign the result to `inst`.</span>
-    <span class="kw">let</span> <span class="ident">is_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">fcmp</span>(<span class="ident">FloatCC::NotEqual</span>, <span class="ident">new_res</span>, <span class="ident">new_res</span>);
+    <span class="comment">// Insert a comparison instruction, to check if `inst_res` is NaN. Select
+    // the canonical NaN value if `val` is NaN, assign the result to `inst`.
+    </span><span class="kw">let </span>is_nan = pos.ins().fcmp(FloatCC::NotEqual, new_res, new_res);
 
-    <span class="kw">let</span> <span class="ident">scalar_select</span> <span class="op">=</span> <span class="op">|</span><span class="ident">pos</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FuncCursor</span>, <span class="ident">canon_nan</span>: <span class="ident">Value</span><span class="op">|</span> {
-        <span class="ident">pos</span>.<span class="ident">ins</span>()
-            .<span class="ident">with_result</span>(<span class="ident">val</span>)
-            .<span class="ident">select</span>(<span class="ident">is_nan</span>, <span class="ident">canon_nan</span>, <span class="ident">new_res</span>);
+    <span class="kw">let </span>scalar_select = |pos: <span class="kw-2">&amp;mut </span>FuncCursor, canon_nan: Value| {
+        pos.ins()
+            .with_result(val)
+            .select(is_nan, canon_nan, new_res);
     };
-    <span class="kw">let</span> <span class="ident">vector_select</span> <span class="op">=</span> <span class="op">|</span><span class="ident">pos</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FuncCursor</span>, <span class="ident">canon_nan</span>: <span class="ident">Value</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">cond</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">raw_bitcast</span>(<span class="ident">types::I8X16</span>, <span class="ident">is_nan</span>);
-        <span class="kw">let</span> <span class="ident">canon_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">raw_bitcast</span>(<span class="ident">types::I8X16</span>, <span class="ident">canon_nan</span>);
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">raw_bitcast</span>(<span class="ident">types::I8X16</span>, <span class="ident">new_res</span>);
-        <span class="kw">let</span> <span class="ident">bitmask</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">bitselect</span>(<span class="ident">cond</span>, <span class="ident">canon_nan</span>, <span class="ident">result</span>);
-        <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">with_result</span>(<span class="ident">val</span>).<span class="ident">raw_bitcast</span>(<span class="ident">val_type</span>, <span class="ident">bitmask</span>);
+    <span class="kw">let </span>vector_select = |pos: <span class="kw-2">&amp;mut </span>FuncCursor, canon_nan: Value| {
+        <span class="kw">let </span>cond = pos.ins().raw_bitcast(types::I8X16, is_nan);
+        <span class="kw">let </span>canon_nan = pos.ins().raw_bitcast(types::I8X16, canon_nan);
+        <span class="kw">let </span>result = pos.ins().raw_bitcast(types::I8X16, new_res);
+        <span class="kw">let </span>bitmask = pos.ins().bitselect(cond, canon_nan, result);
+        pos.ins().with_result(val).raw_bitcast(val_type, bitmask);
     };
 
-    <span class="kw">match</span> <span class="ident">val_type</span> {
-        <span class="ident">types::F32</span> =&gt; {
-            <span class="kw">let</span> <span class="ident">canon_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">f32const</span>(<span class="ident">Ieee32::with_bits</span>(<span class="ident">CANON_32BIT_NAN</span>));
-            <span class="ident">scalar_select</span>(<span class="ident">pos</span>, <span class="ident">canon_nan</span>);
+    <span class="kw">match </span>val_type {
+        types::F32 =&gt; {
+            <span class="kw">let </span>canon_nan = pos.ins().f32const(Ieee32::with_bits(CANON_32BIT_NAN));
+            scalar_select(pos, canon_nan);
         }
-        <span class="ident">types::F64</span> =&gt; {
-            <span class="kw">let</span> <span class="ident">canon_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">f64const</span>(<span class="ident">Ieee64::with_bits</span>(<span class="ident">CANON_64BIT_NAN</span>));
-            <span class="ident">scalar_select</span>(<span class="ident">pos</span>, <span class="ident">canon_nan</span>);
+        types::F64 =&gt; {
+            <span class="kw">let </span>canon_nan = pos.ins().f64const(Ieee64::with_bits(CANON_64BIT_NAN));
+            scalar_select(pos, canon_nan);
         }
-        <span class="ident">types::F32X4</span> =&gt; {
-            <span class="kw">let</span> <span class="ident">canon_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">types::I32</span>, <span class="ident">i64::from</span>(<span class="ident">CANON_32BIT_NAN</span>));
-            <span class="kw">let</span> <span class="ident">canon_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">splat</span>(<span class="ident">types::I32X4</span>, <span class="ident">canon_nan</span>);
-            <span class="ident">vector_select</span>(<span class="ident">pos</span>, <span class="ident">canon_nan</span>);
+        types::F32X4 =&gt; {
+            <span class="kw">let </span>canon_nan = pos.ins().iconst(types::I32, i64::from(CANON_32BIT_NAN));
+            <span class="kw">let </span>canon_nan = pos.ins().splat(types::I32X4, canon_nan);
+            vector_select(pos, canon_nan);
         }
-        <span class="ident">types::F64X2</span> =&gt; {
-            <span class="kw">let</span> <span class="ident">canon_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">types::I64</span>, <span class="ident">CANON_64BIT_NAN</span> <span class="kw">as</span> <span class="ident">i64</span>);
-            <span class="kw">let</span> <span class="ident">canon_nan</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">splat</span>(<span class="ident">types::I64X2</span>, <span class="ident">canon_nan</span>);
-            <span class="ident">vector_select</span>(<span class="ident">pos</span>, <span class="ident">canon_nan</span>);
+        types::F64X2 =&gt; {
+            <span class="kw">let </span>canon_nan = pos.ins().iconst(types::I64, CANON_64BIT_NAN <span class="kw">as </span>i64);
+            <span class="kw">let </span>canon_nan = pos.ins().splat(types::I64X2, canon_nan);
+            vector_select(pos, canon_nan);
         }
-        <span class="kw">_</span> =&gt; {
-            <span class="comment">// Panic if the type given was not an IEEE floating point type.</span>
-            <span class="macro">panic!</span>(<span class="string">&quot;Could not canonicalize NaN: Unexpected result type found.&quot;</span>);
+        <span class="kw">_ </span>=&gt; {
+            <span class="comment">// Panic if the type given was not an IEEE floating point type.
+            </span><span class="macro">panic!</span>(<span class="string">&quot;Could not canonicalize NaN: Unexpected result type found.&quot;</span>);
         }
     }
 
-    <span class="ident">pos</span>.<span class="ident">prev_inst</span>(); <span class="comment">// Step backwards so the pass does not skip instructions.</span>
-}
+    pos.prev_inst(); <span class="comment">// Step backwards so the pass does not skip instructions.
+</span>}
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

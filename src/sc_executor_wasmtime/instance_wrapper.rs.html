@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/wasmtime/src/instance_wrapper.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instance_wrapper.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_executor_wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_executor_wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_executor_wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/executor/wasmtime/src/instance_wrapper.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instance_wrapper.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_executor_wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -430,433 +425,432 @@
 <span id="425">425</span>
 <span id="426">426</span>
 <span id="427">427</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Defines data and logic needed for interaction with an WebAssembly instance of a substrate</span>
-<span class="doccomment">//! runtime module.</span>
+</span><span class="doccomment">//! Defines data and logic needed for interaction with an WebAssembly instance of a substrate
+//! runtime module.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::runtime</span>::{<span class="ident">Store</span>, <span class="ident">StoreData</span>};
-<span class="kw">use</span> <span class="ident">sc_executor_common</span>::{
-	<span class="ident">error</span>::{<span class="ident">Backtrace</span>, <span class="ident">Error</span>, <span class="ident">MessageWithBacktrace</span>, <span class="prelude-ty">Result</span>, <span class="ident">WasmError</span>},
-	<span class="ident">wasm_runtime::InvokeMethod</span>,
+</span><span class="kw">use </span><span class="kw">crate</span>::runtime::{Store, StoreData};
+<span class="kw">use </span>sc_executor_common::{
+	error::{Backtrace, Error, MessageWithBacktrace, <span class="prelude-ty">Result</span>, WasmError},
+	wasm_runtime::InvokeMethod,
 };
-<span class="kw">use</span> <span class="ident">sp_wasm_interface</span>::{<span class="ident">Pointer</span>, <span class="ident">Value</span>, <span class="ident">WordSize</span>};
-<span class="kw">use</span> <span class="ident">wasmtime</span>::{
-	<span class="ident">AsContext</span>, <span class="ident">AsContextMut</span>, <span class="ident">Engine</span>, <span class="ident">Extern</span>, <span class="ident">Func</span>, <span class="ident">Global</span>, <span class="ident">Instance</span>, <span class="ident">InstancePre</span>, <span class="ident">Memory</span>, <span class="ident">Table</span>,
-	<span class="ident">Val</span>,
+<span class="kw">use </span>sp_wasm_interface::{Pointer, Value, WordSize};
+<span class="kw">use </span>wasmtime::{
+	AsContext, AsContextMut, Engine, Extern, Func, Global, Instance, InstancePre, Memory, Table,
+	Val,
 };
 
-<span class="doccomment">/// Invoked entrypoint format.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">EntryPointType</span> {
-	<span class="doccomment">/// Direct call.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Call is made by providing only payload reference and length.</span>
-	<span class="ident">Direct</span> { <span class="ident">entrypoint</span>: <span class="ident">wasmtime::TypedFunc</span><span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">u32</span>), <span class="ident">u64</span><span class="op">&gt;</span> },
-	<span class="doccomment">/// Indirect call.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Call is made by providing payload reference and length, and extra argument</span>
-	<span class="doccomment">/// for advanced routing.</span>
-	<span class="ident">Wrapped</span> {
-		<span class="doccomment">/// The extra argument passed to the runtime. It is typically a wasm function pointer.</span>
-		<span class="ident">func</span>: <span class="ident">u32</span>,
-		<span class="ident">dispatcher</span>: <span class="ident">wasmtime::TypedFunc</span><span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">u32</span>), <span class="ident">u64</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Invoked entrypoint format.
+</span><span class="kw">pub enum </span>EntryPointType {
+	<span class="doccomment">/// Direct call.
+	///
+	/// Call is made by providing only payload reference and length.
+	</span>Direct { entrypoint: wasmtime::TypedFunc&lt;(u32, u32), u64&gt; },
+	<span class="doccomment">/// Indirect call.
+	///
+	/// Call is made by providing payload reference and length, and extra argument
+	/// for advanced routing.
+	</span>Wrapped {
+		<span class="doccomment">/// The extra argument passed to the runtime. It is typically a wasm function pointer.
+		</span>func: u32,
+		dispatcher: wasmtime::TypedFunc&lt;(u32, u32, u32), u64&gt;,
 	},
 }
 
-<span class="doccomment">/// Wasm blob entry point.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EntryPoint</span> {
-	<span class="ident">call_type</span>: <span class="ident">EntryPointType</span>,
+<span class="doccomment">/// Wasm blob entry point.
+</span><span class="kw">pub struct </span>EntryPoint {
+	call_type: EntryPointType,
 }
 
-<span class="kw">impl</span> <span class="ident">EntryPoint</span> {
-	<span class="doccomment">/// Call this entry point.</span>
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">call</span>(
+<span class="kw">impl </span>EntryPoint {
+	<span class="doccomment">/// Call this entry point.
+	</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>call(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Store</span>,
-		<span class="ident">data_ptr</span>: <span class="ident">Pointer</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-		<span class="ident">data_len</span>: <span class="ident">WordSize</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">data_ptr</span> <span class="op">=</span> <span class="ident">u32::from</span>(<span class="ident">data_ptr</span>);
-		<span class="kw">let</span> <span class="ident">data_len</span> <span class="op">=</span> <span class="ident">u32::from</span>(<span class="ident">data_len</span>);
+		store: <span class="kw-2">&amp;mut </span>Store,
+		data_ptr: Pointer&lt;u8&gt;,
+		data_len: WordSize,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
+		<span class="kw">let </span>data_ptr = u32::from(data_ptr);
+		<span class="kw">let </span>data_len = u32::from(data_len);
 
-		<span class="kw">match</span> <span class="self">self</span>.<span class="ident">call_type</span> {
-			<span class="ident">EntryPointType::Direct</span> { <span class="kw-2">ref</span> <span class="ident">entrypoint</span> } =&gt;
-				<span class="ident">entrypoint</span>.<span class="ident">call</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">store</span>, (<span class="ident">data_ptr</span>, <span class="ident">data_len</span>)),
-			<span class="ident">EntryPointType::Wrapped</span> { <span class="ident">func</span>, <span class="kw-2">ref</span> <span class="ident">dispatcher</span> } =&gt;
-				<span class="ident">dispatcher</span>.<span class="ident">call</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">store</span>, (<span class="ident">func</span>, <span class="ident">data_ptr</span>, <span class="ident">data_len</span>)),
+		<span class="kw">match </span><span class="self">self</span>.call_type {
+			EntryPointType::Direct { <span class="kw-2">ref </span>entrypoint } =&gt;
+				entrypoint.call(<span class="kw-2">&amp;mut *</span>store, (data_ptr, data_len)),
+			EntryPointType::Wrapped { func, <span class="kw-2">ref </span>dispatcher } =&gt;
+				dispatcher.call(<span class="kw-2">&amp;mut *</span>store, (func, data_ptr, data_len)),
 		}
-		.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">trap</span><span class="op">|</span> {
-			<span class="kw">let</span> <span class="ident">host_state</span> <span class="op">=</span> <span class="ident">store</span>
-				.<span class="ident">data_mut</span>()
-				.<span class="ident">host_state</span>
-				.<span class="ident">as_mut</span>()
-				.<span class="ident">expect</span>(<span class="string">&quot;host state cannot be empty while a function is being called; qed&quot;</span>);
+		.map_err(|trap| {
+			<span class="kw">let </span>host_state = store
+				.data_mut()
+				.host_state
+				.as_mut()
+				.expect(<span class="string">&quot;host state cannot be empty while a function is being called; qed&quot;</span>);
 
-			<span class="comment">// The logic to print out a backtrace is somewhat complicated,</span>
-			<span class="comment">// so let&#39;s get wasmtime to print it out for us.</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">backtrace_string</span> <span class="op">=</span> <span class="ident">trap</span>.<span class="ident">to_string</span>();
-			<span class="kw">let</span> <span class="ident">suffix</span> <span class="op">=</span> <span class="string">&quot;\nwasm backtrace:&quot;</span>;
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">index</span>) <span class="op">=</span> <span class="ident">backtrace_string</span>.<span class="ident">find</span>(<span class="ident">suffix</span>) {
-				<span class="comment">// Get rid of the error message and just grab the backtrace,</span>
-				<span class="comment">// since we&#39;re storing the error message ourselves separately.</span>
-				<span class="ident">backtrace_string</span>.<span class="ident">replace_range</span>(<span class="number">0</span>..<span class="ident">index</span> <span class="op">+</span> <span class="ident">suffix</span>.<span class="ident">len</span>(), <span class="string">&quot;&quot;</span>);
+			<span class="comment">// The logic to print out a backtrace is somewhat complicated,
+			// so let&#39;s get wasmtime to print it out for us.
+			</span><span class="kw">let </span><span class="kw-2">mut </span>backtrace_string = trap.to_string();
+			<span class="kw">let </span>suffix = <span class="string">&quot;\nwasm backtrace:&quot;</span>;
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(index) = backtrace_string.find(suffix) {
+				<span class="comment">// Get rid of the error message and just grab the backtrace,
+				// since we&#39;re storing the error message ourselves separately.
+				</span>backtrace_string.replace_range(<span class="number">0</span>..index + suffix.len(), <span class="string">&quot;&quot;</span>);
 			}
 
-			<span class="kw">let</span> <span class="ident">backtrace</span> <span class="op">=</span> <span class="ident">Backtrace</span> { <span class="ident">backtrace_string</span> };
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">error</span>) <span class="op">=</span> <span class="ident">host_state</span>.<span class="ident">take_panic_message</span>() {
-				<span class="ident">Error::AbortedDueToPanic</span>(<span class="ident">MessageWithBacktrace</span> {
-					<span class="ident">message</span>: <span class="ident">error</span>,
-					<span class="ident">backtrace</span>: <span class="prelude-val">Some</span>(<span class="ident">backtrace</span>),
+			<span class="kw">let </span>backtrace = Backtrace { backtrace_string };
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(error) = host_state.take_panic_message() {
+				Error::AbortedDueToPanic(MessageWithBacktrace {
+					message: error,
+					backtrace: <span class="prelude-val">Some</span>(backtrace),
 				})
-			} <span class="kw">else</span> {
-				<span class="ident">Error::AbortedDueToTrap</span>(<span class="ident">MessageWithBacktrace</span> {
-					<span class="ident">message</span>: <span class="ident">trap</span>.<span class="ident">display_reason</span>().<span class="ident">to_string</span>(),
-					<span class="ident">backtrace</span>: <span class="prelude-val">Some</span>(<span class="ident">backtrace</span>),
+			} <span class="kw">else </span>{
+				Error::AbortedDueToTrap(MessageWithBacktrace {
+					message: trap.display_reason().to_string(),
+					backtrace: <span class="prelude-val">Some</span>(backtrace),
 				})
 			}
 		})
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direct</span>(
-		<span class="ident">func</span>: <span class="ident">wasmtime::Func</span>,
-		<span class="ident">ctx</span>: <span class="kw">impl</span> <span class="ident">AsContext</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">entrypoint</span> <span class="op">=</span> <span class="ident">func</span>
-			.<span class="ident">typed</span>::<span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">u32</span>), <span class="ident">u64</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">ctx</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;Invalid signature for direct entry point&quot;</span>)<span class="question-mark">?</span>
-			.<span class="ident">clone</span>();
-		<span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">call_type</span>: <span class="ident">EntryPointType::Direct</span> { <span class="ident">entrypoint</span> } })
+	<span class="kw">pub fn </span>direct(
+		func: wasmtime::Func,
+		ctx: <span class="kw">impl </span>AsContext,
+	) -&gt; std::result::Result&lt;<span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+		<span class="kw">let </span>entrypoint = func
+			.typed::&lt;(u32, u32), u64, <span class="kw">_</span>&gt;(ctx)
+			.map_err(|<span class="kw">_</span>| <span class="string">&quot;Invalid signature for direct entry point&quot;</span>)<span class="question-mark">?
+			</span>.clone();
+		<span class="prelude-val">Ok</span>(<span class="self">Self </span>{ call_type: EntryPointType::Direct { entrypoint } })
 	}
 
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wrapped</span>(
-		<span class="ident">dispatcher</span>: <span class="ident">wasmtime::Func</span>,
-		<span class="ident">func</span>: <span class="ident">u32</span>,
-		<span class="ident">ctx</span>: <span class="kw">impl</span> <span class="ident">AsContext</span>,
-	) -&gt; <span class="ident">std::result::Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">dispatcher</span> <span class="op">=</span> <span class="ident">dispatcher</span>
-			.<span class="ident">typed</span>::<span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">u32</span>, <span class="ident">u32</span>), <span class="ident">u64</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">ctx</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;Invalid signature for wrapped entry point&quot;</span>)<span class="question-mark">?</span>
-			.<span class="ident">clone</span>();
-		<span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">call_type</span>: <span class="ident">EntryPointType::Wrapped</span> { <span class="ident">func</span>, <span class="ident">dispatcher</span> } })
-	}
-}
-
-<span class="doccomment">/// Wrap the given WebAssembly Instance of a wasm module with Substrate-runtime.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This struct is a handy wrapper around a wasmtime `Instance` that provides substrate specific</span>
-<span class="doccomment">/// routines.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InstanceWrapper</span> {
-	<span class="ident">instance</span>: <span class="ident">Instance</span>,
-	<span class="ident">memory</span>: <span class="ident">Memory</span>,
-	<span class="ident">store</span>: <span class="ident">Store</span>,
-}
-
-<span class="kw">fn</span> <span class="ident">extern_memory</span>(<span class="ident">extern_</span>: <span class="kw-2">&amp;</span><span class="ident">Extern</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Memory</span><span class="op">&gt;</span> {
-	<span class="kw">match</span> <span class="ident">extern_</span> {
-		<span class="ident">Extern::Memory</span>(<span class="ident">mem</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">mem</span>),
-		<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+	<span class="kw">pub fn </span>wrapped(
+		dispatcher: wasmtime::Func,
+		func: u32,
+		ctx: <span class="kw">impl </span>AsContext,
+	) -&gt; std::result::Result&lt;<span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+		<span class="kw">let </span>dispatcher = dispatcher
+			.typed::&lt;(u32, u32, u32), u64, <span class="kw">_</span>&gt;(ctx)
+			.map_err(|<span class="kw">_</span>| <span class="string">&quot;Invalid signature for wrapped entry point&quot;</span>)<span class="question-mark">?
+			</span>.clone();
+		<span class="prelude-val">Ok</span>(<span class="self">Self </span>{ call_type: EntryPointType::Wrapped { func, dispatcher } })
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">extern_global</span>(<span class="ident">extern_</span>: <span class="kw-2">&amp;</span><span class="ident">Extern</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Global</span><span class="op">&gt;</span> {
-	<span class="kw">match</span> <span class="ident">extern_</span> {
-		<span class="ident">Extern::Global</span>(<span class="ident">glob</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">glob</span>),
-		<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+<span class="doccomment">/// Wrap the given WebAssembly Instance of a wasm module with Substrate-runtime.
+///
+/// This struct is a handy wrapper around a wasmtime `Instance` that provides substrate specific
+/// routines.
+</span><span class="kw">pub struct </span>InstanceWrapper {
+	instance: Instance,
+	memory: Memory,
+	store: Store,
+}
+
+<span class="kw">fn </span>extern_memory(extern_: <span class="kw-2">&amp;</span>Extern) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Memory&gt; {
+	<span class="kw">match </span>extern_ {
+		Extern::Memory(mem) =&gt; <span class="prelude-val">Some</span>(mem),
+		<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">extern_table</span>(<span class="ident">extern_</span>: <span class="kw-2">&amp;</span><span class="ident">Extern</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Table</span><span class="op">&gt;</span> {
-	<span class="kw">match</span> <span class="ident">extern_</span> {
-		<span class="ident">Extern::Table</span>(<span class="ident">table</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">table</span>),
-		<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+<span class="kw">fn </span>extern_global(extern_: <span class="kw-2">&amp;</span>Extern) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Global&gt; {
+	<span class="kw">match </span>extern_ {
+		Extern::Global(glob) =&gt; <span class="prelude-val">Some</span>(glob),
+		<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">extern_func</span>(<span class="ident">extern_</span>: <span class="kw-2">&amp;</span><span class="ident">Extern</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Func</span><span class="op">&gt;</span> {
-	<span class="kw">match</span> <span class="ident">extern_</span> {
-		<span class="ident">Extern::Func</span>(<span class="ident">func</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">func</span>),
-		<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+<span class="kw">fn </span>extern_table(extern_: <span class="kw-2">&amp;</span>Extern) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Table&gt; {
+	<span class="kw">match </span>extern_ {
+		Extern::Table(table) =&gt; <span class="prelude-val">Some</span>(table),
+		<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 	}
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">create_store</span>(<span class="ident">engine</span>: <span class="kw-2">&amp;</span><span class="ident">wasmtime::Engine</span>, <span class="ident">max_memory_size</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) -&gt; <span class="ident">Store</span> {
-	<span class="kw">let</span> <span class="ident">limits</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">max_memory_size</span>) <span class="op">=</span> <span class="ident">max_memory_size</span> {
-		<span class="ident">wasmtime::StoreLimitsBuilder::new</span>().<span class="ident">memory_size</span>(<span class="ident">max_memory_size</span>).<span class="ident">build</span>()
-	} <span class="kw">else</span> {
-		<span class="ident">Default::default</span>()
+<span class="kw">fn </span>extern_func(extern_: <span class="kw-2">&amp;</span>Extern) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Func&gt; {
+	<span class="kw">match </span>extern_ {
+		Extern::Func(func) =&gt; <span class="prelude-val">Some</span>(func),
+		<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+	}
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create_store(engine: <span class="kw-2">&amp;</span>wasmtime::Engine, max_memory_size: <span class="prelude-ty">Option</span>&lt;usize&gt;) -&gt; Store {
+	<span class="kw">let </span>limits = <span class="kw">if let </span><span class="prelude-val">Some</span>(max_memory_size) = max_memory_size {
+		wasmtime::StoreLimitsBuilder::new().memory_size(max_memory_size).build()
+	} <span class="kw">else </span>{
+		Default::default()
 	};
 
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span>
-		<span class="ident">Store::new</span>(<span class="ident">engine</span>, <span class="ident">StoreData</span> { <span class="ident">limits</span>, <span class="ident">host_state</span>: <span class="prelude-val">None</span>, <span class="ident">memory</span>: <span class="prelude-val">None</span>, <span class="ident">table</span>: <span class="prelude-val">None</span> });
-	<span class="kw">if</span> <span class="ident">max_memory_size</span>.<span class="ident">is_some</span>() {
-		<span class="ident">store</span>.<span class="ident">limiter</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="kw-2">&amp;mut</span> <span class="ident">s</span>.<span class="ident">limits</span>);
+	<span class="kw">let </span><span class="kw-2">mut </span>store =
+		Store::new(engine, StoreData { limits, host_state: <span class="prelude-val">None</span>, memory: <span class="prelude-val">None</span>, table: <span class="prelude-val">None </span>});
+	<span class="kw">if </span>max_memory_size.is_some() {
+		store.limiter(|s| <span class="kw-2">&amp;mut </span>s.limits);
 	}
-	<span class="ident">store</span>
+	store
 }
 
-<span class="kw">impl</span> <span class="ident">InstanceWrapper</span> {
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(
-		<span class="ident">engine</span>: <span class="kw-2">&amp;</span><span class="ident">Engine</span>,
-		<span class="ident">instance_pre</span>: <span class="kw-2">&amp;</span><span class="ident">InstancePre</span><span class="op">&lt;</span><span class="ident">StoreData</span><span class="op">&gt;</span>,
-		<span class="ident">max_memory_size</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">create_store</span>(<span class="ident">engine</span>, <span class="ident">max_memory_size</span>);
-		<span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">instance_pre</span>.<span class="ident">instantiate</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">error</span><span class="op">|</span> {
-			<span class="ident">WasmError::Other</span>(
-				<span class="macro">format!</span>(<span class="string">&quot;failed to instantiate a new WASM module instance: {}&quot;</span>, <span class="ident">error</span>,),
+<span class="kw">impl </span>InstanceWrapper {
+	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
+		engine: <span class="kw-2">&amp;</span>Engine,
+		instance_pre: <span class="kw-2">&amp;</span>InstancePre&lt;StoreData&gt;,
+		max_memory_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>store = create_store(engine, max_memory_size);
+		<span class="kw">let </span>instance = instance_pre.instantiate(<span class="kw-2">&amp;mut </span>store).map_err(|error| {
+			WasmError::Other(
+				<span class="macro">format!</span>(<span class="string">&quot;failed to instantiate a new WASM module instance: {}&quot;</span>, error,),
 			)
 		})<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="ident">get_linear_memory</span>(<span class="kw-2">&amp;</span><span class="ident">instance</span>, <span class="kw-2">&amp;mut</span> <span class="ident">store</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="ident">get_table</span>(<span class="kw-2">&amp;</span><span class="ident">instance</span>, <span class="kw-2">&amp;mut</span> <span class="ident">store</span>);
+		<span class="kw">let </span>memory = get_linear_memory(<span class="kw-2">&amp;</span>instance, <span class="kw-2">&amp;mut </span>store)<span class="question-mark">?</span>;
+		<span class="kw">let </span>table = get_table(<span class="kw-2">&amp;</span>instance, <span class="kw-2">&amp;mut </span>store);
 
-		<span class="ident">store</span>.<span class="ident">data_mut</span>().<span class="ident">memory</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">memory</span>);
-		<span class="ident">store</span>.<span class="ident">data_mut</span>().<span class="ident">table</span> <span class="op">=</span> <span class="ident">table</span>;
+		store.data_mut().memory = <span class="prelude-val">Some</span>(memory);
+		store.data_mut().table = table;
 
-		<span class="prelude-val">Ok</span>(<span class="ident">InstanceWrapper</span> { <span class="ident">instance</span>, <span class="ident">memory</span>, <span class="ident">store</span> })
+		<span class="prelude-val">Ok</span>(InstanceWrapper { instance, memory, store })
 	}
 
-	<span class="doccomment">/// Resolves a substrate entrypoint by the given name.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// An entrypoint must have a signature `(i32, i32) -&gt; i64`, otherwise this function will return</span>
-	<span class="doccomment">/// an error.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_entrypoint</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">method</span>: <span class="ident">InvokeMethod</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EntryPoint</span><span class="op">&gt;</span> {
-		<span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">method</span> {
-			<span class="ident">InvokeMethod::Export</span>(<span class="ident">method</span>) =&gt; {
-				<span class="comment">// Resolve the requested method and verify that it has a proper signature.</span>
-				<span class="kw">let</span> <span class="ident">export</span> <span class="op">=</span>
-					<span class="self">self</span>.<span class="ident">instance</span>.<span class="ident">get_export</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="ident">method</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-						<span class="ident">Error::from</span>(<span class="macro">format!</span>(<span class="string">&quot;Exported method {} is not found&quot;</span>, <span class="ident">method</span>))
+	<span class="doccomment">/// Resolves a substrate entrypoint by the given name.
+	///
+	/// An entrypoint must have a signature `(i32, i32) -&gt; i64`, otherwise this function will return
+	/// an error.
+	</span><span class="kw">pub fn </span>resolve_entrypoint(<span class="kw-2">&amp;mut </span><span class="self">self</span>, method: InvokeMethod) -&gt; <span class="prelude-ty">Result</span>&lt;EntryPoint&gt; {
+		<span class="prelude-val">Ok</span>(<span class="kw">match </span>method {
+			InvokeMethod::Export(method) =&gt; {
+				<span class="comment">// Resolve the requested method and verify that it has a proper signature.
+				</span><span class="kw">let </span>export =
+					<span class="self">self</span>.instance.get_export(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, method).ok_or_else(|| {
+						Error::from(<span class="macro">format!</span>(<span class="string">&quot;Exported method {} is not found&quot;</span>, method))
 					})<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">extern_func</span>(<span class="kw-2">&amp;</span><span class="ident">export</span>)
-					.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::from</span>(<span class="macro">format!</span>(<span class="string">&quot;Export {} is not a function&quot;</span>, <span class="ident">method</span>)))<span class="question-mark">?</span>
-					.<span class="ident">clone</span>();
-				<span class="ident">EntryPoint::direct</span>(<span class="ident">func</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-					<span class="ident">Error::from</span>(<span class="macro">format!</span>(<span class="string">&quot;Exported function &#39;{}&#39; has invalid signature.&quot;</span>, <span class="ident">method</span>))
-				})<span class="question-mark">?</span>
-			},
-			<span class="ident">InvokeMethod::Table</span>(<span class="ident">func_ref</span>) =&gt; {
-				<span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="self">self</span>
-					.<span class="ident">instance</span>
-					.<span class="ident">get_table</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="string">&quot;__indirect_function_table&quot;</span>)
-					.<span class="ident">ok_or</span>(<span class="ident">Error::NoTable</span>)<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">table</span>
-					.<span class="ident">get</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="ident">func_ref</span>)
-					.<span class="ident">ok_or</span>(<span class="ident">Error::NoTableEntryWithIndex</span>(<span class="ident">func_ref</span>))<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">val</span>
-					.<span class="ident">funcref</span>()
-					.<span class="ident">ok_or</span>(<span class="ident">Error::TableElementIsNotAFunction</span>(<span class="ident">func_ref</span>))<span class="question-mark">?</span>
-					.<span class="ident">ok_or</span>(<span class="ident">Error::FunctionRefIsNull</span>(<span class="ident">func_ref</span>))<span class="question-mark">?</span>
-					.<span class="ident">clone</span>();
+				<span class="kw">let </span>func = extern_func(<span class="kw-2">&amp;</span>export)
+					.ok_or_else(|| Error::from(<span class="macro">format!</span>(<span class="string">&quot;Export {} is not a function&quot;</span>, method)))<span class="question-mark">?
+					</span>.clone();
+				EntryPoint::direct(func, <span class="kw-2">&amp;</span><span class="self">self</span>.store).map_err(|<span class="kw">_</span>| {
+					Error::from(<span class="macro">format!</span>(<span class="string">&quot;Exported function &#39;{}&#39; has invalid signature.&quot;</span>, method))
+				})<span class="question-mark">?
+			</span>},
+			InvokeMethod::Table(func_ref) =&gt; {
+				<span class="kw">let </span>table = <span class="self">self
+					</span>.instance
+					.get_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, <span class="string">&quot;__indirect_function_table&quot;</span>)
+					.ok_or(Error::NoTable)<span class="question-mark">?</span>;
+				<span class="kw">let </span>val = table
+					.get(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, func_ref)
+					.ok_or(Error::NoTableEntryWithIndex(func_ref))<span class="question-mark">?</span>;
+				<span class="kw">let </span>func = val
+					.funcref()
+					.ok_or(Error::TableElementIsNotAFunction(func_ref))<span class="question-mark">?
+					</span>.ok_or(Error::FunctionRefIsNull(func_ref))<span class="question-mark">?
+					</span>.clone();
 
-				<span class="ident">EntryPoint::direct</span>(<span class="ident">func</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-					<span class="ident">Error::from</span>(<span class="macro">format!</span>(
+				EntryPoint::direct(func, <span class="kw-2">&amp;</span><span class="self">self</span>.store).map_err(|<span class="kw">_</span>| {
+					Error::from(<span class="macro">format!</span>(
 						<span class="string">&quot;Function @{} in exported table has invalid signature for direct call.&quot;</span>,
-						<span class="ident">func_ref</span>,
+						func_ref,
 					))
-				})<span class="question-mark">?</span>
-			},
-			<span class="ident">InvokeMethod::TableWithWrapper</span> { <span class="ident">dispatcher_ref</span>, <span class="ident">func</span> } =&gt; {
-				<span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="self">self</span>
-					.<span class="ident">instance</span>
-					.<span class="ident">get_table</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="string">&quot;__indirect_function_table&quot;</span>)
-					.<span class="ident">ok_or</span>(<span class="ident">Error::NoTable</span>)<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">table</span>
-					.<span class="ident">get</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="ident">dispatcher_ref</span>)
-					.<span class="ident">ok_or</span>(<span class="ident">Error::NoTableEntryWithIndex</span>(<span class="ident">dispatcher_ref</span>))<span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">dispatcher</span> <span class="op">=</span> <span class="ident">val</span>
-					.<span class="ident">funcref</span>()
-					.<span class="ident">ok_or</span>(<span class="ident">Error::TableElementIsNotAFunction</span>(<span class="ident">dispatcher_ref</span>))<span class="question-mark">?</span>
-					.<span class="ident">ok_or</span>(<span class="ident">Error::FunctionRefIsNull</span>(<span class="ident">dispatcher_ref</span>))<span class="question-mark">?</span>
-					.<span class="ident">clone</span>();
+				})<span class="question-mark">?
+			</span>},
+			InvokeMethod::TableWithWrapper { dispatcher_ref, func } =&gt; {
+				<span class="kw">let </span>table = <span class="self">self
+					</span>.instance
+					.get_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, <span class="string">&quot;__indirect_function_table&quot;</span>)
+					.ok_or(Error::NoTable)<span class="question-mark">?</span>;
+				<span class="kw">let </span>val = table
+					.get(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, dispatcher_ref)
+					.ok_or(Error::NoTableEntryWithIndex(dispatcher_ref))<span class="question-mark">?</span>;
+				<span class="kw">let </span>dispatcher = val
+					.funcref()
+					.ok_or(Error::TableElementIsNotAFunction(dispatcher_ref))<span class="question-mark">?
+					</span>.ok_or(Error::FunctionRefIsNull(dispatcher_ref))<span class="question-mark">?
+					</span>.clone();
 
-				<span class="ident">EntryPoint::wrapped</span>(<span class="ident">dispatcher</span>, <span class="ident">func</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-					<span class="ident">Error::from</span>(<span class="macro">format!</span>(
+				EntryPoint::wrapped(dispatcher, func, <span class="kw-2">&amp;</span><span class="self">self</span>.store).map_err(|<span class="kw">_</span>| {
+					Error::from(<span class="macro">format!</span>(
 						<span class="string">&quot;Function @{} in exported table has invalid signature for wrapped call.&quot;</span>,
-						<span class="ident">dispatcher_ref</span>,
+						dispatcher_ref,
 					))
-				})<span class="question-mark">?</span>
-			},
+				})<span class="question-mark">?
+			</span>},
 		})
 	}
 
-	<span class="doccomment">/// Reads `__heap_base: i32` global variable and returns it.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If it doesn&#39;t exist, not a global or of not i32 type returns an error.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">extract_heap_base</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">heap_base_export</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">instance</span>
-			.<span class="ident">get_export</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="string">&quot;__heap_base&quot;</span>)
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::from</span>(<span class="string">&quot;__heap_base is not found&quot;</span>))<span class="question-mark">?</span>;
+	<span class="doccomment">/// Reads `__heap_base: i32` global variable and returns it.
+	///
+	/// If it doesn&#39;t exist, not a global or of not i32 type returns an error.
+	</span><span class="kw">pub fn </span>extract_heap_base(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+		<span class="kw">let </span>heap_base_export = <span class="self">self
+			</span>.instance
+			.get_export(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, <span class="string">&quot;__heap_base&quot;</span>)
+			.ok_or_else(|| Error::from(<span class="string">&quot;__heap_base is not found&quot;</span>))<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">heap_base_global</span> <span class="op">=</span> <span class="ident">extern_global</span>(<span class="kw-2">&amp;</span><span class="ident">heap_base_export</span>)
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::from</span>(<span class="string">&quot;__heap_base is not a global&quot;</span>))<span class="question-mark">?</span>;
+		<span class="kw">let </span>heap_base_global = extern_global(<span class="kw-2">&amp;</span>heap_base_export)
+			.ok_or_else(|| Error::from(<span class="string">&quot;__heap_base is not a global&quot;</span>))<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">heap_base</span> <span class="op">=</span> <span class="ident">heap_base_global</span>
-			.<span class="ident">get</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>)
-			.<span class="ident">i32</span>()
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::from</span>(<span class="string">&quot;__heap_base is not a i32&quot;</span>))<span class="question-mark">?</span>;
+		<span class="kw">let </span>heap_base = heap_base_global
+			.get(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store)
+			.i32()
+			.ok_or_else(|| Error::from(<span class="string">&quot;__heap_base is not a i32&quot;</span>))<span class="question-mark">?</span>;
 
-		<span class="prelude-val">Ok</span>(<span class="ident">heap_base</span> <span class="kw">as</span> <span class="ident">u32</span>)
+		<span class="prelude-val">Ok</span>(heap_base <span class="kw">as </span>u32)
 	}
 
-	<span class="doccomment">/// Get the value from a global with the given `name`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_global_val</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">global</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">instance</span>.<span class="ident">get_export</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="ident">name</span>) {
-			<span class="prelude-val">Some</span>(<span class="ident">global</span>) =&gt; <span class="ident">global</span>,
-			<span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+	<span class="doccomment">/// Get the value from a global with the given `name`.
+	</span><span class="kw">pub fn </span>get_global_val(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Value&gt;&gt; {
+		<span class="kw">let </span>global = <span class="kw">match </span><span class="self">self</span>.instance.get_export(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, name) {
+			<span class="prelude-val">Some</span>(global) =&gt; global,
+			<span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
 		};
 
-		<span class="kw">let</span> <span class="ident">global</span> <span class="op">=</span> <span class="ident">extern_global</span>(<span class="kw-2">&amp;</span><span class="ident">global</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;`{}` is not a global&quot;</span>, <span class="ident">name</span>))<span class="question-mark">?</span>;
+		<span class="kw">let </span>global = extern_global(<span class="kw-2">&amp;</span>global).ok_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;`{}` is not a global&quot;</span>, name))<span class="question-mark">?</span>;
 
-		<span class="kw">match</span> <span class="ident">global</span>.<span class="ident">get</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>) {
-			<span class="ident">Val::I32</span>(<span class="ident">val</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Value::I32</span>(<span class="ident">val</span>))),
-			<span class="ident">Val::I64</span>(<span class="ident">val</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Value::I64</span>(<span class="ident">val</span>))),
-			<span class="ident">Val::F32</span>(<span class="ident">val</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Value::F32</span>(<span class="ident">val</span>))),
-			<span class="ident">Val::F64</span>(<span class="ident">val</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Value::F64</span>(<span class="ident">val</span>))),
-			<span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;Unknown value type&quot;</span>.<span class="ident">into</span>()),
+		<span class="kw">match </span>global.get(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store) {
+			Val::I32(val) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Value::I32(val))),
+			Val::I64(val) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Value::I64(val))),
+			Val::F32(val) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Value::F32(val))),
+			Val::F64(val) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Value::F64(val))),
+			<span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;Unknown value type&quot;</span>.into()),
 		}
 	}
 
-	<span class="doccomment">/// Get a global with the given `name`.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_global</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">wasmtime::Global</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">instance</span>.<span class="ident">get_global</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>, <span class="ident">name</span>)
+	<span class="doccomment">/// Get a global with the given `name`.
+	</span><span class="kw">pub fn </span>get_global(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;wasmtime::Global&gt; {
+		<span class="self">self</span>.instance.get_global(<span class="kw-2">&amp;mut </span><span class="self">self</span>.store, name)
 	}
 }
 
-<span class="doccomment">/// Extract linear memory instance from the given instance.</span>
-<span class="kw">fn</span> <span class="ident">get_linear_memory</span>(<span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">Instance</span>, <span class="ident">ctx</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Memory</span><span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">memory_export</span> <span class="op">=</span> <span class="ident">instance</span>
-		.<span class="ident">get_export</span>(<span class="ident">ctx</span>, <span class="string">&quot;memory&quot;</span>)
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::from</span>(<span class="string">&quot;memory is not exported under `memory` name&quot;</span>))<span class="question-mark">?</span>;
+<span class="doccomment">/// Extract linear memory instance from the given instance.
+</span><span class="kw">fn </span>get_linear_memory(instance: <span class="kw-2">&amp;</span>Instance, ctx: <span class="kw">impl </span>AsContextMut) -&gt; <span class="prelude-ty">Result</span>&lt;Memory&gt; {
+	<span class="kw">let </span>memory_export = instance
+		.get_export(ctx, <span class="string">&quot;memory&quot;</span>)
+		.ok_or_else(|| Error::from(<span class="string">&quot;memory is not exported under `memory` name&quot;</span>))<span class="question-mark">?</span>;
 
-	<span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="ident">extern_memory</span>(<span class="kw-2">&amp;</span><span class="ident">memory_export</span>)
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::from</span>(<span class="string">&quot;the `memory` export should have memory type&quot;</span>))<span class="question-mark">?</span>
-		.<span class="ident">clone</span>();
+	<span class="kw">let </span>memory = extern_memory(<span class="kw-2">&amp;</span>memory_export)
+		.ok_or_else(|| Error::from(<span class="string">&quot;the `memory` export should have memory type&quot;</span>))<span class="question-mark">?
+		</span>.clone();
 
-	<span class="prelude-val">Ok</span>(<span class="ident">memory</span>)
+	<span class="prelude-val">Ok</span>(memory)
 }
 
-<span class="doccomment">/// Extract the table from the given instance if any.</span>
-<span class="kw">fn</span> <span class="ident">get_table</span>(<span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">Instance</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Store</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Table</span><span class="op">&gt;</span> {
-	<span class="ident">instance</span>
-		.<span class="ident">get_export</span>(<span class="ident">ctx</span>, <span class="string">&quot;__indirect_function_table&quot;</span>)
-		.<span class="ident">as_ref</span>()
-		.<span class="ident">and_then</span>(<span class="ident">extern_table</span>)
-		.<span class="ident">cloned</span>()
+<span class="doccomment">/// Extract the table from the given instance if any.
+</span><span class="kw">fn </span>get_table(instance: <span class="kw-2">&amp;</span>Instance, ctx: <span class="kw-2">&amp;mut </span>Store) -&gt; <span class="prelude-ty">Option</span>&lt;Table&gt; {
+	instance
+		.get_export(ctx, <span class="string">&quot;__indirect_function_table&quot;</span>)
+		.as_ref()
+		.and_then(extern_table)
+		.cloned()
 }
 
-<span class="doccomment">/// Functions related to memory.</span>
-<span class="kw">impl</span> <span class="ident">InstanceWrapper</span> {
-	<span class="doccomment">/// Returns the pointer to the first byte of the linear memory for this instance.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">base_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const</span> <span class="ident">u8</span> {
-		<span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">data_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>)
+<span class="doccomment">/// Functions related to memory.
+</span><span class="kw">impl </span>InstanceWrapper {
+	<span class="doccomment">/// Returns the pointer to the first byte of the linear memory for this instance.
+	</span><span class="kw">pub fn </span>base_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span>u8 {
+		<span class="self">self</span>.memory.data_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>.store)
 	}
 
-	<span class="doccomment">/// If possible removes physical backing from the allocated linear memory which</span>
-	<span class="doccomment">/// leads to returning the memory back to the system; this also zeroes the memory</span>
-	<span class="doccomment">/// as a side-effect.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decommit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>) <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">return</span>
-		}
+	<span class="doccomment">/// If possible removes physical backing from the allocated linear memory which
+	/// leads to returning the memory back to the system; this also zeroes the memory
+	/// as a side-effect.
+	</span><span class="kw">pub fn </span>decommit(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+		<span class="kw">if </span><span class="self">self</span>.memory.data_size(<span class="kw-2">&amp;</span><span class="self">self</span>.store) == <span class="number">0 </span>{
+			<span class="kw">return
+		</span>}
 
-		<span class="macro">cfg_if::cfg_if!</span> {
-			<span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span> {
-				<span class="kw">use</span> <span class="ident">std::sync::Once</span>;
+		<span class="macro">cfg_if::cfg_if! </span>{
+			<span class="kw">if </span><span class="attribute">#[cfg(target_os = <span class="string">&quot;linux&quot;</span>)] </span>{
+				<span class="kw">use </span>std::sync::Once;
 
-				<span class="kw">unsafe</span> {
-					<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">data_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>);
-					<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>);
+				<span class="kw">unsafe </span>{
+					<span class="kw">let </span>ptr = <span class="self">self</span>.memory.data_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>.store);
+					<span class="kw">let </span>len = <span class="self">self</span>.memory.data_size(<span class="kw-2">&amp;</span><span class="self">self</span>.store);
 
-					<span class="comment">// Linux handles MADV_DONTNEED reliably. The result is that the given area</span>
-					<span class="comment">// is unmapped and will be zeroed on the next pagefault.</span>
-					<span class="kw">if</span> <span class="ident">libc::madvise</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">len</span>, <span class="ident">libc::MADV_DONTNEED</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-						<span class="kw">static</span> <span class="ident">LOGGED</span>: <span class="ident">Once</span> <span class="op">=</span> <span class="ident">Once::new</span>();
-						<span class="ident">LOGGED</span>.<span class="ident">call_once</span>(<span class="op">|</span><span class="op">|</span> {
+					<span class="comment">// Linux handles MADV_DONTNEED reliably. The result is that the given area
+					// is unmapped and will be zeroed on the next pagefault.
+					</span><span class="kw">if </span>libc::madvise(ptr <span class="kw">as _</span>, len, libc::MADV_DONTNEED) != <span class="number">0 </span>{
+						<span class="kw">static </span>LOGGED: Once = Once::new();
+						LOGGED.call_once(|| {
 							<span class="macro">log::warn!</span>(
 								<span class="string">&quot;madvise(MADV_DONTNEED) failed: {}&quot;</span>,
-								<span class="ident">std::io::Error::last_os_error</span>(),
+								std::io::Error::last_os_error(),
 							);
 						});
-					} <span class="kw">else</span> {
+					} <span class="kw">else </span>{
 						<span class="kw">return</span>;
 					}
 				}
-			} <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>)]</span> {
-				<span class="kw">use</span> <span class="ident">std::sync::Once</span>;
+			} <span class="kw">else if </span><span class="attribute">#[cfg(target_os = <span class="string">&quot;macos&quot;</span>)] </span>{
+				<span class="kw">use </span>std::sync::Once;
 
-				<span class="kw">unsafe</span> {
-					<span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">data_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>);
-					<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>);
+				<span class="kw">unsafe </span>{
+					<span class="kw">let </span>ptr = <span class="self">self</span>.memory.data_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>.store);
+					<span class="kw">let </span>len = <span class="self">self</span>.memory.data_size(<span class="kw-2">&amp;</span><span class="self">self</span>.store);
 
-					<span class="comment">// On MacOS we can simply overwrite memory mapping.</span>
-					<span class="kw">if</span> <span class="ident">libc::mmap</span>(
-						<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw">_</span>,
-						<span class="ident">len</span>,
-						<span class="ident">libc::PROT_READ</span> <span class="op">|</span> <span class="ident">libc::PROT_WRITE</span>,
-						<span class="ident">libc::MAP_FIXED</span> <span class="op">|</span> <span class="ident">libc::MAP_PRIVATE</span> <span class="op">|</span> <span class="ident">libc::MAP_ANONYMOUS</span>,
-						<span class="op">-</span><span class="number">1</span>,
+					<span class="comment">// On MacOS we can simply overwrite memory mapping.
+					</span><span class="kw">if </span>libc::mmap(
+						ptr <span class="kw">as _</span>,
+						len,
+						libc::PROT_READ | libc::PROT_WRITE,
+						libc::MAP_FIXED | libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+						-<span class="number">1</span>,
 						<span class="number">0</span>,
-					) <span class="op">==</span> <span class="ident">libc::MAP_FAILED</span> {
-						<span class="kw">static</span> <span class="ident">LOGGED</span>: <span class="ident">Once</span> <span class="op">=</span> <span class="ident">Once::new</span>();
-						<span class="ident">LOGGED</span>.<span class="ident">call_once</span>(<span class="op">|</span><span class="op">|</span> {
+					) == libc::MAP_FAILED {
+						<span class="kw">static </span>LOGGED: Once = Once::new();
+						LOGGED.call_once(|| {
 							<span class="macro">log::warn!</span>(
 								<span class="string">&quot;Failed to decommit WASM instance memory through mmap: {}&quot;</span>,
-								<span class="ident">std::io::Error::last_os_error</span>(),
+								std::io::Error::last_os_error(),
 							);
 						});
-					} <span class="kw">else</span> {
+					} <span class="kw">else </span>{
 						<span class="kw">return</span>;
 					}
 				}
 			}
 		}
 
-		<span class="comment">// If we&#39;re on an unsupported OS or the memory couldn&#39;t have been</span>
-		<span class="comment">// decommited for some reason then just manually zero it out.</span>
-		<span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">data_mut</span>(<span class="self">self</span>.<span class="ident">store</span>.<span class="ident">as_context_mut</span>()).<span class="ident">fill</span>(<span class="number">0</span>);
+		<span class="comment">// If we&#39;re on an unsupported OS or the memory couldn&#39;t have been
+		// decommited for some reason then just manually zero it out.
+		</span><span class="self">self</span>.memory.data_mut(<span class="self">self</span>.store.as_context_mut()).fill(<span class="number">0</span>);
 	}
 
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Store</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">store</span>
+	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>store(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Store {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.store
 	}
 
-	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">store_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">Store</span> {
-		<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">store</span>
+	<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>store_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Store {
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>.store
 	}
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">decommit_works</span>() {
-	<span class="kw">let</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">wasmtime::Engine::default</span>();
-	<span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">wat::parse_str</span>(<span class="string">&quot;(module (memory (export \&quot;memory\&quot;) 1 4))&quot;</span>).<span class="ident">unwrap</span>();
-	<span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">wasmtime::Module::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="ident">code</span>).<span class="ident">unwrap</span>();
-	<span class="kw">let</span> <span class="ident">linker</span> <span class="op">=</span> <span class="ident">wasmtime::Linker::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>);
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">create_store</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="prelude-val">None</span>);
-	<span class="kw">let</span> <span class="ident">instance_pre</span> <span class="op">=</span> <span class="ident">linker</span>.<span class="ident">instantiate_pre</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>, <span class="kw-2">&amp;</span><span class="ident">module</span>).<span class="ident">unwrap</span>();
-	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">wrapper</span> <span class="op">=</span> <span class="ident">InstanceWrapper::new</span>(<span class="kw-2">&amp;</span><span class="ident">engine</span>, <span class="kw-2">&amp;</span><span class="ident">instance_pre</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
-	<span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">wrapper</span>.<span class="ident">memory</span>.<span class="ident">data_ptr</span>(<span class="kw-2">&amp;</span><span class="ident">wrapper</span>.<span class="ident">store</span>) <span class="op">=</span> <span class="number">42</span> };
-	<span class="macro">assert_eq!</span>(<span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">wrapper</span>.<span class="ident">memory</span>.<span class="ident">data_ptr</span>(<span class="kw-2">&amp;</span><span class="ident">wrapper</span>.<span class="ident">store</span>) }, <span class="number">42</span>);
-	<span class="ident">wrapper</span>.<span class="ident">decommit</span>();
-	<span class="macro">assert_eq!</span>(<span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">wrapper</span>.<span class="ident">memory</span>.<span class="ident">data_ptr</span>(<span class="kw-2">&amp;</span><span class="ident">wrapper</span>.<span class="ident">store</span>) }, <span class="number">0</span>);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>decommit_works() {
+	<span class="kw">let </span>engine = wasmtime::Engine::default();
+	<span class="kw">let </span>code = wat::parse_str(<span class="string">&quot;(module (memory (export \&quot;memory\&quot;) 1 4))&quot;</span>).unwrap();
+	<span class="kw">let </span>module = wasmtime::Module::new(<span class="kw-2">&amp;</span>engine, code).unwrap();
+	<span class="kw">let </span>linker = wasmtime::Linker::new(<span class="kw-2">&amp;</span>engine);
+	<span class="kw">let </span><span class="kw-2">mut </span>store = create_store(<span class="kw-2">&amp;</span>engine, <span class="prelude-val">None</span>);
+	<span class="kw">let </span>instance_pre = linker.instantiate_pre(<span class="kw-2">&amp;mut </span>store, <span class="kw-2">&amp;</span>module).unwrap();
+	<span class="kw">let </span><span class="kw-2">mut </span>wrapper = InstanceWrapper::new(<span class="kw-2">&amp;</span>engine, <span class="kw-2">&amp;</span>instance_pre, <span class="prelude-val">None</span>).unwrap();
+	<span class="kw">unsafe </span>{ <span class="kw-2">*</span>wrapper.memory.data_ptr(<span class="kw-2">&amp;</span>wrapper.store) = <span class="number">42 </span>};
+	<span class="macro">assert_eq!</span>(<span class="kw">unsafe </span>{ <span class="kw-2">*</span>wrapper.memory.data_ptr(<span class="kw-2">&amp;</span>wrapper.store) }, <span class="number">42</span>);
+	wrapper.decommit();
+	<span class="macro">assert_eq!</span>(<span class="kw">unsafe </span>{ <span class="kw-2">*</span>wrapper.memory.data_ptr(<span class="kw-2">&amp;</span>wrapper.store) }, <span class="number">0</span>);
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_executor_wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_executor_wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

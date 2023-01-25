@@ -1,1 +1,1 @@
-initSidebarItems({"macro":[["build","Accepts a number of expressions to create a instance of PiecewiseLinear which represents the NPoS curve (as detailed here) for those parameters. Parameters are:"]]});
+window.SIDEBAR_ITEMS = {"macro":[["build","Accepts a number of expressions to create a instance of PiecewiseLinear which represents the NPoS curve (as detailed here) for those parameters. Parameters are:"]]};

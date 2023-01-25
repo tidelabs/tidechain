@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["IdentifierT","an aggregator trait for a generic type of a voter/target identifier. This usually maps to substrate’s account id."],["PerThing128","Aggregator trait for a PerThing that can be multiplied by u128 (ExtendedBalance)."]]});
+window.SIDEBAR_ITEMS = {"trait":[["IdentifierT","an aggregator trait for a generic type of a voter/target identifier. This usually maps to substrate’s account id."],["PerThing128","Aggregator trait for a PerThing that can be multiplied by u128 (ExtendedBalance)."]]};

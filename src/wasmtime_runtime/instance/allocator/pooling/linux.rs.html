@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/instance/allocator/pooling/linux.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>linux.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/instance/allocator/pooling/linux.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>linux.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../../normalize.css"><link rel="stylesheet" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../../dark.css" disabled><link rel="stylesheet" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -59,62 +54,61 @@
 <span id="54">54</span>
 <span id="55">55</span>
 <span id="56">56</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">Context</span>, <span class="prelude-ty">Result</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>anyhow::{Context, <span class="prelude-ty">Result</span>};
 
-<span class="kw">fn</span> <span class="ident">decommit</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">protect</span>: <span class="ident">bool</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">len</span> <span class="op">==</span> <span class="number">0</span> {
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+<span class="kw">fn </span>decommit(addr: <span class="kw-2">*mut </span>u8, len: usize, protect: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">if </span>len == <span class="number">0 </span>{
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
     }
 
-    <span class="kw">unsafe</span> {
-        <span class="kw">if</span> <span class="ident">protect</span> {
-            <span class="ident">region::protect</span>(<span class="ident">addr</span>, <span class="ident">len</span>, <span class="ident">region::Protection::NONE</span>)
-                .<span class="ident">context</span>(<span class="string">&quot;failed to protect memory pages&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">unsafe </span>{
+        <span class="kw">if </span>protect {
+            region::protect(addr, len, region::Protection::NONE)
+                .context(<span class="string">&quot;failed to protect memory pages&quot;</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="comment">// On Linux, this is enough to cause the kernel to initialize the pages to 0 on next access</span>
-        <span class="ident">rustix::io::madvise</span>(<span class="ident">addr</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">len</span>, <span class="ident">rustix::io::Advice::LinuxDontNeed</span>)
-            .<span class="ident">context</span>(<span class="string">&quot;madvise failed to decommit: {}&quot;</span>)<span class="question-mark">?</span>;
+        <span class="comment">// On Linux, this is enough to cause the kernel to initialize the pages to 0 on next access
+        </span>rustix::io::madvise(addr <span class="kw">as _</span>, len, rustix::io::Advice::LinuxDontNeed)
+            .context(<span class="string">&quot;madvise failed to decommit: {}&quot;</span>)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">commit_memory_pages</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">len</span> <span class="op">==</span> <span class="number">0</span> {
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+<span class="kw">pub fn </span>commit_memory_pages(addr: <span class="kw-2">*mut </span>u8, len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">if </span>len == <span class="number">0 </span>{
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
     }
 
-    <span class="comment">// Just change the protection level to READ|WRITE</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">region::protect</span>(<span class="ident">addr</span>, <span class="ident">len</span>, <span class="ident">region::Protection::READ_WRITE</span>)
-            .<span class="ident">context</span>(<span class="string">&quot;failed to make linear memory pages read/write&quot;</span>)
+    <span class="comment">// Just change the protection level to READ|WRITE
+    </span><span class="kw">unsafe </span>{
+        region::protect(addr, len, region::Protection::READ_WRITE)
+            .context(<span class="string">&quot;failed to make linear memory pages read/write&quot;</span>)
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decommit_memory_pages</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">decommit</span>(<span class="ident">addr</span>, <span class="ident">len</span>, <span class="bool-val">true</span>)
+<span class="kw">pub fn </span>decommit_memory_pages(addr: <span class="kw-2">*mut </span>u8, len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    decommit(addr, len, <span class="bool-val">true</span>)
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">commit_table_pages</span>(<span class="ident">_addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">_len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// A no-op as table pages remain READ|WRITE</span>
-    <span class="prelude-val">Ok</span>(())
+<span class="kw">pub fn </span>commit_table_pages(_addr: <span class="kw-2">*mut </span>u8, _len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="comment">// A no-op as table pages remain READ|WRITE
+    </span><span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decommit_table_pages</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">decommit</span>(<span class="ident">addr</span>, <span class="ident">len</span>, <span class="bool-val">false</span>)
+<span class="kw">pub fn </span>decommit_table_pages(addr: <span class="kw-2">*mut </span>u8, len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    decommit(addr, len, <span class="bool-val">false</span>)
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">commit_stack_pages</span>(<span class="ident">_addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">_len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// A no-op as stack pages remain READ|WRITE</span>
-    <span class="prelude-val">Ok</span>(())
+<span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+</span><span class="kw">pub fn </span>commit_stack_pages(_addr: <span class="kw-2">*mut </span>u8, _len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="comment">// A no-op as stack pages remain READ|WRITE
+    </span><span class="prelude-val">Ok</span>(())
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decommit_stack_pages</span>(<span class="ident">addr</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">len</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">decommit</span>(<span class="ident">addr</span>, <span class="ident">len</span>, <span class="bool-val">false</span>)
+<span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+</span><span class="kw">pub fn </span>decommit_stack_pages(addr: <span class="kw-2">*mut </span>u8, len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    decommit(addr, len, <span class="bool-val">false</span>)
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

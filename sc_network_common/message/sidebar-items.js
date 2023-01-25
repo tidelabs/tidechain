@@ -1,1 +1,1 @@
-initSidebarItems({"type":[["RequestId","A unique ID of a request."]]});
+window.SIDEBAR_ITEMS = {"type":[["RequestId","A unique ID of a request."]]};

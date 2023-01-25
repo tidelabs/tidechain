@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/rotator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>rotator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/rotator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>rotator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -215,218 +210,217 @@
 <span id="210">210</span>
 <span id="211">211</span>
 <span id="212">212</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! Rotate extrinsic inside the pool.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Keeps only recent extrinsic and discard the ones kept for a significant amount of time.</span>
-<span class="doccomment">//! Discarded extrinsics are banned so that they don&#39;t get re-imported again.</span>
+</span><span class="doccomment">//! Rotate extrinsic inside the pool.
+//!
+//! Keeps only recent extrinsic and discard the ones kept for a significant amount of time.
+//! Discarded extrinsics are banned so that they don&#39;t get re-imported again.
 
-<span class="kw">use</span> <span class="ident">parking_lot::RwLock</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">collections::HashMap</span>,
-	<span class="ident">hash</span>, <span class="ident">iter</span>,
-	<span class="ident">time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>},
+</span><span class="kw">use </span>parking_lot::RwLock;
+<span class="kw">use </span>std::{
+	collections::HashMap,
+	hash, iter,
+	time::{Duration, Instant},
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::base_pool::Transaction</span>;
+<span class="kw">use </span><span class="kw">super</span>::base_pool::Transaction;
 
-<span class="doccomment">/// Expected size of the banned extrinsics cache.</span>
-<span class="kw">const</span> <span class="ident">EXPECTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2048</span>;
+<span class="doccomment">/// Expected size of the banned extrinsics cache.
+</span><span class="kw">const </span>EXPECTED_SIZE: usize = <span class="number">2048</span>;
 
-<span class="doccomment">/// Pool rotator is responsible to only keep fresh extrinsics in the pool.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Extrinsics that occupy the pool for too long are culled and temporarily banned from entering</span>
-<span class="doccomment">/// the pool again.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PoolRotator</span><span class="op">&lt;</span><span class="ident">Hash</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// How long the extrinsic is banned for.</span>
-	<span class="ident">ban_time</span>: <span class="ident">Duration</span>,
-	<span class="doccomment">/// Currently banned extrinsics.</span>
-	<span class="ident">banned_until</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Instant</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Pool rotator is responsible to only keep fresh extrinsics in the pool.
+///
+/// Extrinsics that occupy the pool for too long are culled and temporarily banned from entering
+/// the pool again.
+</span><span class="kw">pub struct </span>PoolRotator&lt;Hash&gt; {
+	<span class="doccomment">/// How long the extrinsic is banned for.
+	</span>ban_time: Duration,
+	<span class="doccomment">/// Currently banned extrinsics.
+	</span>banned_until: RwLock&lt;HashMap&lt;Hash, Instant&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>: <span class="ident">hash::Hash</span> <span class="op">+</span> <span class="ident">Eq</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">PoolRotator</span><span class="op">&lt;</span><span class="ident">Hash</span><span class="op">&gt;</span> {
-	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span> { <span class="ident">ban_time</span>: <span class="ident">Duration::from_secs</span>(<span class="number">60</span> <span class="op">*</span> <span class="number">30</span>), <span class="ident">banned_until</span>: <span class="ident">Default::default</span>() }
+<span class="kw">impl</span>&lt;Hash: hash::Hash + Eq&gt; Default <span class="kw">for </span>PoolRotator&lt;Hash&gt; {
+	<span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ ban_time: Duration::from_secs(<span class="number">60 </span>* <span class="number">30</span>), banned_until: Default::default() }
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>: <span class="ident">hash::Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">PoolRotator</span><span class="op">&lt;</span><span class="ident">Hash</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Returns `true` if extrinsic hash is currently banned.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">Hash</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">banned_until</span>.<span class="ident">read</span>().<span class="ident">contains_key</span>(<span class="ident">hash</span>)
+<span class="kw">impl</span>&lt;Hash: hash::Hash + Eq + Clone&gt; PoolRotator&lt;Hash&gt; {
+	<span class="doccomment">/// Returns `true` if extrinsic hash is currently banned.
+	</span><span class="kw">pub fn </span>is_banned(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>Hash) -&gt; bool {
+		<span class="self">self</span>.banned_until.read().contains_key(hash)
 	}
 
-	<span class="doccomment">/// Bans given set of hashes.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">now</span>: <span class="kw-2">&amp;</span><span class="ident">Instant</span>, <span class="ident">hashes</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Hash</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">banned</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">banned_until</span>.<span class="ident">write</span>();
+	<span class="doccomment">/// Bans given set of hashes.
+	</span><span class="kw">pub fn </span>ban(<span class="kw-2">&amp;</span><span class="self">self</span>, now: <span class="kw-2">&amp;</span>Instant, hashes: <span class="kw">impl </span>IntoIterator&lt;Item = Hash&gt;) {
+		<span class="kw">let </span><span class="kw-2">mut </span>banned = <span class="self">self</span>.banned_until.write();
 
-		<span class="kw">for</span> <span class="ident">hash</span> <span class="kw">in</span> <span class="ident">hashes</span> {
-			<span class="ident">banned</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="kw-2">*</span><span class="ident">now</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">ban_time</span>);
+		<span class="kw">for </span>hash <span class="kw">in </span>hashes {
+			banned.insert(hash, <span class="kw-2">*</span>now + <span class="self">self</span>.ban_time);
 		}
 
-		<span class="kw">if</span> <span class="ident">banned</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">EXPECTED_SIZE</span> {
-			<span class="kw">while</span> <span class="ident">banned</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">EXPECTED_SIZE</span> {
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">key</span>) <span class="op">=</span> <span class="ident">banned</span>.<span class="ident">keys</span>().<span class="ident">next</span>().<span class="ident">cloned</span>() {
-					<span class="ident">banned</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>);
+		<span class="kw">if </span>banned.len() &gt; <span class="number">2 </span>* EXPECTED_SIZE {
+			<span class="kw">while </span>banned.len() &gt; EXPECTED_SIZE {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(key) = banned.keys().next().cloned() {
+					banned.remove(<span class="kw-2">&amp;</span>key);
 				}
 			}
 		}
 	}
 
-	<span class="doccomment">/// Bans extrinsic if it&#39;s stale.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Returns `true` if extrinsic is stale and got banned.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ban_if_stale</span><span class="op">&lt;</span><span class="ident">Ex</span><span class="op">&gt;</span>(
+	<span class="doccomment">/// Bans extrinsic if it&#39;s stale.
+	///
+	/// Returns `true` if extrinsic is stale and got banned.
+	</span><span class="kw">pub fn </span>ban_if_stale&lt;Ex&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">now</span>: <span class="kw-2">&amp;</span><span class="ident">Instant</span>,
-		<span class="ident">current_block</span>: <span class="ident">u64</span>,
-		<span class="ident">xt</span>: <span class="kw-2">&amp;</span><span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">bool</span> {
-		<span class="kw">if</span> <span class="ident">xt</span>.<span class="ident">valid_till</span> <span class="op">&gt;</span> <span class="ident">current_block</span> {
-			<span class="kw">return</span> <span class="bool-val">false</span>
-		}
+		now: <span class="kw-2">&amp;</span>Instant,
+		current_block: u64,
+		xt: <span class="kw-2">&amp;</span>Transaction&lt;Hash, Ex&gt;,
+	) -&gt; bool {
+		<span class="kw">if </span>xt.valid_till &gt; current_block {
+			<span class="kw">return </span><span class="bool-val">false
+		</span>}
 
-		<span class="self">self</span>.<span class="ident">ban</span>(<span class="ident">now</span>, <span class="ident">iter::once</span>(<span class="ident">xt</span>.<span class="ident">hash</span>.<span class="ident">clone</span>()));
-		<span class="bool-val">true</span>
-	}
+		<span class="self">self</span>.ban(now, iter::once(xt.hash.clone()));
+		<span class="bool-val">true
+	</span>}
 
-	<span class="doccomment">/// Removes timed bans.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_timeouts</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">now</span>: <span class="kw-2">&amp;</span><span class="ident">Instant</span>) {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">banned</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">banned_until</span>.<span class="ident">write</span>();
+	<span class="doccomment">/// Removes timed bans.
+	</span><span class="kw">pub fn </span>clear_timeouts(<span class="kw-2">&amp;</span><span class="self">self</span>, now: <span class="kw-2">&amp;</span>Instant) {
+		<span class="kw">let </span><span class="kw-2">mut </span>banned = <span class="self">self</span>.banned_until.write();
 
-		<span class="ident">banned</span>.<span class="ident">retain</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw-2">&amp;mut</span> <span class="ident">v</span><span class="op">|</span> <span class="ident">v</span> <span class="op">&gt;</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">now</span>);
+		banned.retain(|<span class="kw">_</span>, <span class="kw-2">&amp;mut </span>v| v &gt;= <span class="kw-2">*</span>now);
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="ident">sp_runtime::transaction_validity::TransactionSource</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use </span>sp_runtime::transaction_validity::TransactionSource;
 
-	<span class="kw">type</span> <span class="ident">Hash</span> <span class="op">=</span> <span class="ident">u64</span>;
-	<span class="kw">type</span> <span class="ident">Ex</span> <span class="op">=</span> ();
+	<span class="kw">type </span>Hash = u64;
+	<span class="kw">type </span>Ex = ();
 
-	<span class="kw">fn</span> <span class="ident">rotator</span>() -&gt; <span class="ident">PoolRotator</span><span class="op">&lt;</span><span class="ident">Hash</span><span class="op">&gt;</span> {
-		<span class="ident">PoolRotator</span> { <span class="ident">ban_time</span>: <span class="ident">Duration::from_millis</span>(<span class="number">10</span>), ..<span class="ident">Default::default</span>() }
+	<span class="kw">fn </span>rotator() -&gt; PoolRotator&lt;Hash&gt; {
+		PoolRotator { ban_time: Duration::from_millis(<span class="number">10</span>), ..Default::default() }
 	}
 
-	<span class="kw">fn</span> <span class="ident">tx</span>() -&gt; (<span class="ident">Hash</span>, <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="number">5u64</span>;
-		<span class="kw">let</span> <span class="ident">tx</span> <span class="op">=</span> <span class="ident">Transaction</span> {
-			<span class="ident">data</span>: (),
-			<span class="ident">bytes</span>: <span class="number">1</span>,
-			<span class="ident">hash</span>: <span class="ident">hash</span>.<span class="ident">clone</span>(),
-			<span class="ident">priority</span>: <span class="number">5</span>,
-			<span class="ident">valid_till</span>: <span class="number">1</span>,
-			<span class="ident">requires</span>: <span class="macro">vec!</span>[],
-			<span class="ident">provides</span>: <span class="macro">vec!</span>[],
-			<span class="ident">propagate</span>: <span class="bool-val">true</span>,
-			<span class="ident">source</span>: <span class="ident">TransactionSource::External</span>,
+	<span class="kw">fn </span>tx() -&gt; (Hash, Transaction&lt;Hash, Ex&gt;) {
+		<span class="kw">let </span>hash = <span class="number">5u64</span>;
+		<span class="kw">let </span>tx = Transaction {
+			data: (),
+			bytes: <span class="number">1</span>,
+			hash: hash.clone(),
+			priority: <span class="number">5</span>,
+			valid_till: <span class="number">1</span>,
+			requires: <span class="macro">vec!</span>[],
+			provides: <span class="macro">vec!</span>[],
+			propagate: <span class="bool-val">true</span>,
+			source: TransactionSource::External,
 		};
 
-		(<span class="ident">hash</span>, <span class="ident">tx</span>)
+		(hash, tx)
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_not_ban_if_not_stale</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> (<span class="ident">hash</span>, <span class="ident">tx</span>) <span class="op">=</span> <span class="ident">tx</span>();
-		<span class="kw">let</span> <span class="ident">rotator</span> <span class="op">=</span> <span class="ident">rotator</span>();
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">rotator</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>));
-		<span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
-		<span class="kw">let</span> <span class="ident">past_block</span> <span class="op">=</span> <span class="number">0</span>;
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_not_ban_if_not_stale() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>(hash, tx) = tx();
+		<span class="kw">let </span>rotator = rotator();
+		<span class="macro">assert!</span>(!rotator.is_banned(<span class="kw-2">&amp;</span>hash));
+		<span class="kw">let </span>now = Instant::now();
+		<span class="kw">let </span>past_block = <span class="number">0</span>;
 
-		<span class="comment">// when</span>
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">rotator</span>.<span class="ident">ban_if_stale</span>(<span class="kw-2">&amp;</span><span class="ident">now</span>, <span class="ident">past_block</span>, <span class="kw-2">&amp;</span><span class="ident">tx</span>));
+		<span class="comment">// when
+		</span><span class="macro">assert!</span>(!rotator.ban_if_stale(<span class="kw-2">&amp;</span>now, past_block, <span class="kw-2">&amp;</span>tx));
 
-		<span class="comment">// then</span>
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">rotator</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert!</span>(!rotator.is_banned(<span class="kw-2">&amp;</span>hash));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_ban_stale_extrinsic</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> (<span class="ident">hash</span>, <span class="ident">tx</span>) <span class="op">=</span> <span class="ident">tx</span>();
-		<span class="kw">let</span> <span class="ident">rotator</span> <span class="op">=</span> <span class="ident">rotator</span>();
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">rotator</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_ban_stale_extrinsic() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>(hash, tx) = tx();
+		<span class="kw">let </span>rotator = rotator();
+		<span class="macro">assert!</span>(!rotator.is_banned(<span class="kw-2">&amp;</span>hash));
 
-		<span class="comment">// when</span>
-		<span class="macro">assert!</span>(<span class="ident">rotator</span>.<span class="ident">ban_if_stale</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">tx</span>));
+		<span class="comment">// when
+		</span><span class="macro">assert!</span>(rotator.ban_if_stale(<span class="kw-2">&amp;</span>Instant::now(), <span class="number">1</span>, <span class="kw-2">&amp;</span>tx));
 
-		<span class="comment">// then</span>
-		<span class="macro">assert!</span>(<span class="ident">rotator</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert!</span>(rotator.is_banned(<span class="kw-2">&amp;</span>hash));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_clear_banned</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">let</span> (<span class="ident">hash</span>, <span class="ident">tx</span>) <span class="op">=</span> <span class="ident">tx</span>();
-		<span class="kw">let</span> <span class="ident">rotator</span> <span class="op">=</span> <span class="ident">rotator</span>();
-		<span class="macro">assert!</span>(<span class="ident">rotator</span>.<span class="ident">ban_if_stale</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">tx</span>));
-		<span class="macro">assert!</span>(<span class="ident">rotator</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>));
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_clear_banned() {
+		<span class="comment">// given
+		</span><span class="kw">let </span>(hash, tx) = tx();
+		<span class="kw">let </span>rotator = rotator();
+		<span class="macro">assert!</span>(rotator.ban_if_stale(<span class="kw-2">&amp;</span>Instant::now(), <span class="number">1</span>, <span class="kw-2">&amp;</span>tx));
+		<span class="macro">assert!</span>(rotator.is_banned(<span class="kw-2">&amp;</span>hash));
 
-		<span class="comment">// when</span>
-		<span class="kw">let</span> <span class="ident">future</span> <span class="op">=</span> <span class="ident">Instant::now</span>() <span class="op">+</span> <span class="ident">rotator</span>.<span class="ident">ban_time</span> <span class="op">+</span> <span class="ident">rotator</span>.<span class="ident">ban_time</span>;
-		<span class="ident">rotator</span>.<span class="ident">clear_timeouts</span>(<span class="kw-2">&amp;</span><span class="ident">future</span>);
+		<span class="comment">// when
+		</span><span class="kw">let </span>future = Instant::now() + rotator.ban_time + rotator.ban_time;
+		rotator.clear_timeouts(<span class="kw-2">&amp;</span>future);
 
-		<span class="comment">// then</span>
-		<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">rotator</span>.<span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>));
+		<span class="comment">// then
+		</span><span class="macro">assert!</span>(!rotator.is_banned(<span class="kw-2">&amp;</span>hash));
 	}
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_garbage_collect</span>() {
-		<span class="comment">// given</span>
-		<span class="kw">fn</span> <span class="ident">tx_with</span>(<span class="ident">i</span>: <span class="ident">u64</span>, <span class="ident">valid_till</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span> {
-			<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">i</span>;
-			<span class="ident">Transaction</span> {
-				<span class="ident">data</span>: (),
-				<span class="ident">bytes</span>: <span class="number">2</span>,
-				<span class="ident">hash</span>,
-				<span class="ident">priority</span>: <span class="number">5</span>,
-				<span class="ident">valid_till</span>,
-				<span class="ident">requires</span>: <span class="macro">vec!</span>[],
-				<span class="ident">provides</span>: <span class="macro">vec!</span>[],
-				<span class="ident">propagate</span>: <span class="bool-val">true</span>,
-				<span class="ident">source</span>: <span class="ident">TransactionSource::External</span>,
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_garbage_collect() {
+		<span class="comment">// given
+		</span><span class="kw">fn </span>tx_with(i: u64, valid_till: u64) -&gt; Transaction&lt;Hash, Ex&gt; {
+			<span class="kw">let </span>hash = i;
+			Transaction {
+				data: (),
+				bytes: <span class="number">2</span>,
+				hash,
+				priority: <span class="number">5</span>,
+				valid_till,
+				requires: <span class="macro">vec!</span>[],
+				provides: <span class="macro">vec!</span>[],
+				propagate: <span class="bool-val">true</span>,
+				source: TransactionSource::External,
 			}
 		}
 
-		<span class="kw">let</span> <span class="ident">rotator</span> <span class="op">=</span> <span class="ident">rotator</span>();
+		<span class="kw">let </span>rotator = rotator();
 
-		<span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
-		<span class="kw">let</span> <span class="ident">past_block</span> <span class="op">=</span> <span class="number">0</span>;
+		<span class="kw">let </span>now = Instant::now();
+		<span class="kw">let </span>past_block = <span class="number">0</span>;
 
-		<span class="comment">// when</span>
-		<span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">2</span> <span class="op">*</span> <span class="ident">EXPECTED_SIZE</span> {
-			<span class="kw">let</span> <span class="ident">tx</span> <span class="op">=</span> <span class="ident">tx_with</span>(<span class="ident">i</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">past_block</span>);
-			<span class="macro">assert!</span>(<span class="ident">rotator</span>.<span class="ident">ban_if_stale</span>(<span class="kw-2">&amp;</span><span class="ident">now</span>, <span class="ident">past_block</span>, <span class="kw-2">&amp;</span><span class="ident">tx</span>));
+		<span class="comment">// when
+		</span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">2 </span>* EXPECTED_SIZE {
+			<span class="kw">let </span>tx = tx_with(i <span class="kw">as </span>u64, past_block);
+			<span class="macro">assert!</span>(rotator.ban_if_stale(<span class="kw-2">&amp;</span>now, past_block, <span class="kw-2">&amp;</span>tx));
 		}
-		<span class="macro">assert_eq!</span>(<span class="ident">rotator</span>.<span class="ident">banned_until</span>.<span class="ident">read</span>().<span class="ident">len</span>(), <span class="number">2</span> <span class="op">*</span> <span class="ident">EXPECTED_SIZE</span>);
+		<span class="macro">assert_eq!</span>(rotator.banned_until.read().len(), <span class="number">2 </span>* EXPECTED_SIZE);
 
-		<span class="comment">// then</span>
-		<span class="kw">let</span> <span class="ident">tx</span> <span class="op">=</span> <span class="ident">tx_with</span>(<span class="number">2</span> <span class="op">*</span> <span class="ident">EXPECTED_SIZE</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">past_block</span>);
-		<span class="comment">// trigger a garbage collection</span>
-		<span class="macro">assert!</span>(<span class="ident">rotator</span>.<span class="ident">ban_if_stale</span>(<span class="kw-2">&amp;</span><span class="ident">now</span>, <span class="ident">past_block</span>, <span class="kw-2">&amp;</span><span class="ident">tx</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">rotator</span>.<span class="ident">banned_until</span>.<span class="ident">read</span>().<span class="ident">len</span>(), <span class="ident">EXPECTED_SIZE</span>);
+		<span class="comment">// then
+		</span><span class="kw">let </span>tx = tx_with(<span class="number">2 </span>* EXPECTED_SIZE <span class="kw">as </span>u64, past_block);
+		<span class="comment">// trigger a garbage collection
+		</span><span class="macro">assert!</span>(rotator.ban_if_stale(<span class="kw-2">&amp;</span>now, past_block, <span class="kw-2">&amp;</span>tx));
+		<span class="macro">assert_eq!</span>(rotator.banned_until.read().len(), EXPECTED_SIZE);
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

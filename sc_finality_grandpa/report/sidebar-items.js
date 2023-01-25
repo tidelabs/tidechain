@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["RoundState","Basic data struct for the state of a round."],["VoterState","Basic data struct for the current state of the voter in a form suitable for passing on to other systems."]]});
+window.SIDEBAR_ITEMS = {"struct":[["RoundState","Basic data struct for the state of a round."],["VoterState","Basic data struct for the current state of the voter in a form suitable for passing on to other systems."]]};

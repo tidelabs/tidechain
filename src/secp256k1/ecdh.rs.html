@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.21.3/src/ecdh.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ecdh.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../secp256k1/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../secp256k1/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../secp256k1/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.21.3/src/ecdh.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ecdh.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../secp256k1/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -280,283 +275,282 @@
 <span id="275">275</span>
 <span id="276">276</span>
 <span id="277">277</span>
-</pre><pre class="rust"><code><span class="comment">// Bitcoin secp256k1 bindings</span>
-<span class="comment">// Written in 2015 by</span>
-<span class="comment">//   Andrew Poelstra</span>
-<span class="comment">//</span>
-<span class="comment">// To the extent possible under law, the author(s) have dedicated all</span>
-<span class="comment">// copyright and related and neighboring rights to this software to</span>
-<span class="comment">// the public domain worldwide. This software is distributed without</span>
-<span class="comment">// any warranty.</span>
-<span class="comment">//</span>
-<span class="comment">// You should have received a copy of the CC0 Public Domain Dedication</span>
-<span class="comment">// along with this software.</span>
-<span class="comment">// If not, see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;.</span>
-<span class="comment">//</span>
+</pre><pre class="rust"><code><span class="comment">// Bitcoin secp256k1 bindings
+// Written in 2015 by
+//   Andrew Poelstra
+//
+// To the extent possible under law, the author(s) have dedicated all
+// copyright and related and neighboring rights to this software to
+// the public domain worldwide. This software is distributed without
+// any warranty.
+//
+// You should have received a copy of the CC0 Public Domain Dedication
+// along with this software.
+// If not, see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;.
+//
 
-<span class="doccomment">//! Support for shared secret computations.</span>
-<span class="doccomment">//!</span>
+</span><span class="doccomment">//! Support for shared secret computations.
+//!
 
-<span class="kw">use</span> <span class="ident">core::ptr</span>;
-<span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">FnMut</span>, <span class="ident">Deref</span>};
+</span><span class="kw">use </span>core::ptr;
+<span class="kw">use </span>core::ops::{FnMut, Deref};
 
-<span class="kw">use</span> <span class="ident">key</span>::{<span class="ident">SecretKey</span>, <span class="ident">PublicKey</span>};
-<span class="kw">use</span> <span class="ident">ffi</span>::{<span class="self">self</span>, <span class="ident">CPtr</span>};
-<span class="kw">use</span> <span class="ident">secp256k1_sys::types</span>::{<span class="ident">c_int</span>, <span class="ident">c_uchar</span>, <span class="ident">c_void</span>};
+<span class="kw">use </span>key::{SecretKey, PublicKey};
+<span class="kw">use </span>ffi::{<span class="self">self</span>, CPtr};
+<span class="kw">use </span>secp256k1_sys::types::{c_int, c_uchar, c_void};
 
-<span class="doccomment">/// Enables two parties to create a shared secret without revealing their own secrets.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Examples</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// # #[cfg(all(feature = &quot;std&quot;, feature = &quot;rand-std&quot;))] {</span>
-<span class="doccomment">/// # use secp256k1::Secp256k1;</span>
-<span class="doccomment">/// # use secp256k1::ecdh::SharedSecret;</span>
-<span class="doccomment">/// # use secp256k1::rand::thread_rng;</span>
-<span class="doccomment">/// let s = Secp256k1::new();</span>
-<span class="doccomment">/// let (sk1, pk1) = s.generate_keypair(&amp;mut thread_rng());</span>
-<span class="doccomment">/// let (sk2, pk2) = s.generate_keypair(&amp;mut thread_rng());</span>
-<span class="doccomment">/// let sec1 = SharedSecret::new(&amp;pk1, &amp;sk2);</span>
-<span class="doccomment">/// let sec2 = SharedSecret::new(&amp;pk2, &amp;sk1);</span>
-<span class="doccomment">/// assert_eq!(sec1, sec2);</span>
-<span class="doccomment">/// # }</span>
-<span class="comment">// ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SharedSecret</span> {
-    <span class="ident">data</span>: [<span class="ident">u8</span>; <span class="number">256</span>],
-    <span class="ident">len</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// Enables two parties to create a shared secret without revealing their own secrets.
+///
+/// # Examples
+///
+/// ```
+/// # #[cfg(all(feature = &quot;std&quot;, feature = &quot;rand-std&quot;))] {
+/// # use secp256k1::Secp256k1;
+/// # use secp256k1::ecdh::SharedSecret;
+/// # use secp256k1::rand::thread_rng;
+/// let s = Secp256k1::new();
+/// let (sk1, pk1) = s.generate_keypair(&amp;mut thread_rng());
+/// let (sk2, pk2) = s.generate_keypair(&amp;mut thread_rng());
+/// let sec1 = SharedSecret::new(&amp;pk1, &amp;sk2);
+/// let sec2 = SharedSecret::new(&amp;pk2, &amp;sk1);
+/// assert_eq!(sec1, sec2);
+/// # }
+</span><span class="comment">// ```
+</span><span class="attribute">#[derive(Copy, Clone)]
+</span><span class="kw">pub struct </span>SharedSecret {
+    data: [u8; <span class="number">256</span>],
+    len: usize,
 }
-<span class="macro">impl_raw_debug!</span>(<span class="ident">SharedSecret</span>);
+<span class="macro">impl_raw_debug!</span>(SharedSecret);
 
 
-<span class="comment">// This implementes `From&lt;N&gt;` for all `[u8; N]` arrays from 128bits(16 byte) to 2048bits allowing known hash lengths.</span>
-<span class="comment">// Lower than 128 bits isn&#39;t resistant to collisions any more.</span>
-<span class="macro">impl_from_array_len!</span>(<span class="ident">SharedSecret</span>, <span class="number">256</span>, (<span class="number">16</span> <span class="number">20</span> <span class="number">28</span> <span class="number">32</span> <span class="number">48</span> <span class="number">64</span> <span class="number">96</span> <span class="number">128</span> <span class="number">256</span>));
+<span class="comment">// This implementes `From&lt;N&gt;` for all `[u8; N]` arrays from 128bits(16 byte) to 2048bits allowing known hash lengths.
+// Lower than 128 bits isn&#39;t resistant to collisions any more.
+</span><span class="macro">impl_from_array_len!</span>(SharedSecret, <span class="number">256</span>, (<span class="number">16 20 28 32 48 64 96 128 256</span>));
 
-<span class="kw">impl</span> <span class="ident">SharedSecret</span> {
+<span class="kw">impl </span>SharedSecret {
 
-    <span class="doccomment">/// Creates an empty `SharedSecret`.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">empty</span>() -&gt;  <span class="ident">SharedSecret</span> {
-        <span class="ident">SharedSecret</span> {
-            <span class="ident">data</span>: [<span class="number">0u8</span>; <span class="number">256</span>],
-            <span class="ident">len</span>: <span class="number">0</span>,
+    <span class="doccomment">/// Creates an empty `SharedSecret`.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>empty() -&gt;  SharedSecret {
+        SharedSecret {
+            data: [<span class="number">0u8</span>; <span class="number">256</span>],
+            len: <span class="number">0</span>,
         }
     }
 
-    <span class="doccomment">/// Gets a pointer to the underlying data with the specified capacity.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">get_data_mut_ptr</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">u8</span> {
-        <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">as_mut_ptr</span>()
+    <span class="doccomment">/// Gets a pointer to the underlying data with the specified capacity.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_data_mut_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>u8 {
+        <span class="self">self</span>.data.as_mut_ptr()
     }
 
-    <span class="doccomment">/// Gets the capacity of the underlying data buffer.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">capacity</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">len</span>()
+    <span class="doccomment">/// Gets the capacity of the underlying data buffer.
+    </span><span class="kw">pub fn </span>capacity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.data.len()
     }
 
-    <span class="doccomment">/// Gets the len of the used data.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">len</span>
+    <span class="doccomment">/// Gets the len of the used data.
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.len
     }
 
-    <span class="doccomment">/// Returns true if the underlying data buffer is empty.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">is_empty</span>()
+    <span class="doccomment">/// Returns true if the underlying data buffer is empty.
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.data.is_empty()
     }
 
-    <span class="doccomment">/// Sets the length of the object.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">set_len</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">len</span>: <span class="ident">usize</span>) {
-        <span class="macro">debug_assert!</span>(<span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">len</span>());
-        <span class="self">self</span>.<span class="ident">len</span> <span class="op">=</span> <span class="ident">len</span>;
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">SharedSecret</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">SharedSecret</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">as_ref</span>() <span class="op">==</span> <span class="ident">other</span>.<span class="ident">as_ref</span>()
+    <span class="doccomment">/// Sets the length of the object.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_len(<span class="kw-2">&amp;mut </span><span class="self">self</span>, len: usize) {
+        <span class="macro">debug_assert!</span>(len &lt;= <span class="self">self</span>.data.len());
+        <span class="self">self</span>.len = len;
     }
 }
 
-<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SharedSecret</span> {
-    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>[..<span class="self">self</span>.<span class="ident">len</span>]
+<span class="kw">impl </span>PartialEq <span class="kw">for </span>SharedSecret {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>SharedSecret) -&gt; bool {
+        <span class="self">self</span>.as_ref() == other.as_ref()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">SharedSecret</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> [<span class="ident">u8</span>];
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>[..<span class="self">self</span>.<span class="ident">len</span>]
+<span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>SharedSecret {
+    <span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.data[..<span class="self">self</span>.len]
+    }
+}
+
+<span class="kw">impl </span>Deref <span class="kw">for </span>SharedSecret {
+    <span class="kw">type </span>Target = [u8];
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.data[..<span class="self">self</span>.len]
     }
 }
 
 
-<span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">c_callback</span>(<span class="ident">output</span>: <span class="kw-2">*mut</span> <span class="ident">c_uchar</span>, <span class="ident">x</span>: <span class="kw-2">*const</span> <span class="ident">c_uchar</span>, <span class="ident">y</span>: <span class="kw-2">*const</span> <span class="ident">c_uchar</span>, <span class="ident">_data</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>) -&gt; <span class="ident">c_int</span> {
-    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">x</span>, <span class="ident">output</span>, <span class="number">32</span>);
-    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">y</span>, <span class="ident">output</span>.<span class="ident">offset</span>(<span class="number">32</span>), <span class="number">32</span>);
-    <span class="number">1</span>
-}
+<span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>c_callback(output: <span class="kw-2">*mut </span>c_uchar, x: <span class="kw-2">*const </span>c_uchar, y: <span class="kw-2">*const </span>c_uchar, _data: <span class="kw-2">*mut </span>c_void) -&gt; c_int {
+    ptr::copy_nonoverlapping(x, output, <span class="number">32</span>);
+    ptr::copy_nonoverlapping(y, output.offset(<span class="number">32</span>), <span class="number">32</span>);
+    <span class="number">1
+</span>}
 
-<span class="kw">impl</span> <span class="ident">SharedSecret</span> {
-    <span class="doccomment">/// Creates a new shared secret from a pubkey and secret key.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">point</span>: <span class="kw-2">&amp;</span><span class="ident">PublicKey</span>, <span class="ident">scalar</span>: <span class="kw-2">&amp;</span><span class="ident">SecretKey</span>) -&gt; <span class="ident">SharedSecret</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ss</span> <span class="op">=</span> <span class="ident">SharedSecret::empty</span>();
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-             <span class="ident">ffi::secp256k1_ecdh</span>(
-                <span class="ident">ffi::secp256k1_context_no_precomp</span>,
-                <span class="ident">ss</span>.<span class="ident">get_data_mut_ptr</span>(),
-                <span class="ident">point</span>.<span class="ident">as_c_ptr</span>(),
-                <span class="ident">scalar</span>.<span class="ident">as_c_ptr</span>(),
-                <span class="ident">ffi::secp256k1_ecdh_hash_function_default</span>,
-                <span class="ident">ptr::null_mut</span>(),
+<span class="kw">impl </span>SharedSecret {
+    <span class="doccomment">/// Creates a new shared secret from a pubkey and secret key.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>new(point: <span class="kw-2">&amp;</span>PublicKey, scalar: <span class="kw-2">&amp;</span>SecretKey) -&gt; SharedSecret {
+        <span class="kw">let </span><span class="kw-2">mut </span>ss = SharedSecret::empty();
+        <span class="kw">let </span>res = <span class="kw">unsafe </span>{
+             ffi::secp256k1_ecdh(
+                ffi::secp256k1_context_no_precomp,
+                ss.get_data_mut_ptr(),
+                point.as_c_ptr(),
+                scalar.as_c_ptr(),
+                ffi::secp256k1_ecdh_hash_function_default,
+                ptr::null_mut(),
             )
         };
-        <span class="comment">// The default `secp256k1_ecdh_hash_function_default` should always return 1.</span>
-        <span class="comment">// and the scalar was verified to be valid(0 &gt; scalar &gt; group_order) via the type system</span>
-        <span class="macro">debug_assert_eq!</span>(<span class="ident">res</span>, <span class="number">1</span>);
-        <span class="ident">ss</span>.<span class="ident">set_len</span>(<span class="number">32</span>); <span class="comment">// The default hash function is SHA256, which is 32 bytes long.</span>
-        <span class="ident">ss</span>
+        <span class="comment">// The default `secp256k1_ecdh_hash_function_default` should always return 1.
+        // and the scalar was verified to be valid(0 &gt; scalar &gt; group_order) via the type system
+        </span><span class="macro">debug_assert_eq!</span>(res, <span class="number">1</span>);
+        ss.set_len(<span class="number">32</span>); <span class="comment">// The default hash function is SHA256, which is 32 bytes long.
+        </span>ss
     }
 
 
-    <span class="doccomment">/// Creates a new shared secret from a pubkey and secret key with applied custom hash function.</span>
-    <span class="doccomment">/// The custom hash function must be in the form of `fn(x: [u8;32], y: [u8;32]) -&gt; SharedSecret`</span>
-    <span class="doccomment">/// `SharedSecret` can be easily created via the `From` impl from arrays.</span>
-    <span class="doccomment">/// # Examples</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # #[cfg(any(feature = &quot;alloc&quot;, features = &quot;std&quot;))] {</span>
-    <span class="doccomment">/// # use secp256k1::ecdh::SharedSecret;</span>
-    <span class="doccomment">/// # use secp256k1::{Secp256k1, PublicKey, SecretKey};</span>
-    <span class="doccomment">/// # fn sha2(_a: &amp;[u8], _b: &amp;[u8]) -&gt; [u8; 32] {[0u8; 32]}</span>
-    <span class="doccomment">/// # let secp = Secp256k1::signing_only();</span>
-    <span class="doccomment">/// # let secret_key = SecretKey::from_slice(&amp;[3u8; 32]).unwrap();</span>
-    <span class="doccomment">/// # let secret_key2 = SecretKey::from_slice(&amp;[7u8; 32]).unwrap();</span>
-    <span class="doccomment">/// # let public_key = PublicKey::from_secret_key(&amp;secp, &amp;secret_key2);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let secret = SharedSecret::new_with_hash(&amp;public_key, &amp;secret_key, |x,y| {</span>
-    <span class="doccomment">///     let hash: [u8; 32] = sha2(&amp;x,&amp;y);</span>
-    <span class="doccomment">///     hash.into()</span>
-    <span class="doccomment">/// });</span>
-    <span class="doccomment">/// # }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_with_hash</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">point</span>: <span class="kw-2">&amp;</span><span class="ident">PublicKey</span>, <span class="ident">scalar</span>: <span class="kw-2">&amp;</span><span class="ident">SecretKey</span>, <span class="kw-2">mut</span> <span class="ident">hash_function</span>: <span class="ident">F</span>) -&gt; <span class="ident">SharedSecret</span>
-        <span class="kw">where</span> <span class="ident">F</span>: <span class="ident">FnMut</span>([<span class="ident">u8</span>; <span class="number">32</span>], [<span class="ident">u8</span>; <span class="number">32</span>]) -&gt; <span class="ident">SharedSecret</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">xy</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
+    <span class="doccomment">/// Creates a new shared secret from a pubkey and secret key with applied custom hash function.
+    /// The custom hash function must be in the form of `fn(x: [u8;32], y: [u8;32]) -&gt; SharedSecret`
+    /// `SharedSecret` can be easily created via the `From` impl from arrays.
+    /// # Examples
+    /// ```
+    /// # #[cfg(any(feature = &quot;alloc&quot;, features = &quot;std&quot;))] {
+    /// # use secp256k1::ecdh::SharedSecret;
+    /// # use secp256k1::{Secp256k1, PublicKey, SecretKey};
+    /// # fn sha2(_a: &amp;[u8], _b: &amp;[u8]) -&gt; [u8; 32] {[0u8; 32]}
+    /// # let secp = Secp256k1::signing_only();
+    /// # let secret_key = SecretKey::from_slice(&amp;[3u8; 32]).unwrap();
+    /// # let secret_key2 = SecretKey::from_slice(&amp;[7u8; 32]).unwrap();
+    /// # let public_key = PublicKey::from_secret_key(&amp;secp, &amp;secret_key2);
+    ///
+    /// let secret = SharedSecret::new_with_hash(&amp;public_key, &amp;secret_key, |x,y| {
+    ///     let hash: [u8; 32] = sha2(&amp;x,&amp;y);
+    ///     hash.into()
+    /// });
+    /// # }
+    /// ```
+    </span><span class="kw">pub fn </span>new_with_hash&lt;F&gt;(point: <span class="kw-2">&amp;</span>PublicKey, scalar: <span class="kw-2">&amp;</span>SecretKey, <span class="kw-2">mut </span>hash_function: F) -&gt; SharedSecret
+        <span class="kw">where </span>F: FnMut([u8; <span class="number">32</span>], [u8; <span class="number">32</span>]) -&gt; SharedSecret {
+        <span class="kw">let </span><span class="kw-2">mut </span>xy = [<span class="number">0u8</span>; <span class="number">64</span>];
 
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="ident">ffi::secp256k1_ecdh</span>(
-                <span class="ident">ffi::secp256k1_context_no_precomp</span>,
-                <span class="ident">xy</span>.<span class="ident">as_mut_ptr</span>(),
-                <span class="ident">point</span>.<span class="ident">as_ptr</span>(),
-                <span class="ident">scalar</span>.<span class="ident">as_ptr</span>(),
-                <span class="prelude-val">Some</span>(<span class="ident">c_callback</span>),
-                <span class="ident">ptr::null_mut</span>(),
+        <span class="kw">let </span>res = <span class="kw">unsafe </span>{
+            ffi::secp256k1_ecdh(
+                ffi::secp256k1_context_no_precomp,
+                xy.as_mut_ptr(),
+                point.as_ptr(),
+                scalar.as_ptr(),
+                <span class="prelude-val">Some</span>(c_callback),
+                ptr::null_mut(),
             )
         };
-        <span class="comment">// Our callback *always* returns 1.</span>
-        <span class="comment">// and the scalar was verified to be valid(0 &gt; scalar &gt; group_order) via the type system</span>
-        <span class="macro">debug_assert_eq!</span>(<span class="ident">res</span>, <span class="number">1</span>);
+        <span class="comment">// Our callback *always* returns 1.
+        // and the scalar was verified to be valid(0 &gt; scalar &gt; group_order) via the type system
+        </span><span class="macro">debug_assert_eq!</span>(res, <span class="number">1</span>);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">y</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="ident">x</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">xy</span>[..<span class="number">32</span>]);
-        <span class="ident">y</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">xy</span>[<span class="number">32</span>..]);
-        <span class="ident">hash_function</span>(<span class="ident">x</span>, <span class="ident">y</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>x = [<span class="number">0u8</span>; <span class="number">32</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>y = [<span class="number">0u8</span>; <span class="number">32</span>];
+        x.copy_from_slice(<span class="kw-2">&amp;</span>xy[..<span class="number">32</span>]);
+        y.copy_from_slice(<span class="kw-2">&amp;</span>xy[<span class="number">32</span>..]);
+        hash_function(x, y)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_imports</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">rand::thread_rng</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::Secp256k1</span>;
+<span class="attribute">#[cfg(test)]
+#[allow(unused_imports)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>rand::thread_rng;
+    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::Secp256k1;
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;wasm32&quot;</span>)]</span>
-    <span class="kw">use</span> <span class="ident">wasm_bindgen_test::wasm_bindgen_test</span> <span class="kw">as</span> <span class="ident">test</span>;
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    </span><span class="kw">use </span>wasm_bindgen_test::wasm_bindgen_test <span class="kw">as </span>test;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;rand-std&quot;</span>, <span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
-    <span class="kw">fn</span> <span class="ident">ecdh</span>() {
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">Secp256k1::signing_only</span>();
-        <span class="kw">let</span> (<span class="ident">sk1</span>, <span class="ident">pk1</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">generate_keypair</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
-        <span class="kw">let</span> (<span class="ident">sk2</span>, <span class="ident">pk2</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">generate_keypair</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
+    <span class="attribute">#[test]
+    #[cfg(all(feature=<span class="string">&quot;rand-std&quot;</span>, any(feature = <span class="string">&quot;alloc&quot;</span>, feature = <span class="string">&quot;std&quot;</span>)))]
+    </span><span class="kw">fn </span>ecdh() {
+        <span class="kw">let </span>s = Secp256k1::signing_only();
+        <span class="kw">let </span>(sk1, pk1) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        <span class="kw">let </span>(sk2, pk2) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
 
-        <span class="kw">let</span> <span class="ident">sec1</span> <span class="op">=</span> <span class="ident">SharedSecret::new</span>(<span class="kw-2">&amp;</span><span class="ident">pk1</span>, <span class="kw-2">&amp;</span><span class="ident">sk2</span>);
-        <span class="kw">let</span> <span class="ident">sec2</span> <span class="op">=</span> <span class="ident">SharedSecret::new</span>(<span class="kw-2">&amp;</span><span class="ident">pk2</span>, <span class="kw-2">&amp;</span><span class="ident">sk1</span>);
-        <span class="kw">let</span> <span class="ident">sec_odd</span> <span class="op">=</span> <span class="ident">SharedSecret::new</span>(<span class="kw-2">&amp;</span><span class="ident">pk1</span>, <span class="kw-2">&amp;</span><span class="ident">sk1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">sec1</span>, <span class="ident">sec2</span>);
-        <span class="macro">assert!</span>(<span class="ident">sec_odd</span> <span class="op">!</span><span class="op">=</span> <span class="ident">sec2</span>);
+        <span class="kw">let </span>sec1 = SharedSecret::new(<span class="kw-2">&amp;</span>pk1, <span class="kw-2">&amp;</span>sk2);
+        <span class="kw">let </span>sec2 = SharedSecret::new(<span class="kw-2">&amp;</span>pk2, <span class="kw-2">&amp;</span>sk1);
+        <span class="kw">let </span>sec_odd = SharedSecret::new(<span class="kw-2">&amp;</span>pk1, <span class="kw-2">&amp;</span>sk1);
+        <span class="macro">assert_eq!</span>(sec1, sec2);
+        <span class="macro">assert!</span>(sec_odd != sec2);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand-std&quot;</span>))]</span>
-    <span class="kw">fn</span> <span class="ident">ecdh_with_hash</span>() {
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">Secp256k1::signing_only</span>();
-        <span class="kw">let</span> (<span class="ident">sk1</span>, <span class="ident">pk1</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">generate_keypair</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
-        <span class="kw">let</span> (<span class="ident">sk2</span>, <span class="ident">pk2</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">generate_keypair</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
+    <span class="attribute">#[test]
+    #[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    </span><span class="kw">fn </span>ecdh_with_hash() {
+        <span class="kw">let </span>s = Secp256k1::signing_only();
+        <span class="kw">let </span>(sk1, pk1) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        <span class="kw">let </span>(sk2, pk2) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
 
-        <span class="kw">let</span> <span class="ident">sec1</span> <span class="op">=</span> <span class="ident">SharedSecret::new_with_hash</span>(<span class="kw-2">&amp;</span><span class="ident">pk1</span>, <span class="kw-2">&amp;</span><span class="ident">sk2</span>, <span class="op">|</span><span class="ident">x</span>,<span class="kw">_</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">into</span>());
-        <span class="kw">let</span> <span class="ident">sec2</span> <span class="op">=</span> <span class="ident">SharedSecret::new_with_hash</span>(<span class="kw-2">&amp;</span><span class="ident">pk2</span>, <span class="kw-2">&amp;</span><span class="ident">sk1</span>, <span class="op">|</span><span class="ident">x</span>,<span class="kw">_</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">into</span>());
-        <span class="kw">let</span> <span class="ident">sec_odd</span> <span class="op">=</span> <span class="ident">SharedSecret::new_with_hash</span>(<span class="kw-2">&amp;</span><span class="ident">pk1</span>, <span class="kw-2">&amp;</span><span class="ident">sk1</span>, <span class="op">|</span><span class="ident">x</span>,<span class="kw">_</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">into</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">sec1</span>, <span class="ident">sec2</span>);
-        <span class="macro">assert_ne!</span>(<span class="ident">sec_odd</span>, <span class="ident">sec2</span>);
+        <span class="kw">let </span>sec1 = SharedSecret::new_with_hash(<span class="kw-2">&amp;</span>pk1, <span class="kw-2">&amp;</span>sk2, |x,<span class="kw">_</span>| x.into());
+        <span class="kw">let </span>sec2 = SharedSecret::new_with_hash(<span class="kw-2">&amp;</span>pk2, <span class="kw-2">&amp;</span>sk1, |x,<span class="kw">_</span>| x.into());
+        <span class="kw">let </span>sec_odd = SharedSecret::new_with_hash(<span class="kw-2">&amp;</span>pk1, <span class="kw-2">&amp;</span>sk1, |x,<span class="kw">_</span>| x.into());
+        <span class="macro">assert_eq!</span>(sec1, sec2);
+        <span class="macro">assert_ne!</span>(sec_odd, sec2);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand-std&quot;</span>))]</span>
-    <span class="kw">fn</span> <span class="ident">ecdh_with_hash_callback</span>() {
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">Secp256k1::signing_only</span>();
-        <span class="kw">let</span> (<span class="ident">sk1</span>, <span class="ident">pk1</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">generate_keypair</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
-        <span class="kw">let</span> <span class="ident">expect_result</span>: [<span class="ident">u8</span>; <span class="number">64</span>] <span class="op">=</span> [<span class="number">123</span>; <span class="number">64</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x_out</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">y_out</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">SharedSecret::new_with_hash</span>(<span class="kw-2">&amp;</span><span class="ident">pk1</span>, <span class="kw-2">&amp;</span><span class="ident">sk1</span>, <span class="op">|</span><span class="ident">x</span>, <span class="ident">y</span><span class="op">|</span> {
-            <span class="ident">x_out</span> <span class="op">=</span> <span class="ident">x</span>;
-            <span class="ident">y_out</span> <span class="op">=</span> <span class="ident">y</span>;
-            <span class="ident">expect_result</span>.<span class="ident">into</span>()
+    <span class="attribute">#[test]
+    #[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    </span><span class="kw">fn </span>ecdh_with_hash_callback() {
+        <span class="kw">let </span>s = Secp256k1::signing_only();
+        <span class="kw">let </span>(sk1, pk1) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        <span class="kw">let </span>expect_result: [u8; <span class="number">64</span>] = [<span class="number">123</span>; <span class="number">64</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>x_out = [<span class="number">0u8</span>; <span class="number">32</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>y_out = [<span class="number">0u8</span>; <span class="number">32</span>];
+        <span class="kw">let </span>result = SharedSecret::new_with_hash(<span class="kw-2">&amp;</span>pk1, <span class="kw-2">&amp;</span>sk1, |x, y| {
+            x_out = x;
+            y_out = y;
+            expect_result.into()
         });
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="ident">expect_result</span>[..], <span class="kw-2">&amp;</span><span class="ident">result</span>[..]);
-        <span class="macro">assert_ne!</span>(<span class="ident">x_out</span>, [<span class="number">0u8</span>; <span class="number">32</span>]);
-        <span class="macro">assert_ne!</span>(<span class="ident">y_out</span>, [<span class="number">0u8</span>; <span class="number">32</span>]);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>expect_result[..], <span class="kw-2">&amp;</span>result[..]);
+        <span class="macro">assert_ne!</span>(x_out, [<span class="number">0u8</span>; <span class="number">32</span>]);
+        <span class="macro">assert_ne!</span>(y_out, [<span class="number">0u8</span>; <span class="number">32</span>]);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_c_callback</span>() {
-        <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> [<span class="number">5u8</span>; <span class="number">32</span>];
-        <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> [<span class="number">7u8</span>; <span class="number">32</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident"><span class="kw">super</span>::c_callback</span>(<span class="ident">output</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">x</span>.<span class="ident">as_ptr</span>(), <span class="ident">y</span>.<span class="ident">as_ptr</span>(), <span class="ident">ptr::null_mut</span>()) };
-        <span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="number">1</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_x</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_y</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="ident">new_x</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>[..<span class="number">32</span>]);
-        <span class="ident">new_y</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>[<span class="number">32</span>..]);
-        <span class="macro">assert_eq!</span>(<span class="ident">x</span>, <span class="ident">new_x</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">y</span>, <span class="ident">new_y</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_c_callback() {
+        <span class="kw">let </span>x = [<span class="number">5u8</span>; <span class="number">32</span>];
+        <span class="kw">let </span>y = [<span class="number">7u8</span>; <span class="number">32</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>output = [<span class="number">0u8</span>; <span class="number">64</span>];
+        <span class="kw">let </span>res = <span class="kw">unsafe </span>{ <span class="kw">super</span>::c_callback(output.as_mut_ptr(), x.as_ptr(), y.as_ptr(), ptr::null_mut()) };
+        <span class="macro">assert_eq!</span>(res, <span class="number">1</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>new_x = [<span class="number">0u8</span>; <span class="number">32</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>new_y = [<span class="number">0u8</span>; <span class="number">32</span>];
+        new_x.copy_from_slice(<span class="kw-2">&amp;</span>output[..<span class="number">32</span>]);
+        new_y.copy_from_slice(<span class="kw-2">&amp;</span>output[<span class="number">32</span>..]);
+        <span class="macro">assert_eq!</span>(x, new_x);
+        <span class="macro">assert_eq!</span>(y, new_y);
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unstable&quot;</span>))]</span>
-<span class="kw">mod</span> <span class="ident">benches</span> {
-    <span class="kw">use</span> <span class="ident">rand::thread_rng</span>;
-    <span class="kw">use</span> <span class="ident">test</span>::{<span class="ident">Bencher</span>, <span class="ident">black_box</span>};
+<span class="attribute">#[cfg(all(test, feature = <span class="string">&quot;unstable&quot;</span>))]
+</span><span class="kw">mod </span>benches {
+    <span class="kw">use </span>rand::thread_rng;
+    <span class="kw">use </span>test::{Bencher, black_box};
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SharedSecret</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::Secp256k1</span>;
+    <span class="kw">use </span><span class="kw">super</span>::SharedSecret;
+    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::Secp256k1;
 
-    <span class="attribute">#[<span class="ident">bench</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bench_ecdh</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">Secp256k1::signing_only</span>();
-        <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">generate_keypair</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
+    <span class="attribute">#[bench]
+    </span><span class="kw">pub fn </span>bench_ecdh(bh: <span class="kw-2">&amp;mut </span>Bencher) {
+        <span class="kw">let </span>s = Secp256k1::signing_only();
+        <span class="kw">let </span>(sk, pk) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
 
-        <span class="ident">bh</span>.<span class="ident">iter</span>( <span class="op">|</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">SharedSecret::new</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>, <span class="kw-2">&amp;</span><span class="ident">sk</span>);
-            <span class="ident">black_box</span>(<span class="ident">res</span>);
+        bh.iter( || {
+            <span class="kw">let </span>res = SharedSecret::new(<span class="kw-2">&amp;</span>pk, <span class="kw-2">&amp;</span>sk);
+            black_box(res);
         });
     }
 }
 
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="secp256k1" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="secp256k1" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

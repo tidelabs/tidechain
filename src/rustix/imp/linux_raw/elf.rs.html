@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/elf.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>elf.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../rustix/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/elf.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>elf.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../rustix/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -175,178 +170,177 @@
 <span id="170">170</span>
 <span id="171">171</span>
 <span id="172">172</span>
-</pre><pre class="rust"><code><span class="doccomment">//! The ELF ABI.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! The ELF ABI.
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_snake_case</span>)]</span>
+</span><span class="attribute">#![allow(non_snake_case)]
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">SELFMAG</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFMAG</span>: [<span class="ident">u8</span>; <span class="ident">SELFMAG</span>] <span class="op">=</span> [<span class="number">0x7f</span>, <span class="string">b&#39;E&#39;</span>, <span class="string">b&#39;L&#39;</span>, <span class="string">b&#39;F&#39;</span>];
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EI_CLASS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EI_DATA</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EI_VERSION</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">6</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EI_OSABI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">7</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EI_ABIVERSION</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EV_CURRENT</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFCLASS</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">1</span>; <span class="comment">// ELFCLASS32</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFCLASS</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">2</span>; <span class="comment">// ELFCLASS64</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_endian</span> <span class="op">=</span> <span class="string">&quot;little&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFDATA</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">1</span>; <span class="comment">// ELFDATA2LSB</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_endian</span> <span class="op">=</span> <span class="string">&quot;big&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFDATA</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">2</span>; <span class="comment">// ELFDATA2MSB</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFOSABI_SYSV</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFOSABI_LINUX</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">3</span>;
-<span class="comment">// At present all of our supported platforms use 0.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ELFABIVERSION</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">ET_DYN</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">3</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EI_NIDENT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">SHN_UNDEF</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">SHN_ABS</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0xfff1</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PN_XNUM</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0xffff</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PT_LOAD</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PT_DYNAMIC</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">2</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PT_INTERP</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">3</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PT_PHDR</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">6</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PT_TLS</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">7</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PT_GNU_STACK</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0x6474_e551</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PT_GNU_RELRO</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0x6474_e552</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PF_X</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PF_W</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">2</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">PF_R</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">4</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">DT_NULL</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">DT_HASH</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">4</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">DT_STRTAB</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">5</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">DT_SYMTAB</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">6</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">DT_SYMENT</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">11</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">DT_VERSYM</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">0x6fff_fff0</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">DT_VERDEF</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">0x6fff_fffc</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">STB_WEAK</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">2</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">STB_GLOBAL</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">STT_NOTYPE</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">STT_FUNC</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">2</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">STN_UNDEF</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">VER_FLG_BASE</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0x1</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">VER_DEF_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">STV_DEFAULT</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EM_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">40</span>; <span class="comment">// EM_ARM</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EM_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">3</span>; <span class="comment">// EM_386</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc64&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EM_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">21</span>; <span class="comment">// EM_PPC64</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips64&quot;</span>))]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EM_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">8</span>; <span class="comment">// EM_MIPS</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EM_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">62</span>; <span class="comment">// EM_X86_64</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EM_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">183</span>; <span class="comment">// EM_AARCH64</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="ident">EM_CURRENT</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">243</span>; <span class="comment">// EM_RISCV</span>
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>SELFMAG: usize = <span class="number">4</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFMAG: [u8; SELFMAG] = [<span class="number">0x7f</span>, <span class="string">b&#39;E&#39;</span>, <span class="string">b&#39;L&#39;</span>, <span class="string">b&#39;F&#39;</span>];
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EI_CLASS: usize = <span class="number">4</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EI_DATA: usize = <span class="number">5</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EI_VERSION: usize = <span class="number">6</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EI_OSABI: usize = <span class="number">7</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EI_ABIVERSION: usize = <span class="number">8</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EV_CURRENT: u8 = <span class="number">1</span>;
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFCLASS: u8 = <span class="number">1</span>; <span class="comment">// ELFCLASS32
+</span><span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFCLASS: u8 = <span class="number">2</span>; <span class="comment">// ELFCLASS64
+</span><span class="attribute">#[cfg(target_endian = <span class="string">&quot;little&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFDATA: u8 = <span class="number">1</span>; <span class="comment">// ELFDATA2LSB
+</span><span class="attribute">#[cfg(target_endian = <span class="string">&quot;big&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFDATA: u8 = <span class="number">2</span>; <span class="comment">// ELFDATA2MSB
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFOSABI_SYSV: u8 = <span class="number">0</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFOSABI_LINUX: u8 = <span class="number">3</span>;
+<span class="comment">// At present all of our supported platforms use 0.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ELFABIVERSION: u8 = <span class="number">0</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>ET_DYN: u16 = <span class="number">3</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EI_NIDENT: usize = <span class="number">16</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>SHN_UNDEF: u16 = <span class="number">0</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>SHN_ABS: u16 = <span class="number">0xfff1</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PN_XNUM: u16 = <span class="number">0xffff</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PT_LOAD: u32 = <span class="number">1</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PT_DYNAMIC: u32 = <span class="number">2</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PT_INTERP: u32 = <span class="number">3</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PT_PHDR: u32 = <span class="number">6</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PT_TLS: u32 = <span class="number">7</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PT_GNU_STACK: u32 = <span class="number">0x6474_e551</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PT_GNU_RELRO: u32 = <span class="number">0x6474_e552</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PF_X: u32 = <span class="number">1</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PF_W: u32 = <span class="number">2</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>PF_R: u32 = <span class="number">4</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>DT_NULL: i32 = <span class="number">0</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>DT_HASH: i32 = <span class="number">4</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>DT_STRTAB: i32 = <span class="number">5</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>DT_SYMTAB: i32 = <span class="number">6</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>DT_SYMENT: i32 = <span class="number">11</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>DT_VERSYM: i32 = <span class="number">0x6fff_fff0</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>DT_VERDEF: i32 = <span class="number">0x6fff_fffc</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>STB_WEAK: u8 = <span class="number">2</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>STB_GLOBAL: u8 = <span class="number">1</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>STT_NOTYPE: u8 = <span class="number">0</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>STT_FUNC: u8 = <span class="number">2</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>STN_UNDEF: u32 = <span class="number">0</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>VER_FLG_BASE: u16 = <span class="number">0x1</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>VER_DEF_CURRENT: u16 = <span class="number">1</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>STV_DEFAULT: u8 = <span class="number">0</span>;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EM_CURRENT: u16 = <span class="number">40</span>; <span class="comment">// EM_ARM
+</span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EM_CURRENT: u16 = <span class="number">3</span>; <span class="comment">// EM_386
+</span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;powerpc64&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EM_CURRENT: u16 = <span class="number">21</span>; <span class="comment">// EM_PPC64
+</span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;mips64&quot;</span>))]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EM_CURRENT: u16 = <span class="number">8</span>; <span class="comment">// EM_MIPS
+</span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EM_CURRENT: u16 = <span class="number">62</span>; <span class="comment">// EM_X86_64
+</span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EM_CURRENT: u16 = <span class="number">183</span>; <span class="comment">// EM_AARCH64
+</span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;riscv64&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>EM_CURRENT: u16 = <span class="number">243</span>; <span class="comment">// EM_RISCV
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">ELF_ST_VISIBILITY</span>(<span class="ident">o</span>: <span class="ident">u8</span>) -&gt; <span class="ident">u8</span> {
-    <span class="ident">o</span> <span class="op">&amp;</span> <span class="number">0x03</span>
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const fn </span>ELF_ST_VISIBILITY(o: u8) -&gt; u8 {
+    o &amp; <span class="number">0x03
+</span>}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const fn </span>ELF_ST_BIND(val: u8) -&gt; u8 {
+    val &gt;&gt; <span class="number">4
+</span>}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const fn </span>ELF_ST_TYPE(val: u8) -&gt; u8 {
+    val &amp; <span class="number">0xf
+</span>}
+
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Ehdr {
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_ident: [u8; EI_NIDENT],
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_type: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_machine: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_version: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_entry: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_phoff: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_shoff: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_flags: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_ehsize: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_phentsize: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_phnum: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_shentsize: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_shnum: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) e_shstrndx: u16,
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">ELF_ST_BIND</span>(<span class="ident">val</span>: <span class="ident">u8</span>) -&gt; <span class="ident">u8</span> {
-    <span class="ident">val</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">4</span>
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Phdr {
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_type: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_offset: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_vaddr: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_paddr: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_filesz: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_memsz: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_flags: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_align: usize,
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">ELF_ST_TYPE</span>(<span class="ident">val</span>: <span class="ident">u8</span>) -&gt; <span class="ident">u8</span> {
-    <span class="ident">val</span> <span class="op">&amp;</span> <span class="number">0xf</span>
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Phdr {
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_type: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_flags: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_offset: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_vaddr: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_paddr: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_filesz: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_memsz: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) p_align: usize,
 }
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Ehdr</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_ident</span>: [<span class="ident">u8</span>; <span class="ident">EI_NIDENT</span>],
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_type</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_machine</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_version</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_entry</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_phoff</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_shoff</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_flags</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_ehsize</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_phentsize</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_phnum</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_shentsize</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_shnum</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">e_shstrndx</span>: <span class="ident">u16</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Sym {
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_name: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_value: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_size: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_info: u8,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_other: u8,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_shndx: u16,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Phdr</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_type</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_offset</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_vaddr</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_paddr</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_filesz</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_memsz</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_flags</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_align</span>: <span class="ident">usize</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Sym {
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_name: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_info: u8,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_other: u8,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_shndx: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_value: usize,
+    <span class="kw">pub</span>(<span class="kw">super</span>) st_size: usize,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Phdr</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_type</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_flags</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_offset</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_vaddr</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_paddr</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_filesz</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_memsz</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">p_align</span>: <span class="ident">usize</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Dyn {
+    <span class="kw">pub</span>(<span class="kw">super</span>) d_tag: i32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) d_val: usize,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Sym</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_name</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_value</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_size</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_info</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_other</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_shndx</span>: <span class="ident">u16</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Verdef {
+    <span class="kw">pub</span>(<span class="kw">super</span>) vd_version: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) vd_flags: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) vd_ndx: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) vd_cnt: u16,
+    <span class="kw">pub</span>(<span class="kw">super</span>) vd_hash: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) vd_aux: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) vd_next: u32,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Sym</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_name</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_info</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_other</span>: <span class="ident">u8</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_shndx</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_value</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">st_size</span>: <span class="ident">usize</span>,
-}
-
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Dyn</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">d_tag</span>: <span class="ident">i32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">d_val</span>: <span class="ident">usize</span>,
-}
-
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Verdef</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vd_version</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vd_flags</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vd_ndx</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vd_cnt</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vd_hash</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vd_aux</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vd_next</span>: <span class="ident">u32</span>,
-}
-
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">Elf_Verdaux</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">vda_name</span>: <span class="ident">u32</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">_vda_next</span>: <span class="ident">u32</span>,
+<span class="attribute">#[repr(C)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Elf_Verdaux {
+    <span class="kw">pub</span>(<span class="kw">super</span>) vda_name: u32,
+    <span class="kw">pub</span>(<span class="kw">super</span>) _vda_next: u32,
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Uvi","Encoder/Decoder of unsigned-varint values"],["UviBytes","Encoder/Decoder of unsigned-varint, length-prefixed bytes"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Uvi","Encoder/Decoder of unsigned-varint values"],["UviBytes","Encoder/Decoder of unsigned-varint, length-prefixed bytes"]]};

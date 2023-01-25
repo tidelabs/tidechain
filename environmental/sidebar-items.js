@@ -1,1 +1,1 @@
-initSidebarItems({"macro":[["environmental","Declare a new global reference module whose underlying value does not contain references."]]});
+window.SIDEBAR_ITEMS = {"macro":[["environmental","Declare a new global reference module whose underlying value does not contain references."]]};

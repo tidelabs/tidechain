@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/instance.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instance.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/instance.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instance.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1082,837 +1077,837 @@
 <span id="1077">1077</span>
 <span id="1078">1078</span>
 <span id="1079">1079</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::linker::Definition</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::signatures::SignatureCollection</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::store</span>::{<span class="ident">InstanceId</span>, <span class="ident">StoreData</span>, <span class="ident">StoreOpaque</span>, <span class="ident">Stored</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::matching</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">AsContext</span>, <span class="ident">AsContextMut</span>, <span class="ident">Engine</span>, <span class="ident">Export</span>, <span class="ident">Extern</span>, <span class="ident">ExternType</span>, <span class="ident">Func</span>, <span class="ident">Global</span>, <span class="ident">InstanceType</span>,
-    <span class="ident">Memory</span>, <span class="ident">Module</span>, <span class="ident">StoreContextMut</span>, <span class="ident">Table</span>, <span class="ident">Trap</span>, <span class="ident">TypedFunc</span>,
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::linker::Definition;
+<span class="kw">use </span><span class="kw">crate</span>::signatures::SignatureCollection;
+<span class="kw">use </span><span class="kw">crate</span>::store::{InstanceId, StoreData, StoreOpaque, Stored};
+<span class="kw">use </span><span class="kw">crate</span>::types::matching;
+<span class="kw">use crate</span>::{
+    AsContext, AsContextMut, Engine, Export, Extern, ExternType, Func, Global, InstanceType,
+    Memory, Module, StoreContextMut, Table, Trap, TypedFunc,
 };
-<span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">anyhow</span>, <span class="ident">bail</span>, <span class="ident">Context</span>, <span class="ident">Error</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">std::mem</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_environ</span>::{
-    <span class="ident">EntityIndex</span>, <span class="ident">EntityType</span>, <span class="ident">FuncIndex</span>, <span class="ident">GlobalIndex</span>, <span class="ident">Initializer</span>, <span class="ident">InstanceIndex</span>, <span class="ident">MemoryIndex</span>,
-    <span class="ident">ModuleIndex</span>, <span class="ident">PrimaryMap</span>, <span class="ident">TableIndex</span>,
+<span class="kw">use </span>anyhow::{anyhow, bail, Context, Error, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>std::mem;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>wasmtime_environ::{
+    EntityIndex, EntityType, FuncIndex, GlobalIndex, Initializer, InstanceIndex, MemoryIndex,
+    ModuleIndex, PrimaryMap, TableIndex,
 };
-<span class="kw">use</span> <span class="ident">wasmtime_jit::TypeTables</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_runtime</span>::{
-    <span class="ident">Imports</span>, <span class="ident">InstanceAllocationRequest</span>, <span class="ident">InstantiationError</span>, <span class="ident">StorePtr</span>, <span class="ident">VMContext</span>, <span class="ident">VMFunctionBody</span>,
-    <span class="ident">VMFunctionImport</span>, <span class="ident">VMGlobalImport</span>, <span class="ident">VMMemoryImport</span>, <span class="ident">VMTableImport</span>,
+<span class="kw">use </span>wasmtime_jit::TypeTables;
+<span class="kw">use </span>wasmtime_runtime::{
+    Imports, InstanceAllocationRequest, InstantiationError, StorePtr, VMContext, VMFunctionBody,
+    VMFunctionImport, VMGlobalImport, VMMemoryImport, VMTableImport,
 };
 
-<span class="doccomment">/// An instantiated WebAssembly module.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This type represents the instantiation of a [`Module`]. Once instantiated</span>
-<span class="doccomment">/// you can access the [`exports`](Instance::exports) which are of type</span>
-<span class="doccomment">/// [`Extern`] and provide the ability to call functions, set globals, read</span>
-<span class="doccomment">/// memory, etc. When interacting with any wasm code you&#39;ll want to make an</span>
-<span class="doccomment">/// [`Instance`] to call any code or execute anything.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Instances are owned by a [`Store`](crate::Store) which is passed in at</span>
-<span class="doccomment">/// creation time. It&#39;s recommended to create instances with</span>
-<span class="doccomment">/// [`Linker::instantiate`](crate::Linker::instantiate) or similar</span>
-<span class="doccomment">/// [`Linker`](crate::Linker) methods, but a more low-level constructor is also</span>
-<span class="doccomment">/// available as [`Instance::new`].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Instance</span>(<span class="ident">Stored</span><span class="op">&lt;</span><span class="ident">InstanceData</span><span class="op">&gt;</span>);
+<span class="doccomment">/// An instantiated WebAssembly module.
+///
+/// This type represents the instantiation of a [`Module`]. Once instantiated
+/// you can access the [`exports`](Instance::exports) which are of type
+/// [`Extern`] and provide the ability to call functions, set globals, read
+/// memory, etc. When interacting with any wasm code you&#39;ll want to make an
+/// [`Instance`] to call any code or execute anything.
+///
+/// Instances are owned by a [`Store`](crate::Store) which is passed in at
+/// creation time. It&#39;s recommended to create instances with
+/// [`Linker::instantiate`](crate::Linker::instantiate) or similar
+/// [`Linker`](crate::Linker) methods, but a more low-level constructor is also
+/// available as [`Instance::new`].
+</span><span class="attribute">#[derive(Copy, Clone, Debug)]
+#[repr(transparent)]
+</span><span class="kw">pub struct </span>Instance(Stored&lt;InstanceData&gt;);
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">InstanceData</span> {
-    <span class="doccomment">/// This variant is used for instances created through instantiation of a</span>
-    <span class="doccomment">/// module, e.g. `Instance::new` or various linker methods.</span>
-    <span class="ident">Instantiated</span> {
-        <span class="doccomment">/// The id of the instance within the store, used to find the original</span>
-        <span class="doccomment">/// `InstanceHandle`.</span>
-        <span class="ident">id</span>: <span class="ident">InstanceId</span>,
-        <span class="doccomment">/// A lazily-populated list of exports of this instance. The order of</span>
-        <span class="doccomment">/// exports here matches the order of the exports in the the original</span>
-        <span class="doccomment">/// module.</span>
-        <span class="ident">exports</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Extern</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="doccomment">/// The type information of the module that this was instantiated with.</span>
-        <span class="ident">types</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TypeTables</span><span class="op">&gt;</span>,
-        <span class="ident">signatures</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">SignatureCollection</span><span class="op">&gt;</span>,
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>InstanceData {
+    <span class="doccomment">/// This variant is used for instances created through instantiation of a
+    /// module, e.g. `Instance::new` or various linker methods.
+    </span>Instantiated {
+        <span class="doccomment">/// The id of the instance within the store, used to find the original
+        /// `InstanceHandle`.
+        </span>id: InstanceId,
+        <span class="doccomment">/// A lazily-populated list of exports of this instance. The order of
+        /// exports here matches the order of the exports in the the original
+        /// module.
+        </span>exports: Vec&lt;<span class="prelude-ty">Option</span>&lt;Extern&gt;&gt;,
+        <span class="doccomment">/// The type information of the module that this was instantiated with.
+        </span>types: Arc&lt;TypeTables&gt;,
+        signatures: Arc&lt;SignatureCollection&gt;,
     },
 
-    <span class="doccomment">/// This variant is used for synthetically created instances via `Linker`</span>
-    <span class="doccomment">/// APIs. This is only used for the module linking proposal at this time.</span>
-    <span class="ident">Synthetic</span>(<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">indexmap::IndexMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Extern</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="doccomment">/// This variant is used for synthetically created instances via `Linker`
+    /// APIs. This is only used for the module linking proposal at this time.
+    </span>Synthetic(Arc&lt;indexmap::IndexMap&lt;String, Extern&gt;&gt;),
 }
 
-<span class="kw">impl</span> <span class="ident">Instance</span> {
-    <span class="doccomment">/// Creates a new [`Instance`] from the previously compiled [`Module`] and</span>
-    <span class="doccomment">/// list of `imports` specified.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method instantiates the `module` provided with the `imports`,</span>
-    <span class="doccomment">/// following the procedure in the [core specification][inst] to</span>
-    <span class="doccomment">/// instantiate. Instantiation can fail for a number of reasons (many</span>
-    <span class="doccomment">/// specified below), but if successful the `start` function will be</span>
-    <span class="doccomment">/// automatically run (if specified in the `module`) and then the</span>
-    <span class="doccomment">/// [`Instance`] will be returned.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Per the WebAssembly spec, instantiation includes running the module&#39;s</span>
-    <span class="doccomment">/// start function, if it has one (not to be confused with the `_start`</span>
-    <span class="doccomment">/// function, which is not run).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this is a low-level function that just performs an</span>
-    <span class="doccomment">/// instantiation. See the [`Linker`](crate::Linker) struct for an API which</span>
-    <span class="doccomment">/// provides a convenient way to link imports and provides automatic Command</span>
-    <span class="doccomment">/// and Reactor behavior.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Providing Imports</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The entries in the list of `imports` are intended to correspond 1:1</span>
-    <span class="doccomment">/// with the list of imports returned by [`Module::imports`]. Before</span>
-    <span class="doccomment">/// calling [`Instance::new`] you&#39;ll want to inspect the return value of</span>
-    <span class="doccomment">/// [`Module::imports`] and, for each import type, create an [`Extern`]</span>
-    <span class="doccomment">/// which corresponds to that type.  These [`Extern`] values are all then</span>
-    <span class="doccomment">/// collected into a list and passed to this function.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this function is intentionally relatively low level. For an</span>
-    <span class="doccomment">/// easier time passing imports by doing name-based resolution it&#39;s</span>
-    <span class="doccomment">/// recommended to instead use the [`Linker`](crate::Linker) type.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Errors</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function can fail for a number of reasons, including, but not</span>
-    <span class="doccomment">/// limited to:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * The number of `imports` provided doesn&#39;t match the number of imports</span>
-    <span class="doccomment">///   returned by the `module`&#39;s [`Module::imports`] method.</span>
-    <span class="doccomment">/// * The type of any [`Extern`] doesn&#39;t match the corresponding</span>
-    <span class="doccomment">///   [`ExternType`] entry that it maps to.</span>
-    <span class="doccomment">/// * The `start` function in the instance, if present, traps.</span>
-    <span class="doccomment">/// * Module/instance resource limits are exceeded.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// When instantiation fails it&#39;s recommended to inspect the return value to</span>
-    <span class="doccomment">/// see why it failed, or bubble it upwards. If you&#39;d like to specifically</span>
-    <span class="doccomment">/// check for trap errors, you can use `error.downcast::&lt;Trap&gt;()`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will panic if called with a store associated with a</span>
-    <span class="doccomment">/// [`asynchronous config`](crate::Config::async_support). This function</span>
-    <span class="doccomment">/// will also panic if any [`Extern`] supplied is not owned by `store`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// [inst]: https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation</span>
-    <span class="doccomment">/// [`ExternType`]: crate::ExternType</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>,
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-        <span class="ident">imports</span>: <span class="kw-2">&amp;</span>[<span class="ident">Extern</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instance</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="comment">// This unsafety comes from `Instantiator::new` where we must typecheck</span>
-        <span class="comment">// first, which we are sure to do here.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="ident">typecheck_externs</span>(<span class="ident">store</span>.<span class="number">0</span>, <span class="ident">module</span>, <span class="ident">imports</span>)<span class="question-mark">?</span>;
-            <span class="ident">Instantiator::new</span>(<span class="ident">store</span>.<span class="number">0</span>, <span class="ident">module</span>, <span class="ident">ImportSource::Externs</span>(<span class="ident">imports</span>))<span class="question-mark">?</span>
-        };
+<span class="kw">impl </span>Instance {
+    <span class="doccomment">/// Creates a new [`Instance`] from the previously compiled [`Module`] and
+    /// list of `imports` specified.
+    ///
+    /// This method instantiates the `module` provided with the `imports`,
+    /// following the procedure in the [core specification][inst] to
+    /// instantiate. Instantiation can fail for a number of reasons (many
+    /// specified below), but if successful the `start` function will be
+    /// automatically run (if specified in the `module`) and then the
+    /// [`Instance`] will be returned.
+    ///
+    /// Per the WebAssembly spec, instantiation includes running the module&#39;s
+    /// start function, if it has one (not to be confused with the `_start`
+    /// function, which is not run).
+    ///
+    /// Note that this is a low-level function that just performs an
+    /// instantiation. See the [`Linker`](crate::Linker) struct for an API which
+    /// provides a convenient way to link imports and provides automatic Command
+    /// and Reactor behavior.
+    ///
+    /// ## Providing Imports
+    ///
+    /// The entries in the list of `imports` are intended to correspond 1:1
+    /// with the list of imports returned by [`Module::imports`]. Before
+    /// calling [`Instance::new`] you&#39;ll want to inspect the return value of
+    /// [`Module::imports`] and, for each import type, create an [`Extern`]
+    /// which corresponds to that type.  These [`Extern`] values are all then
+    /// collected into a list and passed to this function.
+    ///
+    /// Note that this function is intentionally relatively low level. For an
+    /// easier time passing imports by doing name-based resolution it&#39;s
+    /// recommended to instead use the [`Linker`](crate::Linker) type.
+    ///
+    /// ## Errors
+    ///
+    /// This function can fail for a number of reasons, including, but not
+    /// limited to:
+    ///
+    /// * The number of `imports` provided doesn&#39;t match the number of imports
+    ///   returned by the `module`&#39;s [`Module::imports`] method.
+    /// * The type of any [`Extern`] doesn&#39;t match the corresponding
+    ///   [`ExternType`] entry that it maps to.
+    /// * The `start` function in the instance, if present, traps.
+    /// * Module/instance resource limits are exceeded.
+    ///
+    /// When instantiation fails it&#39;s recommended to inspect the return value to
+    /// see why it failed, or bubble it upwards. If you&#39;d like to specifically
+    /// check for trap errors, you can use `error.downcast::&lt;Trap&gt;()`.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if called with a store associated with a
+    /// [`asynchronous config`](crate::Config::async_support). This function
+    /// will also panic if any [`Extern`] supplied is not owned by `store`.
+    ///
+    /// [inst]: https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation
+    /// [`ExternType`]: crate::ExternType
+    </span><span class="kw">pub fn </span>new(
+        <span class="kw-2">mut </span>store: <span class="kw">impl </span>AsContextMut,
+        module: <span class="kw-2">&amp;</span>Module,
+        imports: <span class="kw-2">&amp;</span>[Extern],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Instance, Error&gt; {
+        <span class="comment">// This unsafety comes from `Instantiator::new` where we must typecheck
+        // first, which we are sure to do here.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
+        <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="kw">unsafe </span>{
+            typecheck_externs(store.<span class="number">0</span>, module, imports)<span class="question-mark">?</span>;
+            Instantiator::new(store.<span class="number">0</span>, module, ImportSource::Externs(imports))<span class="question-mark">?
+        </span>};
         <span class="macro">assert!</span>(
-            <span class="op">!</span><span class="ident">store</span>.<span class="number">0</span>.<span class="ident">async_support</span>(),
-            <span class="string">&quot;cannot use `new` when async support is enabled on the config&quot;</span>
-        );
+            !store.<span class="number">0</span>.async_support(),
+            <span class="string">&quot;cannot use `new` when async support is enabled on the config&quot;
+        </span>);
 
-        <span class="ident">i</span>.<span class="ident">run</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>)
+        i.run(<span class="kw-2">&amp;mut </span>store)
     }
 
-    <span class="doccomment">/// Same as [`Instance::new`], except for usage in [asynchronous stores].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more details about this function see the documentation on</span>
-    <span class="doccomment">/// [`Instance::new`]. The only difference between these two methods is that</span>
-    <span class="doccomment">/// this one will asynchronously invoke the wasm start function in case it</span>
-    <span class="doccomment">/// calls any imported function which is an asynchronous host function (e.g.</span>
-    <span class="doccomment">/// created with [`Func::new_async`](crate::Func::new_async).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will panic if called with a store associated with a</span>
-    <span class="doccomment">/// [`synchronous config`](crate::Config::new). This is only compatible with</span>
-    <span class="doccomment">/// stores associated with an [`asynchronous</span>
-    <span class="doccomment">/// config`](crate::Config::async_support).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will also panic, like [`Instance::new`], if any [`Extern`]</span>
-    <span class="doccomment">/// specified does not belong to `store`.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">nightlydoc</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)))]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">new_async</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
-        <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span><span class="op">&lt;</span><span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-        <span class="ident">imports</span>: <span class="kw-2">&amp;</span>[<span class="ident">Extern</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instance</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">Send</span>,
+    <span class="doccomment">/// Same as [`Instance::new`], except for usage in [asynchronous stores].
+    ///
+    /// For more details about this function see the documentation on
+    /// [`Instance::new`]. The only difference between these two methods is that
+    /// this one will asynchronously invoke the wasm start function in case it
+    /// calls any imported function which is an asynchronous host function (e.g.
+    /// created with [`Func::new_async`](crate::Func::new_async).
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if called with a store associated with a
+    /// [`synchronous config`](crate::Config::new). This is only compatible with
+    /// stores associated with an [`asynchronous
+    /// config`](crate::Config::async_support).
+    ///
+    /// This function will also panic, like [`Instance::new`], if any [`Extern`]
+    /// specified does not belong to `store`.
+    </span><span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    #[cfg_attr(nightlydoc, doc(cfg(feature = <span class="string">&quot;async&quot;</span>)))]
+    </span><span class="kw">pub async fn </span>new_async&lt;T&gt;(
+        <span class="kw-2">mut </span>store: <span class="kw">impl </span>AsContextMut&lt;Data = T&gt;,
+        module: <span class="kw-2">&amp;</span>Module,
+        imports: <span class="kw-2">&amp;</span>[Extern],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Instance, Error&gt;
+    <span class="kw">where
+        </span>T: Send,
     {
-        <span class="comment">// See `new` for unsafety comments</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="ident">typecheck_externs</span>(<span class="ident">store</span>.<span class="number">0</span>, <span class="ident">module</span>, <span class="ident">imports</span>)<span class="question-mark">?</span>;
-            <span class="ident">Instantiator::new</span>(<span class="ident">store</span>.<span class="number">0</span>, <span class="ident">module</span>, <span class="ident">ImportSource::Externs</span>(<span class="ident">imports</span>))<span class="question-mark">?</span>
-        };
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
+        <span class="comment">// See `new` for unsafety comments
+        </span><span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
+        <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="kw">unsafe </span>{
+            typecheck_externs(store.<span class="number">0</span>, module, imports)<span class="question-mark">?</span>;
+            Instantiator::new(store.<span class="number">0</span>, module, ImportSource::Externs(imports))<span class="question-mark">?
+        </span>};
+        <span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
         <span class="macro">assert!</span>(
-            <span class="ident">store</span>.<span class="number">0</span>.<span class="ident">async_support</span>(),
-            <span class="string">&quot;cannot use `new_async` without enabling async support on the config&quot;</span>
-        );
-        <span class="ident">store</span>
-            .<span class="ident">on_fiber</span>(<span class="op">|</span><span class="ident">store</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">run</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>()))
-            .<span class="kw">await</span><span class="question-mark">?</span>
+            store.<span class="number">0</span>.async_support(),
+            <span class="string">&quot;cannot use `new_async` without enabling async support on the config&quot;
+        </span>);
+        store
+            .on_fiber(|store| i.run(<span class="kw-2">&amp;mut </span>store.as_context_mut()))
+            .<span class="kw">await</span><span class="question-mark">?
+    </span>}
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_wasmtime(handle: InstanceData, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; Instance {
+        Instance(store.store_data_mut().insert(handle))
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">from_wasmtime</span>(<span class="ident">handle</span>: <span class="ident">InstanceData</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="ident">Instance</span> {
-        <span class="ident">Instance</span>(<span class="ident">store</span>.<span class="ident">store_data_mut</span>().<span class="ident">insert</span>(<span class="ident">handle</span>))
-    }
-
-    <span class="doccomment">/// Returns the type signature of this instance.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContext</span>) -&gt; <span class="ident">InstanceType</span> {
-        <span class="kw">let</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ty</span> <span class="op">=</span> <span class="ident">InstanceType::new</span>();
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">store</span>[<span class="self">self</span>.<span class="number">0</span>] {
-            <span class="ident">InstanceData::Synthetic</span>(<span class="ident">items</span>) =&gt; {
-                <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">item</span>) <span class="kw">in</span> <span class="ident">items</span>.<span class="ident">iter</span>() {
-                    <span class="ident">ty</span>.<span class="ident">add_named_export</span>(<span class="ident">name</span>, <span class="ident">item</span>.<span class="ident">ty</span>(<span class="kw-2">&amp;</span><span class="ident">store</span>));
+    <span class="doccomment">/// Returns the type signature of this instance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    </span><span class="kw">pub fn </span>ty(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw">impl </span>AsContext) -&gt; InstanceType {
+        <span class="kw">let </span>store = store.as_context();
+        <span class="kw">let </span><span class="kw-2">mut </span>ty = InstanceType::new();
+        <span class="kw">match </span><span class="kw-2">&amp;</span>store[<span class="self">self</span>.<span class="number">0</span>] {
+            InstanceData::Synthetic(items) =&gt; {
+                <span class="kw">for </span>(name, item) <span class="kw">in </span>items.iter() {
+                    ty.add_named_export(name, item.ty(<span class="kw-2">&amp;</span>store));
                 }
             }
-            <span class="ident">InstanceData::Instantiated</span> { <span class="ident">id</span>, <span class="ident">types</span>, .. } =&gt; {
-                <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">store</span>.<span class="number">0</span>.<span class="ident">instance</span>(<span class="kw-2">*</span><span class="ident">id</span>).<span class="ident">module</span>();
-                <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">idx</span>) <span class="kw">in</span> <span class="ident">module</span>.<span class="ident">exports</span>.<span class="ident">iter</span>() {
-                    <span class="kw">let</span> <span class="ident">export_ty</span> <span class="op">=</span> <span class="ident">module</span>.<span class="ident">type_of</span>(<span class="kw-2">*</span><span class="ident">idx</span>);
-                    <span class="ident">ty</span>.<span class="ident">add_named_export</span>(<span class="ident">name</span>, <span class="ident">ExternType::from_wasmtime</span>(<span class="ident">types</span>, <span class="kw-2">&amp;</span><span class="ident">export_ty</span>));
-                }
-            }
-        }
-        <span class="ident">ty</span>
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">data</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">StoreData</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">InstanceData</span> {
-        <span class="kw-2">&amp;</span><span class="ident">store</span>[<span class="self">self</span>.<span class="number">0</span>]
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">comes_from_same_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;</span><span class="ident">StoreOpaque</span>) -&gt; <span class="ident">bool</span> {
-        <span class="ident">store</span>.<span class="ident">store_data</span>().<span class="ident">contains</span>(<span class="self">self</span>.<span class="number">0</span>)
-    }
-
-    <span class="doccomment">/// Returns the list of exported items from this [`Instance`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exports</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
-        <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="kw">impl</span> <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Export</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="self">self</span>.<span class="ident">_exports</span>(<span class="ident">store</span>.<span class="ident">into</span>().<span class="number">0</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">_exports</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">StoreOpaque</span>,
-    ) -&gt; <span class="kw">impl</span> <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Export</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="comment">// If this is an `Instantiated` instance then all the `exports` may not</span>
-        <span class="comment">// be filled in. Fill them all in now if that&#39;s the case.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">InstanceData::Instantiated</span> { <span class="ident">exports</span>, <span class="ident">id</span>, .. } <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">store</span>[<span class="self">self</span>.<span class="number">0</span>] {
-            <span class="kw">if</span> <span class="ident">exports</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">is_none</span>()) {
-                <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">Arc::clone</span>(<span class="ident">store</span>.<span class="ident">instance</span>(<span class="kw-2">*</span><span class="ident">id</span>).<span class="ident">module</span>());
-                <span class="kw">for</span> <span class="ident">name</span> <span class="kw">in</span> <span class="ident">module</span>.<span class="ident">exports</span>.<span class="ident">keys</span>() {
-                    <span class="self">self</span>.<span class="ident">_get_export</span>(<span class="ident">store</span>, <span class="ident">name</span>);
+            InstanceData::Instantiated { id, types, .. } =&gt; {
+                <span class="kw">let </span>module = store.<span class="number">0</span>.instance(<span class="kw-2">*</span>id).module();
+                <span class="kw">for </span>(name, idx) <span class="kw">in </span>module.exports.iter() {
+                    <span class="kw">let </span>export_ty = module.type_of(<span class="kw-2">*</span>idx);
+                    ty.add_named_export(name, ExternType::from_wasmtime(types, <span class="kw-2">&amp;</span>export_ty));
                 }
             }
         }
+        ty
+    }
 
-        <span class="kw">return</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">store</span>.<span class="ident">store_data</span>()[<span class="self">self</span>.<span class="number">0</span>] {
-            <span class="ident">InstanceData::Synthetic</span>(<span class="ident">names</span>) =&gt; {
-                <span class="ident">Either::A</span>(<span class="ident">names</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> <span class="ident">Export::new</span>(<span class="ident">k</span>, <span class="ident">v</span>.<span class="ident">clone</span>())))
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>data&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>StoreData) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>InstanceData {
+        <span class="kw-2">&amp;</span>store[<span class="self">self</span>.<span class="number">0</span>]
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>comes_from_same_store(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>StoreOpaque) -&gt; bool {
+        store.store_data().contains(<span class="self">self</span>.<span class="number">0</span>)
+    }
+
+    <span class="doccomment">/// Returns the list of exported items from this [`Instance`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    </span><span class="kw">pub fn </span>exports&lt;<span class="lifetime">&#39;a</span>, T: <span class="lifetime">&#39;a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+        store: <span class="kw">impl </span>Into&lt;StoreContextMut&lt;<span class="lifetime">&#39;a</span>, T&gt;&gt;,
+    ) -&gt; <span class="kw">impl </span>ExactSizeIterator&lt;Item = Export&lt;<span class="lifetime">&#39;a</span>&gt;&gt; + <span class="lifetime">&#39;a </span>{
+        <span class="self">self</span>._exports(store.into().<span class="number">0</span>)
+    }
+
+    <span class="kw">fn </span>_exports&lt;<span class="lifetime">&#39;a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+        store: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>StoreOpaque,
+    ) -&gt; <span class="kw">impl </span>ExactSizeIterator&lt;Item = Export&lt;<span class="lifetime">&#39;a</span>&gt;&gt; + <span class="lifetime">&#39;a </span>{
+        <span class="comment">// If this is an `Instantiated` instance then all the `exports` may not
+        // be filled in. Fill them all in now if that&#39;s the case.
+        </span><span class="kw">if let </span>InstanceData::Instantiated { exports, id, .. } = <span class="kw-2">&amp;</span>store[<span class="self">self</span>.<span class="number">0</span>] {
+            <span class="kw">if </span>exports.iter().any(|e| e.is_none()) {
+                <span class="kw">let </span>module = Arc::clone(store.instance(<span class="kw-2">*</span>id).module());
+                <span class="kw">for </span>name <span class="kw">in </span>module.exports.keys() {
+                    <span class="self">self</span>._get_export(store, name);
+                }
             }
-            <span class="ident">InstanceData::Instantiated</span> { <span class="ident">exports</span>, <span class="ident">id</span>, .. } =&gt; {
-                <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">instance</span>(<span class="kw-2">*</span><span class="ident">id</span>).<span class="ident">module</span>();
-                <span class="ident">Either::B</span>(
-                    <span class="ident">module</span>
-                        .<span class="ident">exports</span>
-                        .<span class="ident">iter</span>()
-                        .<span class="ident">zip</span>(<span class="ident">exports</span>)
-                        .<span class="ident">map</span>(<span class="op">|</span>((<span class="ident">name</span>, <span class="kw">_</span>), <span class="ident">export</span>)<span class="op">|</span> <span class="ident">Export::new</span>(<span class="ident">name</span>, <span class="ident">export</span>.<span class="ident">clone</span>().<span class="ident">unwrap</span>())),
+        }
+
+        <span class="kw">return match </span><span class="kw-2">&amp;</span>store.store_data()[<span class="self">self</span>.<span class="number">0</span>] {
+            InstanceData::Synthetic(names) =&gt; {
+                Either::A(names.iter().map(|(k, v)| Export::new(k, v.clone())))
+            }
+            InstanceData::Instantiated { exports, id, .. } =&gt; {
+                <span class="kw">let </span>module = store.instance(<span class="kw-2">*</span>id).module();
+                Either::B(
+                    module
+                        .exports
+                        .iter()
+                        .zip(exports)
+                        .map(|((name, <span class="kw">_</span>), export)| Export::new(name, export.clone().unwrap())),
                 )
             }
         };
 
-        <span class="kw">enum</span> <span class="ident">Either</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span> {
-            <span class="ident">A</span>(<span class="ident">A</span>),
-            <span class="ident">B</span>(<span class="ident">B</span>),
+        <span class="kw">enum </span>Either&lt;A, B&gt; {
+            A(A),
+            B(B),
         }
 
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Either</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">A</span>: <span class="ident">Iterator</span>,
-            <span class="ident">B</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">A::Item</span><span class="op">&gt;</span>,
+        <span class="kw">impl</span>&lt;A, B&gt; Iterator <span class="kw">for </span>Either&lt;A, B&gt;
+        <span class="kw">where
+            </span>A: Iterator,
+            B: Iterator&lt;Item = A::Item&gt;,
         {
-            <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">A::Item</span>;
+            <span class="kw">type </span>Item = A::Item;
 
-            <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">A::Item</span><span class="op">&gt;</span> {
-                <span class="kw">match</span> <span class="self">self</span> {
-                    <span class="ident">Either::A</span>(<span class="ident">a</span>) =&gt; <span class="ident">a</span>.<span class="ident">next</span>(),
-                    <span class="ident">Either::B</span>(<span class="ident">b</span>) =&gt; <span class="ident">b</span>.<span class="ident">next</span>(),
+            <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;A::Item&gt; {
+                <span class="kw">match </span><span class="self">self </span>{
+                    Either::A(a) =&gt; a.next(),
+                    Either::B(b) =&gt; b.next(),
                 }
             }
 
-            <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
-                <span class="kw">match</span> <span class="self">self</span> {
-                    <span class="ident">Either::A</span>(<span class="ident">a</span>) =&gt; <span class="ident">a</span>.<span class="ident">size_hint</span>(),
-                    <span class="ident">Either::B</span>(<span class="ident">b</span>) =&gt; <span class="ident">b</span>.<span class="ident">size_hint</span>(),
+            <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+                <span class="kw">match </span><span class="self">self </span>{
+                    Either::A(a) =&gt; a.size_hint(),
+                    Either::B(b) =&gt; b.size_hint(),
                 }
             }
         }
 
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span> <span class="ident">ExactSizeIterator</span> <span class="kw">for</span> <span class="ident">Either</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">A</span>: <span class="ident">ExactSizeIterator</span>,
-            <span class="ident">B</span>: <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">A::Item</span><span class="op">&gt;</span>,
+        <span class="kw">impl</span>&lt;A, B&gt; ExactSizeIterator <span class="kw">for </span>Either&lt;A, B&gt;
+        <span class="kw">where
+            </span>A: ExactSizeIterator,
+            B: ExactSizeIterator&lt;Item = A::Item&gt;,
         {
-            <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-                <span class="kw">match</span> <span class="self">self</span> {
-                    <span class="ident">Either::A</span>(<span class="ident">a</span>) =&gt; <span class="ident">a</span>.<span class="ident">len</span>(),
-                    <span class="ident">Either::B</span>(<span class="ident">b</span>) =&gt; <span class="ident">b</span>.<span class="ident">len</span>(),
+            <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+                <span class="kw">match </span><span class="self">self </span>{
+                    Either::A(a) =&gt; a.len(),
+                    Either::B(b) =&gt; b.len(),
                 }
             }
         }
     }
 
-    <span class="doccomment">/// Looks up an exported [`Extern`] value by name.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will search the module for an export named `name` and return</span>
-    <span class="doccomment">/// the value, if found.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if there was no export named `name`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Why does `get_export` take a mutable context?</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method requires a mutable context because an instance&#39;s exports are</span>
-    <span class="doccomment">/// lazily populated, and we cache them as they are accessed. This makes</span>
-    <span class="doccomment">/// instantiating a module faster, but also means this method requires a</span>
-    <span class="doccomment">/// mutable context.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_export</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Extern</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">_get_export</span>(<span class="ident">store</span>.<span class="ident">as_context_mut</span>().<span class="number">0</span>, <span class="ident">name</span>)
+    <span class="doccomment">/// Looks up an exported [`Extern`] value by name.
+    ///
+    /// This method will search the module for an export named `name` and return
+    /// the value, if found.
+    ///
+    /// Returns `None` if there was no export named `name`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    ///
+    /// # Why does `get_export` take a mutable context?
+    ///
+    /// This method requires a mutable context because an instance&#39;s exports are
+    /// lazily populated, and we cache them as they are accessed. This makes
+    /// instantiating a module faster, but also means this method requires a
+    /// mutable context.
+    </span><span class="kw">pub fn </span>get_export(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>store: <span class="kw">impl </span>AsContextMut, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Extern&gt; {
+        <span class="self">self</span>._get_export(store.as_context_mut().<span class="number">0</span>, name)
     }
 
-    <span class="kw">fn</span> <span class="ident">_get_export</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Extern</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">store</span>[<span class="self">self</span>.<span class="number">0</span>] {
-            <span class="comment">// Synthetic instances always have their entire list of exports</span>
-            <span class="comment">// already specified.</span>
-            <span class="ident">InstanceData::Synthetic</span>(<span class="ident">names</span>) =&gt; <span class="ident">names</span>.<span class="ident">get</span>(<span class="ident">name</span>).<span class="ident">cloned</span>(),
+    <span class="kw">fn </span>_get_export(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreOpaque, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Extern&gt; {
+        <span class="kw">match </span><span class="kw-2">&amp;</span>store[<span class="self">self</span>.<span class="number">0</span>] {
+            <span class="comment">// Synthetic instances always have their entire list of exports
+            // already specified.
+            </span>InstanceData::Synthetic(names) =&gt; names.get(name).cloned(),
 
-            <span class="comment">// Instantiated instances will lazily fill in exports, so we process</span>
-            <span class="comment">// all that lazy logic here.</span>
-            <span class="ident">InstanceData::Instantiated</span> { <span class="ident">id</span>, <span class="ident">exports</span>, .. } =&gt; {
-                <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">id</span>;
-                <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">instance</span>(<span class="ident">id</span>);
-                <span class="kw">let</span> (<span class="ident">i</span>, <span class="kw">_</span>, <span class="kw-2">&amp;</span><span class="ident">index</span>) <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">module</span>().<span class="ident">exports</span>.<span class="ident">get_full</span>(<span class="ident">name</span>)<span class="question-mark">?</span>;
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">export</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">exports</span>[<span class="ident">i</span>] {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">export</span>.<span class="ident">clone</span>());
+            <span class="comment">// Instantiated instances will lazily fill in exports, so we process
+            // all that lazy logic here.
+            </span>InstanceData::Instantiated { id, exports, .. } =&gt; {
+                <span class="kw">let </span>id = <span class="kw-2">*</span>id;
+                <span class="kw">let </span>instance = store.instance(id);
+                <span class="kw">let </span>(i, <span class="kw">_</span>, <span class="kw-2">&amp;</span>index) = instance.module().exports.get_full(name)<span class="question-mark">?</span>;
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(export) = <span class="kw-2">&amp;</span>exports[i] {
+                    <span class="kw">return </span><span class="prelude-val">Some</span>(export.clone());
                 }
 
-                <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">instance_mut</span>(<span class="ident">id</span>); <span class="comment">// reborrow the &amp;mut Instancehandle</span>
-                <span class="kw">let</span> <span class="ident">item</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-                    <span class="ident">Extern::from_wasmtime_export</span>(<span class="ident">instance</span>.<span class="ident">lookup_by_declaration</span>(<span class="kw-2">&amp;</span><span class="ident">index</span>), <span class="ident">store</span>)
+                <span class="kw">let </span>instance = store.instance_mut(id); <span class="comment">// reborrow the &amp;mut Instancehandle
+                </span><span class="kw">let </span>item = <span class="kw">unsafe </span>{
+                    Extern::from_wasmtime_export(instance.lookup_by_declaration(<span class="kw-2">&amp;</span>index), store)
                 };
-                <span class="kw">let</span> <span class="ident">exports</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;mut</span> <span class="ident">store</span>[<span class="self">self</span>.<span class="number">0</span>] {
-                    <span class="ident">InstanceData::Instantiated</span> { <span class="ident">exports</span>, .. } =&gt; <span class="ident">exports</span>,
-                    <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+                <span class="kw">let </span>exports = <span class="kw">match </span><span class="kw-2">&amp;mut </span>store[<span class="self">self</span>.<span class="number">0</span>] {
+                    InstanceData::Instantiated { exports, .. } =&gt; exports,
+                    <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 };
-                <span class="ident">exports</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">item</span>.<span class="ident">clone</span>());
-                <span class="prelude-val">Some</span>(<span class="ident">item</span>)
+                exports[i] = <span class="prelude-val">Some</span>(item.clone());
+                <span class="prelude-val">Some</span>(item)
             }
         }
     }
 
-    <span class="doccomment">/// Looks up an exported [`Func`] value by name.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if there was no export named `name`, or if there was but</span>
-    <span class="doccomment">/// it wasn&#39;t a function.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_func</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">get_export</span>(<span class="ident">store</span>, <span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">into_func</span>()
+    <span class="doccomment">/// Looks up an exported [`Func`] value by name.
+    ///
+    /// Returns `None` if there was no export named `name`, or if there was but
+    /// it wasn&#39;t a function.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    </span><span class="kw">pub fn </span>get_func(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw">impl </span>AsContextMut, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Func&gt; {
+        <span class="self">self</span>.get_export(store, name)<span class="question-mark">?</span>.into_func()
     }
 
-    <span class="doccomment">/// Looks up an exported [`Func`] value by name and with its type.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function is a convenience wrapper over [`Instance::get_func`] and</span>
-    <span class="doccomment">/// [`Func::typed`]. For more information see the linked documentation.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns an error if `name` isn&#39;t a function export or if the export&#39;s</span>
-    <span class="doccomment">/// type did not match `Params` or `Results`</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_typed_func</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span>, <span class="ident">S</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Looks up an exported [`Func`] value by name and with its type.
+    ///
+    /// This function is a convenience wrapper over [`Instance::get_func`] and
+    /// [`Func::typed`]. For more information see the linked documentation.
+    ///
+    /// Returns an error if `name` isn&#39;t a function export or if the export&#39;s
+    /// type did not match `Params` or `Results`
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    </span><span class="kw">pub fn </span>get_typed_func&lt;Params, Results, S&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="ident">S</span>,
-        <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TypedFunc</span><span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Params</span>: <span class="ident"><span class="kw">crate</span>::WasmParams</span>,
-        <span class="ident">Results</span>: <span class="ident"><span class="kw">crate</span>::WasmResults</span>,
-        <span class="ident">S</span>: <span class="ident">AsContextMut</span>,
+        <span class="kw-2">mut </span>store: S,
+        name: <span class="kw-2">&amp;</span>str,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;TypedFunc&lt;Params, Results&gt;&gt;
+    <span class="kw">where
+        </span>Params: <span class="kw">crate</span>::WasmParams,
+        Results: <span class="kw">crate</span>::WasmResults,
+        S: AsContextMut,
     {
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">get_export</span>(<span class="ident">store</span>.<span class="ident">as_context_mut</span>(), <span class="ident">name</span>)
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">into_func</span>())
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">anyhow!</span>(<span class="string">&quot;failed to find function export `{}`&quot;</span>, <span class="ident">name</span>))<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">f</span>.<span class="ident">typed</span>::<span class="op">&lt;</span><span class="ident">Params</span>, <span class="ident">Results</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">store</span>)
-            .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;failed to convert function `{}` to given type&quot;</span>, <span class="ident">name</span>))<span class="question-mark">?</span>)
+        <span class="kw">let </span>f = <span class="self">self
+            </span>.get_export(store.as_context_mut(), name)
+            .and_then(|f| f.into_func())
+            .ok_or_else(|| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to find function export `{}`&quot;</span>, name))<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(f.typed::&lt;Params, Results, <span class="kw">_</span>&gt;(store)
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;failed to convert function `{}` to given type&quot;</span>, name))<span class="question-mark">?</span>)
     }
 
-    <span class="doccomment">/// Looks up an exported [`Table`] value by name.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if there was no export named `name`, or if there was but</span>
-    <span class="doccomment">/// it wasn&#39;t a table.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_table</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Table</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">get_export</span>(<span class="ident">store</span>, <span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">into_table</span>()
+    <span class="doccomment">/// Looks up an exported [`Table`] value by name.
+    ///
+    /// Returns `None` if there was no export named `name`, or if there was but
+    /// it wasn&#39;t a table.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    </span><span class="kw">pub fn </span>get_table(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw">impl </span>AsContextMut, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Table&gt; {
+        <span class="self">self</span>.get_export(store, name)<span class="question-mark">?</span>.into_table()
     }
 
-    <span class="doccomment">/// Looks up an exported [`Memory`] value by name.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if there was no export named `name`, or if there was but</span>
-    <span class="doccomment">/// it wasn&#39;t a memory.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_memory</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Memory</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">get_export</span>(<span class="ident">store</span>, <span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">into_memory</span>()
+    <span class="doccomment">/// Looks up an exported [`Memory`] value by name.
+    ///
+    /// Returns `None` if there was no export named `name`, or if there was but
+    /// it wasn&#39;t a memory.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    </span><span class="kw">pub fn </span>get_memory(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw">impl </span>AsContextMut, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Memory&gt; {
+        <span class="self">self</span>.get_export(store, name)<span class="question-mark">?</span>.into_memory()
     }
 
-    <span class="doccomment">/// Looks up an exported [`Global`] value by name.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if there was no export named `name`, or if there was but</span>
-    <span class="doccomment">/// it wasn&#39;t a global.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if `store` does not own this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_global</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Global</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">get_export</span>(<span class="ident">store</span>, <span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">into_global</span>()
+    <span class="doccomment">/// Looks up an exported [`Global`] value by name.
+    ///
+    /// Returns `None` if there was no export named `name`, or if there was but
+    /// it wasn&#39;t a global.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `store` does not own this instance.
+    </span><span class="kw">pub fn </span>get_global(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw">impl </span>AsContextMut, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Global&gt; {
+        <span class="self">self</span>.get_export(store, name)<span class="question-mark">?</span>.into_global()
     }
 }
 
-<span class="kw">struct</span> <span class="ident">Instantiator</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">in_progress</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ImportsBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">cur</span>: <span class="ident">ImportsBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>Instantiator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    in_progress: Vec&lt;ImportsBuilder&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+    cur: ImportsBuilder&lt;<span class="lifetime">&#39;a</span>&gt;,
 }
 
-<span class="kw">struct</span> <span class="ident">ImportsBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">src</span>: <span class="ident">ImportSource</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">functions</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">FuncIndex</span>, <span class="ident">VMFunctionImport</span><span class="op">&gt;</span>,
-    <span class="ident">tables</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">TableIndex</span>, <span class="ident">VMTableImport</span><span class="op">&gt;</span>,
-    <span class="ident">memories</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">MemoryIndex</span>, <span class="ident">VMMemoryImport</span><span class="op">&gt;</span>,
-    <span class="ident">globals</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">GlobalIndex</span>, <span class="ident">VMGlobalImport</span><span class="op">&gt;</span>,
-    <span class="ident">instances</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">InstanceIndex</span>, <span class="ident">Instance</span><span class="op">&gt;</span>,
-    <span class="ident">modules</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">ModuleIndex</span>, <span class="ident">Module</span><span class="op">&gt;</span>,
-    <span class="ident">initializer</span>: <span class="ident">usize</span>,
-    <span class="ident">module</span>: <span class="ident">Module</span>,
+<span class="kw">struct </span>ImportsBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
+    src: ImportSource&lt;<span class="lifetime">&#39;a</span>&gt;,
+    functions: PrimaryMap&lt;FuncIndex, VMFunctionImport&gt;,
+    tables: PrimaryMap&lt;TableIndex, VMTableImport&gt;,
+    memories: PrimaryMap&lt;MemoryIndex, VMMemoryImport&gt;,
+    globals: PrimaryMap&lt;GlobalIndex, VMGlobalImport&gt;,
+    instances: PrimaryMap&lt;InstanceIndex, Instance&gt;,
+    modules: PrimaryMap&lt;ModuleIndex, Module&gt;,
+    initializer: usize,
+    module: Module,
 }
 
-<span class="kw">enum</span> <span class="ident">ImportSource</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">Externs</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">Extern</span>]),
-    <span class="ident">Definitions</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">Definition</span>]),
-    <span class="ident">Outer</span> { <span class="ident">initializer</span>: <span class="ident">usize</span> },
+<span class="kw">enum </span>ImportSource&lt;<span class="lifetime">&#39;a</span>&gt; {
+    Externs(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Extern]),
+    Definitions(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Definition]),
+    Outer { initializer: usize },
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Instantiator</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new instantiation context used to process all the initializer</span>
-    <span class="doccomment">/// directives of a module.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This doesn&#39;t do much work itself beyond setting things up.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Unsafety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function is unsafe for a few reasons:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * This assumes that `imports` has already been typechecked and is of the</span>
-    <span class="doccomment">///   appropriate length. It is memory unsafe if the types of `imports` are</span>
-    <span class="doccomment">///   not what `module` expects.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * The `imports` must be safely able to get inserted into `store`. This</span>
-    <span class="doccomment">///   only applies if `ImportSource::Definitions` is used because this will</span>
-    <span class="doccomment">///   internally call `Definition::to_extern` which requires that any</span>
-    <span class="doccomment">///   host functions in the list were created with an original `T` as the</span>
-    <span class="doccomment">///   store that&#39;s being inserted into.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * The `imports` must all come from the `store` specified.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">store</span>: <span class="kw-2">&amp;</span><span class="ident">StoreOpaque</span>,
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-        <span class="ident">imports</span>: <span class="ident">ImportSource</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instantiator</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">Engine::same</span>(<span class="ident">store</span>.<span class="ident">engine</span>(), <span class="ident">module</span>.<span class="ident">engine</span>()) {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Instantiator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Creates a new instantiation context used to process all the initializer
+    /// directives of a module.
+    ///
+    /// This doesn&#39;t do much work itself beyond setting things up.
+    ///
+    /// # Unsafety
+    ///
+    /// This function is unsafe for a few reasons:
+    ///
+    /// * This assumes that `imports` has already been typechecked and is of the
+    ///   appropriate length. It is memory unsafe if the types of `imports` are
+    ///   not what `module` expects.
+    ///
+    /// * The `imports` must be safely able to get inserted into `store`. This
+    ///   only applies if `ImportSource::Definitions` is used because this will
+    ///   internally call `Definition::to_extern` which requires that any
+    ///   host functions in the list were created with an original `T` as the
+    ///   store that&#39;s being inserted into.
+    ///
+    /// * The `imports` must all come from the `store` specified.
+    </span><span class="kw">unsafe fn </span>new(
+        store: <span class="kw-2">&amp;</span>StoreOpaque,
+        module: <span class="kw-2">&amp;</span>Module,
+        imports: ImportSource&lt;<span class="lifetime">&#39;a</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Instantiator&lt;<span class="lifetime">&#39;a</span>&gt;&gt; {
+        <span class="kw">if </span>!Engine::same(store.engine(), module.engine()) {
             <span class="macro">bail!</span>(<span class="string">&quot;cross-`Engine` instantiation is not currently supported&quot;</span>);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">Instantiator</span> {
-            <span class="ident">in_progress</span>: <span class="ident">Vec::new</span>(),
-            <span class="ident">cur</span>: <span class="ident">ImportsBuilder::new</span>(<span class="ident">module</span>, <span class="ident">imports</span>),
+        <span class="prelude-val">Ok</span>(Instantiator {
+            in_progress: Vec::new(),
+            cur: ImportsBuilder::new(module, imports),
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">run</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instance</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">instance</span>, <span class="ident">start</span>, <span class="ident">toplevel</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">step</span>(<span class="ident">store</span>.<span class="number">0</span>)<span class="question-mark">?</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">start</span>) <span class="op">=</span> <span class="ident">start</span> {
-                    <span class="ident">Instantiator::start_raw</span>(<span class="ident">store</span>, <span class="ident">instance</span>, <span class="ident">start</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>run&lt;T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Instance, Error&gt; {
+        <span class="kw">loop </span>{
+            <span class="kw">if let </span><span class="prelude-val">Some</span>((instance, start, toplevel)) = <span class="self">self</span>.step(store.<span class="number">0</span>)<span class="question-mark">? </span>{
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(start) = start {
+                    Instantiator::start_raw(store, instance, start)<span class="question-mark">?</span>;
                 }
-                <span class="kw">if</span> <span class="ident">toplevel</span> {
-                    <span class="kw">break</span> <span class="prelude-val">Ok</span>(<span class="ident">instance</span>);
+                <span class="kw">if </span>toplevel {
+                    <span class="kw">break </span><span class="prelude-val">Ok</span>(instance);
                 }
             }
         }
     }
 
-    <span class="doccomment">/// Processes the next initializer for the next instance being created</span>
-    <span class="doccomment">/// without running any wasm code.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will process module initializers, handling recursive</span>
-    <span class="doccomment">/// instantiations of modules for module linking if necessary as well. This</span>
-    <span class="doccomment">/// does not actually execute any WebAssembly code, which means that it</span>
-    <span class="doccomment">/// will return whenever an instance is created (because its `start`</span>
-    <span class="doccomment">/// function may need to be executed).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If this function returns `None`, then it simply needs to be called</span>
-    <span class="doccomment">/// again to execute the next initializer. Otherwise this function has two</span>
-    <span class="doccomment">/// return values:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * The first is the raw handle to the instance that was just created.</span>
-    <span class="doccomment">///   This instance must have its start function executed by the caller.</span>
-    <span class="doccomment">/// * The second is an optional list of items to get wrapped up in an</span>
-    <span class="doccomment">///   `Instance`. This is only `Some` for the outermost instance that was</span>
-    <span class="doccomment">///   created. If this is `None` callers need to keep calling this function</span>
-    <span class="doccomment">///   since the instance created was simply for a recursive instance</span>
-    <span class="doccomment">///   defined here.</span>
-    <span class="kw">fn</span> <span class="ident">step</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Instance</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FuncIndex</span><span class="op">&gt;</span>, <span class="ident">bool</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">initializer</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="ident">store</span>.<span class="ident">bump_resource_counts</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>)<span class="question-mark">?</span>;
+    <span class="doccomment">/// Processes the next initializer for the next instance being created
+    /// without running any wasm code.
+    ///
+    /// This function will process module initializers, handling recursive
+    /// instantiations of modules for module linking if necessary as well. This
+    /// does not actually execute any WebAssembly code, which means that it
+    /// will return whenever an instance is created (because its `start`
+    /// function may need to be executed).
+    ///
+    /// If this function returns `None`, then it simply needs to be called
+    /// again to execute the next initializer. Otherwise this function has two
+    /// return values:
+    ///
+    /// * The first is the raw handle to the instance that was just created.
+    ///   This instance must have its start function executed by the caller.
+    /// * The second is an optional list of items to get wrapped up in an
+    ///   `Instance`. This is only `Some` for the outermost instance that was
+    ///   created. If this is `None` callers need to keep calling this function
+    ///   since the instance created was simply for a recursive instance
+    ///   defined here.
+    </span><span class="kw">fn </span>step(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Instance, <span class="prelude-ty">Option</span>&lt;FuncIndex&gt;, bool)&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.cur.initializer == <span class="number">0 </span>{
+            store.bump_resource_counts(<span class="kw-2">&amp;</span><span class="self">self</span>.cur.module)<span class="question-mark">?</span>;
         }
 
-        <span class="comment">// Read the current module&#39;s initializer and move forward the</span>
-        <span class="comment">// initializer pointer as well.</span>
-        <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">initializer</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-        <span class="kw">match</span> <span class="self">self</span>
-            .<span class="ident">cur</span>
-            .<span class="ident">module</span>
-            .<span class="ident">env_module</span>()
-            .<span class="ident">initializers</span>
-            .<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">initializer</span> <span class="op">-</span> <span class="number">1</span>)
+        <span class="comment">// Read the current module&#39;s initializer and move forward the
+        // initializer pointer as well.
+        </span><span class="self">self</span>.cur.initializer += <span class="number">1</span>;
+        <span class="kw">match </span><span class="self">self
+            </span>.cur
+            .module
+            .env_module()
+            .initializers
+            .get(<span class="self">self</span>.cur.initializer - <span class="number">1</span>)
         {
-            <span class="prelude-val">Some</span>(<span class="ident">Initializer::Import</span> { <span class="ident">name</span>, <span class="ident">field</span>, .. }) =&gt; {
-                <span class="kw">match</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">src</span> {
-                    <span class="comment">// If imports are coming from the runtime-provided list</span>
-                    <span class="comment">// (e.g. the root module being instantiated) then we</span>
-                    <span class="comment">// need to typecheck each item here before recording it.</span>
-                    <span class="comment">//</span>
-                    <span class="comment">// Note the `unwrap` here should be ok given the validation</span>
-                    <span class="comment">// above in `Instantiation::new`.</span>
-                    <span class="ident">ImportSource::Externs</span>(<span class="ident">list</span>) =&gt; {
-                        <span class="kw">let</span> (<span class="ident">head</span>, <span class="ident">remaining</span>) <span class="op">=</span> <span class="ident">list</span>.<span class="ident">split_first</span>().<span class="ident">unwrap</span>();
-                        <span class="kw-2">*</span><span class="ident">list</span> <span class="op">=</span> <span class="ident">remaining</span>;
-                        <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">push</span>(<span class="ident">head</span>.<span class="ident">clone</span>(), <span class="ident">store</span>);
+            <span class="prelude-val">Some</span>(Initializer::Import { name, field, .. }) =&gt; {
+                <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.cur.src {
+                    <span class="comment">// If imports are coming from the runtime-provided list
+                    // (e.g. the root module being instantiated) then we
+                    // need to typecheck each item here before recording it.
+                    //
+                    // Note the `unwrap` here should be ok given the validation
+                    // above in `Instantiation::new`.
+                    </span>ImportSource::Externs(list) =&gt; {
+                        <span class="kw">let </span>(head, remaining) = list.split_first().unwrap();
+                        <span class="kw-2">*</span>list = remaining;
+                        <span class="self">self</span>.cur.push(head.clone(), store);
                     }
-                    <span class="ident">ImportSource::Definitions</span>(<span class="ident">list</span>) =&gt; {
-                        <span class="kw">let</span> (<span class="ident">head</span>, <span class="ident">remaining</span>) <span class="op">=</span> <span class="ident">list</span>.<span class="ident">split_first</span>().<span class="ident">unwrap</span>();
-                        <span class="kw-2">*</span><span class="ident">list</span> <span class="op">=</span> <span class="ident">remaining</span>;
-                        <span class="comment">// This unsafety is encapsulated with</span>
-                        <span class="comment">// `Instantiator::new`, documented above.</span>
-                        <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">push</span>(<span class="kw">unsafe</span> { <span class="ident">head</span>.<span class="ident">to_extern</span>(<span class="ident">store</span>) }, <span class="ident">store</span>);
+                    ImportSource::Definitions(list) =&gt; {
+                        <span class="kw">let </span>(head, remaining) = list.split_first().unwrap();
+                        <span class="kw-2">*</span>list = remaining;
+                        <span class="comment">// This unsafety is encapsulated with
+                        // `Instantiator::new`, documented above.
+                        </span><span class="self">self</span>.cur.push(<span class="kw">unsafe </span>{ head.to_extern(store) }, store);
                     }
 
-                    <span class="comment">// Otherwise if arguments are coming from our outer</span>
-                    <span class="comment">// instance due to a recursive instantiation then we</span>
-                    <span class="comment">// look in the previous initializer&#39;s mapping of</span>
-                    <span class="comment">// arguments to figure out where to load the item from.</span>
-                    <span class="comment">// Note that no typechecking is necessary here due to</span>
-                    <span class="comment">// validation.</span>
-                    <span class="ident">ImportSource::Outer</span> { <span class="ident">initializer</span> } =&gt; {
-                        <span class="macro">debug_assert!</span>(<span class="ident">field</span>.<span class="ident">is_none</span>());
-                        <span class="kw">let</span> <span class="ident">outer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">in_progress</span>.<span class="ident">last</span>().<span class="ident">unwrap</span>();
-                        <span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">outer</span>.<span class="ident">module</span>.<span class="ident">env_module</span>().<span class="ident">initializers</span>[<span class="kw-2">*</span><span class="ident">initializer</span>] {
-                            <span class="ident">Initializer::Instantiate</span> { <span class="ident">args</span>, .. } =&gt; <span class="ident">args</span>,
-                            <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+                    <span class="comment">// Otherwise if arguments are coming from our outer
+                    // instance due to a recursive instantiation then we
+                    // look in the previous initializer&#39;s mapping of
+                    // arguments to figure out where to load the item from.
+                    // Note that no typechecking is necessary here due to
+                    // validation.
+                    </span>ImportSource::Outer { initializer } =&gt; {
+                        <span class="macro">debug_assert!</span>(field.is_none());
+                        <span class="kw">let </span>outer = <span class="self">self</span>.in_progress.last().unwrap();
+                        <span class="kw">let </span>args = <span class="kw">match </span><span class="kw-2">&amp;</span>outer.module.env_module().initializers[<span class="kw-2">*</span>initializer] {
+                            Initializer::Instantiate { args, .. } =&gt; args,
+                            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                         };
-                        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">args</span>.<span class="ident">get</span>(<span class="ident">name</span>).<span class="ident">expect</span>(<span class="string">&quot;should be present after validation&quot;</span>);
-                        <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">index</span> {
-                            <span class="ident">EntityIndex::Global</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">globals</span>.<span class="ident">push</span>(<span class="ident">outer</span>.<span class="ident">globals</span>[<span class="ident">i</span>]);
+                        <span class="kw">let </span>index = args.get(name).expect(<span class="string">&quot;should be present after validation&quot;</span>);
+                        <span class="kw">match </span><span class="kw-2">*</span>index {
+                            EntityIndex::Global(i) =&gt; {
+                                <span class="self">self</span>.cur.globals.push(outer.globals[i]);
                             }
-                            <span class="ident">EntityIndex::Function</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">functions</span>.<span class="ident">push</span>(<span class="ident">outer</span>.<span class="ident">functions</span>[<span class="ident">i</span>]);
+                            EntityIndex::Function(i) =&gt; {
+                                <span class="self">self</span>.cur.functions.push(outer.functions[i]);
                             }
-                            <span class="ident">EntityIndex::Table</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">tables</span>.<span class="ident">push</span>(<span class="ident">outer</span>.<span class="ident">tables</span>[<span class="ident">i</span>]);
+                            EntityIndex::Table(i) =&gt; {
+                                <span class="self">self</span>.cur.tables.push(outer.tables[i]);
                             }
-                            <span class="ident">EntityIndex::Memory</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">memories</span>.<span class="ident">push</span>(<span class="ident">outer</span>.<span class="ident">memories</span>[<span class="ident">i</span>]);
+                            EntityIndex::Memory(i) =&gt; {
+                                <span class="self">self</span>.cur.memories.push(outer.memories[i]);
                             }
-                            <span class="ident">EntityIndex::Module</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">modules</span>.<span class="ident">push</span>(<span class="ident">outer</span>.<span class="ident">modules</span>[<span class="ident">i</span>].<span class="ident">clone</span>());
+                            EntityIndex::Module(i) =&gt; {
+                                <span class="self">self</span>.cur.modules.push(outer.modules[i].clone());
                             }
-                            <span class="ident">EntityIndex::Instance</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">instances</span>.<span class="ident">push</span>(<span class="ident">outer</span>.<span class="ident">instances</span>[<span class="ident">i</span>].<span class="ident">clone</span>());
+                            EntityIndex::Instance(i) =&gt; {
+                                <span class="self">self</span>.cur.instances.push(outer.instances[i].clone());
                             }
                         }
                     }
                 }
             }
 
-            <span class="comment">// Here we lookup our instance handle, find the right export,</span>
-            <span class="comment">// and then push that item into our own index space. We eschew</span>
-            <span class="comment">// type-checking since only valid modules should reach this point.</span>
-            <span class="prelude-val">Some</span>(<span class="ident">Initializer::AliasInstanceExport</span> { <span class="ident">instance</span>, <span class="ident">export</span> }) =&gt; {
-                <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">instances</span>[<span class="kw-2">*</span><span class="ident">instance</span>];
-                <span class="kw">let</span> <span class="ident">export</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">_get_export</span>(<span class="ident">store</span>, <span class="ident">export</span>).<span class="ident">unwrap</span>();
-                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">push</span>(<span class="ident">export</span>, <span class="ident">store</span>);
+            <span class="comment">// Here we lookup our instance handle, find the right export,
+            // and then push that item into our own index space. We eschew
+            // type-checking since only valid modules should reach this point.
+            </span><span class="prelude-val">Some</span>(Initializer::AliasInstanceExport { instance, export }) =&gt; {
+                <span class="kw">let </span>instance = <span class="self">self</span>.cur.instances[<span class="kw-2">*</span>instance];
+                <span class="kw">let </span>export = instance._get_export(store, export).unwrap();
+                <span class="self">self</span>.cur.push(export, store);
             }
 
-            <span class="comment">// A recursive instantiation of an instance.</span>
-            <span class="comment">//</span>
-            <span class="comment">// The `module` argument is used to create an import builder</span>
-            <span class="comment">// object, and we specify that the source of imports for the builder is</span>
-            <span class="comment">// this initializer&#39;s position so we can look at the `args` payload</span>
-            <span class="comment">// later.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Once that&#39;s set up we save off `self.cur` into</span>
-            <span class="comment">// `self.in_progress` and start the instantiation of the child</span>
-            <span class="comment">// instance on the next execution of this function.</span>
-            <span class="prelude-val">Some</span>(<span class="ident">Initializer::Instantiate</span> { <span class="ident">module</span>, <span class="ident">args</span>: <span class="kw">_</span> }) =&gt; {
-                <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">modules</span>[<span class="kw-2">*</span><span class="ident">module</span>];
-                <span class="kw">let</span> <span class="ident">imports</span> <span class="op">=</span> <span class="ident">ImportsBuilder::new</span>(
-                    <span class="ident">module</span>,
-                    <span class="ident">ImportSource::Outer</span> {
-                        <span class="ident">initializer</span>: <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">initializer</span> <span class="op">-</span> <span class="number">1</span>,
+            <span class="comment">// A recursive instantiation of an instance.
+            //
+            // The `module` argument is used to create an import builder
+            // object, and we specify that the source of imports for the builder is
+            // this initializer&#39;s position so we can look at the `args` payload
+            // later.
+            //
+            // Once that&#39;s set up we save off `self.cur` into
+            // `self.in_progress` and start the instantiation of the child
+            // instance on the next execution of this function.
+            </span><span class="prelude-val">Some</span>(Initializer::Instantiate { module, args: <span class="kw">_ </span>}) =&gt; {
+                <span class="kw">let </span>module = <span class="kw-2">&amp;</span><span class="self">self</span>.cur.modules[<span class="kw-2">*</span>module];
+                <span class="kw">let </span>imports = ImportsBuilder::new(
+                    module,
+                    ImportSource::Outer {
+                        initializer: <span class="self">self</span>.cur.initializer - <span class="number">1</span>,
                     },
                 );
-                <span class="kw">let</span> <span class="ident">prev</span> <span class="op">=</span> <span class="ident">mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">cur</span>, <span class="ident">imports</span>);
-                <span class="self">self</span>.<span class="ident">in_progress</span>.<span class="ident">push</span>(<span class="ident">prev</span>);
+                <span class="kw">let </span>prev = mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.cur, imports);
+                <span class="self">self</span>.in_progress.push(prev);
             }
 
-            <span class="comment">// A new module is being defined, and the source of this module is</span>
-            <span class="comment">// our module&#39;s list of closed-over-modules.</span>
-            <span class="comment">//</span>
-            <span class="comment">// This is used for outer aliases.</span>
-            <span class="prelude-val">Some</span>(<span class="ident">Initializer::DefineModule</span>(<span class="ident">upvar_index</span>)) =&gt; {
-                <span class="self">self</span>.<span class="ident">cur</span>
-                    .<span class="ident">modules</span>
-                    .<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>.<span class="ident">module_upvar</span>(<span class="kw-2">*</span><span class="ident">upvar_index</span>).<span class="ident">clone</span>());
+            <span class="comment">// A new module is being defined, and the source of this module is
+            // our module&#39;s list of closed-over-modules.
+            //
+            // This is used for outer aliases.
+            </span><span class="prelude-val">Some</span>(Initializer::DefineModule(upvar_index)) =&gt; {
+                <span class="self">self</span>.cur
+                    .modules
+                    .push(<span class="self">self</span>.cur.module.module_upvar(<span class="kw-2">*</span>upvar_index).clone());
             }
 
-            <span class="comment">// A new module is defined, created from a set of compiled</span>
-            <span class="comment">// artifacts. The new module value will be created with the</span>
-            <span class="comment">// specified artifacts being closed over as well as the specified</span>
-            <span class="comment">// set of module values in our index/upvar index spaces being closed</span>
-            <span class="comment">// over.</span>
-            <span class="comment">//</span>
-            <span class="comment">// This is used for defining submodules.</span>
-            <span class="prelude-val">Some</span>(<span class="ident">Initializer::CreateModule</span> {
-                <span class="ident">artifact_index</span>,
-                <span class="ident">artifacts</span>,
-                <span class="ident">modules</span>,
+            <span class="comment">// A new module is defined, created from a set of compiled
+            // artifacts. The new module value will be created with the
+            // specified artifacts being closed over as well as the specified
+            // set of module values in our index/upvar index spaces being closed
+            // over.
+            //
+            // This is used for defining submodules.
+            </span><span class="prelude-val">Some</span>(Initializer::CreateModule {
+                artifact_index,
+                artifacts,
+                modules,
             }) =&gt; {
-                <span class="kw">let</span> <span class="ident">submodule</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>.<span class="ident">create_submodule</span>(
-                    <span class="kw-2">*</span><span class="ident">artifact_index</span>,
-                    <span class="ident">artifacts</span>,
-                    <span class="ident">modules</span>,
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">modules</span>,
+                <span class="kw">let </span>submodule = <span class="self">self</span>.cur.module.create_submodule(
+                    <span class="kw-2">*</span>artifact_index,
+                    artifacts,
+                    modules,
+                    <span class="kw-2">&amp;</span><span class="self">self</span>.cur.modules,
                 )<span class="question-mark">?</span>;
-                <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">modules</span>.<span class="ident">push</span>(<span class="ident">submodule</span>);
+                <span class="self">self</span>.cur.modules.push(submodule);
             }
 
-            <span class="comment">// All initializers have been processed, which means we&#39;re ready to</span>
-            <span class="comment">// perform the actual raw instantiation with the raw import values.</span>
-            <span class="comment">// Once that&#39;s done if there&#39;s an in-progress module we record the</span>
-            <span class="comment">// instance in the index space. Otherwise this is the final module</span>
-            <span class="comment">// and we return the items out.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Note that in all cases we return the raw instance handle to get</span>
-            <span class="comment">// the start function executed by the outer context.</span>
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="kw">let</span> (<span class="ident">instance</span>, <span class="ident">start</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">instantiate_raw</span>(<span class="ident">store</span>)<span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">toplevel</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">in_progress</span>.<span class="ident">pop</span>() {
-                    <span class="prelude-val">Some</span>(<span class="ident">imports</span>) =&gt; {
-                        <span class="self">self</span>.<span class="ident">cur</span> <span class="op">=</span> <span class="ident">imports</span>;
-                        <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">instances</span>.<span class="ident">push</span>(<span class="ident">instance</span>);
-                        <span class="bool-val">false</span>
-                    }
-                    <span class="prelude-val">None</span> =&gt; <span class="bool-val">true</span>,
+            <span class="comment">// All initializers have been processed, which means we&#39;re ready to
+            // perform the actual raw instantiation with the raw import values.
+            // Once that&#39;s done if there&#39;s an in-progress module we record the
+            // instance in the index space. Otherwise this is the final module
+            // and we return the items out.
+            //
+            // Note that in all cases we return the raw instance handle to get
+            // the start function executed by the outer context.
+            </span><span class="prelude-val">None </span>=&gt; {
+                <span class="kw">let </span>(instance, start) = <span class="self">self</span>.instantiate_raw(store)<span class="question-mark">?</span>;
+                <span class="kw">let </span>toplevel = <span class="kw">match </span><span class="self">self</span>.in_progress.pop() {
+                    <span class="prelude-val">Some</span>(imports) =&gt; {
+                        <span class="self">self</span>.cur = imports;
+                        <span class="self">self</span>.cur.instances.push(instance);
+                        <span class="bool-val">false
+                    </span>}
+                    <span class="prelude-val">None </span>=&gt; <span class="bool-val">true</span>,
                 };
-                <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((<span class="ident">instance</span>, <span class="ident">start</span>, <span class="ident">toplevel</span>)));
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((instance, start, toplevel)));
             }
         }
 
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">instantiate_raw</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Instance</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FuncIndex</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">compiled_module</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>.<span class="ident">compiled_module</span>();
+    <span class="kw">fn </span>instantiate_raw(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(Instance, <span class="prelude-ty">Option</span>&lt;FuncIndex&gt;)&gt; {
+        <span class="kw">let </span>compiled_module = <span class="self">self</span>.cur.module.compiled_module();
 
-        <span class="comment">// Register the module just before instantiation to ensure we keep the module</span>
-        <span class="comment">// properly referenced while in use by the store.</span>
-        <span class="ident">store</span>.<span class="ident">modules_mut</span>().<span class="ident">register</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>);
+        <span class="comment">// Register the module just before instantiation to ensure we keep the module
+        // properly referenced while in use by the store.
+        </span>store.modules_mut().register(<span class="kw-2">&amp;</span><span class="self">self</span>.cur.module);
 
-        <span class="kw">unsafe</span> {
-            <span class="comment">// The first thing we do is issue an instance allocation request</span>
-            <span class="comment">// to the instance allocator. This, on success, will give us an</span>
-            <span class="comment">// instance handle.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Note that the `host_state` here is a pointer back to the</span>
-            <span class="comment">// `Instance` we&#39;ll be returning from this function. This is a</span>
-            <span class="comment">// circular reference so we can&#39;t construct it before we construct</span>
-            <span class="comment">// this instance, so we determine what the ID is and then assert</span>
-            <span class="comment">// it&#39;s the same later when we do actually insert it.</span>
-            <span class="kw">let</span> <span class="ident">instance_to_be</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">store_data</span>().<span class="ident">next_id</span>::<span class="op">&lt;</span><span class="ident">InstanceData</span><span class="op">&gt;</span>();
+        <span class="kw">unsafe </span>{
+            <span class="comment">// The first thing we do is issue an instance allocation request
+            // to the instance allocator. This, on success, will give us an
+            // instance handle.
+            //
+            // Note that the `host_state` here is a pointer back to the
+            // `Instance` we&#39;ll be returning from this function. This is a
+            // circular reference so we can&#39;t construct it before we construct
+            // this instance, so we determine what the ID is and then assert
+            // it&#39;s the same later when we do actually insert it.
+            </span><span class="kw">let </span>instance_to_be = store.store_data().next_id::&lt;InstanceData&gt;();
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">instance_handle</span> <span class="op">=</span>
-                <span class="ident">store</span>
-                    .<span class="ident">engine</span>()
-                    .<span class="ident">allocator</span>()
-                    .<span class="ident">allocate</span>(<span class="ident">InstanceAllocationRequest</span> {
-                        <span class="ident">runtime_info</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>.<span class="ident">runtime_info</span>(),
-                        <span class="ident">imports</span>: <span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">build</span>(),
-                        <span class="ident">host_state</span>: <span class="ident">Box::new</span>(<span class="ident">Instance</span>(<span class="ident">instance_to_be</span>)),
-                        <span class="ident">store</span>: <span class="ident">StorePtr::new</span>(<span class="ident">store</span>.<span class="ident">traitobj</span>()),
+            <span class="kw">let </span><span class="kw-2">mut </span>instance_handle =
+                store
+                    .engine()
+                    .allocator()
+                    .allocate(InstanceAllocationRequest {
+                        runtime_info: <span class="kw-2">&amp;</span><span class="self">self</span>.cur.module.runtime_info(),
+                        imports: <span class="self">self</span>.cur.build(),
+                        host_state: Box::new(Instance(instance_to_be)),
+                        store: StorePtr::new(store.traitobj()),
                     })<span class="question-mark">?</span>;
 
-            <span class="comment">// The instance still has lots of setup, for example</span>
-            <span class="comment">// data/elements/start/etc. This can all fail, but even on failure</span>
-            <span class="comment">// the instance may persist some state via previous successful</span>
-            <span class="comment">// initialization. For this reason once we have an instance handle</span>
-            <span class="comment">// we immediately insert it into the store to keep it alive.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Note that we `clone` the instance handle just to make easier</span>
-            <span class="comment">// working the the borrow checker here easier. Technically the `&amp;mut</span>
-            <span class="comment">// instance` has somewhat of a borrow on `store` (which</span>
-            <span class="comment">// conflicts with the borrow on `store.engine`) but this doesn&#39;t</span>
-            <span class="comment">// matter in practice since initialization isn&#39;t even running any</span>
-            <span class="comment">// code here anyway.</span>
-            <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">add_instance</span>(<span class="ident">instance_handle</span>.<span class="ident">clone</span>(), <span class="bool-val">false</span>);
+            <span class="comment">// The instance still has lots of setup, for example
+            // data/elements/start/etc. This can all fail, but even on failure
+            // the instance may persist some state via previous successful
+            // initialization. For this reason once we have an instance handle
+            // we immediately insert it into the store to keep it alive.
+            //
+            // Note that we `clone` the instance handle just to make easier
+            // working the the borrow checker here easier. Technically the `&amp;mut
+            // instance` has somewhat of a borrow on `store` (which
+            // conflicts with the borrow on `store.engine`) but this doesn&#39;t
+            // matter in practice since initialization isn&#39;t even running any
+            // code here anyway.
+            </span><span class="kw">let </span>id = store.add_instance(instance_handle.clone(), <span class="bool-val">false</span>);
 
-            <span class="comment">// Additionally, before we start doing fallible instantiation, we</span>
-            <span class="comment">// do one more step which is to insert an `InstanceData`</span>
-            <span class="comment">// corresponding to this instance. This `InstanceData` can be used</span>
-            <span class="comment">// via `Caller::get_export` if our instance&#39;s state &quot;leaks&quot; into</span>
-            <span class="comment">// other instances, even if we don&#39;t return successfully from this</span>
-            <span class="comment">// function.</span>
-            <span class="comment">//</span>
-            <span class="comment">// We don&#39;t actually load all exports from the instance at this</span>
-            <span class="comment">// time, instead preferring to lazily load them as they&#39;re demanded.</span>
-            <span class="comment">// For module/instance exports, though, those aren&#39;t actually</span>
-            <span class="comment">// stored in the instance handle so we need to immediately handle</span>
-            <span class="comment">// those here.</span>
-            <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> {
-                <span class="kw">let</span> <span class="ident">exports</span> <span class="op">=</span> <span class="ident">compiled_module</span>
-                    .<span class="ident">module</span>()
-                    .<span class="ident">exports</span>
-                    .<span class="ident">values</span>()
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">index</span><span class="op">|</span> {
-                        <span class="comment">// Note that instances and modules are not handled by</span>
-                        <span class="comment">// `wasmtime_runtime`, they&#39;re handled by us in this crate. That</span>
-                        <span class="comment">// means we need to handle that here, otherwise we defer to the</span>
-                        <span class="comment">// instance to load the values.</span>
-                        <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">index</span> {
-                            <span class="ident">EntityIndex::Instance</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="prelude-val">Some</span>(<span class="ident">Extern::Instance</span>(<span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">instances</span>[<span class="ident">i</span>].<span class="ident">clone</span>()))
+            <span class="comment">// Additionally, before we start doing fallible instantiation, we
+            // do one more step which is to insert an `InstanceData`
+            // corresponding to this instance. This `InstanceData` can be used
+            // via `Caller::get_export` if our instance&#39;s state &quot;leaks&quot; into
+            // other instances, even if we don&#39;t return successfully from this
+            // function.
+            //
+            // We don&#39;t actually load all exports from the instance at this
+            // time, instead preferring to lazily load them as they&#39;re demanded.
+            // For module/instance exports, though, those aren&#39;t actually
+            // stored in the instance handle so we need to immediately handle
+            // those here.
+            </span><span class="kw">let </span>instance = {
+                <span class="kw">let </span>exports = compiled_module
+                    .module()
+                    .exports
+                    .values()
+                    .map(|index| {
+                        <span class="comment">// Note that instances and modules are not handled by
+                        // `wasmtime_runtime`, they&#39;re handled by us in this crate. That
+                        // means we need to handle that here, otherwise we defer to the
+                        // instance to load the values.
+                        </span><span class="kw">match </span><span class="kw-2">*</span>index {
+                            EntityIndex::Instance(i) =&gt; {
+                                <span class="prelude-val">Some</span>(Extern::Instance(<span class="self">self</span>.cur.instances[i].clone()))
                             }
-                            <span class="ident">EntityIndex::Module</span>(<span class="ident">i</span>) =&gt; {
-                                <span class="prelude-val">Some</span>(<span class="ident">Extern::Module</span>(<span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">modules</span>[<span class="ident">i</span>].<span class="ident">clone</span>()))
+                            EntityIndex::Module(i) =&gt; {
+                                <span class="prelude-val">Some</span>(Extern::Module(<span class="self">self</span>.cur.modules[i].clone()))
                             }
-                            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+                            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                         }
                     })
-                    .<span class="ident">collect</span>();
-                <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">InstanceData::Instantiated</span> {
-                    <span class="ident">id</span>,
-                    <span class="ident">exports</span>,
-                    <span class="ident">types</span>: <span class="ident">Arc::clone</span>(<span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>.<span class="ident">types</span>()),
-                    <span class="ident">signatures</span>: <span class="ident">Arc::clone</span>(<span class="self">self</span>.<span class="ident">cur</span>.<span class="ident">module</span>.<span class="ident">signatures</span>()),
+                    .collect();
+                <span class="kw">let </span>data = InstanceData::Instantiated {
+                    id,
+                    exports,
+                    types: Arc::clone(<span class="self">self</span>.cur.module.types()),
+                    signatures: Arc::clone(<span class="self">self</span>.cur.module.signatures()),
                 };
-                <span class="ident">Instance::from_wasmtime</span>(<span class="ident">data</span>, <span class="ident">store</span>)
+                Instance::from_wasmtime(data, store)
             };
 
-            <span class="comment">// double-check our guess of what the new instance&#39;s ID would be</span>
-            <span class="comment">// was actually correct.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">instance</span>.<span class="number">0</span>, <span class="ident">instance_to_be</span>);
+            <span class="comment">// double-check our guess of what the new instance&#39;s ID would be
+            // was actually correct.
+            </span><span class="macro">assert_eq!</span>(instance.<span class="number">0</span>, instance_to_be);
 
-            <span class="comment">// Now that we&#39;ve recorded all information we need to about this</span>
-            <span class="comment">// instance within a `Store` we can start performing fallible</span>
-            <span class="comment">// initialization. Note that we still defer the `start` function to</span>
-            <span class="comment">// later since that may need to run asynchronously.</span>
-            <span class="comment">//</span>
-            <span class="comment">// If this returns an error (or if the start function traps) then</span>
-            <span class="comment">// any other initialization which may have succeeded which placed</span>
-            <span class="comment">// items from this instance into other instances should be ok when</span>
-            <span class="comment">// those items are loaded and run we&#39;ll have all the metadata to</span>
-            <span class="comment">// look at them.</span>
-            <span class="ident">store</span>
-                .<span class="ident">engine</span>()
-                .<span class="ident">allocator</span>()
-                .<span class="ident">initialize</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">instance_handle</span>,
-                    <span class="ident">compiled_module</span>.<span class="ident">module</span>(),
-                    <span class="ident">store</span>.<span class="ident">engine</span>().<span class="ident">config</span>().<span class="ident">features</span>.<span class="ident">bulk_memory</span>,
+            <span class="comment">// Now that we&#39;ve recorded all information we need to about this
+            // instance within a `Store` we can start performing fallible
+            // initialization. Note that we still defer the `start` function to
+            // later since that may need to run asynchronously.
+            //
+            // If this returns an error (or if the start function traps) then
+            // any other initialization which may have succeeded which placed
+            // items from this instance into other instances should be ok when
+            // those items are loaded and run we&#39;ll have all the metadata to
+            // look at them.
+            </span>store
+                .engine()
+                .allocator()
+                .initialize(
+                    <span class="kw-2">&amp;mut </span>instance_handle,
+                    compiled_module.module(),
+                    store.engine().config().features.bulk_memory,
                 )
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> -&gt; <span class="ident">Error</span> {
-                    <span class="kw">match</span> <span class="ident">e</span> {
-                        <span class="ident">InstantiationError::Trap</span>(<span class="ident">trap</span>) =&gt; <span class="ident">Trap::from_runtime</span>(<span class="ident">trap</span>).<span class="ident">into</span>(),
-                        <span class="ident">other</span> =&gt; <span class="ident">other</span>.<span class="ident">into</span>(),
+                .map_err(|e| -&gt; Error {
+                    <span class="kw">match </span>e {
+                        InstantiationError::Trap(trap) =&gt; Trap::from_runtime(trap).into(),
+                        other =&gt; other.into(),
                     }
                 })<span class="question-mark">?</span>;
 
-            <span class="prelude-val">Ok</span>((<span class="ident">instance</span>, <span class="ident">compiled_module</span>.<span class="ident">module</span>().<span class="ident">start_func</span>))
+            <span class="prelude-val">Ok</span>((instance, compiled_module.module().start_func))
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">start_raw</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreContextMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span>,
-        <span class="ident">instance</span>: <span class="ident">Instance</span>,
-        <span class="ident">start</span>: <span class="ident">FuncIndex</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">store</span>.<span class="number">0</span>.<span class="ident">store_data</span>()[<span class="ident">instance</span>.<span class="number">0</span>] {
-            <span class="ident">InstanceData::Instantiated</span> { <span class="ident">id</span>, .. } =&gt; <span class="kw-2">*</span><span class="ident">id</span>,
-            <span class="ident">InstanceData::Synthetic</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(()),
+    <span class="kw">fn </span>start_raw&lt;T&gt;(
+        store: <span class="kw-2">&amp;mut </span>StoreContextMut&lt;<span class="lifetime">&#39;_</span>, T&gt;,
+        instance: Instance,
+        start: FuncIndex,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>id = <span class="kw">match </span><span class="kw-2">&amp;</span>store.<span class="number">0</span>.store_data()[instance.<span class="number">0</span>] {
+            InstanceData::Instantiated { id, .. } =&gt; <span class="kw-2">*</span>id,
+            InstanceData::Synthetic(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
         };
-        <span class="comment">// If a start function is present, invoke it. Make sure we use all the</span>
-        <span class="comment">// trap-handling configuration in `store` as well.</span>
-        <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">store</span>.<span class="number">0</span>.<span class="ident">instance_mut</span>(<span class="ident">id</span>);
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">instance</span>.<span class="ident">lookup_by_declaration</span>(<span class="kw-2">&amp;</span><span class="ident">EntityIndex::Function</span>(<span class="ident">start</span>)) {
-            <span class="ident">wasmtime_runtime::Export::Function</span>(<span class="ident">f</span>) =&gt; <span class="ident">f</span>,
-            <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(), <span class="comment">// valid modules shouldn&#39;t hit this</span>
-        };
-        <span class="kw">let</span> <span class="ident">vmctx</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">vmctx_ptr</span>();
-        <span class="kw">unsafe</span> {
-            <span class="ident"><span class="kw">super</span>::func::invoke_wasm_and_catch_traps</span>(<span class="ident">store</span>, <span class="op">|</span><span class="ident">_default_callee</span><span class="op">|</span> {
-                <span class="ident">mem::transmute</span>::<span class="op">&lt;</span>
-                    <span class="kw-2">*const</span> <span class="ident">VMFunctionBody</span>,
-                    <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="kw-2">*mut</span> <span class="ident">VMContext</span>, <span class="kw-2">*mut</span> <span class="ident">VMContext</span>),
-                <span class="op">&gt;</span>(<span class="ident">f</span>.<span class="ident">anyfunc</span>.<span class="ident">as_ref</span>().<span class="ident">func_ptr</span>.<span class="ident">as_ptr</span>())(
-                    <span class="ident">f</span>.<span class="ident">anyfunc</span>.<span class="ident">as_ref</span>().<span class="ident">vmctx</span>, <span class="ident">vmctx</span>
+        <span class="comment">// If a start function is present, invoke it. Make sure we use all the
+        // trap-handling configuration in `store` as well.
+        </span><span class="kw">let </span>instance = store.<span class="number">0</span>.instance_mut(id);
+        <span class="kw">let </span>f = <span class="kw">match </span>instance.lookup_by_declaration(<span class="kw-2">&amp;</span>EntityIndex::Function(start)) {
+            wasmtime_runtime::Export::Function(f) =&gt; f,
+            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(), <span class="comment">// valid modules shouldn&#39;t hit this
+        </span>};
+        <span class="kw">let </span>vmctx = instance.vmctx_ptr();
+        <span class="kw">unsafe </span>{
+            <span class="kw">super</span>::func::invoke_wasm_and_catch_traps(store, |_default_callee| {
+                mem::transmute::&lt;
+                    <span class="kw-2">*const </span>VMFunctionBody,
+                    <span class="kw">unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn</span>(<span class="kw-2">*mut </span>VMContext, <span class="kw-2">*mut </span>VMContext),
+                &gt;(f.anyfunc.as_ref().func_ptr.as_ptr())(
+                    f.anyfunc.as_ref().vmctx, vmctx
                 )
             })<span class="question-mark">?</span>;
         }
@@ -1920,247 +1915,246 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">ImportsBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>, <span class="ident">src</span>: <span class="ident">ImportSource</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) -&gt; <span class="ident">ImportsBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">raw</span> <span class="op">=</span> <span class="ident">module</span>.<span class="ident">compiled_module</span>().<span class="ident">module</span>();
-        <span class="ident">ImportsBuilder</span> {
-            <span class="ident">src</span>,
-            <span class="ident">functions</span>: <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">raw</span>.<span class="ident">num_imported_funcs</span>),
-            <span class="ident">tables</span>: <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">raw</span>.<span class="ident">num_imported_tables</span>),
-            <span class="ident">memories</span>: <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">raw</span>.<span class="ident">num_imported_memories</span>),
-            <span class="ident">globals</span>: <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">raw</span>.<span class="ident">num_imported_globals</span>),
-            <span class="ident">instances</span>: <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">raw</span>.<span class="ident">instances</span>.<span class="ident">len</span>()),
-            <span class="ident">modules</span>: <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">raw</span>.<span class="ident">modules</span>.<span class="ident">len</span>()),
-            <span class="ident">module</span>: <span class="ident">module</span>.<span class="ident">clone</span>(),
-            <span class="ident">initializer</span>: <span class="number">0</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ImportsBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>new(module: <span class="kw-2">&amp;</span>Module, src: ImportSource&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; ImportsBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">let </span>raw = module.compiled_module().module();
+        ImportsBuilder {
+            src,
+            functions: PrimaryMap::with_capacity(raw.num_imported_funcs),
+            tables: PrimaryMap::with_capacity(raw.num_imported_tables),
+            memories: PrimaryMap::with_capacity(raw.num_imported_memories),
+            globals: PrimaryMap::with_capacity(raw.num_imported_globals),
+            instances: PrimaryMap::with_capacity(raw.instances.len()),
+            modules: PrimaryMap::with_capacity(raw.modules.len()),
+            module: module.clone(),
+            initializer: <span class="number">0</span>,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">push</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">item</span>: <span class="ident">Extern</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) {
-        <span class="kw">match</span> <span class="ident">item</span> {
-            <span class="ident">Extern::Func</span>(<span class="ident">i</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">functions</span>.<span class="ident">push</span>(<span class="ident">i</span>.<span class="ident">vmimport</span>(<span class="ident">store</span>));
+    <span class="kw">fn </span>push(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: Extern, store: <span class="kw-2">&amp;mut </span>StoreOpaque) {
+        <span class="kw">match </span>item {
+            Extern::Func(i) =&gt; {
+                <span class="self">self</span>.functions.push(i.vmimport(store));
             }
-            <span class="ident">Extern::Global</span>(<span class="ident">i</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">globals</span>.<span class="ident">push</span>(<span class="ident">i</span>.<span class="ident">vmimport</span>(<span class="ident">store</span>));
+            Extern::Global(i) =&gt; {
+                <span class="self">self</span>.globals.push(i.vmimport(store));
             }
-            <span class="ident">Extern::Table</span>(<span class="ident">i</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">tables</span>.<span class="ident">push</span>(<span class="ident">i</span>.<span class="ident">vmimport</span>(<span class="ident">store</span>));
+            Extern::Table(i) =&gt; {
+                <span class="self">self</span>.tables.push(i.vmimport(store));
             }
-            <span class="ident">Extern::Memory</span>(<span class="ident">i</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">memories</span>.<span class="ident">push</span>(<span class="ident">i</span>.<span class="ident">vmimport</span>(<span class="ident">store</span>));
+            Extern::Memory(i) =&gt; {
+                <span class="self">self</span>.memories.push(i.vmimport(store));
             }
-            <span class="ident">Extern::Instance</span>(<span class="ident">i</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">instances</span>.<span class="ident">push</span>(<span class="ident">i</span>);
+            Extern::Instance(i) =&gt; {
+                <span class="self">self</span>.instances.push(i);
             }
-            <span class="ident">Extern::Module</span>(<span class="ident">m</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">modules</span>.<span class="ident">push</span>(<span class="ident">m</span>);
+            Extern::Module(m) =&gt; {
+                <span class="self">self</span>.modules.push(m);
             }
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Imports</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
-        <span class="ident">Imports</span> {
-            <span class="ident">tables</span>: <span class="self">self</span>.<span class="ident">tables</span>.<span class="ident">values</span>().<span class="ident">as_slice</span>(),
-            <span class="ident">globals</span>: <span class="self">self</span>.<span class="ident">globals</span>.<span class="ident">values</span>().<span class="ident">as_slice</span>(),
-            <span class="ident">memories</span>: <span class="self">self</span>.<span class="ident">memories</span>.<span class="ident">values</span>().<span class="ident">as_slice</span>(),
-            <span class="ident">functions</span>: <span class="self">self</span>.<span class="ident">functions</span>.<span class="ident">values</span>().<span class="ident">as_slice</span>(),
-        }
-    }
-}
-
-<span class="doccomment">/// An instance, pre-instantiation, that is ready to be instantiated.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This structure represents an instance *just before* it was instantiated,</span>
-<span class="doccomment">/// after all type-checking and imports have been resolved. The only thing left</span>
-<span class="doccomment">/// to do for this instance is to actually run the process of instantiation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that an `InstancePre` may not be tied to any particular [`Store`] if</span>
-<span class="doccomment">/// none of the imports it closed over are tied to any particular [`Store`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This structure is created through the [`Linker::instantiate_pre`] method,</span>
-<span class="doccomment">/// which also has some more information and examples.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`Store`]: crate::Store</span>
-<span class="doccomment">/// [`Linker::instantiate_pre`]: crate::Linker::instantiate_pre</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InstancePre</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">module</span>: <span class="ident">Module</span>,
-    <span class="ident">items</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Definition</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// A count of `Definition::HostFunc` entries in `items` above to</span>
-    <span class="doccomment">/// preallocate space in a `Store` up front for all entries to be inserted.</span>
-    <span class="ident">host_funcs</span>: <span class="ident">usize</span>,
-    <span class="ident">_marker</span>: <span class="ident">std::marker::PhantomData</span><span class="op">&lt;</span><span class="kw">fn</span>() -&gt; <span class="ident">T</span><span class="op">&gt;</span>,
-}
-
-<span class="doccomment">/// InstancePre&#39;s clone does not require T: Clone</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">InstancePre</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">module</span>: <span class="self">self</span>.<span class="ident">module</span>.<span class="ident">clone</span>(),
-            <span class="ident">items</span>: <span class="self">self</span>.<span class="ident">items</span>.<span class="ident">clone</span>(),
-            <span class="ident">host_funcs</span>: <span class="self">self</span>.<span class="ident">host_funcs</span>,
-            <span class="ident">_marker</span>: <span class="self">self</span>.<span class="ident">_marker</span>,
+    <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Imports&lt;<span class="lifetime">&#39;_</span>&gt; {
+        Imports {
+            tables: <span class="self">self</span>.tables.values().as_slice(),
+            globals: <span class="self">self</span>.globals.values().as_slice(),
+            memories: <span class="self">self</span>.memories.values().as_slice(),
+            functions: <span class="self">self</span>.functions.values().as_slice(),
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">InstancePre</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-        <span class="ident">items</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Definition</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InstancePre</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">typecheck_defs</span>(<span class="ident">store</span>, <span class="ident">module</span>, <span class="kw-2">&amp;</span><span class="ident">items</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">host_funcs</span> <span class="op">=</span> <span class="ident">items</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">i</span> {
-                <span class="ident">Definition::HostFunc</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-                <span class="kw">_</span> =&gt; <span class="bool-val">false</span>,
+<span class="doccomment">/// An instance, pre-instantiation, that is ready to be instantiated.
+///
+/// This structure represents an instance *just before* it was instantiated,
+/// after all type-checking and imports have been resolved. The only thing left
+/// to do for this instance is to actually run the process of instantiation.
+///
+/// Note that an `InstancePre` may not be tied to any particular [`Store`] if
+/// none of the imports it closed over are tied to any particular [`Store`].
+///
+/// This structure is created through the [`Linker::instantiate_pre`] method,
+/// which also has some more information and examples.
+///
+/// [`Store`]: crate::Store
+/// [`Linker::instantiate_pre`]: crate::Linker::instantiate_pre
+</span><span class="kw">pub struct </span>InstancePre&lt;T&gt; {
+    module: Module,
+    items: Vec&lt;Definition&gt;,
+    <span class="doccomment">/// A count of `Definition::HostFunc` entries in `items` above to
+    /// preallocate space in a `Store` up front for all entries to be inserted.
+    </span>host_funcs: usize,
+    _marker: std::marker::PhantomData&lt;<span class="kw">fn</span>() -&gt; T&gt;,
+}
+
+<span class="doccomment">/// InstancePre&#39;s clone does not require T: Clone
+</span><span class="kw">impl</span>&lt;T&gt; Clone <span class="kw">for </span>InstancePre&lt;T&gt; {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            module: <span class="self">self</span>.module.clone(),
+            items: <span class="self">self</span>.items.clone(),
+            host_funcs: <span class="self">self</span>.host_funcs,
+            _marker: <span class="self">self</span>._marker,
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;T&gt; InstancePre&lt;T&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>new(
+        store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+        module: <span class="kw-2">&amp;</span>Module,
+        items: Vec&lt;Definition&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;InstancePre&lt;T&gt;&gt; {
+        typecheck_defs(store, module, <span class="kw-2">&amp;</span>items)<span class="question-mark">?</span>;
+        <span class="kw">let </span>host_funcs = items
+            .iter()
+            .filter(|i| <span class="kw">match </span>i {
+                Definition::HostFunc(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
+                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
             })
-            .<span class="ident">count</span>();
-        <span class="prelude-val">Ok</span>(<span class="ident">InstancePre</span> {
-            <span class="ident">module</span>: <span class="ident">module</span>.<span class="ident">clone</span>(),
-            <span class="ident">items</span>,
-            <span class="ident">host_funcs</span>,
-            <span class="ident">_marker</span>: <span class="ident">std::marker::PhantomData</span>,
+            .count();
+        <span class="prelude-val">Ok</span>(InstancePre {
+            module: module.clone(),
+            items,
+            host_funcs,
+            _marker: std::marker::PhantomData,
         })
     }
 
-    <span class="doccomment">/// Instantiates this instance, creating a new instance within the provided</span>
-    <span class="doccomment">/// `store`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will run the actual process of instantiation to</span>
-    <span class="doccomment">/// completion. This will use all of the previously-closed-over items as</span>
-    <span class="doccomment">/// imports to instantiate the module that this was originally created with.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more information about instantiation see [`Instance::new`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if any import closed over by this [`InstancePre`] isn&#39;t owned by</span>
-    <span class="doccomment">/// `store`, or if `store` has async support enabled. Additionally this</span>
-    <span class="doccomment">/// function will panic if the `store` provided comes from a different</span>
-    <span class="doccomment">/// [`Engine`] than the [`InstancePre`] originally came from.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">instantiate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span><span class="op">&lt;</span><span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instance</span><span class="op">&gt;</span> {
-        <span class="comment">// For the unsafety here the typecheck happened at creation time of this</span>
-        <span class="comment">// structure and then othrewise the `T` of `InstancePre&lt;T&gt;` connects any</span>
-        <span class="comment">// host functions we have in our definition list to the `store` that was</span>
-        <span class="comment">// passed in.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">instantiator</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="self">self</span>.<span class="ident">verify_store_and_reserve_space</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-            <span class="ident">Instantiator::new</span>(
-                <span class="ident">store</span>.<span class="number">0</span>,
-                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">module</span>,
-                <span class="ident">ImportSource::Definitions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">items</span>),
-            )<span class="question-mark">?</span>
-        };
-        <span class="ident">instantiator</span>.<span class="ident">run</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>)
+    <span class="doccomment">/// Instantiates this instance, creating a new instance within the provided
+    /// `store`.
+    ///
+    /// This function will run the actual process of instantiation to
+    /// completion. This will use all of the previously-closed-over items as
+    /// imports to instantiate the module that this was originally created with.
+    ///
+    /// For more information about instantiation see [`Instance::new`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if any import closed over by this [`InstancePre`] isn&#39;t owned by
+    /// `store`, or if `store` has async support enabled. Additionally this
+    /// function will panic if the `store` provided comes from a different
+    /// [`Engine`] than the [`InstancePre`] originally came from.
+    </span><span class="kw">pub fn </span>instantiate(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>store: <span class="kw">impl </span>AsContextMut&lt;Data = T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="comment">// For the unsafety here the typecheck happened at creation time of this
+        // structure and then othrewise the `T` of `InstancePre&lt;T&gt;` connects any
+        // host functions we have in our definition list to the `store` that was
+        // passed in.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
+        <span class="kw">let </span><span class="kw-2">mut </span>instantiator = <span class="kw">unsafe </span>{
+            <span class="self">self</span>.verify_store_and_reserve_space(<span class="kw-2">&amp;mut </span>store.<span class="number">0</span>)<span class="question-mark">?</span>;
+            Instantiator::new(
+                store.<span class="number">0</span>,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.module,
+                ImportSource::Definitions(<span class="kw-2">&amp;</span><span class="self">self</span>.items),
+            )<span class="question-mark">?
+        </span>};
+        instantiator.run(<span class="kw-2">&amp;mut </span>store)
     }
 
-    <span class="doccomment">/// Creates a new instance, running the start function asynchronously</span>
-    <span class="doccomment">/// instead of inline.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For more information about asynchronous instantiation see the</span>
-    <span class="doccomment">/// documentation on [`Instance::new_async`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Panics if any import closed over by this [`InstancePre`] isn&#39;t owned by</span>
-    <span class="doccomment">/// `store`, or if `store` does not have async support enabled.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">nightlydoc</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)))]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">instantiate_async</span>(
+    <span class="doccomment">/// Creates a new instance, running the start function asynchronously
+    /// instead of inline.
+    ///
+    /// For more information about asynchronous instantiation see the
+    /// documentation on [`Instance::new_async`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if any import closed over by this [`InstancePre`] isn&#39;t owned by
+    /// `store`, or if `store` does not have async support enabled.
+    </span><span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    #[cfg_attr(nightlydoc, doc(cfg(feature = <span class="string">&quot;async&quot;</span>)))]
+    </span><span class="kw">pub async fn </span>instantiate_async(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">store</span>: <span class="kw">impl</span> <span class="ident">AsContextMut</span><span class="op">&lt;</span><span class="ident">Data</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instance</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">Send</span>,
+        <span class="kw-2">mut </span>store: <span class="kw">impl </span>AsContextMut&lt;Data = T&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt;
+    <span class="kw">where
+        </span>T: Send,
     {
-        <span class="comment">// For the unsafety here see above</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="self">self</span>.<span class="ident">verify_store_and_reserve_space</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
-            <span class="ident">Instantiator::new</span>(
-                <span class="ident">store</span>.<span class="number">0</span>,
-                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">module</span>,
-                <span class="ident">ImportSource::Definitions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">items</span>),
-            )<span class="question-mark">?</span>
-        };
+        <span class="comment">// For the unsafety here see above
+        </span><span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
+        <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="kw">unsafe </span>{
+            <span class="self">self</span>.verify_store_and_reserve_space(<span class="kw-2">&amp;mut </span>store.<span class="number">0</span>)<span class="question-mark">?</span>;
+            Instantiator::new(
+                store.<span class="number">0</span>,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.module,
+                ImportSource::Definitions(<span class="kw-2">&amp;</span><span class="self">self</span>.items),
+            )<span class="question-mark">?
+        </span>};
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>store = store.as_context_mut();
         <span class="macro">assert!</span>(
-            <span class="ident">store</span>.<span class="number">0</span>.<span class="ident">async_support</span>(),
-            <span class="string">&quot;cannot use `new_async` without enabling async support on the config&quot;</span>
-        );
-        <span class="ident">store</span>
-            .<span class="ident">on_fiber</span>(<span class="op">|</span><span class="ident">store</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">run</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>.<span class="ident">as_context_mut</span>()))
-            .<span class="kw">await</span><span class="question-mark">?</span>
-    }
+            store.<span class="number">0</span>.async_support(),
+            <span class="string">&quot;cannot use `new_async` without enabling async support on the config&quot;
+        </span>);
+        store
+            .on_fiber(|store| i.run(<span class="kw-2">&amp;mut </span>store.as_context_mut()))
+            .<span class="kw">await</span><span class="question-mark">?
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">verify_store_and_reserve_space</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">for</span> <span class="ident">import</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">items</span>.<span class="ident">iter</span>() {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">import</span>.<span class="ident">comes_from_same_store</span>(<span class="ident">store</span>) {
+    <span class="kw">fn </span>verify_store_and_reserve_space(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;mut </span>StoreOpaque) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">for </span>import <span class="kw">in </span><span class="self">self</span>.items.iter() {
+            <span class="kw">if </span>!import.comes_from_same_store(store) {
                 <span class="macro">bail!</span>(<span class="string">&quot;cross-`Store` instantiation is not currently supported&quot;</span>);
             }
         }
-        <span class="comment">// Any linker-defined function of the `Definition::HostFunc` variant</span>
-        <span class="comment">// will insert a function into the store automatically as part of</span>
-        <span class="comment">// instantiation, so reserve space here to make insertion more efficient</span>
-        <span class="comment">// as it won&#39;t have to realloc during the instantiation.</span>
-        <span class="ident">store</span>.<span class="ident">store_data_mut</span>().<span class="ident">reserve_funcs</span>(<span class="self">self</span>.<span class="ident">host_funcs</span>);
+        <span class="comment">// Any linker-defined function of the `Definition::HostFunc` variant
+        // will insert a function into the store automatically as part of
+        // instantiation, so reserve space here to make insertion more efficient
+        // as it won&#39;t have to realloc during the instantiation.
+        </span>store.store_data_mut().reserve_funcs(<span class="self">self</span>.host_funcs);
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="kw">fn</span> <span class="ident">typecheck_externs</span>(<span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>, <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>, <span class="ident">imports</span>: <span class="kw-2">&amp;</span>[<span class="ident">Extern</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">for</span> <span class="ident">import</span> <span class="kw">in</span> <span class="ident">imports</span> {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">import</span>.<span class="ident">comes_from_same_store</span>(<span class="ident">store</span>) {
+<span class="kw">fn </span>typecheck_externs(store: <span class="kw-2">&amp;mut </span>StoreOpaque, module: <span class="kw-2">&amp;</span>Module, imports: <span class="kw-2">&amp;</span>[Extern]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">for </span>import <span class="kw">in </span>imports {
+        <span class="kw">if </span>!import.comes_from_same_store(store) {
             <span class="macro">bail!</span>(<span class="string">&quot;cross-`Store` instantiation is not currently supported&quot;</span>);
         }
     }
-    <span class="ident">typecheck</span>(<span class="ident">store</span>, <span class="ident">module</span>, <span class="ident">imports</span>, <span class="op">|</span><span class="ident">cx</span>, <span class="ident">ty</span>, <span class="ident">item</span><span class="op">|</span> <span class="ident">cx</span>.<span class="ident">extern_</span>(<span class="ident">ty</span>, <span class="ident">item</span>))
+    typecheck(store, module, imports, |cx, ty, item| cx.extern_(ty, item))
 }
 
-<span class="kw">fn</span> <span class="ident">typecheck_defs</span>(<span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>, <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>, <span class="ident">imports</span>: <span class="kw-2">&amp;</span>[<span class="ident">Definition</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">for</span> <span class="ident">import</span> <span class="kw">in</span> <span class="ident">imports</span> {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">import</span>.<span class="ident">comes_from_same_store</span>(<span class="ident">store</span>) {
+<span class="kw">fn </span>typecheck_defs(store: <span class="kw-2">&amp;mut </span>StoreOpaque, module: <span class="kw-2">&amp;</span>Module, imports: <span class="kw-2">&amp;</span>[Definition]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">for </span>import <span class="kw">in </span>imports {
+        <span class="kw">if </span>!import.comes_from_same_store(store) {
             <span class="macro">bail!</span>(<span class="string">&quot;cross-`Store` instantiation is not currently supported&quot;</span>);
         }
     }
-    <span class="ident">typecheck</span>(<span class="ident">store</span>, <span class="ident">module</span>, <span class="ident">imports</span>, <span class="op">|</span><span class="ident">cx</span>, <span class="ident">ty</span>, <span class="ident">item</span><span class="op">|</span> {
-        <span class="ident">cx</span>.<span class="ident">definition</span>(<span class="ident">ty</span>, <span class="ident">item</span>)
+    typecheck(store, module, imports, |cx, ty, item| {
+        cx.definition(ty, item)
     })
 }
 
-<span class="kw">fn</span> <span class="ident">typecheck</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(
-    <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-    <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-    <span class="ident">imports</span>: <span class="kw-2">&amp;</span>[<span class="ident">I</span>],
-    <span class="ident">check</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">matching::MatchCx</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">EntityType</span>, <span class="kw-2">&amp;</span><span class="ident">I</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">env_module</span> <span class="op">=</span> <span class="ident">module</span>.<span class="ident">compiled_module</span>().<span class="ident">module</span>();
-    <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">env_module</span>.<span class="ident">imports</span>().<span class="ident">count</span>();
-    <span class="kw">if</span> <span class="ident">expected</span> <span class="op">!</span><span class="op">=</span> <span class="ident">imports</span>.<span class="ident">len</span>() {
-        <span class="macro">bail!</span>(<span class="string">&quot;expected {} imports, found {}&quot;</span>, <span class="ident">expected</span>, <span class="ident">imports</span>.<span class="ident">len</span>());
+<span class="kw">fn </span>typecheck&lt;I&gt;(
+    store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+    module: <span class="kw-2">&amp;</span>Module,
+    imports: <span class="kw-2">&amp;</span>[I],
+    check: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>matching::MatchCx&lt;<span class="lifetime">&#39;_</span>&gt;, <span class="kw-2">&amp;</span>EntityType, <span class="kw-2">&amp;</span>I) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">let </span>env_module = module.compiled_module().module();
+    <span class="kw">let </span>expected = env_module.imports().count();
+    <span class="kw">if </span>expected != imports.len() {
+        <span class="macro">bail!</span>(<span class="string">&quot;expected {} imports, found {}&quot;</span>, expected, imports.len());
     }
-    <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">matching::MatchCx</span> {
-        <span class="ident">signatures</span>: <span class="ident">module</span>.<span class="ident">signatures</span>(),
-        <span class="ident">types</span>: <span class="ident">module</span>.<span class="ident">types</span>(),
-        <span class="ident">store</span>: <span class="ident">store</span>,
-        <span class="ident">engine</span>: <span class="ident">store</span>.<span class="ident">engine</span>(),
+    <span class="kw">let </span>cx = matching::MatchCx {
+        signatures: module.signatures(),
+        types: module.types(),
+        store: store,
+        engine: store.engine(),
     };
-    <span class="kw">for</span> ((<span class="ident">name</span>, <span class="ident">field</span>, <span class="ident">expected_ty</span>), <span class="ident">actual</span>) <span class="kw">in</span> <span class="ident">env_module</span>.<span class="ident">imports</span>().<span class="ident">zip</span>(<span class="ident">imports</span>) {
-        <span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="kw-2">&amp;</span><span class="ident">expected_ty</span>, <span class="ident">actual</span>).<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">extra</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">field</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">name</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;::{}&quot;</span>, <span class="ident">name</span>),
-                <span class="prelude-val">None</span> =&gt; <span class="ident">String::new</span>(),
+    <span class="kw">for </span>((name, field, expected_ty), actual) <span class="kw">in </span>env_module.imports().zip(imports) {
+        check(<span class="kw-2">&amp;</span>cx, <span class="kw-2">&amp;</span>expected_ty, actual).with_context(|| {
+            <span class="kw">let </span>extra = <span class="kw">match </span>field {
+                <span class="prelude-val">Some</span>(name) =&gt; <span class="macro">format!</span>(<span class="string">&quot;::{}&quot;</span>, name),
+                <span class="prelude-val">None </span>=&gt; String::new(),
             };
-            <span class="macro">format!</span>(<span class="string">&quot;incompatible import type for `{}{}`&quot;</span>, <span class="ident">name</span>, <span class="ident">extra</span>)
+            <span class="macro">format!</span>(<span class="string">&quot;incompatible import type for `{}{}`&quot;</span>, name, extra)
         })<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

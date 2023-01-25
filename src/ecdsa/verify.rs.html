@@ -1,11 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/ecdsa-0.13.4/src/verify.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>verify.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ecdsa/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../ecdsa/index.html"><div class="logo-container">
-                    <img src="https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../ecdsa/index.html">
-                        <img src="https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/ecdsa-0.13.4/src/verify.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>verify.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../ecdsa/index.html">
+                        <img src="https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -275,276 +269,275 @@
 <span id="268">268</span>
 <span id="269">269</span>
 <span id="270">270</span>
-</pre><pre class="rust"><code><span class="doccomment">//! ECDSA verification key.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! ECDSA verification key.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">hazmat</span>::{<span class="ident">DigestPrimitive</span>, <span class="ident">VerifyPrimitive</span>},
-    <span class="ident">Error</span>, <span class="prelude-ty">Result</span>, <span class="ident">Signature</span>, <span class="ident">SignatureSize</span>,
+</span><span class="kw">use crate</span>::{
+    hazmat::{DigestPrimitive, VerifyPrimitive},
+    Error, <span class="prelude-ty">Result</span>, Signature, SignatureSize,
 };
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">cmp::Ordering</span>, <span class="ident">fmt::Debug</span>};
-<span class="kw">use</span> <span class="ident">elliptic_curve</span>::{
-    <span class="ident">generic_array::ArrayLength</span>,
-    <span class="ident">ops::Reduce</span>,
-    <span class="ident">sec1</span>::{<span class="self">self</span>, <span class="ident">EncodedPoint</span>, <span class="ident">FromEncodedPoint</span>, <span class="ident">ToEncodedPoint</span>},
-    <span class="ident">AffinePoint</span>, <span class="ident">FieldSize</span>, <span class="ident">PointCompression</span>, <span class="ident">PrimeCurve</span>, <span class="ident">ProjectiveArithmetic</span>, <span class="ident">PublicKey</span>, <span class="ident">Scalar</span>,
+<span class="kw">use </span>core::{cmp::Ordering, fmt::Debug};
+<span class="kw">use </span>elliptic_curve::{
+    generic_array::ArrayLength,
+    ops::Reduce,
+    sec1::{<span class="self">self</span>, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
+    AffinePoint, FieldSize, PointCompression, PrimeCurve, ProjectiveArithmetic, PublicKey, Scalar,
 };
-<span class="kw">use</span> <span class="ident">signature</span>::{<span class="ident">digest::Digest</span>, <span class="ident">DigestVerifier</span>, <span class="ident">Verifier</span>};
+<span class="kw">use </span>signature::{digest::Digest, DigestVerifier, Verifier};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pkcs8&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">elliptic_curve</span>::{
-    <span class="ident">pkcs8</span>::{<span class="self">self</span>, <span class="ident">DecodePublicKey</span>},
-    <span class="ident">AlgorithmParameters</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pkcs8&quot;</span>)]
+</span><span class="kw">use </span>elliptic_curve::{
+    pkcs8::{<span class="self">self</span>, DecodePublicKey},
+    AlgorithmParameters,
 };
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pem&quot;</span>)]
+</span><span class="kw">use </span>core::str::FromStr;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>))))]</span>
-<span class="kw">use</span> <span class="ident">elliptic_curve::serde</span>::{<span class="ident">de</span>, <span class="ident">ser</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="attribute">#[cfg(all(feature = <span class="string">&quot;pem&quot;</span>, feature = <span class="string">&quot;serde&quot;</span>))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = <span class="string">&quot;pem&quot;</span>, feature = <span class="string">&quot;serde&quot;</span>))))]
+</span><span class="kw">use </span>elliptic_curve::serde::{de, ser, Deserialize, Serialize};
 
-<span class="doccomment">/// ECDSA verification key (i.e. public key). Generic over elliptic curves.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a</span>
-<span class="doccomment">/// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # `serde` support</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// When the `serde` feature of this crate is enabled, it provides support for</span>
-<span class="doccomment">/// serializing and deserializing ECDSA signatures using the `Serialize` and</span>
-<span class="doccomment">/// `Deserialize` traits.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The serialization leverages the encoding used by the [`PublicKey`] type,</span>
-<span class="doccomment">/// which is a binary-oriented ASN.1 DER encoding.</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;verify&quot;</span>)))]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
+<span class="doccomment">/// ECDSA verification key (i.e. public key). Generic over elliptic curves.
+///
+/// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
+/// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
+///
+/// # `serde` support
+///
+/// When the `serde` feature of this crate is enabled, it provides support for
+/// serializing and deserializing ECDSA signatures using the `Serialize` and
+/// `Deserialize` traits.
+///
+/// The serialization leverages the encoding used by the [`PublicKey`] type,
+/// which is a binary-oriented ASN.1 DER encoding.
+</span><span class="attribute">#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;verify&quot;</span>)))]
+#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
 {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">inner</span>: <span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) inner: PublicKey&lt;C&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="kw">impl</span>&lt;C&gt; VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-    <span class="doccomment">/// Initialize [`VerifyingKey`] from a SEC1-encoded public key.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_sec1_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">PublicKey::from_sec1_bytes</span>(<span class="ident">bytes</span>)
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">pk</span><span class="op">|</span> <span class="self">Self</span> { <span class="ident">inner</span>: <span class="ident">pk</span> })
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::new</span>())
+    <span class="doccomment">/// Initialize [`VerifyingKey`] from a SEC1-encoded public key.
+    </span><span class="kw">pub fn </span>from_sec1_bytes(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        PublicKey::from_sec1_bytes(bytes)
+            .map(|pk| <span class="self">Self </span>{ inner: pk })
+            .map_err(|<span class="kw">_</span>| Error::new())
     }
 
-    <span class="doccomment">/// Initialize [`VerifyingKey`] from an [`EncodedPoint`].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_encoded_point</span>(<span class="ident">public_key</span>: <span class="kw-2">&amp;</span><span class="ident">EncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">Option::from</span>(<span class="ident">PublicKey</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="ident">::from_encoded_point</span>(<span class="ident">public_key</span>))
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">public_key</span><span class="op">|</span> <span class="self">Self</span> { <span class="ident">inner</span>: <span class="ident">public_key</span> })
-            .<span class="ident">ok_or_else</span>(<span class="ident">Error::new</span>)
+    <span class="doccomment">/// Initialize [`VerifyingKey`] from an [`EncodedPoint`].
+    </span><span class="kw">pub fn </span>from_encoded_point(public_key: <span class="kw-2">&amp;</span>EncodedPoint&lt;C&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        Option::from(PublicKey::&lt;C&gt;::from_encoded_point(public_key))
+            .map(|public_key| <span class="self">Self </span>{ inner: public_key })
+            .ok_or_else(Error::new)
     }
 
-    <span class="doccomment">/// Serialize this [`VerifyingKey`] as a SEC1 [`EncodedPoint`], optionally</span>
-    <span class="doccomment">/// applying point compression.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_encoded_point</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">compress</span>: <span class="ident">bool</span>) -&gt; <span class="ident">EncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">to_encoded_point</span>(<span class="ident">compress</span>)
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Copy</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> {}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">D</span><span class="op">&gt;</span> <span class="ident">DigestVerifier</span><span class="op">&lt;</span><span class="ident">D</span>, <span class="ident">Signature</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
-    <span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&lt;</span><span class="ident">OutputSize</span> <span class="op">=</span> <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">VerifyPrimitive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">Scalar</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">Reduce</span><span class="op">&lt;</span><span class="ident">C::UInt</span><span class="op">&gt;</span>,
-    <span class="ident">SignatureSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">ArrayLength</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-{
-    <span class="kw">fn</span> <span class="ident">verify_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg_digest</span>: <span class="ident">D</span>, <span class="ident">signature</span>: <span class="kw-2">&amp;</span><span class="ident">Signature</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">scalar</span> <span class="op">=</span> <span class="ident">Scalar</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="ident">::from_be_bytes_reduced</span>(<span class="ident">msg_digest</span>.<span class="ident">finalize</span>());
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_affine</span>().<span class="ident">verify_prehashed</span>(<span class="ident">scalar</span>, <span class="ident">signature</span>)
+    <span class="doccomment">/// Serialize this [`VerifyingKey`] as a SEC1 [`EncodedPoint`], optionally
+    /// applying point compression.
+    </span><span class="kw">pub fn </span>to_encoded_point(<span class="kw-2">&amp;</span><span class="self">self</span>, compress: bool) -&gt; EncodedPoint&lt;C&gt; {
+        <span class="self">self</span>.inner.to_encoded_point(compress)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Verifier</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> <span class="op">+</span> <span class="ident">DigestPrimitive</span>,
-    <span class="ident">C::Digest</span>: <span class="ident">Digest</span><span class="op">&lt;</span><span class="ident">OutputSize</span> <span class="op">=</span> <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">VerifyPrimitive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">Scalar</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">Reduce</span><span class="op">&lt;</span><span class="ident">C::UInt</span><span class="op">&gt;</span>,
-    <span class="ident">SignatureSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">ArrayLength</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;C&gt; Copy <span class="kw">for </span>VerifyingKey&lt;C&gt; <span class="kw">where </span>C: PrimeCurve + ProjectiveArithmetic {}
+
+<span class="kw">impl</span>&lt;C, D&gt; DigestVerifier&lt;D, Signature&lt;C&gt;&gt; <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
+    D: Digest&lt;OutputSize = FieldSize&lt;C&gt;&gt;,
+    AffinePoint&lt;C&gt;: VerifyPrimitive&lt;C&gt;,
+    Scalar&lt;C&gt;: Reduce&lt;C::UInt&gt;,
+    SignatureSize&lt;C&gt;: ArrayLength&lt;u8&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">signature</span>: <span class="kw-2">&amp;</span><span class="ident">Signature</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">verify_digest</span>(<span class="ident">C::Digest::new</span>().<span class="ident">chain</span>(<span class="ident">msg</span>), <span class="ident">signature</span>)
+    <span class="kw">fn </span>verify_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, msg_digest: D, signature: <span class="kw-2">&amp;</span>Signature&lt;C&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>scalar = Scalar::&lt;C&gt;::from_be_bytes_reduced(msg_digest.finalize());
+        <span class="self">self</span>.inner.as_affine().verify_prehashed(scalar, signature)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> <span class="op">+</span> <span class="ident">PointCompression</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="kw">impl</span>&lt;C&gt; Verifier&lt;Signature&lt;C&gt;&gt; <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C::Digest: Digest&lt;OutputSize = FieldSize&lt;C&gt;&gt;,
+    AffinePoint&lt;C&gt;: VerifyPrimitive&lt;C&gt;,
+    Scalar&lt;C&gt;: Reduce&lt;C::UInt&gt;,
+    SignatureSize&lt;C&gt;: ArrayLength&lt;u8&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">verifying_key</span>: <span class="kw-2">&amp;</span><span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="ident">EncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
-        <span class="ident">verifying_key</span>.<span class="ident">to_encoded_point</span>(<span class="ident">C::COMPRESS_POINTS</span>)
+    <span class="kw">fn </span>verify(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: <span class="kw-2">&amp;</span>[u8], signature: <span class="kw-2">&amp;</span>Signature&lt;C&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.verify_digest(C::Digest::new().chain(msg), signature)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
+<span class="kw">impl</span>&lt;C&gt; From&lt;<span class="kw-2">&amp;</span>VerifyingKey&lt;C&gt;&gt; <span class="kw">for </span>EncodedPoint&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic + PointCompression,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">public_key</span>: <span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
-        <span class="ident">VerifyingKey</span> { <span class="ident">inner</span>: <span class="ident">public_key</span> }
+    <span class="kw">fn </span>from(verifying_key: <span class="kw-2">&amp;</span>VerifyingKey&lt;C&gt;) -&gt; EncodedPoint&lt;C&gt; {
+        verifying_key.to_encoded_point(C::COMPRESS_POINTS)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
+<span class="kw">impl</span>&lt;C&gt; From&lt;PublicKey&lt;C&gt;&gt; <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
 {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">public_key</span>: <span class="kw-2">&amp;</span><span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="ident">public_key</span>).<span class="ident">into</span>()
+    <span class="kw">fn </span>from(public_key: PublicKey&lt;C&gt;) -&gt; VerifyingKey&lt;C&gt; {
+        VerifyingKey { inner: public_key }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
+<span class="kw">impl</span>&lt;C&gt; From&lt;<span class="kw-2">&amp;</span>PublicKey&lt;C&gt;&gt; <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
 {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">verifying_key</span>: <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
-        <span class="ident">verifying_key</span>.<span class="ident">inner</span>
+    <span class="kw">fn </span>from(public_key: <span class="kw-2">&amp;</span>PublicKey&lt;C&gt;) -&gt; VerifyingKey&lt;C&gt; {
+        (<span class="kw-2">*</span>public_key).into()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
+<span class="kw">impl</span>&lt;C&gt; From&lt;VerifyingKey&lt;C&gt;&gt; <span class="kw">for </span>PublicKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
 {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">verifying_key</span>: <span class="kw-2">&amp;</span><span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) -&gt; <span class="ident">PublicKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="ident">verifying_key</span>).<span class="ident">into</span>()
+    <span class="kw">fn </span>from(verifying_key: VerifyingKey&lt;C&gt;) -&gt; PublicKey&lt;C&gt; {
+        verifying_key.inner
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> {}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
+<span class="kw">impl</span>&lt;C&gt; From&lt;<span class="kw-2">&amp;</span>VerifyingKey&lt;C&gt;&gt; <span class="kw">for </span>PublicKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
 {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">inner</span>)
+    <span class="kw">fn </span>from(verifying_key: <span class="kw-2">&amp;</span>VerifyingKey&lt;C&gt;) -&gt; PublicKey&lt;C&gt; {
+        (<span class="kw-2">*</span>verifying_key).into()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="kw">impl</span>&lt;C&gt; Eq <span class="kw">for </span>VerifyingKey&lt;C&gt; <span class="kw">where </span>C: PrimeCurve + ProjectiveArithmetic {}
+
+<span class="kw">impl</span>&lt;C&gt; PartialEq <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
 {
-    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">inner</span>)
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        <span class="self">self</span>.inner.eq(<span class="kw-2">&amp;</span>other.inner)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="kw">impl</span>&lt;C&gt; PartialOrd <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">inner</span>)
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="self">self</span>.inner.partial_cmp(<span class="kw-2">&amp;</span>other.inner)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="kw">impl</span>&lt;C&gt; Ord <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
-
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident"><span class="self">Self</span>::from_sec1_bytes</span>(<span class="ident">bytes</span>)
+    <span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; Ordering {
+        <span class="self">self</span>.inner.cmp(<span class="kw-2">&amp;</span>other.inner)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pkcs8&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pkcs8&quot;</span>)))]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">pkcs8::SubjectPublicKeyInfo</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">AlgorithmParameters</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> <span class="op">+</span> <span class="ident">PointCompression</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="kw">impl</span>&lt;C&gt; TryFrom&lt;<span class="kw-2">&amp;</span>[u8]&gt; <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + ProjectiveArithmetic,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">pkcs8::spki::Error</span>;
+    <span class="kw">type </span>Error = Error;
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">spki</span>: <span class="ident">pkcs8::SubjectPublicKeyInfo</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">pkcs8::spki::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">PublicKey::try_from</span>(<span class="ident">spki</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">inner</span><span class="op">|</span> <span class="self">Self</span> { <span class="ident">inner</span> })
+    <span class="kw">fn </span>try_from(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="self">Self</span>::from_sec1_bytes(bytes)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pkcs8&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pkcs8&quot;</span>)))]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">DecodePublicKey</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">AlgorithmParameters</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> <span class="op">+</span> <span class="ident">PointCompression</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pkcs8&quot;</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;pkcs8&quot;</span>)))]
+</span><span class="kw">impl</span>&lt;C&gt; TryFrom&lt;pkcs8::SubjectPublicKeyInfo&lt;<span class="lifetime">&#39;_</span>&gt;&gt; <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-}
+    <span class="kw">type </span>Error = pkcs8::spki::Error;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>)))]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">FromStr</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">AlgorithmParameters</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> <span class="op">+</span> <span class="ident">PointCompression</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
-{
-    <span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> <span class="ident">Error</span>;
-
-    <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident"><span class="self">Self</span>::from_public_key_pem</span>(<span class="ident">s</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::new</span>())
+    <span class="kw">fn </span>try_from(spki: pkcs8::SubjectPublicKeyInfo&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; pkcs8::spki::Result&lt;<span class="self">Self</span>&gt; {
+        PublicKey::try_from(spki).map(|inner| <span class="self">Self </span>{ inner })
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>))))]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">AlgorithmParameters</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> <span class="op">+</span> <span class="ident">PointCompression</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pkcs8&quot;</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;pkcs8&quot;</span>)))]
+</span><span class="kw">impl</span>&lt;C&gt; DecodePublicKey <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) -&gt; <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">ser::Serializer</span>,
+}
+
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pem&quot;</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;pem&quot;</span>)))]
+</span><span class="kw">impl</span>&lt;C&gt; FromStr <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
+{
+    <span class="kw">type </span><span class="prelude-val">Err </span>= Error;
+
+    <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="self">Self</span>::from_public_key_pem(s).map_err(|<span class="kw">_</span>| Error::new())
+    }
+}
+
+<span class="attribute">#[cfg(all(feature = <span class="string">&quot;pem&quot;</span>, feature = <span class="string">&quot;serde&quot;</span>))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = <span class="string">&quot;pem&quot;</span>, feature = <span class="string">&quot;serde&quot;</span>))))]
+</span><span class="kw">impl</span>&lt;C&gt; Serialize <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
+{
+    <span class="kw">fn </span>serialize&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: S) -&gt; core::result::Result&lt;S::Ok, S::Error&gt;
+    <span class="kw">where
+        </span>S: ser::Serializer,
     {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">serialize</span>(<span class="ident">serializer</span>)
+        <span class="self">self</span>.inner.serialize(serializer)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>))]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pem&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>))))]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerifyingKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">PrimeCurve</span> <span class="op">+</span> <span class="ident">AlgorithmParameters</span> <span class="op">+</span> <span class="ident">ProjectiveArithmetic</span> <span class="op">+</span> <span class="ident">PointCompression</span>,
-    <span class="ident">AffinePoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">FromEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToEncodedPoint</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-    <span class="ident">FieldSize</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>: <span class="ident">sec1::ModulusSize</span>,
+<span class="attribute">#[cfg(all(feature = <span class="string">&quot;pem&quot;</span>, feature = <span class="string">&quot;serde&quot;</span>))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = <span class="string">&quot;pem&quot;</span>, feature = <span class="string">&quot;serde&quot;</span>))))]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, C&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>VerifyingKey&lt;C&gt;
+<span class="kw">where
+    </span>C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint&lt;C&gt;: FromEncodedPoint&lt;C&gt; + ToEncodedPoint&lt;C&gt;,
+    FieldSize&lt;C&gt;: sec1::ModulusSize,
 {
-    <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="ident">deserializer</span>: <span class="ident">D</span>) -&gt; <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">de::Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; core::result::Result&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: de::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
     {
-        <span class="ident">PublicKey</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="ident">::deserialize</span>(<span class="ident">deserializer</span>).<span class="ident">map</span>(<span class="ident">Into::into</span>)
+        PublicKey::&lt;C&gt;::deserialize(deserializer).map(Into::into)
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ecdsa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ecdsa" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

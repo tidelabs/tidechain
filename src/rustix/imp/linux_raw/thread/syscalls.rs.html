@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/thread/syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/thread/syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../../normalize.css"><link rel="stylesheet" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../../dark.css" disabled><link rel="stylesheet" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -293,296 +288,295 @@
 <span id="288">288</span>
 <span id="289">289</span>
 <span id="290">290</span>
-</pre><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::thread`.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Safety</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See the `rustix::imp::syscalls` module documentation for details.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::thread`.
+//!
+//! # Safety
+//!
+//! See the `rustix::imp::syscalls` module documentation for details.
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
+</span><span class="attribute">#![allow(unsafe_code)]
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose</span>::{
-    <span class="ident">syscall0_readonly</span>, <span class="ident">syscall2</span>, <span class="ident">syscall4</span>, <span class="ident">syscall4_readonly</span>, <span class="ident">syscall6</span>,
+</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::{
+    syscall0_readonly, syscall2, syscall4, syscall4_readonly, syscall6,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::c</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{
-    <span class="ident">by_ref</span>, <span class="ident">c_int</span>, <span class="ident">c_uint</span>, <span class="ident">clockid_t</span>, <span class="ident">const_void_star</span>, <span class="ident">out</span>, <span class="ident">ret</span>, <span class="ident">ret_usize</span>, <span class="ident">ret_usize_infallible</span>,
-    <span class="ident">void_star</span>, <span class="ident">zero</span>,
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::c;
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::conv::{
+    by_ref, c_int, c_uint, clockid_t, const_void_star, out, ret, ret_usize, ret_usize_infallible,
+    void_star, zero,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::reg::nr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::process</span>::{<span class="ident">Pid</span>, <span class="ident">RawNonZeroPid</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::thread</span>::{<span class="ident">FutexFlags</span>, <span class="ident">FutexOperation</span>, <span class="ident">NanosleepRelativeResult</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::time</span>::{<span class="ident">ClockId</span>, <span class="ident">Timespec</span>};
-<span class="kw">use</span> <span class="ident">core::mem::MaybeUninit</span>;
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general</span>::{
-    <span class="ident">__NR_clock_nanosleep</span>, <span class="ident">__NR_futex</span>, <span class="ident">__NR_gettid</span>, <span class="ident">__NR_nanosleep</span>, <span class="ident">__kernel_pid_t</span>,
-    <span class="ident">__kernel_timespec</span>, <span class="ident">TIMER_ABSTIME</span>,
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::reg::nr;
+<span class="kw">use </span><span class="kw">crate</span>::io;
+<span class="kw">use </span><span class="kw">crate</span>::process::{Pid, RawNonZeroPid};
+<span class="kw">use </span><span class="kw">crate</span>::thread::{FutexFlags, FutexOperation, NanosleepRelativeResult};
+<span class="kw">use </span><span class="kw">crate</span>::time::{ClockId, Timespec};
+<span class="kw">use </span>core::mem::MaybeUninit;
+<span class="kw">use </span>linux_raw_sys::general::{
+    __NR_clock_nanosleep, __NR_futex, __NR_gettid, __NR_nanosleep, __kernel_pid_t,
+    __kernel_timespec, TIMER_ABSTIME,
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">use</span> {
-    <span class="ident">core::convert::TryInto</span>,
-    <span class="ident">linux_raw_sys::general::timespec</span> <span class="kw">as</span> <span class="ident">__kernel_old_timespec</span>,
-    <span class="ident">linux_raw_sys::general</span>::{<span class="ident">__NR_clock_nanosleep_time64</span>, <span class="ident">__NR_futex_time64</span>},
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">use </span>{
+    core::convert::TryInto,
+    linux_raw_sys::general::timespec <span class="kw">as </span>__kernel_old_timespec,
+    linux_raw_sys::general::{__NR_clock_nanosleep_time64, __NR_futex_time64},
 };
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">clock_nanosleep_relative</span>(
-    <span class="ident">id</span>: <span class="ident">ClockId</span>,
-    <span class="ident">req</span>: <span class="kw-2">&amp;</span><span class="ident">__kernel_timespec</span>,
-) -&gt; <span class="ident">NanosleepRelativeResult</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rem</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">__kernel_timespec</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="kw">match</span> <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_clock_nanosleep_time64</span>),
-            <span class="ident">clockid_t</span>(<span class="ident">id</span>),
-            <span class="ident">c_int</span>(<span class="number">0</span>),
-            <span class="ident">by_ref</span>(<span class="ident">req</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rem</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>clock_nanosleep_relative(
+    id: ClockId,
+    req: <span class="kw-2">&amp;</span>__kernel_timespec,
+) -&gt; NanosleepRelativeResult {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>rem = MaybeUninit::&lt;__kernel_timespec&gt;::uninit();
+        <span class="kw">match </span>ret(syscall4(
+            nr(__NR_clock_nanosleep_time64),
+            clockid_t(id),
+            c_int(<span class="number">0</span>),
+            by_ref(req),
+            out(<span class="kw-2">&amp;mut </span>rem),
         ))
-        .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about</span>
-            <span class="comment">// emulation.</span>
-            <span class="kw">if</span> <span class="ident">err</span> <span class="op">==</span> <span class="ident">io::Error::NOSYS</span> {
-                <span class="ident">clock_nanosleep_relative_old</span>(<span class="ident">id</span>, <span class="ident">req</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rem</span>)
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>)
+        .or_else(|err| {
+            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about
+            // emulation.
+            </span><span class="kw">if </span>err == io::Error::NOSYS {
+                clock_nanosleep_relative_old(id, req, <span class="kw-2">&amp;mut </span>rem)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(err)
             }
         }) {
-            <span class="prelude-val">Ok</span>(()) =&gt; <span class="ident">NanosleepRelativeResult::Ok</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::INTR</span>) =&gt; <span class="ident">NanosleepRelativeResult::Interrupted</span>(<span class="ident">rem</span>.<span class="ident">assume_init</span>()),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="ident">NanosleepRelativeResult::Err</span>(<span class="ident">err</span>),
+            <span class="prelude-val">Ok</span>(()) =&gt; NanosleepRelativeResult::Ok,
+            <span class="prelude-val">Err</span>(io::Error::INTR) =&gt; NanosleepRelativeResult::Interrupted(rem.assume_init()),
+            <span class="prelude-val">Err</span>(err) =&gt; NanosleepRelativeResult::Err(err),
         }
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rem</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">__kernel_timespec</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="kw">match</span> <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_clock_nanosleep</span>),
-            <span class="ident">clockid_t</span>(<span class="ident">id</span>),
-            <span class="ident">c_int</span>(<span class="number">0</span>),
-            <span class="ident">by_ref</span>(<span class="ident">req</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rem</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>rem = MaybeUninit::&lt;__kernel_timespec&gt;::uninit();
+        <span class="kw">match </span>ret(syscall4(
+            nr(__NR_clock_nanosleep),
+            clockid_t(id),
+            c_int(<span class="number">0</span>),
+            by_ref(req),
+            out(<span class="kw-2">&amp;mut </span>rem),
         )) {
-            <span class="prelude-val">Ok</span>(()) =&gt; <span class="ident">NanosleepRelativeResult::Ok</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::INTR</span>) =&gt; <span class="ident">NanosleepRelativeResult::Interrupted</span>(<span class="ident">rem</span>.<span class="ident">assume_init</span>()),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="ident">NanosleepRelativeResult::Err</span>(<span class="ident">err</span>),
+            <span class="prelude-val">Ok</span>(()) =&gt; NanosleepRelativeResult::Ok,
+            <span class="prelude-val">Err</span>(io::Error::INTR) =&gt; NanosleepRelativeResult::Interrupted(rem.assume_init()),
+            <span class="prelude-val">Err</span>(err) =&gt; NanosleepRelativeResult::Err(err),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">clock_nanosleep_relative_old</span>(
-    <span class="ident">id</span>: <span class="ident">ClockId</span>,
-    <span class="ident">req</span>: <span class="kw-2">&amp;</span><span class="ident">__kernel_timespec</span>,
-    <span class="ident">rem</span>: <span class="kw-2">&amp;mut</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">__kernel_timespec</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">old_req</span> <span class="op">=</span> <span class="ident">__kernel_old_timespec</span> {
-        <span class="ident">tv_sec</span>: <span class="ident">req</span>.<span class="ident">tv_sec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-        <span class="ident">tv_nsec</span>: <span class="ident">req</span>.<span class="ident">tv_nsec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">unsafe fn </span>clock_nanosleep_relative_old(
+    id: ClockId,
+    req: <span class="kw-2">&amp;</span>__kernel_timespec,
+    rem: <span class="kw-2">&amp;mut </span>MaybeUninit&lt;__kernel_timespec&gt;,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">let </span>old_req = __kernel_old_timespec {
+        tv_sec: req.tv_sec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
+        tv_nsec: req.tv_nsec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
     };
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">old_rem</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">__kernel_old_timespec</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_clock_nanosleep</span>),
-        <span class="ident">clockid_t</span>(<span class="ident">id</span>),
-        <span class="ident">c_int</span>(<span class="number">0</span>),
-        <span class="ident">by_ref</span>(<span class="kw-2">&amp;</span><span class="ident">old_req</span>),
-        <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">old_rem</span>),
+    <span class="kw">let </span><span class="kw-2">mut </span>old_rem = MaybeUninit::&lt;__kernel_old_timespec&gt;::uninit();
+    <span class="kw">let </span>res = ret(syscall4(
+        nr(__NR_clock_nanosleep),
+        clockid_t(id),
+        c_int(<span class="number">0</span>),
+        by_ref(<span class="kw-2">&amp;</span>old_req),
+        out(<span class="kw-2">&amp;mut </span>old_rem),
     ));
-    <span class="kw">let</span> <span class="ident">old_rem</span> <span class="op">=</span> <span class="ident">old_rem</span>.<span class="ident">assume_init</span>();
-    <span class="kw-2">*</span><span class="ident">rem</span>.<span class="ident">as_mut_ptr</span>() <span class="op">=</span> <span class="ident">__kernel_timespec</span> {
-        <span class="ident">tv_sec</span>: <span class="ident">old_rem</span>.<span class="ident">tv_sec</span>.<span class="ident">into</span>(),
-        <span class="ident">tv_nsec</span>: <span class="ident">old_rem</span>.<span class="ident">tv_nsec</span>.<span class="ident">into</span>(),
+    <span class="kw">let </span>old_rem = old_rem.assume_init();
+    <span class="kw-2">*</span>rem.as_mut_ptr() = __kernel_timespec {
+        tv_sec: old_rem.tv_sec.into(),
+        tv_nsec: old_rem.tv_nsec.into(),
     };
-    <span class="ident">res</span>
+    res
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">clock_nanosleep_absolute</span>(<span class="ident">id</span>: <span class="ident">ClockId</span>, <span class="ident">req</span>: <span class="kw-2">&amp;</span><span class="ident">__kernel_timespec</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_clock_nanosleep_time64</span>),
-            <span class="ident">clockid_t</span>(<span class="ident">id</span>),
-            <span class="ident">c_uint</span>(<span class="ident">TIMER_ABSTIME</span>),
-            <span class="ident">by_ref</span>(<span class="ident">req</span>),
-            <span class="ident">zero</span>(),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>clock_nanosleep_absolute(id: ClockId, req: <span class="kw-2">&amp;</span>__kernel_timespec) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_clock_nanosleep_time64),
+            clockid_t(id),
+            c_uint(TIMER_ABSTIME),
+            by_ref(req),
+            zero(),
         ))
-        .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about</span>
-            <span class="comment">// emulation.</span>
-            <span class="kw">if</span> <span class="ident">err</span> <span class="op">==</span> <span class="ident">io::Error::NOSYS</span> {
-                <span class="ident">clock_nanosleep_absolute_old</span>(<span class="ident">id</span>, <span class="ident">req</span>)
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>)
+        .or_else(|err| {
+            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about
+            // emulation.
+            </span><span class="kw">if </span>err == io::Error::NOSYS {
+                clock_nanosleep_absolute_old(id, req)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(err)
             }
         })
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_clock_nanosleep</span>),
-            <span class="ident">clockid_t</span>(<span class="ident">id</span>),
-            <span class="ident">c_uint</span>(<span class="ident">TIMER_ABSTIME</span>),
-            <span class="ident">by_ref</span>(<span class="ident">req</span>),
-            <span class="ident">zero</span>(),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_clock_nanosleep),
+            clockid_t(id),
+            c_uint(TIMER_ABSTIME),
+            by_ref(req),
+            zero(),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">clock_nanosleep_absolute_old</span>(<span class="ident">id</span>: <span class="ident">ClockId</span>, <span class="ident">req</span>: <span class="kw-2">&amp;</span><span class="ident">__kernel_timespec</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">old_req</span> <span class="op">=</span> <span class="ident">__kernel_old_timespec</span> {
-        <span class="ident">tv_sec</span>: <span class="ident">req</span>.<span class="ident">tv_sec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-        <span class="ident">tv_nsec</span>: <span class="ident">req</span>.<span class="ident">tv_nsec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">unsafe fn </span>clock_nanosleep_absolute_old(id: ClockId, req: <span class="kw-2">&amp;</span>__kernel_timespec) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">let </span>old_req = __kernel_old_timespec {
+        tv_sec: req.tv_sec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
+        tv_nsec: req.tv_nsec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
     };
-    <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_clock_nanosleep</span>),
-        <span class="ident">clockid_t</span>(<span class="ident">id</span>),
-        <span class="ident">c_int</span>(<span class="number">0</span>),
-        <span class="ident">by_ref</span>(<span class="kw-2">&amp;</span><span class="ident">old_req</span>),
-        <span class="ident">zero</span>(),
+    ret(syscall4_readonly(
+        nr(__NR_clock_nanosleep),
+        clockid_t(id),
+        c_int(<span class="number">0</span>),
+        by_ref(<span class="kw-2">&amp;</span>old_req),
+        zero(),
     ))
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">nanosleep</span>(<span class="ident">req</span>: <span class="kw-2">&amp;</span><span class="ident">__kernel_timespec</span>) -&gt; <span class="ident">NanosleepRelativeResult</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rem</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">__kernel_timespec</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="kw">match</span> <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_clock_nanosleep_time64</span>),
-            <span class="ident">clockid_t</span>(<span class="ident">ClockId::Realtime</span>),
-            <span class="ident">c_int</span>(<span class="number">0</span>),
-            <span class="ident">by_ref</span>(<span class="ident">req</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rem</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>nanosleep(req: <span class="kw-2">&amp;</span>__kernel_timespec) -&gt; NanosleepRelativeResult {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>rem = MaybeUninit::&lt;__kernel_timespec&gt;::uninit();
+        <span class="kw">match </span>ret(syscall4(
+            nr(__NR_clock_nanosleep_time64),
+            clockid_t(ClockId::Realtime),
+            c_int(<span class="number">0</span>),
+            by_ref(req),
+            out(<span class="kw-2">&amp;mut </span>rem),
         ))
-        .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about</span>
-            <span class="comment">// emulation.</span>
-            <span class="kw">if</span> <span class="ident">err</span> <span class="op">==</span> <span class="ident">io::Error::NOSYS</span> {
-                <span class="ident">nanosleep_old</span>(<span class="ident">req</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rem</span>)
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>)
+        .or_else(|err| {
+            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about
+            // emulation.
+            </span><span class="kw">if </span>err == io::Error::NOSYS {
+                nanosleep_old(req, <span class="kw-2">&amp;mut </span>rem)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(err)
             }
         }) {
-            <span class="prelude-val">Ok</span>(()) =&gt; <span class="ident">NanosleepRelativeResult::Ok</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::INTR</span>) =&gt; <span class="ident">NanosleepRelativeResult::Interrupted</span>(<span class="ident">rem</span>.<span class="ident">assume_init</span>()),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="ident">NanosleepRelativeResult::Err</span>(<span class="ident">err</span>),
+            <span class="prelude-val">Ok</span>(()) =&gt; NanosleepRelativeResult::Ok,
+            <span class="prelude-val">Err</span>(io::Error::INTR) =&gt; NanosleepRelativeResult::Interrupted(rem.assume_init()),
+            <span class="prelude-val">Err</span>(err) =&gt; NanosleepRelativeResult::Err(err),
         }
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rem</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">__kernel_timespec</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="kw">match</span> <span class="ident">ret</span>(<span class="ident">syscall2</span>(<span class="ident">nr</span>(<span class="ident">__NR_nanosleep</span>), <span class="ident">by_ref</span>(<span class="ident">req</span>), <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rem</span>))) {
-            <span class="prelude-val">Ok</span>(()) =&gt; <span class="ident">NanosleepRelativeResult::Ok</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::INTR</span>) =&gt; <span class="ident">NanosleepRelativeResult::Interrupted</span>(<span class="ident">rem</span>.<span class="ident">assume_init</span>()),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="ident">NanosleepRelativeResult::Err</span>(<span class="ident">err</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>rem = MaybeUninit::&lt;__kernel_timespec&gt;::uninit();
+        <span class="kw">match </span>ret(syscall2(nr(__NR_nanosleep), by_ref(req), out(<span class="kw-2">&amp;mut </span>rem))) {
+            <span class="prelude-val">Ok</span>(()) =&gt; NanosleepRelativeResult::Ok,
+            <span class="prelude-val">Err</span>(io::Error::INTR) =&gt; NanosleepRelativeResult::Interrupted(rem.assume_init()),
+            <span class="prelude-val">Err</span>(err) =&gt; NanosleepRelativeResult::Err(err),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">nanosleep_old</span>(
-    <span class="ident">req</span>: <span class="kw-2">&amp;</span><span class="ident">__kernel_timespec</span>,
-    <span class="ident">rem</span>: <span class="kw-2">&amp;mut</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">__kernel_timespec</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">old_req</span> <span class="op">=</span> <span class="ident">__kernel_old_timespec</span> {
-        <span class="ident">tv_sec</span>: <span class="ident">req</span>.<span class="ident">tv_sec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-        <span class="ident">tv_nsec</span>: <span class="ident">req</span>.<span class="ident">tv_nsec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">unsafe fn </span>nanosleep_old(
+    req: <span class="kw-2">&amp;</span>__kernel_timespec,
+    rem: <span class="kw-2">&amp;mut </span>MaybeUninit&lt;__kernel_timespec&gt;,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">let </span>old_req = __kernel_old_timespec {
+        tv_sec: req.tv_sec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
+        tv_nsec: req.tv_nsec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
     };
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">old_rem</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">__kernel_old_timespec</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_nanosleep</span>),
-        <span class="ident">by_ref</span>(<span class="kw-2">&amp;</span><span class="ident">old_req</span>),
-        <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">old_rem</span>),
+    <span class="kw">let </span><span class="kw-2">mut </span>old_rem = MaybeUninit::&lt;__kernel_old_timespec&gt;::uninit();
+    <span class="kw">let </span>res = ret(syscall2(
+        nr(__NR_nanosleep),
+        by_ref(<span class="kw-2">&amp;</span>old_req),
+        out(<span class="kw-2">&amp;mut </span>old_rem),
     ));
-    <span class="kw">let</span> <span class="ident">old_rem</span> <span class="op">=</span> <span class="ident">old_rem</span>.<span class="ident">assume_init</span>();
-    <span class="kw-2">*</span><span class="ident">rem</span>.<span class="ident">as_mut_ptr</span>() <span class="op">=</span> <span class="ident">__kernel_timespec</span> {
-        <span class="ident">tv_sec</span>: <span class="ident">old_rem</span>.<span class="ident">tv_sec</span>.<span class="ident">into</span>(),
-        <span class="ident">tv_nsec</span>: <span class="ident">old_rem</span>.<span class="ident">tv_nsec</span>.<span class="ident">into</span>(),
+    <span class="kw">let </span>old_rem = old_rem.assume_init();
+    <span class="kw-2">*</span>rem.as_mut_ptr() = __kernel_timespec {
+        tv_sec: old_rem.tv_sec.into(),
+        tv_nsec: old_rem.tv_nsec.into(),
     };
-    <span class="ident">res</span>
+    res
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">gettid</span>() -&gt; <span class="ident">Pid</span> {
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="ident">tid</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="ident">ret_usize_infallible</span>(<span class="ident">syscall0_readonly</span>(<span class="ident">nr</span>(<span class="ident">__NR_gettid</span>))) <span class="kw">as</span> <span class="ident">__kernel_pid_t</span>;
-        <span class="macro">debug_assert_ne!</span>(<span class="ident">tid</span>, <span class="number">0</span>);
-        <span class="ident">Pid::from_raw_nonzero</span>(<span class="ident">RawNonZeroPid::new_unchecked</span>(<span class="ident">tid</span> <span class="kw">as</span> <span class="ident">u32</span>))
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gettid() -&gt; Pid {
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span>tid: i32 = ret_usize_infallible(syscall0_readonly(nr(__NR_gettid))) <span class="kw">as </span>__kernel_pid_t;
+        <span class="macro">debug_assert_ne!</span>(tid, <span class="number">0</span>);
+        Pid::from_raw_nonzero(RawNonZeroPid::new_unchecked(tid <span class="kw">as </span>u32))
     }
 }
 
-<span class="comment">// TODO: This could be de-multiplexed.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">futex</span>(
-    <span class="ident">uaddr</span>: <span class="kw-2">*mut</span> <span class="ident">u32</span>,
-    <span class="ident">op</span>: <span class="ident">FutexOperation</span>,
-    <span class="ident">flags</span>: <span class="ident">FutexFlags</span>,
-    <span class="ident">val</span>: <span class="ident">u32</span>,
-    <span class="ident">utime</span>: <span class="kw-2">*const</span> <span class="ident">Timespec</span>,
-    <span class="ident">uaddr2</span>: <span class="kw-2">*mut</span> <span class="ident">u32</span>,
-    <span class="ident">val3</span>: <span class="ident">u32</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_futex_time64</span>),
-            <span class="ident">void_star</span>(<span class="ident">uaddr</span>.<span class="ident">cast</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">op</span> <span class="kw">as</span> <span class="ident">c::c_uint</span> <span class="op">|</span> <span class="ident">flags</span>.<span class="ident">bits</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">val</span>),
-            <span class="ident">const_void_star</span>(<span class="ident">utime</span>.<span class="ident">cast</span>()),
-            <span class="ident">void_star</span>(<span class="ident">uaddr2</span>.<span class="ident">cast</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">val3</span>),
+<span class="comment">// TODO: This could be de-multiplexed.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>futex(
+    uaddr: <span class="kw-2">*mut </span>u32,
+    op: FutexOperation,
+    flags: FutexFlags,
+    val: u32,
+    utime: <span class="kw-2">*const </span>Timespec,
+    uaddr2: <span class="kw-2">*mut </span>u32,
+    val3: u32,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span>{
+        ret_usize(syscall6(
+            nr(__NR_futex_time64),
+            void_star(uaddr.cast()),
+            c_uint(op <span class="kw">as </span>c::c_uint | flags.bits()),
+            c_uint(val),
+            const_void_star(utime.cast()),
+            void_star(uaddr2.cast()),
+            c_uint(val3),
         ))
-        .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about</span>
-            <span class="comment">// emulation.</span>
-            <span class="kw">if</span> <span class="ident">err</span> <span class="op">==</span> <span class="ident">io::Error::NOSYS</span> {
-                <span class="ident">futex_old</span>(<span class="ident">uaddr</span>, <span class="ident">op</span>, <span class="ident">flags</span>, <span class="ident">val</span>, <span class="ident">utime</span>, <span class="ident">uaddr2</span>, <span class="ident">val3</span>)
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>)
+        .or_else(|err| {
+            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about
+            // emulation.
+            </span><span class="kw">if </span>err == io::Error::NOSYS {
+                futex_old(uaddr, op, flags, val, utime, uaddr2, val3)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(err)
             }
         })
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="ident">ret_usize</span>(<span class="ident">syscall6</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_futex</span>),
-        <span class="ident">void_star</span>(<span class="ident">uaddr</span>.<span class="ident">cast</span>()),
-        <span class="ident">c_uint</span>(<span class="ident">op</span> <span class="kw">as</span> <span class="ident">c::c_uint</span> <span class="op">|</span> <span class="ident">flags</span>.<span class="ident">bits</span>()),
-        <span class="ident">c_uint</span>(<span class="ident">val</span>),
-        <span class="ident">const_void_star</span>(<span class="ident">utime</span>.<span class="ident">cast</span>()),
-        <span class="ident">void_star</span>(<span class="ident">uaddr2</span>.<span class="ident">cast</span>()),
-        <span class="ident">c_uint</span>(<span class="ident">val3</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span>ret_usize(syscall6(
+        nr(__NR_futex),
+        void_star(uaddr.cast()),
+        c_uint(op <span class="kw">as </span>c::c_uint | flags.bits()),
+        c_uint(val),
+        const_void_star(utime.cast()),
+        void_star(uaddr2.cast()),
+        c_uint(val3),
     ))
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">futex_old</span>(
-    <span class="ident">uaddr</span>: <span class="kw-2">*mut</span> <span class="ident">u32</span>,
-    <span class="ident">op</span>: <span class="ident">FutexOperation</span>,
-    <span class="ident">flags</span>: <span class="ident">FutexFlags</span>,
-    <span class="ident">val</span>: <span class="ident">u32</span>,
-    <span class="ident">utime</span>: <span class="kw-2">*const</span> <span class="ident">Timespec</span>,
-    <span class="ident">uaddr2</span>: <span class="kw-2">*mut</span> <span class="ident">u32</span>,
-    <span class="ident">val3</span>: <span class="ident">u32</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">old_utime</span> <span class="op">=</span> <span class="ident">__kernel_old_timespec</span> {
-        <span class="ident">tv_sec</span>: (<span class="kw-2">*</span><span class="ident">utime</span>).<span class="ident">tv_sec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-        <span class="ident">tv_nsec</span>: (<span class="kw-2">*</span><span class="ident">utime</span>).<span class="ident">tv_nsec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">unsafe fn </span>futex_old(
+    uaddr: <span class="kw-2">*mut </span>u32,
+    op: FutexOperation,
+    flags: FutexFlags,
+    val: u32,
+    utime: <span class="kw-2">*const </span>Timespec,
+    uaddr2: <span class="kw-2">*mut </span>u32,
+    val3: u32,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>old_utime = __kernel_old_timespec {
+        tv_sec: (<span class="kw-2">*</span>utime).tv_sec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
+        tv_nsec: (<span class="kw-2">*</span>utime).tv_nsec.try_into().map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
     };
-    <span class="ident">ret_usize</span>(<span class="ident">syscall6</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_futex</span>),
-        <span class="ident">void_star</span>(<span class="ident">uaddr</span>.<span class="ident">cast</span>()),
-        <span class="ident">c_uint</span>(<span class="ident">op</span> <span class="kw">as</span> <span class="ident">c::c_uint</span> <span class="op">|</span> <span class="ident">flags</span>.<span class="ident">bits</span>()),
-        <span class="ident">c_uint</span>(<span class="ident">val</span>),
-        <span class="ident">by_ref</span>(<span class="kw-2">&amp;</span><span class="ident">old_utime</span>),
-        <span class="ident">void_star</span>(<span class="ident">uaddr2</span>.<span class="ident">cast</span>()),
-        <span class="ident">c_uint</span>(<span class="ident">val3</span>),
+    ret_usize(syscall6(
+        nr(__NR_futex),
+        void_star(uaddr.cast()),
+        c_uint(op <span class="kw">as </span>c::c_uint | flags.bits()),
+        c_uint(val),
+        by_ref(<span class="kw-2">&amp;</span>old_utime),
+        void_star(uaddr2.cast()),
+        c_uint(val3),
     ))
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

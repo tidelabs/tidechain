@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/ir/builder.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cranelift_codegen/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cranelift-codegen-0.82.3/src/ir/builder.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../cranelift_codegen/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -268,271 +263,270 @@
 <span id="263">263</span>
 <span id="264">264</span>
 <span id="265">265</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Cranelift instruction builder.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! A `Builder` provides a convenient interface for inserting instructions into a Cranelift</span>
-<span class="doccomment">//! function. Many of its methods are generated from the meta language instruction definitions.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Cranelift instruction builder.
+//!
+//! A `Builder` provides a convenient interface for inserting instructions into a Cranelift
+//! function. Many of its methods are generated from the meta language instruction definitions.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::types</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="ident">DataFlowGraph</span>, <span class="ident">InstructionData</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="ident">Inst</span>, <span class="ident">Opcode</span>, <span class="ident">Type</span>, <span class="ident">Value</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::ir;
+<span class="kw">use </span><span class="kw">crate</span>::ir::types;
+<span class="kw">use </span><span class="kw">crate</span>::ir::{DataFlowGraph, InstructionData};
+<span class="kw">use </span><span class="kw">crate</span>::ir::{Inst, Opcode, Type, Value};
 
-<span class="doccomment">/// Base trait for instruction builders.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The `InstBuilderBase` trait provides the basic functionality required by the methods of the</span>
-<span class="doccomment">/// generated `InstBuilder` trait. These methods should not normally be used directly. Use the</span>
-<span class="doccomment">/// methods in the `InstBuilder` trait instead.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Any data type that implements `InstBuilderBase` also gets all the methods of the `InstBuilder`</span>
-<span class="doccomment">/// trait.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">InstBuilderBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
-    <span class="doccomment">/// Get an immutable reference to the data flow graph that will hold the constructed</span>
-    <span class="doccomment">/// instructions.</span>
-    <span class="kw">fn</span> <span class="ident">data_flow_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">DataFlowGraph</span>;
-    <span class="doccomment">/// Get a mutable reference to the data flow graph that will hold the constructed</span>
-    <span class="doccomment">/// instructions.</span>
-    <span class="kw">fn</span> <span class="ident">data_flow_graph_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">DataFlowGraph</span>;
+<span class="doccomment">/// Base trait for instruction builders.
+///
+/// The `InstBuilderBase` trait provides the basic functionality required by the methods of the
+/// generated `InstBuilder` trait. These methods should not normally be used directly. Use the
+/// methods in the `InstBuilder` trait instead.
+///
+/// Any data type that implements `InstBuilderBase` also gets all the methods of the `InstBuilder`
+/// trait.
+</span><span class="kw">pub trait </span>InstBuilderBase&lt;<span class="lifetime">&#39;f</span>&gt;: Sized {
+    <span class="doccomment">/// Get an immutable reference to the data flow graph that will hold the constructed
+    /// instructions.
+    </span><span class="kw">fn </span>data_flow_graph(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>DataFlowGraph;
+    <span class="doccomment">/// Get a mutable reference to the data flow graph that will hold the constructed
+    /// instructions.
+    </span><span class="kw">fn </span>data_flow_graph_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>DataFlowGraph;
 
-    <span class="doccomment">/// Insert an instruction and return a reference to it, consuming the builder.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The result types may depend on a controlling type variable. For non-polymorphic</span>
-    <span class="doccomment">/// instructions with multiple results, pass `INVALID` for the `ctrl_typevar` argument.</span>
-    <span class="kw">fn</span> <span class="ident">build</span>(<span class="self">self</span>, <span class="ident">data</span>: <span class="ident">InstructionData</span>, <span class="ident">ctrl_typevar</span>: <span class="ident">Type</span>) -&gt; (<span class="ident">Inst</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="kw-2">mut</span> <span class="ident">DataFlowGraph</span>);
+    <span class="doccomment">/// Insert an instruction and return a reference to it, consuming the builder.
+    ///
+    /// The result types may depend on a controlling type variable. For non-polymorphic
+    /// instructions with multiple results, pass `INVALID` for the `ctrl_typevar` argument.
+    </span><span class="kw">fn </span>build(<span class="self">self</span>, data: InstructionData, ctrl_typevar: Type) -&gt; (Inst, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span><span class="kw-2">mut </span>DataFlowGraph);
 }
 
-<span class="comment">// Include trait code generated by `cranelift-codegen/meta/src/gen_inst.rs`.</span>
-<span class="comment">//</span>
-<span class="comment">// This file defines the `InstBuilder` trait as an extension of `InstBuilderBase` with methods per</span>
-<span class="comment">// instruction format and per opcode.</span>
-<span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">&quot;OUT_DIR&quot;</span>), <span class="string">&quot;/inst_builder.rs&quot;</span>));
+<span class="comment">// Include trait code generated by `cranelift-codegen/meta/src/gen_inst.rs`.
+//
+// This file defines the `InstBuilder` trait as an extension of `InstBuilderBase` with methods per
+// instruction format and per opcode.
+</span><span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">&quot;OUT_DIR&quot;</span>), <span class="string">&quot;/inst_builder.rs&quot;</span>));
 
-<span class="doccomment">/// Any type implementing `InstBuilderBase` gets all the `InstBuilder` methods for free.</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">T</span>: <span class="ident">InstBuilderBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">InstBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span> {}
+<span class="doccomment">/// Any type implementing `InstBuilderBase` gets all the `InstBuilder` methods for free.
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;f</span>, T: InstBuilderBase&lt;<span class="lifetime">&#39;f</span>&gt;&gt; InstBuilder&lt;<span class="lifetime">&#39;f</span>&gt; <span class="kw">for </span>T {}
 
-<span class="doccomment">/// Base trait for instruction inserters.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is an alternative base trait for an instruction builder to implement.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An instruction inserter can be adapted into an instruction builder by wrapping it in an</span>
-<span class="doccomment">/// `InsertBuilder`. This provides some common functionality for instruction builders that insert</span>
-<span class="doccomment">/// new instructions, as opposed to the `ReplaceBuilder` which overwrites existing instructions.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">InstInserterBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
-    <span class="doccomment">/// Get an immutable reference to the data flow graph.</span>
-    <span class="kw">fn</span> <span class="ident">data_flow_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">DataFlowGraph</span>;
+<span class="doccomment">/// Base trait for instruction inserters.
+///
+/// This is an alternative base trait for an instruction builder to implement.
+///
+/// An instruction inserter can be adapted into an instruction builder by wrapping it in an
+/// `InsertBuilder`. This provides some common functionality for instruction builders that insert
+/// new instructions, as opposed to the `ReplaceBuilder` which overwrites existing instructions.
+</span><span class="kw">pub trait </span>InstInserterBase&lt;<span class="lifetime">&#39;f</span>&gt;: Sized {
+    <span class="doccomment">/// Get an immutable reference to the data flow graph.
+    </span><span class="kw">fn </span>data_flow_graph(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>DataFlowGraph;
 
-    <span class="doccomment">/// Get a mutable reference to the data flow graph.</span>
-    <span class="kw">fn</span> <span class="ident">data_flow_graph_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">DataFlowGraph</span>;
+    <span class="doccomment">/// Get a mutable reference to the data flow graph.
+    </span><span class="kw">fn </span>data_flow_graph_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>DataFlowGraph;
 
-    <span class="doccomment">/// Insert a new instruction which belongs to the DFG.</span>
-    <span class="kw">fn</span> <span class="ident">insert_built_inst</span>(<span class="self">self</span>, <span class="ident">inst</span>: <span class="ident">Inst</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="kw-2">mut</span> <span class="ident">DataFlowGraph</span>;
+    <span class="doccomment">/// Insert a new instruction which belongs to the DFG.
+    </span><span class="kw">fn </span>insert_built_inst(<span class="self">self</span>, inst: Inst) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span><span class="kw-2">mut </span>DataFlowGraph;
 }
 
-<span class="kw">use</span> <span class="ident">core::marker::PhantomData</span>;
+<span class="kw">use </span>core::marker::PhantomData;
 
-<span class="doccomment">/// Builder that inserts an instruction at the current position.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An `InsertBuilder` is a wrapper for an `InstInserterBase` that turns it into an instruction</span>
-<span class="doccomment">/// builder with some additional facilities for creating instructions that reuse existing values as</span>
-<span class="doccomment">/// their results.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InsertBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>: <span class="ident">InstInserterBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="ident">inserter</span>: <span class="ident">IIB</span>,
-    <span class="ident">unused</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="ident">u32</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Builder that inserts an instruction at the current position.
+///
+/// An `InsertBuilder` is a wrapper for an `InstInserterBase` that turns it into an instruction
+/// builder with some additional facilities for creating instructions that reuse existing values as
+/// their results.
+</span><span class="kw">pub struct </span>InsertBuilder&lt;<span class="lifetime">&#39;f</span>, IIB: InstInserterBase&lt;<span class="lifetime">&#39;f</span>&gt;&gt; {
+    inserter: IIB,
+    unused: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span>u32&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>: <span class="ident">InstInserterBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">InsertBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Create a new builder which inserts instructions at `pos`.</span>
-    <span class="doccomment">/// The `dfg` and `pos.layout` references should be from the same `Function`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inserter</span>: <span class="ident">IIB</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">inserter</span>,
-            <span class="ident">unused</span>: <span class="ident">PhantomData</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;f</span>, IIB: InstInserterBase&lt;<span class="lifetime">&#39;f</span>&gt;&gt; InsertBuilder&lt;<span class="lifetime">&#39;f</span>, IIB&gt; {
+    <span class="doccomment">/// Create a new builder which inserts instructions at `pos`.
+    /// The `dfg` and `pos.layout` references should be from the same `Function`.
+    </span><span class="kw">pub fn </span>new(inserter: IIB) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            inserter,
+            unused: PhantomData,
         }
     }
 
-    <span class="doccomment">/// Reuse result values in `reuse`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Convert this builder into one that will reuse the provided result values instead of</span>
-    <span class="doccomment">/// allocating new ones. The provided values for reuse must not be attached to anything. Any</span>
-    <span class="doccomment">/// missing result values will be allocated as normal.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The `reuse` argument is expected to be an array of `Option&lt;Value&gt;`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_results</span><span class="op">&lt;</span><span class="ident">Array</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">reuse</span>: <span class="ident">Array</span>) -&gt; <span class="ident">InsertReuseBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>, <span class="ident">Array</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Array</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>]<span class="op">&gt;</span>,
+    <span class="doccomment">/// Reuse result values in `reuse`.
+    ///
+    /// Convert this builder into one that will reuse the provided result values instead of
+    /// allocating new ones. The provided values for reuse must not be attached to anything. Any
+    /// missing result values will be allocated as normal.
+    ///
+    /// The `reuse` argument is expected to be an array of `Option&lt;Value&gt;`.
+    </span><span class="kw">pub fn </span>with_results&lt;Array&gt;(<span class="self">self</span>, reuse: Array) -&gt; InsertReuseBuilder&lt;<span class="lifetime">&#39;f</span>, IIB, Array&gt;
+    <span class="kw">where
+        </span>Array: AsRef&lt;[<span class="prelude-ty">Option</span>&lt;Value&gt;]&gt;,
     {
-        <span class="ident">InsertReuseBuilder</span> {
-            <span class="ident">inserter</span>: <span class="self">self</span>.<span class="ident">inserter</span>,
-            <span class="ident">reuse</span>,
-            <span class="ident">unused</span>: <span class="ident">PhantomData</span>,
+        InsertReuseBuilder {
+            inserter: <span class="self">self</span>.inserter,
+            reuse,
+            unused: PhantomData,
         }
     }
 
-    <span class="doccomment">/// Reuse a single result value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Convert this into a builder that will reuse `v` as the single result value. The reused</span>
-    <span class="doccomment">/// result value `v` must not be attached to anything.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method should only be used when building an instruction with exactly one result. Use</span>
-    <span class="doccomment">/// `with_results()` for the more general case.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_result</span>(<span class="self">self</span>, <span class="ident">v</span>: <span class="ident">Value</span>) -&gt; <span class="ident">InsertReuseBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>, [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>; <span class="number">1</span>]<span class="op">&gt;</span> {
-        <span class="comment">// TODO: Specialize this to return a different builder that just attaches `v` instead of</span>
-        <span class="comment">// calling `make_inst_results_reusing()`.</span>
-        <span class="self">self</span>.<span class="ident">with_results</span>([<span class="prelude-val">Some</span>(<span class="ident">v</span>)])
+    <span class="doccomment">/// Reuse a single result value.
+    ///
+    /// Convert this into a builder that will reuse `v` as the single result value. The reused
+    /// result value `v` must not be attached to anything.
+    ///
+    /// This method should only be used when building an instruction with exactly one result. Use
+    /// `with_results()` for the more general case.
+    </span><span class="kw">pub fn </span>with_result(<span class="self">self</span>, v: Value) -&gt; InsertReuseBuilder&lt;<span class="lifetime">&#39;f</span>, IIB, [<span class="prelude-ty">Option</span>&lt;Value&gt;; <span class="number">1</span>]&gt; {
+        <span class="comment">// TODO: Specialize this to return a different builder that just attaches `v` instead of
+        // calling `make_inst_results_reusing()`.
+        </span><span class="self">self</span>.with_results([<span class="prelude-val">Some</span>(v)])
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>: <span class="ident">InstInserterBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">InstBuilderBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">InsertBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">data_flow_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">DataFlowGraph</span> {
-        <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">data_flow_graph</span>()
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;f</span>, IIB: InstInserterBase&lt;<span class="lifetime">&#39;f</span>&gt;&gt; InstBuilderBase&lt;<span class="lifetime">&#39;f</span>&gt; <span class="kw">for </span>InsertBuilder&lt;<span class="lifetime">&#39;f</span>, IIB&gt; {
+    <span class="kw">fn </span>data_flow_graph(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>DataFlowGraph {
+        <span class="self">self</span>.inserter.data_flow_graph()
     }
 
-    <span class="kw">fn</span> <span class="ident">data_flow_graph_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">DataFlowGraph</span> {
-        <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">data_flow_graph_mut</span>()
+    <span class="kw">fn </span>data_flow_graph_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>DataFlowGraph {
+        <span class="self">self</span>.inserter.data_flow_graph_mut()
     }
 
-    <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">data</span>: <span class="ident">InstructionData</span>, <span class="ident">ctrl_typevar</span>: <span class="ident">Type</span>) -&gt; (<span class="ident">Inst</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="kw-2">mut</span> <span class="ident">DataFlowGraph</span>) {
-        <span class="kw">let</span> <span class="ident">inst</span>;
+    <span class="kw">fn </span>build(<span class="kw-2">mut </span><span class="self">self</span>, data: InstructionData, ctrl_typevar: Type) -&gt; (Inst, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span><span class="kw-2">mut </span>DataFlowGraph) {
+        <span class="kw">let </span>inst;
         {
-            <span class="kw">let</span> <span class="ident">dfg</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">data_flow_graph_mut</span>();
-            <span class="ident">inst</span> <span class="op">=</span> <span class="ident">dfg</span>.<span class="ident">make_inst</span>(<span class="ident">data</span>);
-            <span class="ident">dfg</span>.<span class="ident">make_inst_results</span>(<span class="ident">inst</span>, <span class="ident">ctrl_typevar</span>);
+            <span class="kw">let </span>dfg = <span class="self">self</span>.inserter.data_flow_graph_mut();
+            inst = dfg.make_inst(data);
+            dfg.make_inst_results(inst, ctrl_typevar);
         }
-        (<span class="ident">inst</span>, <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">insert_built_inst</span>(<span class="ident">inst</span>))
+        (inst, <span class="self">self</span>.inserter.insert_built_inst(inst))
     }
 }
 
-<span class="doccomment">/// Builder that inserts a new instruction like `InsertBuilder`, but reusing result values.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InsertReuseBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>, <span class="ident">Array</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">IIB</span>: <span class="ident">InstInserterBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span>,
-    <span class="ident">Array</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>]<span class="op">&gt;</span>,
+<span class="doccomment">/// Builder that inserts a new instruction like `InsertBuilder`, but reusing result values.
+</span><span class="kw">pub struct </span>InsertReuseBuilder&lt;<span class="lifetime">&#39;f</span>, IIB, Array&gt;
+<span class="kw">where
+    </span>IIB: InstInserterBase&lt;<span class="lifetime">&#39;f</span>&gt;,
+    Array: AsRef&lt;[<span class="prelude-ty">Option</span>&lt;Value&gt;]&gt;,
 {
-    <span class="ident">inserter</span>: <span class="ident">IIB</span>,
-    <span class="ident">reuse</span>: <span class="ident">Array</span>,
-    <span class="ident">unused</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="ident">u32</span><span class="op">&gt;</span>,
+    inserter: IIB,
+    reuse: Array,
+    unused: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span>u32&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>, <span class="ident">Array</span><span class="op">&gt;</span> <span class="ident">InstBuilderBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">InsertReuseBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span>, <span class="ident">IIB</span>, <span class="ident">Array</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">IIB</span>: <span class="ident">InstInserterBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span>,
-    <span class="ident">Array</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>]<span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;f</span>, IIB, Array&gt; InstBuilderBase&lt;<span class="lifetime">&#39;f</span>&gt; <span class="kw">for </span>InsertReuseBuilder&lt;<span class="lifetime">&#39;f</span>, IIB, Array&gt;
+<span class="kw">where
+    </span>IIB: InstInserterBase&lt;<span class="lifetime">&#39;f</span>&gt;,
+    Array: AsRef&lt;[<span class="prelude-ty">Option</span>&lt;Value&gt;]&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">data_flow_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">DataFlowGraph</span> {
-        <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">data_flow_graph</span>()
+    <span class="kw">fn </span>data_flow_graph(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>DataFlowGraph {
+        <span class="self">self</span>.inserter.data_flow_graph()
     }
 
-    <span class="kw">fn</span> <span class="ident">data_flow_graph_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">DataFlowGraph</span> {
-        <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">data_flow_graph_mut</span>()
+    <span class="kw">fn </span>data_flow_graph_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>DataFlowGraph {
+        <span class="self">self</span>.inserter.data_flow_graph_mut()
     }
 
-    <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">data</span>: <span class="ident">InstructionData</span>, <span class="ident">ctrl_typevar</span>: <span class="ident">Type</span>) -&gt; (<span class="ident">Inst</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="kw-2">mut</span> <span class="ident">DataFlowGraph</span>) {
-        <span class="kw">let</span> <span class="ident">inst</span>;
+    <span class="kw">fn </span>build(<span class="kw-2">mut </span><span class="self">self</span>, data: InstructionData, ctrl_typevar: Type) -&gt; (Inst, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span><span class="kw-2">mut </span>DataFlowGraph) {
+        <span class="kw">let </span>inst;
         {
-            <span class="kw">let</span> <span class="ident">dfg</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">data_flow_graph_mut</span>();
-            <span class="ident">inst</span> <span class="op">=</span> <span class="ident">dfg</span>.<span class="ident">make_inst</span>(<span class="ident">data</span>);
-            <span class="comment">// Make an `Iterator&lt;Item = Option&lt;Value&gt;&gt;`.</span>
-            <span class="kw">let</span> <span class="ident">ru</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">reuse</span>.<span class="ident">as_ref</span>().<span class="ident">iter</span>().<span class="ident">cloned</span>();
-            <span class="ident">dfg</span>.<span class="ident">make_inst_results_reusing</span>(<span class="ident">inst</span>, <span class="ident">ctrl_typevar</span>, <span class="ident">ru</span>);
+            <span class="kw">let </span>dfg = <span class="self">self</span>.inserter.data_flow_graph_mut();
+            inst = dfg.make_inst(data);
+            <span class="comment">// Make an `Iterator&lt;Item = Option&lt;Value&gt;&gt;`.
+            </span><span class="kw">let </span>ru = <span class="self">self</span>.reuse.as_ref().iter().cloned();
+            dfg.make_inst_results_reusing(inst, ctrl_typevar, ru);
         }
-        (<span class="ident">inst</span>, <span class="self">self</span>.<span class="ident">inserter</span>.<span class="ident">insert_built_inst</span>(<span class="ident">inst</span>))
+        (inst, <span class="self">self</span>.inserter.insert_built_inst(inst))
     }
 }
 
-<span class="doccomment">/// Instruction builder that replaces an existing instruction.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The inserted instruction will have the same `Inst` number as the old one.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If the old instruction still has result values attached, it is assumed that the new instruction</span>
-<span class="doccomment">/// produces the same number and types of results. The old result values are preserved. If the</span>
-<span class="doccomment">/// replacement instruction format does not support multiple results, the builder panics. It is a</span>
-<span class="doccomment">/// bug to leave result values dangling.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ReplaceBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> {
-    <span class="ident">dfg</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="kw-2">mut</span> <span class="ident">DataFlowGraph</span>,
-    <span class="ident">inst</span>: <span class="ident">Inst</span>,
+<span class="doccomment">/// Instruction builder that replaces an existing instruction.
+///
+/// The inserted instruction will have the same `Inst` number as the old one.
+///
+/// If the old instruction still has result values attached, it is assumed that the new instruction
+/// produces the same number and types of results. The old result values are preserved. If the
+/// replacement instruction format does not support multiple results, the builder panics. It is a
+/// bug to leave result values dangling.
+</span><span class="kw">pub struct </span>ReplaceBuilder&lt;<span class="lifetime">&#39;f</span>&gt; {
+    dfg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span><span class="kw-2">mut </span>DataFlowGraph,
+    inst: Inst,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> <span class="ident">ReplaceBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Create a `ReplaceBuilder` that will overwrite `inst`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">dfg</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="kw-2">mut</span> <span class="ident">DataFlowGraph</span>, <span class="ident">inst</span>: <span class="ident">Inst</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">dfg</span>, <span class="ident">inst</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;f</span>&gt; ReplaceBuilder&lt;<span class="lifetime">&#39;f</span>&gt; {
+    <span class="doccomment">/// Create a `ReplaceBuilder` that will overwrite `inst`.
+    </span><span class="kw">pub fn </span>new(dfg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span><span class="kw-2">mut </span>DataFlowGraph, inst: Inst) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ dfg, inst }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> <span class="ident">InstBuilderBase</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ReplaceBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;f</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">data_flow_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">DataFlowGraph</span> {
-        <span class="self">self</span>.<span class="ident">dfg</span>
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;f</span>&gt; InstBuilderBase&lt;<span class="lifetime">&#39;f</span>&gt; <span class="kw">for </span>ReplaceBuilder&lt;<span class="lifetime">&#39;f</span>&gt; {
+    <span class="kw">fn </span>data_flow_graph(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>DataFlowGraph {
+        <span class="self">self</span>.dfg
     }
 
-    <span class="kw">fn</span> <span class="ident">data_flow_graph_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">DataFlowGraph</span> {
-        <span class="self">self</span>.<span class="ident">dfg</span>
+    <span class="kw">fn </span>data_flow_graph_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>DataFlowGraph {
+        <span class="self">self</span>.dfg
     }
 
-    <span class="kw">fn</span> <span class="ident">build</span>(<span class="self">self</span>, <span class="ident">data</span>: <span class="ident">InstructionData</span>, <span class="ident">ctrl_typevar</span>: <span class="ident">Type</span>) -&gt; (<span class="ident">Inst</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f</span> <span class="kw-2">mut</span> <span class="ident">DataFlowGraph</span>) {
-        <span class="comment">// Splat the new instruction on top of the old one.</span>
-        <span class="self">self</span>.<span class="ident">dfg</span>[<span class="self">self</span>.<span class="ident">inst</span>] <span class="op">=</span> <span class="ident">data</span>;
+    <span class="kw">fn </span>build(<span class="self">self</span>, data: InstructionData, ctrl_typevar: Type) -&gt; (Inst, <span class="kw-2">&amp;</span><span class="lifetime">&#39;f </span><span class="kw-2">mut </span>DataFlowGraph) {
+        <span class="comment">// Splat the new instruction on top of the old one.
+        </span><span class="self">self</span>.dfg[<span class="self">self</span>.inst] = data;
 
-        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">dfg</span>.<span class="ident">has_results</span>(<span class="self">self</span>.<span class="ident">inst</span>) {
-            <span class="comment">// The old result values were either detached or non-existent.</span>
-            <span class="comment">// Construct new ones.</span>
-            <span class="self">self</span>.<span class="ident">dfg</span>.<span class="ident">make_inst_results</span>(<span class="self">self</span>.<span class="ident">inst</span>, <span class="ident">ctrl_typevar</span>);
+        <span class="kw">if </span>!<span class="self">self</span>.dfg.has_results(<span class="self">self</span>.inst) {
+            <span class="comment">// The old result values were either detached or non-existent.
+            // Construct new ones.
+            </span><span class="self">self</span>.dfg.make_inst_results(<span class="self">self</span>.inst, ctrl_typevar);
         }
 
-        (<span class="self">self</span>.<span class="ident">inst</span>, <span class="self">self</span>.<span class="ident">dfg</span>)
+        (<span class="self">self</span>.inst, <span class="self">self</span>.dfg)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cursor</span>::{<span class="ident">Cursor</span>, <span class="ident">FuncCursor</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::condcodes</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir::types</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ir</span>::{<span class="ident">Function</span>, <span class="ident">InstBuilder</span>, <span class="ident">ValueDef</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">crate</span>::cursor::{Cursor, FuncCursor};
+    <span class="kw">use </span><span class="kw">crate</span>::ir::condcodes::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::ir::types::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::ir::{Function, InstBuilder, ValueDef};
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">types</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">Function::new</span>();
-        <span class="kw">let</span> <span class="ident">block0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">arg0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">append_block_param</span>(<span class="ident">block0</span>, <span class="ident">I32</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">func</span>);
-        <span class="ident">pos</span>.<span class="ident">insert_block</span>(<span class="ident">block0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>types() {
+        <span class="kw">let </span><span class="kw-2">mut </span>func = Function::new();
+        <span class="kw">let </span>block0 = func.dfg.make_block();
+        <span class="kw">let </span>arg0 = func.dfg.append_block_param(block0, I32);
+        <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(<span class="kw-2">&amp;mut </span>func);
+        pos.insert_block(block0);
 
-        <span class="comment">// Explicit types.</span>
-        <span class="kw">let</span> <span class="ident">v0</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iconst</span>(<span class="ident">I32</span>, <span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">v0</span>), <span class="ident">I32</span>);
+        <span class="comment">// Explicit types.
+        </span><span class="kw">let </span>v0 = pos.ins().iconst(I32, <span class="number">3</span>);
+        <span class="macro">assert_eq!</span>(pos.func.dfg.value_type(v0), I32);
 
-        <span class="comment">// Inferred from inputs.</span>
-        <span class="kw">let</span> <span class="ident">v1</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iadd</span>(<span class="ident">arg0</span>, <span class="ident">v0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">v1</span>), <span class="ident">I32</span>);
+        <span class="comment">// Inferred from inputs.
+        </span><span class="kw">let </span>v1 = pos.ins().iadd(arg0, v0);
+        <span class="macro">assert_eq!</span>(pos.func.dfg.value_type(v1), I32);
 
-        <span class="comment">// Formula.</span>
-        <span class="kw">let</span> <span class="ident">cmp</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">icmp</span>(<span class="ident">IntCC::Equal</span>, <span class="ident">arg0</span>, <span class="ident">v0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">cmp</span>), <span class="ident">B1</span>);
+        <span class="comment">// Formula.
+        </span><span class="kw">let </span>cmp = pos.ins().icmp(IntCC::Equal, arg0, v0);
+        <span class="macro">assert_eq!</span>(pos.func.dfg.value_type(cmp), B1);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">reuse_results</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func</span> <span class="op">=</span> <span class="ident">Function::new</span>();
-        <span class="kw">let</span> <span class="ident">block0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">make_block</span>();
-        <span class="kw">let</span> <span class="ident">arg0</span> <span class="op">=</span> <span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">append_block_param</span>(<span class="ident">block0</span>, <span class="ident">I32</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">FuncCursor::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">func</span>);
-        <span class="ident">pos</span>.<span class="ident">insert_block</span>(<span class="ident">block0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>reuse_results() {
+        <span class="kw">let </span><span class="kw-2">mut </span>func = Function::new();
+        <span class="kw">let </span>block0 = func.dfg.make_block();
+        <span class="kw">let </span>arg0 = func.dfg.append_block_param(block0, I32);
+        <span class="kw">let </span><span class="kw-2">mut </span>pos = FuncCursor::new(<span class="kw-2">&amp;mut </span>func);
+        pos.insert_block(block0);
 
-        <span class="kw">let</span> <span class="ident">v0</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">iadd_imm</span>(<span class="ident">arg0</span>, <span class="number">17</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_type</span>(<span class="ident">v0</span>), <span class="ident">I32</span>);
-        <span class="kw">let</span> <span class="ident">iadd</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">prev_inst</span>().<span class="ident">unwrap</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_def</span>(<span class="ident">v0</span>), <span class="ident">ValueDef::Result</span>(<span class="ident">iadd</span>, <span class="number">0</span>));
+        <span class="kw">let </span>v0 = pos.ins().iadd_imm(arg0, <span class="number">17</span>);
+        <span class="macro">assert_eq!</span>(pos.func.dfg.value_type(v0), I32);
+        <span class="kw">let </span>iadd = pos.prev_inst().unwrap();
+        <span class="macro">assert_eq!</span>(pos.func.dfg.value_def(v0), ValueDef::Result(iadd, <span class="number">0</span>));
 
-        <span class="comment">// Detach v0 and reuse it for a different instruction.</span>
-        <span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">clear_results</span>(<span class="ident">iadd</span>);
-        <span class="kw">let</span> <span class="ident">v0b</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">ins</span>().<span class="ident">with_result</span>(<span class="ident">v0</span>).<span class="ident">iconst</span>(<span class="ident">I32</span>, <span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">v0</span>, <span class="ident">v0b</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">pos</span>.<span class="ident">current_inst</span>(), <span class="prelude-val">Some</span>(<span class="ident">iadd</span>));
-        <span class="kw">let</span> <span class="ident">iconst</span> <span class="op">=</span> <span class="ident">pos</span>.<span class="ident">prev_inst</span>().<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="ident">iadd</span> <span class="op">!</span><span class="op">=</span> <span class="ident">iconst</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">pos</span>.<span class="ident">func</span>.<span class="ident">dfg</span>.<span class="ident">value_def</span>(<span class="ident">v0</span>), <span class="ident">ValueDef::Result</span>(<span class="ident">iconst</span>, <span class="number">0</span>));
+        <span class="comment">// Detach v0 and reuse it for a different instruction.
+        </span>pos.func.dfg.clear_results(iadd);
+        <span class="kw">let </span>v0b = pos.ins().with_result(v0).iconst(I32, <span class="number">3</span>);
+        <span class="macro">assert_eq!</span>(v0, v0b);
+        <span class="macro">assert_eq!</span>(pos.current_inst(), <span class="prelude-val">Some</span>(iadd));
+        <span class="kw">let </span>iconst = pos.prev_inst().unwrap();
+        <span class="macro">assert!</span>(iadd != iconst);
+        <span class="macro">assert_eq!</span>(pos.func.dfg.value_def(v0), ValueDef::Result(iconst, <span class="number">0</span>));
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cranelift_codegen" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

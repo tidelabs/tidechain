@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/trampoline.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trampoline.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/trampoline.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trampoline.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -95,98 +90,97 @@
 <span id="90">90</span>
 <span id="91">91</span>
 <span id="92">92</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Utility module to create trampolines in/out WebAssembly module.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Utility module to create trampolines in/out WebAssembly module.
 
-<span class="kw">mod</span> <span class="ident">func</span>;
-<span class="kw">mod</span> <span class="ident">global</span>;
-<span class="kw">mod</span> <span class="ident">memory</span>;
-<span class="kw">mod</span> <span class="ident">table</span>;
+</span><span class="kw">mod </span>func;
+<span class="kw">mod </span>global;
+<span class="kw">mod </span>memory;
+<span class="kw">mod </span>table;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use</span> <span class="ident">memory::MemoryCreatorProxy</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>memory::MemoryCreatorProxy;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="self">self</span>::func</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="self">self</span>::global::create_global</span>;
-<span class="kw">use</span> <span class="ident"><span class="self">self</span>::memory::create_memory</span>;
-<span class="kw">use</span> <span class="ident"><span class="self">self</span>::table::create_table</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::module::BareModuleInfo</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::store</span>::{<span class="ident">InstanceId</span>, <span class="ident">StoreOpaque</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">GlobalType</span>, <span class="ident">MemoryType</span>, <span class="ident">TableType</span>, <span class="ident">Val</span>};
-<span class="kw">use</span> <span class="ident">anyhow::Result</span>;
-<span class="kw">use</span> <span class="ident">std::any::Any</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_environ</span>::{<span class="ident">EntityIndex</span>, <span class="ident">GlobalIndex</span>, <span class="ident">MemoryIndex</span>, <span class="ident">Module</span>, <span class="ident">SignatureIndex</span>, <span class="ident">TableIndex</span>};
-<span class="kw">use</span> <span class="ident">wasmtime_runtime</span>::{
-    <span class="ident">Imports</span>, <span class="ident">InstanceAllocationRequest</span>, <span class="ident">InstanceAllocator</span>, <span class="ident">OnDemandInstanceAllocator</span>, <span class="ident">StorePtr</span>,
-    <span class="ident">VMFunctionImport</span>, <span class="ident">VMSharedSignatureIndex</span>,
+<span class="kw">pub use </span><span class="self">self</span>::func::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="self">self</span>::global::create_global;
+<span class="kw">use </span><span class="self">self</span>::memory::create_memory;
+<span class="kw">use </span><span class="self">self</span>::table::create_table;
+<span class="kw">use </span><span class="kw">crate</span>::module::BareModuleInfo;
+<span class="kw">use </span><span class="kw">crate</span>::store::{InstanceId, StoreOpaque};
+<span class="kw">use crate</span>::{GlobalType, MemoryType, TableType, Val};
+<span class="kw">use </span>anyhow::Result;
+<span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>wasmtime_environ::{EntityIndex, GlobalIndex, MemoryIndex, Module, SignatureIndex, TableIndex};
+<span class="kw">use </span>wasmtime_runtime::{
+    Imports, InstanceAllocationRequest, InstanceAllocator, OnDemandInstanceAllocator, StorePtr,
+    VMFunctionImport, VMSharedSignatureIndex,
 };
 
-<span class="kw">fn</span> <span class="ident">create_handle</span>(
-    <span class="ident">module</span>: <span class="ident">Module</span>,
-    <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-    <span class="ident">host_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>,
-    <span class="ident">func_imports</span>: <span class="kw-2">&amp;</span>[<span class="ident">VMFunctionImport</span>],
-    <span class="ident">one_signature</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">SignatureIndex</span>, <span class="ident">VMSharedSignatureIndex</span>)<span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InstanceId</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">imports</span> <span class="op">=</span> <span class="ident">Imports::default</span>();
-    <span class="ident">imports</span>.<span class="ident">functions</span> <span class="op">=</span> <span class="ident">func_imports</span>;
+<span class="kw">fn </span>create_handle(
+    module: Module,
+    store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+    host_state: Box&lt;<span class="kw">dyn </span>Any + Send + Sync&gt;,
+    func_imports: <span class="kw-2">&amp;</span>[VMFunctionImport],
+    one_signature: <span class="prelude-ty">Option</span>&lt;(SignatureIndex, VMSharedSignatureIndex)&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;InstanceId&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>imports = Imports::default();
+    imports.functions = func_imports;
 
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">engine</span>().<span class="ident">config</span>();
-        <span class="comment">// Use the on-demand allocator when creating handles associated with host objects</span>
-        <span class="comment">// The configured instance allocator should only be used when creating module instances</span>
-        <span class="comment">// as we don&#39;t want host objects to count towards instance limits.</span>
-        <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">module</span>);
-        <span class="kw">let</span> <span class="ident">runtime_info</span> <span class="op">=</span>
-            <span class="kw-2">&amp;</span><span class="ident">BareModuleInfo::maybe_imported_func</span>(<span class="ident">module</span>, <span class="ident">one_signature</span>).<span class="ident">into_traitobj</span>();
-        <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">OnDemandInstanceAllocator::new</span>(<span class="ident">config</span>.<span class="ident">mem_creator</span>.<span class="ident">clone</span>(), <span class="number">0</span>).<span class="ident">allocate</span>(
-            <span class="ident">InstanceAllocationRequest</span> {
-                <span class="ident">imports</span>,
-                <span class="ident">host_state</span>,
-                <span class="ident">store</span>: <span class="ident">StorePtr::new</span>(<span class="ident">store</span>.<span class="ident">traitobj</span>()),
-                <span class="ident">runtime_info</span>,
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span>config = store.engine().config();
+        <span class="comment">// Use the on-demand allocator when creating handles associated with host objects
+        // The configured instance allocator should only be used when creating module instances
+        // as we don&#39;t want host objects to count towards instance limits.
+        </span><span class="kw">let </span>module = Arc::new(module);
+        <span class="kw">let </span>runtime_info =
+            <span class="kw-2">&amp;</span>BareModuleInfo::maybe_imported_func(module, one_signature).into_traitobj();
+        <span class="kw">let </span>handle = OnDemandInstanceAllocator::new(config.mem_creator.clone(), <span class="number">0</span>).allocate(
+            InstanceAllocationRequest {
+                imports,
+                host_state,
+                store: StorePtr::new(store.traitobj()),
+                runtime_info,
             },
         )<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">store</span>.<span class="ident">add_instance</span>(<span class="ident">handle</span>, <span class="bool-val">true</span>))
+        <span class="prelude-val">Ok</span>(store.add_instance(handle, <span class="bool-val">true</span>))
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_global_export</span>(
-    <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-    <span class="ident">gt</span>: <span class="kw-2">&amp;</span><span class="ident">GlobalType</span>,
-    <span class="ident">val</span>: <span class="ident">Val</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">wasmtime_runtime::ExportGlobal</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">create_global</span>(<span class="ident">store</span>, <span class="ident">gt</span>, <span class="ident">val</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">EntityIndex::Global</span>(<span class="ident">GlobalIndex::from_u32</span>(<span class="number">0</span>));
-    <span class="kw">match</span> <span class="ident">store</span>.<span class="ident">instance_mut</span>(<span class="ident">instance</span>).<span class="ident">lookup_by_declaration</span>(<span class="kw-2">&amp;</span><span class="ident">idx</span>) {
-        <span class="ident">wasmtime_runtime::Export::Global</span>(<span class="ident">g</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">g</span>),
-        <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+<span class="kw">pub fn </span>generate_global_export(
+    store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+    gt: <span class="kw-2">&amp;</span>GlobalType,
+    val: Val,
+) -&gt; <span class="prelude-ty">Result</span>&lt;wasmtime_runtime::ExportGlobal&gt; {
+    <span class="kw">let </span>instance = create_global(store, gt, val)<span class="question-mark">?</span>;
+    <span class="kw">let </span>idx = EntityIndex::Global(GlobalIndex::from_u32(<span class="number">0</span>));
+    <span class="kw">match </span>store.instance_mut(instance).lookup_by_declaration(<span class="kw-2">&amp;</span>idx) {
+        wasmtime_runtime::Export::Global(g) =&gt; <span class="prelude-val">Ok</span>(g),
+        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_memory_export</span>(
-    <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-    <span class="ident">m</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryType</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">wasmtime_runtime::ExportMemory</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">create_memory</span>(<span class="ident">store</span>, <span class="ident">m</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">EntityIndex::Memory</span>(<span class="ident">MemoryIndex::from_u32</span>(<span class="number">0</span>));
-    <span class="kw">match</span> <span class="ident">store</span>.<span class="ident">instance_mut</span>(<span class="ident">instance</span>).<span class="ident">lookup_by_declaration</span>(<span class="kw-2">&amp;</span><span class="ident">idx</span>) {
-        <span class="ident">wasmtime_runtime::Export::Memory</span>(<span class="ident">m</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">m</span>),
-        <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+<span class="kw">pub fn </span>generate_memory_export(
+    store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+    m: <span class="kw-2">&amp;</span>MemoryType,
+) -&gt; <span class="prelude-ty">Result</span>&lt;wasmtime_runtime::ExportMemory&gt; {
+    <span class="kw">let </span>instance = create_memory(store, m)<span class="question-mark">?</span>;
+    <span class="kw">let </span>idx = EntityIndex::Memory(MemoryIndex::from_u32(<span class="number">0</span>));
+    <span class="kw">match </span>store.instance_mut(instance).lookup_by_declaration(<span class="kw-2">&amp;</span>idx) {
+        wasmtime_runtime::Export::Memory(m) =&gt; <span class="prelude-val">Ok</span>(m),
+        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_table_export</span>(
-    <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StoreOpaque</span>,
-    <span class="ident">t</span>: <span class="kw-2">&amp;</span><span class="ident">TableType</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">wasmtime_runtime::ExportTable</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">create_table</span>(<span class="ident">store</span>, <span class="ident">t</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">EntityIndex::Table</span>(<span class="ident">TableIndex::from_u32</span>(<span class="number">0</span>));
-    <span class="kw">match</span> <span class="ident">store</span>.<span class="ident">instance_mut</span>(<span class="ident">instance</span>).<span class="ident">lookup_by_declaration</span>(<span class="kw-2">&amp;</span><span class="ident">idx</span>) {
-        <span class="ident">wasmtime_runtime::Export::Table</span>(<span class="ident">t</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">t</span>),
-        <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+<span class="kw">pub fn </span>generate_table_export(
+    store: <span class="kw-2">&amp;mut </span>StoreOpaque,
+    t: <span class="kw-2">&amp;</span>TableType,
+) -&gt; <span class="prelude-ty">Result</span>&lt;wasmtime_runtime::ExportTable&gt; {
+    <span class="kw">let </span>instance = create_table(store, t)<span class="question-mark">?</span>;
+    <span class="kw">let </span>idx = EntityIndex::Table(TableIndex::from_u32(<span class="number">0</span>));
+    <span class="kw">match </span>store.instance_mut(instance).lookup_by_declaration(<span class="kw-2">&amp;</span>idx) {
+        wasmtime_runtime::Export::Table(t) =&gt; <span class="prelude-val">Ok</span>(t),
+        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

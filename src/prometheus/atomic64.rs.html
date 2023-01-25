@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/prometheus-0.13.1/src/atomic64.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>atomic64.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../prometheus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../prometheus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../prometheus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/prometheus-0.13.1/src/atomic64.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>atomic64.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../prometheus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -281,284 +276,283 @@
 <span id="276">276</span>
 <span id="277">277</span>
 <span id="278">278</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright 2014 The Prometheus Authors</span>
-<span class="comment">// Copyright 2019 TiKV Project Authors. Licensed under Apache-2.0.</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2014 The Prometheus Authors
+// Copyright 2019 TiKV Project Authors. Licensed under Apache-2.0.
 
-<span class="kw">use</span> <span class="ident">std::cmp</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::f64</span>;
-<span class="kw">use</span> <span class="ident">std::ops</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicI64</span> <span class="kw">as</span> <span class="ident">StdAtomicI64</span>, <span class="ident">AtomicU64</span> <span class="kw">as</span> <span class="ident">StdAtomicU64</span>, <span class="ident">Ordering</span>};
+</span><span class="kw">use </span>std::cmp::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::f64;
+<span class="kw">use </span>std::ops::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::sync::atomic::{AtomicI64 <span class="kw">as </span>StdAtomicI64, AtomicU64 <span class="kw">as </span>StdAtomicU64, Ordering};
 
-<span class="doccomment">/// An interface for numbers. Used to generically model float metrics and integer metrics, i.e.</span>
-<span class="doccomment">/// [`Counter`](crate::Counter) and [`IntCounter`](crate::Counter).</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Number</span>:
-    <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">AddAssign</span> <span class="op">+</span> <span class="ident">SubAssign</span> <span class="op">+</span> <span class="ident">PartialOrd</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>
+<span class="doccomment">/// An interface for numbers. Used to generically model float metrics and integer metrics, i.e.
+/// [`Counter`](crate::Counter) and [`IntCounter`](crate::Counter).
+</span><span class="kw">pub trait </span>Number:
+    Sized + AddAssign + SubAssign + PartialOrd + PartialEq + Copy + Send + Sync
 {
-    <span class="doccomment">/// `std::convert::From&lt;i64&gt; for f64` is not implemented, so that we need to implement our own.</span>
-    <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">v</span>: <span class="ident">i64</span>) -&gt; <span class="self">Self</span>;
-    <span class="doccomment">/// Convert to a f64.</span>
-    <span class="kw">fn</span> <span class="ident">into_f64</span>(<span class="self">self</span>) -&gt; <span class="ident">f64</span>;
+    <span class="doccomment">/// `std::convert::From&lt;i64&gt; for f64` is not implemented, so that we need to implement our own.
+    </span><span class="kw">fn </span>from_i64(v: i64) -&gt; <span class="self">Self</span>;
+    <span class="doccomment">/// Convert to a f64.
+    </span><span class="kw">fn </span>into_f64(<span class="self">self</span>) -&gt; f64;
 }
 
-<span class="kw">impl</span> <span class="ident">Number</span> <span class="kw">for</span> <span class="ident">i64</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">v</span>: <span class="ident">i64</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">v</span>
+<span class="kw">impl </span>Number <span class="kw">for </span>i64 {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from_i64(v: i64) -&gt; <span class="self">Self </span>{
+        v
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_f64</span>(<span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-        <span class="self">self</span> <span class="kw">as</span> <span class="ident">f64</span>
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Number</span> <span class="kw">for</span> <span class="ident">u64</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">v</span>: <span class="ident">i64</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">v</span> <span class="kw">as</span> <span class="ident">u64</span>
-    }
-
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_f64</span>(<span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-        <span class="self">self</span> <span class="kw">as</span> <span class="ident">f64</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_f64(<span class="self">self</span>) -&gt; f64 {
+        <span class="self">self </span><span class="kw">as </span>f64
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Number</span> <span class="kw">for</span> <span class="ident">f64</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">v</span>: <span class="ident">i64</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">v</span> <span class="kw">as</span> <span class="ident">f64</span>
+<span class="kw">impl </span>Number <span class="kw">for </span>u64 {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from_i64(v: i64) -&gt; <span class="self">Self </span>{
+        v <span class="kw">as </span>u64
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">into_f64</span>(<span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-        <span class="self">self</span>
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_f64(<span class="self">self</span>) -&gt; f64 {
+        <span class="self">self </span><span class="kw">as </span>f64
     }
 }
 
-<span class="doccomment">/// An interface for atomics. Used to generically model float metrics and integer metrics, i.e.</span>
-<span class="doccomment">/// [`Counter`](crate::Counter) and [`IntCounter`](crate::IntCounter).</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Atomic</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-    <span class="doccomment">/// The numeric type associated with this atomic.</span>
-    <span class="kw">type</span> <span class="ident">T</span>: <span class="ident">Number</span>;
-    <span class="doccomment">/// Create a new atomic value.</span>
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>) -&gt; <span class="self">Self</span>;
-    <span class="doccomment">/// Set the value to the provided value.</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>);
-    <span class="doccomment">/// Get the value.</span>
-    <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::T</span>;
-    <span class="doccomment">/// Increment the value by a given amount.</span>
-    <span class="kw">fn</span> <span class="ident">inc_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>);
-    <span class="doccomment">/// Decrement the value by a given amount.</span>
-    <span class="kw">fn</span> <span class="ident">dec_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>);
+<span class="kw">impl </span>Number <span class="kw">for </span>f64 {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>from_i64(v: i64) -&gt; <span class="self">Self </span>{
+        v <span class="kw">as </span>f64
+    }
+
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>into_f64(<span class="self">self</span>) -&gt; f64 {
+        <span class="self">self
+    </span>}
 }
 
-<span class="doccomment">/// A atomic float.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AtomicF64</span> {
-    <span class="ident">inner</span>: <span class="ident">StdAtomicU64</span>,
+<span class="doccomment">/// An interface for atomics. Used to generically model float metrics and integer metrics, i.e.
+/// [`Counter`](crate::Counter) and [`IntCounter`](crate::IntCounter).
+</span><span class="kw">pub trait </span>Atomic: Send + Sync {
+    <span class="doccomment">/// The numeric type associated with this atomic.
+    </span><span class="kw">type </span>T: Number;
+    <span class="doccomment">/// Create a new atomic value.
+    </span><span class="kw">fn </span>new(val: <span class="self">Self</span>::T) -&gt; <span class="self">Self</span>;
+    <span class="doccomment">/// Set the value to the provided value.
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="self">Self</span>::T);
+    <span class="doccomment">/// Get the value.
+    </span><span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::T;
+    <span class="doccomment">/// Increment the value by a given amount.
+    </span><span class="kw">fn </span>inc_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T);
+    <span class="doccomment">/// Decrement the value by a given amount.
+    </span><span class="kw">fn </span>dec_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T);
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">u64_to_f64</span>(<span class="ident">val</span>: <span class="ident">u64</span>) -&gt; <span class="ident">f64</span> {
-    <span class="ident">f64::from_bits</span>(<span class="ident">val</span>)
+<span class="doccomment">/// A atomic float.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>AtomicF64 {
+    inner: StdAtomicU64,
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">f64_to_u64</span>(<span class="ident">val</span>: <span class="ident">f64</span>) -&gt; <span class="ident">u64</span> {
-    <span class="ident">f64::to_bits</span>(<span class="ident">val</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">fn </span>u64_to_f64(val: u64) -&gt; f64 {
+    f64::from_bits(val)
 }
 
-<span class="kw">impl</span> <span class="ident">Atomic</span> <span class="kw">for</span> <span class="ident">AtomicF64</span> {
-    <span class="kw">type</span> <span class="ident">T</span> <span class="op">=</span> <span class="ident">f64</span>;
+<span class="attribute">#[inline]
+</span><span class="kw">fn </span>f64_to_u64(val: f64) -&gt; u64 {
+    f64::to_bits(val)
+}
 
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>) -&gt; <span class="ident">AtomicF64</span> {
-        <span class="ident">AtomicF64</span> {
-            <span class="ident">inner</span>: <span class="ident">StdAtomicU64::new</span>(<span class="ident">f64_to_u64</span>(<span class="ident">val</span>)),
+<span class="kw">impl </span>Atomic <span class="kw">for </span>AtomicF64 {
+    <span class="kw">type </span>T = f64;
+
+    <span class="kw">fn </span>new(val: <span class="self">Self</span>::T) -&gt; AtomicF64 {
+        AtomicF64 {
+            inner: StdAtomicU64::new(f64_to_u64(val)),
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">store</span>(<span class="ident">f64_to_u64</span>(<span class="ident">val</span>), <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inner.store(f64_to_u64(val), Ordering::Relaxed);
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::T</span> {
-        <span class="ident">u64_to_f64</span>(<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>))
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::T {
+        u64_to_f64(<span class="self">self</span>.inner.load(Ordering::Relaxed))
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">inc_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="kw">loop</span> {
-            <span class="kw">let</span> <span class="ident">current</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
-            <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">u64_to_f64</span>(<span class="ident">current</span>) <span class="op">+</span> <span class="ident">delta</span>;
-            <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">compare_exchange_weak</span>(
-                <span class="ident">current</span>,
-                <span class="ident">f64_to_u64</span>(<span class="ident">new</span>),
-                <span class="ident">Ordering::Release</span>,
-                <span class="ident">Ordering::Relaxed</span>,
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>inc_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T) {
+        <span class="kw">loop </span>{
+            <span class="kw">let </span>current = <span class="self">self</span>.inner.load(Ordering::Acquire);
+            <span class="kw">let </span>new = u64_to_f64(current) + delta;
+            <span class="kw">let </span>result = <span class="self">self</span>.inner.compare_exchange_weak(
+                current,
+                f64_to_u64(new),
+                Ordering::Release,
+                Ordering::Relaxed,
             );
-            <span class="kw">if</span> <span class="ident">result</span>.<span class="ident">is_ok</span>() {
+            <span class="kw">if </span>result.is_ok() {
                 <span class="kw">return</span>;
             }
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">dec_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inc_by</span>(<span class="op">-</span><span class="ident">delta</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>dec_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inc_by(-delta);
     }
 }
 
-<span class="kw">impl</span> <span class="ident">AtomicF64</span> {
-    <span class="doccomment">/// Store the value, returning the previous value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">swap</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="ident">f64</span>, <span class="ident">ordering</span>: <span class="ident">Ordering</span>) -&gt; <span class="ident">f64</span> {
-        <span class="ident">u64_to_f64</span>(<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">swap</span>(<span class="ident">f64_to_u64</span>(<span class="ident">val</span>), <span class="ident">ordering</span>))
+<span class="kw">impl </span>AtomicF64 {
+    <span class="doccomment">/// Store the value, returning the previous value.
+    </span><span class="kw">pub fn </span>swap(<span class="kw-2">&amp;</span><span class="self">self</span>, val: f64, ordering: Ordering) -&gt; f64 {
+        u64_to_f64(<span class="self">self</span>.inner.swap(f64_to_u64(val), ordering))
     }
 }
 
-<span class="doccomment">/// A atomic signed integer.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AtomicI64</span> {
-    <span class="ident">inner</span>: <span class="ident">StdAtomicI64</span>,
+<span class="doccomment">/// A atomic signed integer.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>AtomicI64 {
+    inner: StdAtomicI64,
 }
 
-<span class="kw">impl</span> <span class="ident">Atomic</span> <span class="kw">for</span> <span class="ident">AtomicI64</span> {
-    <span class="kw">type</span> <span class="ident">T</span> <span class="op">=</span> <span class="ident">i64</span>;
+<span class="kw">impl </span>Atomic <span class="kw">for </span>AtomicI64 {
+    <span class="kw">type </span>T = i64;
 
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>) -&gt; <span class="ident">AtomicI64</span> {
-        <span class="ident">AtomicI64</span> {
-            <span class="ident">inner</span>: <span class="ident">StdAtomicI64::new</span>(<span class="ident">val</span>),
+    <span class="kw">fn </span>new(val: <span class="self">Self</span>::T) -&gt; AtomicI64 {
+        AtomicI64 {
+            inner: StdAtomicI64::new(val),
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">store</span>(<span class="ident">val</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inner.store(val, Ordering::Relaxed);
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::T</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::T {
+        <span class="self">self</span>.inner.load(Ordering::Relaxed)
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">inc_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">fetch_add</span>(<span class="ident">delta</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>inc_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inner.fetch_add(delta, Ordering::Relaxed);
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">dec_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">fetch_sub</span>(<span class="ident">delta</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>dec_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inner.fetch_sub(delta, Ordering::Relaxed);
     }
 }
 
-<span class="doccomment">/// A atomic unsigned integer.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AtomicU64</span> {
-    <span class="ident">inner</span>: <span class="ident">StdAtomicU64</span>,
+<span class="doccomment">/// A atomic unsigned integer.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>AtomicU64 {
+    inner: StdAtomicU64,
 }
 
-<span class="kw">impl</span> <span class="ident">Atomic</span> <span class="kw">for</span> <span class="ident">AtomicU64</span> {
-    <span class="kw">type</span> <span class="ident">T</span> <span class="op">=</span> <span class="ident">u64</span>;
+<span class="kw">impl </span>Atomic <span class="kw">for </span>AtomicU64 {
+    <span class="kw">type </span>T = u64;
 
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>) -&gt; <span class="ident">AtomicU64</span> {
-        <span class="ident">AtomicU64</span> {
-            <span class="ident">inner</span>: <span class="ident">StdAtomicU64::new</span>(<span class="ident">val</span>),
+    <span class="kw">fn </span>new(val: <span class="self">Self</span>::T) -&gt; AtomicU64 {
+        AtomicU64 {
+            inner: StdAtomicU64::new(val),
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">store</span>(<span class="ident">val</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inner.store(val, Ordering::Relaxed);
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::T</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::T {
+        <span class="self">self</span>.inner.load(Ordering::Relaxed)
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">inc_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inc_by_with_ordering</span>(<span class="ident">delta</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>inc_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inc_by_with_ordering(delta, Ordering::Relaxed);
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">dec_by</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident"><span class="self">Self</span>::T</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">fetch_sub</span>(<span class="ident">delta</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>dec_by(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: <span class="self">Self</span>::T) {
+        <span class="self">self</span>.inner.fetch_sub(delta, Ordering::Relaxed);
     }
 }
 
-<span class="kw">impl</span> <span class="ident">AtomicU64</span> {
-    <span class="doccomment">/// Stores a value into the atomic integer if the current value is the same</span>
-    <span class="doccomment">/// as the current value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function is allowed to spuriously fail even when the comparison</span>
-    <span class="doccomment">/// succeeds, which can result in more efficient code on some platforms. The</span>
-    <span class="doccomment">/// return value is a result indicating whether the new value was written</span>
-    <span class="doccomment">/// and containing the previous value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// See [`StdAtomicU64`] for details.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">compare_exchange_weak</span>(
+<span class="kw">impl </span>AtomicU64 {
+    <span class="doccomment">/// Stores a value into the atomic integer if the current value is the same
+    /// as the current value.
+    ///
+    /// This function is allowed to spuriously fail even when the comparison
+    /// succeeds, which can result in more efficient code on some platforms. The
+    /// return value is a result indicating whether the new value was written
+    /// and containing the previous value.
+    ///
+    /// See [`StdAtomicU64`] for details.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compare_exchange_weak(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">current</span>: <span class="ident">u64</span>,
-        <span class="ident">new</span>: <span class="ident">u64</span>,
-        <span class="ident">success</span>: <span class="ident">Ordering</span>,
-        <span class="ident">failure</span>: <span class="ident">Ordering</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>
-            .<span class="ident">compare_exchange_weak</span>(<span class="ident">current</span>, <span class="ident">new</span>, <span class="ident">success</span>, <span class="ident">failure</span>)
+        current: u64,
+        new: u64,
+        success: Ordering,
+        failure: Ordering,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;u64, u64&gt; {
+        <span class="self">self</span>.inner
+            .compare_exchange_weak(current, new, success, failure)
     }
 
-    <span class="doccomment">/// Increment the value by a given amount with the provided memory ordering.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inc_by_with_ordering</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delta</span>: <span class="ident">u64</span>, <span class="ident">ordering</span>: <span class="ident">Ordering</span>) {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">fetch_add</span>(<span class="ident">delta</span>, <span class="ident">ordering</span>);
+    <span class="doccomment">/// Increment the value by a given amount with the provided memory ordering.
+    </span><span class="kw">pub fn </span>inc_by_with_ordering(<span class="kw-2">&amp;</span><span class="self">self</span>, delta: u64, ordering: Ordering) {
+        <span class="self">self</span>.inner.fetch_add(delta, ordering);
     }
 
-    <span class="doccomment">/// Stores a value into the atomic integer, returning the previous value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">swap</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="ident">u64</span>, <span class="ident">ordering</span>: <span class="ident">Ordering</span>) -&gt; <span class="ident">u64</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">swap</span>(<span class="ident">val</span>, <span class="ident">ordering</span>)
+    <span class="doccomment">/// Stores a value into the atomic integer, returning the previous value.
+    </span><span class="kw">pub fn </span>swap(<span class="kw-2">&amp;</span><span class="self">self</span>, val: u64, ordering: Ordering) -&gt; u64 {
+        <span class="self">self</span>.inner.swap(val, ordering)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="ident">std::f64::consts::PI</span>;
-    <span class="kw">use</span> <span class="ident">std::f64</span>::{<span class="self">self</span>, <span class="ident">EPSILON</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use </span>std::f64::consts::PI;
+    <span class="kw">use </span>std::f64::{<span class="self">self</span>, EPSILON};
 
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_atomic_f64</span>() {
-        <span class="kw">let</span> <span class="ident">table</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0.0</span>, <span class="number">1.0</span>, <span class="ident">PI</span>, <span class="ident">f64::MIN</span>, <span class="ident">f64::MAX</span>];
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_atomic_f64() {
+        <span class="kw">let </span>table: Vec&lt;f64&gt; = <span class="macro">vec!</span>[<span class="number">0.0</span>, <span class="number">1.0</span>, PI, f64::MIN, f64::MAX];
 
-        <span class="kw">for</span> <span class="ident">f</span> <span class="kw">in</span> <span class="ident">table</span> {
-            <span class="macro">assert!</span>((<span class="ident">f</span> <span class="op">-</span> <span class="ident">AtomicF64::new</span>(<span class="ident">f</span>).<span class="ident">get</span>()).<span class="ident">abs</span>() <span class="op">&lt;</span> <span class="ident">EPSILON</span>);
+        <span class="kw">for </span>f <span class="kw">in </span>table {
+            <span class="macro">assert!</span>((f - AtomicF64::new(f).get()).abs() &lt; EPSILON);
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_atomic_i64</span>() {
-        <span class="kw">let</span> <span class="ident">ai64</span> <span class="op">=</span> <span class="ident">AtomicI64::new</span>(<span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">ai64</span>.<span class="ident">get</span>(), <span class="number">0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_atomic_i64() {
+        <span class="kw">let </span>ai64 = AtomicI64::new(<span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(ai64.get(), <span class="number">0</span>);
 
-        <span class="ident">ai64</span>.<span class="ident">inc_by</span>(<span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">ai64</span>.<span class="ident">get</span>(), <span class="number">1</span>);
+        ai64.inc_by(<span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(ai64.get(), <span class="number">1</span>);
 
-        <span class="ident">ai64</span>.<span class="ident">inc_by</span>(<span class="op">-</span><span class="number">5</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">ai64</span>.<span class="ident">get</span>(), <span class="op">-</span><span class="number">4</span>);
+        ai64.inc_by(-<span class="number">5</span>);
+        <span class="macro">assert_eq!</span>(ai64.get(), -<span class="number">4</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_atomic_u64</span>() {
-        <span class="kw">let</span> <span class="ident">au64</span> <span class="op">=</span> <span class="ident">AtomicU64::new</span>(<span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">au64</span>.<span class="ident">get</span>(), <span class="number">0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_atomic_u64() {
+        <span class="kw">let </span>au64 = AtomicU64::new(<span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(au64.get(), <span class="number">0</span>);
 
-        <span class="ident">au64</span>.<span class="ident">inc_by</span>(<span class="number">123</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">au64</span>.<span class="ident">get</span>(), <span class="number">123</span>);
+        au64.inc_by(<span class="number">123</span>);
+        <span class="macro">assert_eq!</span>(au64.get(), <span class="number">123</span>);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="prometheus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="prometheus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

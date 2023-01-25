@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/trap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../wasmtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-0.35.3/src/trap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>trap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../wasmtime/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -404,407 +399,406 @@
 <span id="399">399</span>
 <span id="400">400</span>
 <span id="401">401</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::module::GlobalModuleRegistry</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::FrameInfo</span>;
-<span class="kw">use</span> <span class="ident">backtrace::Backtrace</span>;
-<span class="kw">use</span> <span class="ident">std::fmt</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_environ::TrapCode</span> <span class="kw">as</span> <span class="ident">EnvTrapCode</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_jit</span>::{<span class="ident">demangle_function_name</span>, <span class="ident">demangle_function_name_or_index</span>};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::module::GlobalModuleRegistry;
+<span class="kw">use </span><span class="kw">crate</span>::FrameInfo;
+<span class="kw">use </span>backtrace::Backtrace;
+<span class="kw">use </span>std::fmt;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>wasmtime_environ::TrapCode <span class="kw">as </span>EnvTrapCode;
+<span class="kw">use </span>wasmtime_jit::{demangle_function_name, demangle_function_name_or_index};
 
-<span class="doccomment">/// A struct representing an aborted instruction execution, with a message</span>
-<span class="doccomment">/// indicating the cause.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Trap</span> {
-    <span class="ident">inner</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TrapInner</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A struct representing an aborted instruction execution, with a message
+/// indicating the cause.
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>Trap {
+    inner: Arc&lt;TrapInner&gt;,
 }
 
-<span class="doccomment">/// State describing the occasion which evoked a trap.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">enum</span> <span class="ident">TrapReason</span> {
-    <span class="doccomment">/// An error message describing a trap.</span>
-    <span class="ident">Message</span>(<span class="ident">String</span>),
+<span class="doccomment">/// State describing the occasion which evoked a trap.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">enum </span>TrapReason {
+    <span class="doccomment">/// An error message describing a trap.
+    </span>Message(String),
 
-    <span class="doccomment">/// An `i32` exit status describing an explicit program exit.</span>
-    <span class="ident">I32Exit</span>(<span class="ident">i32</span>),
+    <span class="doccomment">/// An `i32` exit status describing an explicit program exit.
+    </span>I32Exit(i32),
 
-    <span class="doccomment">/// A structured error describing a trap.</span>
-    <span class="ident">Error</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>),
+    <span class="doccomment">/// A structured error describing a trap.
+    </span>Error(Box&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync&gt;),
 
-    <span class="doccomment">/// A specific code for a trap triggered while executing WASM.</span>
-    <span class="ident">InstructionTrap</span>(<span class="ident">TrapCode</span>),
+    <span class="doccomment">/// A specific code for a trap triggered while executing WASM.
+    </span>InstructionTrap(TrapCode),
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">TrapReason</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">TrapReason::Message</span>(<span class="ident">s</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">s</span>),
-            <span class="ident">TrapReason::I32Exit</span>(<span class="ident">status</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Exited with i32 exit status {}&quot;</span>, <span class="ident">status</span>),
-            <span class="ident">TrapReason::Error</span>(<span class="ident">e</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>),
-            <span class="ident">TrapReason::InstructionTrap</span>(<span class="ident">code</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;wasm trap: {}&quot;</span>, <span class="ident">code</span>),
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>TrapReason {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            TrapReason::Message(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, s),
+            TrapReason::I32Exit(status) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Exited with i32 exit status {}&quot;</span>, status),
+            TrapReason::Error(e) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, e),
+            TrapReason::InstructionTrap(code) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;wasm trap: {}&quot;</span>, code),
         }
     }
 }
 
-<span class="doccomment">/// A trap code describing the reason for a trap.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// All trap instructions have an explicit trap code.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The code can be accessed from the c-api, where the possible values are translated</span>
-<span class="doccomment">/// into enum values defined there:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * `wasm_trap_code` in c-api/src/trap.rs, and</span>
-<span class="doccomment">/// * `wasmtime_trap_code_enum` in c-api/include/wasmtime/trap.h.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// These need to be kept in sync.</span>
-<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>, <span class="ident">Hash</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TrapCode</span> {
-    <span class="doccomment">/// The current stack space was exhausted.</span>
-    <span class="ident">StackOverflow</span>,
+<span class="doccomment">/// A trap code describing the reason for a trap.
+///
+/// All trap instructions have an explicit trap code.
+///
+/// The code can be accessed from the c-api, where the possible values are translated
+/// into enum values defined there:
+///
+/// * `wasm_trap_code` in c-api/src/trap.rs, and
+/// * `wasmtime_trap_code_enum` in c-api/include/wasmtime/trap.h.
+///
+/// These need to be kept in sync.
+</span><span class="attribute">#[non_exhaustive]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+</span><span class="kw">pub enum </span>TrapCode {
+    <span class="doccomment">/// The current stack space was exhausted.
+    </span>StackOverflow,
 
-    <span class="doccomment">/// An out-of-bounds memory access.</span>
-    <span class="ident">MemoryOutOfBounds</span>,
+    <span class="doccomment">/// An out-of-bounds memory access.
+    </span>MemoryOutOfBounds,
 
-    <span class="doccomment">/// A wasm atomic operation was presented with a not-naturally-aligned linear-memory address.</span>
-    <span class="ident">HeapMisaligned</span>,
+    <span class="doccomment">/// A wasm atomic operation was presented with a not-naturally-aligned linear-memory address.
+    </span>HeapMisaligned,
 
-    <span class="doccomment">/// An out-of-bounds access to a table.</span>
-    <span class="ident">TableOutOfBounds</span>,
+    <span class="doccomment">/// An out-of-bounds access to a table.
+    </span>TableOutOfBounds,
 
-    <span class="doccomment">/// Indirect call to a null table entry.</span>
-    <span class="ident">IndirectCallToNull</span>,
+    <span class="doccomment">/// Indirect call to a null table entry.
+    </span>IndirectCallToNull,
 
-    <span class="doccomment">/// Signature mismatch on indirect call.</span>
-    <span class="ident">BadSignature</span>,
+    <span class="doccomment">/// Signature mismatch on indirect call.
+    </span>BadSignature,
 
-    <span class="doccomment">/// An integer arithmetic operation caused an overflow.</span>
-    <span class="ident">IntegerOverflow</span>,
+    <span class="doccomment">/// An integer arithmetic operation caused an overflow.
+    </span>IntegerOverflow,
 
-    <span class="doccomment">/// An integer division by zero.</span>
-    <span class="ident">IntegerDivisionByZero</span>,
+    <span class="doccomment">/// An integer division by zero.
+    </span>IntegerDivisionByZero,
 
-    <span class="doccomment">/// Failed float-to-int conversion.</span>
-    <span class="ident">BadConversionToInteger</span>,
+    <span class="doccomment">/// Failed float-to-int conversion.
+    </span>BadConversionToInteger,
 
-    <span class="doccomment">/// Code that was supposed to have been unreachable was reached.</span>
-    <span class="ident">UnreachableCodeReached</span>,
+    <span class="doccomment">/// Code that was supposed to have been unreachable was reached.
+    </span>UnreachableCodeReached,
 
-    <span class="doccomment">/// Execution has potentially run too long and may be interrupted.</span>
-    <span class="ident">Interrupt</span>,
+    <span class="doccomment">/// Execution has potentially run too long and may be interrupted.
+    </span>Interrupt,
 }
 
-<span class="kw">impl</span> <span class="ident">TrapCode</span> {
-    <span class="doccomment">/// Panics if `code` is `EnvTrapCode::User`.</span>
-    <span class="kw">fn</span> <span class="ident">from_non_user</span>(<span class="ident">code</span>: <span class="ident">EnvTrapCode</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">code</span> {
-            <span class="ident">EnvTrapCode::StackOverflow</span> =&gt; <span class="ident">TrapCode::StackOverflow</span>,
-            <span class="ident">EnvTrapCode::HeapOutOfBounds</span> =&gt; <span class="ident">TrapCode::MemoryOutOfBounds</span>,
-            <span class="ident">EnvTrapCode::HeapMisaligned</span> =&gt; <span class="ident">TrapCode::HeapMisaligned</span>,
-            <span class="ident">EnvTrapCode::TableOutOfBounds</span> =&gt; <span class="ident">TrapCode::TableOutOfBounds</span>,
-            <span class="ident">EnvTrapCode::IndirectCallToNull</span> =&gt; <span class="ident">TrapCode::IndirectCallToNull</span>,
-            <span class="ident">EnvTrapCode::BadSignature</span> =&gt; <span class="ident">TrapCode::BadSignature</span>,
-            <span class="ident">EnvTrapCode::IntegerOverflow</span> =&gt; <span class="ident">TrapCode::IntegerOverflow</span>,
-            <span class="ident">EnvTrapCode::IntegerDivisionByZero</span> =&gt; <span class="ident">TrapCode::IntegerDivisionByZero</span>,
-            <span class="ident">EnvTrapCode::BadConversionToInteger</span> =&gt; <span class="ident">TrapCode::BadConversionToInteger</span>,
-            <span class="ident">EnvTrapCode::UnreachableCodeReached</span> =&gt; <span class="ident">TrapCode::UnreachableCodeReached</span>,
-            <span class="ident">EnvTrapCode::Interrupt</span> =&gt; <span class="ident">TrapCode::Interrupt</span>,
+<span class="kw">impl </span>TrapCode {
+    <span class="doccomment">/// Panics if `code` is `EnvTrapCode::User`.
+    </span><span class="kw">fn </span>from_non_user(code: EnvTrapCode) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>code {
+            EnvTrapCode::StackOverflow =&gt; TrapCode::StackOverflow,
+            EnvTrapCode::HeapOutOfBounds =&gt; TrapCode::MemoryOutOfBounds,
+            EnvTrapCode::HeapMisaligned =&gt; TrapCode::HeapMisaligned,
+            EnvTrapCode::TableOutOfBounds =&gt; TrapCode::TableOutOfBounds,
+            EnvTrapCode::IndirectCallToNull =&gt; TrapCode::IndirectCallToNull,
+            EnvTrapCode::BadSignature =&gt; TrapCode::BadSignature,
+            EnvTrapCode::IntegerOverflow =&gt; TrapCode::IntegerOverflow,
+            EnvTrapCode::IntegerDivisionByZero =&gt; TrapCode::IntegerDivisionByZero,
+            EnvTrapCode::BadConversionToInteger =&gt; TrapCode::BadConversionToInteger,
+            EnvTrapCode::UnreachableCodeReached =&gt; TrapCode::UnreachableCodeReached,
+            EnvTrapCode::Interrupt =&gt; TrapCode::Interrupt,
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">TrapCode</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="kw">use</span> <span class="ident">TrapCode</span>::<span class="kw-2">*</span>;
-        <span class="kw">let</span> <span class="ident">desc</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">StackOverflow</span> =&gt; <span class="string">&quot;call stack exhausted&quot;</span>,
-            <span class="ident">MemoryOutOfBounds</span> =&gt; <span class="string">&quot;out of bounds memory access&quot;</span>,
-            <span class="ident">HeapMisaligned</span> =&gt; <span class="string">&quot;misaligned memory access&quot;</span>,
-            <span class="ident">TableOutOfBounds</span> =&gt; <span class="string">&quot;undefined element: out of bounds table access&quot;</span>,
-            <span class="ident">IndirectCallToNull</span> =&gt; <span class="string">&quot;uninitialized element&quot;</span>,
-            <span class="ident">BadSignature</span> =&gt; <span class="string">&quot;indirect call type mismatch&quot;</span>,
-            <span class="ident">IntegerOverflow</span> =&gt; <span class="string">&quot;integer overflow&quot;</span>,
-            <span class="ident">IntegerDivisionByZero</span> =&gt; <span class="string">&quot;integer divide by zero&quot;</span>,
-            <span class="ident">BadConversionToInteger</span> =&gt; <span class="string">&quot;invalid conversion to integer&quot;</span>,
-            <span class="ident">UnreachableCodeReached</span> =&gt; <span class="string">&quot;wasm `unreachable` instruction executed&quot;</span>,
-            <span class="ident">Interrupt</span> =&gt; <span class="string">&quot;interrupt&quot;</span>,
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>TrapCode {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">use </span>TrapCode::<span class="kw-2">*</span>;
+        <span class="kw">let </span>desc = <span class="kw">match </span><span class="self">self </span>{
+            StackOverflow =&gt; <span class="string">&quot;call stack exhausted&quot;</span>,
+            MemoryOutOfBounds =&gt; <span class="string">&quot;out of bounds memory access&quot;</span>,
+            HeapMisaligned =&gt; <span class="string">&quot;misaligned memory access&quot;</span>,
+            TableOutOfBounds =&gt; <span class="string">&quot;undefined element: out of bounds table access&quot;</span>,
+            IndirectCallToNull =&gt; <span class="string">&quot;uninitialized element&quot;</span>,
+            BadSignature =&gt; <span class="string">&quot;indirect call type mismatch&quot;</span>,
+            IntegerOverflow =&gt; <span class="string">&quot;integer overflow&quot;</span>,
+            IntegerDivisionByZero =&gt; <span class="string">&quot;integer divide by zero&quot;</span>,
+            BadConversionToInteger =&gt; <span class="string">&quot;invalid conversion to integer&quot;</span>,
+            UnreachableCodeReached =&gt; <span class="string">&quot;wasm `unreachable` instruction executed&quot;</span>,
+            Interrupt =&gt; <span class="string">&quot;interrupt&quot;</span>,
         };
-        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">desc</span>)
+        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, desc)
     }
 }
 
-<span class="kw">struct</span> <span class="ident">TrapInner</span> {
-    <span class="ident">reason</span>: <span class="ident">TrapReason</span>,
-    <span class="ident">wasm_trace</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FrameInfo</span><span class="op">&gt;</span>,
-    <span class="ident">native_trace</span>: <span class="ident">Backtrace</span>,
-    <span class="ident">hint_wasm_backtrace_details_env</span>: <span class="ident">bool</span>,
+<span class="kw">struct </span>TrapInner {
+    reason: TrapReason,
+    wasm_trace: Vec&lt;FrameInfo&gt;,
+    native_trace: Backtrace,
+    hint_wasm_backtrace_details_env: bool,
 }
 
-<span class="kw">fn</span> <span class="ident">_assert_trap_is_sync_and_send</span>(<span class="ident">t</span>: <span class="kw-2">&amp;</span><span class="ident">Trap</span>) -&gt; (<span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Sync</span>, <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Send</span>) {
-    (<span class="ident">t</span>, <span class="ident">t</span>)
+<span class="kw">fn </span>_assert_trap_is_sync_and_send(t: <span class="kw-2">&amp;</span>Trap) -&gt; (<span class="kw-2">&amp;</span><span class="kw">dyn </span>Sync, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Send) {
+    (t, t)
 }
 
-<span class="kw">impl</span> <span class="ident">Trap</span> {
-    <span class="doccomment">/// Creates a new `Trap` with `message`.</span>
-    <span class="doccomment">/// # Example</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// let trap = wasmtime::Trap::new(&quot;unexpected error&quot;);</span>
-    <span class="doccomment">/// assert!(trap.to_string().contains(&quot;unexpected error&quot;));</span>
-    <span class="doccomment">/// ```</span>
-    <span class="attribute">#[<span class="ident">cold</span>]</span> <span class="comment">// traps are exceptional, this helps move handling off the main path</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">message</span>: <span class="ident">I</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">reason</span> <span class="op">=</span> <span class="ident">TrapReason::Message</span>(<span class="ident">message</span>.<span class="ident">into</span>());
-        <span class="ident">Trap::new_with_trace</span>(<span class="prelude-val">None</span>, <span class="ident">reason</span>, <span class="ident">Backtrace::new_unresolved</span>())
+<span class="kw">impl </span>Trap {
+    <span class="doccomment">/// Creates a new `Trap` with `message`.
+    /// # Example
+    /// ```
+    /// let trap = wasmtime::Trap::new(&quot;unexpected error&quot;);
+    /// assert!(trap.to_string().contains(&quot;unexpected error&quot;));
+    /// ```
+    </span><span class="attribute">#[cold] </span><span class="comment">// traps are exceptional, this helps move handling off the main path
+    </span><span class="kw">pub fn </span>new&lt;I: Into&lt;String&gt;&gt;(message: I) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>reason = TrapReason::Message(message.into());
+        Trap::new_with_trace(<span class="prelude-val">None</span>, reason, Backtrace::new_unresolved())
     }
 
-    <span class="doccomment">/// Creates a new `Trap` representing an explicit program exit with a classic `i32`</span>
-    <span class="doccomment">/// exit status value.</span>
-    <span class="attribute">#[<span class="ident">cold</span>]</span> <span class="comment">// see Trap::new</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">i32_exit</span>(<span class="ident">status</span>: <span class="ident">i32</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Trap::new_with_trace</span>(
+    <span class="doccomment">/// Creates a new `Trap` representing an explicit program exit with a classic `i32`
+    /// exit status value.
+    </span><span class="attribute">#[cold] </span><span class="comment">// see Trap::new
+    </span><span class="kw">pub fn </span>i32_exit(status: i32) -&gt; <span class="self">Self </span>{
+        Trap::new_with_trace(
             <span class="prelude-val">None</span>,
-            <span class="ident">TrapReason::I32Exit</span>(<span class="ident">status</span>),
-            <span class="ident">Backtrace::new_unresolved</span>(),
+            TrapReason::I32Exit(status),
+            Backtrace::new_unresolved(),
         )
     }
 
-    <span class="attribute">#[<span class="ident">cold</span>]</span> <span class="comment">// see Trap::new</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">from_runtime_box</span>(<span class="ident">runtime_trap</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">wasmtime_runtime::Trap</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::from_runtime</span>(<span class="kw-2">*</span><span class="ident">runtime_trap</span>)
+    <span class="attribute">#[cold] </span><span class="comment">// see Trap::new
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_runtime_box(runtime_trap: Box&lt;wasmtime_runtime::Trap&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::from_runtime(<span class="kw-2">*</span>runtime_trap)
     }
 
-    <span class="attribute">#[<span class="ident">cold</span>]</span> <span class="comment">// see Trap::new</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">from_runtime</span>(<span class="ident">runtime_trap</span>: <span class="ident">wasmtime_runtime::Trap</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">runtime_trap</span> {
-            <span class="ident">wasmtime_runtime::Trap::User</span>(<span class="ident">error</span>) =&gt; <span class="ident">Trap::from</span>(<span class="ident">error</span>),
-            <span class="ident">wasmtime_runtime::Trap::Jit</span> {
-                <span class="ident">pc</span>,
-                <span class="ident">backtrace</span>,
-                <span class="ident">maybe_interrupted</span>,
+    <span class="attribute">#[cold] </span><span class="comment">// see Trap::new
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_runtime(runtime_trap: wasmtime_runtime::Trap) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>runtime_trap {
+            wasmtime_runtime::Trap::User(error) =&gt; Trap::from(error),
+            wasmtime_runtime::Trap::Jit {
+                pc,
+                backtrace,
+                maybe_interrupted,
             } =&gt; {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">GlobalModuleRegistry::with</span>(<span class="op">|</span><span class="ident">modules</span><span class="op">|</span> {
-                    <span class="ident">modules</span>
-                        .<span class="ident">lookup_trap_code</span>(<span class="ident">pc</span>)
-                        .<span class="ident">unwrap_or</span>(<span class="ident">EnvTrapCode::StackOverflow</span>)
+                <span class="kw">let </span><span class="kw-2">mut </span>code = GlobalModuleRegistry::with(|modules| {
+                    modules
+                        .lookup_trap_code(pc)
+                        .unwrap_or(EnvTrapCode::StackOverflow)
                 });
-                <span class="kw">if</span> <span class="ident">maybe_interrupted</span> <span class="op">&amp;&amp;</span> <span class="ident">code</span> <span class="op">==</span> <span class="ident">EnvTrapCode::StackOverflow</span> {
-                    <span class="ident">code</span> <span class="op">=</span> <span class="ident">EnvTrapCode::Interrupt</span>;
+                <span class="kw">if </span>maybe_interrupted &amp;&amp; code == EnvTrapCode::StackOverflow {
+                    code = EnvTrapCode::Interrupt;
                 }
-                <span class="ident">Trap::new_wasm</span>(<span class="prelude-val">Some</span>(<span class="ident">pc</span>), <span class="ident">code</span>, <span class="ident">backtrace</span>)
+                Trap::new_wasm(<span class="prelude-val">Some</span>(pc), code, backtrace)
             }
-            <span class="ident">wasmtime_runtime::Trap::Wasm</span> {
-                <span class="ident">trap_code</span>,
-                <span class="ident">backtrace</span>,
-            } =&gt; <span class="ident">Trap::new_wasm</span>(<span class="prelude-val">None</span>, <span class="ident">trap_code</span>, <span class="ident">backtrace</span>),
-            <span class="ident">wasmtime_runtime::Trap::OOM</span> { <span class="ident">backtrace</span> } =&gt; {
-                <span class="kw">let</span> <span class="ident">reason</span> <span class="op">=</span> <span class="ident">TrapReason::Message</span>(<span class="string">&quot;out of memory&quot;</span>.<span class="ident">to_string</span>());
-                <span class="ident">Trap::new_with_trace</span>(<span class="prelude-val">None</span>, <span class="ident">reason</span>, <span class="ident">backtrace</span>)
+            wasmtime_runtime::Trap::Wasm {
+                trap_code,
+                backtrace,
+            } =&gt; Trap::new_wasm(<span class="prelude-val">None</span>, trap_code, backtrace),
+            wasmtime_runtime::Trap::OOM { backtrace } =&gt; {
+                <span class="kw">let </span>reason = TrapReason::Message(<span class="string">&quot;out of memory&quot;</span>.to_string());
+                Trap::new_with_trace(<span class="prelude-val">None</span>, reason, backtrace)
             }
         }
     }
 
-    <span class="attribute">#[<span class="ident">cold</span>]</span> <span class="comment">// see Trap::new</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new_wasm</span>(
-        <span class="ident">trap_pc</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-        <span class="ident">code</span>: <span class="ident">EnvTrapCode</span>,
-        <span class="ident">backtrace</span>: <span class="ident">Backtrace</span>,
-    ) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">TrapCode::from_non_user</span>(<span class="ident">code</span>);
-        <span class="ident">Trap::new_with_trace</span>(<span class="ident">trap_pc</span>, <span class="ident">TrapReason::InstructionTrap</span>(<span class="ident">code</span>), <span class="ident">backtrace</span>)
+    <span class="attribute">#[cold] </span><span class="comment">// see Trap::new
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_wasm(
+        trap_pc: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+        code: EnvTrapCode,
+        backtrace: Backtrace,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>code = TrapCode::from_non_user(code);
+        Trap::new_with_trace(trap_pc, TrapReason::InstructionTrap(code), backtrace)
     }
 
-    <span class="doccomment">/// Creates a new `Trap`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * `trap_pc` - this is the precise program counter, if available, that</span>
-    <span class="doccomment">///   wasm trapped at. This is used when learning about the wasm stack trace</span>
-    <span class="doccomment">///   to ensure we assign the correct source to every frame.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * `reason` - this is the wasmtime-internal reason for why this trap is</span>
-    <span class="doccomment">///   being created.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * `native_trace` - this is a captured backtrace from when the trap</span>
-    <span class="doccomment">///   occurred, and this will iterate over the frames to find frames that</span>
-    <span class="doccomment">///   lie in wasm jit code.</span>
-    <span class="kw">fn</span> <span class="ident">new_with_trace</span>(<span class="ident">trap_pc</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">reason</span>: <span class="ident">TrapReason</span>, <span class="ident">native_trace</span>: <span class="ident">Backtrace</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">wasm_trace</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hint_wasm_backtrace_details_env</span> <span class="op">=</span> <span class="bool-val">false</span>;
+    <span class="doccomment">/// Creates a new `Trap`.
+    ///
+    /// * `trap_pc` - this is the precise program counter, if available, that
+    ///   wasm trapped at. This is used when learning about the wasm stack trace
+    ///   to ensure we assign the correct source to every frame.
+    ///
+    /// * `reason` - this is the wasmtime-internal reason for why this trap is
+    ///   being created.
+    ///
+    /// * `native_trace` - this is a captured backtrace from when the trap
+    ///   occurred, and this will iterate over the frames to find frames that
+    ///   lie in wasm jit code.
+    </span><span class="kw">fn </span>new_with_trace(trap_pc: <span class="prelude-ty">Option</span>&lt;usize&gt;, reason: TrapReason, native_trace: Backtrace) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>wasm_trace = Vec::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>hint_wasm_backtrace_details_env = <span class="bool-val">false</span>;
 
-        <span class="ident">GlobalModuleRegistry::with</span>(<span class="op">|</span><span class="ident">registry</span><span class="op">|</span> {
-            <span class="kw">for</span> <span class="ident">frame</span> <span class="kw">in</span> <span class="ident">native_trace</span>.<span class="ident">frames</span>() {
-                <span class="kw">let</span> <span class="ident">pc</span> <span class="op">=</span> <span class="ident">frame</span>.<span class="ident">ip</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-                <span class="kw">if</span> <span class="ident">pc</span> <span class="op">==</span> <span class="number">0</span> {
+        GlobalModuleRegistry::with(|registry| {
+            <span class="kw">for </span>frame <span class="kw">in </span>native_trace.frames() {
+                <span class="kw">let </span>pc = frame.ip() <span class="kw">as </span>usize;
+                <span class="kw">if </span>pc == <span class="number">0 </span>{
                     <span class="kw">continue</span>;
                 }
-                <span class="comment">// Note that we need to be careful about the pc we pass in</span>
-                <span class="comment">// here to lookup frame information. This program counter is</span>
-                <span class="comment">// used to translate back to an original source location in</span>
-                <span class="comment">// the origin wasm module. If this pc is the exact pc that</span>
-                <span class="comment">// the trap happened at, then we look up that pc precisely.</span>
-                <span class="comment">// Otherwise backtrace information typically points at the</span>
-                <span class="comment">// pc *after* the call instruction (because otherwise it&#39;s</span>
-                <span class="comment">// likely a call instruction on the stack). In that case we</span>
-                <span class="comment">// want to lookup information for the previous instruction</span>
-                <span class="comment">// (the call instruction) so we subtract one as the lookup.</span>
-                <span class="kw">let</span> <span class="ident">pc_to_lookup</span> <span class="op">=</span> <span class="kw">if</span> <span class="prelude-val">Some</span>(<span class="ident">pc</span>) <span class="op">==</span> <span class="ident">trap_pc</span> { <span class="ident">pc</span> } <span class="kw">else</span> { <span class="ident">pc</span> <span class="op">-</span> <span class="number">1</span> };
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">info</span>, <span class="ident">has_unparsed_debuginfo</span>, <span class="ident">wasm_backtrace_details_env_used</span>)) <span class="op">=</span>
-                    <span class="ident">registry</span>.<span class="ident">lookup_frame_info</span>(<span class="ident">pc_to_lookup</span>)
+                <span class="comment">// Note that we need to be careful about the pc we pass in
+                // here to lookup frame information. This program counter is
+                // used to translate back to an original source location in
+                // the origin wasm module. If this pc is the exact pc that
+                // the trap happened at, then we look up that pc precisely.
+                // Otherwise backtrace information typically points at the
+                // pc *after* the call instruction (because otherwise it&#39;s
+                // likely a call instruction on the stack). In that case we
+                // want to lookup information for the previous instruction
+                // (the call instruction) so we subtract one as the lookup.
+                </span><span class="kw">let </span>pc_to_lookup = <span class="kw">if </span><span class="prelude-val">Some</span>(pc) == trap_pc { pc } <span class="kw">else </span>{ pc - <span class="number">1 </span>};
+                <span class="kw">if let </span><span class="prelude-val">Some</span>((info, has_unparsed_debuginfo, wasm_backtrace_details_env_used)) =
+                    registry.lookup_frame_info(pc_to_lookup)
                 {
-                    <span class="ident">wasm_trace</span>.<span class="ident">push</span>(<span class="ident">info</span>);
+                    wasm_trace.push(info);
 
-                    <span class="comment">// If this frame has unparsed debug information and the</span>
-                    <span class="comment">// store&#39;s configuration indicates that we were</span>
-                    <span class="comment">// respecting the environment variable of whether to</span>
-                    <span class="comment">// do this then we will print out a helpful note in</span>
-                    <span class="comment">// `Display` to indicate that more detailed information</span>
-                    <span class="comment">// in a trap may be available.</span>
-                    <span class="kw">if</span> <span class="ident">has_unparsed_debuginfo</span> <span class="op">&amp;&amp;</span> <span class="ident">wasm_backtrace_details_env_used</span> {
-                        <span class="ident">hint_wasm_backtrace_details_env</span> <span class="op">=</span> <span class="bool-val">true</span>;
+                    <span class="comment">// If this frame has unparsed debug information and the
+                    // store&#39;s configuration indicates that we were
+                    // respecting the environment variable of whether to
+                    // do this then we will print out a helpful note in
+                    // `Display` to indicate that more detailed information
+                    // in a trap may be available.
+                    </span><span class="kw">if </span>has_unparsed_debuginfo &amp;&amp; wasm_backtrace_details_env_used {
+                        hint_wasm_backtrace_details_env = <span class="bool-val">true</span>;
                     }
                 }
             }
         });
-        <span class="ident">Trap</span> {
-            <span class="ident">inner</span>: <span class="ident">Arc::new</span>(<span class="ident">TrapInner</span> {
-                <span class="ident">reason</span>,
-                <span class="ident">wasm_trace</span>,
-                <span class="ident">native_trace</span>,
-                <span class="ident">hint_wasm_backtrace_details_env</span>,
+        Trap {
+            inner: Arc::new(TrapInner {
+                reason,
+                wasm_trace,
+                native_trace,
+                hint_wasm_backtrace_details_env,
             }),
         }
     }
 
-    <span class="doccomment">/// If the trap was the result of an explicit program exit with a classic</span>
-    <span class="doccomment">/// `i32` exit status value, return the value, otherwise return `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">i32_exit_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">reason</span> {
-            <span class="ident">TrapReason::I32Exit</span>(<span class="ident">status</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">status</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+    <span class="doccomment">/// If the trap was the result of an explicit program exit with a classic
+    /// `i32` exit status value, return the value, otherwise return `None`.
+    </span><span class="kw">pub fn </span>i32_exit_status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;i32&gt; {
+        <span class="kw">match </span><span class="self">self</span>.inner.reason {
+            TrapReason::I32Exit(status) =&gt; <span class="prelude-val">Some</span>(status),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="doccomment">/// Displays the error reason for this trap.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// In particular, it differs from this struct&#39;s `Display` by *only*</span>
-    <span class="doccomment">/// showing the reason, and not the full backtrace. This is useful to</span>
-    <span class="doccomment">/// customize the way the trap is reported, for instance to display a short</span>
-    <span class="doccomment">/// message for user-facing errors.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">display_reason</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">reason</span>
+    <span class="doccomment">/// Displays the error reason for this trap.
+    ///
+    /// In particular, it differs from this struct&#39;s `Display` by *only*
+    /// showing the reason, and not the full backtrace. This is useful to
+    /// customize the way the trap is reported, for instance to display a short
+    /// message for user-facing errors.
+    </span><span class="kw">pub fn </span>display_reason&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>) -&gt; <span class="kw">impl </span>fmt::Display + <span class="lifetime">&#39;a </span>{
+        <span class="kw-2">&amp;</span><span class="self">self</span>.inner.reason
     }
 
-    <span class="doccomment">/// Returns a list of function frames in WebAssembly code that led to this</span>
-    <span class="doccomment">/// trap happening.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">trace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">FrameInfo</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">wasm_trace</span>
+    <span class="doccomment">/// Returns a list of function frames in WebAssembly code that led to this
+    /// trap happening.
+    </span><span class="kw">pub fn </span>trace(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[FrameInfo] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.inner.wasm_trace
     }
 
-    <span class="doccomment">/// Code of a trap that happened while executing a WASM instruction.</span>
-    <span class="doccomment">/// If the trap was triggered by a host export this will be `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">trap_code</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TrapCode</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">reason</span> {
-            <span class="ident">TrapReason::InstructionTrap</span>(<span class="ident">code</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">code</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+    <span class="doccomment">/// Code of a trap that happened while executing a WASM instruction.
+    /// If the trap was triggered by a host export this will be `None`.
+    </span><span class="kw">pub fn </span>trap_code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TrapCode&gt; {
+        <span class="kw">match </span><span class="self">self</span>.inner.reason {
+            TrapReason::InstructionTrap(code) =&gt; <span class="prelude-val">Some</span>(code),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Trap</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Trap&quot;</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;reason&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">reason</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;wasm_trace&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">wasm_trace</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;native_trace&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">native_trace</span>)
-            .<span class="ident">finish</span>()
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Trap {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Trap&quot;</span>)
+            .field(<span class="string">&quot;reason&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.reason)
+            .field(<span class="string">&quot;wasm_trace&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.wasm_trace)
+            .field(<span class="string">&quot;native_trace&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.native_trace)
+            .finish()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Trap</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">reason</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">trace</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">trace</span>();
-        <span class="kw">if</span> <span class="ident">trace</span>.<span class="ident">is_empty</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>Trap {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.inner.reason)<span class="question-mark">?</span>;
+        <span class="kw">let </span>trace = <span class="self">self</span>.trace();
+        <span class="kw">if </span>trace.is_empty() {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
-        <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;\nwasm backtrace:&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">frame</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">trace</span>().<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-            <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">frame</span>.<span class="ident">module_name</span>().<span class="ident">unwrap_or</span>(<span class="string">&quot;&lt;unknown&gt;&quot;</span>);
-            <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;  {:&gt;3}: &quot;</span>, <span class="ident">i</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;\nwasm backtrace:&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>(i, frame) <span class="kw">in </span><span class="self">self</span>.trace().iter().enumerate() {
+            <span class="kw">let </span>name = frame.module_name().unwrap_or(<span class="string">&quot;&lt;unknown&gt;&quot;</span>);
+            <span class="macro">write!</span>(f, <span class="string">&quot;  {:&gt;3}: &quot;</span>, i)<span class="question-mark">?</span>;
 
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">offset</span>) <span class="op">=</span> <span class="ident">frame</span>.<span class="ident">module_offset</span>() {
-                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{:#6x} - &quot;</span>, <span class="ident">offset</span>)<span class="question-mark">?</span>;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(offset) = frame.module_offset() {
+                <span class="macro">write!</span>(f, <span class="string">&quot;{:#6x} - &quot;</span>, offset)<span class="question-mark">?</span>;
             }
 
-            <span class="kw">let</span> <span class="ident">write_raw_func_name</span> <span class="op">=</span> <span class="op">|</span><span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">|</span> {
-                <span class="ident">demangle_function_name_or_index</span>(<span class="ident">f</span>, <span class="ident">frame</span>.<span class="ident">func_name</span>(), <span class="ident">frame</span>.<span class="ident">func_index</span>() <span class="kw">as</span> <span class="ident">usize</span>)
+            <span class="kw">let </span>write_raw_func_name = |f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;| {
+                demangle_function_name_or_index(f, frame.func_name(), frame.func_index() <span class="kw">as </span>usize)
             };
-            <span class="kw">if</span> <span class="ident">frame</span>.<span class="ident">symbols</span>().<span class="ident">is_empty</span>() {
-                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}!&quot;</span>, <span class="ident">name</span>)<span class="question-mark">?</span>;
-                <span class="ident">write_raw_func_name</span>(<span class="ident">f</span>)<span class="question-mark">?</span>;
-                <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
-            } <span class="kw">else</span> {
-                <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">symbol</span>) <span class="kw">in</span> <span class="ident">frame</span>.<span class="ident">symbols</span>().<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-                    <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;              - &quot;</span>)<span class="question-mark">?</span>;
-                    } <span class="kw">else</span> {
-                        <span class="comment">// ...</span>
+            <span class="kw">if </span>frame.symbols().is_empty() {
+                <span class="macro">write!</span>(f, <span class="string">&quot;{}!&quot;</span>, name)<span class="question-mark">?</span>;
+                write_raw_func_name(f)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+            } <span class="kw">else </span>{
+                <span class="kw">for </span>(i, symbol) <span class="kw">in </span>frame.symbols().iter().enumerate() {
+                    <span class="kw">if </span>i &gt; <span class="number">0 </span>{
+                        <span class="macro">write!</span>(f, <span class="string">&quot;              - &quot;</span>)<span class="question-mark">?</span>;
+                    } <span class="kw">else </span>{
+                        <span class="comment">// ...
+                    </span>}
+                    <span class="kw">match </span>symbol.name() {
+                        <span class="prelude-val">Some</span>(name) =&gt; demangle_function_name(f, name)<span class="question-mark">?</span>,
+                        <span class="prelude-val">None </span><span class="kw">if </span>i == <span class="number">0 </span>=&gt; write_raw_func_name(f)<span class="question-mark">?</span>,
+                        <span class="prelude-val">None </span>=&gt; <span class="macro">write!</span>(f, <span class="string">&quot;&lt;inlined function&gt;&quot;</span>)<span class="question-mark">?</span>,
                     }
-                    <span class="kw">match</span> <span class="ident">symbol</span>.<span class="ident">name</span>() {
-                        <span class="prelude-val">Some</span>(<span class="ident">name</span>) =&gt; <span class="ident">demangle_function_name</span>(<span class="ident">f</span>, <span class="ident">name</span>)<span class="question-mark">?</span>,
-                        <span class="prelude-val">None</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="number">0</span> =&gt; <span class="ident">write_raw_func_name</span>(<span class="ident">f</span>)<span class="question-mark">?</span>,
-                        <span class="prelude-val">None</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;&lt;inlined function&gt;&quot;</span>)<span class="question-mark">?</span>,
-                    }
-                    <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">file</span>) <span class="op">=</span> <span class="ident">symbol</span>.<span class="ident">file</span>() {
-                        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;                    at {}&quot;</span>, <span class="ident">file</span>)<span class="question-mark">?</span>;
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">line</span>) <span class="op">=</span> <span class="ident">symbol</span>.<span class="ident">line</span>() {
-                            <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;:{}&quot;</span>, <span class="ident">line</span>)<span class="question-mark">?</span>;
-                            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">col</span>) <span class="op">=</span> <span class="ident">symbol</span>.<span class="ident">column</span>() {
-                                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;:{}&quot;</span>, <span class="ident">col</span>)<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(f, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = symbol.file() {
+                        <span class="macro">write!</span>(f, <span class="string">&quot;                    at {}&quot;</span>, file)<span class="question-mark">?</span>;
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(line) = symbol.line() {
+                            <span class="macro">write!</span>(f, <span class="string">&quot;:{}&quot;</span>, line)<span class="question-mark">?</span>;
+                            <span class="kw">if let </span><span class="prelude-val">Some</span>(col) = symbol.column() {
+                                <span class="macro">write!</span>(f, <span class="string">&quot;:{}&quot;</span>, col)<span class="question-mark">?</span>;
                             }
                         }
                     }
-                    <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(f, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
                 }
             }
         }
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">hint_wasm_backtrace_details_env</span> {
-            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;note: using the `WASMTIME_BACKTRACE_DETAILS=1` environment variable to may show more debugging information&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">if </span><span class="self">self</span>.inner.hint_wasm_backtrace_details_env {
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;note: using the `WASMTIME_BACKTRACE_DETAILS=1` environment variable to may show more debugging information&quot;</span>)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="kw">impl</span> <span class="ident">std::error::Error</span> <span class="kw">for</span> <span class="ident">Trap</span> {
-    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">reason</span> {
-            <span class="ident">TrapReason::Error</span>(<span class="ident">e</span>) =&gt; <span class="ident">e</span>.<span class="ident">source</span>(),
-            <span class="ident">TrapReason::I32Exit</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">TrapReason::Message</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">TrapReason::InstructionTrap</span>(<span class="kw">_</span>) =&gt; {
-                <span class="prelude-val">None</span>
-            }
+<span class="kw">impl </span>std::error::Error <span class="kw">for </span>Trap {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)&gt; {
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner.reason {
+            TrapReason::Error(e) =&gt; e.source(),
+            TrapReason::I32Exit(<span class="kw">_</span>) | TrapReason::Message(<span class="kw">_</span>) | TrapReason::InstructionTrap(<span class="kw">_</span>) =&gt; {
+                <span class="prelude-val">None
+            </span>}
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">anyhow::Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Trap</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">anyhow::Error</span>) -&gt; <span class="ident">Trap</span> {
-        <span class="kw">match</span> <span class="ident">e</span>.<span class="ident">downcast</span>::<span class="op">&lt;</span><span class="ident">Trap</span><span class="op">&gt;</span>() {
-            <span class="prelude-val">Ok</span>(<span class="ident">trap</span>) =&gt; <span class="ident">trap</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Box</span>::<span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="ident">::from</span>(<span class="ident">e</span>).<span class="ident">into</span>(),
+<span class="kw">impl </span>From&lt;anyhow::Error&gt; <span class="kw">for </span>Trap {
+    <span class="kw">fn </span>from(e: anyhow::Error) -&gt; Trap {
+        <span class="kw">match </span>e.downcast::&lt;Trap&gt;() {
+            <span class="prelude-val">Ok</span>(trap) =&gt; trap,
+            <span class="prelude-val">Err</span>(e) =&gt; Box::&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync&gt;::from(e).into(),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Trap</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>) -&gt; <span class="ident">Trap</span> {
-        <span class="comment">// If the top-level error is already a trap, don&#39;t be redundant and just return it.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">trap</span>) <span class="op">=</span> <span class="ident">e</span>.<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="ident">Trap</span><span class="op">&gt;</span>() {
-            <span class="ident">trap</span>.<span class="ident">clone</span>()
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">reason</span> <span class="op">=</span> <span class="ident">TrapReason::Error</span>(<span class="ident">e</span>.<span class="ident">into</span>());
-            <span class="ident">Trap::new_with_trace</span>(<span class="prelude-val">None</span>, <span class="ident">reason</span>, <span class="ident">Backtrace::new_unresolved</span>())
+<span class="kw">impl </span>From&lt;Box&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync&gt;&gt; <span class="kw">for </span>Trap {
+    <span class="kw">fn </span>from(e: Box&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync&gt;) -&gt; Trap {
+        <span class="comment">// If the top-level error is already a trap, don&#39;t be redundant and just return it.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(trap) = e.downcast_ref::&lt;Trap&gt;() {
+            trap.clone()
+        } <span class="kw">else </span>{
+            <span class="kw">let </span>reason = TrapReason::Error(e.into());
+            Trap::new_with_trace(<span class="prelude-val">None</span>, reason, Backtrace::new_unresolved())
         }
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="wasmtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

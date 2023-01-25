@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/fs/syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rustix-0.33.7/src/imp/linux_raw/fs/syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../../normalize.css"><link rel="stylesheet" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../../dark.css" disabled><link rel="stylesheet" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1362,1365 +1357,1364 @@
 <span id="1357">1357</span>
 <span id="1358">1358</span>
 <span id="1359">1359</span>
-</pre><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::fs`.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Safety</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See the `rustix::imp::syscalls` module documentation for details.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::fs`.
+//!
+//! # Safety
+//!
+//! See the `rustix::imp::syscalls` module documentation for details.
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+</span><span class="attribute">#![allow(unsafe_code)]
+#![allow(dead_code)]
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall7_readonly</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose</span>::{
-    <span class="ident">syscall1_readonly</span>, <span class="ident">syscall2</span>, <span class="ident">syscall2_readonly</span>, <span class="ident">syscall3</span>, <span class="ident">syscall3_readonly</span>, <span class="ident">syscall4</span>,
-    <span class="ident">syscall4_readonly</span>, <span class="ident">syscall5</span>, <span class="ident">syscall5_readonly</span>, <span class="ident">syscall6</span>,
+#[cfg(target_arch = <span class="string">&quot;mips&quot;</span>)]
+</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall7_readonly;
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::{
+    syscall1_readonly, syscall2, syscall2_readonly, syscall3, syscall3_readonly, syscall4,
+    syscall4_readonly, syscall5, syscall5_readonly, syscall6,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::c</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-    <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-    <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>)
-))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv::zero</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{
-    <span class="ident">borrowed_fd</span>, <span class="ident">by_ref</span>, <span class="ident">c_int</span>, <span class="ident">c_str</span>, <span class="ident">c_uint</span>, <span class="ident">dev_t</span>, <span class="ident">fs_advice</span>, <span class="ident">mode_and_type_as</span>, <span class="ident">mode_as</span>, <span class="ident">oflags</span>,
-    <span class="ident">oflags_for_open_how</span>, <span class="ident">opt_c_str</span>, <span class="ident">opt_mut</span>, <span class="ident">out</span>, <span class="ident">pass_usize</span>, <span class="ident">raw_fd</span>, <span class="ident">ret</span>, <span class="ident">ret_c_int</span>, <span class="ident">ret_c_uint</span>,
-    <span class="ident">ret_owned_fd</span>, <span class="ident">ret_usize</span>, <span class="ident">size_of</span>, <span class="ident">slice_mut</span>,
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::c;
+<span class="attribute">#[cfg(all(
+    target_pointer_width = <span class="string">&quot;32&quot;</span>,
+    any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;powerpc&quot;</span>)
+))]
+</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::conv::zero;
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::conv::{
+    borrowed_fd, by_ref, c_int, c_str, c_uint, dev_t, fs_advice, mode_and_type_as, mode_as, oflags,
+    oflags_for_open_how, opt_c_str, opt_mut, out, pass_usize, raw_fd, ret, ret_c_int, ret_c_uint,
+    ret_owned_fd, ret_usize, size_of, slice_mut,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::reg::nr</span>;
-<span class="kw">use</span> <span class="kw">super</span>::{
-    <span class="ident">Access</span>, <span class="ident">Advice</span>, <span class="ident">AtFlags</span>, <span class="ident">FallocateFlags</span>, <span class="ident">FdFlags</span>, <span class="ident">FlockOperation</span>, <span class="ident">MemfdFlags</span>, <span class="ident">Mode</span>, <span class="ident">OFlags</span>,
-    <span class="ident">RenameFlags</span>, <span class="ident">ResolveFlags</span>, <span class="ident">Stat</span>, <span class="ident">StatFs</span>, <span class="ident">StatxFlags</span>,
+<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::reg::nr;
+<span class="kw">use super</span>::{
+    Access, Advice, AtFlags, FallocateFlags, FdFlags, FlockOperation, MemfdFlags, Mode, OFlags,
+    RenameFlags, ResolveFlags, Stat, StatFs, StatxFlags,
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fd::AsFd</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fd</span>::{<span class="ident">BorrowedFd</span>, <span class="ident">RawFd</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ffi::ZStr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fs</span>::{<span class="ident">FileType</span>, <span class="ident">SealFlags</span>, <span class="ident">Timestamps</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>::{<span class="self">self</span>, <span class="ident">OwnedFd</span>, <span class="ident">SeekFrom</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::process</span>::{<span class="ident">Gid</span>, <span class="ident">Uid</span>};
-<span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
-<span class="kw">use</span> <span class="ident">core::mem::MaybeUninit</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_arm_fadvise64_64</span> <span class="kw">as</span> <span class="ident">__NR_fadvise64_64</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_fadvise64</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-    <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-    <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>))
-))]</span>
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_fadvise64_64</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_open</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_renameat</span>;
-<span class="kw">use</span> <span class="ident">linux_raw_sys::general</span>::{
-    <span class="ident">__NR_copy_file_range</span>, <span class="ident">__NR_faccessat</span>, <span class="ident">__NR_fallocate</span>, <span class="ident">__NR_fchmod</span>, <span class="ident">__NR_fchmodat</span>, <span class="ident">__NR_fchown</span>,
-    <span class="ident">__NR_fchownat</span>, <span class="ident">__NR_fdatasync</span>, <span class="ident">__NR_flock</span>, <span class="ident">__NR_fsync</span>, <span class="ident">__NR_getdents64</span>, <span class="ident">__NR_linkat</span>,
-    <span class="ident">__NR_memfd_create</span>, <span class="ident">__NR_mkdirat</span>, <span class="ident">__NR_mknodat</span>, <span class="ident">__NR_openat</span>, <span class="ident">__NR_openat2</span>, <span class="ident">__NR_readlinkat</span>,
-    <span class="ident">__NR_renameat2</span>, <span class="ident">__NR_statx</span>, <span class="ident">__NR_symlinkat</span>, <span class="ident">__NR_unlinkat</span>, <span class="ident">__NR_utimensat</span>, <span class="ident">__kernel_timespec</span>,
-    <span class="ident">open_how</span>, <span class="ident">statx</span>, <span class="ident">AT_FDCWD</span>, <span class="ident">AT_REMOVEDIR</span>, <span class="ident">AT_SYMLINK_NOFOLLOW</span>, <span class="ident">F_ADD_SEALS</span>, <span class="ident">F_DUPFD</span>,
-    <span class="ident">F_DUPFD_CLOEXEC</span>, <span class="ident">F_GETFD</span>, <span class="ident">F_GETFL</span>, <span class="ident">F_GETLEASE</span>, <span class="ident">F_GETOWN</span>, <span class="ident">F_GETPIPE_SZ</span>, <span class="ident">F_GETSIG</span>, <span class="ident">F_GET_SEALS</span>,
-    <span class="ident">F_SETFD</span>, <span class="ident">F_SETFL</span>, <span class="ident">F_SETPIPE_SZ</span>,
+<span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+</span><span class="kw">use </span><span class="kw">crate</span>::fd::AsFd;
+<span class="kw">use </span><span class="kw">crate</span>::fd::{BorrowedFd, RawFd};
+<span class="kw">use </span><span class="kw">crate</span>::ffi::ZStr;
+<span class="kw">use </span><span class="kw">crate</span>::fs::{FileType, SealFlags, Timestamps};
+<span class="kw">use </span><span class="kw">crate</span>::io::{<span class="self">self</span>, OwnedFd, SeekFrom};
+<span class="kw">use </span><span class="kw">crate</span>::process::{Gid, Uid};
+<span class="kw">use </span>core::convert::TryInto;
+<span class="kw">use </span>core::mem::MaybeUninit;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;arm&quot;</span>)]
+</span><span class="kw">use </span>linux_raw_sys::general::__NR_arm_fadvise64_64 <span class="kw">as </span>__NR_fadvise64_64;
+<span class="attribute">#[cfg(target_arch = <span class="string">&quot;mips&quot;</span>)]
+</span><span class="kw">use </span>linux_raw_sys::general::__NR_fadvise64;
+<span class="attribute">#[cfg(all(
+    target_pointer_width = <span class="string">&quot;32&quot;</span>,
+    not(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>))
+))]
+</span><span class="kw">use </span>linux_raw_sys::general::__NR_fadvise64_64;
+<span class="attribute">#[cfg(not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>)))]
+</span><span class="kw">use </span>linux_raw_sys::general::__NR_open;
+<span class="attribute">#[cfg(not(any(target_arch = <span class="string">&quot;riscv64&quot;</span>)))]
+</span><span class="kw">use </span>linux_raw_sys::general::__NR_renameat;
+<span class="kw">use </span>linux_raw_sys::general::{
+    __NR_copy_file_range, __NR_faccessat, __NR_fallocate, __NR_fchmod, __NR_fchmodat, __NR_fchown,
+    __NR_fchownat, __NR_fdatasync, __NR_flock, __NR_fsync, __NR_getdents64, __NR_linkat,
+    __NR_memfd_create, __NR_mkdirat, __NR_mknodat, __NR_openat, __NR_openat2, __NR_readlinkat,
+    __NR_renameat2, __NR_statx, __NR_symlinkat, __NR_unlinkat, __NR_utimensat, __kernel_timespec,
+    open_how, statx, AT_FDCWD, AT_REMOVEDIR, AT_SYMLINK_NOFOLLOW, F_ADD_SEALS, F_DUPFD,
+    F_DUPFD_CLOEXEC, F_GETFD, F_GETFL, F_GETLEASE, F_GETOWN, F_GETPIPE_SZ, F_GETSIG, F_GET_SEALS,
+    F_SETFD, F_SETFL, F_SETPIPE_SZ,
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">use</span> {
-    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall6_readonly</span>,
-    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{<span class="ident">hi</span>, <span class="ident">lo</span>, <span class="ident">slice_just_addr</span>},
-    <span class="ident">linux_raw_sys::general::__NR_utimensat_time64</span>,
-    <span class="ident">linux_raw_sys::general</span>::{
-        <span class="ident">__NR__llseek</span>, <span class="ident">__NR_fcntl64</span>, <span class="ident">__NR_fstat64</span>, <span class="ident">__NR_fstatat64</span>, <span class="ident">__NR_fstatfs64</span>, <span class="ident">__NR_ftruncate64</span>,
-        <span class="ident">__NR_sendfile64</span>, <span class="ident">__NR_statfs64</span>, <span class="ident">timespec</span> <span class="kw">as</span> <span class="ident">__kernel_old_timespec</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">use </span>{
+    <span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall6_readonly,
+    <span class="kw">super</span>::<span class="kw">super</span>::conv::{hi, lo, slice_just_addr},
+    linux_raw_sys::general::__NR_utimensat_time64,
+    linux_raw_sys::general::{
+        __NR__llseek, __NR_fcntl64, __NR_fstat64, __NR_fstatat64, __NR_fstatfs64, __NR_ftruncate64,
+        __NR_sendfile64, __NR_statfs64, timespec <span class="kw">as </span>__kernel_old_timespec,
     },
 };
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">use</span> {
-    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{<span class="ident">loff_t</span>, <span class="ident">loff_t_from_u64</span>, <span class="ident">ret_u64</span>},
-    <span class="ident">linux_raw_sys::general</span>::{
-        <span class="ident">__NR_fadvise64</span>, <span class="ident">__NR_fcntl</span>, <span class="ident">__NR_fstat</span>, <span class="ident">__NR_fstatfs</span>, <span class="ident">__NR_ftruncate</span>, <span class="ident">__NR_lseek</span>,
-        <span class="ident">__NR_newfstatat</span>, <span class="ident">__NR_sendfile</span>, <span class="ident">__NR_statfs</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+</span><span class="kw">use </span>{
+    <span class="kw">super</span>::<span class="kw">super</span>::conv::{loff_t, loff_t_from_u64, ret_u64},
+    linux_raw_sys::general::{
+        __NR_fadvise64, __NR_fcntl, __NR_fstat, __NR_fstatfs, __NR_ftruncate, __NR_lseek,
+        __NR_newfstatat, __NR_sendfile, __NR_statfs,
     },
 };
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">open</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">flags</span>: <span class="ident">OFlags</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-    {
-        <span class="ident">openat</span>(<span class="ident"><span class="kw">crate</span>::fs::cwd</span>().<span class="ident">as_fd</span>(), <span class="ident">filename</span>, <span class="ident">flags</span>, <span class="ident">mode</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>open(filename: <span class="kw-2">&amp;</span>ZStr, flags: OFlags, mode: Mode) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+    </span>{
+        openat(<span class="kw">crate</span>::fs::cwd().as_fd(), filename, flags, mode)
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_open</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">oflags</span>(<span class="ident">flags</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+    <span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall3_readonly(
+            nr(__NR_open),
+            c_str(filename),
+            oflags(flags),
+            mode_as(mode),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>,
-        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_open</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">oflags</span>(<span class="ident">flags</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">openat</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">flags</span>: <span class="ident">OFlags</span>,
-    <span class="ident">mode</span>: <span class="ident">Mode</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_openat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">oflags</span>(<span class="ident">flags</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_openat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">oflags</span>(<span class="ident">flags</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+    <span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;64&quot;</span>,
+        not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall3_readonly(
+            nr(__NR_open),
+            c_str(filename),
+            oflags(flags),
+            mode_as(mode),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">openat2</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">flags</span>: <span class="ident">OFlags</span>,
-    <span class="ident">mode</span>: <span class="ident">Mode</span>,
-    <span class="ident">resolve</span>: <span class="ident">ResolveFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_openat2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">by_ref</span>(<span class="kw-2">&amp;</span><span class="ident">open_how</span> {
-                <span class="ident">flags</span>: <span class="ident">oflags_for_open_how</span>(<span class="ident">flags</span>),
-                <span class="ident">mode</span>: <span class="ident">u64::from</span>(<span class="ident">mode</span>.<span class="ident">bits</span>()),
-                <span class="ident">resolve</span>: <span class="ident">resolve</span>.<span class="ident">bits</span>(),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>openat(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    filename: <span class="kw-2">&amp;</span>ZStr,
+    flags: OFlags,
+    mode: Mode,
+) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall4_readonly(
+            nr(__NR_openat),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            oflags(flags),
+            mode_as(mode),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall4_readonly(
+            nr(__NR_openat),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            oflags(flags),
+            mode_as(mode),
+        ))
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>openat2(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    pathname: <span class="kw-2">&amp;</span>ZStr,
+    flags: OFlags,
+    mode: Mode,
+    resolve: ResolveFlags,
+) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall4_readonly(
+            nr(__NR_openat2),
+            borrowed_fd(dirfd),
+            c_str(pathname),
+            by_ref(<span class="kw-2">&amp;</span>open_how {
+                flags: oflags_for_open_how(flags),
+                mode: u64::from(mode.bits()),
+                resolve: resolve.bits(),
             }),
-            <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">open_how</span>, <span class="kw">_</span><span class="op">&gt;</span>(),
+            size_of::&lt;open_how, <span class="kw">_</span>&gt;(),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_openat2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">by_ref</span>(<span class="kw-2">&amp;</span><span class="ident">open_how</span> {
-                <span class="ident">flags</span>: <span class="ident">oflags_for_open_how</span>(<span class="ident">flags</span>),
-                <span class="ident">mode</span>: <span class="ident">u64::from</span>(<span class="ident">mode</span>.<span class="ident">bits</span>()),
-                <span class="ident">resolve</span>: <span class="ident">resolve</span>.<span class="ident">bits</span>(),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall4_readonly(
+            nr(__NR_openat2),
+            borrowed_fd(dirfd),
+            c_str(pathname),
+            by_ref(<span class="kw-2">&amp;</span>open_how {
+                flags: oflags_for_open_how(flags),
+                mode: u64::from(mode.bits()),
+                resolve: resolve.bits(),
             }),
-            <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">open_how</span>, <span class="kw">_</span><span class="op">&gt;</span>(),
+            size_of::&lt;open_how, <span class="kw">_</span>&gt;(),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">chmod</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fchmodat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>chmod(filename: <span class="kw-2">&amp;</span>ZStr, mode: Mode) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fchmodat),
+            c_int(AT_FDCWD),
+            c_str(filename),
+            mode_as(mode),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">chmodat</span>(<span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fchmodat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>chmodat(dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, filename: <span class="kw-2">&amp;</span>ZStr, mode: Mode) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fchmodat),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            mode_as(mode),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fchmod</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fchmod</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fchmod(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, mode: Mode) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall2_readonly(
+            nr(__NR_fchmod),
+            borrowed_fd(fd),
+            mode_as(mode),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">chownat</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">owner</span>: <span class="ident">Uid</span>,
-    <span class="ident">group</span>: <span class="ident">Gid</span>,
-    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fchownat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">c_uint</span>(<span class="ident">owner</span>.<span class="ident">as_raw</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">group</span>.<span class="ident">as_raw</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>chownat(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    filename: <span class="kw-2">&amp;</span>ZStr,
+    owner: Uid,
+    group: Gid,
+    flags: AtFlags,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall5_readonly(
+            nr(__NR_fchownat),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            c_uint(owner.as_raw()),
+            c_uint(group.as_raw()),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fchown</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">owner</span>: <span class="ident">Uid</span>, <span class="ident">group</span>: <span class="ident">Gid</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fchown</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">owner</span>.<span class="ident">as_raw</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">group</span>.<span class="ident">as_raw</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fchown(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, owner: Uid, group: Gid) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fchown),
+            borrowed_fd(fd),
+            c_uint(owner.as_raw()),
+            c_uint(group.as_raw()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">mknodat</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">file_type</span>: <span class="ident">FileType</span>,
-    <span class="ident">mode</span>: <span class="ident">Mode</span>,
-    <span class="ident">dev</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mknodat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">mode_and_type_as</span>(<span class="ident">mode</span>, <span class="ident">file_type</span>),
-            <span class="ident">dev_t</span>(<span class="ident">dev</span>)<span class="question-mark">?</span>,
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mknodat(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    filename: <span class="kw-2">&amp;</span>ZStr,
+    file_type: FileType,
+    mode: Mode,
+    dev: u64,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_mknodat),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            mode_and_type_as(mode, file_type),
+            dev_t(dev)<span class="question-mark">?</span>,
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mknodat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">mode_and_type_as</span>(<span class="ident">mode</span>, <span class="ident">file_type</span>),
-            <span class="ident">dev_t</span>(<span class="ident">dev</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_mknodat),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            mode_and_type_as(mode, file_type),
+            dev_t(dev),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">seek</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pos</span>: <span class="ident">SeekFrom</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">whence</span>, <span class="ident">offset</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">pos</span> {
-        <span class="ident">SeekFrom::Start</span>(<span class="ident">pos</span>) =&gt; {
-            <span class="kw">let</span> <span class="ident">pos</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="ident">pos</span>;
-            <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.</span>
-            (<span class="ident">linux_raw_sys::general::SEEK_SET</span>, <span class="ident">pos</span> <span class="kw">as</span> <span class="ident">i64</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>seek(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, pos: SeekFrom) -&gt; io::Result&lt;u64&gt; {
+    <span class="kw">let </span>(whence, offset) = <span class="kw">match </span>pos {
+        SeekFrom::Start(pos) =&gt; {
+            <span class="kw">let </span>pos: u64 = pos;
+            <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.
+            </span>(linux_raw_sys::general::SEEK_SET, pos <span class="kw">as </span>i64)
         }
-        <span class="ident">SeekFrom::End</span>(<span class="ident">offset</span>) =&gt; (<span class="ident">linux_raw_sys::general::SEEK_END</span>, <span class="ident">offset</span>),
-        <span class="ident">SeekFrom::Current</span>(<span class="ident">offset</span>) =&gt; (<span class="ident">linux_raw_sys::general::SEEK_CUR</span>, <span class="ident">offset</span>),
+        SeekFrom::End(offset) =&gt; (linux_raw_sys::general::SEEK_END, offset),
+        SeekFrom::Current(offset) =&gt; (linux_raw_sys::general::SEEK_CUR, offset),
     };
-    <span class="ident">_seek</span>(<span class="ident">fd</span>, <span class="ident">offset</span>, <span class="ident">whence</span>)
+    _seek(fd, offset, whence)
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">_seek</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">offset</span>: <span class="ident">i64</span>, <span class="ident">whence</span>: <span class="ident">c::c_uint</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall5</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR__llseek</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="comment">// Don&#39;t use the hi/lo functions here because Linux&#39;s llseek</span>
-            <span class="comment">// takes its 64-bit argument differently from everything else.</span>
-            <span class="ident">pass_usize</span>((<span class="ident">offset</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">32</span>) <span class="kw">as</span> <span class="ident">usize</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">usize</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="ident">whence</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>_seek(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, offset: i64, whence: c::c_uint) -&gt; io::Result&lt;u64&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;u64&gt;::uninit();
+        ret(syscall5(
+            nr(__NR__llseek),
+            borrowed_fd(fd),
+            <span class="comment">// Don&#39;t use the hi/lo functions here because Linux&#39;s llseek
+            // takes its 64-bit argument differently from everything else.
+            </span>pass_usize((offset &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>usize),
+            pass_usize(offset <span class="kw">as </span>usize),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(whence),
         ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
+        .map(|()| result.assume_init())
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_u64</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_lseek</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">loff_t</span>(<span class="ident">offset</span>),
-            <span class="ident">c_uint</span>(<span class="ident">whence</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">tell</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-    <span class="ident">_seek</span>(<span class="ident">fd</span>, <span class="number">0</span>, <span class="ident">linux_raw_sys::general::SEEK_CUR</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="kw">as</span> <span class="ident">u64</span>)
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ftruncate</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">length</span>: <span class="ident">u64</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// &lt;https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L81-L83&gt;</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>)
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ftruncate64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">zero</span>(),
-            <span class="ident">hi</span>(<span class="ident">length</span>),
-            <span class="ident">lo</span>(<span class="ident">length</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>))
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ftruncate64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">hi</span>(<span class="ident">length</span>),
-            <span class="ident">lo</span>(<span class="ident">length</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_ftruncate</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">length</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_u64(syscall3_readonly(
+            nr(__NR_lseek),
+            borrowed_fd(fd),
+            loff_t(offset),
+            c_uint(whence),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fallocate</span>(
-    <span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">mode</span>: <span class="ident">FallocateFlags</span>,
-    <span class="ident">offset</span>: <span class="ident">u64</span>,
-    <span class="ident">len</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall6_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fallocate</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">mode</span>.<span class="ident">bits</span>()),
-            <span class="ident">hi</span>(<span class="ident">offset</span>),
-            <span class="ident">lo</span>(<span class="ident">offset</span>),
-            <span class="ident">hi</span>(<span class="ident">len</span>),
-            <span class="ident">lo</span>(<span class="ident">len</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tell(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;u64&gt; {
+    _seek(fd, <span class="number">0</span>, linux_raw_sys::general::SEEK_CUR).map(|x| x <span class="kw">as </span>u64)
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ftruncate(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, length: u64) -&gt; io::Result&lt;()&gt; {
+    <span class="comment">// &lt;https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L81-L83&gt;
+    </span><span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;powerpc&quot;</span>)
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_ftruncate64),
+            borrowed_fd(fd),
+            zero(),
+            hi(length),
+            lo(length),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fallocate</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">mode</span>.<span class="ident">bits</span>()),
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">offset</span>),
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">len</span>),
+    <span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        not(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;powerpc&quot;</span>))
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_ftruncate64),
+            borrowed_fd(fd),
+            hi(length),
+            lo(length),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall2_readonly(
+            nr(__NR_ftruncate),
+            borrowed_fd(fd),
+            loff_t_from_u64(length),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fadvise</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pos</span>: <span class="ident">u64</span>, <span class="ident">len</span>: <span class="ident">u64</span>, <span class="ident">advice</span>: <span class="ident">Advice</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// On arm and powerpc, the arguments are reordered so that the len and</span>
-    <span class="comment">// pos argument pairs are aligned.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall6_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fadvise64_64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-            <span class="ident">hi</span>(<span class="ident">len</span>),
-            <span class="ident">lo</span>(<span class="ident">len</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fallocate(
+    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    mode: FallocateFlags,
+    offset: u64,
+    len: u64,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall6_readonly(
+            nr(__NR_fallocate),
+            borrowed_fd(fd),
+            c_uint(mode.bits()),
+            hi(offset),
+            lo(offset),
+            hi(len),
+            lo(len),
         ))
     }
-    <span class="comment">// On mips, the arguments are not reordered, and padding is inserted</span>
-    <span class="comment">// instead to ensure alignment.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall7_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fadvise64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">zero</span>(),
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-            <span class="ident">hi</span>(<span class="ident">len</span>),
-            <span class="ident">lo</span>(<span class="ident">len</span>),
-            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
-        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>))
-    ))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall6_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fadvise64_64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">hi</span>(<span class="ident">pos</span>),
-            <span class="ident">lo</span>(<span class="ident">pos</span>),
-            <span class="ident">hi</span>(<span class="ident">len</span>),
-            <span class="ident">lo</span>(<span class="ident">len</span>),
-            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fadvise64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
-            <span class="ident">loff_t_from_u64</span>(<span class="ident">len</span>),
-            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_fallocate),
+            borrowed_fd(fd),
+            c_uint(mode.bits()),
+            loff_t_from_u64(offset),
+            loff_t_from_u64(len),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fsync</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> { <span class="ident">ret</span>(<span class="ident">syscall1_readonly</span>(<span class="ident">nr</span>(<span class="ident">__NR_fsync</span>), <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>))) }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fdatasync</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> { <span class="ident">ret</span>(<span class="ident">syscall1_readonly</span>(<span class="ident">nr</span>(<span class="ident">__NR_fdatasync</span>), <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>))) }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">flock</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">operation</span>: <span class="ident">FlockOperation</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_flock</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">operation</span> <span class="kw">as</span> <span class="ident">c::c_uint</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fadvise(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, pos: u64, len: u64, advice: Advice) -&gt; io::Result&lt;()&gt; {
+    <span class="comment">// On arm and powerpc, the arguments are reordered so that the len and
+    // pos argument pairs are aligned.
+    </span><span class="attribute">#[cfg(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;powerpc&quot;</span>))]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall6_readonly(
+            nr(__NR_fadvise64_64),
+            borrowed_fd(fd),
+            fs_advice(advice),
+            hi(pos),
+            lo(pos),
+            hi(len),
+            lo(len),
+        ))
+    }
+    <span class="comment">// On mips, the arguments are not reordered, and padding is inserted
+    // instead to ensure alignment.
+    </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;mips&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall7_readonly(
+            nr(__NR_fadvise64),
+            borrowed_fd(fd),
+            zero(),
+            hi(pos),
+            lo(pos),
+            hi(len),
+            lo(len),
+            fs_advice(advice),
+        ))
+    }
+    <span class="attribute">#[cfg(all(
+        target_pointer_width = <span class="string">&quot;32&quot;</span>,
+        not(any(target_arch = <span class="string">&quot;arm&quot;</span>, target_arch = <span class="string">&quot;mips&quot;</span>, target_arch = <span class="string">&quot;powerpc&quot;</span>))
+    ))]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall6_readonly(
+            nr(__NR_fadvise64_64),
+            borrowed_fd(fd),
+            hi(pos),
+            lo(pos),
+            hi(len),
+            lo(len),
+            fs_advice(advice),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_fadvise64),
+            borrowed_fd(fd),
+            loff_t_from_u64(pos),
+            loff_t_from_u64(len),
+            fs_advice(advice),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fstat</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fstat64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall2</span>(<span class="ident">nr</span>(<span class="ident">__NR_fstat</span>), <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>), <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>)))
-            .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fsync(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{ ret(syscall1_readonly(nr(__NR_fsync), borrowed_fd(fd))) }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">stat</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fstatat64</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="number">0</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_newfstatat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="number">0</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fdatasync(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{ ret(syscall1_readonly(nr(__NR_fdatasync), borrowed_fd(fd))) }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">statat</span>(<span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">flags</span>: <span class="ident">AtFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fstatat64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_newfstatat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">lstat</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fstatat64</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="ident">AT_SYMLINK_NOFOLLOW</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">Stat</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_newfstatat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-            <span class="ident">c_uint</span>(<span class="ident">AT_SYMLINK_NOFOLLOW</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">statx</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
-    <span class="ident">mask</span>: <span class="ident">StatxFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">statx</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">statx_buf</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">statx</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall5</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_statx</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-            <span class="ident">c_uint</span>(<span class="ident">mask</span>.<span class="ident">bits</span>()),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">statx_buf</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">statx_buf</span>.<span class="ident">assume_init</span>())
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fstatfs</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fstatfs64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">StatFs</span>, <span class="kw">_</span><span class="op">&gt;</span>(),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall2</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fstatfs</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">statfs</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_statfs64</span>),
-            <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">StatFs</span>, <span class="kw">_</span><span class="op">&gt;</span>(),
-            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
-        <span class="ident">ret</span>(<span class="ident">syscall2</span>(<span class="ident">nr</span>(<span class="ident">__NR_statfs</span>), <span class="ident">c_str</span>(<span class="ident">filename</span>), <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>)))
-            .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">readlink</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">buf_addr_mut</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">buf</span>);
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_readlinkat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">path</span>),
-            <span class="ident">buf_addr_mut</span>,
-            <span class="ident">buf_len</span>,
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>flock(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, operation: FlockOperation) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall2(
+            nr(__NR_flock),
+            borrowed_fd(fd),
+            c_uint(operation <span class="kw">as </span>c::c_uint),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">readlinkat</span>(<span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">buf_addr_mut</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">buf</span>);
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_readlinkat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">path</span>),
-            <span class="ident">buf_addr_mut</span>,
-            <span class="ident">buf_len</span>,
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fstat(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;Stat&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall2(
+            nr(__NR_fstat64),
+            borrowed_fd(fd),
+            out(<span class="kw-2">&amp;mut </span>result),
+        ))
+        .map(|()| result.assume_init())
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall2(nr(__NR_fstat), borrowed_fd(fd), out(<span class="kw-2">&amp;mut </span>result)))
+            .map(|()| result.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>stat(filename: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;Stat&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall4(
+            nr(__NR_fstatat64),
+            c_int(AT_FDCWD),
+            c_str(filename),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(<span class="number">0</span>),
+        ))
+        .map(|()| result.assume_init())
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall4(
+            nr(__NR_newfstatat),
+            c_int(AT_FDCWD),
+            c_str(filename),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(<span class="number">0</span>),
+        ))
+        .map(|()| result.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>statat(dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, filename: <span class="kw-2">&amp;</span>ZStr, flags: AtFlags) -&gt; io::Result&lt;Stat&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall4(
+            nr(__NR_fstatat64),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(flags.bits()),
+        ))
+        .map(|()| result.assume_init())
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall4(
+            nr(__NR_newfstatat),
+            borrowed_fd(dirfd),
+            c_str(filename),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(flags.bits()),
+        ))
+        .map(|()| result.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>lstat(filename: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;Stat&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall4(
+            nr(__NR_fstatat64),
+            c_int(AT_FDCWD),
+            c_str(filename),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(AT_SYMLINK_NOFOLLOW),
+        ))
+        .map(|()| result.assume_init())
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Stat&gt;::uninit();
+        ret(syscall4(
+            nr(__NR_newfstatat),
+            c_int(AT_FDCWD),
+            c_str(filename),
+            out(<span class="kw-2">&amp;mut </span>result),
+            c_uint(AT_SYMLINK_NOFOLLOW),
+        ))
+        .map(|()| result.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>statx(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    pathname: <span class="kw-2">&amp;</span>ZStr,
+    flags: AtFlags,
+    mask: StatxFlags,
+) -&gt; io::Result&lt;statx&gt; {
+    <span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>statx_buf = MaybeUninit::&lt;statx&gt;::uninit();
+        ret(syscall5(
+            nr(__NR_statx),
+            borrowed_fd(dirfd),
+            c_str(pathname),
+            c_uint(flags.bits()),
+            c_uint(mask.bits()),
+            out(<span class="kw-2">&amp;mut </span>statx_buf),
+        ))
+        .map(|()| statx_buf.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fstatfs(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;StatFs&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;StatFs&gt;::uninit();
+        ret(syscall3(
+            nr(__NR_fstatfs64),
+            borrowed_fd(fd),
+            size_of::&lt;StatFs, <span class="kw">_</span>&gt;(),
+            out(<span class="kw-2">&amp;mut </span>result),
+        ))
+        .map(|()| result.assume_init())
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;StatFs&gt;::uninit();
+        ret(syscall2(
+            nr(__NR_fstatfs),
+            borrowed_fd(fd),
+            out(<span class="kw-2">&amp;mut </span>result),
+        ))
+        .map(|()| result.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>statfs(filename: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;StatFs&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;StatFs&gt;::uninit();
+        ret(syscall3(
+            nr(__NR_statfs64),
+            c_str(filename),
+            size_of::&lt;StatFs, <span class="kw">_</span>&gt;(),
+            out(<span class="kw-2">&amp;mut </span>result),
+        ))
+        .map(|()| result.assume_init())
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;StatFs&gt;::uninit();
+        ret(syscall2(nr(__NR_statfs), c_str(filename), out(<span class="kw-2">&amp;mut </span>result)))
+            .map(|()| result.assume_init())
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>readlink(path: <span class="kw-2">&amp;</span>ZStr, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(buf_addr_mut, buf_len) = slice_mut(buf);
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall4(
+            nr(__NR_readlinkat),
+            c_int(AT_FDCWD),
+            c_str(path),
+            buf_addr_mut,
+            buf_len,
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_dupfd</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">min</span>: <span class="ident">RawFd</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_DUPFD</span>),
-            <span class="ident">raw_fd</span>(<span class="ident">min</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_DUPFD</span>),
-            <span class="ident">raw_fd</span>(<span class="ident">min</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>readlinkat(dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, path: <span class="kw-2">&amp;</span>ZStr, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(buf_addr_mut, buf_len) = slice_mut(buf);
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall4(
+            nr(__NR_readlinkat),
+            borrowed_fd(dirfd),
+            c_str(path),
+            buf_addr_mut,
+            buf_len,
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_dupfd_cloexec</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">min</span>: <span class="ident">RawFd</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_DUPFD_CLOEXEC</span>),
-            <span class="ident">raw_fd</span>(<span class="ident">min</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_dupfd(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, min: RawFd) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall3_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_DUPFD),
+            raw_fd(min),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_DUPFD_CLOEXEC</span>),
-            <span class="ident">raw_fd</span>(<span class="ident">min</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_getfd</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">FdFlags</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_uint</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETFD</span>),
-        ))
-        .<span class="ident">map</span>(<span class="ident">FdFlags::from_bits_truncate</span>)
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_uint</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETFD</span>),
-        ))
-        .<span class="ident">map</span>(<span class="ident">FdFlags::from_bits_truncate</span>)
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_setfd</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">flags</span>: <span class="ident">FdFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_SETFD</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_SETFD</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall3_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_DUPFD),
+            raw_fd(min),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_getfl</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OFlags</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_uint</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETFL</span>),
-        ))
-        .<span class="ident">map</span>(<span class="ident">OFlags::from_bits_truncate</span>)
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_uint</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETFL</span>),
-        ))
-        .<span class="ident">map</span>(<span class="ident">OFlags::from_bits_truncate</span>)
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_setfl</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">flags</span>: <span class="ident">OFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_SETFL</span>),
-            <span class="ident">oflags</span>(<span class="ident">flags</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_dupfd_cloexec(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, min: RawFd) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall3_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_DUPFD_CLOEXEC),
+            raw_fd(min),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_SETFL</span>),
-            <span class="ident">oflags</span>(<span class="ident">flags</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_owned_fd(syscall3_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_DUPFD_CLOEXEC),
+            raw_fd(min),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_getlease</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">c::c_int</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETLEASE</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getfd(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;FdFlags&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_uint(syscall2_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_GETFD),
+        ))
+        .map(FdFlags::from_bits_truncate)
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_uint(syscall2_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_GETFD),
+        ))
+        .map(FdFlags::from_bits_truncate)
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_setfd(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, flags: FdFlags) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_SETFD),
+            c_uint(flags.bits()),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETLEASE</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_SETFD),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_getown</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">c::c_int</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETOWN</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getfl(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;OFlags&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_uint(syscall2_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_GETFL),
+        ))
+        .map(OFlags::from_bits_truncate)
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_uint(syscall2_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_GETFL),
+        ))
+        .map(OFlags::from_bits_truncate)
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_setfl(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, flags: OFlags) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_SETFL),
+            oflags(flags),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETOWN</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_SETFL),
+            oflags(flags),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_getsig</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">c::c_int</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETSIG</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getlease(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;c::c_int&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_GETLEASE),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETSIG</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_getpipe_sz</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETPIPE_SZ</span>),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GETPIPE_SZ</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_GETLEASE),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_setpipe_sz</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">size</span>: <span class="ident">c::c_int</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_SETPIPE_SZ</span>),
-            <span class="ident">c_int</span>(<span class="ident">size</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getown(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;c::c_int&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_GETOWN),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_SETPIPE_SZ</span>),
-            <span class="ident">c_int</span>(<span class="ident">size</span>),
-        ))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_get_seals</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">SealFlags</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GET_SEALS</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seals</span><span class="op">|</span> <span class="ident">SealFlags::from_bits_unchecked</span>(<span class="ident">seals</span> <span class="kw">as</span> <span class="ident">u32</span>))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_GET_SEALS</span>),
-        ))
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seals</span><span class="op">|</span> <span class="ident">SealFlags::from_bits_unchecked</span>(<span class="ident">seals</span> <span class="kw">as</span> <span class="ident">u32</span>))
-    }
-}
-
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_add_seals</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">seals</span>: <span class="ident">SealFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_ADD_SEALS</span>),
-            <span class="ident">c_uint</span>(<span class="ident">seals</span>.<span class="ident">bits</span>()),
-        ))
-    }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">F_ADD_SEALS</span>),
-            <span class="ident">c_uint</span>(<span class="ident">seals</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_GETOWN),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">rename</span>(<span class="ident">oldname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">newname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_renameat2</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
-            <span class="ident">c_uint</span>(<span class="number">0</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getsig(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;c::c_int&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_GETSIG),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_renameat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_GETSIG),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">renameat</span>(
-    <span class="ident">old_dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">oldname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">new_dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">newname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_renameat2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">old_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">new_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
-            <span class="ident">c_uint</span>(<span class="number">0</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getpipe_sz(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;usize&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall2_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_GETPIPE_SZ),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_renameat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">old_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">new_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall2_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_GETPIPE_SZ),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">renameat2</span>(
-    <span class="ident">old_dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">oldname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">new_dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">newname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">flags</span>: <span class="ident">RenameFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_renameat2</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">old_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">new_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_setpipe_sz(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, size: c::c_int) -&gt; io::Result&lt;usize&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall3_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_SETPIPE_SZ),
+            c_int(size),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall3_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_SETPIPE_SZ),
+            c_int(size),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unlink</span>(<span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_unlinkat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">c_uint</span>(<span class="number">0</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_get_seals(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;SealFlags&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_GET_SEALS),
+        ))
+        .map(|seals| SealFlags::from_bits_unchecked(seals <span class="kw">as </span>u32))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_c_int(syscall2_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_GET_SEALS),
+        ))
+        .map(|seals| SealFlags::from_bits_unchecked(seals <span class="kw">as </span>u32))
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_add_seals(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, seals: SealFlags) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fcntl64),
+            borrowed_fd(fd),
+            c_uint(F_ADD_SEALS),
+            c_uint(seals.bits()),
+        ))
+    }
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_fcntl),
+            borrowed_fd(fd),
+            c_uint(F_ADD_SEALS),
+            c_uint(seals.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unlinkat</span>(<span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">flags</span>: <span class="ident">AtFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_unlinkat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>rename(oldname: <span class="kw-2">&amp;</span>ZStr, newname: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;riscv64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall5_readonly(
+            nr(__NR_renameat2),
+            c_int(AT_FDCWD),
+            c_str(oldname),
+            c_int(AT_FDCWD),
+            c_str(newname),
+            c_uint(<span class="number">0</span>),
+        ))
+    }
+    <span class="attribute">#[cfg(not(target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_renameat),
+            c_int(AT_FDCWD),
+            c_str(oldname),
+            c_int(AT_FDCWD),
+            c_str(newname),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">rmdir</span>(<span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_unlinkat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">c_uint</span>(<span class="ident">AT_REMOVEDIR</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>renameat(
+    old_dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    oldname: <span class="kw-2">&amp;</span>ZStr,
+    new_dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    newname: <span class="kw-2">&amp;</span>ZStr,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="attribute">#[cfg(target_arch = <span class="string">&quot;riscv64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall5_readonly(
+            nr(__NR_renameat2),
+            borrowed_fd(old_dirfd),
+            c_str(oldname),
+            borrowed_fd(new_dirfd),
+            c_str(newname),
+            c_uint(<span class="number">0</span>),
+        ))
+    }
+    <span class="attribute">#[cfg(not(target_arch = <span class="string">&quot;riscv64&quot;</span>))]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_renameat),
+            borrowed_fd(old_dirfd),
+            c_str(oldname),
+            borrowed_fd(new_dirfd),
+            c_str(newname),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">link</span>(<span class="ident">oldname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">newname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_linkat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
-            <span class="ident">c_uint</span>(<span class="number">0</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>renameat2(
+    old_dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    oldname: <span class="kw-2">&amp;</span>ZStr,
+    new_dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    newname: <span class="kw-2">&amp;</span>ZStr,
+    flags: RenameFlags,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall5_readonly(
+            nr(__NR_renameat2),
+            borrowed_fd(old_dirfd),
+            c_str(oldname),
+            borrowed_fd(new_dirfd),
+            c_str(newname),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">linkat</span>(
-    <span class="ident">old_dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">oldname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">new_dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">newname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall5_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_linkat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">old_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">new_dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unlink(pathname: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_unlinkat),
+            c_int(AT_FDCWD),
+            c_str(pathname),
+            c_uint(<span class="number">0</span>),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">symlink</span>(<span class="ident">oldname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">newname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_symlinkat</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unlinkat(dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, pathname: <span class="kw-2">&amp;</span>ZStr, flags: AtFlags) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_unlinkat),
+            borrowed_fd(dirfd),
+            c_str(pathname),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">symlinkat</span>(<span class="ident">oldname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">newname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_symlinkat</span>),
-            <span class="ident">c_str</span>(<span class="ident">oldname</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">newname</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>rmdir(pathname: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_unlinkat),
+            c_int(AT_FDCWD),
+            c_str(pathname),
+            c_uint(AT_REMOVEDIR),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">mkdir</span>(<span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mkdirat</span>),
-            <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>link(oldname: <span class="kw-2">&amp;</span>ZStr, newname: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall5_readonly(
+            nr(__NR_linkat),
+            c_int(AT_FDCWD),
+            c_str(oldname),
+            c_int(AT_FDCWD),
+            c_str(newname),
+            c_uint(<span class="number">0</span>),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">mkdirat</span>(<span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_mkdirat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>linkat(
+    old_dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    oldname: <span class="kw-2">&amp;</span>ZStr,
+    new_dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    newname: <span class="kw-2">&amp;</span>ZStr,
+    flags: AtFlags,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall5_readonly(
+            nr(__NR_linkat),
+            borrowed_fd(old_dirfd),
+            c_str(oldname),
+            borrowed_fd(new_dirfd),
+            c_str(newname),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">getdents</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">dirent</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">dirent_addr_mut</span>, <span class="ident">dirent_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">dirent</span>);
-
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall3</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_getdents64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">dirent_addr_mut</span>,
-            <span class="ident">dirent_len</span>,
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>symlink(oldname: <span class="kw-2">&amp;</span>ZStr, newname: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_symlinkat),
+            c_str(oldname),
+            c_int(AT_FDCWD),
+            c_str(newname),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">utimensat</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>,
-    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">_utimensat</span>(<span class="ident">dirfd</span>, <span class="prelude-val">Some</span>(<span class="ident">pathname</span>), <span class="ident">times</span>, <span class="ident">flags</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>symlinkat(oldname: <span class="kw-2">&amp;</span>ZStr, dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, newname: <span class="kw-2">&amp;</span>ZStr) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_symlinkat),
+            c_str(oldname),
+            borrowed_fd(dirfd),
+            c_str(newname),
+        ))
+    }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">_utimensat</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">pathname</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ZStr</span><span class="op">&gt;</span>,
-    <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>,
-    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// Assert that `Timestamps` has the expected layout.</span>
-    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">core::mem::transmute</span>::<span class="op">&lt;</span><span class="ident">Timestamps</span>, [<span class="ident">__kernel_timespec</span>; <span class="number">2</span>]<span class="op">&gt;</span>(<span class="ident">times</span>.<span class="ident">clone</span>()) };
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mkdir(pathname: <span class="kw-2">&amp;</span>ZStr, mode: Mode) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_mkdirat),
+            c_int(AT_FDCWD),
+            c_str(pathname),
+            mode_as(mode),
+        ))
+    }
+}
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="kw">match</span> <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_utimensat_time64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">opt_c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">by_ref</span>(<span class="ident">times</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mkdirat(dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, pathname: <span class="kw-2">&amp;</span>ZStr, mode: Mode) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_mkdirat),
+            borrowed_fd(dirfd),
+            c_str(pathname),
+            mode_as(mode),
+        ))
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>getdents(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, dirent: <span class="kw-2">&amp;mut </span>[u8]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>(dirent_addr_mut, dirent_len) = slice_mut(dirent);
+
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall3(
+            nr(__NR_getdents64),
+            borrowed_fd(fd),
+            dirent_addr_mut,
+            dirent_len,
+        ))
+    }
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>utimensat(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    pathname: <span class="kw-2">&amp;</span>ZStr,
+    times: <span class="kw-2">&amp;</span>Timestamps,
+    flags: AtFlags,
+) -&gt; io::Result&lt;()&gt; {
+    _utimensat(dirfd, <span class="prelude-val">Some</span>(pathname), times, flags)
+}
+
+<span class="attribute">#[inline]
+</span><span class="kw">fn </span>_utimensat(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    pathname: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ZStr&gt;,
+    times: <span class="kw-2">&amp;</span>Timestamps,
+    flags: AtFlags,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="comment">// Assert that `Timestamps` has the expected layout.
+    </span><span class="kw">let _ </span>= <span class="kw">unsafe </span>{ core::mem::transmute::&lt;Timestamps, [__kernel_timespec; <span class="number">2</span>]&gt;(times.clone()) };
+
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">match </span>ret(syscall4_readonly(
+            nr(__NR_utimensat_time64),
+            borrowed_fd(dirfd),
+            opt_c_str(pathname),
+            by_ref(times),
+            c_uint(flags.bits()),
         )) {
-            <span class="prelude-val">Err</span>(<span class="ident">io::Error::NOSYS</span>) =&gt; <span class="ident">_utimensat_old</span>(<span class="ident">dirfd</span>, <span class="ident">pathname</span>, <span class="ident">times</span>, <span class="ident">flags</span>),
-            <span class="ident">otherwise</span> =&gt; <span class="ident">otherwise</span>,
+            <span class="prelude-val">Err</span>(io::Error::NOSYS) =&gt; _utimensat_old(dirfd, pathname, times, flags),
+            otherwise =&gt; otherwise,
         }
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_utimensat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">opt_c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">by_ref</span>(<span class="ident">times</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret(syscall4_readonly(
+            nr(__NR_utimensat),
+            borrowed_fd(dirfd),
+            opt_c_str(pathname),
+            by_ref(times),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">_utimensat_old</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">pathname</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ZStr</span><span class="op">&gt;</span>,
-    <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>,
-    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about</span>
-    <span class="comment">// emulation.</span>
-    <span class="kw">let</span> <span class="ident">old_times</span> <span class="op">=</span> [
-        <span class="ident">__kernel_old_timespec</span> {
-            <span class="ident">tv_sec</span>: <span class="ident">times</span>
-                .<span class="ident">last_access</span>
-                .<span class="ident">tv_sec</span>
-                .<span class="ident">try_into</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-            <span class="ident">tv_nsec</span>: <span class="ident">times</span>
-                .<span class="ident">last_access</span>
-                .<span class="ident">tv_nsec</span>
-                .<span class="ident">try_into</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+<span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+</span><span class="kw">unsafe fn </span>_utimensat_old(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    pathname: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ZStr&gt;,
+    times: <span class="kw-2">&amp;</span>Timestamps,
+    flags: AtFlags,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about
+    // emulation.
+    </span><span class="kw">let </span>old_times = [
+        __kernel_old_timespec {
+            tv_sec: times
+                .last_access
+                .tv_sec
+                .try_into()
+                .map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
+            tv_nsec: times
+                .last_access
+                .tv_nsec
+                .try_into()
+                .map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
         },
-        <span class="ident">__kernel_old_timespec</span> {
-            <span class="ident">tv_sec</span>: <span class="ident">times</span>
-                .<span class="ident">last_modification</span>
-                .<span class="ident">tv_sec</span>
-                .<span class="ident">try_into</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-            <span class="ident">tv_nsec</span>: <span class="ident">times</span>
-                .<span class="ident">last_modification</span>
-                .<span class="ident">tv_nsec</span>
-                .<span class="ident">try_into</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+        __kernel_old_timespec {
+            tv_sec: times
+                .last_modification
+                .tv_sec
+                .try_into()
+                .map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
+            tv_nsec: times
+                .last_modification
+                .tv_nsec
+                .try_into()
+                .map_err(|<span class="kw">_</span>| io::Error::INVAL)<span class="question-mark">?</span>,
         },
     ];
-    <span class="comment">// The length of the array is fixed and not passed into the syscall.</span>
-    <span class="kw">let</span> <span class="ident">old_times_addr</span> <span class="op">=</span> <span class="ident">slice_just_addr</span>(<span class="kw-2">&amp;</span><span class="ident">old_times</span>);
-    <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-        <span class="ident">nr</span>(<span class="ident">__NR_utimensat</span>),
-        <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-        <span class="ident">opt_c_str</span>(<span class="ident">pathname</span>),
-        <span class="ident">old_times_addr</span>,
-        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    <span class="comment">// The length of the array is fixed and not passed into the syscall.
+    </span><span class="kw">let </span>old_times_addr = slice_just_addr(<span class="kw-2">&amp;</span>old_times);
+    ret(syscall4_readonly(
+        nr(__NR_utimensat),
+        borrowed_fd(dirfd),
+        opt_c_str(pathname),
+        old_times_addr,
+        c_uint(flags.bits()),
     ))
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">futimens</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">_utimensat</span>(<span class="ident">fd</span>, <span class="prelude-val">None</span>, <span class="ident">times</span>, <span class="ident">AtFlags::empty</span>())
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>futimens(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, times: <span class="kw-2">&amp;</span>Timestamps) -&gt; io::Result&lt;()&gt; {
+    _utimensat(fd, <span class="prelude-val">None</span>, times, AtFlags::empty())
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">accessat</span>(
-    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">access</span>: <span class="ident">Access</span>,
-    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">flags</span>.<span class="ident">is_empty</span>()
-        <span class="op">|</span><span class="op">|</span> (<span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">==</span> <span class="ident">linux_raw_sys::general::AT_EACCESS</span>
-            <span class="op">&amp;&amp;</span> <span class="ident"><span class="kw">crate</span>::process::getuid</span>() <span class="op">==</span> <span class="ident"><span class="kw">crate</span>::process::geteuid</span>()
-            <span class="op">&amp;&amp;</span> <span class="ident"><span class="kw">crate</span>::process::getgid</span>() <span class="op">==</span> <span class="ident"><span class="kw">crate</span>::process::getegid</span>())
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>accessat(
+    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    path: <span class="kw-2">&amp;</span>ZStr,
+    access: Access,
+    flags: AtFlags,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">if </span>flags.is_empty()
+        || (flags.bits() == linux_raw_sys::general::AT_EACCESS
+            &amp;&amp; <span class="kw">crate</span>::process::getuid() == <span class="kw">crate</span>::process::geteuid()
+            &amp;&amp; <span class="kw">crate</span>::process::getgid() == <span class="kw">crate</span>::process::getegid())
     {
-        <span class="kw">return</span> <span class="ident">_accessat</span>(<span class="ident">dirfd</span>, <span class="ident">path</span>, <span class="ident">access</span>.<span class="ident">bits</span>());
+        <span class="kw">return </span>_accessat(dirfd, path, access.bits());
     }
 
-    <span class="kw">if</span> <span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">linux_raw_sys::general::AT_EACCESS</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">io::Error::INVAL</span>);
+    <span class="kw">if </span>flags.bits() != linux_raw_sys::general::AT_EACCESS {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::INVAL);
     }
 
-    <span class="comment">// TODO: Use faccessat2 in newer Linux versions.</span>
-    <span class="prelude-val">Err</span>(<span class="ident">io::Error::NOSYS</span>)
+    <span class="comment">// TODO: Use faccessat2 in newer Linux versions.
+    </span><span class="prelude-val">Err</span>(io::Error::NOSYS)
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">_accessat</span>(<span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">mode</span>: <span class="ident">c::c_uint</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_faccessat</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-            <span class="ident">c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">c_uint</span>(<span class="ident">mode</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">fn </span>_accessat(dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, pathname: <span class="kw-2">&amp;</span>ZStr, mode: c::c_uint) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(syscall3_readonly(
+            nr(__NR_faccessat),
+            borrowed_fd(dirfd),
+            c_str(pathname),
+            c_uint(mode),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">copy_file_range</span>(
-    <span class="ident">fd_in</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">off_in</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">u64</span><span class="op">&gt;</span>,
-    <span class="ident">fd_out</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">off_out</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">u64</span><span class="op">&gt;</span>,
-    <span class="ident">len</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">len</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">len</span>.<span class="ident">try_into</span>().<span class="ident">unwrap_or</span>(<span class="ident">usize::MAX</span>);
-    <span class="ident">_copy_file_range</span>(<span class="ident">fd_in</span>, <span class="ident">off_in</span>, <span class="ident">fd_out</span>, <span class="ident">off_out</span>, <span class="ident">len</span>, <span class="number">0</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">result</span><span class="op">|</span> <span class="ident">result</span> <span class="kw">as</span> <span class="ident">u64</span>)
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>copy_file_range(
+    fd_in: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    off_in: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
+    fd_out: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    off_out: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
+    len: u64,
+) -&gt; io::Result&lt;u64&gt; {
+    <span class="kw">let </span>len: usize = len.try_into().unwrap_or(usize::MAX);
+    _copy_file_range(fd_in, off_in, fd_out, off_out, len, <span class="number">0</span>).map(|result| result <span class="kw">as </span>u64)
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">_copy_file_range</span>(
-    <span class="ident">fd_in</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">off_in</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">u64</span><span class="op">&gt;</span>,
-    <span class="ident">fd_out</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">off_out</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">u64</span><span class="op">&gt;</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">c::c_uint</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall6</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_copy_file_range</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd_in</span>),
-            <span class="ident">opt_mut</span>(<span class="ident">off_in</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">fd_out</span>),
-            <span class="ident">opt_mut</span>(<span class="ident">off_out</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">len</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">fn </span>_copy_file_range(
+    fd_in: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    off_in: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
+    fd_out: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    off_out: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
+    len: usize,
+    flags: c::c_uint,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">unsafe </span>{
+        ret_usize(syscall6(
+            nr(__NR_copy_file_range),
+            borrowed_fd(fd_in),
+            opt_mut(off_in),
+            borrowed_fd(fd_out),
+            opt_mut(off_out),
+            pass_usize(len),
+            c_uint(flags),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">memfd_create</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">flags</span>: <span class="ident">MemfdFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall2_readonly</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_memfd_create</span>),
-            <span class="ident">c_str</span>(<span class="ident">name</span>),
-            <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>memfd_create(name: <span class="kw-2">&amp;</span>ZStr, flags: MemfdFlags) -&gt; io::Result&lt;OwnedFd&gt; {
+    <span class="kw">unsafe </span>{
+        ret_owned_fd(syscall2_readonly(
+            nr(__NR_memfd_create),
+            c_str(name),
+            c_uint(flags.bits()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">sendfile</span>(
-    <span class="ident">out_fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">in_fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">offset</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">u64</span><span class="op">&gt;</span>,
-    <span class="ident">count</span>: <span class="ident">usize</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_sendfile64</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">out_fd</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">in_fd</span>),
-            <span class="ident">opt_mut</span>(<span class="ident">offset</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">count</span>),
+<span class="attribute">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>sendfile(
+    out_fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    in_fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    offset: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
+    count: usize,
+) -&gt; io::Result&lt;usize&gt; {
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall4(
+            nr(__NR_sendfile64),
+            borrowed_fd(out_fd),
+            borrowed_fd(in_fd),
+            opt_mut(offset),
+            pass_usize(count),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
-            <span class="ident">nr</span>(<span class="ident">__NR_sendfile</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">out_fd</span>),
-            <span class="ident">borrowed_fd</span>(<span class="ident">in_fd</span>),
-            <span class="ident">opt_mut</span>(<span class="ident">offset</span>),
-            <span class="ident">pass_usize</span>(<span class="ident">count</span>),
+    <span class="attribute">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="kw">unsafe </span>{
+        ret_usize(syscall4(
+            nr(__NR_sendfile),
+            borrowed_fd(out_fd),
+            borrowed_fd(in_fd),
+            opt_mut(offset),
+            pass_usize(count),
         ))
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="rustix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

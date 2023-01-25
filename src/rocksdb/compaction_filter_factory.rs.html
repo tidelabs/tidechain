@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/compaction_filter_factory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compaction_filter_factory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rocksdb/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rocksdb-0.18.0/src/compaction_filter_factory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compaction_filter_factory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../rocksdb/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -143,146 +138,145 @@
 <span id="138">138</span>
 <span id="139">139</span>
 <span id="140">140</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::ffi::CStr</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>std::ffi::CStr;
 
-<span class="kw">use</span> <span class="ident">libc</span>::{<span class="self">self</span>, <span class="ident">c_char</span>, <span class="ident">c_void</span>};
+<span class="kw">use </span>libc::{<span class="self">self</span>, c_char, c_void};
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">compaction_filter</span>::{<span class="self">self</span>, <span class="ident">CompactionFilter</span>},
-    <span class="ident">ffi</span>,
+<span class="kw">use crate</span>::{
+    compaction_filter::{<span class="self">self</span>, CompactionFilter},
+    ffi,
 };
 
-<span class="doccomment">/// Each compaction will create a new CompactionFilter allowing the</span>
-<span class="doccomment">/// application to know about different compactions.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///  See [compaction_filter::CompactionFilter][CompactionFilter] and</span>
-<span class="doccomment">///  [Options::set_compaction_filter_factory][set_compaction_filter_factory]</span>
-<span class="doccomment">///  for more details</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///  [CompactionFilter]: ../compaction_filter/trait.CompactionFilter.html</span>
-<span class="doccomment">///  [set_compaction_filter_factory]: ../struct.Options.html#method.set_compaction_filter_factory</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CompactionFilterFactory</span> {
-    <span class="kw">type</span> <span class="ident">Filter</span>: <span class="ident">CompactionFilter</span>;
+<span class="doccomment">/// Each compaction will create a new CompactionFilter allowing the
+/// application to know about different compactions.
+///
+///  See [compaction_filter::CompactionFilter][CompactionFilter] and
+///  [Options::set_compaction_filter_factory][set_compaction_filter_factory]
+///  for more details
+///
+///  [CompactionFilter]: ../compaction_filter/trait.CompactionFilter.html
+///  [set_compaction_filter_factory]: ../struct.Options.html#method.set_compaction_filter_factory
+</span><span class="kw">pub trait </span>CompactionFilterFactory {
+    <span class="kw">type </span>Filter: CompactionFilter;
 
-    <span class="doccomment">/// Returns a CompactionFilter for the compaction process</span>
-    <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">context</span>: <span class="ident">CompactionFilterContext</span>) -&gt; <span class="ident"><span class="self">Self</span>::Filter</span>;
+    <span class="doccomment">/// Returns a CompactionFilter for the compaction process
+    </span><span class="kw">fn </span>create(<span class="kw-2">&amp;mut </span><span class="self">self</span>, context: CompactionFilterContext) -&gt; <span class="self">Self</span>::Filter;
 
-    <span class="doccomment">/// Returns a name that identifies this compaction filter factory.</span>
-    <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CStr</span>;
+    <span class="doccomment">/// Returns a name that identifies this compaction filter factory.
+    </span><span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CStr;
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">destructor_callback</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">raw_self</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">CompactionFilterFactory</span>,
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>destructor_callback&lt;F&gt;(raw_self: <span class="kw-2">*mut </span>c_void)
+<span class="kw">where
+    </span>F: CompactionFilterFactory,
 {
-    <span class="ident">Box::from_raw</span>(<span class="ident">raw_self</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">F</span>);
+    Box::from_raw(raw_self <span class="kw">as </span><span class="kw-2">*mut </span>F);
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">name_callback</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">raw_self</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>) -&gt; <span class="kw-2">*const</span> <span class="ident">c_char</span>
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">CompactionFilterFactory</span>,
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>name_callback&lt;F&gt;(raw_self: <span class="kw-2">*mut </span>c_void) -&gt; <span class="kw-2">*const </span>c_char
+<span class="kw">where
+    </span>F: CompactionFilterFactory,
 {
-    <span class="kw">let</span> <span class="ident">self_</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">raw_self</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">c_void</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">F</span>);
-    <span class="ident">self_</span>.<span class="ident">name</span>().<span class="ident">as_ptr</span>()
+    <span class="kw">let </span>self_ = <span class="kw-2">&amp;*</span>(raw_self <span class="kw">as </span><span class="kw-2">*const </span>c_void <span class="kw">as </span><span class="kw-2">*const </span>F);
+    self_.name().as_ptr()
 }
 
-<span class="doccomment">/// Context information of a compaction run</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CompactionFilterContext</span> {
-    <span class="doccomment">/// Does this compaction run include all data files</span>
-    <span class="kw">pub</span> <span class="ident">is_full_compaction</span>: <span class="ident">bool</span>,
-    <span class="doccomment">/// Is this compaction requested by the client (true),</span>
-    <span class="doccomment">/// or is it occurring as an automatic compaction process</span>
-    <span class="kw">pub</span> <span class="ident">is_manual_compaction</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// Context information of a compaction run
+</span><span class="kw">pub struct </span>CompactionFilterContext {
+    <span class="doccomment">/// Does this compaction run include all data files
+    </span><span class="kw">pub </span>is_full_compaction: bool,
+    <span class="doccomment">/// Is this compaction requested by the client (true),
+    /// or is it occurring as an automatic compaction process
+    </span><span class="kw">pub </span>is_manual_compaction: bool,
 }
 
-<span class="kw">impl</span> <span class="ident">CompactionFilterContext</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_compactionfiltercontext_t</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">is_full_compaction</span> <span class="op">=</span> <span class="ident">ffi::rocksdb_compactionfiltercontext_is_full_compaction</span>(<span class="ident">ptr</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">let</span> <span class="ident">is_manual_compaction</span> <span class="op">=</span>
-            <span class="ident">ffi::rocksdb_compactionfiltercontext_is_manual_compaction</span>(<span class="ident">ptr</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>;
+<span class="kw">impl </span>CompactionFilterContext {
+    <span class="kw">unsafe fn </span>from_raw(ptr: <span class="kw-2">*mut </span>ffi::rocksdb_compactionfiltercontext_t) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>is_full_compaction = ffi::rocksdb_compactionfiltercontext_is_full_compaction(ptr) != <span class="number">0</span>;
+        <span class="kw">let </span>is_manual_compaction =
+            ffi::rocksdb_compactionfiltercontext_is_manual_compaction(ptr) != <span class="number">0</span>;
 
-        <span class="self">Self</span> {
-            <span class="ident">is_full_compaction</span>,
-            <span class="ident">is_manual_compaction</span>,
+        <span class="self">Self </span>{
+            is_full_compaction,
+            is_manual_compaction,
         }
     }
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">create_compaction_filter_callback</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(
-    <span class="ident">raw_self</span>: <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-    <span class="ident">context</span>: <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_compactionfiltercontext_t</span>,
-) -&gt; <span class="kw-2">*mut</span> <span class="ident">ffi::rocksdb_compactionfilter_t</span>
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">CompactionFilterFactory</span>,
+<span class="kw">pub unsafe extern </span><span class="string">&quot;C&quot; </span><span class="kw">fn </span>create_compaction_filter_callback&lt;F&gt;(
+    raw_self: <span class="kw-2">*mut </span>c_void,
+    context: <span class="kw-2">*mut </span>ffi::rocksdb_compactionfiltercontext_t,
+) -&gt; <span class="kw-2">*mut </span>ffi::rocksdb_compactionfilter_t
+<span class="kw">where
+    </span>F: CompactionFilterFactory,
 {
-    <span class="kw">let</span> <span class="ident">self_</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span>(<span class="ident">raw_self</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">F</span>);
-    <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">CompactionFilterContext::from_raw</span>(<span class="ident">context</span>);
-    <span class="kw">let</span> <span class="ident">filter</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="ident">self_</span>.<span class="ident">create</span>(<span class="ident">context</span>));
+    <span class="kw">let </span>self_ = <span class="kw-2">&amp;mut *</span>(raw_self <span class="kw">as </span><span class="kw-2">*mut </span>F);
+    <span class="kw">let </span>context = CompactionFilterContext::from_raw(context);
+    <span class="kw">let </span>filter = Box::new(self_.create(context));
 
-    <span class="kw">let</span> <span class="ident">filter_ptr</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">filter</span>);
+    <span class="kw">let </span>filter_ptr = Box::into_raw(filter);
 
-    <span class="ident">ffi::rocksdb_compactionfilter_create</span>(
-        <span class="ident">filter_ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">c_void</span>,
-        <span class="prelude-val">Some</span>(<span class="ident">compaction_filter::destructor_callback</span>::<span class="op">&lt;</span><span class="ident">F::Filter</span><span class="op">&gt;</span>),
-        <span class="prelude-val">Some</span>(<span class="ident">compaction_filter::filter_callback</span>::<span class="op">&lt;</span><span class="ident">F::Filter</span><span class="op">&gt;</span>),
-        <span class="prelude-val">Some</span>(<span class="ident">compaction_filter::name_callback</span>::<span class="op">&lt;</span><span class="ident">F::Filter</span><span class="op">&gt;</span>),
+    ffi::rocksdb_compactionfilter_create(
+        filter_ptr <span class="kw">as </span><span class="kw-2">*mut </span>c_void,
+        <span class="prelude-val">Some</span>(compaction_filter::destructor_callback::&lt;F::Filter&gt;),
+        <span class="prelude-val">Some</span>(compaction_filter::filter_callback::&lt;F::Filter&gt;),
+        <span class="prelude-val">Some</span>(compaction_filter::name_callback::&lt;F::Filter&gt;),
     )
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::compaction_filter::Decision</span>;
-    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Options</span>, <span class="ident">DB</span>};
-    <span class="kw">use</span> <span class="ident">std::ffi::CString</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::compaction_filter::Decision;
+    <span class="kw">use crate</span>::{Options, DB};
+    <span class="kw">use </span>std::ffi::CString;
 
-    <span class="kw">struct</span> <span class="ident">CountFilter</span>(<span class="ident">u16</span>, <span class="ident">CString</span>);
-    <span class="kw">impl</span> <span class="ident">CompactionFilter</span> <span class="kw">for</span> <span class="ident">CountFilter</span> {
-        <span class="kw">fn</span> <span class="ident">filter</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_level</span>: <span class="ident">u32</span>, <span class="ident">_key</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">_value</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident"><span class="kw">crate</span>::CompactionDecision</span> {
-            <span class="self">self</span>.<span class="number">0</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="kw">if</span> <span class="self">self</span>.<span class="number">0</span> <span class="op">&gt;</span> <span class="number">2</span> {
-                <span class="ident">Decision::Remove</span>
-            } <span class="kw">else</span> {
-                <span class="ident">Decision::Keep</span>
+    <span class="kw">struct </span>CountFilter(u16, CString);
+    <span class="kw">impl </span>CompactionFilter <span class="kw">for </span>CountFilter {
+        <span class="kw">fn </span>filter(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _level: u32, _key: <span class="kw-2">&amp;</span>[u8], _value: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="kw">crate</span>::CompactionDecision {
+            <span class="self">self</span>.<span class="number">0 </span>+= <span class="number">1</span>;
+            <span class="kw">if </span><span class="self">self</span>.<span class="number">0 </span>&gt; <span class="number">2 </span>{
+                Decision::Remove
+            } <span class="kw">else </span>{
+                Decision::Keep
             }
         }
 
-        <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CStr</span> {
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">1</span>
-        }
+        <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CStr {
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">1
+        </span>}
     }
 
-    <span class="kw">struct</span> <span class="ident">TestFactory</span>(<span class="ident">CString</span>);
-    <span class="kw">impl</span> <span class="ident">CompactionFilterFactory</span> <span class="kw">for</span> <span class="ident">TestFactory</span> {
-        <span class="kw">type</span> <span class="ident">Filter</span> <span class="op">=</span> <span class="ident">CountFilter</span>;
+    <span class="kw">struct </span>TestFactory(CString);
+    <span class="kw">impl </span>CompactionFilterFactory <span class="kw">for </span>TestFactory {
+        <span class="kw">type </span>Filter = CountFilter;
 
-        <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_context</span>: <span class="ident">CompactionFilterContext</span>) -&gt; <span class="ident"><span class="self">Self</span>::Filter</span> {
-            <span class="ident">CountFilter</span>(<span class="number">0</span>, <span class="ident">CString::new</span>(<span class="string">&quot;CountFilter&quot;</span>).<span class="ident">unwrap</span>())
+        <span class="kw">fn </span>create(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _context: CompactionFilterContext) -&gt; <span class="self">Self</span>::Filter {
+            CountFilter(<span class="number">0</span>, CString::new(<span class="string">&quot;CountFilter&quot;</span>).unwrap())
         }
 
-        <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CStr</span> {
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>
-        }
+        <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CStr {
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+        </span>}
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">compaction_filter_factory_test</span>() {
-        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;_rust_rocksdb_filter_factory_test&quot;</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">Options::default</span>();
-        <span class="ident">opts</span>.<span class="ident">create_if_missing</span>(<span class="bool-val">true</span>);
-        <span class="ident">opts</span>.<span class="ident">set_compaction_filter_factory</span>(<span class="ident">TestFactory</span>(<span class="ident">CString::new</span>(<span class="string">&quot;TestFactory&quot;</span>).<span class="ident">unwrap</span>()));
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>compaction_filter_factory_test() {
+        <span class="kw">let </span>path = <span class="string">&quot;_rust_rocksdb_filter_factory_test&quot;</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>opts = Options::default();
+        opts.create_if_missing(<span class="bool-val">true</span>);
+        opts.set_compaction_filter_factory(TestFactory(CString::new(<span class="string">&quot;TestFactory&quot;</span>).unwrap()));
         {
-            <span class="kw">let</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">DB::open</span>(<span class="kw-2">&amp;</span><span class="ident">opts</span>, <span class="ident">path</span>).<span class="ident">unwrap</span>();
-            <span class="kw">let</span> <span class="ident">_r</span> <span class="op">=</span> <span class="ident">db</span>.<span class="ident">put</span>(<span class="string">b&quot;k1&quot;</span>, <span class="string">b&quot;a&quot;</span>);
-            <span class="kw">let</span> <span class="ident">_r</span> <span class="op">=</span> <span class="ident">db</span>.<span class="ident">put</span>(<span class="string">b&quot;_rk&quot;</span>, <span class="string">b&quot;b&quot;</span>);
-            <span class="kw">let</span> <span class="ident">_r</span> <span class="op">=</span> <span class="ident">db</span>.<span class="ident">put</span>(<span class="string">b&quot;%k&quot;</span>, <span class="string">b&quot;c&quot;</span>);
-            <span class="ident">db</span>.<span class="ident">compact_range</span>(<span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">db</span>.<span class="ident">get</span>(<span class="string">b&quot;%k1&quot;</span>).<span class="ident">unwrap</span>(), <span class="prelude-val">None</span>);
+            <span class="kw">let </span>db = DB::open(<span class="kw-2">&amp;</span>opts, path).unwrap();
+            <span class="kw">let </span>_r = db.put(<span class="string">b&quot;k1&quot;</span>, <span class="string">b&quot;a&quot;</span>);
+            <span class="kw">let </span>_r = db.put(<span class="string">b&quot;_rk&quot;</span>, <span class="string">b&quot;b&quot;</span>);
+            <span class="kw">let </span>_r = db.put(<span class="string">b&quot;%k&quot;</span>, <span class="string">b&quot;c&quot;</span>);
+            db.compact_range(<span class="prelude-val">None</span>::&lt;<span class="kw-2">&amp;</span>[u8]&gt;, <span class="prelude-val">None</span>::&lt;<span class="kw-2">&amp;</span>[u8]&gt;);
+            <span class="macro">assert_eq!</span>(db.get(<span class="string">b&quot;%k1&quot;</span>).unwrap(), <span class="prelude-val">None</span>);
         }
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">DB::destroy</span>(<span class="kw-2">&amp;</span><span class="ident">opts</span>, <span class="ident">path</span>);
-        <span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">is_ok</span>());
+        <span class="kw">let </span>result = DB::destroy(<span class="kw-2">&amp;</span>opts, path);
+        <span class="macro">assert!</span>(result.is_ok());
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rocksdb" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

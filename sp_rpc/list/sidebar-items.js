@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ListOrValue","RPC list or value wrapper."]]});
+window.SIDEBAR_ITEMS = {"enum":[["ListOrValue","RPC list or value wrapper."]]};

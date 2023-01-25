@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/babe/src/authorship.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>authorship.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sc_consensus_babe/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../sc_consensus_babe/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_consensus_babe/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/consensus/babe/src/authorship.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>authorship.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../sc_consensus_babe/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -319,70 +314,70 @@
 <span id="314">314</span>
 <span id="315">315</span>
 <span id="316">316</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="doccomment">//! BABE authority selection and slot claiming.</span>
+</span><span class="doccomment">//! BABE authority selection and slot claiming.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Epoch</span>;
-<span class="kw">use</span> <span class="ident">codec::Encode</span>;
-<span class="kw">use</span> <span class="ident">schnorrkel</span>::{<span class="ident">keys::PublicKey</span>, <span class="ident">vrf::VRFInOut</span>};
-<span class="kw">use</span> <span class="ident">sp_application_crypto::AppKey</span>;
-<span class="kw">use</span> <span class="ident">sp_consensus_babe</span>::{
-	<span class="ident">digests</span>::{<span class="ident">PreDigest</span>, <span class="ident">PrimaryPreDigest</span>, <span class="ident">SecondaryPlainPreDigest</span>, <span class="ident">SecondaryVRFPreDigest</span>},
-	<span class="ident">make_transcript</span>, <span class="ident">make_transcript_data</span>, <span class="ident">AuthorityId</span>, <span class="ident">BabeAuthorityWeight</span>, <span class="ident">Slot</span>, <span class="ident">BABE_VRF_PREFIX</span>,
+</span><span class="kw">use </span><span class="kw">super</span>::Epoch;
+<span class="kw">use </span>codec::Encode;
+<span class="kw">use </span>schnorrkel::{keys::PublicKey, vrf::VRFInOut};
+<span class="kw">use </span>sp_application_crypto::AppKey;
+<span class="kw">use </span>sp_consensus_babe::{
+	digests::{PreDigest, PrimaryPreDigest, SecondaryPlainPreDigest, SecondaryVRFPreDigest},
+	make_transcript, make_transcript_data, AuthorityId, BabeAuthorityWeight, Slot, BABE_VRF_PREFIX,
 };
-<span class="kw">use</span> <span class="ident">sp_consensus_vrf::schnorrkel</span>::{<span class="ident">VRFOutput</span>, <span class="ident">VRFProof</span>};
-<span class="kw">use</span> <span class="ident">sp_core</span>::{<span class="ident">blake2_256</span>, <span class="ident">crypto::ByteArray</span>, <span class="ident">U256</span>};
-<span class="kw">use</span> <span class="ident">sp_keystore</span>::{<span class="ident">SyncCryptoStore</span>, <span class="ident">SyncCryptoStorePtr</span>};
+<span class="kw">use </span>sp_consensus_vrf::schnorrkel::{VRFOutput, VRFProof};
+<span class="kw">use </span>sp_core::{blake2_256, crypto::ByteArray, U256};
+<span class="kw">use </span>sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 
-<span class="doccomment">/// Calculates the primary selection threshold for a given authority, taking</span>
-<span class="doccomment">/// into account `c` (`1 - c` represents the probability of a slot being empty).</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">calculate_primary_threshold</span>(
-	<span class="ident">c</span>: (<span class="ident">u64</span>, <span class="ident">u64</span>),
-	<span class="ident">authorities</span>: <span class="kw-2">&amp;</span>[(<span class="ident">AuthorityId</span>, <span class="ident">BabeAuthorityWeight</span>)],
-	<span class="ident">authority_index</span>: <span class="ident">usize</span>,
-) -&gt; <span class="ident">u128</span> {
-	<span class="kw">use</span> <span class="ident">num_bigint::BigUint</span>;
-	<span class="kw">use</span> <span class="ident">num_rational::BigRational</span>;
-	<span class="kw">use</span> <span class="ident">num_traits</span>::{<span class="ident">cast::ToPrimitive</span>, <span class="ident">identities::One</span>};
+<span class="doccomment">/// Calculates the primary selection threshold for a given authority, taking
+/// into account `c` (`1 - c` represents the probability of a slot being empty).
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>calculate_primary_threshold(
+	c: (u64, u64),
+	authorities: <span class="kw-2">&amp;</span>[(AuthorityId, BabeAuthorityWeight)],
+	authority_index: usize,
+) -&gt; u128 {
+	<span class="kw">use </span>num_bigint::BigUint;
+	<span class="kw">use </span>num_rational::BigRational;
+	<span class="kw">use </span>num_traits::{cast::ToPrimitive, identities::One};
 
-	<span class="comment">// Prevent div by zero and out of bounds access.</span>
-	<span class="comment">// While Babe&#39;s pallet implementation that ships with FRAME performs a sanity check over</span>
-	<span class="comment">// configuration parameters, this is not sufficient to guarantee that `c.1` is non-zero</span>
-	<span class="comment">// (i.e. third party implementations are possible).</span>
-	<span class="kw">if</span> <span class="ident">c</span>.<span class="number">1</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">authority_index</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">authorities</span>.<span class="ident">len</span>() {
-		<span class="kw">return</span> <span class="number">0</span>
-	}
+	<span class="comment">// Prevent div by zero and out of bounds access.
+	// While Babe&#39;s pallet implementation that ships with FRAME performs a sanity check over
+	// configuration parameters, this is not sufficient to guarantee that `c.1` is non-zero
+	// (i.e. third party implementations are possible).
+	</span><span class="kw">if </span>c.<span class="number">1 </span>== <span class="number">0 </span>|| authority_index &gt;= authorities.len() {
+		<span class="kw">return </span><span class="number">0
+	</span>}
 
-	<span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">c</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="ident">c</span>.<span class="number">1</span> <span class="kw">as</span> <span class="ident">f64</span>;
+	<span class="kw">let </span>c = c.<span class="number">0 </span><span class="kw">as </span>f64 / c.<span class="number">1 </span><span class="kw">as </span>f64;
 
-	<span class="kw">let</span> <span class="ident">theta</span> <span class="op">=</span> <span class="ident">authorities</span>[<span class="ident">authority_index</span>].<span class="number">1</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span>
-		<span class="ident">authorities</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">weight</span>)<span class="op">|</span> <span class="ident">weight</span>).<span class="ident">sum</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>() <span class="kw">as</span> <span class="ident">f64</span>;
+	<span class="kw">let </span>theta = authorities[authority_index].<span class="number">1 </span><span class="kw">as </span>f64 /
+		authorities.iter().map(|(<span class="kw">_</span>, weight)| weight).sum::&lt;u64&gt;() <span class="kw">as </span>f64;
 
-	<span class="macro">assert!</span>(<span class="ident">theta</span> <span class="op">&gt;</span> <span class="number">0.0</span>, <span class="string">&quot;authority with weight 0.&quot;</span>);
+	<span class="macro">assert!</span>(theta &gt; <span class="number">0.0</span>, <span class="string">&quot;authority with weight 0.&quot;</span>);
 
-	<span class="comment">// NOTE: in the equation `p = 1 - (1 - c)^theta` the value of `p` is always</span>
-	<span class="comment">// capped by `c`. For all pratical purposes `c` should always be set to a</span>
-	<span class="comment">// value &lt; 0.5, as such in the computations below we should never be near</span>
-	<span class="comment">// edge cases like `0.999999`.</span>
+	<span class="comment">// NOTE: in the equation `p = 1 - (1 - c)^theta` the value of `p` is always
+	// capped by `c`. For all pratical purposes `c` should always be set to a
+	// value &lt; 0.5, as such in the computations below we should never be near
+	// edge cases like `0.999999`.
 
-	<span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">BigRational::from_float</span>(<span class="number">1f64</span> <span class="op">-</span> (<span class="number">1f64</span> <span class="op">-</span> <span class="ident">c</span>).<span class="ident">powf</span>(<span class="ident">theta</span>)).<span class="ident">expect</span>(
+	</span><span class="kw">let </span>p = BigRational::from_float(<span class="number">1f64 </span>- (<span class="number">1f64 </span>- c).powf(theta)).expect(
 		<span class="string">&quot;returns None when the given value is not finite; \
 		 c is a configuration parameter defined in (0, 1]; \
 		 theta must be &gt; 0 if the given authority&#39;s weight is &gt; 0; \
@@ -392,21 +387,21 @@
 		 qed.&quot;</span>,
 	);
 
-	<span class="kw">let</span> <span class="ident">numer</span> <span class="op">=</span> <span class="ident">p</span>.<span class="ident">numer</span>().<span class="ident">to_biguint</span>().<span class="ident">expect</span>(
+	<span class="kw">let </span>numer = p.numer().to_biguint().expect(
 		<span class="string">&quot;returns None when the given value is negative; \
 		 p is defined as `1 - n` where n is defined in (0, 1]; \
 		 p must be a value in [0, 1); \
 		 qed.&quot;</span>,
 	);
 
-	<span class="kw">let</span> <span class="ident">denom</span> <span class="op">=</span> <span class="ident">p</span>.<span class="ident">denom</span>().<span class="ident">to_biguint</span>().<span class="ident">expect</span>(
+	<span class="kw">let </span>denom = p.denom().to_biguint().expect(
 		<span class="string">&quot;returns None when the given value is negative; \
 		 p is defined as `1 - n` where n is defined in (0, 1]; \
 		 p must be a value in [0, 1); \
 		 qed.&quot;</span>,
 	);
 
-	((<span class="ident">BigUint::one</span>() <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">128</span>) <span class="op">*</span> <span class="ident">numer</span> <span class="op">/</span> <span class="ident">denom</span>).<span class="ident">to_u128</span>().<span class="ident">expect</span>(
+	((BigUint::one() &lt;&lt; <span class="number">128</span>) * numer / denom).to_u128().expect(
 		<span class="string">&quot;returns None if the underlying value cannot be represented with 128 bits; \
 		 we start with 2^128 which is one more than can be represented with 128 bits; \
 		 we multiple by p which is defined in [0, 1); \
@@ -415,226 +410,225 @@
 	)
 }
 
-<span class="doccomment">/// Returns true if the given VRF output is lower than the given threshold,</span>
-<span class="doccomment">/// false otherwise.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">check_primary_threshold</span>(<span class="ident">inout</span>: <span class="kw-2">&amp;</span><span class="ident">VRFInOut</span>, <span class="ident">threshold</span>: <span class="ident">u128</span>) -&gt; <span class="ident">bool</span> {
-	<span class="ident">u128::from_le_bytes</span>(<span class="ident">inout</span>.<span class="ident">make_bytes</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">16</span>]<span class="op">&gt;</span>(<span class="ident">BABE_VRF_PREFIX</span>)) <span class="op">&lt;</span> <span class="ident">threshold</span>
+<span class="doccomment">/// Returns true if the given VRF output is lower than the given threshold,
+/// false otherwise.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>check_primary_threshold(inout: <span class="kw-2">&amp;</span>VRFInOut, threshold: u128) -&gt; bool {
+	u128::from_le_bytes(inout.make_bytes::&lt;[u8; <span class="number">16</span>]&gt;(BABE_VRF_PREFIX)) &lt; threshold
 }
 
-<span class="doccomment">/// Get the expected secondary author for the given slot and with given</span>
-<span class="doccomment">/// authorities. This should always assign the slot to some authority unless the</span>
-<span class="doccomment">/// authorities list is empty.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">secondary_slot_author</span>(
-	<span class="ident">slot</span>: <span class="ident">Slot</span>,
-	<span class="ident">authorities</span>: <span class="kw-2">&amp;</span>[(<span class="ident">AuthorityId</span>, <span class="ident">BabeAuthorityWeight</span>)],
-	<span class="ident">randomness</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">AuthorityId</span><span class="op">&gt;</span> {
-	<span class="kw">if</span> <span class="ident">authorities</span>.<span class="ident">is_empty</span>() {
-		<span class="kw">return</span> <span class="prelude-val">None</span>
-	}
+<span class="doccomment">/// Get the expected secondary author for the given slot and with given
+/// authorities. This should always assign the slot to some authority unless the
+/// authorities list is empty.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>secondary_slot_author(
+	slot: Slot,
+	authorities: <span class="kw-2">&amp;</span>[(AuthorityId, BabeAuthorityWeight)],
+	randomness: [u8; <span class="number">32</span>],
+) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>AuthorityId&gt; {
+	<span class="kw">if </span>authorities.is_empty() {
+		<span class="kw">return </span><span class="prelude-val">None
+	</span>}
 
-	<span class="kw">let</span> <span class="ident">rand</span> <span class="op">=</span> <span class="ident">U256::from</span>((<span class="ident">randomness</span>, <span class="ident">slot</span>).<span class="ident">using_encoded</span>(<span class="ident">blake2_256</span>));
+	<span class="kw">let </span>rand = U256::from((randomness, slot).using_encoded(blake2_256));
 
-	<span class="kw">let</span> <span class="ident">authorities_len</span> <span class="op">=</span> <span class="ident">U256::from</span>(<span class="ident">authorities</span>.<span class="ident">len</span>());
-	<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">rand</span> <span class="op">%</span> <span class="ident">authorities_len</span>;
+	<span class="kw">let </span>authorities_len = U256::from(authorities.len());
+	<span class="kw">let </span>idx = rand % authorities_len;
 
-	<span class="kw">let</span> <span class="ident">expected_author</span> <span class="op">=</span> <span class="ident">authorities</span>.<span class="ident">get</span>(<span class="ident">idx</span>.<span class="ident">as_u32</span>() <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">expect</span>(
+	<span class="kw">let </span>expected_author = authorities.get(idx.as_u32() <span class="kw">as </span>usize).expect(
 		<span class="string">&quot;authorities not empty; index constrained to list length; \
 				this is a valid index; qed&quot;</span>,
 	);
 
-	<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">expected_author</span>.<span class="number">0</span>)
+	<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>expected_author.<span class="number">0</span>)
 }
 
-<span class="doccomment">/// Claim a secondary slot if it is our turn to propose, returning the</span>
-<span class="doccomment">/// pre-digest to use when authoring the block, or `None` if it is not our turn</span>
-<span class="doccomment">/// to propose.</span>
-<span class="kw">fn</span> <span class="ident">claim_secondary_slot</span>(
-	<span class="ident">slot</span>: <span class="ident">Slot</span>,
-	<span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="ident">Epoch</span>,
-	<span class="ident">keys</span>: <span class="kw-2">&amp;</span>[(<span class="ident">AuthorityId</span>, <span class="ident">usize</span>)],
-	<span class="ident">keystore</span>: <span class="kw-2">&amp;</span><span class="ident">SyncCryptoStorePtr</span>,
-	<span class="ident">author_secondary_vrf</span>: <span class="ident">bool</span>,
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">PreDigest</span>, <span class="ident">AuthorityId</span>)<span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">Epoch</span> { <span class="ident">authorities</span>, <span class="ident">randomness</span>, <span class="ident">epoch_index</span>, .. } <span class="op">=</span> <span class="ident">epoch</span>;
+<span class="doccomment">/// Claim a secondary slot if it is our turn to propose, returning the
+/// pre-digest to use when authoring the block, or `None` if it is not our turn
+/// to propose.
+</span><span class="kw">fn </span>claim_secondary_slot(
+	slot: Slot,
+	epoch: <span class="kw-2">&amp;</span>Epoch,
+	keys: <span class="kw-2">&amp;</span>[(AuthorityId, usize)],
+	keystore: <span class="kw-2">&amp;</span>SyncCryptoStorePtr,
+	author_secondary_vrf: bool,
+) -&gt; <span class="prelude-ty">Option</span>&lt;(PreDigest, AuthorityId)&gt; {
+	<span class="kw">let </span>Epoch { authorities, randomness, epoch_index, .. } = epoch;
 
-	<span class="kw">if</span> <span class="ident">authorities</span>.<span class="ident">is_empty</span>() {
-		<span class="kw">return</span> <span class="prelude-val">None</span>
-	}
+	<span class="kw">if </span>authorities.is_empty() {
+		<span class="kw">return </span><span class="prelude-val">None
+	</span>}
 
-	<span class="kw">let</span> <span class="ident">expected_author</span> <span class="op">=</span> <span class="ident">secondary_slot_author</span>(<span class="ident">slot</span>, <span class="ident">authorities</span>, <span class="kw-2">*</span><span class="ident">randomness</span>)<span class="question-mark">?</span>;
+	<span class="kw">let </span>expected_author = secondary_slot_author(slot, authorities, <span class="kw-2">*</span>randomness)<span class="question-mark">?</span>;
 
-	<span class="kw">for</span> (<span class="ident">authority_id</span>, <span class="ident">authority_index</span>) <span class="kw">in</span> <span class="ident">keys</span> {
-		<span class="kw">if</span> <span class="ident">authority_id</span> <span class="op">==</span> <span class="ident">expected_author</span> {
-			<span class="kw">let</span> <span class="ident">pre_digest</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">author_secondary_vrf</span> {
-				<span class="kw">let</span> <span class="ident">transcript_data</span> <span class="op">=</span> <span class="ident">make_transcript_data</span>(<span class="ident">randomness</span>, <span class="ident">slot</span>, <span class="kw-2">*</span><span class="ident">epoch_index</span>);
-				<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">SyncCryptoStore::sr25519_vrf_sign</span>(
-					<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">keystore</span>,
-					<span class="ident">AuthorityId::ID</span>,
-					<span class="ident">authority_id</span>.<span class="ident">as_ref</span>(),
-					<span class="ident">transcript_data</span>,
+	<span class="kw">for </span>(authority_id, authority_index) <span class="kw">in </span>keys {
+		<span class="kw">if </span>authority_id == expected_author {
+			<span class="kw">let </span>pre_digest = <span class="kw">if </span>author_secondary_vrf {
+				<span class="kw">let </span>transcript_data = make_transcript_data(randomness, slot, <span class="kw-2">*</span>epoch_index);
+				<span class="kw">let </span>result = SyncCryptoStore::sr25519_vrf_sign(
+					<span class="kw-2">&amp;**</span>keystore,
+					AuthorityId::ID,
+					authority_id.as_ref(),
+					transcript_data,
 				);
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">signature</span>)) <span class="op">=</span> <span class="ident">result</span> {
-					<span class="prelude-val">Some</span>(<span class="ident">PreDigest::SecondaryVRF</span>(<span class="ident">SecondaryVRFPreDigest</span> {
-						<span class="ident">slot</span>,
-						<span class="ident">vrf_output</span>: <span class="ident">VRFOutput</span>(<span class="ident">signature</span>.<span class="ident">output</span>),
-						<span class="ident">vrf_proof</span>: <span class="ident">VRFProof</span>(<span class="ident">signature</span>.<span class="ident">proof</span>),
-						<span class="ident">authority_index</span>: <span class="kw-2">*</span><span class="ident">authority_index</span> <span class="kw">as</span> <span class="ident">u32</span>,
+				<span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signature)) = result {
+					<span class="prelude-val">Some</span>(PreDigest::SecondaryVRF(SecondaryVRFPreDigest {
+						slot,
+						vrf_output: VRFOutput(signature.output),
+						vrf_proof: VRFProof(signature.proof),
+						authority_index: <span class="kw-2">*</span>authority_index <span class="kw">as </span>u32,
 					}))
-				} <span class="kw">else</span> {
-					<span class="prelude-val">None</span>
-				}
-			} <span class="kw">else</span> <span class="kw">if</span> <span class="ident">SyncCryptoStore::has_keys</span>(
-				<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">keystore</span>,
-				<span class="kw-2">&amp;</span>[(<span class="ident">authority_id</span>.<span class="ident">to_raw_vec</span>(), <span class="ident">AuthorityId::ID</span>)],
+				} <span class="kw">else </span>{
+					<span class="prelude-val">None
+				</span>}
+			} <span class="kw">else if </span>SyncCryptoStore::has_keys(
+				<span class="kw-2">&amp;**</span>keystore,
+				<span class="kw-2">&amp;</span>[(authority_id.to_raw_vec(), AuthorityId::ID)],
 			) {
-				<span class="prelude-val">Some</span>(<span class="ident">PreDigest::SecondaryPlain</span>(<span class="ident">SecondaryPlainPreDigest</span> {
-					<span class="ident">slot</span>,
-					<span class="ident">authority_index</span>: <span class="kw-2">*</span><span class="ident">authority_index</span> <span class="kw">as</span> <span class="ident">u32</span>,
+				<span class="prelude-val">Some</span>(PreDigest::SecondaryPlain(SecondaryPlainPreDigest {
+					slot,
+					authority_index: <span class="kw-2">*</span>authority_index <span class="kw">as </span>u32,
 				}))
-			} <span class="kw">else</span> {
-				<span class="prelude-val">None</span>
-			};
+			} <span class="kw">else </span>{
+				<span class="prelude-val">None
+			</span>};
 
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pre_digest</span>) <span class="op">=</span> <span class="ident">pre_digest</span> {
-				<span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="ident">pre_digest</span>, <span class="ident">authority_id</span>.<span class="ident">clone</span>()))
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(pre_digest) = pre_digest {
+				<span class="kw">return </span><span class="prelude-val">Some</span>((pre_digest, authority_id.clone()))
 			}
 		}
 	}
 
-	<span class="prelude-val">None</span>
+	<span class="prelude-val">None
+</span>}
+
+<span class="doccomment">/// Tries to claim the given slot number. This method starts by trying to claim
+/// a primary VRF based slot. If we are not able to claim it, then if we have
+/// secondary slots enabled for the given epoch, we will fallback to trying to
+/// claim a secondary slot.
+</span><span class="kw">pub fn </span>claim_slot(
+	slot: Slot,
+	epoch: <span class="kw-2">&amp;</span>Epoch,
+	keystore: <span class="kw-2">&amp;</span>SyncCryptoStorePtr,
+) -&gt; <span class="prelude-ty">Option</span>&lt;(PreDigest, AuthorityId)&gt; {
+	<span class="kw">let </span>authorities = epoch
+		.authorities
+		.iter()
+		.enumerate()
+		.map(|(index, a)| (a.<span class="number">0</span>.clone(), index))
+		.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+	claim_slot_using_keys(slot, epoch, keystore, <span class="kw-2">&amp;</span>authorities)
 }
 
-<span class="doccomment">/// Tries to claim the given slot number. This method starts by trying to claim</span>
-<span class="doccomment">/// a primary VRF based slot. If we are not able to claim it, then if we have</span>
-<span class="doccomment">/// secondary slots enabled for the given epoch, we will fallback to trying to</span>
-<span class="doccomment">/// claim a secondary slot.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">claim_slot</span>(
-	<span class="ident">slot</span>: <span class="ident">Slot</span>,
-	<span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="ident">Epoch</span>,
-	<span class="ident">keystore</span>: <span class="kw-2">&amp;</span><span class="ident">SyncCryptoStorePtr</span>,
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">PreDigest</span>, <span class="ident">AuthorityId</span>)<span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">authorities</span> <span class="op">=</span> <span class="ident">epoch</span>
-		.<span class="ident">authorities</span>
-		.<span class="ident">iter</span>()
-		.<span class="ident">enumerate</span>()
-		.<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">index</span>, <span class="ident">a</span>)<span class="op">|</span> (<span class="ident">a</span>.<span class="number">0</span>.<span class="ident">clone</span>(), <span class="ident">index</span>))
-		.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-	<span class="ident">claim_slot_using_keys</span>(<span class="ident">slot</span>, <span class="ident">epoch</span>, <span class="ident">keystore</span>, <span class="kw-2">&amp;</span><span class="ident">authorities</span>)
-}
-
-<span class="doccomment">/// Like `claim_slot`, but allows passing an explicit set of key pairs. Useful if we intend</span>
-<span class="doccomment">/// to make repeated calls for different slots using the same key pairs.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">claim_slot_using_keys</span>(
-	<span class="ident">slot</span>: <span class="ident">Slot</span>,
-	<span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="ident">Epoch</span>,
-	<span class="ident">keystore</span>: <span class="kw-2">&amp;</span><span class="ident">SyncCryptoStorePtr</span>,
-	<span class="ident">keys</span>: <span class="kw-2">&amp;</span>[(<span class="ident">AuthorityId</span>, <span class="ident">usize</span>)],
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">PreDigest</span>, <span class="ident">AuthorityId</span>)<span class="op">&gt;</span> {
-	<span class="ident">claim_primary_slot</span>(<span class="ident">slot</span>, <span class="ident">epoch</span>, <span class="ident">epoch</span>.<span class="ident">config</span>.<span class="ident">c</span>, <span class="ident">keystore</span>, <span class="ident">keys</span>).<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> {
-		<span class="kw">if</span> <span class="ident">epoch</span>.<span class="ident">config</span>.<span class="ident">allowed_slots</span>.<span class="ident">is_secondary_plain_slots_allowed</span>() <span class="op">|</span><span class="op">|</span>
-			<span class="ident">epoch</span>.<span class="ident">config</span>.<span class="ident">allowed_slots</span>.<span class="ident">is_secondary_vrf_slots_allowed</span>()
+<span class="doccomment">/// Like `claim_slot`, but allows passing an explicit set of key pairs. Useful if we intend
+/// to make repeated calls for different slots using the same key pairs.
+</span><span class="kw">pub fn </span>claim_slot_using_keys(
+	slot: Slot,
+	epoch: <span class="kw-2">&amp;</span>Epoch,
+	keystore: <span class="kw-2">&amp;</span>SyncCryptoStorePtr,
+	keys: <span class="kw-2">&amp;</span>[(AuthorityId, usize)],
+) -&gt; <span class="prelude-ty">Option</span>&lt;(PreDigest, AuthorityId)&gt; {
+	claim_primary_slot(slot, epoch, epoch.config.c, keystore, keys).or_else(|| {
+		<span class="kw">if </span>epoch.config.allowed_slots.is_secondary_plain_slots_allowed() ||
+			epoch.config.allowed_slots.is_secondary_vrf_slots_allowed()
 		{
-			<span class="ident">claim_secondary_slot</span>(
-				<span class="ident">slot</span>,
-				<span class="ident">epoch</span>,
-				<span class="ident">keys</span>,
-				<span class="ident">keystore</span>,
-				<span class="ident">epoch</span>.<span class="ident">config</span>.<span class="ident">allowed_slots</span>.<span class="ident">is_secondary_vrf_slots_allowed</span>(),
+			claim_secondary_slot(
+				slot,
+				epoch,
+				keys,
+				keystore,
+				epoch.config.allowed_slots.is_secondary_vrf_slots_allowed(),
 			)
-		} <span class="kw">else</span> {
-			<span class="prelude-val">None</span>
-		}
+		} <span class="kw">else </span>{
+			<span class="prelude-val">None
+		</span>}
 	})
 }
 
-<span class="doccomment">/// Claim a primary slot if it is our turn.  Returns `None` if it is not our turn.</span>
-<span class="doccomment">/// This hashes the slot number, epoch, genesis hash, and chain randomness into</span>
-<span class="doccomment">/// the VRF.  If the VRF produces a value less than `threshold`, it is our turn,</span>
-<span class="doccomment">/// so it returns `Some(_)`. Otherwise, it returns `None`.</span>
-<span class="kw">fn</span> <span class="ident">claim_primary_slot</span>(
-	<span class="ident">slot</span>: <span class="ident">Slot</span>,
-	<span class="ident">epoch</span>: <span class="kw-2">&amp;</span><span class="ident">Epoch</span>,
-	<span class="ident">c</span>: (<span class="ident">u64</span>, <span class="ident">u64</span>),
-	<span class="ident">keystore</span>: <span class="kw-2">&amp;</span><span class="ident">SyncCryptoStorePtr</span>,
-	<span class="ident">keys</span>: <span class="kw-2">&amp;</span>[(<span class="ident">AuthorityId</span>, <span class="ident">usize</span>)],
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">PreDigest</span>, <span class="ident">AuthorityId</span>)<span class="op">&gt;</span> {
-	<span class="kw">let</span> <span class="ident">Epoch</span> { <span class="ident">authorities</span>, <span class="ident">randomness</span>, <span class="ident">epoch_index</span>, .. } <span class="op">=</span> <span class="ident">epoch</span>;
+<span class="doccomment">/// Claim a primary slot if it is our turn.  Returns `None` if it is not our turn.
+/// This hashes the slot number, epoch, genesis hash, and chain randomness into
+/// the VRF.  If the VRF produces a value less than `threshold`, it is our turn,
+/// so it returns `Some(_)`. Otherwise, it returns `None`.
+</span><span class="kw">fn </span>claim_primary_slot(
+	slot: Slot,
+	epoch: <span class="kw-2">&amp;</span>Epoch,
+	c: (u64, u64),
+	keystore: <span class="kw-2">&amp;</span>SyncCryptoStorePtr,
+	keys: <span class="kw-2">&amp;</span>[(AuthorityId, usize)],
+) -&gt; <span class="prelude-ty">Option</span>&lt;(PreDigest, AuthorityId)&gt; {
+	<span class="kw">let </span>Epoch { authorities, randomness, epoch_index, .. } = epoch;
 
-	<span class="kw">for</span> (<span class="ident">authority_id</span>, <span class="ident">authority_index</span>) <span class="kw">in</span> <span class="ident">keys</span> {
-		<span class="kw">let</span> <span class="ident">transcript</span> <span class="op">=</span> <span class="ident">make_transcript</span>(<span class="ident">randomness</span>, <span class="ident">slot</span>, <span class="kw-2">*</span><span class="ident">epoch_index</span>);
-		<span class="kw">let</span> <span class="ident">transcript_data</span> <span class="op">=</span> <span class="ident">make_transcript_data</span>(<span class="ident">randomness</span>, <span class="ident">slot</span>, <span class="kw-2">*</span><span class="ident">epoch_index</span>);
-		<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">SyncCryptoStore::sr25519_vrf_sign</span>(
-			<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">keystore</span>,
-			<span class="ident">AuthorityId::ID</span>,
-			<span class="ident">authority_id</span>.<span class="ident">as_ref</span>(),
-			<span class="ident">transcript_data</span>,
+	<span class="kw">for </span>(authority_id, authority_index) <span class="kw">in </span>keys {
+		<span class="kw">let </span>transcript = make_transcript(randomness, slot, <span class="kw-2">*</span>epoch_index);
+		<span class="kw">let </span>transcript_data = make_transcript_data(randomness, slot, <span class="kw-2">*</span>epoch_index);
+		<span class="kw">let </span>result = SyncCryptoStore::sr25519_vrf_sign(
+			<span class="kw-2">&amp;**</span>keystore,
+			AuthorityId::ID,
+			authority_id.as_ref(),
+			transcript_data,
 		);
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">signature</span>)) <span class="op">=</span> <span class="ident">result</span> {
-			<span class="kw">let</span> <span class="ident">public</span> <span class="op">=</span> <span class="ident">PublicKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">authority_id</span>.<span class="ident">to_raw_vec</span>()).<span class="ident">ok</span>()<span class="question-mark">?</span>;
-			<span class="kw">let</span> <span class="ident">inout</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">signature</span>.<span class="ident">output</span>.<span class="ident">attach_input_hash</span>(<span class="kw-2">&amp;</span><span class="ident">public</span>, <span class="ident">transcript</span>) {
-				<span class="prelude-val">Ok</span>(<span class="ident">inout</span>) =&gt; <span class="ident">inout</span>,
+		<span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signature)) = result {
+			<span class="kw">let </span>public = PublicKey::from_bytes(<span class="kw-2">&amp;</span>authority_id.to_raw_vec()).ok()<span class="question-mark">?</span>;
+			<span class="kw">let </span>inout = <span class="kw">match </span>signature.output.attach_input_hash(<span class="kw-2">&amp;</span>public, transcript) {
+				<span class="prelude-val">Ok</span>(inout) =&gt; inout,
 				<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">continue</span>,
 			};
 
-			<span class="kw">let</span> <span class="ident">threshold</span> <span class="op">=</span> <span class="ident">calculate_primary_threshold</span>(<span class="ident">c</span>, <span class="ident">authorities</span>, <span class="kw-2">*</span><span class="ident">authority_index</span>);
-			<span class="kw">if</span> <span class="ident">check_primary_threshold</span>(<span class="kw-2">&amp;</span><span class="ident">inout</span>, <span class="ident">threshold</span>) {
-				<span class="kw">let</span> <span class="ident">pre_digest</span> <span class="op">=</span> <span class="ident">PreDigest::Primary</span>(<span class="ident">PrimaryPreDigest</span> {
-					<span class="ident">slot</span>,
-					<span class="ident">vrf_output</span>: <span class="ident">VRFOutput</span>(<span class="ident">signature</span>.<span class="ident">output</span>),
-					<span class="ident">vrf_proof</span>: <span class="ident">VRFProof</span>(<span class="ident">signature</span>.<span class="ident">proof</span>),
-					<span class="ident">authority_index</span>: <span class="kw-2">*</span><span class="ident">authority_index</span> <span class="kw">as</span> <span class="ident">u32</span>,
+			<span class="kw">let </span>threshold = calculate_primary_threshold(c, authorities, <span class="kw-2">*</span>authority_index);
+			<span class="kw">if </span>check_primary_threshold(<span class="kw-2">&amp;</span>inout, threshold) {
+				<span class="kw">let </span>pre_digest = PreDigest::Primary(PrimaryPreDigest {
+					slot,
+					vrf_output: VRFOutput(signature.output),
+					vrf_proof: VRFProof(signature.proof),
+					authority_index: <span class="kw-2">*</span>authority_index <span class="kw">as </span>u32,
 				});
 
-				<span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="ident">pre_digest</span>, <span class="ident">authority_id</span>.<span class="ident">clone</span>()))
+				<span class="kw">return </span><span class="prelude-val">Some</span>((pre_digest, authority_id.clone()))
 			}
 		}
 	}
 
-	<span class="prelude-val">None</span>
-}
+	<span class="prelude-val">None
+</span>}
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="ident">sc_keystore::LocalKeystore</span>;
-	<span class="kw">use</span> <span class="ident">sp_consensus_babe</span>::{<span class="ident">AllowedSlots</span>, <span class="ident">AuthorityId</span>, <span class="ident">BabeEpochConfiguration</span>};
-	<span class="kw">use</span> <span class="ident">sp_core</span>::{<span class="ident">crypto::Pair</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">sr25519::Pair</span>};
-	<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use </span>sc_keystore::LocalKeystore;
+	<span class="kw">use </span>sp_consensus_babe::{AllowedSlots, AuthorityId, BabeEpochConfiguration};
+	<span class="kw">use </span>sp_core::{crypto::Pair <span class="kw">as _</span>, sr25519::Pair};
+	<span class="kw">use </span>std::sync::Arc;
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">claim_secondary_plain_slot_works</span>() {
-		<span class="kw">let</span> <span class="ident">keystore</span>: <span class="ident">SyncCryptoStorePtr</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">LocalKeystore::in_memory</span>());
-		<span class="kw">let</span> <span class="ident">valid_public_key</span> <span class="op">=</span> <span class="ident">SyncCryptoStore::sr25519_generate_new</span>(
-			<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">keystore</span>,
-			<span class="ident">AuthorityId::ID</span>,
-			<span class="prelude-val">Some</span>(<span class="ident">sp_core::crypto::DEV_PHRASE</span>),
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>claim_secondary_plain_slot_works() {
+		<span class="kw">let </span>keystore: SyncCryptoStorePtr = Arc::new(LocalKeystore::in_memory());
+		<span class="kw">let </span>valid_public_key = SyncCryptoStore::sr25519_generate_new(
+			<span class="kw-2">&amp;*</span>keystore,
+			AuthorityId::ID,
+			<span class="prelude-val">Some</span>(sp_core::crypto::DEV_PHRASE),
 		)
-		.<span class="ident">unwrap</span>();
+		.unwrap();
 
-		<span class="kw">let</span> <span class="ident">authorities</span> <span class="op">=</span> <span class="macro">vec!</span>[
-			(<span class="ident">AuthorityId::from</span>(<span class="ident">Pair::generate</span>().<span class="number">0</span>.<span class="ident">public</span>()), <span class="number">5</span>),
-			(<span class="ident">AuthorityId::from</span>(<span class="ident">Pair::generate</span>().<span class="number">0</span>.<span class="ident">public</span>()), <span class="number">7</span>),
+		<span class="kw">let </span>authorities = <span class="macro">vec!</span>[
+			(AuthorityId::from(Pair::generate().<span class="number">0</span>.public()), <span class="number">5</span>),
+			(AuthorityId::from(Pair::generate().<span class="number">0</span>.public()), <span class="number">7</span>),
 		];
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="ident">Epoch</span> {
-			<span class="ident">epoch_index</span>: <span class="number">10</span>,
-			<span class="ident">start_slot</span>: <span class="number">0</span>.<span class="ident">into</span>(),
-			<span class="ident">duration</span>: <span class="number">20</span>,
-			<span class="ident">authorities</span>: <span class="ident">authorities</span>.<span class="ident">clone</span>(),
-			<span class="ident">randomness</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">config</span>: <span class="ident">BabeEpochConfiguration</span> {
-				<span class="ident">c</span>: (<span class="number">3</span>, <span class="number">10</span>),
-				<span class="ident">allowed_slots</span>: <span class="ident">AllowedSlots::PrimaryAndSecondaryPlainSlots</span>,
+		<span class="kw">let </span><span class="kw-2">mut </span>epoch = Epoch {
+			epoch_index: <span class="number">10</span>,
+			start_slot: <span class="number">0</span>.into(),
+			duration: <span class="number">20</span>,
+			authorities: authorities.clone(),
+			randomness: Default::default(),
+			config: BabeEpochConfiguration {
+				c: (<span class="number">3</span>, <span class="number">10</span>),
+				allowed_slots: AllowedSlots::PrimaryAndSecondaryPlainSlots,
 			},
 		};
 
-		<span class="macro">assert!</span>(<span class="ident">claim_slot</span>(<span class="number">10</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="ident">epoch</span>, <span class="kw-2">&amp;</span><span class="ident">keystore</span>).<span class="ident">is_none</span>());
+		<span class="macro">assert!</span>(claim_slot(<span class="number">10</span>.into(), <span class="kw-2">&amp;</span>epoch, <span class="kw-2">&amp;</span>keystore).is_none());
 
-		<span class="ident">epoch</span>.<span class="ident">authorities</span>.<span class="ident">push</span>((<span class="ident">valid_public_key</span>.<span class="ident">clone</span>().<span class="ident">into</span>(), <span class="number">10</span>));
-		<span class="macro">assert_eq!</span>(<span class="ident">claim_slot</span>(<span class="number">10</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="ident">epoch</span>, <span class="kw-2">&amp;</span><span class="ident">keystore</span>).<span class="ident">unwrap</span>().<span class="number">1</span>, <span class="ident">valid_public_key</span>.<span class="ident">into</span>());
+		epoch.authorities.push((valid_public_key.clone().into(), <span class="number">10</span>));
+		<span class="macro">assert_eq!</span>(claim_slot(<span class="number">10</span>.into(), <span class="kw-2">&amp;</span>epoch, <span class="kw-2">&amp;</span>keystore).unwrap().<span class="number">1</span>, valid_public_key.into());
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_consensus_babe" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="sc_consensus_babe" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

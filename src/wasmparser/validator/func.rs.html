@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmparser-0.83.0/src/validator/func.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>func.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../wasmparser/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../wasmparser/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../wasmparser/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmparser-0.83.0/src/validator/func.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>func.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmparser/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -206,209 +201,208 @@
 <span id="201">201</span>
 <span id="202">202</span>
 <span id="203">203</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::operators_validator::OperatorValidator</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">BinaryReader</span>, <span class="prelude-ty">Result</span>, <span class="ident">Type</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">FunctionBody</span>, <span class="ident">Operator</span>, <span class="ident">WasmFeatures</span>, <span class="ident">WasmModuleResources</span>};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::operators_validator::OperatorValidator;
+<span class="kw">use crate</span>::{BinaryReader, <span class="prelude-ty">Result</span>, Type};
+<span class="kw">use crate</span>::{FunctionBody, Operator, WasmFeatures, WasmModuleResources};
 
-<span class="doccomment">/// Validation context for a WebAssembly function.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This structure is created by</span>
-<span class="doccomment">/// [`Validator::code_section_entry`](crate::Validator::code_section_entry)</span>
-<span class="doccomment">/// and is created per-function in a WebAssembly module. This structure is</span>
-<span class="doccomment">/// suitable for sending to other threads while the original</span>
-<span class="doccomment">/// [`Validator`](crate::Validator) continues processing other functions.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FuncValidator</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">validator</span>: <span class="ident">OperatorValidator</span>,
-    <span class="ident">resources</span>: <span class="ident">T</span>,
+<span class="doccomment">/// Validation context for a WebAssembly function.
+///
+/// This structure is created by
+/// [`Validator::code_section_entry`](crate::Validator::code_section_entry)
+/// and is created per-function in a WebAssembly module. This structure is
+/// suitable for sending to other threads while the original
+/// [`Validator`](crate::Validator) continues processing other functions.
+</span><span class="kw">pub struct </span>FuncValidator&lt;T&gt; {
+    validator: OperatorValidator,
+    resources: T,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">WasmModuleResources</span><span class="op">&gt;</span> <span class="ident">FuncValidator</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new `FuncValidator`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The returned `FuncValidator` can be used to validate a function with</span>
-    <span class="doccomment">/// the type `ty` specified. The `resources` indicate what the containing</span>
-    <span class="doccomment">/// module has for the function to use, and the `features` configure what</span>
-    <span class="doccomment">/// WebAssembly proposals are enabled for this function.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The returned validator can be used to then parse a [`FunctionBody`], for</span>
-    <span class="doccomment">/// example, to read locals and validate operators.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">ty</span>: <span class="ident">u32</span>,
-        <span class="ident">offset</span>: <span class="ident">usize</span>,
-        <span class="ident">resources</span>: <span class="ident">T</span>,
-        <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">WasmFeatures</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">FuncValidator</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">FuncValidator</span> {
-            <span class="ident">validator</span>: <span class="ident">OperatorValidator::new_func</span>(<span class="ident">ty</span>, <span class="ident">offset</span>, <span class="ident">features</span>, <span class="kw-2">&amp;</span><span class="ident">resources</span>)<span class="question-mark">?</span>,
-            <span class="ident">resources</span>,
+<span class="kw">impl</span>&lt;T: WasmModuleResources&gt; FuncValidator&lt;T&gt; {
+    <span class="doccomment">/// Creates a new `FuncValidator`.
+    ///
+    /// The returned `FuncValidator` can be used to validate a function with
+    /// the type `ty` specified. The `resources` indicate what the containing
+    /// module has for the function to use, and the `features` configure what
+    /// WebAssembly proposals are enabled for this function.
+    ///
+    /// The returned validator can be used to then parse a [`FunctionBody`], for
+    /// example, to read locals and validate operators.
+    </span><span class="kw">pub fn </span>new(
+        ty: u32,
+        offset: usize,
+        resources: T,
+        features: <span class="kw-2">&amp;</span>WasmFeatures,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;FuncValidator&lt;T&gt;&gt; {
+        <span class="prelude-val">Ok</span>(FuncValidator {
+            validator: OperatorValidator::new_func(ty, offset, features, <span class="kw-2">&amp;</span>resources)<span class="question-mark">?</span>,
+            resources,
         })
     }
 
-    <span class="doccomment">/// Get the current height of the operand stack.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This returns the height of the whole operand stack for this function,</span>
-    <span class="doccomment">/// not just for the current control frame.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">operand_stack_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-        <span class="self">self</span>.<span class="ident">validator</span>.<span class="ident">operands</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>
+    <span class="doccomment">/// Get the current height of the operand stack.
+    ///
+    /// This returns the height of the whole operand stack for this function,
+    /// not just for the current control frame.
+    </span><span class="kw">pub fn </span>operand_stack_height(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="self">self</span>.validator.operands.len() <span class="kw">as </span>u32
     }
 
-    <span class="doccomment">/// Convenience function to validate an entire function&#39;s body.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// You may not end up using this in final implementations because you&#39;ll</span>
-    <span class="doccomment">/// often want to interleave validation with parsing.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">validate</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">body</span>: <span class="kw-2">&amp;</span><span class="ident">FunctionBody</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">get_binary_reader</span>();
-        <span class="self">self</span>.<span class="ident">read_locals</span>(<span class="kw-2">&amp;mut</span> <span class="ident">reader</span>)<span class="question-mark">?</span>;
-        <span class="ident">reader</span>.<span class="ident">allow_memarg64</span>(<span class="self">self</span>.<span class="ident">validator</span>.<span class="ident">features</span>.<span class="ident">memory64</span>);
-        <span class="kw">while</span> <span class="op">!</span><span class="ident">reader</span>.<span class="ident">eof</span>() {
-            <span class="kw">let</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">reader</span>.<span class="ident">original_position</span>();
-            <span class="kw">let</span> <span class="ident">op</span> <span class="op">=</span> <span class="ident">reader</span>.<span class="ident">read_operator</span>()<span class="question-mark">?</span>;
-            <span class="self">self</span>.<span class="ident">op</span>(<span class="ident">pos</span>, <span class="kw-2">&amp;</span><span class="ident">op</span>)<span class="question-mark">?</span>;
+    <span class="doccomment">/// Convenience function to validate an entire function&#39;s body.
+    ///
+    /// You may not end up using this in final implementations because you&#39;ll
+    /// often want to interleave validation with parsing.
+    </span><span class="kw">pub fn </span>validate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, body: <span class="kw-2">&amp;</span>FunctionBody&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>reader = body.get_binary_reader();
+        <span class="self">self</span>.read_locals(<span class="kw-2">&amp;mut </span>reader)<span class="question-mark">?</span>;
+        reader.allow_memarg64(<span class="self">self</span>.validator.features.memory64);
+        <span class="kw">while </span>!reader.eof() {
+            <span class="kw">let </span>pos = reader.original_position();
+            <span class="kw">let </span>op = reader.read_operator()<span class="question-mark">?</span>;
+            <span class="self">self</span>.op(pos, <span class="kw-2">&amp;</span>op)<span class="question-mark">?</span>;
         }
-        <span class="self">self</span>.<span class="ident">finish</span>(<span class="ident">reader</span>.<span class="ident">original_position</span>())
+        <span class="self">self</span>.finish(reader.original_position())
     }
 
-    <span class="doccomment">/// Reads the local defintions from the given `BinaryReader`, often sourced</span>
-    <span class="doccomment">/// from a `FunctionBody`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function will automatically advance the `BinaryReader` forward,</span>
-    <span class="doccomment">/// leaving reading operators up to the caller afterwards.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_locals</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">reader</span>: <span class="kw-2">&amp;mut</span> <span class="ident">BinaryReader</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">reader</span>.<span class="ident">read_var_u32</span>()<span class="question-mark">?</span> {
-            <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">reader</span>.<span class="ident">original_position</span>();
-            <span class="kw">let</span> <span class="ident">cnt</span> <span class="op">=</span> <span class="ident">reader</span>.<span class="ident">read_var_u32</span>()<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">ty</span> <span class="op">=</span> <span class="ident">reader</span>.<span class="ident">read_type</span>()<span class="question-mark">?</span>;
-            <span class="self">self</span>.<span class="ident">define_locals</span>(<span class="ident">offset</span>, <span class="ident">cnt</span>, <span class="ident">ty</span>)<span class="question-mark">?</span>;
+    <span class="doccomment">/// Reads the local defintions from the given `BinaryReader`, often sourced
+    /// from a `FunctionBody`.
+    ///
+    /// This function will automatically advance the `BinaryReader` forward,
+    /// leaving reading operators up to the caller afterwards.
+    </span><span class="kw">pub fn </span>read_locals(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reader: <span class="kw-2">&amp;mut </span>BinaryReader&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">for _ in </span><span class="number">0</span>..reader.read_var_u32()<span class="question-mark">? </span>{
+            <span class="kw">let </span>offset = reader.original_position();
+            <span class="kw">let </span>cnt = reader.read_var_u32()<span class="question-mark">?</span>;
+            <span class="kw">let </span>ty = reader.read_type()<span class="question-mark">?</span>;
+            <span class="self">self</span>.define_locals(offset, cnt, ty)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Defines locals into this validator.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This should be used if the application is already reading local</span>
-    <span class="doccomment">/// definitions and there&#39;s no need to re-parse the function again.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">define_locals</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">usize</span>, <span class="ident">count</span>: <span class="ident">u32</span>, <span class="ident">ty</span>: <span class="ident">Type</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">validator</span>.<span class="ident">define_locals</span>(<span class="ident">offset</span>, <span class="ident">count</span>, <span class="ident">ty</span>)
+    <span class="doccomment">/// Defines locals into this validator.
+    ///
+    /// This should be used if the application is already reading local
+    /// definitions and there&#39;s no need to re-parse the function again.
+    </span><span class="kw">pub fn </span>define_locals(<span class="kw-2">&amp;mut </span><span class="self">self</span>, offset: usize, count: u32, ty: Type) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.validator.define_locals(offset, count, ty)
     }
 
-    <span class="doccomment">/// Validates the next operator in a function.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This functions is expected to be called once-per-operator in a</span>
-    <span class="doccomment">/// WebAssembly function. Each operator&#39;s offset in the original binary and</span>
-    <span class="doccomment">/// the operator itself are passed to this function to provide more useful</span>
-    <span class="doccomment">/// error messages.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">op</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">usize</span>, <span class="ident">operator</span>: <span class="kw-2">&amp;</span><span class="ident">Operator</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">validator</span>
-            .<span class="ident">process_operator</span>(<span class="ident">operator</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">resources</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">set_offset</span>(<span class="ident">offset</span>))<span class="question-mark">?</span>;
+    <span class="doccomment">/// Validates the next operator in a function.
+    ///
+    /// This functions is expected to be called once-per-operator in a
+    /// WebAssembly function. Each operator&#39;s offset in the original binary and
+    /// the operator itself are passed to this function to provide more useful
+    /// error messages.
+    </span><span class="kw">pub fn </span>op(<span class="kw-2">&amp;mut </span><span class="self">self</span>, offset: usize, operator: <span class="kw-2">&amp;</span>Operator&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.validator
+            .process_operator(operator, <span class="kw-2">&amp;</span><span class="self">self</span>.resources)
+            .map_err(|e| e.set_offset(offset))<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Function that must be called after the last opcode has been processed.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This will validate that the function was properly terminated with the</span>
-    <span class="doccomment">/// `end` opcode. If this function is not called then the function will not</span>
-    <span class="doccomment">/// be properly validated.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The `offset` provided to this function will be used as a position for an</span>
-    <span class="doccomment">/// error if validation fails.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finish</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">offset</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">validator</span>.<span class="ident">finish</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">set_offset</span>(<span class="ident">offset</span>))<span class="question-mark">?</span>;
+    <span class="doccomment">/// Function that must be called after the last opcode has been processed.
+    ///
+    /// This will validate that the function was properly terminated with the
+    /// `end` opcode. If this function is not called then the function will not
+    /// be properly validated.
+    ///
+    /// The `offset` provided to this function will be used as a position for an
+    /// error if validation fails.
+    </span><span class="kw">pub fn </span>finish(<span class="kw-2">&amp;mut </span><span class="self">self</span>, offset: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.validator.finish().map_err(|e| e.set_offset(offset))<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Returns the underlying module resources that this validator is using.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resources</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">T</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">resources</span>
+    <span class="doccomment">/// Returns the underlying module resources that this validator is using.
+    </span><span class="kw">pub fn </span>resources(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.resources
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::WasmFuncType</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::WasmFuncType;
 
-    <span class="kw">struct</span> <span class="ident">EmptyResources</span>;
+    <span class="kw">struct </span>EmptyResources;
 
-    <span class="kw">impl</span> <span class="ident">WasmModuleResources</span> <span class="kw">for</span> <span class="ident">EmptyResources</span> {
-        <span class="kw">type</span> <span class="ident">FuncType</span> <span class="op">=</span> <span class="ident">EmptyFuncType</span>;
+    <span class="kw">impl </span>WasmModuleResources <span class="kw">for </span>EmptyResources {
+        <span class="kw">type </span>FuncType = EmptyFuncType;
 
-        <span class="kw">fn</span> <span class="ident">table_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_at</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::TableType</span><span class="op">&gt;</span> {
+        <span class="kw">fn </span>table_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _at: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::TableType&gt; {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">memory_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_at</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::MemoryType</span><span class="op">&gt;</span> {
+        <span class="kw">fn </span>memory_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _at: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::MemoryType&gt; {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">tag_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_at</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::FuncType</span><span class="op">&gt;</span> {
+        <span class="kw">fn </span>tag_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _at: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::FuncType&gt; {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">global_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_at</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::GlobalType</span><span class="op">&gt;</span> {
+        <span class="kw">fn </span>global_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _at: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::GlobalType&gt; {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">func_type_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_type_idx</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::FuncType</span><span class="op">&gt;</span> {
-            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">EmptyFuncType</span>)
+        <span class="kw">fn </span>func_type_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _type_idx: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::FuncType&gt; {
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>EmptyFuncType)
         }
-        <span class="kw">fn</span> <span class="ident">type_of_function</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_func_idx</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::FuncType</span><span class="op">&gt;</span> {
+        <span class="kw">fn </span>type_of_function(<span class="kw-2">&amp;</span><span class="self">self</span>, _func_idx: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::FuncType&gt; {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">element_type_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_at</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Type</span><span class="op">&gt;</span> {
+        <span class="kw">fn </span>element_type_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _at: u32) -&gt; <span class="prelude-ty">Option</span>&lt;Type&gt; {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">element_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
+        <span class="kw">fn </span>element_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">data_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
+        <span class="kw">fn </span>data_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">is_function_referenced</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_idx</span>: <span class="ident">u32</span>) -&gt; <span class="ident">bool</span> {
+        <span class="kw">fn </span>is_function_referenced(<span class="kw-2">&amp;</span><span class="self">self</span>, _idx: u32) -&gt; bool {
             <span class="macro">todo!</span>()
         }
     }
 
-    <span class="kw">struct</span> <span class="ident">EmptyFuncType</span>;
+    <span class="kw">struct </span>EmptyFuncType;
 
-    <span class="kw">impl</span> <span class="ident">WasmFuncType</span> <span class="kw">for</span> <span class="ident">EmptyFuncType</span> {
-        <span class="kw">fn</span> <span class="ident">len_inputs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-            <span class="number">0</span>
-        }
-        <span class="kw">fn</span> <span class="ident">len_outputs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-            <span class="number">0</span>
-        }
-        <span class="kw">fn</span> <span class="ident">input_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_at</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Type</span><span class="op">&gt;</span> {
+    <span class="kw">impl </span>WasmFuncType <span class="kw">for </span>EmptyFuncType {
+        <span class="kw">fn </span>len_inputs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+            <span class="number">0
+        </span>}
+        <span class="kw">fn </span>len_outputs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+            <span class="number">0
+        </span>}
+        <span class="kw">fn </span>input_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _at: u32) -&gt; <span class="prelude-ty">Option</span>&lt;Type&gt; {
             <span class="macro">todo!</span>()
         }
-        <span class="kw">fn</span> <span class="ident">output_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_at</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Type</span><span class="op">&gt;</span> {
+        <span class="kw">fn </span>output_at(<span class="kw-2">&amp;</span><span class="self">self</span>, _at: u32) -&gt; <span class="prelude-ty">Option</span>&lt;Type&gt; {
             <span class="macro">todo!</span>()
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">operand_stack_height</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">FuncValidator::new</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">EmptyResources</span>, <span class="kw-2">&amp;</span><span class="ident">Default::default</span>()).<span class="ident">unwrap</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>operand_stack_height() {
+        <span class="kw">let </span><span class="kw-2">mut </span>v = FuncValidator::new(<span class="number">0</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span>EmptyResources, <span class="kw-2">&amp;</span>Default::default()).unwrap();
 
-        <span class="comment">// Initially zero values on the stack.</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">v</span>.<span class="ident">operand_stack_height</span>(), <span class="number">0</span>);
+        <span class="comment">// Initially zero values on the stack.
+        </span><span class="macro">assert_eq!</span>(v.operand_stack_height(), <span class="number">0</span>);
 
-        <span class="comment">// Pushing a constant value makes use have one value on the stack.</span>
-        <span class="macro">assert!</span>(<span class="ident">v</span>.<span class="ident">op</span>(<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">Operator::I32Const</span> { <span class="ident">value</span>: <span class="number">0</span> }).<span class="ident">is_ok</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">v</span>.<span class="ident">operand_stack_height</span>(), <span class="number">1</span>);
+        <span class="comment">// Pushing a constant value makes use have one value on the stack.
+        </span><span class="macro">assert!</span>(v.op(<span class="number">0</span>, <span class="kw-2">&amp;</span>Operator::I32Const { value: <span class="number">0 </span>}).is_ok());
+        <span class="macro">assert_eq!</span>(v.operand_stack_height(), <span class="number">1</span>);
 
-        <span class="comment">// Entering a new control block does not affect the stack height.</span>
-        <span class="macro">assert!</span>(<span class="ident">v</span>
-            .<span class="ident">op</span>(
+        <span class="comment">// Entering a new control block does not affect the stack height.
+        </span><span class="macro">assert!</span>(v
+            .op(
                 <span class="number">1</span>,
-                <span class="kw-2">&amp;</span><span class="ident">Operator::Block</span> {
-                    <span class="ident">ty</span>: <span class="ident"><span class="kw">crate</span>::TypeOrFuncType::Type</span>(<span class="ident"><span class="kw">crate</span>::Type::EmptyBlockType</span>)
+                <span class="kw-2">&amp;</span>Operator::Block {
+                    ty: <span class="kw">crate</span>::TypeOrFuncType::Type(<span class="kw">crate</span>::Type::EmptyBlockType)
                 }
             )
-            .<span class="ident">is_ok</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">v</span>.<span class="ident">operand_stack_height</span>(), <span class="number">1</span>);
+            .is_ok());
+        <span class="macro">assert_eq!</span>(v.operand_stack_height(), <span class="number">1</span>);
 
-        <span class="comment">// Pushing another constant value makes use have two values on the stack.</span>
-        <span class="macro">assert!</span>(<span class="ident">v</span>.<span class="ident">op</span>(<span class="number">2</span>, <span class="kw-2">&amp;</span><span class="ident">Operator::I32Const</span> { <span class="ident">value</span>: <span class="number">99</span> }).<span class="ident">is_ok</span>());
-        <span class="macro">assert_eq!</span>(<span class="ident">v</span>.<span class="ident">operand_stack_height</span>(), <span class="number">2</span>);
+        <span class="comment">// Pushing another constant value makes use have two values on the stack.
+        </span><span class="macro">assert!</span>(v.op(<span class="number">2</span>, <span class="kw-2">&amp;</span>Operator::I32Const { value: <span class="number">99 </span>}).is_ok());
+        <span class="macro">assert_eq!</span>(v.operand_stack_height(), <span class="number">2</span>);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmparser" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmparser" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

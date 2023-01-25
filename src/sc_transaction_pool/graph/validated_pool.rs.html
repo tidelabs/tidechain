@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/validated_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>validated_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_transaction_pool/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/transaction-pool/src/graph/validated_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>validated_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_transaction_pool/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -671,674 +666,673 @@
 <span id="666">666</span>
 <span id="667">667</span>
 <span id="668">668</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="ident">std</span>::{
-	<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>},
-	<span class="ident">hash</span>,
-	<span class="ident">sync::Arc</span>,
+</span><span class="kw">use </span>std::{
+	collections::{HashMap, HashSet},
+	hash,
+	sync::Arc,
 };
 
-<span class="kw">use</span> <span class="ident">futures::channel::mpsc</span>::{<span class="ident">channel</span>, <span class="ident">Sender</span>};
-<span class="kw">use</span> <span class="ident">parking_lot</span>::{<span class="ident">Mutex</span>, <span class="ident">RwLock</span>};
-<span class="kw">use</span> <span class="ident">retain_mut::RetainMut</span>;
-<span class="kw">use</span> <span class="ident">sc_transaction_pool_api</span>::{<span class="ident">error</span>, <span class="ident">PoolStatus</span>, <span class="ident">ReadyTransactions</span>};
-<span class="kw">use</span> <span class="ident">serde::Serialize</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-	<span class="ident">generic::BlockId</span>,
-	<span class="ident">traits</span>::{<span class="self">self</span>, <span class="ident">SaturatedConversion</span>},
-	<span class="ident">transaction_validity</span>::{<span class="ident">TransactionSource</span>, <span class="ident">TransactionTag</span> <span class="kw">as</span> <span class="ident">Tag</span>, <span class="ident">ValidTransaction</span>},
+<span class="kw">use </span>futures::channel::mpsc::{channel, Sender};
+<span class="kw">use </span>parking_lot::{Mutex, RwLock};
+<span class="kw">use </span>retain_mut::RetainMut;
+<span class="kw">use </span>sc_transaction_pool_api::{error, PoolStatus, ReadyTransactions};
+<span class="kw">use </span>serde::Serialize;
+<span class="kw">use </span>sp_runtime::{
+	generic::BlockId,
+	traits::{<span class="self">self</span>, SaturatedConversion},
+	transaction_validity::{TransactionSource, TransactionTag <span class="kw">as </span>Tag, ValidTransaction},
 };
-<span class="kw">use</span> <span class="ident">std::time::Instant</span>;
+<span class="kw">use </span>std::time::Instant;
 
-<span class="kw">use</span> <span class="kw">super</span>::{
-	<span class="ident">base_pool</span>::{<span class="self">self</span> <span class="kw">as</span> <span class="ident">base</span>, <span class="ident">PruneStatus</span>},
-	<span class="ident">listener::Listener</span>,
-	<span class="ident">pool</span>::{
-		<span class="ident">BlockHash</span>, <span class="ident">ChainApi</span>, <span class="ident">EventStream</span>, <span class="ident">ExtrinsicFor</span>, <span class="ident">ExtrinsicHash</span>, <span class="ident">Options</span>, <span class="ident">TransactionFor</span>,
+<span class="kw">use super</span>::{
+	base_pool::{<span class="self">self </span><span class="kw">as </span>base, PruneStatus},
+	listener::Listener,
+	pool::{
+		BlockHash, ChainApi, EventStream, ExtrinsicFor, ExtrinsicHash, Options, TransactionFor,
 	},
-	<span class="ident">rotator::PoolRotator</span>,
-	<span class="ident">watcher::Watcher</span>,
+	rotator::PoolRotator,
+	watcher::Watcher,
 };
 
-<span class="doccomment">/// Pre-validated transaction. Validated pool only accepts transactions wrapped in this enum.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ValidatedTransaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Transaction that has been validated successfully.</span>
-	<span class="ident">Valid</span>(<span class="ident">base::Transaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span><span class="op">&gt;</span>),
-	<span class="doccomment">/// Transaction that is invalid.</span>
-	<span class="ident">Invalid</span>(<span class="ident">Hash</span>, <span class="ident">Error</span>),
-	<span class="doccomment">/// Transaction which validity can&#39;t be determined.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// We&#39;re notifying watchers about failure, if &#39;unknown&#39; transaction is submitted.</span>
-	<span class="ident">Unknown</span>(<span class="ident">Hash</span>, <span class="ident">Error</span>),
+<span class="doccomment">/// Pre-validated transaction. Validated pool only accepts transactions wrapped in this enum.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub enum </span>ValidatedTransaction&lt;Hash, Ex, Error&gt; {
+	<span class="doccomment">/// Transaction that has been validated successfully.
+	</span>Valid(base::Transaction&lt;Hash, Ex&gt;),
+	<span class="doccomment">/// Transaction that is invalid.
+	</span>Invalid(Hash, Error),
+	<span class="doccomment">/// Transaction which validity can&#39;t be determined.
+	///
+	/// We&#39;re notifying watchers about failure, if &#39;unknown&#39; transaction is submitted.
+	</span>Unknown(Hash, Error),
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="ident">ValidatedTransaction</span><span class="op">&lt;</span><span class="ident">Hash</span>, <span class="ident">Ex</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Consume validity result, transaction data and produce ValidTransaction.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">valid_at</span>(
-		<span class="ident">at</span>: <span class="ident">u64</span>,
-		<span class="ident">hash</span>: <span class="ident">Hash</span>,
-		<span class="ident">source</span>: <span class="ident">TransactionSource</span>,
-		<span class="ident">data</span>: <span class="ident">Ex</span>,
-		<span class="ident">bytes</span>: <span class="ident">usize</span>,
-		<span class="ident">validity</span>: <span class="ident">ValidTransaction</span>,
-	) -&gt; <span class="self">Self</span> {
-		<span class="ident"><span class="self">Self</span>::Valid</span>(<span class="ident">base::Transaction</span> {
-			<span class="ident">data</span>,
-			<span class="ident">bytes</span>,
-			<span class="ident">hash</span>,
-			<span class="ident">source</span>,
-			<span class="ident">priority</span>: <span class="ident">validity</span>.<span class="ident">priority</span>,
-			<span class="ident">requires</span>: <span class="ident">validity</span>.<span class="ident">requires</span>,
-			<span class="ident">provides</span>: <span class="ident">validity</span>.<span class="ident">provides</span>,
-			<span class="ident">propagate</span>: <span class="ident">validity</span>.<span class="ident">propagate</span>,
-			<span class="ident">valid_till</span>: <span class="ident">at</span>.<span class="ident">saturated_into</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>().<span class="ident">saturating_add</span>(<span class="ident">validity</span>.<span class="ident">longevity</span>),
+<span class="kw">impl</span>&lt;Hash, Ex, Error&gt; ValidatedTransaction&lt;Hash, Ex, Error&gt; {
+	<span class="doccomment">/// Consume validity result, transaction data and produce ValidTransaction.
+	</span><span class="kw">pub fn </span>valid_at(
+		at: u64,
+		hash: Hash,
+		source: TransactionSource,
+		data: Ex,
+		bytes: usize,
+		validity: ValidTransaction,
+	) -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>::Valid(base::Transaction {
+			data,
+			bytes,
+			hash,
+			source,
+			priority: validity.priority,
+			requires: validity.requires,
+			provides: validity.provides,
+			propagate: validity.propagate,
+			valid_till: at.saturated_into::&lt;u64&gt;().saturating_add(validity.longevity),
 		})
 	}
 }
 
-<span class="doccomment">/// A type of validated transaction stored in the pool.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> <span class="op">=</span>
-	<span class="ident">ValidatedTransaction</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="op">&lt;</span><span class="ident">B</span> <span class="kw">as</span> <span class="ident">ChainApi</span><span class="op">&gt;</span><span class="ident">::Error</span><span class="op">&gt;</span>;
+<span class="doccomment">/// A type of validated transaction stored in the pool.
+</span><span class="kw">pub type </span>ValidatedTransactionFor&lt;B&gt; =
+	ValidatedTransaction&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicFor&lt;B&gt;, &lt;B <span class="kw">as </span>ChainApi&gt;::Error&gt;;
 
-<span class="doccomment">/// A closure that returns true if the local node is a validator that can author blocks.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IsValidator</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>() -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>);
+<span class="doccomment">/// A closure that returns true if the local node is a validator that can author blocks.
+</span><span class="kw">pub struct </span>IsValidator(Box&lt;<span class="kw">dyn </span>Fn() -&gt; bool + Send + Sync&gt;);
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IsValidator</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">is_validator</span>: <span class="ident">bool</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span>(<span class="ident">Box::new</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">is_validator</span>))
+<span class="kw">impl </span>From&lt;bool&gt; <span class="kw">for </span>IsValidator {
+	<span class="kw">fn </span>from(is_validator: bool) -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>(Box::new(<span class="kw">move </span>|| is_validator))
 	}
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>() -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IsValidator</span> {
-	<span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">is_validator</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>() -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">Self</span>(<span class="ident">is_validator</span>)
+<span class="kw">impl </span>From&lt;Box&lt;<span class="kw">dyn </span>Fn() -&gt; bool + Send + Sync&gt;&gt; <span class="kw">for </span>IsValidator {
+	<span class="kw">fn </span>from(is_validator: Box&lt;<span class="kw">dyn </span>Fn() -&gt; bool + Send + Sync&gt;) -&gt; <span class="self">Self </span>{
+		<span class="self">Self</span>(is_validator)
 	}
 }
 
-<span class="doccomment">/// Pool that deals with validated transactions.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ValidatedPool</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> {
-	<span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">is_validator</span>: <span class="ident">IsValidator</span>,
-	<span class="ident">options</span>: <span class="ident">Options</span>,
-	<span class="ident">listener</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">Listener</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">pool</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">base::BasePool</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">import_notification_sinks</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sender</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">rotator</span>: <span class="ident">PoolRotator</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Pool that deals with validated transactions.
+</span><span class="kw">pub struct </span>ValidatedPool&lt;B: ChainApi&gt; {
+	api: Arc&lt;B&gt;,
+	is_validator: IsValidator,
+	options: Options,
+	listener: RwLock&lt;Listener&lt;ExtrinsicHash&lt;B&gt;, B&gt;&gt;,
+	pool: RwLock&lt;base::BasePool&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicFor&lt;B&gt;&gt;&gt;,
+	import_notification_sinks: Mutex&lt;Vec&lt;Sender&lt;ExtrinsicHash&lt;B&gt;&gt;&gt;&gt;,
+	rotator: PoolRotator&lt;ExtrinsicHash&lt;B&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">parity_util_mem::MallocSizeOf</span> <span class="kw">for</span> <span class="ident">ValidatedPool</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>: <span class="ident">parity_util_mem::MallocSizeOf</span>,
+<span class="kw">impl</span>&lt;B: ChainApi&gt; parity_util_mem::MallocSizeOf <span class="kw">for </span>ValidatedPool&lt;B&gt;
+<span class="kw">where
+	</span>ExtrinsicFor&lt;B&gt;: parity_util_mem::MallocSizeOf,
 {
-	<span class="kw">fn</span> <span class="ident">size_of</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ops</span>: <span class="kw-2">&amp;mut</span> <span class="ident">parity_util_mem::MallocSizeOfOps</span>) -&gt; <span class="ident">usize</span> {
-		<span class="comment">// other entries insignificant or non-primary references</span>
-		<span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">size_of</span>(<span class="ident">ops</span>)
+	<span class="kw">fn </span>size_of(<span class="kw-2">&amp;</span><span class="self">self</span>, ops: <span class="kw-2">&amp;mut </span>parity_util_mem::MallocSizeOfOps) -&gt; usize {
+		<span class="comment">// other entries insignificant or non-primary references
+		</span><span class="self">self</span>.pool.size_of(ops)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">ChainApi</span><span class="op">&gt;</span> <span class="ident">ValidatedPool</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-	<span class="doccomment">/// Create a new transaction pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">options</span>: <span class="ident">Options</span>, <span class="ident">is_validator</span>: <span class="ident">IsValidator</span>, <span class="ident">api</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-		<span class="kw">let</span> <span class="ident">base_pool</span> <span class="op">=</span> <span class="ident">base::BasePool::new</span>(<span class="ident">options</span>.<span class="ident">reject_future_transactions</span>);
-		<span class="self">Self</span> {
-			<span class="ident">is_validator</span>,
-			<span class="ident">options</span>,
-			<span class="ident">listener</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">api</span>,
-			<span class="ident">pool</span>: <span class="ident">RwLock::new</span>(<span class="ident">base_pool</span>),
-			<span class="ident">import_notification_sinks</span>: <span class="ident">Default::default</span>(),
-			<span class="ident">rotator</span>: <span class="ident">Default::default</span>(),
+<span class="kw">impl</span>&lt;B: ChainApi&gt; ValidatedPool&lt;B&gt; {
+	<span class="doccomment">/// Create a new transaction pool.
+	</span><span class="kw">pub fn </span>new(options: Options, is_validator: IsValidator, api: Arc&lt;B&gt;) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span>base_pool = base::BasePool::new(options.reject_future_transactions);
+		<span class="self">Self </span>{
+			is_validator,
+			options,
+			listener: Default::default(),
+			api,
+			pool: RwLock::new(base_pool),
+			import_notification_sinks: Default::default(),
+			rotator: Default::default(),
 		}
 	}
 
-	<span class="doccomment">/// Bans given set of hashes.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">now</span>: <span class="kw-2">&amp;</span><span class="ident">Instant</span>, <span class="ident">hashes</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-		<span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">ban</span>(<span class="ident">now</span>, <span class="ident">hashes</span>)
+	<span class="doccomment">/// Bans given set of hashes.
+	</span><span class="kw">pub fn </span>ban(<span class="kw-2">&amp;</span><span class="self">self</span>, now: <span class="kw-2">&amp;</span>Instant, hashes: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicHash&lt;B&gt;&gt;) {
+		<span class="self">self</span>.rotator.ban(now, hashes)
 	}
 
-	<span class="doccomment">/// Returns true if transaction with given hash is currently banned from the pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_banned</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
-		<span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">is_banned</span>(<span class="ident">hash</span>)
+	<span class="doccomment">/// Returns true if transaction with given hash is currently banned from the pool.
+	</span><span class="kw">pub fn </span>is_banned(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>ExtrinsicHash&lt;B&gt;) -&gt; bool {
+		<span class="self">self</span>.rotator.is_banned(hash)
 	}
 
-	<span class="doccomment">/// A fast check before doing any further processing of a transaction, like validation.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// If `ignore_banned` is `true`, it will not check if the transaction is banned.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// It checks if the transaction is already imported or banned. If so, it returns an error.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check_is_known</span>(
+	<span class="doccomment">/// A fast check before doing any further processing of a transaction, like validation.
+	///
+	/// If `ignore_banned` is `true`, it will not check if the transaction is banned.
+	///
+	/// It checks if the transaction is already imported or banned. If so, it returns an error.
+	</span><span class="kw">pub fn </span>check_is_known(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">tx_hash</span>: <span class="kw-2">&amp;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">ignore_banned</span>: <span class="ident">bool</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="op">!</span><span class="ident">ignore_banned</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">is_banned</span>(<span class="ident">tx_hash</span>) {
-			<span class="prelude-val">Err</span>(<span class="ident">error::Error::TemporarilyBanned</span>.<span class="ident">into</span>())
-		} <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">read</span>().<span class="ident">is_imported</span>(<span class="ident">tx_hash</span>) {
-			<span class="prelude-val">Err</span>(<span class="ident">error::Error::AlreadyImported</span>(<span class="ident">Box::new</span>(<span class="kw-2">*</span><span class="ident">tx_hash</span>)).<span class="ident">into</span>())
-		} <span class="kw">else</span> {
+		tx_hash: <span class="kw-2">&amp;</span>ExtrinsicHash&lt;B&gt;,
+		ignore_banned: bool,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
+		<span class="kw">if </span>!ignore_banned &amp;&amp; <span class="self">self</span>.is_banned(tx_hash) {
+			<span class="prelude-val">Err</span>(error::Error::TemporarilyBanned.into())
+		} <span class="kw">else if </span><span class="self">self</span>.pool.read().is_imported(tx_hash) {
+			<span class="prelude-val">Err</span>(error::Error::AlreadyImported(Box::new(<span class="kw-2">*</span>tx_hash)).into())
+		} <span class="kw">else </span>{
 			<span class="prelude-val">Ok</span>(())
 		}
 	}
 
-	<span class="doccomment">/// Imports a bunch of pre-validated transactions to the pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">submit</span>(
+	<span class="doccomment">/// Imports a bunch of pre-validated transactions to the pool.
+	</span><span class="kw">pub fn </span>submit(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">txs</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">results</span> <span class="op">=</span> <span class="ident">txs</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span><span class="ident">validated_tx</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">submit_one</span>(<span class="ident">validated_tx</span>))
-			.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+		txs: <span class="kw">impl </span>IntoIterator&lt;Item = ValidatedTransactionFor&lt;B&gt;&gt;,
+	) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt;&gt; {
+		<span class="kw">let </span>results = txs
+			.into_iter()
+			.map(|validated_tx| <span class="self">self</span>.submit_one(validated_tx))
+			.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-		<span class="comment">// only enforce limits if there is at least one imported transaction</span>
-		<span class="kw">let</span> <span class="ident">removed</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">results</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">res</span><span class="op">|</span> <span class="ident">res</span>.<span class="ident">is_ok</span>()) {
-			<span class="self">self</span>.<span class="ident">enforce_limits</span>()
-		} <span class="kw">else</span> {
-			<span class="ident">Default::default</span>()
+		<span class="comment">// only enforce limits if there is at least one imported transaction
+		</span><span class="kw">let </span>removed = <span class="kw">if </span>results.iter().any(|res| res.is_ok()) {
+			<span class="self">self</span>.enforce_limits()
+		} <span class="kw">else </span>{
+			Default::default()
 		};
 
-		<span class="ident">results</span>
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span><span class="ident">res</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">res</span> {
-				<span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">hash</span>) <span class="kw">if</span> <span class="ident">removed</span>.<span class="ident">contains</span>(<span class="ident">hash</span>) =&gt;
-					<span class="prelude-val">Err</span>(<span class="ident">error::Error::ImmediatelyDropped</span>.<span class="ident">into</span>()),
-				<span class="ident">other</span> =&gt; <span class="ident">other</span>,
+		results
+			.into_iter()
+			.map(|res| <span class="kw">match </span>res {
+				<span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>hash) <span class="kw">if </span>removed.contains(hash) =&gt;
+					<span class="prelude-val">Err</span>(error::Error::ImmediatelyDropped.into()),
+				other =&gt; other,
 			})
-			.<span class="ident">collect</span>()
+			.collect()
 	}
 
-	<span class="doccomment">/// Submit single pre-validated transaction to the pool.</span>
-	<span class="kw">fn</span> <span class="ident">submit_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tx</span>: <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">match</span> <span class="ident">tx</span> {
-			<span class="ident">ValidatedTransaction::Valid</span>(<span class="ident">tx</span>) =&gt; {
-				<span class="kw">if</span> <span class="op">!</span><span class="ident">tx</span>.<span class="ident">propagate</span> <span class="op">&amp;&amp;</span> <span class="op">!</span>(<span class="self">self</span>.<span class="ident">is_validator</span>.<span class="number">0</span>)() {
-					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error::Error::Unactionable</span>.<span class="ident">into</span>())
+	<span class="doccomment">/// Submit single pre-validated transaction to the pool.
+	</span><span class="kw">fn </span>submit_one(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: ValidatedTransactionFor&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;ExtrinsicHash&lt;B&gt;, B::Error&gt; {
+		<span class="kw">match </span>tx {
+			ValidatedTransaction::Valid(tx) =&gt; {
+				<span class="kw">if </span>!tx.propagate &amp;&amp; !(<span class="self">self</span>.is_validator.<span class="number">0</span>)() {
+					<span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::Unactionable.into())
 				}
 
-				<span class="kw">let</span> <span class="ident">imported</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">write</span>().<span class="ident">import</span>(<span class="ident">tx</span>)<span class="question-mark">?</span>;
+				<span class="kw">let </span>imported = <span class="self">self</span>.pool.write().import(tx)<span class="question-mark">?</span>;
 
-				<span class="kw">if</span> <span class="kw">let</span> <span class="ident">base::Imported::Ready</span> { <span class="kw-2">ref</span> <span class="ident">hash</span>, .. } <span class="op">=</span> <span class="ident">imported</span> {
-					<span class="ident">RetainMut::retain_mut</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">import_notification_sinks</span>.<span class="ident">lock</span>(), <span class="op">|</span><span class="ident">sink</span><span class="op">|</span> {
-						<span class="kw">match</span> <span class="ident">sink</span>.<span class="ident">try_send</span>(<span class="kw-2">*</span><span class="ident">hash</span>) {
+				<span class="kw">if let </span>base::Imported::Ready { <span class="kw-2">ref </span>hash, .. } = imported {
+					RetainMut::retain_mut(<span class="kw-2">&amp;mut *</span><span class="self">self</span>.import_notification_sinks.lock(), |sink| {
+						<span class="kw">match </span>sink.try_send(<span class="kw-2">*</span>hash) {
 							<span class="prelude-val">Ok</span>(()) =&gt; <span class="bool-val">true</span>,
-							<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt;
-								<span class="kw">if</span> <span class="ident">e</span>.<span class="ident">is_full</span>() {
+							<span class="prelude-val">Err</span>(e) =&gt;
+								<span class="kw">if </span>e.is_full() {
 									<span class="macro">log::warn!</span>(
-										<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+										target: <span class="string">&quot;txpool&quot;</span>,
 										<span class="string">&quot;[{:?}] Trying to notify an import but the channel is full&quot;</span>,
-										<span class="ident">hash</span>,
+										hash,
 									);
-									<span class="bool-val">true</span>
-								} <span class="kw">else</span> {
-									<span class="bool-val">false</span>
-								},
+									<span class="bool-val">true
+								</span>} <span class="kw">else </span>{
+									<span class="bool-val">false
+								</span>},
 						}
 					});
 				}
 
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>();
-				<span class="ident">fire_events</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">listener</span>, <span class="kw-2">&amp;</span><span class="ident">imported</span>);
-				<span class="prelude-val">Ok</span>(<span class="kw-2">*</span><span class="ident">imported</span>.<span class="ident">hash</span>())
+				<span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="self">self</span>.listener.write();
+				fire_events(<span class="kw-2">&amp;mut *</span>listener, <span class="kw-2">&amp;</span>imported);
+				<span class="prelude-val">Ok</span>(<span class="kw-2">*</span>imported.hash())
 			},
-			<span class="ident">ValidatedTransaction::Invalid</span>(<span class="ident">hash</span>, <span class="ident">err</span>) =&gt; {
-				<span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="ident">std::iter::once</span>(<span class="ident">hash</span>));
-				<span class="prelude-val">Err</span>(<span class="ident">err</span>)
+			ValidatedTransaction::Invalid(hash, err) =&gt; {
+				<span class="self">self</span>.rotator.ban(<span class="kw-2">&amp;</span>Instant::now(), std::iter::once(hash));
+				<span class="prelude-val">Err</span>(err)
 			},
-			<span class="ident">ValidatedTransaction::Unknown</span>(<span class="ident">hash</span>, <span class="ident">err</span>) =&gt; {
-				<span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>().<span class="ident">invalid</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>);
-				<span class="prelude-val">Err</span>(<span class="ident">err</span>)
+			ValidatedTransaction::Unknown(hash, err) =&gt; {
+				<span class="self">self</span>.listener.write().invalid(<span class="kw-2">&amp;</span>hash);
+				<span class="prelude-val">Err</span>(err)
 			},
 		}
 	}
 
-	<span class="kw">fn</span> <span class="ident">enforce_limits</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">read</span>().<span class="ident">status</span>();
-		<span class="kw">let</span> <span class="ident">ready_limit</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">options</span>.<span class="ident">ready</span>;
-		<span class="kw">let</span> <span class="ident">future_limit</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">options</span>.<span class="ident">future</span>;
+	<span class="kw">fn </span>enforce_limits(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HashSet&lt;ExtrinsicHash&lt;B&gt;&gt; {
+		<span class="kw">let </span>status = <span class="self">self</span>.pool.read().status();
+		<span class="kw">let </span>ready_limit = <span class="kw-2">&amp;</span><span class="self">self</span>.options.ready;
+		<span class="kw">let </span>future_limit = <span class="kw-2">&amp;</span><span class="self">self</span>.options.future;
 
-		<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Pool Status: {:?}&quot;</span>, <span class="ident">status</span>);
-		<span class="kw">if</span> <span class="ident">ready_limit</span>.<span class="ident">is_exceeded</span>(<span class="ident">status</span>.<span class="ident">ready</span>, <span class="ident">status</span>.<span class="ident">ready_bytes</span>) <span class="op">|</span><span class="op">|</span>
-			<span class="ident">future_limit</span>.<span class="ident">is_exceeded</span>(<span class="ident">status</span>.<span class="ident">future</span>, <span class="ident">status</span>.<span class="ident">future_bytes</span>)
+		<span class="macro">log::debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Pool Status: {:?}&quot;</span>, status);
+		<span class="kw">if </span>ready_limit.is_exceeded(status.ready, status.ready_bytes) ||
+			future_limit.is_exceeded(status.future, status.future_bytes)
 		{
 			<span class="macro">log::debug!</span>(
-				<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+				target: <span class="string">&quot;txpool&quot;</span>,
 				<span class="string">&quot;Enforcing limits ({}/{}kB ready, {}/{}kB future&quot;</span>,
-				<span class="ident">ready_limit</span>.<span class="ident">count</span>, <span class="ident">ready_limit</span>.<span class="ident">total_bytes</span> <span class="op">/</span> <span class="number">1024</span>,
-				<span class="ident">future_limit</span>.<span class="ident">count</span>, <span class="ident">future_limit</span>.<span class="ident">total_bytes</span> <span class="op">/</span> <span class="number">1024</span>,
+				ready_limit.count, ready_limit.total_bytes / <span class="number">1024</span>,
+				future_limit.count, future_limit.total_bytes / <span class="number">1024</span>,
 			);
 
-			<span class="comment">// clean up the pool</span>
-			<span class="kw">let</span> <span class="ident">removed</span> <span class="op">=</span> {
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">write</span>();
-				<span class="kw">let</span> <span class="ident">removed</span> <span class="op">=</span> <span class="ident">pool</span>
-					.<span class="ident">enforce_limits</span>(<span class="ident">ready_limit</span>, <span class="ident">future_limit</span>)
-					.<span class="ident">into_iter</span>()
-					.<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">hash</span>)
-					.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-				<span class="comment">// ban all removed transactions</span>
-				<span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="ident">removed</span>.<span class="ident">iter</span>().<span class="ident">copied</span>());
-				<span class="ident">removed</span>
+			<span class="comment">// clean up the pool
+			</span><span class="kw">let </span>removed = {
+				<span class="kw">let </span><span class="kw-2">mut </span>pool = <span class="self">self</span>.pool.write();
+				<span class="kw">let </span>removed = pool
+					.enforce_limits(ready_limit, future_limit)
+					.into_iter()
+					.map(|x| x.hash)
+					.collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
+				<span class="comment">// ban all removed transactions
+				</span><span class="self">self</span>.rotator.ban(<span class="kw-2">&amp;</span>Instant::now(), removed.iter().copied());
+				removed
 			};
-			<span class="kw">if</span> <span class="op">!</span><span class="ident">removed</span>.<span class="ident">is_empty</span>() {
-				<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Enforcing limits: {} dropped&quot;</span>, <span class="ident">removed</span>.<span class="ident">len</span>());
+			<span class="kw">if </span>!removed.is_empty() {
+				<span class="macro">log::debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Enforcing limits: {} dropped&quot;</span>, removed.len());
 			}
 
-			<span class="comment">// run notifications</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>();
-			<span class="kw">for</span> <span class="ident">h</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">removed</span> {
-				<span class="ident">listener</span>.<span class="ident">dropped</span>(<span class="ident">h</span>, <span class="prelude-val">None</span>);
+			<span class="comment">// run notifications
+			</span><span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="self">self</span>.listener.write();
+			<span class="kw">for </span>h <span class="kw">in </span><span class="kw-2">&amp;</span>removed {
+				listener.dropped(h, <span class="prelude-val">None</span>);
 			}
 
-			<span class="ident">removed</span>
-		} <span class="kw">else</span> {
-			<span class="ident">Default::default</span>()
+			removed
+		} <span class="kw">else </span>{
+			Default::default()
 		}
 	}
 
-	<span class="doccomment">/// Import a single extrinsic and starts to watch their progress in the pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">submit_and_watch</span>(
+	<span class="doccomment">/// Import a single extrinsic and starts to watch their progress in the pool.
+	</span><span class="kw">pub fn </span>submit_and_watch(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">tx</span>: <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Watcher</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">match</span> <span class="ident">tx</span> {
-			<span class="ident">ValidatedTransaction::Valid</span>(<span class="ident">tx</span>) =&gt; {
-				<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">api</span>.<span class="ident">hash_and_length</span>(<span class="kw-2">&amp;</span><span class="ident">tx</span>.<span class="ident">data</span>).<span class="number">0</span>;
-				<span class="kw">let</span> <span class="ident">watcher</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>().<span class="ident">create_watcher</span>(<span class="ident">hash</span>);
-				<span class="self">self</span>.<span class="ident">submit</span>(<span class="ident">std::iter::once</span>(<span class="ident">ValidatedTransaction::Valid</span>(<span class="ident">tx</span>)))
-					.<span class="ident">pop</span>()
-					.<span class="ident">expect</span>(<span class="string">&quot;One extrinsic passed; one result returned; qed&quot;</span>)
-					.<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">watcher</span>)
+		tx: ValidatedTransactionFor&lt;B&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;Watcher&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicHash&lt;B&gt;&gt;, B::Error&gt; {
+		<span class="kw">match </span>tx {
+			ValidatedTransaction::Valid(tx) =&gt; {
+				<span class="kw">let </span>hash = <span class="self">self</span>.api.hash_and_length(<span class="kw-2">&amp;</span>tx.data).<span class="number">0</span>;
+				<span class="kw">let </span>watcher = <span class="self">self</span>.listener.write().create_watcher(hash);
+				<span class="self">self</span>.submit(std::iter::once(ValidatedTransaction::Valid(tx)))
+					.pop()
+					.expect(<span class="string">&quot;One extrinsic passed; one result returned; qed&quot;</span>)
+					.map(|<span class="kw">_</span>| watcher)
 			},
-			<span class="ident">ValidatedTransaction::Invalid</span>(<span class="ident">hash</span>, <span class="ident">err</span>) =&gt; {
-				<span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="ident">std::iter::once</span>(<span class="ident">hash</span>));
-				<span class="prelude-val">Err</span>(<span class="ident">err</span>)
+			ValidatedTransaction::Invalid(hash, err) =&gt; {
+				<span class="self">self</span>.rotator.ban(<span class="kw-2">&amp;</span>Instant::now(), std::iter::once(hash));
+				<span class="prelude-val">Err</span>(err)
 			},
-			<span class="ident">ValidatedTransaction::Unknown</span>(<span class="kw">_</span>, <span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+			ValidatedTransaction::Unknown(<span class="kw">_</span>, err) =&gt; <span class="prelude-val">Err</span>(err),
 		}
 	}
 
-	<span class="doccomment">/// Resubmits revalidated transactions back to the pool.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Removes and then submits passed transactions and all dependent transactions.</span>
-	<span class="doccomment">/// Transactions that are missing from the pool are not submitted.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resubmit</span>(
+	<span class="doccomment">/// Resubmits revalidated transactions back to the pool.
+	///
+	/// Removes and then submits passed transactions and all dependent transactions.
+	/// Transactions that are missing from the pool are not submitted.
+	</span><span class="kw">pub fn </span>resubmit(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="kw-2">mut</span> <span class="ident">updated_transactions</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+		<span class="kw-2">mut </span>updated_transactions: HashMap&lt;ExtrinsicHash&lt;B&gt;, ValidatedTransactionFor&lt;B&gt;&gt;,
 	) {
-		<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>)]</span>
-		<span class="kw">enum</span> <span class="ident">Status</span> {
-			<span class="ident">Future</span>,
-			<span class="ident">Ready</span>,
-			<span class="ident">Failed</span>,
-			<span class="ident">Dropped</span>,
+		<span class="attribute">#[derive(Debug, Clone, Copy, PartialEq)]
+		</span><span class="kw">enum </span>Status {
+			Future,
+			Ready,
+			Failed,
+			Dropped,
 		}
 
-		<span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">initial_statuses</span>, <span class="ident">final_statuses</span>) <span class="op">=</span> {
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">write</span>();
+		<span class="kw">let </span>(<span class="kw-2">mut </span>initial_statuses, final_statuses) = {
+			<span class="kw">let </span><span class="kw-2">mut </span>pool = <span class="self">self</span>.pool.write();
 
-			<span class="comment">// remove all passed transactions from the ready/future queues</span>
-			<span class="comment">// (this may remove additional transactions as well)</span>
-			<span class="comment">//</span>
-			<span class="comment">// for every transaction that has an entry in the `updated_transactions`,</span>
-			<span class="comment">// we store updated validation result in txs_to_resubmit</span>
-			<span class="comment">// for every transaction that has no entry in the `updated_transactions`,</span>
-			<span class="comment">// we store last validation result (i.e. the pool entry) in txs_to_resubmit</span>
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">initial_statuses</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">txs_to_resubmit</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">updated_transactions</span>.<span class="ident">len</span>());
-			<span class="kw">while</span> <span class="op">!</span><span class="ident">updated_transactions</span>.<span class="ident">is_empty</span>() {
-				<span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">updated_transactions</span>
-					.<span class="ident">keys</span>()
-					.<span class="ident">next</span>()
-					.<span class="ident">cloned</span>()
-					.<span class="ident">expect</span>(<span class="string">&quot;transactions is not empty; qed&quot;</span>);
+			<span class="comment">// remove all passed transactions from the ready/future queues
+			// (this may remove additional transactions as well)
+			//
+			// for every transaction that has an entry in the `updated_transactions`,
+			// we store updated validation result in txs_to_resubmit
+			// for every transaction that has no entry in the `updated_transactions`,
+			// we store last validation result (i.e. the pool entry) in txs_to_resubmit
+			</span><span class="kw">let </span><span class="kw-2">mut </span>initial_statuses = HashMap::new();
+			<span class="kw">let </span><span class="kw-2">mut </span>txs_to_resubmit = Vec::with_capacity(updated_transactions.len());
+			<span class="kw">while </span>!updated_transactions.is_empty() {
+				<span class="kw">let </span>hash = updated_transactions
+					.keys()
+					.next()
+					.cloned()
+					.expect(<span class="string">&quot;transactions is not empty; qed&quot;</span>);
 
-				<span class="comment">// note we are not considering tx with hash invalid here - we just want</span>
-				<span class="comment">// to remove it along with dependent transactions and `remove_subtree()`</span>
-				<span class="comment">// does exactly what we need</span>
-				<span class="kw">let</span> <span class="ident">removed</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">remove_subtree</span>(<span class="kw-2">&amp;</span>[<span class="ident">hash</span>]);
-				<span class="kw">for</span> <span class="ident">removed_tx</span> <span class="kw">in</span> <span class="ident">removed</span> {
-					<span class="kw">let</span> <span class="ident">removed_hash</span> <span class="op">=</span> <span class="ident">removed_tx</span>.<span class="ident">hash</span>;
-					<span class="kw">let</span> <span class="ident">updated_transaction</span> <span class="op">=</span> <span class="ident">updated_transactions</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">removed_hash</span>);
-					<span class="kw">let</span> <span class="ident">tx_to_resubmit</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">updated_tx</span>) <span class="op">=</span> <span class="ident">updated_transaction</span> {
-						<span class="ident">updated_tx</span>
-					} <span class="kw">else</span> {
-						<span class="comment">// in most cases we&#39;ll end up in successful `try_unwrap`, but if not</span>
-						<span class="comment">// we still need to reinsert transaction back to the pool =&gt; duplicate call</span>
-						<span class="kw">let</span> <span class="ident">transaction</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">Arc::try_unwrap</span>(<span class="ident">removed_tx</span>) {
-							<span class="prelude-val">Ok</span>(<span class="ident">transaction</span>) =&gt; <span class="ident">transaction</span>,
-							<span class="prelude-val">Err</span>(<span class="ident">transaction</span>) =&gt; <span class="ident">transaction</span>.<span class="ident">duplicate</span>(),
+				<span class="comment">// note we are not considering tx with hash invalid here - we just want
+				// to remove it along with dependent transactions and `remove_subtree()`
+				// does exactly what we need
+				</span><span class="kw">let </span>removed = pool.remove_subtree(<span class="kw-2">&amp;</span>[hash]);
+				<span class="kw">for </span>removed_tx <span class="kw">in </span>removed {
+					<span class="kw">let </span>removed_hash = removed_tx.hash;
+					<span class="kw">let </span>updated_transaction = updated_transactions.remove(<span class="kw-2">&amp;</span>removed_hash);
+					<span class="kw">let </span>tx_to_resubmit = <span class="kw">if let </span><span class="prelude-val">Some</span>(updated_tx) = updated_transaction {
+						updated_tx
+					} <span class="kw">else </span>{
+						<span class="comment">// in most cases we&#39;ll end up in successful `try_unwrap`, but if not
+						// we still need to reinsert transaction back to the pool =&gt; duplicate call
+						</span><span class="kw">let </span>transaction = <span class="kw">match </span>Arc::try_unwrap(removed_tx) {
+							<span class="prelude-val">Ok</span>(transaction) =&gt; transaction,
+							<span class="prelude-val">Err</span>(transaction) =&gt; transaction.duplicate(),
 						};
-						<span class="ident">ValidatedTransaction::Valid</span>(<span class="ident">transaction</span>)
+						ValidatedTransaction::Valid(transaction)
 					};
 
-					<span class="ident">initial_statuses</span>.<span class="ident">insert</span>(<span class="ident">removed_hash</span>, <span class="ident">Status::Ready</span>);
-					<span class="ident">txs_to_resubmit</span>.<span class="ident">push</span>((<span class="ident">removed_hash</span>, <span class="ident">tx_to_resubmit</span>));
+					initial_statuses.insert(removed_hash, Status::Ready);
+					txs_to_resubmit.push((removed_hash, tx_to_resubmit));
 				}
-				<span class="comment">// make sure to remove the hash even if it&#39;s not present in the pool any more.</span>
-				<span class="ident">updated_transactions</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>);
+				<span class="comment">// make sure to remove the hash even if it&#39;s not present in the pool any more.
+				</span>updated_transactions.remove(<span class="kw-2">&amp;</span>hash);
 			}
 
-			<span class="comment">// if we&#39;re rejecting future transactions, then insertion order matters here:</span>
-			<span class="comment">// if tx1 depends on tx2, then if tx1 is inserted before tx2, then it goes</span>
-			<span class="comment">// to the future queue and gets rejected immediately</span>
-			<span class="comment">// =&gt; let&#39;s temporary stop rejection and clear future queue before return</span>
-			<span class="ident">pool</span>.<span class="ident">with_futures_enabled</span>(<span class="op">|</span><span class="ident">pool</span>, <span class="ident">reject_future_transactions</span><span class="op">|</span> {
-				<span class="comment">// now resubmit all removed transactions back to the pool</span>
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">final_statuses</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-				<span class="kw">for</span> (<span class="ident">hash</span>, <span class="ident">tx_to_resubmit</span>) <span class="kw">in</span> <span class="ident">txs_to_resubmit</span> {
-					<span class="kw">match</span> <span class="ident">tx_to_resubmit</span> {
-						<span class="ident">ValidatedTransaction::Valid</span>(<span class="ident">tx</span>) =&gt; <span class="kw">match</span> <span class="ident">pool</span>.<span class="ident">import</span>(<span class="ident">tx</span>) {
-							<span class="prelude-val">Ok</span>(<span class="ident">imported</span>) =&gt; <span class="kw">match</span> <span class="ident">imported</span> {
-								<span class="ident">base::Imported::Ready</span> { <span class="ident">promoted</span>, <span class="ident">failed</span>, <span class="ident">removed</span>, .. } =&gt; {
-									<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="ident">Status::Ready</span>);
-									<span class="kw">for</span> <span class="ident">hash</span> <span class="kw">in</span> <span class="ident">promoted</span> {
-										<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="ident">Status::Ready</span>);
+			<span class="comment">// if we&#39;re rejecting future transactions, then insertion order matters here:
+			// if tx1 depends on tx2, then if tx1 is inserted before tx2, then it goes
+			// to the future queue and gets rejected immediately
+			// =&gt; let&#39;s temporary stop rejection and clear future queue before return
+			</span>pool.with_futures_enabled(|pool, reject_future_transactions| {
+				<span class="comment">// now resubmit all removed transactions back to the pool
+				</span><span class="kw">let </span><span class="kw-2">mut </span>final_statuses = HashMap::new();
+				<span class="kw">for </span>(hash, tx_to_resubmit) <span class="kw">in </span>txs_to_resubmit {
+					<span class="kw">match </span>tx_to_resubmit {
+						ValidatedTransaction::Valid(tx) =&gt; <span class="kw">match </span>pool.import(tx) {
+							<span class="prelude-val">Ok</span>(imported) =&gt; <span class="kw">match </span>imported {
+								base::Imported::Ready { promoted, failed, removed, .. } =&gt; {
+									final_statuses.insert(hash, Status::Ready);
+									<span class="kw">for </span>hash <span class="kw">in </span>promoted {
+										final_statuses.insert(hash, Status::Ready);
 									}
-									<span class="kw">for</span> <span class="ident">hash</span> <span class="kw">in</span> <span class="ident">failed</span> {
-										<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="ident">Status::Failed</span>);
+									<span class="kw">for </span>hash <span class="kw">in </span>failed {
+										final_statuses.insert(hash, Status::Failed);
 									}
-									<span class="kw">for</span> <span class="ident">tx</span> <span class="kw">in</span> <span class="ident">removed</span> {
-										<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">tx</span>.<span class="ident">hash</span>, <span class="ident">Status::Dropped</span>);
+									<span class="kw">for </span>tx <span class="kw">in </span>removed {
+										final_statuses.insert(tx.hash, Status::Dropped);
 									}
 								},
-								<span class="ident">base::Imported::Future</span> { .. } =&gt; {
-									<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="ident">Status::Future</span>);
+								base::Imported::Future { .. } =&gt; {
+									final_statuses.insert(hash, Status::Future);
 								},
 							},
-							<span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
-								<span class="comment">// we do not want to fail if single transaction import has failed</span>
-								<span class="comment">// nor we do want to propagate this error, because it could tx</span>
-								<span class="comment">// unknown to caller =&gt; let&#39;s just notify listeners (and issue debug</span>
-								<span class="comment">// message)</span>
-								<span class="macro">log::warn!</span>(
-									<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>,
+							<span class="prelude-val">Err</span>(err) =&gt; {
+								<span class="comment">// we do not want to fail if single transaction import has failed
+								// nor we do want to propagate this error, because it could tx
+								// unknown to caller =&gt; let&#39;s just notify listeners (and issue debug
+								// message)
+								</span><span class="macro">log::warn!</span>(
+									target: <span class="string">&quot;txpool&quot;</span>,
 									<span class="string">&quot;[{:?}] Removing invalid transaction from update: {}&quot;</span>,
-									<span class="ident">hash</span>,
-									<span class="ident">err</span>,
+									hash,
+									err,
 								);
-								<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="ident">Status::Failed</span>);
+								final_statuses.insert(hash, Status::Failed);
 							},
 						},
-						<span class="ident">ValidatedTransaction::Invalid</span>(<span class="kw">_</span>, <span class="kw">_</span>) <span class="op">|</span>
-						<span class="ident">ValidatedTransaction::Unknown</span>(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
-							<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">hash</span>, <span class="ident">Status::Failed</span>);
+						ValidatedTransaction::Invalid(<span class="kw">_</span>, <span class="kw">_</span>) |
+						ValidatedTransaction::Unknown(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
+							final_statuses.insert(hash, Status::Failed);
 						},
 					}
 				}
 
-				<span class="comment">// if the pool is configured to reject future transactions, let&#39;s clear the future</span>
-				<span class="comment">// queue, updating final statuses as required</span>
-				<span class="kw">if</span> <span class="ident">reject_future_transactions</span> {
-					<span class="kw">for</span> <span class="ident">future_tx</span> <span class="kw">in</span> <span class="ident">pool</span>.<span class="ident">clear_future</span>() {
-						<span class="ident">final_statuses</span>.<span class="ident">insert</span>(<span class="ident">future_tx</span>.<span class="ident">hash</span>, <span class="ident">Status::Dropped</span>);
+				<span class="comment">// if the pool is configured to reject future transactions, let&#39;s clear the future
+				// queue, updating final statuses as required
+				</span><span class="kw">if </span>reject_future_transactions {
+					<span class="kw">for </span>future_tx <span class="kw">in </span>pool.clear_future() {
+						final_statuses.insert(future_tx.hash, Status::Dropped);
 					}
 				}
 
-				(<span class="ident">initial_statuses</span>, <span class="ident">final_statuses</span>)
+				(initial_statuses, final_statuses)
 			})
 		};
 
-		<span class="comment">// and now let&#39;s notify listeners about status changes</span>
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>();
-		<span class="kw">for</span> (<span class="ident">hash</span>, <span class="ident">final_status</span>) <span class="kw">in</span> <span class="ident">final_statuses</span> {
-			<span class="kw">let</span> <span class="ident">initial_status</span> <span class="op">=</span> <span class="ident">initial_statuses</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>);
-			<span class="kw">if</span> <span class="ident">initial_status</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">final_status</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">initial_status</span> {
-				<span class="kw">match</span> <span class="ident">final_status</span> {
-					<span class="ident">Status::Future</span> =&gt; <span class="ident">listener</span>.<span class="ident">future</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>),
-					<span class="ident">Status::Ready</span> =&gt; <span class="ident">listener</span>.<span class="ident">ready</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>, <span class="prelude-val">None</span>),
-					<span class="ident">Status::Dropped</span> =&gt; <span class="ident">listener</span>.<span class="ident">dropped</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>, <span class="prelude-val">None</span>),
-					<span class="ident">Status::Failed</span> =&gt; <span class="ident">listener</span>.<span class="ident">invalid</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>),
+		<span class="comment">// and now let&#39;s notify listeners about status changes
+		</span><span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="self">self</span>.listener.write();
+		<span class="kw">for </span>(hash, final_status) <span class="kw">in </span>final_statuses {
+			<span class="kw">let </span>initial_status = initial_statuses.remove(<span class="kw-2">&amp;</span>hash);
+			<span class="kw">if </span>initial_status.is_none() || <span class="prelude-val">Some</span>(final_status) != initial_status {
+				<span class="kw">match </span>final_status {
+					Status::Future =&gt; listener.future(<span class="kw-2">&amp;</span>hash),
+					Status::Ready =&gt; listener.ready(<span class="kw-2">&amp;</span>hash, <span class="prelude-val">None</span>),
+					Status::Dropped =&gt; listener.dropped(<span class="kw-2">&amp;</span>hash, <span class="prelude-val">None</span>),
+					Status::Failed =&gt; listener.invalid(<span class="kw-2">&amp;</span>hash),
 				}
 			}
 		}
 	}
 
-	<span class="doccomment">/// For each extrinsic, returns tags that it provides (if known), or None (if it is unknown).</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">extrinsics_tags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hashes</span>: <span class="kw-2">&amp;</span>[<span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Tag</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">pool</span>
-			.<span class="ident">read</span>()
-			.<span class="ident">by_hashes</span>(<span class="ident">hashes</span>)
-			.<span class="ident">into_iter</span>()
-			.<span class="ident">map</span>(<span class="op">|</span><span class="ident">existing_in_pool</span><span class="op">|</span> {
-				<span class="ident">existing_in_pool</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">transaction</span><span class="op">|</span> <span class="ident">transaction</span>.<span class="ident">provides</span>.<span class="ident">to_vec</span>())
+	<span class="doccomment">/// For each extrinsic, returns tags that it provides (if known), or None (if it is unknown).
+	</span><span class="kw">pub fn </span>extrinsics_tags(<span class="kw-2">&amp;</span><span class="self">self</span>, hashes: <span class="kw-2">&amp;</span>[ExtrinsicHash&lt;B&gt;]) -&gt; Vec&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;Tag&gt;&gt;&gt; {
+		<span class="self">self</span>.pool
+			.read()
+			.by_hashes(hashes)
+			.into_iter()
+			.map(|existing_in_pool| {
+				existing_in_pool.map(|transaction| transaction.provides.to_vec())
 			})
-			.<span class="ident">collect</span>()
+			.collect()
 	}
 
-	<span class="doccomment">/// Get ready transaction by hash</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ready_by_hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hash</span>: <span class="kw-2">&amp;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">read</span>().<span class="ident">ready_by_hash</span>(<span class="ident">hash</span>)
+	<span class="doccomment">/// Get ready transaction by hash
+	</span><span class="kw">pub fn </span>ready_by_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>ExtrinsicHash&lt;B&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;TransactionFor&lt;B&gt;&gt; {
+		<span class="self">self</span>.pool.read().ready_by_hash(hash)
 	}
 
-	<span class="doccomment">/// Prunes ready transactions that provide given list of tags.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prune_tags</span>(
+	<span class="doccomment">/// Prunes ready transactions that provide given list of tags.
+	</span><span class="kw">pub fn </span>prune_tags(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">tags</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Tag</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PruneStatus</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="comment">// Perform tag-based pruning in the base pool</span>
-		<span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">write</span>().<span class="ident">prune_tags</span>(<span class="ident">tags</span>);
-		<span class="comment">// Notify event listeners of all transactions</span>
-		<span class="comment">// that were promoted to `Ready` or were dropped.</span>
-		{
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>();
-			<span class="kw">for</span> <span class="ident">promoted</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">status</span>.<span class="ident">promoted</span> {
-				<span class="ident">fire_events</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">listener</span>, <span class="ident">promoted</span>);
+		tags: <span class="kw">impl </span>IntoIterator&lt;Item = Tag&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;PruneStatus&lt;ExtrinsicHash&lt;B&gt;, ExtrinsicFor&lt;B&gt;&gt;, B::Error&gt; {
+		<span class="comment">// Perform tag-based pruning in the base pool
+		</span><span class="kw">let </span>status = <span class="self">self</span>.pool.write().prune_tags(tags);
+		<span class="comment">// Notify event listeners of all transactions
+		// that were promoted to `Ready` or were dropped.
+		</span>{
+			<span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="self">self</span>.listener.write();
+			<span class="kw">for </span>promoted <span class="kw">in </span><span class="kw-2">&amp;</span>status.promoted {
+				fire_events(<span class="kw-2">&amp;mut *</span>listener, promoted);
 			}
-			<span class="kw">for</span> <span class="ident">f</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">status</span>.<span class="ident">failed</span> {
-				<span class="ident">listener</span>.<span class="ident">dropped</span>(<span class="ident">f</span>, <span class="prelude-val">None</span>);
+			<span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>status.failed {
+				listener.dropped(f, <span class="prelude-val">None</span>);
 			}
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">status</span>)
+		<span class="prelude-val">Ok</span>(status)
 	}
 
-	<span class="doccomment">/// Resubmit transactions that have been revalidated after prune_tags call.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resubmit_pruned</span>(
+	<span class="doccomment">/// Resubmit transactions that have been revalidated after prune_tags call.
+	</span><span class="kw">pub fn </span>resubmit_pruned(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">known_imported_hashes</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span>,
-		<span class="ident">pruned_hashes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">pruned_xts</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ValidatedTransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="macro">debug_assert_eq!</span>(<span class="ident">pruned_hashes</span>.<span class="ident">len</span>(), <span class="ident">pruned_xts</span>.<span class="ident">len</span>());
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		known_imported_hashes: <span class="kw">impl </span>IntoIterator&lt;Item = ExtrinsicHash&lt;B&gt;&gt; + Clone,
+		pruned_hashes: Vec&lt;ExtrinsicHash&lt;B&gt;&gt;,
+		pruned_xts: Vec&lt;ValidatedTransactionFor&lt;B&gt;&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
+		<span class="macro">debug_assert_eq!</span>(pruned_hashes.len(), pruned_xts.len());
 
-		<span class="comment">// Resubmit pruned transactions</span>
-		<span class="kw">let</span> <span class="ident">results</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">submit</span>(<span class="ident">pruned_xts</span>);
+		<span class="comment">// Resubmit pruned transactions
+		</span><span class="kw">let </span>results = <span class="self">self</span>.submit(pruned_xts);
 
-		<span class="comment">// Collect the hashes of transactions that now became invalid (meaning that they are</span>
-		<span class="comment">// successfully pruned).</span>
-		<span class="kw">let</span> <span class="ident">hashes</span> <span class="op">=</span> <span class="ident">results</span>.<span class="ident">into_iter</span>().<span class="ident">enumerate</span>().<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="ident">idx</span>, <span class="ident">r</span>)<span class="op">|</span> {
-			<span class="kw">match</span> <span class="ident">r</span>.<span class="ident">map_err</span>(<span class="ident">error::IntoPoolError::into_pool_error</span>) {
-				<span class="prelude-val">Err</span>(<span class="prelude-val">Ok</span>(<span class="ident">error::Error::InvalidTransaction</span>(<span class="kw">_</span>))) =&gt; <span class="prelude-val">Some</span>(<span class="ident">pruned_hashes</span>[<span class="ident">idx</span>]),
-				<span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+		<span class="comment">// Collect the hashes of transactions that now became invalid (meaning that they are
+		// successfully pruned).
+		</span><span class="kw">let </span>hashes = results.into_iter().enumerate().filter_map(|(idx, r)| {
+			<span class="kw">match </span>r.map_err(error::IntoPoolError::into_pool_error) {
+				<span class="prelude-val">Err</span>(<span class="prelude-val">Ok</span>(error::Error::InvalidTransaction(<span class="kw">_</span>))) =&gt; <span class="prelude-val">Some</span>(pruned_hashes[idx]),
+				<span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 			}
 		});
-		<span class="comment">// Fire `pruned` notifications for collected hashes and make sure to include</span>
-		<span class="comment">// `known_imported_hashes` since they were just imported as part of the block.</span>
-		<span class="kw">let</span> <span class="ident">hashes</span> <span class="op">=</span> <span class="ident">hashes</span>.<span class="ident">chain</span>(<span class="ident">known_imported_hashes</span>.<span class="ident">into_iter</span>());
-		<span class="self">self</span>.<span class="ident">fire_pruned</span>(<span class="ident">at</span>, <span class="ident">hashes</span>)<span class="question-mark">?</span>;
+		<span class="comment">// Fire `pruned` notifications for collected hashes and make sure to include
+		// `known_imported_hashes` since they were just imported as part of the block.
+		</span><span class="kw">let </span>hashes = hashes.chain(known_imported_hashes.into_iter());
+		<span class="self">self</span>.fire_pruned(at, hashes)<span class="question-mark">?</span>;
 
-		<span class="comment">// perform regular cleanup of old transactions in the pool</span>
-		<span class="comment">// and update temporary bans.</span>
-		<span class="self">self</span>.<span class="ident">clear_stale</span>(<span class="ident">at</span>)<span class="question-mark">?</span>;
+		<span class="comment">// perform regular cleanup of old transactions in the pool
+		// and update temporary bans.
+		</span><span class="self">self</span>.clear_stale(at)<span class="question-mark">?</span>;
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Fire notifications for pruned transactions.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fire_pruned</span>(
+	<span class="doccomment">/// Fire notifications for pruned transactions.
+	</span><span class="kw">pub fn </span>fire_pruned(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>,
-		<span class="ident">hashes</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">header_hash</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">api</span>
-			.<span class="ident">block_id_to_hash</span>(<span class="ident">at</span>)<span class="question-mark">?</span>
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error::Error::InvalidBlockId</span>(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">at</span>)))<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">set</span> <span class="op">=</span> <span class="ident">HashSet::with_capacity</span>(<span class="ident">hashes</span>.<span class="ident">size_hint</span>().<span class="number">0</span>);
-		<span class="kw">for</span> <span class="ident">h</span> <span class="kw">in</span> <span class="ident">hashes</span> {
-			<span class="comment">// `hashes` has possibly duplicate hashes.</span>
-			<span class="comment">// we&#39;d like to send out the `InBlock` notification only once.</span>
-			<span class="kw">if</span> <span class="op">!</span><span class="ident">set</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">h</span>) {
-				<span class="ident">listener</span>.<span class="ident">pruned</span>(<span class="ident">header_hash</span>, <span class="kw-2">&amp;</span><span class="ident">h</span>);
-				<span class="ident">set</span>.<span class="ident">insert</span>(<span class="ident">h</span>);
+		at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;,
+		hashes: <span class="kw">impl </span>Iterator&lt;Item = ExtrinsicHash&lt;B&gt;&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
+		<span class="kw">let </span>header_hash = <span class="self">self
+			</span>.api
+			.block_id_to_hash(at)<span class="question-mark">?
+			</span>.ok_or_else(|| error::Error::InvalidBlockId(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, at)))<span class="question-mark">?</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="self">self</span>.listener.write();
+		<span class="kw">let </span><span class="kw-2">mut </span>set = HashSet::with_capacity(hashes.size_hint().<span class="number">0</span>);
+		<span class="kw">for </span>h <span class="kw">in </span>hashes {
+			<span class="comment">// `hashes` has possibly duplicate hashes.
+			// we&#39;d like to send out the `InBlock` notification only once.
+			</span><span class="kw">if </span>!set.contains(<span class="kw-2">&amp;</span>h) {
+				listener.pruned(header_hash, <span class="kw-2">&amp;</span>h);
+				set.insert(h);
 			}
 		}
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Removes stale transactions from the pool.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Stale transactions are transaction beyond their longevity period.</span>
-	<span class="doccomment">/// Note this function does not remove transactions that are already included in the chain.</span>
-	<span class="doccomment">/// See `prune_tags` if you want this.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear_stale</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">B::Block</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">block_number</span> <span class="op">=</span> <span class="self">self</span>
-			.<span class="ident">api</span>
-			.<span class="ident">block_id_to_number</span>(<span class="ident">at</span>)<span class="question-mark">?</span>
-			.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">error::Error::InvalidBlockId</span>(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">at</span>)))<span class="question-mark">?</span>
-			.<span class="ident">saturated_into</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>();
-		<span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
-		<span class="kw">let</span> <span class="ident">to_remove</span> <span class="op">=</span> {
-			<span class="self">self</span>.<span class="ident">ready</span>()
-				.<span class="ident">filter</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">ban_if_stale</span>(<span class="kw-2">&amp;</span><span class="ident">now</span>, <span class="ident">block_number</span>, <span class="ident">tx</span>))
-				.<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> <span class="ident">tx</span>.<span class="ident">hash</span>)
-				.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+	<span class="doccomment">/// Removes stale transactions from the pool.
+	///
+	/// Stale transactions are transaction beyond their longevity period.
+	/// Note this function does not remove transactions that are already included in the chain.
+	/// See `prune_tags` if you want this.
+	</span><span class="kw">pub fn </span>clear_stale(<span class="kw-2">&amp;</span><span class="self">self</span>, at: <span class="kw-2">&amp;</span>BlockId&lt;B::Block&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
+		<span class="kw">let </span>block_number = <span class="self">self
+			</span>.api
+			.block_id_to_number(at)<span class="question-mark">?
+			</span>.ok_or_else(|| error::Error::InvalidBlockId(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, at)))<span class="question-mark">?
+			</span>.saturated_into::&lt;u64&gt;();
+		<span class="kw">let </span>now = Instant::now();
+		<span class="kw">let </span>to_remove = {
+			<span class="self">self</span>.ready()
+				.filter(|tx| <span class="self">self</span>.rotator.ban_if_stale(<span class="kw-2">&amp;</span>now, block_number, tx))
+				.map(|tx| tx.hash)
+				.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
 		};
-		<span class="kw">let</span> <span class="ident">futures_to_remove</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> {
-			<span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">read</span>();
-			<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hashes</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-			<span class="kw">for</span> <span class="ident">tx</span> <span class="kw">in</span> <span class="ident">p</span>.<span class="ident">futures</span>() {
-				<span class="kw">if</span> <span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">ban_if_stale</span>(<span class="kw-2">&amp;</span><span class="ident">now</span>, <span class="ident">block_number</span>, <span class="ident">tx</span>) {
-					<span class="ident">hashes</span>.<span class="ident">push</span>(<span class="ident">tx</span>.<span class="ident">hash</span>);
+		<span class="kw">let </span>futures_to_remove: Vec&lt;ExtrinsicHash&lt;B&gt;&gt; = {
+			<span class="kw">let </span>p = <span class="self">self</span>.pool.read();
+			<span class="kw">let </span><span class="kw-2">mut </span>hashes = Vec::new();
+			<span class="kw">for </span>tx <span class="kw">in </span>p.futures() {
+				<span class="kw">if </span><span class="self">self</span>.rotator.ban_if_stale(<span class="kw-2">&amp;</span>now, block_number, tx) {
+					hashes.push(tx.hash);
 				}
 			}
-			<span class="ident">hashes</span>
+			hashes
 		};
-		<span class="comment">// removing old transactions</span>
-		<span class="self">self</span>.<span class="ident">remove_invalid</span>(<span class="kw-2">&amp;</span><span class="ident">to_remove</span>);
-		<span class="self">self</span>.<span class="ident">remove_invalid</span>(<span class="kw-2">&amp;</span><span class="ident">futures_to_remove</span>);
-		<span class="comment">// clear banned transactions timeouts</span>
-		<span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">clear_timeouts</span>(<span class="kw-2">&amp;</span><span class="ident">now</span>);
+		<span class="comment">// removing old transactions
+		</span><span class="self">self</span>.remove_invalid(<span class="kw-2">&amp;</span>to_remove);
+		<span class="self">self</span>.remove_invalid(<span class="kw-2">&amp;</span>futures_to_remove);
+		<span class="comment">// clear banned transactions timeouts
+		</span><span class="self">self</span>.rotator.clear_timeouts(<span class="kw-2">&amp;</span>now);
 
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Get api reference.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">api</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">B</span> {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">api</span>
+	<span class="doccomment">/// Get api reference.
+	</span><span class="kw">pub fn </span>api(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>B {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.api
 	}
 
-	<span class="doccomment">/// Return an event stream of notifications for when transactions are imported to the pool.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Consumers of this stream should use the `ready` method to actually get the</span>
-	<span class="doccomment">/// pending transactions in the right order.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">import_notification_stream</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EventStream</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">const</span> <span class="ident">CHANNEL_BUFFER_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1024</span>;
+	<span class="doccomment">/// Return an event stream of notifications for when transactions are imported to the pool.
+	///
+	/// Consumers of this stream should use the `ready` method to actually get the
+	/// pending transactions in the right order.
+	</span><span class="kw">pub fn </span>import_notification_stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EventStream&lt;ExtrinsicHash&lt;B&gt;&gt; {
+		<span class="kw">const </span>CHANNEL_BUFFER_SIZE: usize = <span class="number">1024</span>;
 
-		<span class="kw">let</span> (<span class="ident">sink</span>, <span class="ident">stream</span>) <span class="op">=</span> <span class="ident">channel</span>(<span class="ident">CHANNEL_BUFFER_SIZE</span>);
-		<span class="self">self</span>.<span class="ident">import_notification_sinks</span>.<span class="ident">lock</span>().<span class="ident">push</span>(<span class="ident">sink</span>);
-		<span class="ident">stream</span>
+		<span class="kw">let </span>(sink, stream) = channel(CHANNEL_BUFFER_SIZE);
+		<span class="self">self</span>.import_notification_sinks.lock().push(sink);
+		stream
 	}
 
-	<span class="doccomment">/// Invoked when extrinsics are broadcasted.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">on_broadcasted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">propagated</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>();
-		<span class="kw">for</span> (<span class="ident">hash</span>, <span class="ident">peers</span>) <span class="kw">in</span> <span class="ident">propagated</span>.<span class="ident">into_iter</span>() {
-			<span class="ident">listener</span>.<span class="ident">broadcasted</span>(<span class="kw-2">&amp;</span><span class="ident">hash</span>, <span class="ident">peers</span>);
+	<span class="doccomment">/// Invoked when extrinsics are broadcasted.
+	</span><span class="kw">pub fn </span>on_broadcasted(<span class="kw-2">&amp;</span><span class="self">self</span>, propagated: HashMap&lt;ExtrinsicHash&lt;B&gt;, Vec&lt;String&gt;&gt;) {
+		<span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="self">self</span>.listener.write();
+		<span class="kw">for </span>(hash, peers) <span class="kw">in </span>propagated.into_iter() {
+			listener.broadcasted(<span class="kw-2">&amp;</span>hash, peers);
 		}
 	}
 
-	<span class="doccomment">/// Remove a subtree of transactions from the pool and mark them invalid.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// The transactions passed as an argument will be additionally banned</span>
-	<span class="doccomment">/// to prevent them from entering the pool right away.</span>
-	<span class="doccomment">/// Note this is not the case for the dependent transactions - those may</span>
-	<span class="doccomment">/// still be valid so we want to be able to re-import them.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove_invalid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hashes</span>: <span class="kw-2">&amp;</span>[<span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="comment">// early exit in case there is no invalid transactions.</span>
-		<span class="kw">if</span> <span class="ident">hashes</span>.<span class="ident">is_empty</span>() {
-			<span class="kw">return</span> <span class="macro">vec!</span>[]
+	<span class="doccomment">/// Remove a subtree of transactions from the pool and mark them invalid.
+	///
+	/// The transactions passed as an argument will be additionally banned
+	/// to prevent them from entering the pool right away.
+	/// Note this is not the case for the dependent transactions - those may
+	/// still be valid so we want to be able to re-import them.
+	</span><span class="kw">pub fn </span>remove_invalid(<span class="kw-2">&amp;</span><span class="self">self</span>, hashes: <span class="kw-2">&amp;</span>[ExtrinsicHash&lt;B&gt;]) -&gt; Vec&lt;TransactionFor&lt;B&gt;&gt; {
+		<span class="comment">// early exit in case there is no invalid transactions.
+		</span><span class="kw">if </span>hashes.is_empty() {
+			<span class="kw">return </span><span class="macro">vec!</span>[]
 		}
 
-		<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Removing invalid transactions: {:?}&quot;</span>, <span class="ident">hashes</span>);
+		<span class="macro">log::debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Removing invalid transactions: {:?}&quot;</span>, hashes);
 
-		<span class="comment">// temporarily ban invalid transactions</span>
-		<span class="self">self</span>.<span class="ident">rotator</span>.<span class="ident">ban</span>(<span class="kw-2">&amp;</span><span class="ident">Instant::now</span>(), <span class="ident">hashes</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>());
+		<span class="comment">// temporarily ban invalid transactions
+		</span><span class="self">self</span>.rotator.ban(<span class="kw-2">&amp;</span>Instant::now(), hashes.iter().cloned());
 
-		<span class="kw">let</span> <span class="ident">invalid</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">write</span>().<span class="ident">remove_subtree</span>(<span class="ident">hashes</span>);
+		<span class="kw">let </span>invalid = <span class="self">self</span>.pool.write().remove_subtree(hashes);
 
-		<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Removed invalid transactions: {:?}&quot;</span>, <span class="ident">invalid</span>);
+		<span class="macro">log::debug!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Removed invalid transactions: {:?}&quot;</span>, invalid);
 
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>();
-		<span class="kw">for</span> <span class="ident">tx</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">invalid</span> {
-			<span class="ident">listener</span>.<span class="ident">invalid</span>(<span class="kw-2">&amp;</span><span class="ident">tx</span>.<span class="ident">hash</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>listener = <span class="self">self</span>.listener.write();
+		<span class="kw">for </span>tx <span class="kw">in </span><span class="kw-2">&amp;</span>invalid {
+			listener.invalid(<span class="kw-2">&amp;</span>tx.hash);
 		}
 
-		<span class="ident">invalid</span>
+		invalid
 	}
 
-	<span class="doccomment">/// Get an iterator for ready transactions ordered by priority</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ready</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">ReadyTransactions</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">TransactionFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> {
-		<span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">read</span>().<span class="ident">ready</span>()
+	<span class="doccomment">/// Get an iterator for ready transactions ordered by priority
+	</span><span class="kw">pub fn </span>ready(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>ReadyTransactions&lt;Item = TransactionFor&lt;B&gt;&gt; + Send {
+		<span class="self">self</span>.pool.read().ready()
 	}
 
-	<span class="doccomment">/// Returns a Vec of hashes and extrinsics in the future pool.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">futures</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">ExtrinsicHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">ExtrinsicFor</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-		<span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">read</span>().<span class="ident">futures</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">tx</span><span class="op">|</span> (<span class="ident">tx</span>.<span class="ident">hash</span>, <span class="ident">tx</span>.<span class="ident">data</span>.<span class="ident">clone</span>())).<span class="ident">collect</span>()
+	<span class="doccomment">/// Returns a Vec of hashes and extrinsics in the future pool.
+	</span><span class="kw">pub fn </span>futures(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(ExtrinsicHash&lt;B&gt;, ExtrinsicFor&lt;B&gt;)&gt; {
+		<span class="self">self</span>.pool.read().futures().map(|tx| (tx.hash, tx.data.clone())).collect()
 	}
 
-	<span class="doccomment">/// Returns pool status.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PoolStatus</span> {
-		<span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">read</span>().<span class="ident">status</span>()
+	<span class="doccomment">/// Returns pool status.
+	</span><span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolStatus {
+		<span class="self">self</span>.pool.read().status()
 	}
 
-	<span class="doccomment">/// Notify all watchers that transactions in the block with hash have been finalized</span>
-	<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">on_block_finalized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">block_hash</span>: <span class="ident">BlockHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">B::Error</span><span class="op">&gt;</span> {
-		<span class="macro">log::trace!</span>(<span class="ident">target</span>: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Attempting to notify watchers of finalization for {}&quot;</span>, <span class="ident">block_hash</span>);
-		<span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>().<span class="ident">finalized</span>(<span class="ident">block_hash</span>);
+	<span class="doccomment">/// Notify all watchers that transactions in the block with hash have been finalized
+	</span><span class="kw">pub async fn </span>on_block_finalized(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: BlockHash&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), B::Error&gt; {
+		<span class="macro">log::trace!</span>(target: <span class="string">&quot;txpool&quot;</span>, <span class="string">&quot;Attempting to notify watchers of finalization for {}&quot;</span>, block_hash);
+		<span class="self">self</span>.listener.write().finalized(block_hash);
 		<span class="prelude-val">Ok</span>(())
 	}
 
-	<span class="doccomment">/// Notify the listener of retracted blocks</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">on_block_retracted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">block_hash</span>: <span class="ident">BlockHash</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>) {
-		<span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">write</span>().<span class="ident">retracted</span>(<span class="ident">block_hash</span>)
+	<span class="doccomment">/// Notify the listener of retracted blocks
+	</span><span class="kw">pub fn </span>on_block_retracted(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: BlockHash&lt;B&gt;) {
+		<span class="self">self</span>.listener.write().retracted(block_hash)
 	}
 }
 
-<span class="kw">fn</span> <span class="ident">fire_events</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">B</span>, <span class="ident">Ex</span><span class="op">&gt;</span>(<span class="ident">listener</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Listener</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">imported</span>: <span class="kw-2">&amp;</span><span class="ident">base::Imported</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Ex</span><span class="op">&gt;</span>)
-<span class="kw">where</span>
-	<span class="ident">H</span>: <span class="ident">hash::Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">traits::Member</span> <span class="op">+</span> <span class="ident">Serialize</span>,
-	<span class="ident">B</span>: <span class="ident">ChainApi</span>,
+<span class="kw">fn </span>fire_events&lt;H, B, Ex&gt;(listener: <span class="kw-2">&amp;mut </span>Listener&lt;H, B&gt;, imported: <span class="kw-2">&amp;</span>base::Imported&lt;H, Ex&gt;)
+<span class="kw">where
+	</span>H: hash::Hash + Eq + traits::Member + Serialize,
+	B: ChainApi,
 {
-	<span class="kw">match</span> <span class="kw-2">*</span><span class="ident">imported</span> {
-		<span class="ident">base::Imported::Ready</span> { <span class="kw-2">ref</span> <span class="ident">promoted</span>, <span class="kw-2">ref</span> <span class="ident">failed</span>, <span class="kw-2">ref</span> <span class="ident">removed</span>, <span class="kw-2">ref</span> <span class="ident">hash</span> } =&gt; {
-			<span class="ident">listener</span>.<span class="ident">ready</span>(<span class="ident">hash</span>, <span class="prelude-val">None</span>);
-			<span class="ident">failed</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">listener</span>.<span class="ident">invalid</span>(<span class="ident">f</span>));
-			<span class="ident">removed</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">listener</span>.<span class="ident">dropped</span>(<span class="kw-2">&amp;</span><span class="ident">r</span>.<span class="ident">hash</span>, <span class="prelude-val">Some</span>(<span class="ident">hash</span>)));
-			<span class="ident">promoted</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">listener</span>.<span class="ident">ready</span>(<span class="ident">p</span>, <span class="prelude-val">None</span>));
+	<span class="kw">match </span><span class="kw-2">*</span>imported {
+		base::Imported::Ready { <span class="kw-2">ref </span>promoted, <span class="kw-2">ref </span>failed, <span class="kw-2">ref </span>removed, <span class="kw-2">ref </span>hash } =&gt; {
+			listener.ready(hash, <span class="prelude-val">None</span>);
+			failed.iter().for_each(|f| listener.invalid(f));
+			removed.iter().for_each(|r| listener.dropped(<span class="kw-2">&amp;</span>r.hash, <span class="prelude-val">Some</span>(hash)));
+			promoted.iter().for_each(|p| listener.ready(p, <span class="prelude-val">None</span>));
 		},
-		<span class="ident">base::Imported::Future</span> { <span class="kw-2">ref</span> <span class="ident">hash</span> } =&gt; <span class="ident">listener</span>.<span class="ident">future</span>(<span class="ident">hash</span>),
+		base::Imported::Future { <span class="kw-2">ref </span>hash } =&gt; listener.future(hash),
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_transaction_pool" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

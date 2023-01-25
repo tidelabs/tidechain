@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["RuntimeDebug",""]]});
+window.SIDEBAR_ITEMS = {"derive":[["RuntimeDebug",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["Borrow","A trait for borrowing data."],["BorrowMut","A trait for mutably borrowing data."]]});
+window.SIDEBAR_ITEMS = {"trait":[["Borrow","A trait for borrowing data."],["BorrowMut","A trait for mutably borrowing data."]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/service/src/client/call_executor.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>call_executor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_service/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../sc_service/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../sc_service/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/service/src/client/call_executor.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>call_executor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../sc_service/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -432,435 +427,434 @@
 <span id="427">427</span>
 <span id="428">428</span>
 <span id="429">429</span>
-</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
+</pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
-<span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
-<span class="comment">// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0</span>
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-<span class="comment">// This program is free software: you can redistribute it and/or modify</span>
-<span class="comment">// it under the terms of the GNU General Public License as published by</span>
-<span class="comment">// the Free Software Foundation, either version 3 of the License, or</span>
-<span class="comment">// (at your option) any later version.</span>
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-<span class="comment">// This program is distributed in the hope that it will be useful,</span>
-<span class="comment">// but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
-<span class="comment">// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
-<span class="comment">// GNU General Public License for more details.</span>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 
-<span class="comment">// You should have received a copy of the GNU General Public License</span>
-<span class="comment">// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">client::ClientConfig</span>, <span class="ident">wasm_override::WasmOverride</span>, <span class="ident">wasm_substitutes::WasmSubstitutes</span>};
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
-<span class="kw">use</span> <span class="ident">sc_client_api</span>::{<span class="ident">backend</span>, <span class="ident">call_executor::CallExecutor</span>, <span class="ident">HeaderBackend</span>};
-<span class="kw">use</span> <span class="ident">sc_executor</span>::{<span class="ident">RuntimeVersion</span>, <span class="ident">RuntimeVersionOf</span>};
-<span class="kw">use</span> <span class="ident">sp_api</span>::{<span class="ident">ProofRecorder</span>, <span class="ident">StorageTransactionCache</span>};
-<span class="kw">use</span> <span class="ident">sp_core</span>::{
-	<span class="ident">traits</span>::{<span class="ident">CodeExecutor</span>, <span class="ident">RuntimeCode</span>, <span class="ident">SpawnNamed</span>},
-	<span class="ident">NativeOrEncoded</span>, <span class="ident">NeverNativeValue</span>,
+</span><span class="kw">use super</span>::{client::ClientConfig, wasm_override::WasmOverride, wasm_substitutes::WasmSubstitutes};
+<span class="kw">use </span>codec::{Decode, Encode};
+<span class="kw">use </span>sc_client_api::{backend, call_executor::CallExecutor, HeaderBackend};
+<span class="kw">use </span>sc_executor::{RuntimeVersion, RuntimeVersionOf};
+<span class="kw">use </span>sp_api::{ProofRecorder, StorageTransactionCache};
+<span class="kw">use </span>sp_core::{
+	traits::{CodeExecutor, RuntimeCode, SpawnNamed},
+	NativeOrEncoded, NeverNativeValue,
 };
-<span class="kw">use</span> <span class="ident">sp_externalities::Extensions</span>;
-<span class="kw">use</span> <span class="ident">sp_runtime</span>::{<span class="ident">generic::BlockId</span>, <span class="ident">traits::Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>};
-<span class="kw">use</span> <span class="ident">sp_state_machine</span>::{
-	<span class="self">self</span>, <span class="ident">backend::Backend</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">ExecutionManager</span>, <span class="ident">ExecutionStrategy</span>, <span class="ident">Ext</span>, <span class="ident">OverlayedChanges</span>,
-	<span class="ident">StateMachine</span>, <span class="ident">StorageProof</span>,
+<span class="kw">use </span>sp_externalities::Extensions;
+<span class="kw">use </span>sp_runtime::{generic::BlockId, traits::Block <span class="kw">as </span>BlockT};
+<span class="kw">use </span>sp_state_machine::{
+	<span class="self">self</span>, backend::Backend <span class="kw">as _</span>, ExecutionManager, ExecutionStrategy, Ext, OverlayedChanges,
+	StateMachine, StorageProof,
 };
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">cell::RefCell</span>, <span class="ident">panic::UnwindSafe</span>, <span class="ident">result</span>, <span class="ident">sync::Arc</span>};
+<span class="kw">use </span>std::{cell::RefCell, panic::UnwindSafe, result, sync::Arc};
 
-<span class="doccomment">/// Call executor that executes methods locally, querying all required</span>
-<span class="doccomment">/// data from local backend.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LocalCallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span> {
-	<span class="ident">backend</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">executor</span>: <span class="ident">E</span>,
-	<span class="ident">wasm_override</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">WasmOverride</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">wasm_substitutes</span>: <span class="ident">WasmSubstitutes</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">E</span>, <span class="ident">B</span><span class="op">&gt;</span>,
-	<span class="ident">spawn_handle</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SpawnNamed</span><span class="op">&gt;</span>,
-	<span class="ident">client_config</span>: <span class="ident">ClientConfig</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Call executor that executes methods locally, querying all required
+/// data from local backend.
+</span><span class="kw">pub struct </span>LocalCallExecutor&lt;Block: BlockT, B, E&gt; {
+	backend: Arc&lt;B&gt;,
+	executor: E,
+	wasm_override: Arc&lt;<span class="prelude-ty">Option</span>&lt;WasmOverride&gt;&gt;,
+	wasm_substitutes: WasmSubstitutes&lt;Block, E, B&gt;,
+	spawn_handle: Box&lt;<span class="kw">dyn </span>SpawnNamed&gt;,
+	client_config: ClientConfig&lt;Block&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="ident">LocalCallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">E</span>: <span class="ident">CodeExecutor</span> <span class="op">+</span> <span class="ident">RuntimeVersionOf</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-	<span class="ident">B</span>: <span class="ident">backend::Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;Block: BlockT, B, E&gt; LocalCallExecutor&lt;Block, B, E&gt;
+<span class="kw">where
+	</span>E: CodeExecutor + RuntimeVersionOf + Clone + <span class="lifetime">&#39;static</span>,
+	B: backend::Backend&lt;Block&gt;,
 {
-	<span class="doccomment">/// Creates new instance of local call executor.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-		<span class="ident">backend</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-		<span class="ident">executor</span>: <span class="ident">E</span>,
-		<span class="ident">spawn_handle</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SpawnNamed</span><span class="op">&gt;</span>,
-		<span class="ident">client_config</span>: <span class="ident">ClientConfig</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">sp_blockchain::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">wasm_override</span> <span class="op">=</span> <span class="ident">client_config</span>
-			.<span class="ident">wasm_runtime_overrides</span>
-			.<span class="ident">as_ref</span>()
-			.<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">WasmOverride::new</span>(<span class="ident">p</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="ident">executor</span>))
-			.<span class="ident">transpose</span>()<span class="question-mark">?</span>;
+	<span class="doccomment">/// Creates new instance of local call executor.
+	</span><span class="kw">pub fn </span>new(
+		backend: Arc&lt;B&gt;,
+		executor: E,
+		spawn_handle: Box&lt;<span class="kw">dyn </span>SpawnNamed&gt;,
+		client_config: ClientConfig&lt;Block&gt;,
+	) -&gt; sp_blockchain::Result&lt;<span class="self">Self</span>&gt; {
+		<span class="kw">let </span>wasm_override = client_config
+			.wasm_runtime_overrides
+			.as_ref()
+			.map(|p| WasmOverride::new(p.clone(), <span class="kw-2">&amp;</span>executor))
+			.transpose()<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">wasm_substitutes</span> <span class="op">=</span> <span class="ident">WasmSubstitutes::new</span>(
-			<span class="ident">client_config</span>.<span class="ident">wasm_runtime_substitutes</span>.<span class="ident">clone</span>(),
-			<span class="ident">executor</span>.<span class="ident">clone</span>(),
-			<span class="ident">backend</span>.<span class="ident">clone</span>(),
+		<span class="kw">let </span>wasm_substitutes = WasmSubstitutes::new(
+			client_config.wasm_runtime_substitutes.clone(),
+			executor.clone(),
+			backend.clone(),
 		)<span class="question-mark">?</span>;
 
-		<span class="prelude-val">Ok</span>(<span class="ident">LocalCallExecutor</span> {
-			<span class="ident">backend</span>,
-			<span class="ident">executor</span>,
-			<span class="ident">wasm_override</span>: <span class="ident">Arc::new</span>(<span class="ident">wasm_override</span>),
-			<span class="ident">spawn_handle</span>,
-			<span class="ident">client_config</span>,
-			<span class="ident">wasm_substitutes</span>,
+		<span class="prelude-val">Ok</span>(LocalCallExecutor {
+			backend,
+			executor,
+			wasm_override: Arc::new(wasm_override),
+			spawn_handle,
+			client_config,
+			wasm_substitutes,
 		})
 	}
 
-	<span class="doccomment">/// Check if local runtime code overrides are enabled and one is available</span>
-	<span class="doccomment">/// for the given `BlockId`. If yes, return it; otherwise return the same</span>
-	<span class="doccomment">/// `RuntimeCode` instance that was passed.</span>
-	<span class="kw">fn</span> <span class="ident">check_override</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-		<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
-		<span class="ident">onchain_code</span>: <span class="ident">RuntimeCode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-		<span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">sp_blockchain::Result</span><span class="op">&lt;</span><span class="ident">RuntimeCode</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">Block</span>: <span class="ident">BlockT</span>,
-		<span class="ident">B</span>: <span class="ident">backend::Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
+	<span class="doccomment">/// Check if local runtime code overrides are enabled and one is available
+	/// for the given `BlockId`. If yes, return it; otherwise return the same
+	/// `RuntimeCode` instance that was passed.
+	</span><span class="kw">fn </span>check_override&lt;<span class="lifetime">&#39;a</span>&gt;(
+		<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+		onchain_code: RuntimeCode&lt;<span class="lifetime">&#39;a</span>&gt;,
+		id: <span class="kw-2">&amp;</span>BlockId&lt;Block&gt;,
+	) -&gt; sp_blockchain::Result&lt;RuntimeCode&lt;<span class="lifetime">&#39;a</span>&gt;&gt;
+	<span class="kw">where
+		</span>Block: BlockT,
+		B: backend::Backend&lt;Block&gt;,
 	{
-		<span class="kw">let</span> <span class="ident">spec</span> <span class="op">=</span> <span class="ident">CallExecutor::runtime_version</span>(<span class="self">self</span>, <span class="ident">id</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span>
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">d</span>) <span class="op">=</span>
-				<span class="self">self</span>.<span class="ident">wasm_override</span>.<span class="ident">as_ref</span>().<span class="ident">as_ref</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">o</span><span class="op">|</span> {
-					<span class="ident">o</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">spec</span>.<span class="ident">spec_version</span>, <span class="ident">onchain_code</span>.<span class="ident">heap_pages</span>, <span class="kw-2">&amp;</span><span class="ident">spec</span>.<span class="ident">spec_name</span>)
+		<span class="kw">let </span>spec = CallExecutor::runtime_version(<span class="self">self</span>, id)<span class="question-mark">?</span>;
+		<span class="kw">let </span>code =
+			<span class="kw">if let </span><span class="prelude-val">Some</span>(d) =
+				<span class="self">self</span>.wasm_override.as_ref().as_ref().and_then(|o| {
+					o.get(<span class="kw-2">&amp;</span>spec.spec_version, onchain_code.heap_pages, <span class="kw-2">&amp;</span>spec.spec_name)
 				}) {
-				<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;wasm_overrides&quot;</span>, <span class="string">&quot;using WASM override for block {}&quot;</span>, <span class="ident">id</span>);
-				<span class="ident">d</span>
-			} <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span>
-				<span class="self">self</span>.<span class="ident">wasm_substitutes</span>.<span class="ident">get</span>(<span class="ident">spec</span>.<span class="ident">spec_version</span>, <span class="ident">onchain_code</span>.<span class="ident">heap_pages</span>, <span class="ident">id</span>)
+				<span class="macro">log::debug!</span>(target: <span class="string">&quot;wasm_overrides&quot;</span>, <span class="string">&quot;using WASM override for block {}&quot;</span>, id);
+				d
+			} <span class="kw">else if let </span><span class="prelude-val">Some</span>(s) =
+				<span class="self">self</span>.wasm_substitutes.get(spec.spec_version, onchain_code.heap_pages, id)
 			{
-				<span class="macro">log::debug!</span>(<span class="ident">target</span>: <span class="string">&quot;wasm_substitutes&quot;</span>, <span class="string">&quot;Using WASM substitute for block {:?}&quot;</span>, <span class="ident">id</span>);
-				<span class="ident">s</span>
-			} <span class="kw">else</span> {
+				<span class="macro">log::debug!</span>(target: <span class="string">&quot;wasm_substitutes&quot;</span>, <span class="string">&quot;Using WASM substitute for block {:?}&quot;</span>, id);
+				s
+			} <span class="kw">else </span>{
 				<span class="macro">log::debug!</span>(
-					<span class="ident">target</span>: <span class="string">&quot;wasm_overrides&quot;</span>,
+					target: <span class="string">&quot;wasm_overrides&quot;</span>,
 					<span class="string">&quot;No WASM override available for block {}, using onchain code&quot;</span>,
-					<span class="ident">id</span>
+					id
 				);
-				<span class="ident">onchain_code</span>
+				onchain_code
 			};
 
-		<span class="prelude-val">Ok</span>(<span class="ident">code</span>)
+		<span class="prelude-val">Ok</span>(code)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Block</span>: <span class="ident">BlockT</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">LocalCallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">E</span>: <span class="ident">Clone</span>,
+<span class="kw">impl</span>&lt;Block: BlockT, B, E&gt; Clone <span class="kw">for </span>LocalCallExecutor&lt;Block, B, E&gt;
+<span class="kw">where
+	</span>E: Clone,
 {
-	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="ident">LocalCallExecutor</span> {
-			<span class="ident">backend</span>: <span class="self">self</span>.<span class="ident">backend</span>.<span class="ident">clone</span>(),
-			<span class="ident">executor</span>: <span class="self">self</span>.<span class="ident">executor</span>.<span class="ident">clone</span>(),
-			<span class="ident">wasm_override</span>: <span class="self">self</span>.<span class="ident">wasm_override</span>.<span class="ident">clone</span>(),
-			<span class="ident">spawn_handle</span>: <span class="self">self</span>.<span class="ident">spawn_handle</span>.<span class="ident">clone</span>(),
-			<span class="ident">client_config</span>: <span class="self">self</span>.<span class="ident">client_config</span>.<span class="ident">clone</span>(),
-			<span class="ident">wasm_substitutes</span>: <span class="self">self</span>.<span class="ident">wasm_substitutes</span>.<span class="ident">clone</span>(),
+	<span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+		LocalCallExecutor {
+			backend: <span class="self">self</span>.backend.clone(),
+			executor: <span class="self">self</span>.executor.clone(),
+			wasm_override: <span class="self">self</span>.wasm_override.clone(),
+			spawn_handle: <span class="self">self</span>.spawn_handle.clone(),
+			client_config: <span class="self">self</span>.client_config.clone(),
+			wasm_substitutes: <span class="self">self</span>.wasm_substitutes.clone(),
 		}
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">E</span>, <span class="ident">Block</span><span class="op">&gt;</span> <span class="ident">CallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">LocalCallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">B</span>: <span class="ident">backend::Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">E</span>: <span class="ident">CodeExecutor</span> <span class="op">+</span> <span class="ident">RuntimeVersionOf</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-	<span class="ident">Block</span>: <span class="ident">BlockT</span>,
+<span class="kw">impl</span>&lt;B, E, Block&gt; CallExecutor&lt;Block&gt; <span class="kw">for </span>LocalCallExecutor&lt;Block, B, E&gt;
+<span class="kw">where
+	</span>B: backend::Backend&lt;Block&gt;,
+	E: CodeExecutor + RuntimeVersionOf + Clone + <span class="lifetime">&#39;static</span>,
+	Block: BlockT,
 {
-	<span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">E::Error</span>;
+	<span class="kw">type </span>Error = E::Error;
 
-	<span class="kw">type</span> <span class="ident">Backend</span> <span class="op">=</span> <span class="ident">B</span>;
+	<span class="kw">type </span>Backend = B;
 
-	<span class="kw">fn</span> <span class="ident">call</span>(
+	<span class="kw">fn </span>call(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-		<span class="ident">method</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">call_data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">strategy</span>: <span class="ident">ExecutionStrategy</span>,
-		<span class="ident">extensions</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Extensions</span><span class="op">&gt;</span>,
-	) -&gt; <span class="ident">sp_blockchain::Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changes</span> <span class="op">=</span> <span class="ident">OverlayedChanges::default</span>();
-		<span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">backend</span>.<span class="ident">state_at</span>(<span class="kw-2">*</span><span class="ident">at</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">state_runtime_code</span> <span class="op">=</span> <span class="ident">sp_state_machine::backend::BackendRuntimeCode::new</span>(<span class="kw-2">&amp;</span><span class="ident">state</span>);
-		<span class="kw">let</span> <span class="ident">runtime_code</span> <span class="op">=</span>
-			<span class="ident">state_runtime_code</span>.<span class="ident">runtime_code</span>().<span class="ident">map_err</span>(<span class="ident">sp_blockchain::Error::RuntimeCode</span>)<span class="question-mark">?</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;Block&gt;,
+		method: <span class="kw-2">&amp;</span>str,
+		call_data: <span class="kw-2">&amp;</span>[u8],
+		strategy: ExecutionStrategy,
+		extensions: <span class="prelude-ty">Option</span>&lt;Extensions&gt;,
+	) -&gt; sp_blockchain::Result&lt;Vec&lt;u8&gt;&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>changes = OverlayedChanges::default();
+		<span class="kw">let </span>state = <span class="self">self</span>.backend.state_at(<span class="kw-2">*</span>at)<span class="question-mark">?</span>;
+		<span class="kw">let </span>state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(<span class="kw-2">&amp;</span>state);
+		<span class="kw">let </span>runtime_code =
+			state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">runtime_code</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">check_override</span>(<span class="ident">runtime_code</span>, <span class="ident">at</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>runtime_code = <span class="self">self</span>.check_override(runtime_code, at)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">at_hash</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">backend</span>.<span class="ident">blockchain</span>().<span class="ident">block_hash_from_id</span>(<span class="ident">at</span>)<span class="question-mark">?</span>.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">sp_blockchain::Error::UnknownBlock</span>(<span class="macro">format!</span>(<span class="string">&quot;Could not find block hash for {:?}&quot;</span>, <span class="ident">at</span>))
+		<span class="kw">let </span>at_hash = <span class="self">self</span>.backend.blockchain().block_hash_from_id(at)<span class="question-mark">?</span>.ok_or_else(|| {
+			sp_blockchain::Error::UnknownBlock(<span class="macro">format!</span>(<span class="string">&quot;Could not find block hash for {:?}&quot;</span>, at))
 		})<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">return_data</span> <span class="op">=</span> <span class="ident">StateMachine::new</span>(
-			<span class="kw-2">&amp;</span><span class="ident">state</span>,
-			<span class="kw-2">&amp;mut</span> <span class="ident">changes</span>,
-			<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">executor</span>,
-			<span class="ident">method</span>,
-			<span class="ident">call_data</span>,
-			<span class="ident">extensions</span>.<span class="ident">unwrap_or_default</span>(),
-			<span class="kw-2">&amp;</span><span class="ident">runtime_code</span>,
-			<span class="self">self</span>.<span class="ident">spawn_handle</span>.<span class="ident">clone</span>(),
+		<span class="kw">let </span>return_data = StateMachine::new(
+			<span class="kw-2">&amp;</span>state,
+			<span class="kw-2">&amp;mut </span>changes,
+			<span class="kw-2">&amp;</span><span class="self">self</span>.executor,
+			method,
+			call_data,
+			extensions.unwrap_or_default(),
+			<span class="kw-2">&amp;</span>runtime_code,
+			<span class="self">self</span>.spawn_handle.clone(),
 		)
-		.<span class="ident">set_parent_hash</span>(<span class="ident">at_hash</span>)
-		.<span class="ident">execute_using_consensus_failure_handler</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">NeverNativeValue</span>, <span class="kw">fn</span>() -&gt; <span class="kw">_</span><span class="op">&gt;</span>(
-			<span class="ident">strategy</span>.<span class="ident">get_manager</span>(),
+		.set_parent_hash(at_hash)
+		.execute_using_consensus_failure_handler::&lt;<span class="kw">_</span>, NeverNativeValue, <span class="kw">fn</span>() -&gt; <span class="kw">_</span>&gt;(
+			strategy.get_manager(),
 			<span class="prelude-val">None</span>,
 		)<span class="question-mark">?</span>;
 
-		<span class="prelude-val">Ok</span>(<span class="ident">return_data</span>.<span class="ident">into_encoded</span>())
+		<span class="prelude-val">Ok</span>(return_data.into_encoded())
 	}
 
-	<span class="kw">fn</span> <span class="ident">contextual_call</span><span class="op">&lt;</span>
-		<span class="ident">EM</span>: <span class="ident">Fn</span>(
-			<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NativeOrEncoded</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>,
-			<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NativeOrEncoded</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>,
-		) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NativeOrEncoded</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>,
-		<span class="ident">R</span>: <span class="ident">Encode</span> <span class="op">+</span> <span class="ident">Decode</span> <span class="op">+</span> <span class="ident">PartialEq</span>,
-		<span class="ident">NC</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident">result::Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">sp_api::ApiError</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">UnwindSafe</span>,
-	<span class="op">&gt;</span>(
+	<span class="kw">fn </span>contextual_call&lt;
+		EM: Fn(
+			<span class="prelude-ty">Result</span>&lt;NativeOrEncoded&lt;R&gt;, <span class="self">Self</span>::Error&gt;,
+			<span class="prelude-ty">Result</span>&lt;NativeOrEncoded&lt;R&gt;, <span class="self">Self</span>::Error&gt;,
+		) -&gt; <span class="prelude-ty">Result</span>&lt;NativeOrEncoded&lt;R&gt;, <span class="self">Self</span>::Error&gt;,
+		R: Encode + Decode + PartialEq,
+		NC: FnOnce() -&gt; result::Result&lt;R, sp_api::ApiError&gt; + UnwindSafe,
+	&gt;(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-		<span class="ident">method</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">call_data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">changes</span>: <span class="kw-2">&amp;</span><span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">OverlayedChanges</span><span class="op">&gt;</span>,
-		<span class="ident">storage_transaction_cache</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">StorageTransactionCache</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B::State</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">execution_manager</span>: <span class="ident">ExecutionManager</span><span class="op">&lt;</span><span class="ident">EM</span><span class="op">&gt;</span>,
-		<span class="ident">native_call</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NC</span><span class="op">&gt;</span>,
-		<span class="ident">recorder</span>: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProofRecorder</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-		<span class="ident">extensions</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Extensions</span><span class="op">&gt;</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NativeOrEncoded</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">sp_blockchain::Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">ExecutionManager</span><span class="op">&lt;</span><span class="ident">EM</span><span class="op">&gt;</span>: <span class="ident">Clone</span>,
+		at: <span class="kw-2">&amp;</span>BlockId&lt;Block&gt;,
+		method: <span class="kw-2">&amp;</span>str,
+		call_data: <span class="kw-2">&amp;</span>[u8],
+		changes: <span class="kw-2">&amp;</span>RefCell&lt;OverlayedChanges&gt;,
+		storage_transaction_cache: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>RefCell&lt;StorageTransactionCache&lt;Block, B::State&gt;&gt;&gt;,
+		execution_manager: ExecutionManager&lt;EM&gt;,
+		native_call: <span class="prelude-ty">Option</span>&lt;NC&gt;,
+		recorder: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;ProofRecorder&lt;Block&gt;&gt;,
+		extensions: <span class="prelude-ty">Option</span>&lt;Extensions&gt;,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;NativeOrEncoded&lt;R&gt;, sp_blockchain::Error&gt;
+	<span class="kw">where
+		</span>ExecutionManager&lt;EM&gt;: Clone,
 	{
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">storage_transaction_cache</span> <span class="op">=</span> <span class="ident">storage_transaction_cache</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">borrow_mut</span>());
+		<span class="kw">let </span><span class="kw-2">mut </span>storage_transaction_cache = storage_transaction_cache.map(|c| c.borrow_mut());
 
-		<span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">backend</span>.<span class="ident">state_at</span>(<span class="kw-2">*</span><span class="ident">at</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>state = <span class="self">self</span>.backend.state_at(<span class="kw-2">*</span>at)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">changes</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">changes</span>.<span class="ident">borrow_mut</span>();
+		<span class="kw">let </span>changes = <span class="kw-2">&amp;mut *</span>changes.borrow_mut();
 
-		<span class="kw">let</span> <span class="ident">at_hash</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">backend</span>.<span class="ident">blockchain</span>().<span class="ident">block_hash_from_id</span>(<span class="ident">at</span>)<span class="question-mark">?</span>.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">sp_blockchain::Error::UnknownBlock</span>(<span class="macro">format!</span>(<span class="string">&quot;Could not find block hash for {:?}&quot;</span>, <span class="ident">at</span>))
+		<span class="kw">let </span>at_hash = <span class="self">self</span>.backend.blockchain().block_hash_from_id(at)<span class="question-mark">?</span>.ok_or_else(|| {
+			sp_blockchain::Error::UnknownBlock(<span class="macro">format!</span>(<span class="string">&quot;Could not find block hash for {:?}&quot;</span>, at))
 		})<span class="question-mark">?</span>;
 
-		<span class="comment">// It is important to extract the runtime code here before we create the proof</span>
-		<span class="comment">// recorder to not record it. We also need to fetch the runtime code from `state` to</span>
-		<span class="comment">// make sure we use the caching layers.</span>
-		<span class="kw">let</span> <span class="ident">state_runtime_code</span> <span class="op">=</span> <span class="ident">sp_state_machine::backend::BackendRuntimeCode::new</span>(<span class="kw-2">&amp;</span><span class="ident">state</span>);
+		<span class="comment">// It is important to extract the runtime code here before we create the proof
+		// recorder to not record it. We also need to fetch the runtime code from `state` to
+		// make sure we use the caching layers.
+		</span><span class="kw">let </span>state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(<span class="kw-2">&amp;</span>state);
 
-		<span class="kw">let</span> <span class="ident">runtime_code</span> <span class="op">=</span>
-			<span class="ident">state_runtime_code</span>.<span class="ident">runtime_code</span>().<span class="ident">map_err</span>(<span class="ident">sp_blockchain::Error::RuntimeCode</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">runtime_code</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">check_override</span>(<span class="ident">runtime_code</span>, <span class="ident">at</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>runtime_code =
+			state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)<span class="question-mark">?</span>;
+		<span class="kw">let </span>runtime_code = <span class="self">self</span>.check_override(runtime_code, at)<span class="question-mark">?</span>;
 
-		<span class="kw">match</span> <span class="ident">recorder</span> {
-			<span class="prelude-val">Some</span>(<span class="ident">recorder</span>) =&gt; {
-				<span class="kw">let</span> <span class="ident">trie_state</span> <span class="op">=</span> <span class="ident">state</span>.<span class="ident">as_trie_backend</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-					<span class="ident">Box::new</span>(<span class="ident">sp_state_machine::ExecutionError::UnableToGenerateProof</span>)
-						<span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">sp_state_machine::Error</span><span class="op">&gt;</span>
+		<span class="kw">match </span>recorder {
+			<span class="prelude-val">Some</span>(recorder) =&gt; {
+				<span class="kw">let </span>trie_state = state.as_trie_backend().ok_or_else(|| {
+					Box::new(sp_state_machine::ExecutionError::UnableToGenerateProof)
+						<span class="kw">as </span>Box&lt;<span class="kw">dyn </span>sp_state_machine::Error&gt;
 				})<span class="question-mark">?</span>;
 
-				<span class="kw">let</span> <span class="ident">backend</span> <span class="op">=</span> <span class="ident">sp_state_machine::ProvingBackend::new_with_recorder</span>(
-					<span class="ident">trie_state</span>,
-					<span class="ident">recorder</span>.<span class="ident">clone</span>(),
+				<span class="kw">let </span>backend = sp_state_machine::ProvingBackend::new_with_recorder(
+					trie_state,
+					recorder.clone(),
 				);
 
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">state_machine</span> <span class="op">=</span> <span class="ident">StateMachine::new</span>(
-					<span class="kw-2">&amp;</span><span class="ident">backend</span>,
-					<span class="ident">changes</span>,
-					<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">executor</span>,
-					<span class="ident">method</span>,
-					<span class="ident">call_data</span>,
-					<span class="ident">extensions</span>.<span class="ident">unwrap_or_default</span>(),
-					<span class="kw-2">&amp;</span><span class="ident">runtime_code</span>,
-					<span class="self">self</span>.<span class="ident">spawn_handle</span>.<span class="ident">clone</span>(),
+				<span class="kw">let </span><span class="kw-2">mut </span>state_machine = StateMachine::new(
+					<span class="kw-2">&amp;</span>backend,
+					changes,
+					<span class="kw-2">&amp;</span><span class="self">self</span>.executor,
+					method,
+					call_data,
+					extensions.unwrap_or_default(),
+					<span class="kw-2">&amp;</span>runtime_code,
+					<span class="self">self</span>.spawn_handle.clone(),
 				)
-				.<span class="ident">with_storage_transaction_cache</span>(<span class="ident">storage_transaction_cache</span>.<span class="ident">as_deref_mut</span>())
-				.<span class="ident">set_parent_hash</span>(<span class="ident">at_hash</span>);
-				<span class="ident">state_machine</span>.<span class="ident">execute_using_consensus_failure_handler</span>(
-					<span class="ident">execution_manager</span>,
-					<span class="ident">native_call</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">n</span><span class="op">|</span> <span class="op">|</span><span class="op">|</span> (<span class="ident">n</span>)().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Box::new</span>(<span class="ident">e</span>) <span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>)),
+				.with_storage_transaction_cache(storage_transaction_cache.as_deref_mut())
+				.set_parent_hash(at_hash);
+				state_machine.execute_using_consensus_failure_handler(
+					execution_manager,
+					native_call.map(|n| || (n)().map_err(|e| Box::new(e) <span class="kw">as </span>Box&lt;<span class="kw">_</span>&gt;)),
 				)
 			},
-			<span class="prelude-val">None</span> =&gt; {
-				<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">state_machine</span> <span class="op">=</span> <span class="ident">StateMachine::new</span>(
-					<span class="kw-2">&amp;</span><span class="ident">state</span>,
-					<span class="ident">changes</span>,
-					<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">executor</span>,
-					<span class="ident">method</span>,
-					<span class="ident">call_data</span>,
-					<span class="ident">extensions</span>.<span class="ident">unwrap_or_default</span>(),
-					<span class="kw-2">&amp;</span><span class="ident">runtime_code</span>,
-					<span class="self">self</span>.<span class="ident">spawn_handle</span>.<span class="ident">clone</span>(),
+			<span class="prelude-val">None </span>=&gt; {
+				<span class="kw">let </span><span class="kw-2">mut </span>state_machine = StateMachine::new(
+					<span class="kw-2">&amp;</span>state,
+					changes,
+					<span class="kw-2">&amp;</span><span class="self">self</span>.executor,
+					method,
+					call_data,
+					extensions.unwrap_or_default(),
+					<span class="kw-2">&amp;</span>runtime_code,
+					<span class="self">self</span>.spawn_handle.clone(),
 				)
-				.<span class="ident">with_storage_transaction_cache</span>(<span class="ident">storage_transaction_cache</span>.<span class="ident">as_deref_mut</span>())
-				.<span class="ident">set_parent_hash</span>(<span class="ident">at_hash</span>);
-				<span class="ident">state_machine</span>.<span class="ident">execute_using_consensus_failure_handler</span>(
-					<span class="ident">execution_manager</span>,
-					<span class="ident">native_call</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">n</span><span class="op">|</span> <span class="op">|</span><span class="op">|</span> (<span class="ident">n</span>)().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Box::new</span>(<span class="ident">e</span>) <span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>)),
+				.with_storage_transaction_cache(storage_transaction_cache.as_deref_mut())
+				.set_parent_hash(at_hash);
+				state_machine.execute_using_consensus_failure_handler(
+					execution_manager,
+					native_call.map(|n| || (n)().map_err(|e| Box::new(e) <span class="kw">as </span>Box&lt;<span class="kw">_</span>&gt;)),
 				)
 			},
 		}
-		.<span class="ident">map_err</span>(<span class="ident">Into::into</span>)
+		.map_err(Into::into)
 	}
 
-	<span class="kw">fn</span> <span class="ident">runtime_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>) -&gt; <span class="ident">sp_blockchain::Result</span><span class="op">&lt;</span><span class="ident">RuntimeVersion</span><span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">overlay</span> <span class="op">=</span> <span class="ident">OverlayedChanges::default</span>();
-		<span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">backend</span>.<span class="ident">state_at</span>(<span class="kw-2">*</span><span class="ident">id</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cache</span> <span class="op">=</span> <span class="ident">StorageTransactionCache</span>::<span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B::State</span><span class="op">&gt;</span><span class="ident">::default</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ext</span> <span class="op">=</span> <span class="ident">Ext::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">overlay</span>, <span class="kw-2">&amp;mut</span> <span class="ident">cache</span>, <span class="kw-2">&amp;</span><span class="ident">state</span>, <span class="prelude-val">None</span>);
-		<span class="kw">let</span> <span class="ident">state_runtime_code</span> <span class="op">=</span> <span class="ident">sp_state_machine::backend::BackendRuntimeCode::new</span>(<span class="kw-2">&amp;</span><span class="ident">state</span>);
-		<span class="kw">let</span> <span class="ident">runtime_code</span> <span class="op">=</span>
-			<span class="ident">state_runtime_code</span>.<span class="ident">runtime_code</span>().<span class="ident">map_err</span>(<span class="ident">sp_blockchain::Error::RuntimeCode</span>)<span class="question-mark">?</span>;
-		<span class="self">self</span>.<span class="ident">executor</span>
-			.<span class="ident">runtime_version</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ext</span>, <span class="kw-2">&amp;</span><span class="ident">runtime_code</span>)
-			.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">sp_blockchain::Error::VersionInvalid</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
+	<span class="kw">fn </span>runtime_version(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>BlockId&lt;Block&gt;) -&gt; sp_blockchain::Result&lt;RuntimeVersion&gt; {
+		<span class="kw">let </span><span class="kw-2">mut </span>overlay = OverlayedChanges::default();
+		<span class="kw">let </span>state = <span class="self">self</span>.backend.state_at(<span class="kw-2">*</span>id)<span class="question-mark">?</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>cache = StorageTransactionCache::&lt;Block, B::State&gt;::default();
+		<span class="kw">let </span><span class="kw-2">mut </span>ext = Ext::new(<span class="kw-2">&amp;mut </span>overlay, <span class="kw-2">&amp;mut </span>cache, <span class="kw-2">&amp;</span>state, <span class="prelude-val">None</span>);
+		<span class="kw">let </span>state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(<span class="kw-2">&amp;</span>state);
+		<span class="kw">let </span>runtime_code =
+			state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)<span class="question-mark">?</span>;
+		<span class="self">self</span>.executor
+			.runtime_version(<span class="kw-2">&amp;mut </span>ext, <span class="kw-2">&amp;</span>runtime_code)
+			.map_err(|e| sp_blockchain::Error::VersionInvalid(e.to_string()))
 	}
 
-	<span class="kw">fn</span> <span class="ident">prove_execution</span>(
+	<span class="kw">fn </span>prove_execution(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-		<span class="ident">method</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-		<span class="ident">call_data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-	) -&gt; <span class="ident">sp_blockchain::Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">StorageProof</span>)<span class="op">&gt;</span> {
-		<span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">backend</span>.<span class="ident">state_at</span>(<span class="kw-2">*</span><span class="ident">at</span>)<span class="question-mark">?</span>;
+		at: <span class="kw-2">&amp;</span>BlockId&lt;Block&gt;,
+		method: <span class="kw-2">&amp;</span>str,
+		call_data: <span class="kw-2">&amp;</span>[u8],
+	) -&gt; sp_blockchain::Result&lt;(Vec&lt;u8&gt;, StorageProof)&gt; {
+		<span class="kw">let </span>state = <span class="self">self</span>.backend.state_at(<span class="kw-2">*</span>at)<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">trie_backend</span> <span class="op">=</span> <span class="ident">state</span>.<span class="ident">as_trie_backend</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-			<span class="ident">Box::new</span>(<span class="ident">sp_state_machine::ExecutionError::UnableToGenerateProof</span>)
-				<span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">sp_state_machine::Error</span><span class="op">&gt;</span>
+		<span class="kw">let </span>trie_backend = state.as_trie_backend().ok_or_else(|| {
+			Box::new(sp_state_machine::ExecutionError::UnableToGenerateProof)
+				<span class="kw">as </span>Box&lt;<span class="kw">dyn </span>sp_state_machine::Error&gt;
 		})<span class="question-mark">?</span>;
 
-		<span class="kw">let</span> <span class="ident">state_runtime_code</span> <span class="op">=</span> <span class="ident">sp_state_machine::backend::BackendRuntimeCode::new</span>(<span class="ident">trie_backend</span>);
-		<span class="kw">let</span> <span class="ident">runtime_code</span> <span class="op">=</span>
-			<span class="ident">state_runtime_code</span>.<span class="ident">runtime_code</span>().<span class="ident">map_err</span>(<span class="ident">sp_blockchain::Error::RuntimeCode</span>)<span class="question-mark">?</span>;
-		<span class="kw">let</span> <span class="ident">runtime_code</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">check_override</span>(<span class="ident">runtime_code</span>, <span class="ident">at</span>)<span class="question-mark">?</span>;
+		<span class="kw">let </span>state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(trie_backend);
+		<span class="kw">let </span>runtime_code =
+			state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)<span class="question-mark">?</span>;
+		<span class="kw">let </span>runtime_code = <span class="self">self</span>.check_override(runtime_code, at)<span class="question-mark">?</span>;
 
-		<span class="ident">sp_state_machine::prove_execution_on_trie_backend</span>(
-			<span class="ident">trie_backend</span>,
-			<span class="kw-2">&amp;mut</span> <span class="ident">Default::default</span>(),
-			<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">executor</span>,
-			<span class="self">self</span>.<span class="ident">spawn_handle</span>.<span class="ident">clone</span>(),
-			<span class="ident">method</span>,
-			<span class="ident">call_data</span>,
-			<span class="kw-2">&amp;</span><span class="ident">runtime_code</span>,
+		sp_state_machine::prove_execution_on_trie_backend(
+			trie_backend,
+			<span class="kw-2">&amp;mut </span>Default::default(),
+			<span class="kw-2">&amp;</span><span class="self">self</span>.executor,
+			<span class="self">self</span>.spawn_handle.clone(),
+			method,
+			call_data,
+			<span class="kw-2">&amp;</span>runtime_code,
 		)
-		.<span class="ident">map_err</span>(<span class="ident">Into::into</span>)
+		.map_err(Into::into)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">E</span>, <span class="ident">Block</span><span class="op">&gt;</span> <span class="ident">RuntimeVersionOf</span> <span class="kw">for</span> <span class="ident">LocalCallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">E</span>: <span class="ident">RuntimeVersionOf</span>,
-	<span class="ident">Block</span>: <span class="ident">BlockT</span>,
+<span class="kw">impl</span>&lt;B, E, Block&gt; RuntimeVersionOf <span class="kw">for </span>LocalCallExecutor&lt;Block, B, E&gt;
+<span class="kw">where
+	</span>E: RuntimeVersionOf,
+	Block: BlockT,
 {
-	<span class="kw">fn</span> <span class="ident">runtime_version</span>(
+	<span class="kw">fn </span>runtime_version(
 		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		<span class="ident">ext</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">sp_externalities::Externalities</span>,
-		<span class="ident">runtime_code</span>: <span class="kw-2">&amp;</span><span class="ident">sp_core::traits::RuntimeCode</span>,
-	) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">sp_version::RuntimeVersion</span>, <span class="ident">sc_executor::error::Error</span><span class="op">&gt;</span> {
-		<span class="ident">RuntimeVersionOf::runtime_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">executor</span>, <span class="ident">ext</span>, <span class="ident">runtime_code</span>)
+		ext: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>sp_externalities::Externalities,
+		runtime_code: <span class="kw-2">&amp;</span>sp_core::traits::RuntimeCode,
+	) -&gt; <span class="prelude-ty">Result</span>&lt;sp_version::RuntimeVersion, sc_executor::error::Error&gt; {
+		RuntimeVersionOf::runtime_version(<span class="kw-2">&amp;</span><span class="self">self</span>.executor, ext, runtime_code)
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="ident">sp_version::GetRuntimeVersionAt</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">LocalCallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">B</span>: <span class="ident">backend::Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">E</span>: <span class="ident">CodeExecutor</span> <span class="op">+</span> <span class="ident">RuntimeVersionOf</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-	<span class="ident">Block</span>: <span class="ident">BlockT</span>,
+<span class="kw">impl</span>&lt;Block, B, E&gt; sp_version::GetRuntimeVersionAt&lt;Block&gt; <span class="kw">for </span>LocalCallExecutor&lt;Block, B, E&gt;
+<span class="kw">where
+	</span>B: backend::Backend&lt;Block&gt;,
+	E: CodeExecutor + RuntimeVersionOf + Clone + <span class="lifetime">&#39;static</span>,
+	Block: BlockT,
 {
-	<span class="kw">fn</span> <span class="ident">runtime_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="kw-2">&amp;</span><span class="ident">BlockId</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">sp_version::RuntimeVersion</span>, <span class="ident">String</span><span class="op">&gt;</span> {
-		<span class="ident">CallExecutor::runtime_version</span>(<span class="self">self</span>, <span class="ident">at</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
+	<span class="kw">fn </span>runtime_version(<span class="kw-2">&amp;</span><span class="self">self</span>, at: <span class="kw-2">&amp;</span>BlockId&lt;Block&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;sp_version::RuntimeVersion, String&gt; {
+		CallExecutor::runtime_version(<span class="self">self</span>, at).map_err(|e| e.to_string())
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="ident">sp_version::GetNativeVersion</span> <span class="kw">for</span> <span class="ident">LocalCallExecutor</span><span class="op">&lt;</span><span class="ident">Block</span>, <span class="ident">B</span>, <span class="ident">E</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-	<span class="ident">B</span>: <span class="ident">backend::Backend</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>,
-	<span class="ident">E</span>: <span class="ident">CodeExecutor</span> <span class="op">+</span> <span class="ident">sp_version::GetNativeVersion</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
-	<span class="ident">Block</span>: <span class="ident">BlockT</span>,
+<span class="kw">impl</span>&lt;Block, B, E&gt; sp_version::GetNativeVersion <span class="kw">for </span>LocalCallExecutor&lt;Block, B, E&gt;
+<span class="kw">where
+	</span>B: backend::Backend&lt;Block&gt;,
+	E: CodeExecutor + sp_version::GetNativeVersion + Clone + <span class="lifetime">&#39;static</span>,
+	Block: BlockT,
 {
-	<span class="kw">fn</span> <span class="ident">native_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">sp_version::NativeVersion</span> {
-		<span class="self">self</span>.<span class="ident">executor</span>.<span class="ident">native_version</span>()
+	<span class="kw">fn </span>native_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>sp_version::NativeVersion {
+		<span class="self">self</span>.executor.native_version()
 	}
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-	<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use</span> <span class="ident">sc_client_api::in_mem</span>;
-	<span class="kw">use</span> <span class="ident">sc_executor</span>::{<span class="ident">NativeElseWasmExecutor</span>, <span class="ident">WasmExecutionMethod</span>};
-	<span class="kw">use</span> <span class="ident">sp_core</span>::{
-		<span class="ident">testing::TaskExecutor</span>,
-		<span class="ident">traits</span>::{<span class="ident">FetchRuntimeCode</span>, <span class="ident">WrappedRuntimeCode</span>},
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+	<span class="kw">use super</span>::<span class="kw-2">*</span>;
+	<span class="kw">use </span>sc_client_api::in_mem;
+	<span class="kw">use </span>sc_executor::{NativeElseWasmExecutor, WasmExecutionMethod};
+	<span class="kw">use </span>sp_core::{
+		testing::TaskExecutor,
+		traits::{FetchRuntimeCode, WrappedRuntimeCode},
 	};
-	<span class="kw">use</span> <span class="ident">substrate_test_runtime_client</span>::{<span class="ident">runtime</span>, <span class="ident">GenesisInit</span>, <span class="ident">LocalExecutorDispatch</span>};
+	<span class="kw">use </span>substrate_test_runtime_client::{runtime, GenesisInit, LocalExecutorDispatch};
 
-	<span class="attribute">#[<span class="ident">test</span>]</span>
-	<span class="kw">fn</span> <span class="ident">should_get_override_if_exists</span>() {
-		<span class="kw">let</span> <span class="ident">executor</span> <span class="op">=</span> <span class="ident">NativeElseWasmExecutor</span>::<span class="op">&lt;</span><span class="ident">LocalExecutorDispatch</span><span class="op">&gt;</span><span class="ident">::new</span>(
-			<span class="ident">WasmExecutionMethod::Interpreted</span>,
+	<span class="attribute">#[test]
+	</span><span class="kw">fn </span>should_get_override_if_exists() {
+		<span class="kw">let </span>executor = NativeElseWasmExecutor::&lt;LocalExecutorDispatch&gt;::new(
+			WasmExecutionMethod::Interpreted,
 			<span class="prelude-val">Some</span>(<span class="number">128</span>),
 			<span class="number">1</span>,
 			<span class="number">2</span>,
 		);
 
-		<span class="kw">let</span> <span class="ident">overrides</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::client::wasm_override::dummy_overrides</span>();
-		<span class="kw">let</span> <span class="ident">onchain_code</span> <span class="op">=</span> <span class="ident">WrappedRuntimeCode</span>(<span class="ident">substrate_test_runtime::wasm_binary_unwrap</span>().<span class="ident">into</span>());
-		<span class="kw">let</span> <span class="ident">onchain_code</span> <span class="op">=</span> <span class="ident">RuntimeCode</span> {
-			<span class="ident">code_fetcher</span>: <span class="kw-2">&amp;</span><span class="ident">onchain_code</span>,
-			<span class="ident">heap_pages</span>: <span class="prelude-val">Some</span>(<span class="number">128</span>),
-			<span class="ident">hash</span>: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>],
+		<span class="kw">let </span>overrides = <span class="kw">crate</span>::client::wasm_override::dummy_overrides();
+		<span class="kw">let </span>onchain_code = WrappedRuntimeCode(substrate_test_runtime::wasm_binary_unwrap().into());
+		<span class="kw">let </span>onchain_code = RuntimeCode {
+			code_fetcher: <span class="kw-2">&amp;</span>onchain_code,
+			heap_pages: <span class="prelude-val">Some</span>(<span class="number">128</span>),
+			hash: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>],
 		};
 
-		<span class="kw">let</span> <span class="ident">backend</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">in_mem::Backend</span>::<span class="op">&lt;</span><span class="ident">runtime::Block</span><span class="op">&gt;</span><span class="ident">::new</span>());
+		<span class="kw">let </span>backend = Arc::new(in_mem::Backend::&lt;runtime::Block&gt;::new());
 
-		<span class="comment">// wasm_runtime_overrides is `None` here because we construct the</span>
-		<span class="comment">// LocalCallExecutor directly later on</span>
-		<span class="kw">let</span> <span class="ident">client_config</span> <span class="op">=</span> <span class="ident">ClientConfig::default</span>();
+		<span class="comment">// wasm_runtime_overrides is `None` here because we construct the
+		// LocalCallExecutor directly later on
+		</span><span class="kw">let </span>client_config = ClientConfig::default();
 
-		<span class="comment">// client is used for the convenience of creating and inserting the genesis block.</span>
-		<span class="kw">let</span> <span class="ident">_client</span> <span class="op">=</span> <span class="ident">substrate_test_runtime_client::client::new_with_backend</span>::<span class="op">&lt;</span>
+		<span class="comment">// client is used for the convenience of creating and inserting the genesis block.
+		</span><span class="kw">let </span>_client = substrate_test_runtime_client::client::new_with_backend::&lt;
 			<span class="kw">_</span>,
 			<span class="kw">_</span>,
-			<span class="ident">runtime::Block</span>,
+			runtime::Block,
 			<span class="kw">_</span>,
-			<span class="ident">runtime::RuntimeApi</span>,
-		<span class="op">&gt;</span>(
-			<span class="ident">backend</span>.<span class="ident">clone</span>(),
-			<span class="ident">executor</span>.<span class="ident">clone</span>(),
-			<span class="kw-2">&amp;</span><span class="ident">substrate_test_runtime_client::GenesisParameters::default</span>().<span class="ident">genesis_storage</span>(),
+			runtime::RuntimeApi,
+		&gt;(
+			backend.clone(),
+			executor.clone(),
+			<span class="kw-2">&amp;</span>substrate_test_runtime_client::GenesisParameters::default().genesis_storage(),
 			<span class="prelude-val">None</span>,
-			<span class="ident">Box::new</span>(<span class="ident">TaskExecutor::new</span>()),
+			Box::new(TaskExecutor::new()),
 			<span class="prelude-val">None</span>,
 			<span class="prelude-val">None</span>,
-			<span class="ident">Default::default</span>(),
+			Default::default(),
 		)
-		.<span class="ident">expect</span>(<span class="string">&quot;Creates a client&quot;</span>);
+		.expect(<span class="string">&quot;Creates a client&quot;</span>);
 
-		<span class="kw">let</span> <span class="ident">call_executor</span> <span class="op">=</span> <span class="ident">LocalCallExecutor</span> {
-			<span class="ident">backend</span>: <span class="ident">backend</span>.<span class="ident">clone</span>(),
-			<span class="ident">executor</span>: <span class="ident">executor</span>.<span class="ident">clone</span>(),
-			<span class="ident">wasm_override</span>: <span class="ident">Arc::new</span>(<span class="prelude-val">Some</span>(<span class="ident">overrides</span>)),
-			<span class="ident">spawn_handle</span>: <span class="ident">Box::new</span>(<span class="ident">TaskExecutor::new</span>()),
-			<span class="ident">client_config</span>,
-			<span class="ident">wasm_substitutes</span>: <span class="ident">WasmSubstitutes::new</span>(
-				<span class="ident">Default::default</span>(),
-				<span class="ident">executor</span>.<span class="ident">clone</span>(),
-				<span class="ident">backend</span>.<span class="ident">clone</span>(),
+		<span class="kw">let </span>call_executor = LocalCallExecutor {
+			backend: backend.clone(),
+			executor: executor.clone(),
+			wasm_override: Arc::new(<span class="prelude-val">Some</span>(overrides)),
+			spawn_handle: Box::new(TaskExecutor::new()),
+			client_config,
+			wasm_substitutes: WasmSubstitutes::new(
+				Default::default(),
+				executor.clone(),
+				backend.clone(),
 			)
-			.<span class="ident">unwrap</span>(),
+			.unwrap(),
 		};
 
-		<span class="kw">let</span> <span class="ident">check</span> <span class="op">=</span> <span class="ident">call_executor</span>
-			.<span class="ident">check_override</span>(<span class="ident">onchain_code</span>, <span class="kw-2">&amp;</span><span class="ident">BlockId::Number</span>(<span class="ident">Default::default</span>()))
-			.<span class="ident">expect</span>(<span class="string">&quot;RuntimeCode override&quot;</span>);
+		<span class="kw">let </span>check = call_executor
+			.check_override(onchain_code, <span class="kw-2">&amp;</span>BlockId::Number(Default::default()))
+			.expect(<span class="string">&quot;RuntimeCode override&quot;</span>);
 
-		<span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>]), <span class="ident">check</span>.<span class="ident">fetch_runtime_code</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>));
+		<span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>]), check.fetch_runtime_code().map(Into::into));
 	}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_service" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="sc_service" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

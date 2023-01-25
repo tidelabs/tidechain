@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/instance/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../wasmtime_runtime/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-0.35.3/src/instance/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -567,243 +562,243 @@
 <span id="562">562</span>
 <span id="563">563</span>
 <span id="564">564</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::imports::Imports</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::instance</span>::{<span class="ident">Instance</span>, <span class="ident">InstanceHandle</span>, <span class="ident">RuntimeMemoryCreator</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::memory</span>::{<span class="ident">DefaultMemoryCreator</span>, <span class="ident">Memory</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::table::Table</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::traphandlers::Trap</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ModuleRuntimeInfo</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Store</span>;
-<span class="kw">use</span> <span class="ident">anyhow::Result</span>;
-<span class="kw">use</span> <span class="ident">std::alloc</span>;
-<span class="kw">use</span> <span class="ident">std::any::Any</span>;
-<span class="kw">use</span> <span class="ident">std::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">std::ptr</span>;
-<span class="kw">use</span> <span class="ident">std::slice</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
-<span class="kw">use</span> <span class="ident">wasmtime_environ</span>::{
-    <span class="ident">DefinedMemoryIndex</span>, <span class="ident">DefinedTableIndex</span>, <span class="ident">HostPtr</span>, <span class="ident">InitMemory</span>, <span class="ident">MemoryInitialization</span>,
-    <span class="ident">MemoryInitializer</span>, <span class="ident">Module</span>, <span class="ident">PrimaryMap</span>, <span class="ident">TableInitialization</span>, <span class="ident">TableInitializer</span>, <span class="ident">TrapCode</span>,
-    <span class="ident">VMOffsets</span>, <span class="ident">WasmType</span>, <span class="ident">WASM_PAGE_SIZE</span>,
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::imports::Imports;
+<span class="kw">use </span><span class="kw">crate</span>::instance::{Instance, InstanceHandle, RuntimeMemoryCreator};
+<span class="kw">use </span><span class="kw">crate</span>::memory::{DefaultMemoryCreator, Memory};
+<span class="kw">use </span><span class="kw">crate</span>::table::Table;
+<span class="kw">use </span><span class="kw">crate</span>::traphandlers::Trap;
+<span class="kw">use </span><span class="kw">crate</span>::ModuleRuntimeInfo;
+<span class="kw">use </span><span class="kw">crate</span>::Store;
+<span class="kw">use </span>anyhow::Result;
+<span class="kw">use </span>std::alloc;
+<span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::convert::TryFrom;
+<span class="kw">use </span>std::ptr;
+<span class="kw">use </span>std::slice;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>thiserror::Error;
+<span class="kw">use </span>wasmtime_environ::{
+    DefinedMemoryIndex, DefinedTableIndex, HostPtr, InitMemory, MemoryInitialization,
+    MemoryInitializer, Module, PrimaryMap, TableInitialization, TableInitializer, TrapCode,
+    VMOffsets, WasmType, WASM_PAGE_SIZE,
 };
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pooling-allocator&quot;</span>)]</span>
-<span class="kw">mod</span> <span class="ident">pooling</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pooling-allocator&quot;</span>)]
+</span><span class="kw">mod </span>pooling;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pooling-allocator&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="self">self</span>::pooling</span>::{<span class="ident">InstanceLimits</span>, <span class="ident">PoolingAllocationStrategy</span>, <span class="ident">PoolingInstanceAllocator</span>};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pooling-allocator&quot;</span>)]
+</span><span class="kw">pub use </span><span class="self">self</span>::pooling::{InstanceLimits, PoolingAllocationStrategy, PoolingInstanceAllocator};
 
-<span class="doccomment">/// Represents a request for a new runtime instance.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InstanceAllocationRequest</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The info related to the compiled version of this module,</span>
-    <span class="doccomment">/// needed for instantiation: function metadata, JIT code</span>
-    <span class="doccomment">/// addresses, precomputed images for lazy memory and table</span>
-    <span class="doccomment">/// initialization, and the like. This Arc is cloned and held for</span>
-    <span class="doccomment">/// the lifetime of the instance.</span>
-    <span class="kw">pub</span> <span class="ident">runtime_info</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ModuleRuntimeInfo</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Represents a request for a new runtime instance.
+</span><span class="kw">pub struct </span>InstanceAllocationRequest&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// The info related to the compiled version of this module,
+    /// needed for instantiation: function metadata, JIT code
+    /// addresses, precomputed images for lazy memory and table
+    /// initialization, and the like. This Arc is cloned and held for
+    /// the lifetime of the instance.
+    </span><span class="kw">pub </span>runtime_info: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Arc&lt;<span class="kw">dyn </span>ModuleRuntimeInfo&gt;,
 
-    <span class="doccomment">/// The imports to use for the instantiation.</span>
-    <span class="kw">pub</span> <span class="ident">imports</span>: <span class="ident">Imports</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The imports to use for the instantiation.
+    </span><span class="kw">pub </span>imports: Imports&lt;<span class="lifetime">&#39;a</span>&gt;,
 
-    <span class="doccomment">/// The host state to associate with the instance.</span>
-    <span class="kw">pub</span> <span class="ident">host_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The host state to associate with the instance.
+    </span><span class="kw">pub </span>host_state: Box&lt;<span class="kw">dyn </span>Any + Send + Sync&gt;,
 
-    <span class="doccomment">/// A pointer to the &quot;store&quot; for this instance to be allocated. The store</span>
-    <span class="doccomment">/// correlates with the `Store` in wasmtime itself, and lots of contextual</span>
-    <span class="doccomment">/// information about the execution of wasm can be learned through the store.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this is a raw pointer and has a static lifetime, both of which</span>
-    <span class="doccomment">/// are a bit of a lie. This is done purely so a store can learn about</span>
-    <span class="doccomment">/// itself when it gets called as a host function, and additionally so this</span>
-    <span class="doccomment">/// runtime can access internals as necessary (such as the</span>
-    <span class="doccomment">/// VMExternRefActivationsTable or the resource limiter methods).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this ends up being a self-pointer to the instance when stored.</span>
-    <span class="doccomment">/// The reason is that the instance itself is then stored within the store.</span>
-    <span class="doccomment">/// We use a number of `PhantomPinned` declarations to indicate this to the</span>
-    <span class="doccomment">/// compiler. More info on this in `wasmtime/src/store.rs`</span>
-    <span class="kw">pub</span> <span class="ident">store</span>: <span class="ident">StorePtr</span>,
+    <span class="doccomment">/// A pointer to the &quot;store&quot; for this instance to be allocated. The store
+    /// correlates with the `Store` in wasmtime itself, and lots of contextual
+    /// information about the execution of wasm can be learned through the store.
+    ///
+    /// Note that this is a raw pointer and has a static lifetime, both of which
+    /// are a bit of a lie. This is done purely so a store can learn about
+    /// itself when it gets called as a host function, and additionally so this
+    /// runtime can access internals as necessary (such as the
+    /// VMExternRefActivationsTable or the resource limiter methods).
+    ///
+    /// Note that this ends up being a self-pointer to the instance when stored.
+    /// The reason is that the instance itself is then stored within the store.
+    /// We use a number of `PhantomPinned` declarations to indicate this to the
+    /// compiler. More info on this in `wasmtime/src/store.rs`
+    </span><span class="kw">pub </span>store: StorePtr,
 }
 
-<span class="doccomment">/// A pointer to a Store. This Option&lt;*mut dyn Store&gt; is wrapped in a struct</span>
-<span class="doccomment">/// so that the function to create a &amp;mut dyn Store is a method on a member of</span>
-<span class="doccomment">/// InstanceAllocationRequest, rather than on a &amp;mut InstanceAllocationRequest</span>
-<span class="doccomment">/// itself, because several use-sites require a split mut borrow on the</span>
-<span class="doccomment">/// InstanceAllocationRequest.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StorePtr</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="kw">dyn</span> <span class="ident">Store</span><span class="op">&gt;</span>);
-<span class="kw">impl</span> <span class="ident">StorePtr</span> {
-    <span class="doccomment">/// A pointer to no Store.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">empty</span>() -&gt; <span class="self">Self</span> {
+<span class="doccomment">/// A pointer to a Store. This Option&lt;*mut dyn Store&gt; is wrapped in a struct
+/// so that the function to create a &amp;mut dyn Store is a method on a member of
+/// InstanceAllocationRequest, rather than on a &amp;mut InstanceAllocationRequest
+/// itself, because several use-sites require a split mut borrow on the
+/// InstanceAllocationRequest.
+</span><span class="kw">pub struct </span>StorePtr(<span class="prelude-ty">Option</span>&lt;<span class="kw-2">*mut </span><span class="kw">dyn </span>Store&gt;);
+<span class="kw">impl </span>StorePtr {
+    <span class="doccomment">/// A pointer to no Store.
+    </span><span class="kw">pub fn </span>empty() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>(<span class="prelude-val">None</span>)
     }
-    <span class="doccomment">/// A pointer to a Store.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="kw">dyn</span> <span class="ident">Store</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span>(<span class="prelude-val">Some</span>(<span class="ident">ptr</span>))
+    <span class="doccomment">/// A pointer to a Store.
+    </span><span class="kw">pub fn </span>new(ptr: <span class="kw-2">*mut </span><span class="kw">dyn </span>Store) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(<span class="prelude-val">Some</span>(ptr))
     }
-    <span class="doccomment">/// The raw contents of this struct</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">*mut</span> <span class="kw">dyn</span> <span class="ident">Store</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">clone</span>()
+    <span class="doccomment">/// The raw contents of this struct
+    </span><span class="kw">pub fn </span>as_raw(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*mut </span><span class="kw">dyn </span>Store&gt; {
+        <span class="self">self</span>.<span class="number">0</span>.clone()
     }
-    <span class="doccomment">/// Use the StorePtr as a mut ref to the Store.</span>
-    <span class="doccomment">/// Safety: must not be used outside the original lifetime of the borrow.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Store</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="number">0</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">ptr</span>) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">*</span><span class="ident">ptr</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
+    <span class="doccomment">/// Use the StorePtr as a mut ref to the Store.
+    /// Safety: must not be used outside the original lifetime of the borrow.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>get(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Store&gt; {
+        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
+            <span class="prelude-val">Some</span>(ptr) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;mut *</span>ptr),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
 }
 
-<span class="doccomment">/// An link error while instantiating a module.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Link error: {0}&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LinkError</span>(<span class="kw">pub</span> <span class="ident">String</span>);
+<span class="doccomment">/// An link error while instantiating a module.
+</span><span class="attribute">#[derive(Error, Debug)]
+#[error(<span class="string">&quot;Link error: {0}&quot;</span>)]
+</span><span class="kw">pub struct </span>LinkError(<span class="kw">pub </span>String);
 
-<span class="doccomment">/// An error while instantiating a module.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">InstantiationError</span> {
-    <span class="doccomment">/// Insufficient resources available for execution.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Insufficient resources: {0}&quot;</span>)]</span>
-    <span class="ident">Resource</span>(<span class="ident">anyhow::Error</span>),
+<span class="doccomment">/// An error while instantiating a module.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>InstantiationError {
+    <span class="doccomment">/// Insufficient resources available for execution.
+    </span><span class="attribute">#[error(<span class="string">&quot;Insufficient resources: {0}&quot;</span>)]
+    </span>Resource(anyhow::Error),
 
-    <span class="doccomment">/// A wasm link error occured.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to link module&quot;</span>)]</span>
-    <span class="ident">Link</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">LinkError</span>),
+    <span class="doccomment">/// A wasm link error occured.
+    </span><span class="attribute">#[error(<span class="string">&quot;Failed to link module&quot;</span>)]
+    </span>Link(<span class="attribute">#[from] </span>LinkError),
 
-    <span class="doccomment">/// A trap ocurred during instantiation, after linking.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Trap occurred during instantiation&quot;</span>)]</span>
-    <span class="ident">Trap</span>(<span class="ident">Trap</span>),
+    <span class="doccomment">/// A trap ocurred during instantiation, after linking.
+    </span><span class="attribute">#[error(<span class="string">&quot;Trap occurred during instantiation&quot;</span>)]
+    </span>Trap(Trap),
 
-    <span class="doccomment">/// A limit on how many instances are supported has been reached.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Limit of {0} concurrent instances has been reached&quot;</span>)]</span>
-    <span class="ident">Limit</span>(<span class="ident">u32</span>),
+    <span class="doccomment">/// A limit on how many instances are supported has been reached.
+    </span><span class="attribute">#[error(<span class="string">&quot;Limit of {0} concurrent instances has been reached&quot;</span>)]
+    </span>Limit(u32),
 }
 
-<span class="doccomment">/// An error while creating a fiber stack.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FiberStackError</span> {
-    <span class="doccomment">/// Insufficient resources available for the request.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Insufficient resources: {0}&quot;</span>)]</span>
-    <span class="ident">Resource</span>(<span class="ident">anyhow::Error</span>),
-    <span class="doccomment">/// An error for when the allocator doesn&#39;t support fiber stacks.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;fiber stacks are not supported by the allocator&quot;</span>)]</span>
-    <span class="ident">NotSupported</span>,
-    <span class="doccomment">/// A limit on how many fibers are supported has been reached.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Limit of {0} concurrent fibers has been reached&quot;</span>)]</span>
-    <span class="ident">Limit</span>(<span class="ident">u32</span>),
+<span class="doccomment">/// An error while creating a fiber stack.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>FiberStackError {
+    <span class="doccomment">/// Insufficient resources available for the request.
+    </span><span class="attribute">#[error(<span class="string">&quot;Insufficient resources: {0}&quot;</span>)]
+    </span>Resource(anyhow::Error),
+    <span class="doccomment">/// An error for when the allocator doesn&#39;t support fiber stacks.
+    </span><span class="attribute">#[error(<span class="string">&quot;fiber stacks are not supported by the allocator&quot;</span>)]
+    </span>NotSupported,
+    <span class="doccomment">/// A limit on how many fibers are supported has been reached.
+    </span><span class="attribute">#[error(<span class="string">&quot;Limit of {0} concurrent fibers has been reached&quot;</span>)]
+    </span>Limit(u32),
 }
 
-<span class="doccomment">/// Represents a runtime instance allocator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This trait is unsafe as it requires knowledge of Wasmtime&#39;s runtime internals to implement correctly.</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">trait</span> <span class="ident">InstanceAllocator</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-    <span class="doccomment">/// Validates that a module is supported by the allocator.</span>
-    <span class="kw">fn</span> <span class="ident">validate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="ident">drop</span>(<span class="ident">module</span>);
+<span class="doccomment">/// Represents a runtime instance allocator.
+///
+/// # Safety
+///
+/// This trait is unsafe as it requires knowledge of Wasmtime&#39;s runtime internals to implement correctly.
+</span><span class="kw">pub unsafe trait </span>InstanceAllocator: Send + Sync {
+    <span class="doccomment">/// Validates that a module is supported by the allocator.
+    </span><span class="kw">fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        drop(module);
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Adjusts the tunables prior to creation of any JIT compiler.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method allows the instance allocator control over tunables passed to a `wasmtime_jit::Compiler`.</span>
-    <span class="kw">fn</span> <span class="ident">adjust_tunables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tunables</span>: <span class="kw-2">&amp;mut</span> <span class="ident">wasmtime_environ::Tunables</span>) {
-        <span class="ident">drop</span>(<span class="ident">tunables</span>);
+    <span class="doccomment">/// Adjusts the tunables prior to creation of any JIT compiler.
+    ///
+    /// This method allows the instance allocator control over tunables passed to a `wasmtime_jit::Compiler`.
+    </span><span class="kw">fn </span>adjust_tunables(<span class="kw-2">&amp;</span><span class="self">self</span>, tunables: <span class="kw-2">&amp;mut </span>wasmtime_environ::Tunables) {
+        drop(tunables);
     }
 
-    <span class="doccomment">/// Allocates an instance for the given allocation request.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method is not inherently unsafe, but care must be made to ensure</span>
-    <span class="doccomment">/// pointers passed in the allocation request outlive the returned instance.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">allocate</span>(
+    <span class="doccomment">/// Allocates an instance for the given allocation request.
+    ///
+    /// # Safety
+    ///
+    /// This method is not inherently unsafe, but care must be made to ensure
+    /// pointers passed in the allocation request outlive the returned instance.
+    </span><span class="kw">unsafe fn </span>allocate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">InstanceAllocationRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InstanceHandle</span>, <span class="ident">InstantiationError</span><span class="op">&gt;</span>;
+        req: InstanceAllocationRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;InstanceHandle, InstantiationError&gt;;
 
-    <span class="doccomment">/// Finishes the instantiation process started by an instance allocator.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method is only safe to call immediately after an instance has been allocated.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">initialize</span>(
+    <span class="doccomment">/// Finishes the instantiation process started by an instance allocator.
+    ///
+    /// # Safety
+    ///
+    /// This method is only safe to call immediately after an instance has been allocated.
+    </span><span class="kw">unsafe fn </span>initialize(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">handle</span>: <span class="kw-2">&amp;mut</span> <span class="ident">InstanceHandle</span>,
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-        <span class="ident">is_bulk_memory</span>: <span class="ident">bool</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span>;
+        handle: <span class="kw-2">&amp;mut </span>InstanceHandle,
+        module: <span class="kw-2">&amp;</span>Module,
+        is_bulk_memory: bool,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt;;
 
-    <span class="doccomment">/// Deallocates a previously allocated instance.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function is unsafe because there are no guarantees that the given handle</span>
-    <span class="doccomment">/// is the only owner of the underlying instance to deallocate.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Use extreme care when deallocating an instance so that there are no dangling instance pointers.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">deallocate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">InstanceHandle</span>);
+    <span class="doccomment">/// Deallocates a previously allocated instance.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because there are no guarantees that the given handle
+    /// is the only owner of the underlying instance to deallocate.
+    ///
+    /// Use extreme care when deallocating an instance so that there are no dangling instance pointers.
+    </span><span class="kw">unsafe fn </span>deallocate(<span class="kw-2">&amp;</span><span class="self">self</span>, handle: <span class="kw-2">&amp;</span>InstanceHandle);
 
-    <span class="doccomment">/// Allocates a fiber stack for calling async functions on.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">allocate_fiber_stack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">wasmtime_fiber::FiberStack</span>, <span class="ident">FiberStackError</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Allocates a fiber stack for calling async functions on.
+    </span><span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    </span><span class="kw">fn </span>allocate_fiber_stack(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;wasmtime_fiber::FiberStack, FiberStackError&gt;;
 
-    <span class="doccomment">/// Deallocates a fiber stack that was previously allocated with `allocate_fiber_stack`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Safety</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The provided stack is required to have been allocated with `allocate_fiber_stack`.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">deallocate_fiber_stack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">stack</span>: <span class="kw-2">&amp;</span><span class="ident">wasmtime_fiber::FiberStack</span>);
+    <span class="doccomment">/// Deallocates a fiber stack that was previously allocated with `allocate_fiber_stack`.
+    ///
+    /// # Safety
+    ///
+    /// The provided stack is required to have been allocated with `allocate_fiber_stack`.
+    </span><span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    </span><span class="kw">unsafe fn </span>deallocate_fiber_stack(<span class="kw-2">&amp;</span><span class="self">self</span>, stack: <span class="kw-2">&amp;</span>wasmtime_fiber::FiberStack);
 }
 
-<span class="kw">fn</span> <span class="ident">get_table_init_start</span>(
-    <span class="ident">init</span>: <span class="kw-2">&amp;</span><span class="ident">TableInitializer</span>,
-    <span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">Instance</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="ident">init</span>.<span class="ident">base</span> {
-        <span class="prelude-val">Some</span>(<span class="ident">base</span>) =&gt; {
-            <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">def_index</span>) <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">module</span>().<span class="ident">defined_global_index</span>(<span class="ident">base</span>) {
-                    <span class="kw-2">*</span><span class="ident">instance</span>.<span class="ident">global</span>(<span class="ident">def_index</span>).<span class="ident">as_u32</span>()
-                } <span class="kw">else</span> {
-                    <span class="kw-2">*</span>(<span class="kw-2">*</span><span class="ident">instance</span>.<span class="ident">imported_global</span>(<span class="ident">base</span>).<span class="ident">from</span>).<span class="ident">as_u32</span>()
+<span class="kw">fn </span>get_table_init_start(
+    init: <span class="kw-2">&amp;</span>TableInitializer,
+    instance: <span class="kw-2">&amp;</span>Instance,
+) -&gt; <span class="prelude-ty">Result</span>&lt;u32, InstantiationError&gt; {
+    <span class="kw">match </span>init.base {
+        <span class="prelude-val">Some</span>(base) =&gt; {
+            <span class="kw">let </span>val = <span class="kw">unsafe </span>{
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(def_index) = instance.module().defined_global_index(base) {
+                    <span class="kw-2">*</span>instance.global(def_index).as_u32()
+                } <span class="kw">else </span>{
+                    <span class="kw-2">*</span>(<span class="kw-2">*</span>instance.imported_global(base).from).as_u32()
                 }
             };
 
-            <span class="ident">init</span>.<span class="ident">offset</span>.<span class="ident">checked_add</span>(<span class="ident">val</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                <span class="ident">InstantiationError::Link</span>(<span class="ident">LinkError</span>(
-                    <span class="string">&quot;element segment global base overflows&quot;</span>.<span class="ident">to_owned</span>(),
+            init.offset.checked_add(val).ok_or_else(|| {
+                InstantiationError::Link(LinkError(
+                    <span class="string">&quot;element segment global base overflows&quot;</span>.to_owned(),
                 ))
             })
         }
-        <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">init</span>.<span class="ident">offset</span>),
+        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(init.offset),
     }
 }
 
-<span class="kw">fn</span> <span class="ident">check_table_init_bounds</span>(
-    <span class="ident">instance</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Instance</span>,
-    <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">module</span>.<span class="ident">table_initialization</span> {
-        <span class="ident">TableInitialization::FuncTable</span> { <span class="ident">segments</span>, .. }
-        <span class="op">|</span> <span class="ident">TableInitialization::Segments</span> { <span class="ident">segments</span> } =&gt; {
-            <span class="kw">for</span> <span class="ident">segment</span> <span class="kw">in</span> <span class="ident">segments</span> {
-                <span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">instance</span>.<span class="ident">get_table</span>(<span class="ident">segment</span>.<span class="ident">table_index</span>) };
-                <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">get_table_init_start</span>(<span class="ident">segment</span>, <span class="ident">instance</span>)<span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">start</span>).<span class="ident">unwrap</span>();
-                <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">start</span>.<span class="ident">checked_add</span>(<span class="ident">segment</span>.<span class="ident">elements</span>.<span class="ident">len</span>());
+<span class="kw">fn </span>check_table_init_bounds(
+    instance: <span class="kw-2">&amp;mut </span>Instance,
+    module: <span class="kw-2">&amp;</span>Module,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+    <span class="kw">match </span><span class="kw-2">&amp;</span>module.table_initialization {
+        TableInitialization::FuncTable { segments, .. }
+        | TableInitialization::Segments { segments } =&gt; {
+            <span class="kw">for </span>segment <span class="kw">in </span>segments {
+                <span class="kw">let </span>table = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>instance.get_table(segment.table_index) };
+                <span class="kw">let </span>start = get_table_init_start(segment, instance)<span class="question-mark">?</span>;
+                <span class="kw">let </span>start = usize::try_from(start).unwrap();
+                <span class="kw">let </span>end = start.checked_add(segment.elements.len());
 
-                <span class="kw">match</span> <span class="ident">end</span> {
-                    <span class="prelude-val">Some</span>(<span class="ident">end</span>) <span class="kw">if</span> <span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">table</span>.<span class="ident">size</span>() <span class="kw">as</span> <span class="ident">usize</span> =&gt; {
-                        <span class="comment">// Initializer is in bounds</span>
-                    }
-                    <span class="kw">_</span> =&gt; {
-                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">InstantiationError::Link</span>(<span class="ident">LinkError</span>(
-                            <span class="string">&quot;table out of bounds: elements segment does not fit&quot;</span>.<span class="ident">to_owned</span>(),
+                <span class="kw">match </span>end {
+                    <span class="prelude-val">Some</span>(end) <span class="kw">if </span>end &lt;= table.size() <span class="kw">as </span>usize =&gt; {
+                        <span class="comment">// Initializer is in bounds
+                    </span>}
+                    <span class="kw">_ </span>=&gt; {
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(InstantiationError::Link(LinkError(
+                            <span class="string">&quot;table out of bounds: elements segment does not fit&quot;</span>.to_owned(),
                         )))
                     }
                 }
@@ -814,27 +809,27 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">initialize_tables</span>(<span class="ident">instance</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Instance</span>, <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="comment">// Note: if the module&#39;s table initializer state is in</span>
-    <span class="comment">// FuncTable mode, we will lazily initialize tables based on</span>
-    <span class="comment">// any statically-precomputed image of FuncIndexes, but there</span>
-    <span class="comment">// may still be &quot;leftover segments&quot; that could not be</span>
-    <span class="comment">// incorporated. So we have a unified handler here that</span>
-    <span class="comment">// iterates over all segments (Segments mode) or leftover</span>
-    <span class="comment">// segments (FuncTable mode) to initialize.</span>
-    <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">module</span>.<span class="ident">table_initialization</span> {
-        <span class="ident">TableInitialization::FuncTable</span> { <span class="ident">segments</span>, .. }
-        <span class="op">|</span> <span class="ident">TableInitialization::Segments</span> { <span class="ident">segments</span> } =&gt; {
-            <span class="kw">for</span> <span class="ident">segment</span> <span class="kw">in</span> <span class="ident">segments</span> {
-                <span class="ident">instance</span>
-                    .<span class="ident">table_init_segment</span>(
-                        <span class="ident">segment</span>.<span class="ident">table_index</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">segment</span>.<span class="ident">elements</span>,
-                        <span class="ident">get_table_init_start</span>(<span class="ident">segment</span>, <span class="ident">instance</span>)<span class="question-mark">?</span>,
+<span class="kw">fn </span>initialize_tables(instance: <span class="kw-2">&amp;mut </span>Instance, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+    <span class="comment">// Note: if the module&#39;s table initializer state is in
+    // FuncTable mode, we will lazily initialize tables based on
+    // any statically-precomputed image of FuncIndexes, but there
+    // may still be &quot;leftover segments&quot; that could not be
+    // incorporated. So we have a unified handler here that
+    // iterates over all segments (Segments mode) or leftover
+    // segments (FuncTable mode) to initialize.
+    </span><span class="kw">match </span><span class="kw-2">&amp;</span>module.table_initialization {
+        TableInitialization::FuncTable { segments, .. }
+        | TableInitialization::Segments { segments } =&gt; {
+            <span class="kw">for </span>segment <span class="kw">in </span>segments {
+                instance
+                    .table_init_segment(
+                        segment.table_index,
+                        <span class="kw-2">&amp;</span>segment.elements,
+                        get_table_init_start(segment, instance)<span class="question-mark">?</span>,
                         <span class="number">0</span>,
-                        <span class="ident">segment</span>.<span class="ident">elements</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>,
+                        segment.elements.len() <span class="kw">as </span>u32,
                     )
-                    .<span class="ident">map_err</span>(<span class="ident">InstantiationError::Trap</span>)<span class="question-mark">?</span>;
+                    .map_err(InstantiationError::Trap)<span class="question-mark">?</span>;
             }
         }
     }
@@ -842,54 +837,54 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">get_memory_init_start</span>(
-    <span class="ident">init</span>: <span class="kw-2">&amp;</span><span class="ident">MemoryInitializer</span>,
-    <span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">Instance</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="ident">init</span>.<span class="ident">base</span> {
-        <span class="prelude-val">Some</span>(<span class="ident">base</span>) =&gt; {
-            <span class="kw">let</span> <span class="ident">mem64</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">module</span>().<span class="ident">memory_plans</span>[<span class="ident">init</span>.<span class="ident">memory_index</span>]
-                .<span class="ident">memory</span>
-                .<span class="ident">memory64</span>;
-            <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-                <span class="kw">let</span> <span class="ident">global</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">def_index</span>) <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">module</span>().<span class="ident">defined_global_index</span>(<span class="ident">base</span>) {
-                    <span class="ident">instance</span>.<span class="ident">global</span>(<span class="ident">def_index</span>)
-                } <span class="kw">else</span> {
-                    <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">instance</span>.<span class="ident">imported_global</span>(<span class="ident">base</span>).<span class="ident">from</span>
+<span class="kw">fn </span>get_memory_init_start(
+    init: <span class="kw-2">&amp;</span>MemoryInitializer,
+    instance: <span class="kw-2">&amp;</span>Instance,
+) -&gt; <span class="prelude-ty">Result</span>&lt;u64, InstantiationError&gt; {
+    <span class="kw">match </span>init.base {
+        <span class="prelude-val">Some</span>(base) =&gt; {
+            <span class="kw">let </span>mem64 = instance.module().memory_plans[init.memory_index]
+                .memory
+                .memory64;
+            <span class="kw">let </span>val = <span class="kw">unsafe </span>{
+                <span class="kw">let </span>global = <span class="kw">if let </span><span class="prelude-val">Some</span>(def_index) = instance.module().defined_global_index(base) {
+                    instance.global(def_index)
+                } <span class="kw">else </span>{
+                    <span class="kw-2">&amp;*</span>instance.imported_global(base).from
                 };
-                <span class="kw">if</span> <span class="ident">mem64</span> {
-                    <span class="kw-2">*</span><span class="ident">global</span>.<span class="ident">as_u64</span>()
-                } <span class="kw">else</span> {
-                    <span class="ident">u64::from</span>(<span class="kw-2">*</span><span class="ident">global</span>.<span class="ident">as_u32</span>())
+                <span class="kw">if </span>mem64 {
+                    <span class="kw-2">*</span>global.as_u64()
+                } <span class="kw">else </span>{
+                    u64::from(<span class="kw-2">*</span>global.as_u32())
                 }
             };
 
-            <span class="ident">init</span>.<span class="ident">offset</span>.<span class="ident">checked_add</span>(<span class="ident">val</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                <span class="ident">InstantiationError::Link</span>(<span class="ident">LinkError</span>(<span class="string">&quot;data segment global base overflows&quot;</span>.<span class="ident">to_owned</span>()))
+            init.offset.checked_add(val).ok_or_else(|| {
+                InstantiationError::Link(LinkError(<span class="string">&quot;data segment global base overflows&quot;</span>.to_owned()))
             })
         }
-        <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">init</span>.<span class="ident">offset</span>),
+        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(init.offset),
     }
 }
 
-<span class="kw">fn</span> <span class="ident">check_memory_init_bounds</span>(
-    <span class="ident">instance</span>: <span class="kw-2">&amp;</span><span class="ident">Instance</span>,
-    <span class="ident">initializers</span>: <span class="kw-2">&amp;</span>[<span class="ident">MemoryInitializer</span>],
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="kw">for</span> <span class="ident">init</span> <span class="kw">in</span> <span class="ident">initializers</span> {
-        <span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">get_memory</span>(<span class="ident">init</span>.<span class="ident">memory_index</span>);
-        <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">get_memory_init_start</span>(<span class="ident">init</span>, <span class="ident">instance</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">start</span>)
-            .<span class="ident">ok</span>()
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">start</span><span class="op">|</span> <span class="ident">start</span>.<span class="ident">checked_add</span>(<span class="ident">init</span>.<span class="ident">data</span>.<span class="ident">len</span>()));
+<span class="kw">fn </span>check_memory_init_bounds(
+    instance: <span class="kw-2">&amp;</span>Instance,
+    initializers: <span class="kw-2">&amp;</span>[MemoryInitializer],
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+    <span class="kw">for </span>init <span class="kw">in </span>initializers {
+        <span class="kw">let </span>memory = instance.get_memory(init.memory_index);
+        <span class="kw">let </span>start = get_memory_init_start(init, instance)<span class="question-mark">?</span>;
+        <span class="kw">let </span>end = usize::try_from(start)
+            .ok()
+            .and_then(|start| start.checked_add(init.data.len()));
 
-        <span class="kw">match</span> <span class="ident">end</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">end</span>) <span class="kw">if</span> <span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">memory</span>.<span class="ident">current_length</span> =&gt; {
-                <span class="comment">// Initializer is in bounds</span>
-            }
-            <span class="kw">_</span> =&gt; {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">InstantiationError::Link</span>(<span class="ident">LinkError</span>(
-                    <span class="string">&quot;memory out of bounds: data segment does not fit&quot;</span>.<span class="ident">into</span>(),
+        <span class="kw">match </span>end {
+            <span class="prelude-val">Some</span>(end) <span class="kw">if </span>end &lt;= memory.current_length =&gt; {
+                <span class="comment">// Initializer is in bounds
+            </span>}
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(InstantiationError::Link(LinkError(
+                    <span class="string">&quot;memory out of bounds: data segment does not fit&quot;</span>.into(),
                 )))
             }
         }
@@ -898,239 +893,238 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">initialize_memories</span>(<span class="ident">instance</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Instance</span>, <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">memory_size_in_pages</span> <span class="op">=</span>
-        <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">memory</span><span class="op">|</span> (<span class="ident">instance</span>.<span class="ident">get_memory</span>(<span class="ident">memory</span>).<span class="ident">current_length</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">/</span> <span class="ident">u64::from</span>(<span class="ident">WASM_PAGE_SIZE</span>);
+<span class="kw">fn </span>initialize_memories(instance: <span class="kw-2">&amp;mut </span>Instance, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+    <span class="kw">let </span>memory_size_in_pages =
+        <span class="kw-2">&amp;</span>|memory| (instance.get_memory(memory).current_length <span class="kw">as </span>u64) / u64::from(WASM_PAGE_SIZE);
 
-    <span class="comment">// Loads the `global` value and returns it as a `u64`, but sign-extends</span>
-    <span class="comment">// 32-bit globals which can be used as the base for 32-bit memories.</span>
-    <span class="kw">let</span> <span class="ident">get_global_as_u64</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">global</span><span class="op">|</span> <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="ident">def</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">def_index</span>) <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">module</span>().<span class="ident">defined_global_index</span>(<span class="ident">global</span>) {
-            <span class="ident">instance</span>.<span class="ident">global</span>(<span class="ident">def_index</span>)
-        } <span class="kw">else</span> {
-            <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">instance</span>.<span class="ident">imported_global</span>(<span class="ident">global</span>).<span class="ident">from</span>
+    <span class="comment">// Loads the `global` value and returns it as a `u64`, but sign-extends
+    // 32-bit globals which can be used as the base for 32-bit memories.
+    </span><span class="kw">let </span>get_global_as_u64 = <span class="kw-2">&amp;</span>|global| <span class="kw">unsafe </span>{
+        <span class="kw">let </span>def = <span class="kw">if let </span><span class="prelude-val">Some</span>(def_index) = instance.module().defined_global_index(global) {
+            instance.global(def_index)
+        } <span class="kw">else </span>{
+            <span class="kw-2">&amp;*</span>instance.imported_global(global).from
         };
-        <span class="kw">if</span> <span class="ident">module</span>.<span class="ident">globals</span>[<span class="ident">global</span>].<span class="ident">wasm_ty</span> <span class="op">==</span> <span class="ident">WasmType::I64</span> {
-            <span class="kw-2">*</span><span class="ident">def</span>.<span class="ident">as_u64</span>()
-        } <span class="kw">else</span> {
-            <span class="ident">u64::from</span>(<span class="kw-2">*</span><span class="ident">def</span>.<span class="ident">as_u32</span>())
+        <span class="kw">if </span>module.globals[global].wasm_ty == WasmType::I64 {
+            <span class="kw-2">*</span>def.as_u64()
+        } <span class="kw">else </span>{
+            u64::from(<span class="kw-2">*</span>def.as_u32())
         }
     };
 
-    <span class="comment">// Delegates to the `init_memory` method which is sort of a duplicate of</span>
-    <span class="comment">// `instance.memory_init_segment` but is used at compile-time in other</span>
-    <span class="comment">// contexts so is shared here to have only one method of memory</span>
-    <span class="comment">// initialization.</span>
-    <span class="comment">//</span>
-    <span class="comment">// This call to `init_memory` notably implements all the bells and whistles</span>
-    <span class="comment">// so errors only happen if an out-of-bounds segment is found, in which case</span>
-    <span class="comment">// a trap is returned.</span>
-    <span class="kw">let</span> <span class="ident">ok</span> <span class="op">=</span> <span class="ident">module</span>.<span class="ident">memory_initialization</span>.<span class="ident">init_memory</span>(
-        <span class="ident">InitMemory::Runtime</span> {
-            <span class="ident">memory_size_in_pages</span>,
-            <span class="ident">get_global_as_u64</span>,
+    <span class="comment">// Delegates to the `init_memory` method which is sort of a duplicate of
+    // `instance.memory_init_segment` but is used at compile-time in other
+    // contexts so is shared here to have only one method of memory
+    // initialization.
+    //
+    // This call to `init_memory` notably implements all the bells and whistles
+    // so errors only happen if an out-of-bounds segment is found, in which case
+    // a trap is returned.
+    </span><span class="kw">let </span>ok = module.memory_initialization.init_memory(
+        InitMemory::Runtime {
+            memory_size_in_pages,
+            get_global_as_u64,
         },
-        <span class="kw-2">&amp;mut</span> <span class="op">|</span><span class="ident">memory_index</span>, <span class="ident">init</span><span class="op">|</span> {
-            <span class="comment">// If this initializer applies to a defined memory but that memory</span>
-            <span class="comment">// doesn&#39;t need initialization, due to something like uffd or</span>
-            <span class="comment">// copy-on-write pre-initializing it via mmap magic, then this</span>
-            <span class="comment">// initializer can be skipped entirely.</span>
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">memory_index</span>) <span class="op">=</span> <span class="ident">module</span>.<span class="ident">defined_memory_index</span>(<span class="ident">memory_index</span>) {
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">instance</span>.<span class="ident">memories</span>[<span class="ident">memory_index</span>].<span class="ident">needs_init</span>() {
-                    <span class="kw">return</span> <span class="bool-val">true</span>;
+        <span class="kw-2">&amp;mut </span>|memory_index, init| {
+            <span class="comment">// If this initializer applies to a defined memory but that memory
+            // doesn&#39;t need initialization, due to something like uffd or
+            // copy-on-write pre-initializing it via mmap magic, then this
+            // initializer can be skipped entirely.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(memory_index) = module.defined_memory_index(memory_index) {
+                <span class="kw">if </span>!instance.memories[memory_index].needs_init() {
+                    <span class="kw">return </span><span class="bool-val">true</span>;
                 }
             }
-            <span class="kw">let</span> <span class="ident">memory</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">get_memory</span>(<span class="ident">memory_index</span>);
-            <span class="kw">let</span> <span class="ident">dst_slice</span> <span class="op">=</span>
-                <span class="kw">unsafe</span> { <span class="ident">slice::from_raw_parts_mut</span>(<span class="ident">memory</span>.<span class="ident">base</span>, <span class="ident">memory</span>.<span class="ident">current_length</span>) };
-            <span class="kw">let</span> <span class="ident">dst</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">dst_slice</span>[<span class="ident">usize::try_from</span>(<span class="ident">init</span>.<span class="ident">offset</span>).<span class="ident">unwrap</span>()..][..<span class="ident">init</span>.<span class="ident">data</span>.<span class="ident">len</span>()];
-            <span class="ident">dst</span>.<span class="ident">copy_from_slice</span>(<span class="ident">instance</span>.<span class="ident">wasm_data</span>(<span class="ident">init</span>.<span class="ident">data</span>.<span class="ident">clone</span>()));
-            <span class="bool-val">true</span>
-        },
+            <span class="kw">let </span>memory = instance.get_memory(memory_index);
+            <span class="kw">let </span>dst_slice =
+                <span class="kw">unsafe </span>{ slice::from_raw_parts_mut(memory.base, memory.current_length) };
+            <span class="kw">let </span>dst = <span class="kw-2">&amp;mut </span>dst_slice[usize::try_from(init.offset).unwrap()..][..init.data.len()];
+            dst.copy_from_slice(instance.wasm_data(init.data.clone()));
+            <span class="bool-val">true
+        </span>},
     );
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">ok</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">InstantiationError::Trap</span>(<span class="ident">Trap::wasm</span>(
-            <span class="ident">TrapCode::HeapOutOfBounds</span>,
+    <span class="kw">if </span>!ok {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(InstantiationError::Trap(Trap::wasm(
+            TrapCode::HeapOutOfBounds,
         )));
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">check_init_bounds</span>(<span class="ident">instance</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Instance</span>, <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="ident">check_table_init_bounds</span>(<span class="ident">instance</span>, <span class="ident">module</span>)<span class="question-mark">?</span>;
+<span class="kw">fn </span>check_init_bounds(instance: <span class="kw-2">&amp;mut </span>Instance, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+    check_table_init_bounds(instance, module)<span class="question-mark">?</span>;
 
-    <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">instance</span>.<span class="ident">module</span>().<span class="ident">memory_initialization</span> {
-        <span class="ident">MemoryInitialization::Segmented</span>(<span class="ident">initializers</span>) =&gt; {
-            <span class="ident">check_memory_init_bounds</span>(<span class="ident">instance</span>, <span class="ident">initializers</span>)<span class="question-mark">?</span>;
+    <span class="kw">match </span><span class="kw-2">&amp;</span>instance.module().memory_initialization {
+        MemoryInitialization::Segmented(initializers) =&gt; {
+            check_memory_init_bounds(instance, initializers)<span class="question-mark">?</span>;
         }
-        <span class="comment">// Statically validated already to have everything in-bounds.</span>
-        <span class="ident">MemoryInitialization::Paged</span> { .. } <span class="op">|</span> <span class="ident">MemoryInitialization::Static</span> { .. } =&gt; {}
+        <span class="comment">// Statically validated already to have everything in-bounds.
+        </span>MemoryInitialization::Paged { .. } | MemoryInitialization::Static { .. } =&gt; {}
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">initialize_instance</span>(
-    <span class="ident">instance</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Instance</span>,
-    <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-    <span class="ident">is_bulk_memory</span>: <span class="ident">bool</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-    <span class="comment">// If bulk memory is not enabled, bounds check the data and element segments before</span>
-    <span class="comment">// making any changes. With bulk memory enabled, initializers are processed</span>
-    <span class="comment">// in-order and side effects are observed up to the point of an out-of-bounds</span>
-    <span class="comment">// initializer, so the early checking is not desired.</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">is_bulk_memory</span> {
-        <span class="ident">check_init_bounds</span>(<span class="ident">instance</span>, <span class="ident">module</span>)<span class="question-mark">?</span>;
+<span class="kw">fn </span>initialize_instance(
+    instance: <span class="kw-2">&amp;mut </span>Instance,
+    module: <span class="kw-2">&amp;</span>Module,
+    is_bulk_memory: bool,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+    <span class="comment">// If bulk memory is not enabled, bounds check the data and element segments before
+    // making any changes. With bulk memory enabled, initializers are processed
+    // in-order and side effects are observed up to the point of an out-of-bounds
+    // initializer, so the early checking is not desired.
+    </span><span class="kw">if </span>!is_bulk_memory {
+        check_init_bounds(instance, module)<span class="question-mark">?</span>;
     }
 
-    <span class="comment">// Initialize the tables</span>
-    <span class="ident">initialize_tables</span>(<span class="ident">instance</span>, <span class="ident">module</span>)<span class="question-mark">?</span>;
+    <span class="comment">// Initialize the tables
+    </span>initialize_tables(instance, module)<span class="question-mark">?</span>;
 
-    <span class="comment">// Initialize the memories</span>
-    <span class="ident">initialize_memories</span>(<span class="ident">instance</span>, <span class="kw-2">&amp;</span><span class="ident">module</span>)<span class="question-mark">?</span>;
+    <span class="comment">// Initialize the memories
+    </span>initialize_memories(instance, <span class="kw-2">&amp;</span>module)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="doccomment">/// Represents the on-demand instance allocator.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OnDemandInstanceAllocator</span> {
-    <span class="ident">mem_creator</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RuntimeMemoryCreator</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="ident">stack_size</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// Represents the on-demand instance allocator.
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>OnDemandInstanceAllocator {
+    mem_creator: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>RuntimeMemoryCreator&gt;&gt;,
+    <span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    </span>stack_size: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">OnDemandInstanceAllocator</span> {
-    <span class="doccomment">/// Creates a new on-demand instance allocator.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">mem_creator</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RuntimeMemoryCreator</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">stack_size</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">drop</span>(<span class="ident">stack_size</span>); <span class="comment">// suppress unused warnings w/o async feature</span>
-        <span class="self">Self</span> {
-            <span class="ident">mem_creator</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-            <span class="ident">stack_size</span>,
+<span class="kw">impl </span>OnDemandInstanceAllocator {
+    <span class="doccomment">/// Creates a new on-demand instance allocator.
+    </span><span class="kw">pub fn </span>new(mem_creator: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>RuntimeMemoryCreator&gt;&gt;, stack_size: usize) -&gt; <span class="self">Self </span>{
+        drop(stack_size); <span class="comment">// suppress unused warnings w/o async feature
+        </span><span class="self">Self </span>{
+            mem_creator,
+            <span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+            </span>stack_size,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">create_tables</span>(
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StorePtr</span>,
-        <span class="ident">runtime_info</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ModuleRuntimeInfo</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedTableIndex</span>, <span class="ident">Table</span><span class="op">&gt;</span>, <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">runtime_info</span>.<span class="ident">module</span>();
-        <span class="kw">let</span> <span class="ident">num_imports</span> <span class="op">=</span> <span class="ident">module</span>.<span class="ident">num_imported_tables</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tables</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedTableIndex</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span>
-            <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">module</span>.<span class="ident">table_plans</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">num_imports</span>);
-        <span class="kw">for</span> (<span class="kw">_</span>, <span class="ident">table</span>) <span class="kw">in</span> <span class="ident">module</span>.<span class="ident">table_plans</span>.<span class="ident">iter</span>().<span class="ident">skip</span>(<span class="ident">num_imports</span>) {
-            <span class="ident">tables</span>.<span class="ident">push</span>(
-                <span class="ident">Table::new_dynamic</span>(<span class="ident">table</span>, <span class="kw">unsafe</span> {
-                    <span class="ident">store</span>
-                        .<span class="ident">get</span>()
-                        .<span class="ident">expect</span>(<span class="string">&quot;if module has table plans, store is not empty&quot;</span>)
+    <span class="kw">fn </span>create_tables(
+        store: <span class="kw-2">&amp;mut </span>StorePtr,
+        runtime_info: <span class="kw-2">&amp;</span>Arc&lt;<span class="kw">dyn </span>ModuleRuntimeInfo&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;PrimaryMap&lt;DefinedTableIndex, Table&gt;, InstantiationError&gt; {
+        <span class="kw">let </span>module = runtime_info.module();
+        <span class="kw">let </span>num_imports = module.num_imported_tables;
+        <span class="kw">let </span><span class="kw-2">mut </span>tables: PrimaryMap&lt;DefinedTableIndex, <span class="kw">_</span>&gt; =
+            PrimaryMap::with_capacity(module.table_plans.len() - num_imports);
+        <span class="kw">for </span>(<span class="kw">_</span>, table) <span class="kw">in </span>module.table_plans.iter().skip(num_imports) {
+            tables.push(
+                Table::new_dynamic(table, <span class="kw">unsafe </span>{
+                    store
+                        .get()
+                        .expect(<span class="string">&quot;if module has table plans, store is not empty&quot;</span>)
                 })
-                .<span class="ident">map_err</span>(<span class="ident">InstantiationError::Resource</span>)<span class="question-mark">?</span>,
+                .map_err(InstantiationError::Resource)<span class="question-mark">?</span>,
             );
         }
-        <span class="prelude-val">Ok</span>(<span class="ident">tables</span>)
+        <span class="prelude-val">Ok</span>(tables)
     }
 
-    <span class="kw">fn</span> <span class="ident">create_memories</span>(
+    <span class="kw">fn </span>create_memories(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">store</span>: <span class="kw-2">&amp;mut</span> <span class="ident">StorePtr</span>,
-        <span class="ident">runtime_info</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ModuleRuntimeInfo</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedMemoryIndex</span>, <span class="ident">Memory</span><span class="op">&gt;</span>, <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">runtime_info</span>.<span class="ident">module</span>();
-        <span class="kw">let</span> <span class="ident">creator</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">mem_creator</span>
-            .<span class="ident">as_deref</span>()
-            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">DefaultMemoryCreator</span>);
-        <span class="kw">let</span> <span class="ident">num_imports</span> <span class="op">=</span> <span class="ident">module</span>.<span class="ident">num_imported_memories</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">memories</span>: <span class="ident">PrimaryMap</span><span class="op">&lt;</span><span class="ident">DefinedMemoryIndex</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span>
-            <span class="ident">PrimaryMap::with_capacity</span>(<span class="ident">module</span>.<span class="ident">memory_plans</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">num_imports</span>);
-        <span class="kw">for</span> (<span class="ident">memory_idx</span>, <span class="ident">plan</span>) <span class="kw">in</span> <span class="ident">module</span>.<span class="ident">memory_plans</span>.<span class="ident">iter</span>().<span class="ident">skip</span>(<span class="ident">num_imports</span>) {
-            <span class="kw">let</span> <span class="ident">defined_memory_idx</span> <span class="op">=</span> <span class="ident">module</span>
-                .<span class="ident">defined_memory_index</span>(<span class="ident">memory_idx</span>)
-                .<span class="ident">expect</span>(<span class="string">&quot;Skipped imports, should never be None&quot;</span>);
-            <span class="kw">let</span> <span class="ident">image</span> <span class="op">=</span> <span class="ident">runtime_info</span>
-                .<span class="ident">memory_image</span>(<span class="ident">defined_memory_idx</span>)
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">InstantiationError::Resource</span>(<span class="ident">err</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+        store: <span class="kw-2">&amp;mut </span>StorePtr,
+        runtime_info: <span class="kw-2">&amp;</span>Arc&lt;<span class="kw">dyn </span>ModuleRuntimeInfo&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;PrimaryMap&lt;DefinedMemoryIndex, Memory&gt;, InstantiationError&gt; {
+        <span class="kw">let </span>module = runtime_info.module();
+        <span class="kw">let </span>creator = <span class="self">self
+            </span>.mem_creator
+            .as_deref()
+            .unwrap_or_else(|| <span class="kw-2">&amp;</span>DefaultMemoryCreator);
+        <span class="kw">let </span>num_imports = module.num_imported_memories;
+        <span class="kw">let </span><span class="kw-2">mut </span>memories: PrimaryMap&lt;DefinedMemoryIndex, <span class="kw">_</span>&gt; =
+            PrimaryMap::with_capacity(module.memory_plans.len() - num_imports);
+        <span class="kw">for </span>(memory_idx, plan) <span class="kw">in </span>module.memory_plans.iter().skip(num_imports) {
+            <span class="kw">let </span>defined_memory_idx = module
+                .defined_memory_index(memory_idx)
+                .expect(<span class="string">&quot;Skipped imports, should never be None&quot;</span>);
+            <span class="kw">let </span>image = runtime_info
+                .memory_image(defined_memory_idx)
+                .map_err(|err| InstantiationError::Resource(err.into()))<span class="question-mark">?</span>;
 
-            <span class="ident">memories</span>.<span class="ident">push</span>(
-                <span class="ident">Memory::new_dynamic</span>(
-                    <span class="ident">plan</span>,
-                    <span class="ident">creator</span>,
-                    <span class="kw">unsafe</span> {
-                        <span class="ident">store</span>
-                            .<span class="ident">get</span>()
-                            .<span class="ident">expect</span>(<span class="string">&quot;if module has memory plans, store is not empty&quot;</span>)
+            memories.push(
+                Memory::new_dynamic(
+                    plan,
+                    creator,
+                    <span class="kw">unsafe </span>{
+                        store
+                            .get()
+                            .expect(<span class="string">&quot;if module has memory plans, store is not empty&quot;</span>)
                     },
-                    <span class="ident">image</span>,
+                    image,
                 )
-                .<span class="ident">map_err</span>(<span class="ident">InstantiationError::Resource</span>)<span class="question-mark">?</span>,
+                .map_err(InstantiationError::Resource)<span class="question-mark">?</span>,
             );
         }
-        <span class="prelude-val">Ok</span>(<span class="ident">memories</span>)
+        <span class="prelude-val">Ok</span>(memories)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">OnDemandInstanceAllocator</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">mem_creator</span>: <span class="prelude-val">None</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-            <span class="ident">stack_size</span>: <span class="number">0</span>,
+<span class="kw">impl </span>Default <span class="kw">for </span>OnDemandInstanceAllocator {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            mem_creator: <span class="prelude-val">None</span>,
+            <span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+            </span>stack_size: <span class="number">0</span>,
         }
     }
 }
 
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">InstanceAllocator</span> <span class="kw">for</span> <span class="ident">OnDemandInstanceAllocator</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">allocate</span>(
+<span class="kw">unsafe impl </span>InstanceAllocator <span class="kw">for </span>OnDemandInstanceAllocator {
+    <span class="kw">unsafe fn </span>allocate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">req</span>: <span class="ident">InstanceAllocationRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InstanceHandle</span>, <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">memories</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">create_memories</span>(<span class="kw-2">&amp;mut</span> <span class="ident">req</span>.<span class="ident">store</span>, <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">runtime_info</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">tables</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::create_tables</span>(<span class="kw-2">&amp;mut</span> <span class="ident">req</span>.<span class="ident">store</span>, <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">runtime_info</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">runtime_info</span>.<span class="ident">module</span>();
-        <span class="kw">let</span> <span class="ident">offsets</span> <span class="op">=</span> <span class="ident">VMOffsets::new</span>(<span class="ident">HostPtr</span>, <span class="ident">module</span>);
-        <span class="kw">let</span> <span class="ident">layout</span> <span class="op">=</span> <span class="ident">Instance::alloc_layout</span>(<span class="kw-2">&amp;</span><span class="ident">offsets</span>);
-        <span class="kw">let</span> <span class="ident">instance_ptr</span> <span class="op">=</span> <span class="ident">alloc::alloc</span>(<span class="ident">layout</span>) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">Instance</span>;
+        <span class="kw-2">mut </span>req: InstanceAllocationRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;InstanceHandle, InstantiationError&gt; {
+        <span class="kw">let </span>memories = <span class="self">self</span>.create_memories(<span class="kw-2">&amp;mut </span>req.store, <span class="kw-2">&amp;</span>req.runtime_info)<span class="question-mark">?</span>;
+        <span class="kw">let </span>tables = <span class="self">Self</span>::create_tables(<span class="kw-2">&amp;mut </span>req.store, <span class="kw-2">&amp;</span>req.runtime_info)<span class="question-mark">?</span>;
+        <span class="kw">let </span>module = req.runtime_info.module();
+        <span class="kw">let </span>offsets = VMOffsets::new(HostPtr, module);
+        <span class="kw">let </span>layout = Instance::alloc_layout(<span class="kw-2">&amp;</span>offsets);
+        <span class="kw">let </span>instance_ptr = alloc::alloc(layout) <span class="kw">as </span><span class="kw-2">*mut </span>Instance;
 
-        <span class="ident">Instance::new_at</span>(<span class="ident">instance_ptr</span>, <span class="ident">layout</span>.<span class="ident">size</span>(), <span class="ident">offsets</span>, <span class="ident">req</span>, <span class="ident">memories</span>, <span class="ident">tables</span>);
+        Instance::new_at(instance_ptr, layout.size(), offsets, req, memories, tables);
 
-        <span class="prelude-val">Ok</span>(<span class="ident">InstanceHandle</span> {
-            <span class="ident">instance</span>: <span class="ident">instance_ptr</span>,
+        <span class="prelude-val">Ok</span>(InstanceHandle {
+            instance: instance_ptr,
         })
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">initialize</span>(
+    <span class="kw">unsafe fn </span>initialize(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">handle</span>: <span class="kw-2">&amp;mut</span> <span class="ident">InstanceHandle</span>,
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">Module</span>,
-        <span class="ident">is_bulk_memory</span>: <span class="ident">bool</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">InstantiationError</span><span class="op">&gt;</span> {
-        <span class="ident">initialize_instance</span>(<span class="ident">handle</span>.<span class="ident">instance_mut</span>(), <span class="ident">module</span>, <span class="ident">is_bulk_memory</span>)
+        handle: <span class="kw-2">&amp;mut </span>InstanceHandle,
+        module: <span class="kw-2">&amp;</span>Module,
+        is_bulk_memory: bool,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), InstantiationError&gt; {
+        initialize_instance(handle.instance_mut(), module, is_bulk_memory)
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">deallocate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">InstanceHandle</span>) {
-        <span class="kw">let</span> <span class="ident">layout</span> <span class="op">=</span> <span class="ident">Instance::alloc_layout</span>(<span class="kw-2">&amp;</span><span class="ident">handle</span>.<span class="ident">instance</span>().<span class="ident">offsets</span>);
-        <span class="ident">ptr::drop_in_place</span>(<span class="ident">handle</span>.<span class="ident">instance</span>);
-        <span class="ident">alloc::dealloc</span>(<span class="ident">handle</span>.<span class="ident">instance</span>.<span class="ident">cast</span>(), <span class="ident">layout</span>);
+    <span class="kw">unsafe fn </span>deallocate(<span class="kw-2">&amp;</span><span class="self">self</span>, handle: <span class="kw-2">&amp;</span>InstanceHandle) {
+        <span class="kw">let </span>layout = Instance::alloc_layout(<span class="kw-2">&amp;</span>handle.instance().offsets);
+        ptr::drop_in_place(handle.instance);
+        alloc::dealloc(handle.instance.cast(), layout);
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">allocate_fiber_stack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">wasmtime_fiber::FiberStack</span>, <span class="ident">FiberStackError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">stack_size</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">FiberStackError::NotSupported</span>);
+    <span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    </span><span class="kw">fn </span>allocate_fiber_stack(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;wasmtime_fiber::FiberStack, FiberStackError&gt; {
+        <span class="kw">if </span><span class="self">self</span>.stack_size == <span class="number">0 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(FiberStackError::NotSupported);
         }
 
-        <span class="ident">wasmtime_fiber::FiberStack::new</span>(<span class="self">self</span>.<span class="ident">stack_size</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">FiberStackError::Resource</span>(<span class="ident">e</span>.<span class="ident">into</span>()))
+        wasmtime_fiber::FiberStack::new(<span class="self">self</span>.stack_size)
+            .map_err(|e| FiberStackError::Resource(e.into()))
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async&quot;</span>)]</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">deallocate_fiber_stack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_stack</span>: <span class="kw-2">&amp;</span><span class="ident">wasmtime_fiber::FiberStack</span>) {
-        <span class="comment">// The on-demand allocator has no further bookkeeping for fiber stacks</span>
-    }
+    <span class="attribute">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    </span><span class="kw">unsafe fn </span>deallocate_fiber_stack(<span class="kw-2">&amp;</span><span class="self">self</span>, _stack: <span class="kw-2">&amp;</span>wasmtime_fiber::FiberStack) {
+        <span class="comment">// The on-demand allocator has no further bookkeeping for fiber stacks
+    </span>}
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="wasmtime_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SimpleProtocol","Implementation of `ConnectionUpgrade`. Convenient to use with small protocols."]]});
+window.SIDEBAR_ITEMS = {"struct":[["SimpleProtocol","Implementation of `ConnectionUpgrade`. Convenient to use with small protocols."]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["migrate",""],["pre_migrate",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["migrate",""],["pre_migrate",""]]};

@@ -1,9 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/nalgebra-0.27.1/src/base/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" href="https://nalgebra.org/img/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../nalgebra/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../nalgebra/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../nalgebra/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/nalgebra-0.27.1/src/base/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" href="https://nalgebra.org/img/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../nalgebra/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -109,112 +104,111 @@
 <span id="104">104</span>
 <span id="105">105</span>
 <span id="106">106</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Abstract definition of a matrix data storage allocator.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Abstract definition of a matrix data storage allocator.
 
-<span class="kw">use</span> <span class="ident">std::any::Any</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>;
+</span><span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::mem;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base::constraint</span>::{<span class="ident">SameNumberOfColumns</span>, <span class="ident">SameNumberOfRows</span>, <span class="ident">ShapeConstraint</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base::dimension</span>::{<span class="ident">Dim</span>, <span class="ident">U1</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base::storage::ContiguousStorageMut</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::base</span>::{<span class="ident">DefaultAllocator</span>, <span class="ident">Scalar</span>};
+<span class="kw">use </span><span class="kw">crate</span>::base::constraint::{SameNumberOfColumns, SameNumberOfRows, ShapeConstraint};
+<span class="kw">use </span><span class="kw">crate</span>::base::dimension::{Dim, U1};
+<span class="kw">use </span><span class="kw">crate</span>::base::storage::ContiguousStorageMut;
+<span class="kw">use </span><span class="kw">crate</span>::base::{DefaultAllocator, Scalar};
 
-<span class="doccomment">/// A matrix allocator of a memory buffer that may contain `R::to_usize() * C::to_usize()`</span>
-<span class="doccomment">/// elements of type `T`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An allocator is said to be:</span>
-<span class="doccomment">///   − static:  if `R` and `C` both implement `DimName`.</span>
-<span class="doccomment">///   − dynamic: if either one (or both) of `R` or `C` is equal to `Dynamic`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Every allocator must be both static and dynamic. Though not all implementations may share the</span>
-<span class="doccomment">/// same `Buffer` type.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Scalar</span>, <span class="ident">R</span>: <span class="ident">Dim</span>, <span class="ident">C</span>: <span class="ident">Dim</span> <span class="op">=</span> <span class="ident">U1</span><span class="op">&gt;</span>: <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Sized</span> {
-    <span class="doccomment">/// The type of buffer this allocator can instanciate.</span>
-    <span class="kw">type</span> <span class="ident">Buffer</span>: <span class="ident">ContiguousStorageMut</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R</span>, <span class="ident">C</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span>;
+<span class="doccomment">/// A matrix allocator of a memory buffer that may contain `R::to_usize() * C::to_usize()`
+/// elements of type `T`.
+///
+/// An allocator is said to be:
+///   − static:  if `R` and `C` both implement `DimName`.
+///   − dynamic: if either one (or both) of `R` or `C` is equal to `Dynamic`.
+///
+/// Every allocator must be both static and dynamic. Though not all implementations may share the
+/// same `Buffer` type.
+</span><span class="kw">pub trait </span>Allocator&lt;T: Scalar, R: Dim, C: Dim = U1&gt;: Any + Sized {
+    <span class="doccomment">/// The type of buffer this allocator can instanciate.
+    </span><span class="kw">type </span>Buffer: ContiguousStorageMut&lt;T, R, C&gt; + Clone;
 
-    <span class="doccomment">/// Allocates a buffer with the given number of rows and columns without initializing its content.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">allocate_uninitialized</span>(<span class="ident">nrows</span>: <span class="ident">R</span>, <span class="ident">ncols</span>: <span class="ident">C</span>) -&gt; <span class="ident">mem::MaybeUninit</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Buffer</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Allocates a buffer with the given number of rows and columns without initializing its content.
+    </span><span class="kw">unsafe fn </span>allocate_uninitialized(nrows: R, ncols: C) -&gt; mem::MaybeUninit&lt;<span class="self">Self</span>::Buffer&gt;;
 
-    <span class="doccomment">/// Allocates a buffer initialized with the content of the given iterator.</span>
-    <span class="kw">fn</span> <span class="ident">allocate_from_iterator</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-        <span class="ident">nrows</span>: <span class="ident">R</span>,
-        <span class="ident">ncols</span>: <span class="ident">C</span>,
-        <span class="ident">iter</span>: <span class="ident">I</span>,
-    ) -&gt; <span class="ident"><span class="self">Self</span>::Buffer</span>;
+    <span class="doccomment">/// Allocates a buffer initialized with the content of the given iterator.
+    </span><span class="kw">fn </span>allocate_from_iterator&lt;I: IntoIterator&lt;Item = T&gt;&gt;(
+        nrows: R,
+        ncols: C,
+        iter: I,
+    ) -&gt; <span class="self">Self</span>::Buffer;
 }
 
-<span class="doccomment">/// A matrix reallocator. Changes the size of the memory buffer that initially contains (RFrom ×</span>
-<span class="doccomment">/// CFrom) elements to a smaller or larger size (RTo, CTo).</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Reallocator</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Scalar</span>, <span class="ident">RFrom</span>: <span class="ident">Dim</span>, <span class="ident">CFrom</span>: <span class="ident">Dim</span>, <span class="ident">RTo</span>: <span class="ident">Dim</span>, <span class="ident">CTo</span>: <span class="ident">Dim</span><span class="op">&gt;</span>:
-    <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RFrom</span>, <span class="ident">CFrom</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RTo</span>, <span class="ident">CTo</span><span class="op">&gt;</span>
+<span class="doccomment">/// A matrix reallocator. Changes the size of the memory buffer that initially contains (RFrom ×
+/// CFrom) elements to a smaller or larger size (RTo, CTo).
+</span><span class="kw">pub trait </span>Reallocator&lt;T: Scalar, RFrom: Dim, CFrom: Dim, RTo: Dim, CTo: Dim&gt;:
+    Allocator&lt;T, RFrom, CFrom&gt; + Allocator&lt;T, RTo, CTo&gt;
 {
-    <span class="doccomment">/// Reallocates a buffer of shape `(RTo, CTo)`, possibly reusing a previously allocated buffer</span>
-    <span class="doccomment">/// `buf`. Data stored by `buf` are linearly copied to the output:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * The copy is performed as if both were just arrays (without a matrix structure).</span>
-    <span class="doccomment">/// * If `buf` is larger than the output size, then extra elements of `buf` are truncated.</span>
-    <span class="doccomment">/// * If `buf` is smaller than the output size, then extra elements of the output are left</span>
-    <span class="doccomment">/// uninitialized.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">reallocate_copy</span>(
-        <span class="ident">nrows</span>: <span class="ident">RTo</span>,
-        <span class="ident">ncols</span>: <span class="ident">CTo</span>,
-        <span class="ident">buf</span>: <span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RFrom</span>, <span class="ident">CFrom</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Buffer</span>,
-    ) -&gt; <span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RTo</span>, <span class="ident">CTo</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Buffer</span>;
+    <span class="doccomment">/// Reallocates a buffer of shape `(RTo, CTo)`, possibly reusing a previously allocated buffer
+    /// `buf`. Data stored by `buf` are linearly copied to the output:
+    ///
+    /// * The copy is performed as if both were just arrays (without a matrix structure).
+    /// * If `buf` is larger than the output size, then extra elements of `buf` are truncated.
+    /// * If `buf` is smaller than the output size, then extra elements of the output are left
+    /// uninitialized.
+    </span><span class="kw">unsafe fn </span>reallocate_copy(
+        nrows: RTo,
+        ncols: CTo,
+        buf: &lt;<span class="self">Self </span><span class="kw">as </span>Allocator&lt;T, RFrom, CFrom&gt;&gt;::Buffer,
+    ) -&gt; &lt;<span class="self">Self </span><span class="kw">as </span>Allocator&lt;T, RTo, CTo&gt;&gt;::Buffer;
 }
 
-<span class="doccomment">/// The number of rows of the result of a componentwise operation on two matrices.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SameShapeR</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">ShapeConstraint</span> <span class="kw">as</span> <span class="ident">SameNumberOfRows</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Representative</span>;
+<span class="doccomment">/// The number of rows of the result of a componentwise operation on two matrices.
+</span><span class="kw">pub type </span>SameShapeR&lt;R1, R2&gt; = &lt;ShapeConstraint <span class="kw">as </span>SameNumberOfRows&lt;R1, R2&gt;&gt;::Representative;
 
-<span class="doccomment">/// The number of columns of the result of a componentwise operation on two matrices.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SameShapeC</span><span class="op">&lt;</span><span class="ident">C1</span>, <span class="ident">C2</span><span class="op">&gt;</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">ShapeConstraint</span> <span class="kw">as</span> <span class="ident">SameNumberOfColumns</span><span class="op">&lt;</span><span class="ident">C1</span>, <span class="ident">C2</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Representative</span>;
+<span class="doccomment">/// The number of columns of the result of a componentwise operation on two matrices.
+</span><span class="kw">pub type </span>SameShapeC&lt;C1, C2&gt; = &lt;ShapeConstraint <span class="kw">as </span>SameNumberOfColumns&lt;C1, C2&gt;&gt;::Representative;
 
-<span class="comment">// TODO: Bad name.</span>
-<span class="doccomment">/// Restricts the given number of rows and columns to be respectively the same.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">SameShapeAllocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">C1</span>, <span class="ident">R2</span>, <span class="ident">C2</span><span class="op">&gt;</span>:
-    <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">C1</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">SameShapeR</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span>, <span class="ident">SameShapeC</span><span class="op">&lt;</span><span class="ident">C1</span>, <span class="ident">C2</span><span class="op">&gt;</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">R1</span>: <span class="ident">Dim</span>,
-    <span class="ident">R2</span>: <span class="ident">Dim</span>,
-    <span class="ident">C1</span>: <span class="ident">Dim</span>,
-    <span class="ident">C2</span>: <span class="ident">Dim</span>,
-    <span class="ident">T</span>: <span class="ident">Scalar</span>,
-    <span class="ident">ShapeConstraint</span>: <span class="ident">SameNumberOfRows</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">SameNumberOfColumns</span><span class="op">&lt;</span><span class="ident">C1</span>, <span class="ident">C2</span><span class="op">&gt;</span>,
-{
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">R2</span>, <span class="ident">C1</span>, <span class="ident">C2</span><span class="op">&gt;</span> <span class="ident">SameShapeAllocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">C1</span>, <span class="ident">R2</span>, <span class="ident">C2</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">DefaultAllocator</span>
-<span class="kw">where</span>
-    <span class="ident">R1</span>: <span class="ident">Dim</span>,
-    <span class="ident">R2</span>: <span class="ident">Dim</span>,
-    <span class="ident">C1</span>: <span class="ident">Dim</span>,
-    <span class="ident">C2</span>: <span class="ident">Dim</span>,
-    <span class="ident">T</span>: <span class="ident">Scalar</span>,
-    <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">C1</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">SameShapeR</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span>, <span class="ident">SameShapeC</span><span class="op">&lt;</span><span class="ident">C1</span>, <span class="ident">C2</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">ShapeConstraint</span>: <span class="ident">SameNumberOfRows</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">SameNumberOfColumns</span><span class="op">&lt;</span><span class="ident">C1</span>, <span class="ident">C2</span><span class="op">&gt;</span>,
+<span class="comment">// TODO: Bad name.
+</span><span class="doccomment">/// Restricts the given number of rows and columns to be respectively the same.
+</span><span class="kw">pub trait </span>SameShapeAllocator&lt;T, R1, C1, R2, C2&gt;:
+    Allocator&lt;T, R1, C1&gt; + Allocator&lt;T, SameShapeR&lt;R1, R2&gt;, SameShapeC&lt;C1, C2&gt;&gt;
+<span class="kw">where
+    </span>R1: Dim,
+    R2: Dim,
+    C1: Dim,
+    C2: Dim,
+    T: Scalar,
+    ShapeConstraint: SameNumberOfRows&lt;R1, R2&gt; + SameNumberOfColumns&lt;C1, C2&gt;,
 {
 }
 
-<span class="comment">// XXX: Bad name.</span>
-<span class="doccomment">/// Restricts the given number of rows to be equal.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">SameShapeVectorAllocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span>:
-    <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">SameShapeR</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">SameShapeAllocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">U1</span>, <span class="ident">R2</span>, <span class="ident">U1</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">R1</span>: <span class="ident">Dim</span>,
-    <span class="ident">R2</span>: <span class="ident">Dim</span>,
-    <span class="ident">T</span>: <span class="ident">Scalar</span>,
-    <span class="ident">ShapeConstraint</span>: <span class="ident">SameNumberOfRows</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;T, R1, R2, C1, C2&gt; SameShapeAllocator&lt;T, R1, C1, R2, C2&gt; <span class="kw">for </span>DefaultAllocator
+<span class="kw">where
+    </span>R1: Dim,
+    R2: Dim,
+    C1: Dim,
+    C2: Dim,
+    T: Scalar,
+    DefaultAllocator: Allocator&lt;T, R1, C1&gt; + Allocator&lt;T, SameShapeR&lt;R1, R2&gt;, SameShapeC&lt;C1, C2&gt;&gt;,
+    ShapeConstraint: SameNumberOfRows&lt;R1, R2&gt; + SameNumberOfColumns&lt;C1, C2&gt;,
 {
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span> <span class="ident">SameShapeVectorAllocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">DefaultAllocator</span>
-<span class="kw">where</span>
-    <span class="ident">R1</span>: <span class="ident">Dim</span>,
-    <span class="ident">R2</span>: <span class="ident">Dim</span>,
-    <span class="ident">T</span>: <span class="ident">Scalar</span>,
-    <span class="ident">DefaultAllocator</span>: <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">R1</span>, <span class="ident">U1</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Allocator</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">SameShapeR</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">ShapeConstraint</span>: <span class="ident">SameNumberOfRows</span><span class="op">&lt;</span><span class="ident">R1</span>, <span class="ident">R2</span><span class="op">&gt;</span>,
+<span class="comment">// XXX: Bad name.
+</span><span class="doccomment">/// Restricts the given number of rows to be equal.
+</span><span class="kw">pub trait </span>SameShapeVectorAllocator&lt;T, R1, R2&gt;:
+    Allocator&lt;T, R1&gt; + Allocator&lt;T, SameShapeR&lt;R1, R2&gt;&gt; + SameShapeAllocator&lt;T, R1, U1, R2, U1&gt;
+<span class="kw">where
+    </span>R1: Dim,
+    R2: Dim,
+    T: Scalar,
+    ShapeConstraint: SameNumberOfRows&lt;R1, R2&gt;,
+{
+}
+
+<span class="kw">impl</span>&lt;T, R1, R2&gt; SameShapeVectorAllocator&lt;T, R1, R2&gt; <span class="kw">for </span>DefaultAllocator
+<span class="kw">where
+    </span>R1: Dim,
+    R2: Dim,
+    T: Scalar,
+    DefaultAllocator: Allocator&lt;T, R1, U1&gt; + Allocator&lt;T, SameShapeR&lt;R1, R2&gt;&gt;,
+    ShapeConstraint: SameNumberOfRows&lt;R1, R2&gt;,
 {
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nalgebra" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nalgebra" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

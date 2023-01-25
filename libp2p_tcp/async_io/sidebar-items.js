@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Tcp",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["Tcp",""]]};
