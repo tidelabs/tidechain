@@ -15,6 +15,7 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 #![allow(dead_code)]
+use crate::pallet as pallet_tidefi_stake;
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
   parameter_types,
@@ -34,13 +35,11 @@ use sp_core::H256;
 use sp_runtime::{
   generic::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, Percent,
+  DispatchError, DispatchResult, FixedU128, Percent, Permill,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::{BlockNumber, CurrencyId, StakeCurrencyMeta};
-
-use crate::pallet as pallet_tidefi_stake;
+use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex, StakeCurrencyMeta};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -55,12 +54,17 @@ frame_support::construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+    Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
+    Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>},
     TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
-    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+    Fees: pallet_fees::{Pallet, Storage, Event<T>},
+    Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>},
+    Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
+    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
@@ -111,12 +115,41 @@ parameter_types! {
   pub const MetadataDepositPerByte: u64 = 1;
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
+  pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
-  pub const BlocksForceUnstake: BlockNumber = 256;
+  pub const FeesPalletId: PalletId = PalletId(*b"fees*pal");
+  pub const SunrisePalletId: PalletId = PalletId(*b"sunr*pal");
+  pub const SessionsPerEra: SessionIndex = 10;
+  pub const SessionsArchive: SessionIndex = 2;
+  pub const BlocksPerSession: BlockNumber = 50;
+  pub const BlocksForceUnstake: BlockNumber = 10;
   pub const MinimumPeriod: u64 = 5;
   pub const StakeAccountCap: u32 = 10;
   pub const UnstakeQueueCap: u32 = 100;
   pub const StakingRewardCap: u32 = 100;
+  // 20 basis point
+  pub const FeeAmount: Permill = Permill::from_perthousand(20);
+  // 10 basis point
+  pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
+  pub const MarketMakerLimitFeeAmount: Permill = Permill::from_parts(500);
+  pub const BurnedCap: u32 = 1000;
+  // Maximum proposals in queue for the quorum, to limit the vector size and optimization
+  pub const ProposalsCap: u32 = 1000;
+  // The lifetime of a proposal by the quorum members
+  pub const ProposalLifetime: BlockNumber = 100;
+  // The number of votes maximum per proposal, should alway be higher than the proposals threshold
+  pub const VotesLimit: u32 = 10;
+  // The maximum number of account the watchlist can contains
+  pub const WatchListLimit: u32 = 10000;
+  // The maximum number of pubkey each asset can have, should alway be more more than the current quorum active member set
+  pub const PubkeyLimitPerAsset: u32 = 10;
+  // The number of swap each account can have in queue
+  pub const SwapLimitByAccount: u32 = 100;
+  pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
+  // max 10k rewards
+  pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
+  // 50%
+  pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
 }
 
 impl pallet_assets::Config for Test {
@@ -148,6 +181,40 @@ impl pallet_balances::Config for Test {
   type WeightInfo = ();
 }
 
+impl pallet_security::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
+}
+
+impl pallet_tidefi::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_tidefi::weights::SubstrateWeight<Test>;
+  type Quorum = Quorum;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Oracle = Oracle;
+  type Fees = Fees;
+  type Sunrise = Sunrise;
+  type Security = Security;
+  type AssetRegistry = AssetRegistry;
+}
+
+impl pallet_quorum::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
+  type QuorumPalletId = QuorumPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Security = Security;
+  type Sunrise = Sunrise;
+  type AssetRegistry = AssetRegistry;
+  type ProposalsCap = ProposalsCap;
+  type BurnedCap = BurnedCap;
+  type ProposalLifetime = ProposalLifetime;
+  type StringLimit = StringLimit;
+  type VotesLimit = VotesLimit;
+  type WatchListLimit = WatchListLimit;
+  type PubkeyLimitPerAsset = PubkeyLimitPerAsset;
+}
+
 impl pallet_timestamp::Config for Test {
   type Moment = u64;
   type OnTimestampSet = ();
@@ -155,9 +222,42 @@ impl pallet_timestamp::Config for Test {
   type WeightInfo = ();
 }
 
-impl pallet_security::Config for Test {
+impl pallet_oracle::Config for Test {
   type Event = Event;
-  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
+  type WeightInfo = pallet_oracle::weights::SubstrateWeight<Test>;
+  type OraclePalletId = OraclePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Security = Security;
+  type SwapLimitByAccount = SwapLimitByAccount;
+  type Fees = Fees;
+  type Sunrise = Sunrise;
+}
+
+impl pallet_fees::Config for Test {
+  type Event = Event;
+  type Security = Security;
+  type FeesPalletId = FeesPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type UnixTime = Timestamp;
+  type SessionsPerEra = SessionsPerEra;
+  type SessionsArchive = SessionsArchive;
+  type FeeAmount = FeeAmount;
+  type MarketMakerFeeAmount = MarketMakerFeeAmount;
+  type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
+  type BlocksPerSession = BlocksPerSession;
+  type Staking = TidefiStaking;
+  type Sunrise = Sunrise;
+}
+
+impl pallet_sunrise::Config for Test {
+  type Event = Event;
+  type Security = Security;
+  type SunrisePalletId = SunrisePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Cooldown = Cooldown;
+  type MaximumRewardPerSwap = MaximumRewardPerSwap;
+  type LeftoverSwapRebates = LeftoverSwapRebates;
 }
 
 impl pallet_tidefi_stake::Config for Test {
@@ -344,6 +444,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
+  pallet_fees::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+  pallet_sunrise::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut t)
+    .unwrap();
+
   pallet_tidefi_stake::GenesisConfig::<Test> {
     unstake_fee: Percent::from_parts(1),
     staking_periods: vec![
@@ -363,6 +471,22 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         maximum_amount: 500_000_000,
       },
     )],
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
+
+  pallet_quorum::GenesisConfig::<Test> {
+    enabled: true,
+    members: vec![0],
+    threshold: 1,
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
+
+  pallet_oracle::GenesisConfig::<Test> {
+    enabled: true,
+    account: 1,
+    market_makers: Vec::new(),
   }
   .assimilate_storage(&mut t)
   .unwrap();

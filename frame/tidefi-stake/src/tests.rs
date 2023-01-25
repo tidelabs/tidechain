@@ -16,34 +16,48 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Balance, Origin, Security, StakeAccountCap, Test,
-    TidefiStaking, UnstakeQueueCap,
+    new_test_ext, AccountId, Adapter, Balance, FeeAmount, MarketMakerFeeAmount, Oracle, Origin,
+    Security, StakeAccountCap, Test, TidefiStaking, UnstakeQueueCap,
   },
   pallet as pallet_tidefi_stake, AccountStakes, Error, StakingPool, UnstakeQueue,
 };
 use frame_support::{
   assert_noop, assert_ok,
   traits::{
-    fungibles::{Inspect, Mutate},
+    fungibles::{Inspect, InspectHold, Mutate},
     Hooks,
   },
   BoundedVec,
 };
 use sp_runtime::{
   traits::{AccountIdConversion, BadOrigin},
-  ArithmeticError, DispatchError, Percent,
+  ArithmeticError, DispatchError, Percent, Permill,
 };
 use std::str::FromStr;
-use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId, Hash, Stake, StakeStatus};
+use tidefi_primitives::{
+  pallet::{OracleExt, StakingExt},
+  BlockNumber, CurrencyId, Hash, Stake, StakeStatus, SwapConfirmation, SwapStatus, SwapType,
+};
 
 const TEST_TOKEN: u32 = 2;
 const TEST_TOKEN_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEST_TOKEN);
 const FIFTEEN_DAYS: BlockNumber = 14400 * 15;
 const BLOCKS_FORCE_UNLOCK: BlockNumber = 256;
 
+// Extrinsic Hashes
+const EXTRINSIC_HASH_0: [u8; 32] = [0; 32];
+const EXTRINSIC_HASH_1: [u8; 32] = [1; 32];
+
+// Slippage Rates
+const SLIPPAGE_0_PERCENT: Permill = Permill::from_percent(0);
+
+// Swap Fee Rates
+const REQUESTER_SWAP_FEE_RATE: Permill = FeeAmount::get();
+const MARKET_MAKER_SWAP_FEE_RATE: Permill = MarketMakerFeeAmount::get();
+
 // Asset Units
 const ONE_TDFY: Balance = 1_000_000_000_000;
-const ONE_TEST_TOKEN: Balance = 100;
+const ONE_TEST_TOKEN: Balance = 100_000_000;
 
 // Test Accounts
 const ALICE_ACCOUNT_ID: AccountId = 1;
@@ -53,7 +67,9 @@ const CHARLIE_ACCOUNT_ID: AccountId = 3;
 const ALICE_INITIAL_ONE_THOUSAND_TDFYS: Balance = 1_000 * ONE_TDFY;
 const ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS: Balance = 1_000 * ONE_TEST_TOKEN;
 const BOB_INITIAL_ONE_THOUSAND_TDFYS: Balance = 1_000 * ONE_TDFY;
+const BOB_INITIAL_ONE_THOUSAND_TEST_TOKENS: Balance = 1_000 * ONE_TEST_TOKEN;
 const CHARLIE_INITIAL_ONE_THOUSAND_TDFYS: Balance = 1_000 * ONE_TDFY;
+const CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS: Balance = 1_000 * ONE_TEST_TOKEN;
 
 const ALICE_STAKE_ONE_TDFY: Balance = ONE_TDFY;
 const BOB_STAKE_QUARTER_TDFY: Balance = ALICE_STAKE_ONE_TDFY / 4;
@@ -67,6 +83,7 @@ struct Context {
   test_token_amount: Balance,
   stake_id: Hash,
   duration: BlockNumber,
+  market_makers: Vec<AccountId>,
 }
 
 impl Default for Context {
@@ -82,11 +99,26 @@ impl Default for Context {
       )
       .unwrap_or_default(),
       duration: FIFTEEN_DAYS,
+      market_makers: vec![],
     }
   }
 }
 
 impl Context {
+  fn set_oracle_status(self, status: bool) -> Self {
+    assert_ok!(Oracle::set_status(Origin::signed(ALICE_ACCOUNT_ID), status));
+    match status {
+      true => assert!(Oracle::status()),
+      false => assert!(!Oracle::status()),
+    }
+    self
+  }
+
+  fn set_market_makers(mut self, account_ids: Vec<AccountId>) -> Self {
+    self.market_makers = account_ids;
+    self
+  }
+
   fn mint_tdfy(self, account: AccountId, amount: Balance) -> Self {
     Self::mint_asset_for_accounts(vec![account], CurrencyId::Tdfy, amount);
     assert_eq!(Adapter::balance(CurrencyId::Tdfy, &account), amount);
@@ -187,6 +219,187 @@ impl Context {
     StakingPool::<Test>::insert(currency_id, new_balance);
     self
   }
+
+  fn create_tdfy_to_temp_limit_swap_request(
+    &self,
+    requester_account_id: AccountId,
+    tdfy_amount: Balance,
+    temp_amount: Balance,
+    extrinsic_hash: [u8; 32],
+    slippage: Permill,
+  ) -> Hash {
+    add_new_swap_and_assert_results(
+      requester_account_id,
+      CurrencyId::Tdfy,
+      tdfy_amount,
+      TEST_TOKEN_CURRENCY_ID,
+      temp_amount,
+      BLOCK_NUMBER_ZERO,
+      extrinsic_hash,
+      self.market_makers.contains(&requester_account_id),
+      SwapType::Limit,
+      slippage,
+    )
+  }
+
+  fn create_temp_to_tdfy_limit_swap_request(
+    &self,
+    requester_account_id: AccountId,
+    temp_amount: Balance,
+    tdfy_amount: Balance,
+    extrinsic_hash: [u8; 32],
+    slippage: Permill,
+  ) -> Hash {
+    add_new_swap_and_assert_results(
+      requester_account_id,
+      TEST_TOKEN_CURRENCY_ID,
+      temp_amount,
+      CurrencyId::Tdfy,
+      tdfy_amount,
+      BLOCK_NUMBER_ZERO,
+      extrinsic_hash,
+      self.market_makers.contains(&requester_account_id),
+      SwapType::Limit,
+      slippage,
+    )
+  }
+}
+
+fn add_new_swap_and_assert_results(
+  account_id: AccountId,
+  asset_id_from: CurrencyId,
+  amount_from: Balance,
+  asset_id_to: CurrencyId,
+  amount_to: Balance,
+  block_number: BlockNumber,
+  extrinsic_hash: [u8; 32],
+  is_market_maker: bool,
+  swap_type: SwapType,
+  slippage: Permill,
+) -> Hash {
+  let initial_from_token_balance = Adapter::balance(asset_id_from, &account_id);
+
+  let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
+    account_id,
+    asset_id_from,
+    amount_from,
+    asset_id_to,
+    amount_to,
+    block_number,
+    extrinsic_hash,
+    is_market_maker,
+    swap_type,
+    slippage,
+  )
+  .unwrap();
+
+  assert_swap_cost_is_suspended(account_id, asset_id_from, amount_from, is_market_maker);
+
+  if asset_id_from != CurrencyId::Tdfy {
+    assert_sold_tokens_are_deducted(
+      account_id,
+      asset_id_from,
+      initial_from_token_balance,
+      amount_from,
+      is_market_maker,
+    );
+  }
+
+  assert_spendable_balance_is_updated(
+    account_id,
+    asset_id_from,
+    initial_from_token_balance,
+    amount_from,
+    is_market_maker,
+  );
+
+  assert_eq!(trade_request.status, SwapStatus::Pending);
+  assert_eq!(
+    Oracle::account_swaps(account_id)
+      .unwrap()
+      .iter()
+      .find(|(request_id, _)| *request_id == trade_request_id),
+    Some(&(trade_request_id, SwapStatus::Pending))
+  );
+
+  assert_eq!(trade_request.block_number, BLOCK_NUMBER_ZERO);
+
+  trade_request_id
+}
+
+fn assert_swap_cost_is_suspended(
+  account_id: AccountId,
+  currency_id: CurrencyId,
+  sell_amount: Balance,
+  is_market_maker: bool,
+) {
+  let swap_fee_rate = if is_market_maker {
+    MARKET_MAKER_SWAP_FEE_RATE
+  } else {
+    REQUESTER_SWAP_FEE_RATE
+  };
+
+  assert_eq!(
+    Adapter::balance_on_hold(currency_id, &account_id),
+    sell_amount.saturating_add(swap_fee_rate * sell_amount)
+  );
+}
+
+fn assert_spendable_balance_is_updated(
+  account_id: AccountId,
+  currency_id: CurrencyId,
+  initial_balance: Balance,
+  sell_amount: Balance,
+  is_market_maker: bool,
+) {
+  let swap_fee_rate = if is_market_maker {
+    MARKET_MAKER_SWAP_FEE_RATE
+  } else {
+    REQUESTER_SWAP_FEE_RATE
+  };
+
+  let expected_reducible_balance = initial_balance
+    .saturating_sub(sell_amount)
+    .saturating_sub(swap_fee_rate * sell_amount);
+
+  match currency_id {
+    CurrencyId::Tdfy => assert_eq!(
+      Adapter::reducible_balance(currency_id, &account_id, true),
+      expected_reducible_balance
+    ),
+    _ => assert_eq!(
+      Adapter::reducible_balance(currency_id, &account_id, true),
+      expected_reducible_balance.saturating_sub(1_u128) // keep-alive token
+    ),
+  }
+
+  assert_eq!(
+    Adapter::reducible_balance(currency_id, &account_id, false),
+    initial_balance
+      .saturating_sub(sell_amount)
+      .saturating_sub(swap_fee_rate * sell_amount)
+  );
+}
+
+fn assert_sold_tokens_are_deducted(
+  account_id: AccountId,
+  currency_id: CurrencyId,
+  initial_balance: Balance,
+  sell_amount: Balance,
+  is_market_maker: bool,
+) {
+  let swap_fee_rate = if is_market_maker {
+    MARKET_MAKER_SWAP_FEE_RATE
+  } else {
+    REQUESTER_SWAP_FEE_RATE
+  };
+
+  assert_eq!(
+    Adapter::balance(currency_id, &account_id),
+    initial_balance
+      .saturating_sub(sell_amount)
+      .saturating_sub(swap_fee_rate * sell_amount)
+  );
 }
 
 fn set_current_block(block_number: BlockNumber) {
@@ -460,13 +673,52 @@ mod unstake {
       fn for_wrapped_asset() {
         new_test_ext().execute_with(|| {
           let context = Context::default()
+            .set_oracle_status(true)
+            .set_market_makers(vec![ALICE_ACCOUNT_ID])
             .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
             .mint_test_token(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
+            .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TDFYS)
+            .mint_test_token(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TEST_TOKENS)
+            .mint_tdfy(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TDFYS)
+            .mint_test_token(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
             .stake_test_tokens();
+
+          // Swaps
+          let trade_request_id_1 = context.create_tdfy_to_temp_limit_swap_request(
+            BOB_ACCOUNT_ID,
+            10 * ONE_TDFY,
+            (2 * ONE_TEST_TOKEN).into(),
+            EXTRINSIC_HASH_0,
+            SLIPPAGE_0_PERCENT,
+          );
+
+          let trade_request_id_2 = context.create_temp_to_tdfy_limit_swap_request(
+            CHARLIE_ACCOUNT_ID,
+            (2 * ONE_TEST_TOKEN).into(),
+            10 * ONE_TDFY,
+            EXTRINSIC_HASH_1,
+            SLIPPAGE_0_PERCENT,
+          );
+
+          // Filling
+          assert_ok!(Oracle::confirm_swap(
+            Origin::signed(ALICE_ACCOUNT_ID),
+            trade_request_id_1,
+            vec![SwapConfirmation {
+              request_id: trade_request_id_2,
+              amount_to_receive: (2 * ONE_TEST_TOKEN).into(),
+              amount_to_send: 10 * ONE_TDFY
+            },],
+          ));
+
+          assert!(Oracle::swaps(trade_request_id_1).is_none());
+          assert!(Oracle::swaps(trade_request_id_2).is_some());
 
           set_current_block(FIFTEEN_DAYS + 1);
 
           let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
+
+          // TODO: Assert Swap event
 
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
@@ -474,6 +726,9 @@ mod unstake {
             false
           ));
 
+          // TODO: Assert Unstaked event
+
+          // TODO: Update balance amount including the swap fee earned
           assert_eq!(
             staker_balance_before + context.test_token_amount,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
