@@ -700,19 +700,18 @@ mod unstake {
             SLIPPAGE_0_PERCENT,
           );
 
-          // Filling
           assert_ok!(Oracle::confirm_swap(
-            Origin::signed(ALICE_ACCOUNT_ID),
+            Oracle::account_id().into(),
             trade_request_id_1,
             vec![SwapConfirmation {
               request_id: trade_request_id_2,
-              amount_to_receive: (2 * ONE_TEST_TOKEN).into(),
-              amount_to_send: 10 * ONE_TDFY
+              amount_to_receive: 10 * ONE_TDFY,
+              amount_to_send: (2 * ONE_TEST_TOKEN).into()
             },],
           ));
 
           assert!(Oracle::swaps(trade_request_id_1).is_none());
-          assert!(Oracle::swaps(trade_request_id_2).is_some());
+          assert!(Oracle::swaps(trade_request_id_2).is_none());
 
           set_current_block(FIFTEEN_DAYS + 1);
 
