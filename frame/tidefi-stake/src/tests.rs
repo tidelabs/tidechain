@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Balance, FeeAmount, MarketMakerFeeAmount, Oracle, Origin,
-    Security, StakeAccountCap, Test, TidefiStaking, UnstakeQueueCap,
+    new_test_ext, AccountId, Adapter, Balance, Event as MockEvent, FeeAmount, MarketMakerFeeAmount,
+    Oracle, Origin, Security, StakeAccountCap, System, Test, TidefiStaking, UnstakeQueueCap,
   },
   pallet as pallet_tidefi_stake, AccountStakes, Error, StakingPool, UnstakeQueue,
 };
@@ -75,6 +75,8 @@ const ALICE_STAKE_ONE_TDFY: Balance = ONE_TDFY;
 const BOB_STAKE_QUARTER_TDFY: Balance = ALICE_STAKE_ONE_TDFY / 4;
 
 const BLOCK_NUMBER_ZERO: BlockNumber = 0;
+
+const SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
 
 struct Context {
   staker: AccountId,
@@ -683,6 +685,8 @@ mod unstake {
             .mint_test_token(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
             .stake_test_tokens();
 
+          let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
+
           // Swaps
           let trade_request_id_1 = context.create_tdfy_to_temp_limit_swap_request(
             BOB_ACCOUNT_ID,
@@ -700,6 +704,16 @@ mod unstake {
             SLIPPAGE_0_PERCENT,
           );
 
+          assert!(Oracle::swaps(trade_request_id_1).is_some());
+          assert!(Oracle::swaps(trade_request_id_2).is_some());
+
+          let mut stake = AccountStakes::<Test>::get(&context.staker)
+            .into_iter()
+            .find(|stake| stake.unique_id == context.stake_id)
+            .unwrap();
+          let mut final_balance = stake.principal;
+
+          // Confirm Swaps
           assert_ok!(Oracle::confirm_swap(
             Oracle::account_id().into(),
             trade_request_id_1,
@@ -713,19 +727,59 @@ mod unstake {
           assert!(Oracle::swaps(trade_request_id_1).is_none());
           assert!(Oracle::swaps(trade_request_id_2).is_none());
 
+          System::assert_has_event(MockEvent::Oracle(pallet_oracle::Event::SwapProcessed {
+            request_id: trade_request_id_1,
+            status: SwapStatus::Completed,
+            account_id: BOB_ACCOUNT_ID,
+            currency_from: CurrencyId::Tdfy,
+            currency_amount_from: 10 * ONE_TDFY,
+            currency_to: TEST_TOKEN_CURRENCY_ID,
+            currency_amount_to: (2 * ONE_TEST_TOKEN).into(),
+            initial_extrinsic_hash: EXTRINSIC_HASH_0,
+          }));
+
+          System::assert_has_event(MockEvent::Oracle(pallet_oracle::Event::SwapProcessed {
+            request_id: trade_request_id_2,
+            status: SwapStatus::Completed,
+            account_id: CHARLIE_ACCOUNT_ID,
+            currency_from: TEST_TOKEN_CURRENCY_ID,
+            currency_amount_from: (2 * ONE_TEST_TOKEN).into(),
+            currency_to: CurrencyId::Tdfy,
+            currency_amount_to: 10 * ONE_TDFY,
+            initial_extrinsic_hash: EXTRINSIC_HASH_1,
+          }));
+
+          assert_ok!(TidefiStaking::on_session_end(
+            1,
+            vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
+          ));
+
+          run_on_idle_hook(1, 1_000 * ONE_TDFY);
+
           set_current_block(FIFTEEN_DAYS + 1);
 
-          let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
+          stake = AccountStakes::<Test>::get(&context.staker)
+            .into_iter()
+            .find(|stake| stake.unique_id == context.stake_id)
+            .unwrap();
+          final_balance = stake.principal;
 
-          // TODO: Assert Swap event
-
+          // Unstake
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
             context.stake_id,
             false
           ));
 
-          // TODO: Assert Unstaked event
+          System::assert_has_event(MockEvent::TidefiStaking(
+            pallet_tidefi_stake::Event::Unstaked {
+              request_id: context.stake_id,
+              account_id: context.staker,
+              currency_id: TEST_TOKEN_CURRENCY_ID,
+              initial_balance: context.test_token_amount,
+              final_balance: final_balance,
+            },
+          ));
 
           // TODO: Update balance amount including the swap fee earned
           assert_eq!(
@@ -1171,7 +1225,6 @@ pub fn should_calculate_rewards() {
     const ALICE_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
     const BOB_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
     const CHARLIE_STAKE_FOUR_HUNDRED_TDFYS: Balance = 400 * ONE_TDFY;
-    const SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
 
     Context::default()
       .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
