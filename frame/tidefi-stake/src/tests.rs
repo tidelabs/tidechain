@@ -81,6 +81,7 @@ const SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
 struct Context {
   staker: AccountId,
   staking_pallet_account: AccountId,
+  fee_pallet_account: AccountId,
   tdfy_amount: Balance,
   test_token_amount: Balance,
   stake_id: Hash,
@@ -93,6 +94,8 @@ impl Default for Context {
     Self {
       staker: ALICE_ACCOUNT_ID,
       staking_pallet_account: <Test as pallet_tidefi_stake::Config>::StakePalletId::get()
+        .into_account_truncating(),
+      fee_pallet_account: <Test as pallet_fees::Config>::FeesPalletId::get()
         .into_account_truncating(),
       tdfy_amount: ONE_TDFY,
       test_token_amount: ONE_TEST_TOKEN,
@@ -176,6 +179,27 @@ impl Context {
     assert_eq!(
       self.test_token_amount,
       Adapter::balance(TEST_TOKEN_CURRENCY_ID, &self.staking_pallet_account)
+    );
+
+    assert_eq!(
+      TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID),
+      Some(self.test_token_amount)
+    );
+
+    assert!(
+      TidefiStaking::account_stakes(self.staker)
+        .first()
+        .unwrap()
+        .initial_balance
+        == self.test_token_amount
+    );
+
+    assert!(
+      TidefiStaking::account_stakes(self.staker)
+        .first()
+        .unwrap()
+        .principal
+        == self.test_token_amount
     );
 
     self
@@ -674,6 +698,7 @@ mod unstake {
       #[test]
       fn for_wrapped_asset() {
         new_test_ext().execute_with(|| {
+          // Mint and Stake
           let context = Context::default()
             .set_oracle_status(true)
             .set_market_makers(vec![ALICE_ACCOUNT_ID])
@@ -685,7 +710,8 @@ mod unstake {
             .mint_test_token(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
             .stake_test_tokens();
 
-          let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
+          let staker_test_token_balance_before_unstaking =
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
 
           // Swaps
           let trade_request_id_1 = context.create_tdfy_to_temp_limit_swap_request(
@@ -707,11 +733,17 @@ mod unstake {
           assert!(Oracle::swaps(trade_request_id_1).is_some());
           assert!(Oracle::swaps(trade_request_id_2).is_some());
 
-          let mut stake = AccountStakes::<Test>::get(&context.staker)
-            .into_iter()
-            .find(|stake| stake.unique_id == context.stake_id)
-            .unwrap();
-          let mut final_balance = stake.principal;
+          assert_eq!(
+            0,
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fee_pallet_account)
+          );
+
+          assert_ok!(TidefiStaking::on_session_end(
+            1,
+            vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
+          ));
+
+          run_on_idle_hook(1, 1_000 * ONE_TDFY);
 
           // Confirm Swaps
           assert_ok!(Oracle::confirm_swap(
@@ -749,20 +781,19 @@ mod unstake {
             initial_extrinsic_hash: EXTRINSIC_HASH_1,
           }));
 
-          assert_ok!(TidefiStaking::on_session_end(
-            1,
-            vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
-          ));
-
-          run_on_idle_hook(1, 1_000 * ONE_TDFY);
+          // Fee account test token balance is increased
+          assert_eq!(
+            4000000,
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fee_pallet_account)
+          );
 
           set_current_block(FIFTEEN_DAYS + 1);
 
-          stake = AccountStakes::<Test>::get(&context.staker)
+          let stake = AccountStakes::<Test>::get(&context.staker)
             .into_iter()
             .find(|stake| stake.unique_id == context.stake_id)
             .unwrap();
-          final_balance = stake.principal;
+          let final_balance = stake.principal;
 
           // Unstake
           assert_ok!(TidefiStaking::unstake(
@@ -783,7 +814,7 @@ mod unstake {
 
           // TODO: Update balance amount including the swap fee earned
           assert_eq!(
-            staker_balance_before + context.test_token_amount,
+            staker_test_token_balance_before_unstaking + context.test_token_amount,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
           );
 
@@ -792,6 +823,15 @@ mod unstake {
             0,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staking_pallet_account)
           );
+
+          // Fee pallet account Test token balance becomes empty
+          assert_eq!(
+            0,
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fee_pallet_account)
+          );
+
+          // Assert Bob TDFY and Test token balance
+          // Assert Charlie TDFY and Test token balance
         });
       }
     }
