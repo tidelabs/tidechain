@@ -74,31 +74,6 @@ parameter_types! {
   pub const MaxReserves: u32 = 50;
 }
 
-parameter_types! {
-  pub const AssetDeposit: u64 = 1;
-  pub const ApprovalDeposit: u64 = 1;
-  pub const StringLimit: u32 = 50;
-  pub const MetadataDepositBase: u64 = 1;
-  pub const MetadataDepositPerByte: u64 = 1;
-}
-
-impl pallet_assets::Config for Runtime {
-  type Event = Event;
-  type Balance = u128;
-  type AssetId = u32;
-  type Currency = PalletBalances;
-  type AssetDeposit = AssetDeposit;
-  type MetadataDepositBase = MetadataDepositBase;
-  type MetadataDepositPerByte = MetadataDepositPerByte;
-  type ApprovalDeposit = ApprovalDeposit;
-  type StringLimit = StringLimit;
-  type Freezer = ();
-  type Extra = ();
-  type WeightInfo = ();
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
-  type AssetAccountDeposit = ConstU128<0>;
-}
-
 impl pallet_balances::Config for Runtime {
   type Balance = Balance;
   type DustRemoval = ();
@@ -169,14 +144,14 @@ impl Inspect<AccountId> for Adapter<AccountId> {
   fn total_issuance(asset: Self::AssetId) -> Self::Balance {
     match asset {
       CurrencyId::Tdfy => PalletBalances::total_issuance(),
-      CurrencyId::Wrapped(asset_id) => Assets::total_issuance(asset_id),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 
   fn balance(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
     match asset {
       CurrencyId::Tdfy => PalletBalances::balance(who),
-      CurrencyId::Wrapped(asset_id) => Assets::balance(asset_id, who),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 
@@ -187,14 +162,14 @@ impl Inspect<AccountId> for Adapter<AccountId> {
           AccountId,
         >>::minimum_balance()
       }
-      CurrencyId::Wrapped(asset_id) => Assets::minimum_balance(asset_id),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 
   fn reducible_balance(asset: Self::AssetId, who: &AccountId, keep_alive: bool) -> Self::Balance {
     match asset {
       CurrencyId::Tdfy => PalletBalances::reducible_balance(who, keep_alive),
-      CurrencyId::Wrapped(asset_id) => Assets::reducible_balance(asset_id, who, keep_alive),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 
@@ -206,7 +181,7 @@ impl Inspect<AccountId> for Adapter<AccountId> {
   ) -> DepositConsequence {
     match asset {
       CurrencyId::Tdfy => PalletBalances::can_deposit(who, amount, mint),
-      CurrencyId::Wrapped(asset_id) => Assets::can_deposit(asset_id, who, amount, mint),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 
@@ -217,7 +192,7 @@ impl Inspect<AccountId> for Adapter<AccountId> {
   ) -> WithdrawConsequence<Self::Balance> {
     match asset {
       CurrencyId::Tdfy => PalletBalances::can_withdraw(who, amount),
-      CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 }
@@ -226,7 +201,7 @@ impl Mutate<AccountId> for Adapter<AccountId> {
   fn mint_into(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
     match asset {
       CurrencyId::Tdfy => PalletBalances::mint_into(who, amount),
-      CurrencyId::Wrapped(asset_id) => Assets::mint_into(asset_id, who, amount),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 
@@ -237,14 +212,12 @@ impl Mutate<AccountId> for Adapter<AccountId> {
   ) -> Result<Balance, DispatchError> {
     match asset {
       CurrencyId::Tdfy => PalletBalances::burn_from(who, amount),
-      CurrencyId::Wrapped(asset_id) => Assets::burn_from(asset_id, who, amount),
+      CurrencyId::Wrapped(_) => unimplemented!(),
     }
   }
 }
 
 impl Transfer<AccountId> for Adapter<AccountId>
-where
-  Assets: Transfer<AccountId>,
 {
   fn transfer(
     asset: Self::AssetId,
@@ -257,9 +230,7 @@ where
       CurrencyId::Tdfy => {
         <PalletBalances as FungibleTransfer<AccountId>>::transfer(source, dest, amount, keep_alive)
       }
-      CurrencyId::Wrapped(asset_id) => {
-        <Assets as Transfer<AccountId>>::transfer(asset_id, source, dest, amount, keep_alive)
-      }
+      CurrencyId::Wrapped(_) => unimplemented!()
     }
   }
 }
@@ -274,7 +245,6 @@ construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-    Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Vesting: vesting::{Pallet, Storage, Call, Event<T>, Config<T>},
     PalletBalances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
   }
