@@ -481,6 +481,17 @@ pub mod pallet {
                     .checked_sub(market_maker_trade_intent.amount_from_filled)
                     .ok_or(Error::<T>::MarketMakerHasNotEnoughTokenLeftToSell)?;
 
+                  // 11 d) prevent MM overflow
+                  if market_maker_trade_intent
+                    .amount_from_filled
+                    .checked_add(mm.amount_to_send)
+                    .ok_or(Error::<T>::ArithmeticError)?
+                    > market_maker_trade_intent.amount_from
+                  {
+                    return Err(Error::<T>::MarketMakerHasNotEnoughTokenToSell);
+                  }
+
+                  // 11 e) make sure there is enough funds available
                   if available_funds
                     .checked_add(market_maker_trade_intent.slippage * available_funds)
                     .ok_or(Error::<T>::ArithmeticError)?
@@ -907,13 +918,8 @@ pub mod pallet {
         )
         .ok_or(Error::<T>::ArithmeticError)?;
 
-      T::CurrencyTidefi::release(
-        trade.token_from,
-        &trade.account_id,
-        amount_to_release,
-        false,
-      )
-      .map_err(|_| Error::<T>::ReleaseFailed)?;
+      T::CurrencyTidefi::release(trade.token_from, &trade.account_id, amount_to_release, true)
+        .map_err(|_| Error::<T>::ReleaseFailed)?;
 
       Ok(())
     }
@@ -1047,57 +1053,60 @@ pub mod pallet {
             Error::<T>::AccessDenied
           );
 
-          // release the remaining funds and the network fee
-          let amount_and_fee = T::Fees::calculate_swap_fees(
-            swap_intent.token_from,
-            swap_intent.amount_from,
-            swap_intent.swap_type.clone(),
-            swap_intent.is_market_maker,
-          );
           let amount_to_release = swap_intent
             .amount_from
             // amount filled
             .checked_sub(swap_intent.amount_from_filled)
-            .ok_or(Error::<T>::ArithmeticError)?;
+            .unwrap_or(0);
 
-          // FIXME: Should we refund the swap fee?
-          // swap fee
-          let real_amount_to_release = if swap_intent.amount_from_filled == 0 {
-            amount_to_release
-              .checked_add(amount_and_fee.fee)
-              .ok_or(Error::<T>::ArithmeticError)?
-          } else {
-            // real fees required
-            let fees_amount_filled = T::Fees::calculate_swap_fees(
-              swap_intent.token_from,
-              swap_intent.amount_from_filled,
-              swap_intent.swap_type.clone(),
-              swap_intent.is_market_maker,
-            );
-            let fees_amount = T::Fees::calculate_swap_fees(
+          if amount_to_release > 0 {
+            // release the remaining funds and the network fee
+            let amount_and_fee = T::Fees::calculate_swap_fees(
               swap_intent.token_from,
               swap_intent.amount_from,
               swap_intent.swap_type.clone(),
               swap_intent.is_market_maker,
             );
 
-            amount_to_release
-              .checked_add(
-                fees_amount
-                  .fee
-                  .checked_sub(fees_amount_filled.fee)
-                  .ok_or(Error::<T>::ArithmeticError)?,
-              )
-              .ok_or(Error::<T>::ArithmeticError)?
-          };
+            // FIXME: Should we refund the swap fee?
+            // swap fee
+            let real_amount_to_release = if swap_intent.amount_from_filled == 0 {
+              amount_to_release
+                .checked_add(amount_and_fee.fee)
+                .ok_or(Error::<T>::ArithmeticError)?
+            } else {
+              // real fees required
+              let fees_amount_filled = T::Fees::calculate_swap_fees(
+                swap_intent.token_from,
+                swap_intent.amount_from_filled,
+                swap_intent.swap_type.clone(),
+                swap_intent.is_market_maker,
+              );
+              let fees_amount = T::Fees::calculate_swap_fees(
+                swap_intent.token_from,
+                swap_intent.amount_from,
+                swap_intent.swap_type.clone(),
+                swap_intent.is_market_maker,
+              );
 
-          T::CurrencyTidefi::release(
-            swap_intent.token_from,
-            &swap_intent.account_id,
-            real_amount_to_release,
-            false,
-          )
-          .map_err(|_| Error::<T>::ReleaseFailed)?;
+              amount_to_release
+                .checked_add(
+                  fees_amount
+                    .fee
+                    .checked_sub(fees_amount_filled.fee)
+                    .ok_or(Error::<T>::ArithmeticError)?,
+                )
+                .ok_or(Error::<T>::ArithmeticError)?
+            };
+
+            T::CurrencyTidefi::release(
+              swap_intent.token_from,
+              &swap_intent.account_id,
+              real_amount_to_release,
+              true,
+            )
+            .map_err(|_| Error::<T>::ReleaseFailed)?;
+          }
 
           // delete the swap from the storage
           Self::try_delete_account_swap(&swap_intent.account_id, request_id)

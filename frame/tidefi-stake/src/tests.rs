@@ -19,7 +19,7 @@ use crate::{
     new_test_ext, AccountId, Adapter, Balance, Origin, Security, StakeAccountCap, Test,
     TidefiStaking, UnstakeQueueCap,
   },
-  AccountStakes, Error, StakingPool, UnstakeQueue,
+  pallet as pallet_tidefi_stake, AccountStakes, Error, StakingPool, UnstakeQueue,
 };
 use frame_support::{
   assert_noop, assert_ok,
@@ -29,7 +29,10 @@ use frame_support::{
   },
   BoundedVec,
 };
-use sp_runtime::{traits::BadOrigin, ArithmeticError, DispatchError, Percent};
+use sp_runtime::{
+  traits::{AccountIdConversion, BadOrigin},
+  ArithmeticError, DispatchError, Percent,
+};
 use std::str::FromStr;
 use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId, Hash, Stake, StakeStatus};
 
@@ -59,6 +62,7 @@ const BLOCK_NUMBER_ZERO: BlockNumber = 0;
 
 struct Context {
   staker: AccountId,
+  staking_pallet_account: AccountId,
   tdfy_amount: Balance,
   test_token_amount: Balance,
   stake_id: Hash,
@@ -69,6 +73,8 @@ impl Default for Context {
   fn default() -> Self {
     Self {
       staker: ALICE_ACCOUNT_ID,
+      staking_pallet_account: <Test as pallet_tidefi_stake::Config>::StakePalletId::get()
+        .into_account_truncating(),
       tdfy_amount: ONE_TDFY,
       test_token_amount: ONE_TEST_TOKEN,
       stake_id: Hash::from_str(
@@ -100,22 +106,44 @@ impl Context {
   }
 
   fn stake_tdfy(self) -> Self {
+    assert_eq!(
+      0,
+      Adapter::balance(CurrencyId::Tdfy, &self.staking_pallet_account)
+    );
+
     assert_ok!(TidefiStaking::stake(
       Origin::signed(self.staker),
       CurrencyId::Tdfy,
       self.tdfy_amount,
       self.duration
     ));
+
+    assert_eq!(
+      self.tdfy_amount,
+      Adapter::balance(CurrencyId::Tdfy, &self.staking_pallet_account)
+    );
+
     self
   }
 
   fn stake_test_tokens(self) -> Self {
+    assert_eq!(
+      0,
+      Adapter::balance(TEST_TOKEN_CURRENCY_ID, &self.staking_pallet_account)
+    );
+
     assert_ok!(TidefiStaking::stake(
       Origin::signed(self.staker),
       TEST_TOKEN_CURRENCY_ID,
       self.test_token_amount,
       self.duration
     ));
+
+    assert_eq!(
+      self.test_token_amount,
+      Adapter::balance(TEST_TOKEN_CURRENCY_ID, &self.staking_pallet_account)
+    );
+
     self
   }
 
@@ -408,7 +436,6 @@ mod unstake {
           set_current_block(FIFTEEN_DAYS + 1);
 
           let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
-          let staking_pool_before = TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap();
 
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
@@ -421,10 +448,10 @@ mod unstake {
             Adapter::balance(CurrencyId::Tdfy, &context.staker)
           );
 
-          // make sure the staking pool has been updated
+          // Staking pallet account becomes empty
           assert_eq!(
-            Some(staking_pool_before - context.tdfy_amount),
-            TidefiStaking::staking_pool(CurrencyId::Tdfy)
+            0,
+            Adapter::balance(CurrencyId::Tdfy, &context.staking_pallet_account)
           );
         });
       }
@@ -440,7 +467,6 @@ mod unstake {
           set_current_block(FIFTEEN_DAYS + 1);
 
           let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
-          let staking_pool_before = TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID).unwrap();
 
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
@@ -453,10 +479,10 @@ mod unstake {
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
           );
 
-          // make sure the staking pool has been updated
+          // Staking pallet account becomes empty
           assert_eq!(
-            Some(staking_pool_before - context.test_token_amount),
-            TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID)
+            0,
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staking_pallet_account)
           );
         });
       }
@@ -473,7 +499,6 @@ mod unstake {
             .stake_tdfy();
 
           let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
-          let staking_pool_before = TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap();
 
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
@@ -494,12 +519,6 @@ mod unstake {
             staker_balance_before - unstaking_fee,
             Adapter::balance(CurrencyId::Tdfy, &context.staker)
           );
-
-          // make sure the staking pool has not been updated
-          assert_eq!(
-            Some(staking_pool_before),
-            TidefiStaking::staking_pool(CurrencyId::Tdfy)
-          );
         });
       }
 
@@ -512,7 +531,6 @@ mod unstake {
             .stake_test_tokens();
 
           let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
-          let staking_pool_before = TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID).unwrap();
 
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
@@ -532,12 +550,6 @@ mod unstake {
           assert_eq!(
             staker_balance_before - unstaking_fee,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
-          );
-
-          // make sure the staking pool has not been updated
-          assert_eq!(
-            Some(staking_pool_before),
-            TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID)
           );
         });
       }

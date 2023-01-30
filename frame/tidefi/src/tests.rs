@@ -364,6 +364,44 @@ mod transfer {
         }
       });
     }
+
+    #[test]
+    fn sender_send_max_tdfy_delete_keepalive() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY);
+
+        assert_ok!(Tidefi::transfer(
+          Origin::signed(context.sender),
+          context.receiver,
+          CurrencyId::Tdfy,
+          ONE_TDFY
+        ));
+      });
+    }
+
+    #[test]
+    fn sender_send_max_wrapped_asset_delete_keepalive() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10);
+
+        for currency_id in context.test_assets.clone() {
+          let alice_balance_before = get_alice_balance(currency_id);
+
+          assert_ok!(Tidefi::transfer(
+            Origin::signed(context.sender),
+            context.receiver,
+            currency_id,
+            alice_balance_before
+          ));
+
+          assert_eq!(0, get_alice_balance(currency_id));
+          assert_eq!(alice_balance_before, get_bob_balance(currency_id));
+        }
+      });
+    }
   }
 
   mod fails_when {
@@ -471,23 +509,6 @@ mod transfer {
     }
 
     #[test]
-    fn sender_has_insufficient_tdfy_left_to_keep_alive() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY);
-
-        assert_noop!(
-          Tidefi::transfer(
-            Origin::signed(context.sender),
-            context.receiver,
-            CurrencyId::Tdfy,
-            10 * ONE_TDFY
-          ),
-          BalancesError::<Test>::KeepAlive
-        );
-      });
-    }
-
-    #[test]
     fn receiver_has_not_enough_tdfy_to_exist() {
       new_test_ext().execute_with(|| {
         let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY);
@@ -529,6 +550,23 @@ mod withdrawal {
       assert_eq!(alice_balance_before, get_alice_balance(TEMP_CURRENCY_ID));
       assert_withdrawal_proposal_exists_in_storage(&context);
       assert_event_is_emitted_withdrawal(&context, TEMP_CURRENCY_ID);
+    });
+  }
+
+  #[test]
+  fn succeeds_if_max_withdrawal() {
+    new_test_ext().execute_with(|| {
+      let context = Context::default()
+        .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+        .create_temp_asset_and_metadata()
+        .mint_temp(ALICE_ACCOUNT_ID, ONE_TEMP);
+
+      assert_ok!(Tidefi::withdrawal(
+        Origin::signed(context.sender),
+        TEMP_CURRENCY_ID,
+        ONE_TEMP,
+        context.external_address.clone(),
+      ));
     });
   }
 
@@ -655,26 +693,6 @@ mod withdrawal {
             context.external_address.clone(),
           ),
           Error::<Test>::AccountAssetFrozen
-        );
-      });
-    }
-
-    #[test]
-    fn sender_balance_would_be_reduced_to_zero() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default()
-          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
-          .create_temp_asset_and_metadata()
-          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
-
-        assert_noop!(
-          Tidefi::withdrawal(
-            Origin::signed(context.sender),
-            TEMP_CURRENCY_ID,
-            10 * ONE_TEMP,
-            context.external_address.clone(),
-          ),
-          Error::<Test>::ReducedToZero
         );
       });
     }
@@ -1251,6 +1269,104 @@ mod cancel_swap {
           );
         });
       }
+    }
+  }
+
+  mod reported_tests {
+    use super::*;
+
+    //  Test Case
+    // {
+    //     extrinsicHash: 0xaa2da68e072933bdb893c23221afb27fa54993666bdc17fbf58049bffac84790
+    //     accountId: fhEVp1YLd462wqi7ZZQ6kwsAJJoSiQTLryHr8haS47FVTJZiZ
+    //     isMarketMaker: true
+    //     tokenFrom: Tdfy
+    //     amountFrom: 358,691,894,374,000,000
+    //     amountFromFilled: 0
+    //     tokenTo: {
+    //       Wrapped: 3
+    //     }
+    //     amountTo: 27,601,341,270,000,000,000
+    //     amountToFilled: 0
+    //     status: Pending
+    //     swapType: Limit
+    //     blockNumber: 181,437
+    //     slippage: 0.00%
+    //   }
+
+    //   the user balance:
+    //   {
+    //     nonce: 7,723
+    //     consumers: 0
+    //     providers: 1
+    //     sufficients: 4
+    //     data: {
+    //       free: 2,510,661,247,398,669,860
+    //       reserved: 358,861,235,321,187,000
+    //       miscFrozen: 0
+    //       feeFrozen: 0
+    //     }
+    //   }
+    #[test]
+    fn from_tdfy_to_temp() {
+      let free_balance: u128 = 2_510_661_247_398_669_860;
+      let from_amount: u128 = 358_691_894_374_000_000;
+      let to_amount: u128 = 27_601_341_270_000_000_000;
+      let fee: u128 = 179_345_947_187_000; // MarketMakerLimitFeeAmount: 0.05% of from_amount
+      let reserved_balance: u128 = from_amount + fee;
+      let total: u128 = free_balance + reserved_balance;
+
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 20 * ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, total)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, to_amount);
+
+        Oracle::add_new_swap_in_queue(
+          BOB_ACCOUNT_ID,
+          CurrencyId::Tdfy,
+          from_amount,
+          TEMP_CURRENCY_ID,
+          to_amount,
+          181_437,
+          *Hash::from_str("0xaa2da68e072933bdb893c23221afb27fa54993666bdc17fbf58049bffac84790")
+            .unwrap_or_default()
+            .as_fixed_bytes(),
+          true,
+          SwapType::Limit,
+          Permill::from_parts(0),
+        )
+        .unwrap();
+
+        assert_eq!(
+          Oracle::account_swaps(BOB_ACCOUNT_ID)
+            .unwrap()
+            .iter()
+            .find(|(request_id, _)| *request_id == context.request_id),
+          Some(&(context.request_id, SwapStatus::Pending))
+        );
+
+        let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+        let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+
+        assert_eq!(requester_balance_before, free_balance);
+        assert_eq!(requester_reserved, reserved_balance);
+
+        assert_ok!(Tidefi::cancel_swap(
+          Origin::signed(BOB_ACCOUNT_ID),
+          context.request_id,
+        ));
+
+        assert_eq!(
+          Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
+          requester_balance_before + requester_reserved
+        );
+
+        assert_cancelled_swap_is_set_to_none(&context);
+        assert_cancelled_swap_is_deleted_from_account_swaps(&context);
+        assert_event_is_emitted_swap_cancelled(&context);
+      })
     }
   }
 }
