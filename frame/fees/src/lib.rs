@@ -302,9 +302,11 @@ pub mod pallet {
 
               // notify the staking pallet that we are done with this session
               // the compute can be done for all stakers
-              if let Err(err) =
-                T::Staking::on_session_end(current_session, session_fees_by_currency.clone())
-              {
+              if let Err(err) = T::Staking::on_session_end(
+                current_session,
+                session_fees_by_currency.clone(),
+                Self::account_id(),
+              ) {
                 log!(error, "Can't notify staking pallet {:?}", err);
               }
 

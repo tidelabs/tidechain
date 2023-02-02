@@ -572,7 +572,7 @@ pub mod pallet {
           StakingPool::<T>::try_mutate(current_stake.currency_id, |balance| -> DispatchResult {
             if let Some(b) = balance {
               *balance = Some(
-                b.checked_sub(current_stake.principal)
+                b.checked_sub(current_stake.initial_balance)
                   .ok_or(ArithmeticError::Underflow)?,
               )
             }
@@ -813,10 +813,20 @@ pub mod pallet {
     fn on_session_end(
       session_index: SessionIndex,
       session_trade_values: Vec<(CurrencyId, Balance)>,
+      fees_account_id: T::AccountId,
     ) -> Result<(), DispatchError> {
       InterestCompoundLastSession::<T>::put(session_index);
       PendingStoredSessions::<T>::insert(session_index, ());
       for (currency_id, total_fees_for_the_session) in session_trade_values {
+        T::CurrencyTidefi::transfer(
+          currency_id,
+          &fees_account_id,
+          &Self::account_id(),
+          total_fees_for_the_session,
+          false,
+        )
+        .map_err(|_| Error::<T>::TransferFeesFailed)?;
+
         SessionTotalFees::<T>::insert(session_index, currency_id, total_fees_for_the_session);
       }
       Ok(())
