@@ -607,7 +607,7 @@ pub mod pallet {
     pub fn do_next_compound_interest_operation(
       max_weight: Weight,
     ) -> Result<(Weight, bool), DispatchError> {
-      let weight_per_iteration = <T as frame_system::Config>::DbWeight::get().reads_writes(2, 2);
+      let weight_per_iteration = <T as frame_system::Config>::DbWeight::get().reads_writes(3, 3);
       let max_iterations = if weight_per_iteration == 0 {
         100
       } else {
@@ -638,7 +638,6 @@ pub mod pallet {
         //for (_, last_session_indexed, _) in account_stakes {
         for current_stake in account_stakes {
           let currency_id = current_stake.currency_id;
-          let staking_pool_for_this_currency = StakingPool::<T>::get(currency_id).unwrap_or(0);
           if current_stake.last_session_index_compound <= last_session {
             let mut keep_going_in_loop =
               Some(current_stake.last_session_index_compound.saturating_add(1));
@@ -668,13 +667,26 @@ pub mod pallet {
 
                         // calculate proportional reward base on the stake pool
                         let staking_pool_percentage = Perquintill::from_rational(
-                          active_stake.initial_balance,
-                          staking_pool_for_this_currency,
+                          active_stake.principal,
+                          StakingPool::<T>::get(currency_id).unwrap_or(0),
                         );
 
                         let proportional_reward = staking_pool_percentage * available_reward;
                         active_stake.principal =
                           active_stake.principal.saturating_add(proportional_reward);
+
+                        // add the `proportional_reward` to the staking pool
+                        StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
+                          if let Some(b) = balance {
+                            *balance = Some(
+                              b.checked_add(proportional_reward)
+                                .ok_or(ArithmeticError::Overflow)?,
+                            );
+                          } else {
+                            *balance = Some(proportional_reward)
+                          }
+                          Ok(())
+                        })?;
                       }
                       // update the last session index for this stake
                       active_stake.last_session_index_compound = session_to_index;
