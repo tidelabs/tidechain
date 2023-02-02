@@ -1306,6 +1306,8 @@ pub fn should_calculate_rewards() {
     const ALICE_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
     const BOB_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
     const CHARLIE_STAKE_FOUR_HUNDRED_TDFYS: Balance = 400 * ONE_TDFY;
+    let fees_pallet_account: AccountId =
+      <Test as pallet_fees::Config>::FeesPalletId::get().into_account_truncating();
 
     Context::default()
       .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
@@ -1343,7 +1345,7 @@ pub fn should_calculate_rewards() {
     assert_ok!(TidefiStaking::on_session_end(
       1,
       vec![(CurrencyId::Tdfy, SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS)],
-      <Test as pallet_fees::Config>::FeesPalletId::get().into_account_truncating()
+      fees_pallet_account
     ));
 
     run_on_idle_hook(1, 1_000 * ONE_TDFY);
@@ -1381,7 +1383,7 @@ pub fn should_calculate_rewards() {
     assert_ok!(TidefiStaking::on_session_end(
       2,
       vec![(CurrencyId::Tdfy, SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS)],
-      <Test as pallet_fees::Config>::FeesPalletId::get().into_account_truncating()
+      fees_pallet_account
     ));
 
     let staking_pool_before_compound_session_1 =
@@ -1423,8 +1425,16 @@ pub fn should_calculate_rewards() {
     );
 
     // 2 empty sessions
-    assert_ok!(TidefiStaking::on_session_end(3, Vec::new()));
-    assert_ok!(TidefiStaking::on_session_end(4, Vec::new()));
+    assert_ok!(TidefiStaking::on_session_end(
+      3,
+      Vec::new(),
+      fees_pallet_account
+    ));
+    assert_ok!(TidefiStaking::on_session_end(
+      4,
+      Vec::new(),
+      fees_pallet_account
+    ));
 
     run_on_idle_hook(1, 1_000 * ONE_TDFY);
 
@@ -1454,7 +1464,7 @@ pub fn should_calculate_rewards() {
     assert_ok!(TidefiStaking::on_session_end(
       5,
       vec![(CurrencyId::Tdfy, SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS)],
-      <Test as pallet_fees::Config>::FeesPalletId::get().into_account_truncating()
+      fees_pallet_account
     ));
 
     let staking_pool_before_compound_session_5 =
