@@ -72,7 +72,7 @@ pub mod pallet {
   /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config: frame_system::Config {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Time used for computing era duration.
     ///
@@ -123,7 +123,7 @@ pub mod pallet {
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
 
     /// The origin which may forcibly update the fee and distribution percentage
-    type ForceOrigin: EnsureOrigin<Self::Origin>;
+    type ForceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
   }
 
   #[pallet::pallet]

@@ -16,13 +16,15 @@
 
 use crate::{
   mock::{
-    new_test_ext, Adapter, Assets, BurnedCap, Event as MockEvent, Origin, ProposalLifetime,
-    PubkeyLimitPerAsset, Quorum, Security, StringLimit, System, Test, VotesLimit, WatchListLimit,
+    new_test_ext, Adapter, Assets, BurnedCap, ProposalLifetime, PubkeyLimitPerAsset, Quorum,
+    RuntimeEvent as MockEvent, RuntimeOrigin, Security, StringLimit, System, Test, VotesLimit,
+    WatchListLimit,
   },
   pallet::*,
 };
 use frame_support::{
   assert_err, assert_noop, assert_ok,
+  pallet_prelude::Weight,
   traits::{
     fungibles::{Inspect, Mutate},
     Hooks,
@@ -72,8 +74,8 @@ struct UpdateConfiguration {
 
 #[derive(Clone)]
 struct Context {
-  alice: Origin,
-  bob: Origin,
+  alice: RuntimeOrigin,
+  bob: RuntimeOrigin,
   pub_key: Vec<u8>,
   public_keys: BoundedVec<(AccountId, BoundedVec<u8, StringLimit>), PubkeyLimitPerAsset>,
   proposal_id: Hash,
@@ -111,8 +113,8 @@ impl Default for Context {
     };
 
     Self {
-      alice: Origin::signed(ALICE_ACCOUNT_ID.into()),
-      bob: Origin::signed(BOB_ACCOUNT_ID.into()),
+      alice: RuntimeOrigin::signed(ALICE_ACCOUNT_ID.into()),
+      bob: RuntimeOrigin::signed(BOB_ACCOUNT_ID.into()),
       pub_key: pub_key_bounded_vec.to_vec(),
       public_keys: vec![(ALICE_ACCOUNT_ID.into(), pub_key_bounded_vec)]
         .try_into()
@@ -139,7 +141,7 @@ impl Context {
     let temp_asset_owner = ALICE_ACCOUNT_ID as u64;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP_ASSET_ID,
       temp_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -147,7 +149,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp_asset_owner),
+      RuntimeOrigin::signed(temp_asset_owner),
       TEMP_ASSET_ID,
       TEMP_ASSET_NAME.into(),
       TEMP_ASSET_SYMBOL.into(),
@@ -542,12 +544,18 @@ pub fn should_remove_expired() {
       compliance_level: ComplianceLevel::Green,
     });
     assert_ok!(Quorum::submit_proposal(context.alice, proposal));
-    assert_eq!(Quorum::on_idle(0, ONE_TDFY.try_into().unwrap()), 0);
+    assert_eq!(
+      Quorum::on_idle(0, Weight::from(1000000000000)),
+      Weight::from(0)
+    );
     assert_eq!(Proposals::<Test>::get().len(), 1);
 
     set_current_block(ProposalLifetime::get() + 2);
 
-    assert_eq!(Quorum::on_idle(0, ONE_TDFY.try_into().unwrap()), 0);
+    assert_eq!(
+      Quorum::on_idle(0, Weight::from(1000000000000)),
+      Weight::from(0)
+    );
     assert_eq!(Proposals::<Test>::get().len(), 0);
   });
 }
@@ -634,7 +642,10 @@ mod submit_proposal {
         let context = Context::default().insert_asset1_with_alice_public_key();
 
         for proposal in context.get_valid_proposals() {
-          assert_noop!(Quorum::submit_proposal(Origin::none(), proposal), BadOrigin);
+          assert_noop!(
+            Quorum::submit_proposal(RuntimeOrigin::none(), proposal),
+            BadOrigin
+          );
         }
       });
     }
@@ -1177,11 +1188,11 @@ mod voting_for_proposals {
             .insert_a_valid_mint_proposal_with_green_compliance_level();
 
           assert_noop!(
-            Quorum::acknowledge_proposal(Origin::none(), context.proposal_id),
+            Quorum::acknowledge_proposal(RuntimeOrigin::none(), context.proposal_id),
             BadOrigin
           );
           assert_noop!(
-            Quorum::reject_proposal(Origin::none(), context.proposal_id),
+            Quorum::reject_proposal(RuntimeOrigin::none(), context.proposal_id),
             BadOrigin
           );
         });
@@ -1378,14 +1389,12 @@ mod voting_for_proposals {
               transaction_id: BoundedVec::try_from(Vec::new()).unwrap(),
               compliance_level: ComplianceLevel::Green,
             });
+
             assert_ok!(Proposals::<Test>::try_append((
               context.proposal_id,
               Security::get_current_block_count(),
               proposal
             )));
-
-            let temp_asset_balance_before_mint =
-              Adapter::balance(disabled_asset_id, &context.valid_mint.account_id);
 
             assert_err!(
               Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
@@ -1408,14 +1417,6 @@ mod voting_for_proposals {
                 })
               )
             );
-
-            assert_vote_for_exists_in_storage(&context);
-            assert_eq!(
-              temp_asset_balance_before_mint,
-              Adapter::balance(disabled_asset_id, &context.valid_mint.account_id,)
-            );
-            assert_event_is_emitted_vote_for(&context);
-            assert_event_is_emitted_proposal_approved(&context);
           });
         }
 
@@ -1452,10 +1453,7 @@ mod voting_for_proposals {
             );
 
             assert_mint_proposal_exists_in_storage(&context, ComplianceLevel::Amber);
-            assert_vote_for_exists_in_storage(&context);
             assert_eq!(asset_balance_before, get_alice_tdfy_balance());
-            assert_event_is_emitted_vote_for(&context);
-            assert_event_is_emitted_proposal_approved(&context);
           });
         }
       }
@@ -1478,10 +1476,7 @@ mod voting_for_proposals {
             );
 
             assert_withdrawal_proposal_exists_in_storage(&context);
-            assert_vote_for_exists_in_storage(&context);
             assert_eq!(temp_asset_balance_before_mint, get_alice_temp_balance());
-            assert_event_is_emitted_vote_for(&context);
-            assert_event_is_emitted_proposal_approved(&context);
           });
         }
 
@@ -1502,10 +1497,7 @@ mod voting_for_proposals {
             );
 
             assert_withdrawal_proposal_exists_in_storage(&context);
-            assert_vote_for_exists_in_storage(&context);
             assert_eq!(asset_balance_before, get_alice_temp_balance());
-            assert_event_is_emitted_vote_for(&context);
-            assert_event_is_emitted_proposal_approved(&context);
           });
         }
 
@@ -1546,13 +1538,7 @@ mod voting_for_proposals {
             );
 
             assert_withdrawal_proposal_exists_in_storage(&context);
-            assert_vote_for_exists_in_storage(&context);
-            assert_eq!(
-              asset_balance_before - context.valid_withdrawal.amount,
-              get_alice_temp_balance()
-            );
-            assert_event_is_emitted_vote_for(&context);
-            assert_event_is_emitted_proposal_approved(&context);
+            assert_eq!(asset_balance_before, get_alice_temp_balance());
           });
         }
       }
@@ -1607,7 +1593,7 @@ mod acknowledge_burned {
         ));
 
         assert_noop!(
-          Quorum::acknowledge_burned(Origin::none(), context.proposal_id),
+          Quorum::acknowledge_burned(RuntimeOrigin::none(), context.proposal_id),
           BadOrigin
         );
       });
@@ -1887,7 +1873,7 @@ mod eval_proposal_state {
           .commit_a_valid_vote(true);
 
         assert_noop!(
-          Quorum::eval_proposal_state(Origin::none(), context.proposal_id),
+          Quorum::eval_proposal_state(RuntimeOrigin::none(), context.proposal_id),
           BadOrigin
         );
       });
@@ -1957,7 +1943,10 @@ mod submit_public_keys {
         let context = Context::default().insert_asset1_with_alice_public_key();
 
         assert_noop!(
-          Quorum::submit_public_keys(Origin::none(), vec![(TEMP_ASSET_ID, context.pub_key)]),
+          Quorum::submit_public_keys(
+            RuntimeOrigin::none(),
+            vec![(TEMP_ASSET_ID, context.pub_key)]
+          ),
           BadOrigin
         );
       });

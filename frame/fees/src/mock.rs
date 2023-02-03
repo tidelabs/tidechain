@@ -25,7 +25,7 @@ use frame_support::{
     },
     fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
     tokens::{DepositConsequence, WithdrawConsequence},
-    ConstU128, ConstU32, GenesisBuild,
+    AsEnsureOriginWithArg, ConstU32, GenesisBuild,
   },
   PalletId,
 };
@@ -106,8 +106,8 @@ impl system::Config for Test {
   type BlockWeights = ();
   type BlockLength = ();
   type DbWeight = ();
-  type Origin = Origin;
-  type Call = Call;
+  type RuntimeOrigin = RuntimeOrigin;
+  type RuntimeCall = RuntimeCall;
   type Index = u64;
   type BlockNumber = u64;
   type Hash = H256;
@@ -115,7 +115,7 @@ impl system::Config for Test {
   type AccountId = AccountId;
   type Lookup = IdentityLookup<Self::AccountId>;
   type Header = Header;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type BlockHashCount = BlockHashCount;
   type Version = ();
   type PalletInfo = PalletInfo;
@@ -151,26 +151,30 @@ parameter_types! {
 }
 
 impl pallet_assets::Config for Test {
-  type Event = Event;
-  type Balance = u128;
+  type RuntimeEvent = RuntimeEvent;
+  type Balance = Balance;
   type AssetId = u32;
+  type AssetIdParameter = u32;
   type Currency = Balances;
+  type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
   type AssetDeposit = AssetDeposit;
+  type AssetAccountDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = StringLimit;
   type Freezer = ();
-  type Extra = ();
   type WeightInfo = ();
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
-  type AssetAccountDeposit = ConstU128<0>;
+  type CallbackHandle = ();
+  type Extra = ();
+  type RemoveItemsLimit = ConstU32<5>;
 }
 
 impl pallet_balances::Config for Test {
   type Balance = Balance;
   type DustRemoval = ();
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type ExistentialDeposit = ExistentialDeposit;
   type AccountStore = frame_system::Pallet<Test>;
   type MaxLocks = MaxLocks;
@@ -207,7 +211,7 @@ parameter_types! {
 }
 
 impl pallet_sunrise::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Security = Security;
   type SunrisePalletId = SunrisePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -217,7 +221,7 @@ impl pallet_sunrise::Config for Test {
 }
 
 impl pallet_fees::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Security = Security;
   type FeesPalletId = TidefiPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -234,7 +238,7 @@ impl pallet_fees::Config for Test {
 }
 
 impl pallet_tidefi_stake::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Test>;
   type StakePalletId = StakePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -247,14 +251,14 @@ impl pallet_tidefi_stake::Config for Test {
 }
 
 impl pallet_asset_registry::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
 }
 
 impl pallet_security::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
@@ -315,6 +319,13 @@ impl Inspect<AccountId> for Adapter<AccountId> {
     match asset {
       CurrencyId::Tdfy => Balances::can_withdraw(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
+    }
+  }
+
+  fn asset_exists(asset: Self::AssetId) -> bool {
+    match asset {
+      CurrencyId::Tdfy => true,
+      CurrencyId::Wrapped(asset_id) => Assets::asset_exists(asset_id),
     }
   }
 }

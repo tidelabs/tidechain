@@ -48,7 +48,7 @@ pub(super) type AssetAccountOf<T, I> =
 /// AssetStatus holds the current state of the asset. It could either be Live and available for use,
 /// or in a Destroying state.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub(super) enum AssetStatus {
+pub enum AssetStatus {
   /// The asset is active and able to be used.
   Live,
   /// Whether the asset is frozen for non-admin transfers.
@@ -84,7 +84,7 @@ pub struct AssetDetails<Balance, AccountId, DepositBalance> {
   /// The total number of approvals.
   pub(super) approvals: u32,
   /// The status of the asset
-  pub(super) status: AssetStatus,
+  pub status: AssetStatus,
 }
 
 impl<Balance, AccountId, DepositBalance> AssetDetails<Balance, AccountId, DepositBalance> {

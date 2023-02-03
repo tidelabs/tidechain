@@ -16,13 +16,14 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Balance, Origin, Security, StakeAccountCap, Test,
+    new_test_ext, AccountId, Adapter, Balance, RuntimeOrigin, Security, StakeAccountCap, Test,
     TidefiStaking, UnstakeQueueCap,
   },
   pallet as pallet_tidefi_stake, AccountStakes, Error, StakingPool, UnstakeQueue,
 };
 use frame_support::{
   assert_noop, assert_ok,
+  pallet_prelude::Weight,
   traits::{
     fungibles::{Inspect, Mutate},
     Hooks,
@@ -112,7 +113,7 @@ impl Context {
     );
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(self.staker),
+      RuntimeOrigin::signed(self.staker),
       CurrencyId::Tdfy,
       self.tdfy_amount,
       self.duration
@@ -133,7 +134,7 @@ impl Context {
     );
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(self.staker),
+      RuntimeOrigin::signed(self.staker),
       TEST_TOKEN_CURRENCY_ID,
       self.test_token_amount,
       self.duration
@@ -196,9 +197,12 @@ fn set_current_block(block_number: BlockNumber) {
   });
 }
 
-fn run_on_idle_hook(block_number: BlockNumber, remaining_weights: Balance) {
+fn run_on_idle_hook(block_number: BlockNumber, remaining_weights: u128) {
   let weights: u64 = remaining_weights.try_into().unwrap();
-  assert_eq!(TidefiStaking::on_idle(block_number, weights), weights);
+  assert_eq!(
+    TidefiStaking::on_idle(block_number, Weight::from_ref_time(weights)),
+    Weight::from_ref_time(weights)
+  );
 }
 
 #[test]
@@ -228,7 +232,7 @@ mod stake {
         let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
 
         assert_ok!(TidefiStaking::stake(
-          Origin::signed(context.staker),
+          RuntimeOrigin::signed(context.staker),
           CurrencyId::Tdfy,
           context.tdfy_amount,
           context.duration
@@ -267,7 +271,7 @@ mod stake {
         let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
 
         assert_ok!(TidefiStaking::stake(
-          Origin::signed(context.staker),
+          RuntimeOrigin::signed(context.staker),
           TEST_TOKEN_CURRENCY_ID,
           context.test_token_amount,
           context.duration
@@ -308,7 +312,7 @@ mod stake {
 
         assert_noop!(
           TidefiStaking::stake(
-            Origin::none(),
+            RuntimeOrigin::none(),
             CurrencyId::Tdfy,
             context.tdfy_amount,
             context.duration
@@ -326,7 +330,7 @@ mod stake {
 
         assert_noop!(
           TidefiStaking::stake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             CurrencyId::Tdfy,
             context.tdfy_amount,
             1
@@ -345,7 +349,7 @@ mod stake {
 
         assert_noop!(
           TidefiStaking::stake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             TEST_TOKEN_CURRENCY_ID,
             ONE_TEST_TOKEN - 1,
             context.duration
@@ -364,7 +368,7 @@ mod stake {
 
         assert_noop!(
           TidefiStaking::stake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             TEST_TOKEN_CURRENCY_ID,
             u128::MAX,
             context.duration
@@ -385,7 +389,7 @@ mod stake {
 
         assert_noop!(
           TidefiStaking::stake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             TEST_TOKEN_CURRENCY_ID,
             context.test_token_amount,
             context.duration
@@ -405,7 +409,7 @@ mod stake {
 
         assert_noop!(
           TidefiStaking::stake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             CurrencyId::Tdfy,
             context.tdfy_amount,
             context.duration
@@ -438,7 +442,7 @@ mod unstake {
           let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
 
           assert_ok!(TidefiStaking::unstake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             context.stake_id,
             false
           ));
@@ -469,7 +473,7 @@ mod unstake {
           let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
 
           assert_ok!(TidefiStaking::unstake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             context.stake_id,
             false
           ));
@@ -501,7 +505,7 @@ mod unstake {
           let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
 
           assert_ok!(TidefiStaking::unstake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             context.stake_id,
             true
           ));
@@ -533,7 +537,7 @@ mod unstake {
           let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
 
           assert_ok!(TidefiStaking::unstake(
-            Origin::signed(context.staker),
+            RuntimeOrigin::signed(context.staker),
             context.stake_id,
             true
           ));
@@ -567,7 +571,7 @@ mod unstake {
           .stake_tdfy();
 
         assert_noop!(
-          TidefiStaking::unstake(Origin::none(), Hash::zero(), true),
+          TidefiStaking::unstake(RuntimeOrigin::none(), Hash::zero(), true),
           BadOrigin
         );
       });
@@ -581,7 +585,7 @@ mod unstake {
           .stake_tdfy();
 
         assert_noop!(
-          TidefiStaking::unstake(Origin::signed(context.staker), Hash::zero(), true),
+          TidefiStaking::unstake(RuntimeOrigin::signed(context.staker), Hash::zero(), true),
           Error::<Test>::InvalidStakeId
         );
       });
@@ -595,7 +599,11 @@ mod unstake {
           .stake_tdfy();
 
         assert_noop!(
-          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, false),
+          TidefiStaking::unstake(
+            RuntimeOrigin::signed(context.staker),
+            context.stake_id,
+            false
+          ),
           Error::<Test>::UnstakingNotReady
         );
       });
@@ -609,7 +617,11 @@ mod unstake {
           .stake_tdfy();
 
         assert_noop!(
-          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
+          TidefiStaking::unstake(
+            RuntimeOrigin::signed(context.staker),
+            context.stake_id,
+            true
+          ),
           Error::<Test>::InsufficientBalance
         );
       });
@@ -624,7 +636,11 @@ mod unstake {
           .stake_test_tokens();
 
         assert_noop!(
-          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
+          TidefiStaking::unstake(
+            RuntimeOrigin::signed(context.staker),
+            context.stake_id,
+            true
+          ),
           Error::<Test>::InsufficientBalance
         );
       });
@@ -639,7 +655,11 @@ mod unstake {
           .add_mock_unstakes_to_queue(UnstakeQueueCap::get() as usize);
 
         assert_noop!(
-          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
+          TidefiStaking::unstake(
+            RuntimeOrigin::signed(context.staker),
+            context.stake_id,
+            true
+          ),
           Error::<Test>::UnstakeQueueCapExceeded
         );
       });
@@ -653,7 +673,7 @@ pub fn should_stake_and_unstake() {
     Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS);
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(ALICE_ACCOUNT_ID),
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
       CurrencyId::Tdfy,
       ALICE_STAKE_ONE_TDFY,
       FIFTEEN_DAYS
@@ -689,7 +709,7 @@ pub fn should_stake_and_unstake() {
 
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS + 1);
     assert_ok!(TidefiStaking::unstake(
-      Origin::signed(ALICE_ACCOUNT_ID),
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
       stake_id,
       false
     ));
@@ -708,7 +728,7 @@ pub fn should_stake_and_unstake_queue() {
     Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS);
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(ALICE_ACCOUNT_ID),
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
       CurrencyId::Tdfy,
       ALICE_STAKE_ONE_TDFY,
       FIFTEEN_DAYS
@@ -744,7 +764,7 @@ pub fn should_stake_and_unstake_queue() {
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 1_000);
 
     assert_ok!(TidefiStaking::unstake(
-      Origin::signed(ALICE_ACCOUNT_ID),
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
       stake_id,
       true
     ));
@@ -765,11 +785,11 @@ pub fn should_stake_and_unstake_queue() {
       FIFTEEN_DAYS - 1_000 + BLOCKS_FORCE_UNLOCK + 1
     );
 
-    assert!(TidefiStaking::unstake_queue().len() == 1);
+    assert_eq!(TidefiStaking::unstake_queue().len(), 1);
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook(1, 1_000_000_000_000_000);
 
-    assert!(TidefiStaking::unstake_queue().len() == 0);
+    assert_eq!(TidefiStaking::unstake_queue().len(), 0);
   });
 }
 
@@ -783,7 +803,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(ALICE_ACCOUNT_ID),
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
       CurrencyId::Tdfy,
       ALICE_STAKE_ONE_TDFY,
       FIFTEEN_DAYS
@@ -819,7 +839,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 3_000);
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(BOB_ACCOUNT_ID),
+      RuntimeOrigin::signed(BOB_ACCOUNT_ID),
       CurrencyId::Tdfy,
       BOB_STAKE_QUARTER_TDFY,
       FIFTEEN_DAYS
@@ -831,7 +851,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
       .unique_id;
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(BOB_ACCOUNT_ID),
+      RuntimeOrigin::signed(BOB_ACCOUNT_ID),
       CurrencyId::Tdfy,
       BOB_STAKE_QUARTER_TDFY,
       FIFTEEN_DAYS * 2
@@ -841,7 +861,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 2_000);
 
     assert_ok!(TidefiStaking::unstake(
-      Origin::signed(BOB_ACCOUNT_ID),
+      RuntimeOrigin::signed(BOB_ACCOUNT_ID),
       bob_stake_id,
       true
     ));
@@ -854,7 +874,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert_eq!(TidefiStaking::unstake_queue().len(), 1);
 
     assert_ok!(TidefiStaking::unstake(
-      Origin::signed(ALICE_ACCOUNT_ID),
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
       stake_id,
       true
     ));
@@ -883,7 +903,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
 
     assert_eq!(TidefiStaking::unstake_queue().len(), 2);
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook(1, 1_000_000_000_000_000);
 
     assert_eq!(TidefiStaking::unstake_queue().len(), 1);
 
@@ -893,7 +913,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
       FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + (BLOCKS_FORCE_UNLOCK / 2) + 1
     );
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook(1, 1_000_000_000_000_000);
 
     assert!(TidefiStaking::unstake_queue().is_empty());
 
@@ -927,7 +947,7 @@ pub fn should_calculate_rewards() {
     set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(ALICE_ACCOUNT_ID),
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
       CurrencyId::Tdfy,
       ALICE_STAKE_ONE_HUNDRED_TDFYS,
       FIFTEEN_DAYS
@@ -956,7 +976,7 @@ pub fn should_calculate_rewards() {
       vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
     ));
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook(1, 1_000_000_000_000_000);
 
     let alice_staked_tdfy_principal_after_session_1 = ALICE_STAKE_ONE_HUNDRED_TDFYS + 2 * ONE_TDFY;
 
@@ -969,7 +989,7 @@ pub fn should_calculate_rewards() {
     );
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(BOB_ACCOUNT_ID),
+      RuntimeOrigin::signed(BOB_ACCOUNT_ID),
       CurrencyId::Tdfy,
       BOB_STAKE_ONE_HUNDRED_TDFYS,
       FIFTEEN_DAYS
@@ -988,7 +1008,7 @@ pub fn should_calculate_rewards() {
       vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
     ));
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook(1, 1_000_000_000_000_000);
 
     let alice_staked_tdfy_principal_after_session_2 =
       alice_staked_tdfy_principal_after_session_1 + ONE_TDFY;
@@ -1013,7 +1033,7 @@ pub fn should_calculate_rewards() {
     // 2 empty sessions
     assert_ok!(TidefiStaking::on_session_end(3, Vec::new()));
     assert_ok!(TidefiStaking::on_session_end(4, Vec::new()));
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook(1, 1_000_000_000_000_000);
 
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
@@ -1032,7 +1052,7 @@ pub fn should_calculate_rewards() {
     );
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(CHARLIE_ACCOUNT_ID),
+      RuntimeOrigin::signed(CHARLIE_ACCOUNT_ID),
       CurrencyId::Tdfy,
       CHARLIE_STAKE_FOUR_HUNDRED_TDFYS,
       FIFTEEN_DAYS
@@ -1043,7 +1063,7 @@ pub fn should_calculate_rewards() {
       vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
     ));
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook(1, 1_000_000_000_000_000);
 
     let total_staked_tdfys_after_session_5 = ALICE_STAKE_ONE_HUNDRED_TDFYS
       .saturating_add(BOB_STAKE_ONE_HUNDRED_TDFYS)

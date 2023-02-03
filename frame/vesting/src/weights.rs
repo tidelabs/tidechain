@@ -52,24 +52,24 @@ pub trait WeightInfo {
 }
 
 /// Default weights.
-impl WeightInfo for () {
+pub struct SubstrateWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn vested_transfer() -> Weight {
-		(69_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		Weight::from(69_200_000)
+		.saturating_add(T::DbWeight::get().reads(4_u64))
+		.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
 	fn claim(i: u32, ) -> Weight {
-		(31_747_000 as Weight)
+		Weight::from(32_200_000)
 			// Standard Error: 4_000
-			.saturating_add((63_000 as Weight).saturating_mul(i as Weight))
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+			.saturating_add(Weight::from(63_000).saturating_mul(i as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
 	fn update_vesting_schedules(i: u32, ) -> Weight {
-		(29_457_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add((117_000 as Weight).saturating_mul(i as Weight))
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from(29_200_000)
+			.saturating_add(Weight::from(117_000).saturating_mul(i as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 }

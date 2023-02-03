@@ -58,6 +58,7 @@ pub mod pallet {
     rand_core::{RngCore, SeedableRng},
     ChaChaRng,
   };
+  use sp_runtime::traits::Zero;
   use sp_std::{vec, vec::Vec};
   use tidefi_primitives::{
     assets::Asset,
@@ -72,7 +73,7 @@ pub mod pallet {
     frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
   {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Pallet ID
     #[pallet::constant]
@@ -385,6 +386,7 @@ pub mod pallet {
   #[pallet::call]
   impl<T: Config> Pallet<T> {
     /// Quorum member submit proposal
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::submit_proposal())]
     pub fn submit_proposal(
       origin: OriginFor<T>,
@@ -447,6 +449,7 @@ pub mod pallet {
     }
 
     /// Quorum member acknowledge to a proposal
+    #[pallet::call_index(1)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::acknowledge_proposal())]
     pub fn acknowledge_proposal(
       origin: OriginFor<T>,
@@ -466,6 +469,7 @@ pub mod pallet {
     }
 
     /// Quorum member acknowledge a burned item and started the process.
+    #[pallet::call_index(2)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::acknowledge_burned())]
     pub fn acknowledge_burned(origin: OriginFor<T>, proposal: Hash) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
@@ -489,6 +493,7 @@ pub mod pallet {
     }
 
     /// Quorum member reject a proposal
+    #[pallet::call_index(3)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::reject_proposal())]
     pub fn reject_proposal(origin: OriginFor<T>, proposal: Hash) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
@@ -505,6 +510,7 @@ pub mod pallet {
     }
 
     /// Evaluate the state of a proposal given the current vote threshold
+    #[pallet::call_index(4)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::eval_proposal_state())]
     pub fn eval_proposal_state(origin: OriginFor<T>, proposal: Hash) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
@@ -518,6 +524,7 @@ pub mod pallet {
     }
 
     /// Quorum member submit his own public keys
+    #[pallet::call_index(5)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::submit_public_keys(public_keys.len() as u32))]
     pub fn submit_public_keys(
       origin: OriginFor<T>,
@@ -553,17 +560,19 @@ pub mod pallet {
       }
 
       // The amount of remaining weight under which we stop processing messages
-      let threshold_weight = 100_000;
+      let threshold_weight = Weight::from(100_000);
 
       // we create a shuffle of index, to prevent queue blocking
       let mut shuffled = Self::create_shuffle(all_proposals.len());
       let current_block = T::Security::get_current_block_count();
       let proposal_lifetime = T::ProposalLifetime::get();
       let mut shuffle_index = 0;
-      let mut weight_available = 0;
+      let mut weight_available = Weight::from(0);
 
       while shuffle_index < shuffled.len()
-        && max_weight.saturating_sub(weight_used) >= threshold_weight
+        && max_weight
+          .saturating_sub(weight_used)
+          .any_gt(threshold_weight)
       {
         let index = shuffled[shuffle_index];
         let proposal_id = all_proposals[index].0;
@@ -578,7 +587,7 @@ pub mod pallet {
           // on the first round to unlocking everything, then we do so.
           if shuffle_index < all_proposals.len() {
             weight_available += (max_weight - weight_available) / (weight_restrict_decay + 1);
-            if weight_available + threshold_weight > max_weight {
+            if (weight_available + threshold_weight).any_gt(max_weight) {
               weight_available = max_weight;
             }
           } else {
@@ -597,7 +606,7 @@ pub mod pallet {
 
           <T as frame_system::Config>::DbWeight::get().reads_writes(0, 2)
         } else {
-          0
+          Weight::from(0)
         };
 
         weight_used += weight_processed;
@@ -606,7 +615,7 @@ pub mod pallet {
         // other channels a look in. If we've still not unlocked all weight, then we set them
         // up for processing a second time anyway.
         if current_block >= proposal_expiration
-          && (weight_processed > 0 || weight_available != max_weight)
+          && (!weight_processed.is_zero() || !weight_available.eq(&max_weight))
         {
           if shuffle_index + 1 == shuffled.len() {
             // Only this queue left. Just run around this loop once more.

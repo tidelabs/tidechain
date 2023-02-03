@@ -24,7 +24,7 @@ use frame_support::{
       MutateHold as FungibleMutateHold, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-    ConstU128, ConstU32, EnsureOrigin, GenesisBuild,
+    AsEnsureOriginWithArg, ConstU32, EnsureOrigin, GenesisBuild,
   },
   PalletId,
 };
@@ -47,11 +47,11 @@ type Balance = u128;
 pub type AccountId = u64;
 
 pub struct EnsureRootOrAssetRegistry;
-impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
+impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
   type Success = AccountId;
 
-  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+  fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+    Into::<Result<RawOrigin<AccountId>, RuntimeOrigin>>::into(o).and_then(|o| match o {
       RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
       RawOrigin::Signed(caller) => {
         let asset_registry_account: u64 = AssetRegistryPalletId::get().into_account_truncating();
@@ -62,16 +62,11 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
         {
           Ok(caller)
         } else {
-          Err(Origin::from(Some(caller)))
+          Err(RuntimeOrigin::from(Some(caller)))
         }
       }
-      r => Err(Origin::from(r)),
+      r => Err(RuntimeOrigin::from(r)),
     })
-  }
-
-  #[cfg(feature = "runtime-benchmarks")]
-  fn successful_origin() -> Origin {
-    Origin::from(RawOrigin::Signed(Default::default()))
   }
 }
 
@@ -99,8 +94,8 @@ impl system::Config for Test {
   type BlockWeights = ();
   type BlockLength = ();
   type DbWeight = ();
-  type Origin = Origin;
-  type Call = Call;
+  type RuntimeOrigin = RuntimeOrigin;
+  type RuntimeCall = RuntimeCall;
   type Index = u64;
   type BlockNumber = u64;
   type Hash = H256;
@@ -108,7 +103,7 @@ impl system::Config for Test {
   type AccountId = AccountId;
   type Lookup = IdentityLookup<Self::AccountId>;
   type Header = Header;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type BlockHashCount = BlockHashCount;
   type Version = ();
   type PalletInfo = PalletInfo;
@@ -136,26 +131,30 @@ parameter_types! {
 }
 
 impl pallet_assets::Config for Test {
-  type Event = Event;
-  type Balance = u128;
+  type RuntimeEvent = RuntimeEvent;
+  type Balance = Balance;
   type AssetId = u32;
+  type AssetIdParameter = u32;
   type Currency = Balances;
+  type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
   type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
+  type AssetAccountDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = StringLimit;
   type Freezer = ();
-  type Extra = ();
   type WeightInfo = ();
-  type AssetAccountDeposit = ConstU128<0>;
+  type CallbackHandle = ();
+  type Extra = ();
+  type RemoveItemsLimit = ConstU32<5>;
 }
 
 impl pallet_balances::Config for Test {
   type Balance = Balance;
   type DustRemoval = ();
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type ExistentialDeposit = ExistentialDeposit;
   type AccountStore = frame_system::Pallet<Test>;
   type MaxLocks = MaxLocks;
@@ -165,7 +164,7 @@ impl pallet_balances::Config for Test {
 }
 
 impl pallet_asset_registry::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency
@@ -234,6 +233,13 @@ impl Inspect<AccountId> for Adapter<AccountId> {
     match asset {
       CurrencyId::Tdfy => Balances::can_withdraw(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
+    }
+  }
+
+  fn asset_exists(asset: Self::AssetId) -> bool {
+    match asset {
+      CurrencyId::Tdfy => true,
+      CurrencyId::Wrapped(asset_id) => Assets::asset_exists(asset_id),
     }
   }
 }

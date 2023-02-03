@@ -60,7 +60,7 @@ pub mod pallet {
     frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
   {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Pallet ID
     #[pallet::constant]
@@ -277,6 +277,7 @@ pub mod pallet {
     /// Emits `SwapProcessed` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_swap())]
     pub fn confirm_swap(
       origin: OriginFor<T>,
@@ -701,6 +702,7 @@ pub mod pallet {
     ///
     /// Weight: `O(1)`
     #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_swap())]
+    #[pallet::call_index(1)]
     pub fn cancel_swap(origin: OriginFor<T>, request_id: Hash) -> DispatchResultWithPostInfo {
       // 1. Make sure the oracle/chain is not paused
       Self::ensure_not_paused()?;
@@ -730,6 +732,7 @@ pub mod pallet {
     /// Emits `AccountChanged` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(2)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
     pub fn set_account_id(
       origin: OriginFor<T>,
@@ -761,6 +764,7 @@ pub mod pallet {
     /// Emits `StatusChanged` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(3)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, is_enabled: bool) -> DispatchResultWithPostInfo {
       // 1. Make sure this is signed by `account_id`
@@ -809,6 +813,7 @@ pub mod pallet {
     ///
     /// Weight: `O(1)`
     ///
+    #[pallet::call_index(4)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::update_assets_value())]
     pub fn update_assets_value(
       origin: OriginFor<T>,
@@ -835,6 +840,7 @@ pub mod pallet {
     /// Emits `StatusChanged` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(5)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::add_market_maker())]
     pub fn add_market_maker(
       origin: OriginFor<T>,
@@ -864,6 +870,7 @@ pub mod pallet {
     /// Emits `StatusChanged` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(6)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_market_maker())]
     pub fn remove_market_maker(
       origin: OriginFor<T>,

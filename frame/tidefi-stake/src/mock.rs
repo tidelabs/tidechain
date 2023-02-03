@@ -17,6 +17,7 @@
 #![allow(dead_code)]
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
+  pallet_prelude::EnsureOrigin,
   parameter_types,
   traits::{
     fungible::{
@@ -24,7 +25,7 @@ use frame_support::{
       MutateHold as FungibleMutateHold, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-    ConstU128, ConstU32, GenesisBuild,
+    AsEnsureOriginWithArg, ConstU32, GenesisBuild,
   },
   PalletId,
 };
@@ -33,11 +34,11 @@ use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
   generic::Header,
-  traits::{BlakeTwo256, IdentityLookup},
+  traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
   DispatchError, DispatchResult, Percent,
 };
 use std::marker::PhantomData;
-use system::EnsureRoot;
+use system::RawOrigin;
 use tidefi_primitives::{BlockNumber, CurrencyId, StakeCurrencyMeta};
 
 use crate::pallet as pallet_tidefi_stake;
@@ -46,6 +47,30 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
 pub type AccountId = u64;
+
+pub struct EnsureRootOrAssetRegistry;
+impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
+  type Success = AccountId;
+
+  fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+    Into::<Result<RawOrigin<AccountId>, RuntimeOrigin>>::into(o).and_then(|o| match o {
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
+      RawOrigin::Signed(caller) => {
+        let asset_registry_account: u64 = AssetRegistryPalletId::get().into_account_truncating();
+        // Allow call from asset registry pallet ID account
+        if caller == asset_registry_account
+        // Allow call from asset registry owner
+        || caller == AssetRegistry::account_id().expect("Unable to get asset registry account id")
+        {
+          Ok(caller)
+        } else {
+          Err(RuntimeOrigin::from(Some(caller)))
+        }
+      }
+      r => Err(RuntimeOrigin::from(r)),
+    })
+  }
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -74,8 +99,8 @@ impl system::Config for Test {
   type BlockWeights = ();
   type BlockLength = ();
   type DbWeight = ();
-  type Origin = Origin;
-  type Call = Call;
+  type RuntimeOrigin = RuntimeOrigin;
+  type RuntimeCall = RuntimeCall;
   type Index = u64;
   type BlockNumber = BlockNumber;
   type Hash = H256;
@@ -83,7 +108,7 @@ impl system::Config for Test {
   type AccountId = AccountId;
   type Lookup = IdentityLookup<Self::AccountId>;
   type Header = Header<BlockNumber, BlakeTwo256>;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type BlockHashCount = BlockHashCount;
   type Version = ();
   type PalletInfo = PalletInfo;
@@ -120,26 +145,30 @@ parameter_types! {
 }
 
 impl pallet_assets::Config for Test {
-  type Event = Event;
-  type Balance = u128;
+  type RuntimeEvent = RuntimeEvent;
+  type Balance = Balance;
   type AssetId = u32;
+  type AssetIdParameter = u32;
   type Currency = Balances;
+  type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+  type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
+  type AssetAccountDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = StringLimit;
   type Freezer = ();
-  type Extra = ();
   type WeightInfo = ();
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
-  type AssetAccountDeposit = ConstU128<0>;
+  type CallbackHandle = ();
+  type Extra = ();
+  type RemoveItemsLimit = ConstU32<5>;
 }
 
 impl pallet_balances::Config for Test {
   type Balance = Balance;
   type DustRemoval = ();
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type ExistentialDeposit = ExistentialDeposit;
   type AccountStore = frame_system::Pallet<Test>;
   type MaxLocks = MaxLocks;
@@ -156,12 +185,12 @@ impl pallet_timestamp::Config for Test {
 }
 
 impl pallet_security::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_tidefi_stake::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type StakePalletId = TidefiPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -174,7 +203,7 @@ impl pallet_tidefi_stake::Config for Test {
 }
 
 impl pallet_asset_registry::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -237,6 +266,13 @@ impl Inspect<AccountId> for Adapter<AccountId> {
     match asset {
       CurrencyId::Tdfy => Balances::can_withdraw(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
+    }
+  }
+
+  fn asset_exists(asset: Self::AssetId) -> bool {
+    match asset {
+      CurrencyId::Tdfy => true,
+      CurrencyId::Wrapped(asset_id) => Assets::asset_exists(asset_id),
     }
   }
 }

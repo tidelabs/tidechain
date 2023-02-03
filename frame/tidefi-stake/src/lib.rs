@@ -61,7 +61,7 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::{
-    traits::{AccountIdConversion, Saturating},
+    traits::{AccountIdConversion, Saturating, Zero},
     ArithmeticError, Percent, Perquintill,
   };
   use tidefi_primitives::{
@@ -76,7 +76,7 @@ pub mod pallet {
   /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config: frame_system::Config {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Pallet ID
     #[pallet::constant]
@@ -302,7 +302,7 @@ pub mod pallet {
       let mut current_iter = 0;
 
       loop {
-        if remaining_weight > do_next_compound_interest_operation_weight
+        if remaining_weight.any_gt(do_next_compound_interest_operation_weight)
           && PendingStoredSessions::<T>::count() > 0
         {
           match Self::do_next_compound_interest_operation(remaining_weight) {
@@ -318,7 +318,7 @@ pub mod pallet {
               break;
             }
           };
-        } else if remaining_weight > do_next_unstake_operation_weight
+        } else if remaining_weight.any_gt(do_next_unstake_operation_weight)
           && !Self::unstake_queue().is_empty()
         {
           match Self::do_next_unstake_operation(remaining_weight) {
@@ -363,6 +363,7 @@ pub mod pallet {
     /// Emits `Staked` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::stake())]
     pub fn stake(
       origin: OriginFor<T>,
@@ -418,6 +419,7 @@ pub mod pallet {
     /// Emits `Unstaked` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(1)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::unstake())]
     pub fn unstake(
       origin: OriginFor<T>,
@@ -608,10 +610,13 @@ pub mod pallet {
       max_weight: Weight,
     ) -> Result<(Weight, bool), DispatchError> {
       let weight_per_iteration = <T as frame_system::Config>::DbWeight::get().reads_writes(2, 2);
-      let max_iterations = if weight_per_iteration == 0 {
+
+      let max_iterations = if weight_per_iteration.is_zero() {
         100
       } else {
-        max_weight / weight_per_iteration
+        max_weight
+          .ref_time()
+          .saturating_div(weight_per_iteration.ref_time())
       };
 
       let pending_session_to_compound = PendingStoredSessions::<T>::count();
@@ -732,10 +737,12 @@ pub mod pallet {
         unstake_queue.len()
       );
 
-      let max_iterations = if weight_per_iteration == 0 {
-        1
+      let max_iterations = if weight_per_iteration.is_zero() {
+        100
       } else {
-        max_weight / weight_per_iteration
+        max_weight
+          .ref_time()
+          .saturating_div(weight_per_iteration.ref_time())
       };
 
       let mut keep_going_in_loop = Some(0);
@@ -744,7 +751,8 @@ pub mod pallet {
         Self::do_unstake_queue_front()?;
 
         total_weight += weight_per_iteration;
-        if current_iterations >= max_iterations || current_iterations >= unstake_queue.len() as u64
+        if current_iterations.gt(&max_iterations)
+          || current_iterations >= unstake_queue.len() as u64
         {
           keep_going_in_loop = None;
         } else {

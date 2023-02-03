@@ -54,7 +54,7 @@ pub mod pallet {
   #[pallet::config]
   pub trait Config: frame_system::Config {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Weights
     type WeightInfo: WeightInfo;
@@ -167,6 +167,7 @@ pub mod pallet {
     /// Emits `Transfer` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::transfer())]
     pub fn transfer(
       origin: OriginFor<T>,
@@ -205,6 +206,7 @@ pub mod pallet {
     /// Emits `Withdrawal` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(1)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::withdrawal())]
     pub fn withdrawal(
       origin: OriginFor<T>,
@@ -274,6 +276,7 @@ pub mod pallet {
     /// Emits `Swap` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(2)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::swap())]
     pub fn swap(
       origin: OriginFor<T>,
@@ -369,6 +372,7 @@ pub mod pallet {
     /// Emits `SwapCancelled` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(3)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::swap())]
     pub fn cancel_swap(origin: OriginFor<T>, request_id: Hash) -> DispatchResultWithPostInfo {
       // 1. Make sure the transaction is signed
@@ -393,6 +397,7 @@ pub mod pallet {
     /// Emits `RewardsClaimed` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(4)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::claim_sunrise_rewards())]
     pub fn claim_sunrise_rewards(
       origin: OriginFor<T>,

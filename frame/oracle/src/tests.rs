@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Assets, Event as MockEvent, FeeAmount, Fees,
-    MarketMakerFeeAmount, Oracle, Origin, Sunrise, System, Test,
+    new_test_ext, AccountId, Adapter, Assets, FeeAmount, Fees, MarketMakerFeeAmount, Oracle,
+    RuntimeEvent as MockEvent, RuntimeOrigin, Sunrise, System, Test,
   },
   pallet::*,
 };
@@ -99,8 +99,8 @@ type BlockNumber = u64;
 
 #[derive(Clone)]
 struct Context {
-  alice: Origin,
-  bob: Origin,
+  alice: RuntimeOrigin,
+  bob: RuntimeOrigin,
   market_makers: Vec<AccountId>,
   fees_account_id: AccountId,
 }
@@ -111,8 +111,8 @@ impl Default for Context {
     assert_eq!(fees_account_id, 8246216774960574317);
 
     Self {
-      alice: Origin::signed(ALICE_ACCOUNT_ID),
-      bob: Origin::signed(BOB_ACCOUNT_ID),
+      alice: RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
+      bob: RuntimeOrigin::signed(BOB_ACCOUNT_ID),
       market_makers: vec![],
       fees_account_id: fees_account_id,
     }
@@ -138,7 +138,7 @@ impl Context {
     let temp_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP_ASSET_ID,
       temp_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -146,7 +146,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp_asset_owner),
+      RuntimeOrigin::signed(temp_asset_owner),
       TEMP_ASSET_ID,
       TEMP_ASSET_NAME.into(),
       TEMP_ASSET_SYMBOL.into(),
@@ -160,7 +160,7 @@ impl Context {
     let temp2_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP2_ASSET_ID,
       temp2_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -168,7 +168,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp2_asset_owner),
+      RuntimeOrigin::signed(temp2_asset_owner),
       TEMP2_ASSET_ID,
       TEMP2_ASSET_NAME.into(),
       TEMP2_ASSET_SYMBOL.into(),
@@ -182,7 +182,7 @@ impl Context {
     let zemp_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       ZEMP_ASSET_ID,
       zemp_asset_owner,
       ZEMP_ASSET_IS_SUFFICIENT,
@@ -190,7 +190,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(zemp_asset_owner),
+      RuntimeOrigin::signed(zemp_asset_owner),
       ZEMP_ASSET_ID,
       ZEMP_ASSET_NAME.into(),
       ZEMP_ASSET_SYMBOL.into(),
@@ -1556,7 +1556,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            Origin::none(),
+            RuntimeOrigin::none(),
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
