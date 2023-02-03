@@ -17,7 +17,8 @@
 use crate::{
   mock::{
     new_test_ext, AccountId, Adapter, Balance, Event as MockEvent, FeeAmount, MarketMakerFeeAmount,
-    Oracle, Origin, Security, StakeAccountCap, System, Test, TidefiStaking, UnstakeQueueCap,
+    Oracle, Origin, Security, StakeAccountCap, System, Test, Tidefi, TidefiStaking,
+    UnstakeQueueCap,
   },
   pallet as pallet_tidefi_stake, AccountStakes, Error, StakingPool, UnstakeQueue,
 };
@@ -81,7 +82,7 @@ const SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
 struct Context {
   staker: AccountId,
   staking_pallet_account: AccountId,
-  fee_pallet_account: AccountId,
+  fees_pallet_account: AccountId,
   tdfy_amount: Balance,
   test_token_amount: Balance,
   stake_id: Hash,
@@ -95,7 +96,7 @@ impl Default for Context {
       staker: ALICE_ACCOUNT_ID,
       staking_pallet_account: <Test as pallet_tidefi_stake::Config>::StakePalletId::get()
         .into_account_truncating(),
-      fee_pallet_account: <Test as pallet_fees::Config>::FeesPalletId::get()
+      fees_pallet_account: <Test as pallet_fees::Config>::FeesPalletId::get()
         .into_account_truncating(),
       tdfy_amount: ONE_TDFY,
       test_token_amount: ONE_TEST_TOKEN,
@@ -582,11 +583,14 @@ mod stake {
           .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
           .mint_test_token(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS);
 
+        let minimum_stake_amount = TidefiStaking::staking_meta(TEST_TOKEN_CURRENCY_ID)
+          .unwrap()
+          .minimum_amount;
         assert_noop!(
           TidefiStaking::stake(
             Origin::signed(context.staker),
             TEST_TOKEN_CURRENCY_ID,
-            ONE_TEST_TOKEN - 1,
+            minimum_stake_amount - 1,
             context.duration
           ),
           Error::<Test>::AmountTooSmall
@@ -700,9 +704,9 @@ mod unstake {
         new_test_ext().execute_with(|| {
           let context = Context::default();
           let fees_pallet_account_initial_tdfy_balance =
-            Adapter::balance(CurrencyId::Tdfy, &context.fee_pallet_account);
+            Adapter::balance(CurrencyId::Tdfy, &context.fees_pallet_account);
           let fees_pallet_account_initial_test_token_balance =
-            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fee_pallet_account);
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fees_pallet_account);
           const SWAP_TDFY_AMOUNT: Balance = 10 * ONE_TDFY;
           const SWAP_TEST_TOKEN_AMOUNT: Balance = 2 * ONE_TEST_TOKEN;
 
@@ -785,11 +789,11 @@ mod unstake {
           // Assert fees in both TDFYs and test tokens are paid to fees pallet account
           assert_eq!(
             fees_pallet_account_initial_tdfy_balance + total_fee_in_tdfy,
-            Adapter::balance(CurrencyId::Tdfy, &context.fee_pallet_account)
+            Adapter::balance(CurrencyId::Tdfy, &context.fees_pallet_account)
           );
           assert_eq!(
             fees_pallet_account_initial_test_token_balance + total_fee_in_test_token,
-            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fee_pallet_account)
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fees_pallet_account)
           );
 
           // End the session in an advanced block, so the session total fees is transferred from fees pallet to stake pallet
@@ -799,17 +803,17 @@ mod unstake {
             vec![
               (
                 CurrencyId::Tdfy,
-                Adapter::balance(CurrencyId::Tdfy, &context.fee_pallet_account)
+                Adapter::balance(CurrencyId::Tdfy, &context.fees_pallet_account)
               ),
               (
                 TEST_TOKEN_CURRENCY_ID,
-                Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fee_pallet_account)
+                Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fees_pallet_account)
               )
             ],
-            context.fee_pallet_account,
+            context.fees_pallet_account,
           ));
 
-          // Finish session
+          // Finish staking period
           set_current_block(FIFTEEN_DAYS + 1);
 
           // Get stake from chain storage
@@ -850,7 +854,7 @@ mod unstake {
           // Fee pallet account Test token balance becomes empty
           assert_eq!(
             fees_pallet_account_initial_test_token_balance,
-            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fee_pallet_account)
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fees_pallet_account)
           );
 
           // Assert Bob TDFY and Test token balance
@@ -1314,6 +1318,13 @@ pub fn should_calculate_rewards() {
       .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TDFYS)
       .mint_tdfy(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TDFYS);
 
+    assert_ok!(Tidefi::transfer(
+      Origin::signed(ALICE_ACCOUNT_ID),
+      fees_pallet_account,
+      CurrencyId::Tdfy,
+      500 * ONE_TDFY
+    ));
+
     set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
@@ -1342,6 +1353,7 @@ pub fn should_calculate_rewards() {
     // 100 for TDFY in fees for session 1
     // 15 days should get 2%, so 2 tides (100% of the pool)
     let expected_max_rewards = 2 * ONE_TDFY;
+
     assert_ok!(TidefiStaking::on_session_end(
       1,
       vec![(CurrencyId::Tdfy, SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS)],
