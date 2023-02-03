@@ -122,7 +122,7 @@ parameter_types! {
   pub const SessionsPerEra: SessionIndex = 10;
   pub const SessionsArchive: SessionIndex = 2;
   pub const BlocksPerSession: BlockNumber = 50;
-  pub const BlocksForceUnstake: BlockNumber = 10;
+  pub const BlocksForceUnstake: BlockNumber = 256;
   pub const MinimumPeriod: u64 = 5;
   pub const StakeAccountCap: u32 = 10;
   pub const UnstakeQueueCap: u32 = 100;
