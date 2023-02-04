@@ -47,7 +47,7 @@ impl frame_election_provider_support::onchain::Config for OnChainSeqPhragmen {
   type System = Runtime;
   type Solver = frame_election_provider_support::SequentialPhragmen<AccountId, Perbill>;
   type DataProvider = Staking;
-  type WeightInfo = crate::weights::frame_election_provider_support::WeightInfo<Runtime>;
+  type WeightInfo = frame_election_provider_support::weights::SubstrateWeight<Runtime>;
   type MaxWinners = MaxActiveValidators;
   type VotersBound = MaxElectingVoters;
   type TargetsBound = MaxElectableTargets;
@@ -106,7 +106,7 @@ impl pallet_im_online::Config for Runtime {
   type MaxKeys = MaxKeys;
   type MaxPeerInHeartbeats = MaxPeerInHeartbeats;
   type MaxPeerDataEncodingSize = MaxPeerDataEncodingSize;
-  type WeightInfo = crate::weights::pallet_im_online::WeightInfo<Runtime>;
+  type WeightInfo = pallet_im_online::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_authority_discovery::Config for Runtime {
@@ -143,7 +143,8 @@ impl pallet_grandpa::Config for Runtime {
     pallet_grandpa::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
 
   type MaxAuthorities = MaxAuthorities;
-  type WeightInfo = crate::weights::pallet_grandpa::WeightInfo<Runtime>;
+  // FIXME: Local weights
+  type WeightInfo = ();
   type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
 }
 
@@ -156,7 +157,7 @@ impl pallet_session::Config for Runtime {
   type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
   type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
   type Keys = SessionKeys;
-  type WeightInfo = crate::weights::pallet_session::WeightInfo<Runtime>;
+  type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -279,7 +280,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
-  type WeightInfo = crate::weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
+  type WeightInfo = pallet_election_provider_multi_phase::weights::SubstrateWeight<Runtime>;
   type MaxElectingVoters = MaxElectingVoters;
   type MaxElectableTargets = MaxElectableTargets;
   type MaxWinners = MaxActiveValidators;
@@ -363,7 +364,7 @@ impl pallet_staking::Config for Runtime {
   type MaxUnlockingChunks = ConstU32<32>;
   type BenchmarkingConfig = StakingBenchmarkingConfig;
   type OnStakerSlash = ();
-  type WeightInfo = crate::weights::pallet_staking::WeightInfo<Runtime>;
+  type WeightInfo = pallet_staking::weights::SubstrateWeight<Runtime>;
   type HistoryDepth = ConstU32<84>;
 }
 

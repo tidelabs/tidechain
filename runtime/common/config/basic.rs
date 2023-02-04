@@ -113,7 +113,7 @@ impl pallet_balances::Config for Runtime {
   type MaxLocks = MaxLocks;
   type MaxReserves = MaxReserves;
   type ReserveIdentifier = [u8; 8];
-  type WeightInfo = crate::weights::pallet_balances::WeightInfo<Runtime>;
+  type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -155,7 +155,7 @@ impl pallet_scheduler::Config for Runtime {
   type ScheduleOrigin = EnsureRoot<AccountId>;
   type MaxScheduledPerBlock = MaxScheduledPerBlock;
   type OriginPrivilegeCmp = OriginPrivilegeCmp;
-  type WeightInfo = crate::weights::pallet_scheduler::WeightInfo<Runtime>;
+  type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
   type Preimages = Preimage;
 }
 
@@ -168,7 +168,7 @@ impl pallet_indices::Config for Runtime {
   type Currency = Balances;
   type Deposit = IndexDeposit;
   type RuntimeEvent = RuntimeEvent;
-  type WeightInfo = crate::weights::pallet_indices::WeightInfo<Runtime>;
+  type WeightInfo = pallet_indices::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -179,7 +179,7 @@ impl pallet_timestamp::Config for Runtime {
   type Moment = Moment;
   type OnTimestampSet = Babe;
   type MinimumPeriod = MinimumPeriod;
-  type WeightInfo = crate::weights::pallet_timestamp::WeightInfo<Runtime>;
+  type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -206,7 +206,7 @@ impl pallet_identity::Config for Runtime {
   type Slashed = Treasury;
   type ForceOrigin = EnsureRootOrHalfCouncil;
   type RegistrarOrigin = EnsureRootOrHalfCouncil;
-  type WeightInfo = crate::weights::pallet_identity::WeightInfo<Runtime>;
+  type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -221,7 +221,7 @@ impl pallet_preimage::Config for Runtime {
   type ManagerOrigin = EnsureRoot<AccountId>;
   type BaseDeposit = PreimageBaseDeposit;
   type ByteDeposit = PreimageByteDeposit;
-  type WeightInfo = crate::weights::pallet_preimage::WeightInfo<Runtime>;
+  type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
