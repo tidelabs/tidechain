@@ -24,6 +24,7 @@ pub use tidechain_client::{
 
 #[cfg(feature = "full-node")]
 use {
+  frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE,
   sc_client_api::{BlockBackend, ExecutorProvider},
   sc_executor::NativeElseWasmExecutor,
   sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
@@ -229,7 +230,7 @@ where
 
   let justification_import = grandpa_block_import.clone();
 
-  let babe_config = sc_consensus_babe::Config::get(&*client)?;
+  let babe_config = sc_consensus_babe::configuration(&*client)?;
   let (block_import, babe_link) =
     sc_consensus_babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
 
@@ -253,7 +254,6 @@ where
     },
     &task_manager.spawn_essential_handle(),
     config.prometheus_registry(),
-    sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
     telemetry.as_ref().map(|x| x.handle()),
   )?;
 
@@ -346,6 +346,7 @@ impl<C> NewFull<C> {
 #[cfg(feature = "full-node")]
 pub fn new_full<RuntimeApi, Executor>(
   mut config: Configuration,
+  hwbench: Option<sc_sysinfo::HwBench>,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
 where
   RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
@@ -400,7 +401,7 @@ where
     Default::default(),
   ));
 
-  let (network, system_rpc_tx, network_starter) =
+  let (network, system_rpc_tx, tx_handler_controller, network_starter) =
     sc_service::build_network(sc_service::BuildNetworkParams {
       config: &config,
       client: client.clone(),
@@ -430,14 +431,32 @@ where
     transaction_pool: transaction_pool.clone(),
     task_manager: &mut task_manager,
     system_rpc_tx,
+    tx_handler_controller,
     telemetry: telemetry.as_mut(),
   })?;
 
+  if let Some(hwbench) = hwbench {
+    sc_sysinfo::print_hwbench(&hwbench);
+    if !SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench) && role.is_authority() {
+      log::warn!(
+				"⚠️  The hardware does not meet the minimal requirements for role 'Authority' find out more at:\n\
+				https://www.tidelabs.org/docs/Community/validator-guide#hardware"
+			);
+    }
+
+    if let Some(ref mut telemetry) = telemetry {
+      let telemetry_handle = telemetry.handle();
+      task_manager.spawn_handle().spawn(
+        "telemetry_hwbench",
+        None,
+        sc_sysinfo::initialize_hwbench_telemetry(telemetry_handle, hwbench),
+      );
+    }
+  }
+
   let (block_import, link_half, babe_link) = import_setup;
 
-  if let sc_service::config::Role::Authority { .. } = &role {
-    let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
-
+  if role.is_authority() {
     let proposer = sc_basic_authorship::ProposerFactory::new(
       task_manager.spawn_handle(),
       client.clone(),
@@ -459,8 +478,7 @@ where
       force_authoring,
       backoff_authoring_blocks,
       babe_link,
-      can_author_with,
-      create_inherent_data_providers: move |parent, ()| {
+      create_inherent_data_providers: move |_parent, ()| {
         let client_clone = client_clone.clone();
         async move {
           // FIXME
@@ -475,7 +493,7 @@ where
               slot_duration,
             );
 
-          Ok((timestamp, slot))
+          Ok((slot, timestamp))
         }
       },
       block_proposal_slot_portion: sc_consensus_babe::SlotProportion::new(2f32 / 3f32),
@@ -492,6 +510,7 @@ where
   if role.is_authority() {
     use futures::StreamExt;
     use sc_network::Event;
+    use sc_network_common::service::NetworkEventStream;
 
     let authority_discovery_role = if role.is_authority() {
       sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore())
@@ -593,16 +612,19 @@ where
 }
 
 #[cfg(feature = "full-node")]
-pub fn build_full(config: Configuration) -> Result<NewFull<Client>, Error> {
+pub fn build_full(
+  config: Configuration,
+  hwbench: Option<sc_sysinfo::HwBench>,
+) -> Result<NewFull<Client>, Error> {
   #[cfg(feature = "tidechain-native")]
   if config.chain_spec.is_tidechain() {
-    return new_full::<tidechain_runtime::RuntimeApi, TidechainExecutorDispatch>(config)
+    return new_full::<tidechain_runtime::RuntimeApi, TidechainExecutorDispatch>(config, hwbench)
       .map(|full| full.with_client(Client::Tidechain));
   }
 
   #[cfg(feature = "lagoon-native")]
   if config.chain_spec.is_lagoon() {
-    return new_full::<lagoon_runtime::RuntimeApi, LagoonExecutorDispatch>(config)
+    return new_full::<lagoon_runtime::RuntimeApi, LagoonExecutorDispatch>(config, hwbench)
       .map(|full| full.with_client(Client::Lagoon));
   }
 
