@@ -79,7 +79,7 @@ fn create_proposal<T: Config>() -> Hash {
 fn create_burned_queue<T: Config>() -> Hash {
   let account_id: T::AccountId = whitelisted_caller();
   let proposal_id = Hash::zero();
-  BurnedQueue::<T>::try_mutate(|burned_queue| {
+  let _ = BurnedQueue::<T>::try_mutate(|burned_queue| {
     burned_queue.try_push((
       proposal_id,
       Withdrawal {
@@ -89,12 +89,11 @@ fn create_burned_queue<T: Config>() -> Hash {
         external_address: b"1FfmbHfnpaZjKFvyi1okTjJJusN455paPH"
           .to_vec()
           .try_into()
-          .expect("Invalid address"),
+          .unwrap_or_default(),
         block_number: T::BlockNumber::from(1_u32),
       },
     ))
-  })
-  .unwrap();
+  });
 
   proposal_id
 }

@@ -135,6 +135,10 @@ impl pallet_assets::Config for Runtime {
   type Extra = ();
   type AssetIdParameter = u32;
   type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+
+  /// Helper trait for benchmarks.
+  #[cfg(feature = "runtime-benchmarks")]
+  type BenchmarkHelper = ();
 }
 
 impl pallet_tidefi::Config for Runtime {
