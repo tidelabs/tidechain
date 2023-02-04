@@ -465,7 +465,6 @@ where
       telemetry.as_ref().map(|x| x.handle()),
     );
 
-    let client_clone = client.clone();
     let slot_duration = babe_link.config().slot_duration();
     let babe_config = sc_consensus_babe::BabeParams {
       keystore: keystore_container.sync_keystore(),
