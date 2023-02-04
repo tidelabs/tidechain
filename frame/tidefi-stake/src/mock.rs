@@ -164,7 +164,7 @@ impl pallet_assets::Config for Test {
   type Extra = ();
   type RemoveItemsLimit = ConstU32<5>;
   #[cfg(feature = "runtime-benchmarks")]
-  type BenchmarkHelper = ();  
+  type BenchmarkHelper = ();
 }
 
 impl pallet_balances::Config for Test {

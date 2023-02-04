@@ -25,13 +25,14 @@ use crate::{
     RuntimeBlockLength, RuntimeBlockWeights,
   },
   Babe, BagsList, Balances, BlockNumber, CouncilCollectiveInstance, ElectionProviderMultiPhase,
-  Historical, ImOnline, Offences, Runtime, RuntimeCall, RuntimeEvent, Session, SessionKeys,
-  Staking, Timestamp, TransactionPayment, Treasury,
+  Historical, ImOnline, Offences, Runtime, RuntimeEvent, Session, SessionKeys, Staking, Timestamp,
+  TransactionPayment, Treasury,
 };
 use frame_support::{
+  dispatch::DispatchClass,
   parameter_types,
   traits::{ConstU32, EitherOfDiverse, KeyOwnerProofSystem, U128CurrencyToVote},
-  weights::{DispatchClass, Weight},
+  weights::Weight,
 };
 use frame_system::EnsureRoot;
 use pallet_staking::UseValidatorsMap;

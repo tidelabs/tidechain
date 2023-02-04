@@ -19,7 +19,7 @@ pub use sc_executor::NativeElseWasmExecutor;
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
-  generic::{BlockId, SignedBlock},
+  generic::SignedBlock,
   traits::{BlakeTwo256, Block as BlockT},
   Justifications,
 };

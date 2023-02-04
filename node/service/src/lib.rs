@@ -25,7 +25,7 @@ pub use tidechain_client::{
 #[cfg(feature = "full-node")]
 use {
   frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE,
-  sc_client_api::{BlockBackend, ExecutorProvider},
+  sc_client_api::BlockBackend,
   sc_executor::NativeElseWasmExecutor,
   sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
   sc_service::{
@@ -479,7 +479,6 @@ where
       backoff_authoring_blocks,
       babe_link,
       create_inherent_data_providers: move |_parent, ()| {
-        let client_clone = client_clone.clone();
         async move {
           // FIXME
           //let uncles =
