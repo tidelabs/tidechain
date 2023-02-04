@@ -22,7 +22,7 @@ use crate::{
   AssetRegistry, AuthorityDiscovery, Babe, Executive, Grandpa, Historical, InherentDataExt,
   Runtime, SessionKeys, System, TidefiStaking, TransactionPayment, VERSION,
 };
-use frame_support::traits::KeyOwnerProofSystem;
+use frame_support::{pallet_prelude::Weight, traits::KeyOwnerProofSystem};
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use sp_api::{impl_runtime_apis, ApisVec};
@@ -133,17 +133,17 @@ impl_runtime_apis! {
    }
 
    impl sp_consensus_babe::BabeApi<Block> for Runtime {
-       fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
+       fn configuration() -> sp_consensus_babe::BabeConfiguration {
            // The choice of `c` parameter (where `1 - c` represents the
            // probability of a slot being empty), is done in accordance to the
            // slot duration and expected target block time, for safely
            // resisting network delays of maximum two seconds.
            // <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
-           sp_consensus_babe::BabeGenesisConfiguration {
+           sp_consensus_babe::BabeConfiguration {
                slot_duration: Babe::slot_duration(),
                epoch_length: EpochDuration::get(),
                c: BABE_GENESIS_EPOCH_CONFIG.c,
-               genesis_authorities: Babe::authorities().to_vec(),
+               authorities: Babe::authorities().to_vec(),
                randomness: Babe::randomness(),
                allowed_slots: BABE_GENESIS_EPOCH_CONFIG.allowed_slots,
            }
@@ -206,6 +206,12 @@ impl_runtime_apis! {
        }
        fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
            TransactionPayment::query_fee_details(uxt, len)
+       }
+       fn query_weight_to_fee(weight: Weight) -> Balance {
+            TransactionPayment::weight_to_fee(weight)
+       }
+       fn query_length_to_fee(length: u32) -> Balance {
+            TransactionPayment::length_to_fee(length)
        }
    }
 

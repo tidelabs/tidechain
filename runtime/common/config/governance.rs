@@ -20,15 +20,16 @@ use crate::{
     time::{DAYS, HOURS},
   },
   types::{AccountId, Balance, BlockNumber, EnsureRootOrHalfCouncil},
-  Balances, Bounties, Call, Council, CouncilCollectiveInstance, Event, Origin, OriginCaller,
-  Runtime, Scheduler, TechnicalCollectiveInstance, TechnicalCommittee, Treasury, TreasuryPalletId,
+  Balances, Bounties, Council, CouncilCollectiveInstance, OriginCaller, Preimage, Runtime,
+  RuntimeCall, RuntimeEvent, RuntimeOrigin, Scheduler, TechnicalCollectiveInstance,
+  TechnicalCommittee, Treasury, TreasuryPalletId,
 };
 use frame_support::{
   parameter_types,
   traits::{EitherOfDiverse, LockIdentifier, U128CurrencyToVote},
 };
 use frame_system::EnsureRoot;
-use sp_runtime::Permill;
+use sp_runtime::{traits::ConstU32, Permill};
 use static_assertions::const_assert;
 
 parameter_types! {
@@ -40,6 +41,8 @@ parameter_types! {
    pub const TermDuration: BlockNumber = 7 * DAYS;
    pub const DesiredMembers: u32 = 13;
    pub const DesiredRunnersUp: u32 = 20;
+   pub const MaxVoters: u32 = 10 * 1000;
+   pub const MaxCandidates: u32 = 1000;
    pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
 }
 
@@ -47,7 +50,7 @@ parameter_types! {
 const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 
 impl pallet_elections_phragmen::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type PalletId = ElectionsPhragmenPalletId;
   type Currency = Balances;
   type ChangeMembers = Council;
@@ -63,6 +66,8 @@ impl pallet_elections_phragmen::Config for Runtime {
   type DesiredMembers = DesiredMembers;
   type DesiredRunnersUp = DesiredRunnersUp;
   type TermDuration = TermDuration;
+  type MaxVoters = MaxVoters;
+  type MaxCandidates = MaxCandidates;
   type WeightInfo = crate::weights::pallet_elections_phragmen::WeightInfo<Runtime>;
 }
 
@@ -73,9 +78,9 @@ parameter_types! {
 }
 
 impl pallet_collective::Config<CouncilCollectiveInstance> for Runtime {
-  type Origin = Origin;
-  type Proposal = Call;
-  type Event = Event;
+  type RuntimeOrigin = RuntimeOrigin;
+  type Proposal = RuntimeCall;
+  type RuntimeEvent = RuntimeEvent;
   type MotionDuration = CouncilMotionDuration;
   type MaxProposals = CouncilMaxProposals;
   type MaxMembers = CouncilMaxMembers;
@@ -90,9 +95,9 @@ parameter_types! {
 }
 
 impl pallet_collective::Config<TechnicalCollectiveInstance> for Runtime {
-  type Origin = Origin;
-  type Proposal = Call;
-  type Event = Event;
+  type RuntimeOrigin = RuntimeOrigin;
+  type Proposal = RuntimeCall;
+  type RuntimeEvent = RuntimeEvent;
   type MotionDuration = TechnicalMotionDuration;
   type MaxProposals = TechnicalMaxProposals;
   type MaxMembers = TechnicalMaxMembers;
@@ -101,7 +106,7 @@ impl pallet_collective::Config<TechnicalCollectiveInstance> for Runtime {
 }
 
 impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type AddOrigin = EnsureRootOrHalfCouncil;
   type RemoveOrigin = EnsureRootOrHalfCouncil;
   type SwapOrigin = EnsureRootOrHalfCouncil;
@@ -139,7 +144,7 @@ impl pallet_treasury::Config for Runtime {
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 4, 5>,
   >;
   type RejectOrigin = EnsureRootOrHalfCouncil;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type OnSlash = ();
   type ProposalBond = ProposalBond;
   type ProposalBondMinimum = ProposalBondMinimum;
@@ -165,7 +170,7 @@ impl pallet_bounties::Config for Runtime {
   type BountyValueMinimum = BountyValueMinimum;
   type ChildBountyManager = ();
   type DataDepositPerByte = DataDepositPerByte;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type MaximumReasonLength = MaximumReasonLength;
   type WeightInfo = crate::weights::pallet_bounties::WeightInfo<Runtime>;
 }
@@ -184,8 +189,7 @@ parameter_types! {
 }
 
 impl pallet_democracy::Config for Runtime {
-  type Proposal = Call;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Currency = Balances;
   type EnactmentPeriod = EnactmentPeriod;
   type VoteLockingPeriod = EnactmentPeriod;
@@ -226,13 +230,13 @@ impl pallet_democracy::Config for Runtime {
   // only do it once and it lasts only for the cooloff period.
   type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollectiveInstance>;
   type CooloffPeriod = CooloffPeriod;
-  type PreimageByteDeposit = PreimageByteDeposit;
-  type OperationalPreimageOrigin =
-    pallet_collective::EnsureMember<AccountId, CouncilCollectiveInstance>;
   type Slash = Treasury;
   type Scheduler = Scheduler;
   type PalletsOrigin = OriginCaller;
   type MaxVotes = MaxVotes;
   type WeightInfo = crate::weights::pallet_democracy::WeightInfo<Runtime>;
   type MaxProposals = MaxProposals;
+  type Preimages = Preimage;
+  type MaxDeposits = ConstU32<100>;
+  type MaxBlacklisted = ConstU32<100>;
 }

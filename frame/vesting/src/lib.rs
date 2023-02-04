@@ -69,7 +69,7 @@ mod tests;
 mod weights;
 
 pub use module::*;
-pub use weights::WeightInfo;
+pub use weights::*;
 
 pub const VESTING_LOCK_ID: LockIdentifier = *b"ormlvest";
 

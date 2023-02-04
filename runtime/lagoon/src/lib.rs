@@ -140,8 +140,8 @@ parameter_types! {
 }
 
 impl pallet_sudo::Config for Runtime {
-  type Event = Event;
-  type Call = Call;
+  type RuntimeEvent = RuntimeEvent;
+  type RuntimeCall = RuntimeCall;
 }
 
 construct_runtime!(
@@ -162,7 +162,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 
         // Consensus support
-        Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 6,
+        Authorship: pallet_authorship::{Pallet, Storage} = 6,
         Staking: pallet_staking::{Pallet, Call, Config<T>, Storage, Event<T>} = 7,
         Offences: pallet_offences::{Pallet, Storage, Event} = 8,
         Historical: pallet_session_historical::{Pallet} = 9,

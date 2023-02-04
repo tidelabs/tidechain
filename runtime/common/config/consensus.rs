@@ -24,8 +24,8 @@ use crate::{
     AccountId, Balance, BlockExecutionWeight, EpochDuration, GrandpaId, ImOnlineId, Moment,
     RuntimeBlockLength, RuntimeBlockWeights,
   },
-  Babe, BagsList, Balances, BlockNumber, Call, CouncilCollectiveInstance,
-  ElectionProviderMultiPhase, Event, Historical, ImOnline, Offences, Runtime, Session, SessionKeys,
+  Babe, BagsList, Balances, BlockNumber, CouncilCollectiveInstance, ElectionProviderMultiPhase,
+  Historical, ImOnline, Offences, Runtime, RuntimeCall, RuntimeEvent, Session, SessionKeys,
   Staking, Timestamp, TransactionPayment, Treasury,
 };
 use frame_support::{
@@ -34,6 +34,7 @@ use frame_support::{
   weights::{DispatchClass, Weight},
 };
 use frame_system::EnsureRoot;
+use pallet_staking::UseValidatorsMap;
 use sp_runtime::{
   curve::PiecewiseLinear, traits::OpaqueKeys, transaction_validity::TransactionPriority, KeyTypeId,
   Perbill,
@@ -47,6 +48,9 @@ impl frame_election_provider_support::onchain::Config for OnChainSeqPhragmen {
   type Solver = frame_election_provider_support::SequentialPhragmen<AccountId, Perbill>;
   type DataProvider = Staking;
   type WeightInfo = crate::weights::frame_election_provider_support::WeightInfo<Runtime>;
+  type MaxWinners = MaxActiveValidators;
+  type VotersBound = MaxElectingVoters;
+  type TargetsBound = MaxElectableTargets;
 }
 
 parameter_types! {
@@ -94,7 +98,7 @@ parameter_types! {
 
 impl pallet_im_online::Config for Runtime {
   type AuthorityId = ImOnlineId;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type NextSessionRotation = Babe;
   type ValidatorSet = Historical;
   type ReportUnresponsiveness = Offences;
@@ -110,25 +114,22 @@ impl pallet_authority_discovery::Config for Runtime {
 }
 
 parameter_types! {
-   pub const UncleGenerations: BlockNumber = 0;
+  pub MaxSetIdSessionEntries: u32 = BondingDuration::get() * SessionsPerEra::get();
 }
 
 impl pallet_authorship::Config for Runtime {
   type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Babe>;
-  type UncleGenerations = UncleGenerations;
-  type FilterUncle = ();
   type EventHandler = (Staking, ImOnline);
 }
 
 impl pallet_offences::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type IdentificationTuple = pallet_session::historical::IdentificationTuple<Self>;
   type OnOffenceHandler = Staking;
 }
 
 impl pallet_grandpa::Config for Runtime {
-  type Event = Event;
-  type Call = Call;
+  type RuntimeEvent = RuntimeEvent;
 
   type KeyOwnerProofSystem = Historical;
 
@@ -143,10 +144,11 @@ impl pallet_grandpa::Config for Runtime {
 
   type MaxAuthorities = MaxAuthorities;
   type WeightInfo = crate::weights::pallet_grandpa::WeightInfo<Runtime>;
+  type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
 }
 
 impl pallet_session::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type ValidatorId = <Self as frame_system::Config>::AccountId;
   type ValidatorIdOf = pallet_staking::StashOf<Self>;
   type ShouldEndSession = Babe;
@@ -186,6 +188,9 @@ parameter_types! {
   /// ... and all of the validators as electable targets. Whilst this is the case, we cannot and
   /// shall not increase the size of the validator intentions.
   pub const MaxElectableTargets: u16 = u16::MAX;
+  /// Setup election pallet to support maximum winners upto 2000. This will mean Staking Pallet
+  /// cannot have active validators higher than this count.
+  pub const MaxActiveValidators: u32 = 2000;
 }
 
 frame_election_provider_support::generate_solution_type!(
@@ -235,7 +240,7 @@ impl pallet_election_provider_multi_phase::BenchmarkingConfig for BenchmarkConfi
 }
 
 impl pallet_election_provider_multi_phase::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Currency = Balances;
   type EstimateCallFee = TransactionPayment;
   type SignedPhase = SignedPhase;
@@ -256,9 +261,14 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type OffchainRepeat = OffchainRepeat;
   type MinerTxPriority = NposSolutionPriority;
   type DataProvider = Staking;
-  type Fallback = frame_election_provider_support::onchain::UnboundedExecution<OnChainSeqPhragmen>;
+  type Fallback = frame_election_provider_support::NoElection<(
+    AccountId,
+    BlockNumber,
+    Staking,
+    MaxActiveValidators,
+  )>;
   type GovernanceFallback =
-    frame_election_provider_support::onchain::UnboundedExecution<OnChainSeqPhragmen>;
+    frame_election_provider_support::onchain::OnChainExecution<OnChainSeqPhragmen>;
   type Solver = frame_election_provider_support::SequentialPhragmen<
     AccountId,
     pallet_election_provider_multi_phase::SolutionAccuracyOf<Self>,
@@ -272,6 +282,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type WeightInfo = crate::weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
   type MaxElectingVoters = MaxElectingVoters;
   type MaxElectableTargets = MaxElectableTargets;
+  type MaxWinners = MaxActiveValidators;
 }
 
 parameter_types! {
@@ -328,17 +339,16 @@ impl pallet_staking::Config for Runtime {
   type UnixTime = Timestamp;
   type CurrencyToVote = U128CurrencyToVote;
   type RewardRemainder = Treasury;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Slash = Treasury;
   type Reward = ();
   type SessionsPerEra = SessionsPerEra;
   type BondingDuration = BondingDuration;
   type ElectionProvider = ElectionProviderMultiPhase;
   type GenesisElectionProvider =
-    frame_election_provider_support::onchain::UnboundedExecution<OnChainSeqPhragmen>;
+    frame_election_provider_support::onchain::OnChainExecution<OnChainSeqPhragmen>;
   type SlashDeferDuration = SlashDeferDuration;
-  /// A super-majority of the council can cancel the slash.
-  type SlashCancelOrigin = EitherOfDiverse<
+  type AdminOrigin = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 3, 4>,
   >;
@@ -349,10 +359,12 @@ impl pallet_staking::Config for Runtime {
   type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
   // Use the nominators map to iter voters, but also keep bags-list up-to-date.
   type VoterList = BagsList;
-  type MaxUnlockingChunks = frame_support::traits::ConstU32<32>;
+  type TargetList = UseValidatorsMap<Self>;
+  type MaxUnlockingChunks = ConstU32<32>;
   type BenchmarkingConfig = StakingBenchmarkingConfig;
   type OnStakerSlash = ();
   type WeightInfo = crate::weights::pallet_staking::WeightInfo<Runtime>;
+  type HistoryDepth = ConstU32<84>;
 }
 
 parameter_types! {
@@ -360,7 +372,7 @@ parameter_types! {
 }
 
 impl pallet_bags_list::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type ScoreProvider = Staking;
   type BagThresholds = BagThresholds;
   /// FIXME: Revert local weighting
