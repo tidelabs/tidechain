@@ -545,7 +545,7 @@ pub fn should_remove_expired() {
     });
     assert_ok!(Quorum::submit_proposal(context.alice, proposal));
     assert_eq!(
-      Quorum::on_idle(0, Weight::from(1000000000000)),
+      Quorum::on_idle(0, Weight::from_ref_time(1000000000000)),
       Weight::from(0)
     );
     assert_eq!(Proposals::<Test>::get().len(), 1);
@@ -553,7 +553,7 @@ pub fn should_remove_expired() {
     set_current_block(ProposalLifetime::get() + 2);
 
     assert_eq!(
-      Quorum::on_idle(0, Weight::from(1000000000000)),
+      Quorum::on_idle(0, Weight::from_ref_time(1000000000000)),
       Weight::from(0)
     );
     assert_eq!(Proposals::<Test>::get().len(), 0);

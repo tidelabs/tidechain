@@ -55,20 +55,20 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn vested_transfer() -> Weight {
-		Weight::from(69_200_000)
+		Weight::from_ref_time(69_200_000)
 		.saturating_add(T::DbWeight::get().reads(4_u64))
 		.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
 	fn claim(i: u32, ) -> Weight {
-		Weight::from(32_200_000)
+		Weight::from_ref_time(32_200_000)
 			// Standard Error: 4_000
-			.saturating_add(Weight::from(63_000).saturating_mul(i as u64))
+			.saturating_add(Weight::from_ref_time(63_000).saturating_mul(i as u64))
 			.saturating_add(T::DbWeight::get().reads(4_u64))
 			.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
 	fn update_vesting_schedules(i: u32, ) -> Weight {
-		Weight::from(29_200_000)
-			.saturating_add(Weight::from(117_000).saturating_mul(i as u64))
+		Weight::from_ref_time(29_200_000)
+			.saturating_add(Weight::from_ref_time(117_000).saturating_mul(i as u64))
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}

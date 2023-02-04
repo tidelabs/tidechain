@@ -35,33 +35,33 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
    fn submit_proposal() -> Weight {
-      Weight::from(61_000_300)
+      Weight::from_ref_time(61_000_300)
           .saturating_add(T::DbWeight::get().reads(6_u64))
           .saturating_add(T::DbWeight::get().writes(5_u64))
   }
   fn acknowledge_proposal() -> Weight {
-      Weight::from(62_000_300)
+      Weight::from_ref_time(62_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn acknowledge_burned() -> Weight {
-      Weight::from(60_000_300)
+      Weight::from_ref_time(60_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn reject_proposal() -> Weight {
-      Weight::from(63_000_300)
+      Weight::from_ref_time(63_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn eval_proposal_state() -> Weight {
-      Weight::from(64_000_300)
+      Weight::from_ref_time(64_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn submit_public_keys(k: u32) -> Weight {
-      Weight::from(65_000_300)
-         .saturating_add(Weight::from(200_000).saturating_mul(k as u64))
+      Weight::from_ref_time(65_000_300)
+         .saturating_add(Weight::from_ref_time(200_000).saturating_mul(k as u64))
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }

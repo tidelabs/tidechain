@@ -32,12 +32,12 @@ pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
    fn stake() -> Weight {
-      Weight::from(14_100_000)
+      Weight::from_ref_time(14_100_000)
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn unstake() -> Weight {
-      Weight::from(18_200_000)
+      Weight::from_ref_time(18_200_000)
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }

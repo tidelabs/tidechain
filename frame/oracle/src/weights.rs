@@ -35,32 +35,32 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
    fn set_status() -> Weight {
-      Weight::from(61_000_300)
+      Weight::from_ref_time(61_000_300)
           .saturating_add(T::DbWeight::get().reads(6_u64))
           .saturating_add(T::DbWeight::get().writes(5_u64))
   }
   fn add_market_maker() -> Weight {
-      Weight::from(61_000_300)
+      Weight::from_ref_time(61_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn remove_market_maker() -> Weight {
-      Weight::from(61_000_300)
+      Weight::from_ref_time(61_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
   fn set_account_id() -> Weight {
-   Weight::from(62_000_300)
+   Weight::from_ref_time(62_000_300)
        .saturating_add(T::DbWeight::get().reads(6_u64))
        .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn confirm_swap() -> Weight {
-      Weight::from(63_000_300)
+      Weight::from_ref_time(63_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn update_assets_value() -> Weight {
-      Weight::from(64_000_300)
+      Weight::from_ref_time(64_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }

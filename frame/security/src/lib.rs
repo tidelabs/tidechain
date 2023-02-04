@@ -118,7 +118,7 @@ pub mod pallet {
         });
         Self::deposit_event(Event::UpdateCurrentBlock(height));
       }
-      Weight::from(0)
+      Weight::from_ref_time(0)
     }
   }
 

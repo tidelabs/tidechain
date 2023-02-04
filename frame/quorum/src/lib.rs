@@ -560,14 +560,14 @@ pub mod pallet {
       }
 
       // The amount of remaining weight under which we stop processing messages
-      let threshold_weight = Weight::from(100_000);
+      let threshold_weight = Weight::from_ref_time(100_000);
 
       // we create a shuffle of index, to prevent queue blocking
       let mut shuffled = Self::create_shuffle(all_proposals.len());
       let current_block = T::Security::get_current_block_count();
       let proposal_lifetime = T::ProposalLifetime::get();
       let mut shuffle_index = 0;
-      let mut weight_available = Weight::from(0);
+      let mut weight_available = Weight::from_ref_time(0);
 
       while shuffle_index < shuffled.len()
         && max_weight
@@ -606,7 +606,7 @@ pub mod pallet {
 
           <T as frame_system::Config>::DbWeight::get().reads_writes(0, 2)
         } else {
-          Weight::from(0)
+          Weight::from_ref_time(0)
         };
 
         weight_used += weight_processed;
@@ -1002,11 +1002,7 @@ pub mod pallet {
             .try_push(watch_list.clone())
             .map_err(|_| Error::<T>::WatchlistOverflow),
           None => {
-            *account_watch_list = Some(
-              vec![watch_list]
-                .try_into()
-                .expect("Watch list should be created"),
-            );
+            *account_watch_list = Some(vec![watch_list].try_into().unwrap_or_default());
             Ok(())
           }
         }
