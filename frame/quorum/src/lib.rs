@@ -13,7 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
-
+#![allow(clippy::type_complexity)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -38,7 +38,7 @@ pub(crate) const LOG_TARGET: &str = "tidefi::quorum";
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
-			target: crate::LOG_TARGET,
+			target: $crate::LOG_TARGET,
 			concat!("[{:?}] 💸 ", $patter), T::Security::get_current_block_count() $(, $values)*
 		)
 	};
@@ -66,6 +66,30 @@ pub mod pallet {
     AssetId, Balance, ComplianceLevel, CurrencyId, Hash, Mint, ProposalStatus, ProposalType,
     ProposalVotes, WatchList, WatchListAction, Withdrawal,
   };
+
+  pub type PublicKeyItem<AccountId, StringLimit> = (AccountId, BoundedVec<u8, StringLimit>);
+
+  pub type WatchListItem<BlockNumber, StringLimit> =
+    WatchList<BlockNumber, BoundedVec<u8, StringLimit>>;
+
+  pub type ProposalItem<BlockNumber, AccountId, StringLimit, VotesLimit> = (
+    Hash,
+    BlockNumber,
+    ProposalType<
+      AccountId,
+      BlockNumber,
+      BoundedVec<u8, StringLimit>,
+      BoundedVec<AccountId, VotesLimit>,
+    >,
+  );
+
+  pub type BurnedQueueItem<BlockNumber, AccountId, StringLimit> = (
+    Hash,
+    Withdrawal<AccountId, BlockNumber, BoundedVec<u8, StringLimit>>,
+  );
+
+  pub type QuorumProposal<BlockNumber, AccountId> =
+    ProposalType<AccountId, BlockNumber, Vec<u8>, Vec<AccountId>>;
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -142,10 +166,7 @@ pub mod pallet {
     Blake2_128Concat,
     AssetId,
     BoundedVec<
-      (
-        T::AccountId,
-        BoundedVec<u8, <T as pallet::Config>::StringLimit>,
-      ),
+      PublicKeyItem<T::AccountId, <T as pallet::Config>::StringLimit>,
       T::PubkeyLimitPerAsset,
     >,
     ValueQuery,
@@ -159,7 +180,7 @@ pub mod pallet {
     Blake2_128Concat,
     T::AccountId,
     BoundedVec<
-      WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
+      WatchListItem<T::BlockNumber, <T as pallet::Config>::StringLimit>,
       <T as pallet::Config>::WatchListLimit,
     >,
   >;
@@ -175,16 +196,7 @@ pub mod pallet {
   pub type Proposals<T: Config> = StorageValue<
     _,
     BoundedVec<
-      (
-        Hash,
-        T::BlockNumber,
-        ProposalType<
-          T::AccountId,
-          T::BlockNumber,
-          BoundedVec<u8, <T as pallet::Config>::StringLimit>,
-          BoundedVec<T::AccountId, <T as pallet::Config>::VotesLimit>,
-        >,
-      ),
+      ProposalItem<T::BlockNumber, T::AccountId, <T as pallet::Config>::StringLimit, T::VotesLimit>,
       T::ProposalsCap,
     >,
     ValueQuery,
@@ -211,14 +223,7 @@ pub mod pallet {
   pub type BurnedQueue<T: Config> = StorageValue<
     _,
     BoundedVec<
-      (
-        Hash,
-        Withdrawal<
-          T::AccountId,
-          T::BlockNumber,
-          BoundedVec<u8, <T as pallet::Config>::StringLimit>,
-        >,
-      ),
+      BurnedQueueItem<T::BlockNumber, T::AccountId, <T as pallet::Config>::StringLimit>,
       T::BurnedCap,
     >,
     ValueQuery,
@@ -390,7 +395,7 @@ pub mod pallet {
     #[pallet::weight(<T as pallet::Config>::WeightInfo::submit_proposal())]
     pub fn submit_proposal(
       origin: OriginFor<T>,
-      proposal: ProposalType<T::AccountId, T::BlockNumber, Vec<u8>, Vec<T::AccountId>>,
+      proposal: QuorumProposal<T::BlockNumber, T::AccountId>,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;
@@ -602,7 +607,7 @@ pub mod pallet {
           };
 
           // Delete all votes (1 write)
-          Votes::<T>::remove(&proposal_id);
+          Votes::<T>::remove(proposal_id);
 
           <T as frame_system::Config>::DbWeight::get().reads_writes(0, 2)
         } else {
@@ -684,8 +689,7 @@ pub mod pallet {
     // Make sure the account id is part of the quorum set list and have public key set
     fn is_member_and_ready(who: &T::AccountId) -> bool {
       let at_least_one_public_key = PublicKeys::<T>::iter_values()
-        .find(|assets| assets.iter().any(|(account_id, _)| account_id == who))
-        .is_some();
+        .any(|assets| assets.iter().any(|(account_id, _)| account_id == who));
 
       Self::members(who).unwrap_or(false) && at_least_one_public_key
     }
@@ -718,11 +722,9 @@ pub mod pallet {
         Error::<T>::ProposalBlockIsInFuture
       );
 
-      let mut votes = Votes::<T>::get(proposal_id).unwrap_or_else(|| {
-        let mut v =
-          ProposalVotes::<T::BlockNumber, BoundedVec<T::AccountId, T::VotesLimit>>::default();
-        v.expiry = proposal_block + T::ProposalLifetime::get();
-        v
+      let mut votes = Votes::<T>::get(proposal_id).unwrap_or_else(|| ProposalVotes {
+        expiry: proposal_block + T::ProposalLifetime::get(),
+        ..Default::default()
       });
 
       ensure!(
@@ -999,7 +1001,7 @@ pub mod pallet {
       AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
         match account_watch_list {
           Some(current_watch_list) => current_watch_list
-            .try_push(watch_list.clone())
+            .try_push(watch_list)
             .map_err(|_| Error::<T>::WatchlistOverflow),
           None => {
             *account_watch_list = Some(vec![watch_list].try_into().unwrap_or_default());

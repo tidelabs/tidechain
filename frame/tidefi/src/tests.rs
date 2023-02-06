@@ -285,7 +285,7 @@ fn assert_event_is_emitted_transfer(context: &Context, currency_id: CurrencyId) 
   System::assert_has_event(MockEvent::Tidefi(Event::Transfer {
     from_account_id: context.sender,
     to_account_id: context.receiver,
-    currency_id: currency_id,
+    currency_id,
     amount: context.amount,
   }));
 }
@@ -293,7 +293,7 @@ fn assert_event_is_emitted_transfer(context: &Context, currency_id: CurrencyId) 
 fn assert_event_is_emitted_withdrawal(context: &Context, currency_id: CurrencyId) {
   System::assert_has_event(MockEvent::Tidefi(Event::Withdrawal {
     account: context.sender,
-    currency_id: currency_id,
+    currency_id,
     amount: context.amount,
     external_address: context.external_address.clone(),
   }));
@@ -568,7 +568,7 @@ mod withdrawal {
         RuntimeOrigin::signed(context.sender),
         TEMP_CURRENCY_ID,
         ONE_TEMP,
-        context.external_address.clone(),
+        context.external_address,
       ));
     });
   }
@@ -589,7 +589,7 @@ mod withdrawal {
             RuntimeOrigin::none(),
             TEMP_CURRENCY_ID,
             context.amount,
-            context.external_address.clone(),
+            context.external_address,
           ),
           BadOrigin
         );
@@ -606,7 +606,7 @@ mod withdrawal {
             RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             context.amount,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::AssetDisabled
         );
@@ -623,7 +623,7 @@ mod withdrawal {
             RuntimeOrigin::signed(context.sender),
             CurrencyId::Tdfy,
             context.amount,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::CannotWithdrawTdfy
         );
@@ -646,7 +646,7 @@ mod withdrawal {
             RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             alice_temp_balance + 1,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::WithdrawAmountGreaterThanAccountBalance
         );
@@ -667,7 +667,7 @@ mod withdrawal {
             RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             initial_temp_amount + 1,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::WithdrawAmountGreaterThanAssetSupply
         );
@@ -693,7 +693,7 @@ mod withdrawal {
             RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             10 * ONE_TEMP,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::AccountAssetFrozen
         );
@@ -1229,7 +1229,7 @@ mod cancel_swap {
             .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
             .add_temp_to_tdfy_limit_swap(BOB_ACCOUNT_ID, 200 * ONE_TEMP, 10 * ONE_TDFY);
 
-          Account::<Test>::remove(&BOB_ACCOUNT_ID, TEMP_ASSET_ID);
+          Account::<Test>::remove(BOB_ACCOUNT_ID, TEMP_ASSET_ID);
 
           assert_noop!(
             Tidefi::cancel_swap(RuntimeOrigin::signed(BOB_ACCOUNT_ID), context.request_id),
@@ -1257,7 +1257,7 @@ mod cancel_swap {
             maybe_account
               .as_mut()
               .ok_or(())
-              .map(|account| account.reserved = account.reserved - 1)
+              .map(|account| account.reserved -= 1)
           })
           .unwrap();
 
@@ -1483,7 +1483,7 @@ mod claim_sunrise_rewards {
         let current_era = Fees::current_era().unwrap().index;
 
         assert_noop!(
-          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), current_era),
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, current_era),
           Error::<Test>::InvalidEra
         );
       });
@@ -1519,7 +1519,7 @@ mod claim_sunrise_rewards {
         let previous_era = Fees::current_era().unwrap().index - 1;
 
         assert_noop!(
-          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), previous_era),
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, previous_era),
           Error::<Test>::EraNotReady
         );
       });

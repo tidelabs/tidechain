@@ -329,10 +329,10 @@ fn lagoon_testnet_genesis(
       lagoon_runtime,
       vec![
         (150_u32, Percent::from_parts(1)),
-        ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
-        ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
-        ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
-        ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+        ((14400_u32 * 15_u32), Percent::from_parts(2)),
+        ((14400_u32 * 30_u32), Percent::from_parts(3)),
+        ((14400_u32 * 60_u32), Percent::from_parts(4)),
+        ((14400_u32 * 90_u32), Percent::from_parts(5)),
       ]
     ),
   }
@@ -537,9 +537,7 @@ fn tidechain_testnet_genesis(
     },
 
     // FIXME: Remove sudo once the staging is completed
-    sudo: tidechain_runtime::SudoConfig {
-      key: Some(root.clone()),
-    },
+    sudo: tidechain_runtime::SudoConfig { key: Some(root) },
 
     babe: tidechain_runtime::BabeConfig {
       authorities: Default::default(),
@@ -574,10 +572,10 @@ fn tidechain_testnet_genesis(
     tidefi_staking: crate::tidefi_staking_genesis!(
       tidechain_runtime,
       vec![
-        ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
-        ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
-        ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
-        ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+        ((14400_u32 * 15_u32), Percent::from_parts(2)),
+        ((14400_u32 * 30_u32), Percent::from_parts(3)),
+        ((14400_u32 * 60_u32), Percent::from_parts(4)),
+        ((14400_u32 * 90_u32), Percent::from_parts(5)),
       ]
     ),
   }
@@ -1140,7 +1138,7 @@ mod helpers {
 
   /// Helper function to generate a crypto pair from seed
   pub(crate) fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-    TPublic::Pair::from_string(&format!("//{}", seed), None)
+    TPublic::Pair::from_string(&format!("//{seed}"), None)
       .expect("static values are valid; qed")
       .public()
   }
@@ -1165,7 +1163,7 @@ mod helpers {
     AuthorityDiscoveryId,
   ) {
     (
-      get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", seed)),
+      get_account_id_from_seed::<sr25519::Public>(&format!("{seed}//stash")),
       get_account_id_from_seed::<sr25519::Public>(seed),
       get_from_seed::<GrandpaId>(seed),
       get_from_seed::<BabeId>(seed),

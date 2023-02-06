@@ -1062,9 +1062,7 @@ pub mod pallet {
 
           let amount_to_release = swap_intent
             .amount_from
-            // amount filled
-            .checked_sub(swap_intent.amount_from_filled)
-            .unwrap_or(0);
+            .saturating_sub(swap_intent.amount_from_filled);
 
           if amount_to_release > 0 {
             // release the remaining funds and the network fee

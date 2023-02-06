@@ -311,10 +311,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       Error::<T, I>::AlreadyExists
     );
     let deposit = T::AssetAccountDeposit::get();
-    let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::Unknown)?;
+    let mut details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
     let reason = Self::new_account(&who, &mut details, Some(deposit))?;
     T::Currency::reserve(&who, deposit)?;
-    Asset::<T, I>::insert(&id, details);
+    Asset::<T, I>::insert(id, details);
     Account::<T, I>::insert(
       &who,
       id,
@@ -336,7 +336,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       .reason
       .take_deposit()
       .ok_or(Error::<T, I>::NoDeposit)?;
-    let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::Unknown)?;
+    let mut details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
 
     ensure!(
       account.balance.is_zero() || allow_burn,
@@ -355,7 +355,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     } else {
       debug_assert!(false, "refund did not result in dead account?!");
     }
-    Asset::<T, I>::insert(&id, details);
+    Asset::<T, I>::insert(id, details);
     // Executing a hook here is safe, since it is not in a `mutate`.
     T::Freezer::died(id, &who);
     Ok(())
@@ -585,7 +585,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     let debit = Self::prep_debit(id, source, amount, f.into())?;
     let (credit, maybe_burn) = Self::prep_credit(id, dest, amount, debit, f.burn_dust)?;
 
-    let mut source_account = Account::<T, I>::get(&source, id).ok_or(Error::<T, I>::NoAccount)?;
+    let mut source_account = Account::<T, I>::get(source, id).ok_or(Error::<T, I>::NoAccount)?;
     let mut source_died: Option<DeadConsequence> = None;
 
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
@@ -613,7 +613,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       debug_assert!(source_account.balance >= debit, "checked in prep; qed");
       source_account.balance = source_account.balance.saturating_sub(debit);
 
-      Account::<T, I>::try_mutate(&dest, id, |maybe_account| -> DispatchResult {
+      Account::<T, I>::try_mutate(dest, id, |maybe_account| -> DispatchResult {
         match maybe_account {
           Some(ref mut account) => {
             // Calculate new balance; this will not saturate since it's already checked
@@ -647,11 +647,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
           false,
         ));
         if let Some(Remove) = source_died {
-          Account::<T, I>::remove(&source, id);
+          Account::<T, I>::remove(source, id);
           return Ok(());
         }
       }
-      Account::<T, I>::insert(&source, id, &source_account);
+      Account::<T, I>::insert(source, id, &source_account);
       Ok(())
     })?;
 
@@ -999,14 +999,14 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     let debit = Self::prep_debit_held(id, source, amount, f.into())?;
     let (credit, maybe_burn) = Self::prep_credit(id, dest, amount, debit, f.burn_dust)?;
 
-    let mut source_account = Account::<T, I>::get(&source, id).ok_or(Error::<T, I>::NoAccount)?;
+    let mut source_account = Account::<T, I>::get(source, id).ok_or(Error::<T, I>::NoAccount)?;
 
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
       let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
 
       // Unlock fund if transfer to itself
       if source == dest {
-        Account::<T, I>::try_mutate(&dest, id, |maybe_account| -> DispatchResult {
+        Account::<T, I>::try_mutate(dest, id, |maybe_account| -> DispatchResult {
           let d = maybe_account.as_mut().ok_or(Error::<T, I>::NoAccount)?;
           // Debit balance from source; this will not saturate since it's already checked in prep.
           debug_assert!(d.reserved >= debit, "checked in prep; qed");
@@ -1037,7 +1037,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       debug_assert!(source_account.reserved >= debit, "checked in prep; qed");
       source_account.reserved = source_account.reserved.saturating_sub(debit);
 
-      Account::<T, I>::try_mutate(&dest, id, |maybe_account| -> DispatchResult {
+      Account::<T, I>::try_mutate(dest, id, |maybe_account| -> DispatchResult {
         match maybe_account {
           Some(ref mut account) => {
             // Calculate new balance; this will not saturate since it's already checked
@@ -1061,7 +1061,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
         Ok(())
       })?;
 
-      Account::<T, I>::insert(&source, id, &source_account);
+      Account::<T, I>::insert(source, id, &source_account);
       Ok(())
     })?;
 

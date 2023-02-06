@@ -232,7 +232,7 @@ pub fn test_maximum_fee_values() {
     assert_eq!(
       Sunrise::try_get_tdfy_value(CurrencyId::Wrapped(2), Asset::Bitcoin.saturating_mul(1))
         .unwrap(),
-      oracle_value.into()
+      oracle_value
     );
 
     let fee = Fees::calculate_swap_fees(

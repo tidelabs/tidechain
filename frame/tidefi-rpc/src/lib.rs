@@ -118,8 +118,8 @@ where
     ));
     api
       .get_account_balance(&at, account_id, asset_id)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 
   fn get_account_stakes(
@@ -134,8 +134,8 @@ where
     ));
     api
       .get_account_stakes(&at, account_id)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 
   fn get_assets(
@@ -149,8 +149,8 @@ where
     ));
     api
       .get_assets(&at)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 
   fn get_account_balances(
@@ -165,7 +165,7 @@ where
     ));
     api
       .get_account_balances(&at, account_id)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 }

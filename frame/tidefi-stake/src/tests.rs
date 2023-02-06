@@ -152,7 +152,7 @@ impl Context {
     UnstakeQueue::<Test>::put(
       BoundedVec::try_from(vec![
         (self.staker, self.stake_id, BLOCK_NUMBER_ZERO);
-        number_of_unstakes as usize
+        number_of_unstakes
       ])
       .unwrap(),
     );
@@ -161,7 +161,7 @@ impl Context {
 
   fn add_mock_account_stakes(self, account_id: AccountId, number_of_stakes: usize) -> Self {
     AccountStakes::<Test>::insert(
-      &account_id,
+      account_id,
       BoundedVec::try_from(vec![
         Stake {
           currency_id: CurrencyId::Tdfy,

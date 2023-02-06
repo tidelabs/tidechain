@@ -174,7 +174,7 @@ pub(crate) fn clear_frozen_balance(asset: u32, who: u64) {
   });
 }
 pub(crate) fn hooks() -> Vec<Hook> {
-  Hooks::get().clone()
+  Hooks::get()
 }
 
 pub(crate) fn new_test_ext() -> sp_io::TestExternalities {

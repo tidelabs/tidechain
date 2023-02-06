@@ -34,7 +34,7 @@ pub(crate) const LOG_TARGET: &str = "tidefi::fees";
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
-			target: crate::LOG_TARGET,
+			target: $crate::LOG_TARGET,
 			concat!("[{:?}] 💸 ", $patter), T::Security::get_current_block_count() $(, $values)*
 		)
 	};

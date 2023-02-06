@@ -386,11 +386,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     unstake_fee: Percent::from_parts(1),
     staking_periods: vec![
       // FIXME: Remove the 15 minutes after our tests
-      (150_u32.into(), Percent::from_parts(1)),
-      ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
-      ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
-      ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
-      ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+      (150_u32, Percent::from_parts(1)),
+      ((14400_u32 * 15_u32), Percent::from_parts(2)),
+      ((14400_u32 * 30_u32), Percent::from_parts(3)),
+      ((14400_u32 * 60_u32), Percent::from_parts(4)),
+      ((14400_u32 * 90_u32), Percent::from_parts(5)),
     ],
     staking_meta: vec![(
       CurrencyId::Wrapped(2),

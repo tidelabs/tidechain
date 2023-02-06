@@ -369,10 +369,10 @@ impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
     }
   }
 
-  fn storage_keys_iter<'a>(
+  fn storage_keys_iter(
     &self,
     id: Hash,
-    prefix: Option<&'a StorageKey>,
+    prefix: Option<&StorageKey>,
     start_key: Option<&StorageKey>,
   ) -> sp_blockchain::Result<
     KeyIterator<<FullBackend as sc_client_api::Backend<Block>>::State, Block>,
@@ -416,11 +416,11 @@ impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
     }
   }
 
-  fn child_storage_keys_iter<'a>(
+  fn child_storage_keys_iter(
     &self,
     id: Hash,
     child_info: ChildInfo,
-    prefix: Option<&'a StorageKey>,
+    prefix: Option<&StorageKey>,
     start_key: Option<&StorageKey>,
   ) -> sp_blockchain::Result<
     KeyIterator<<FullBackend as sc_client_api::Backend<Block>>::State, Block>,

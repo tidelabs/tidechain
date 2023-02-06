@@ -40,7 +40,7 @@ mod migrations;
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
-			target: crate::LOG_TARGET,
+			target: $crate::LOG_TARGET,
 			concat!("[{:?}] 💸 ", $patter), T::Security::get_current_block_count() $(, $values)*
 		)
 	};
@@ -225,7 +225,7 @@ pub mod pallet {
         .expect("too much periods");
 
       StakingPeriodRewards::<T>::put(bounded_periods);
-      UnstakeFee::<T>::put(self.unstake_fee.clone());
+      UnstakeFee::<T>::put(self.unstake_fee);
 
       for (currency_id, staking_meta) in self.staking_meta.clone() {
         StakingCurrencyMeta::<T>::insert(currency_id, staking_meta);
@@ -378,8 +378,7 @@ pub mod pallet {
       ensure!(
         StakingPeriodRewards::<T>::get()
           .into_iter()
-          .find(|(iter_duration, _)| *iter_duration == duration)
-          .is_some(),
+          .any(|(iter_duration, _)| duration.eq(&iter_duration)),
         Error::<T>::InvalidDuration
       );
 
@@ -559,7 +558,7 @@ pub mod pallet {
 
     fn process_unstake(account_id: &T::AccountId, stake_id: Hash) -> DispatchResult {
       let current_stake =
-        Self::get_account_stake(&account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
+        Self::get_account_stake(account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
       AccountStakes::<T>::try_mutate_exists(account_id, |account_stakes| match account_stakes {
         None => Err(Error::<T>::InvalidStakeId),
         Some(stakes) => {
@@ -585,7 +584,7 @@ pub mod pallet {
           T::CurrencyTidefi::transfer(
             current_stake.currency_id,
             &Self::account_id(),
-            &account_id,
+            account_id,
             current_stake.principal,
             false,
           )
@@ -775,7 +774,7 @@ pub mod pallet {
         return Ok(());
       }
 
-      Self::process_unstake(&account_id, *stake_id)?;
+      Self::process_unstake(account_id, *stake_id)?;
       UnstakeQueue::<T>::mutate(|v| v.remove(0));
 
       Ok(())
