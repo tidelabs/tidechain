@@ -66,7 +66,7 @@ pub mod types;
 #[path = "../../common/api.rs"]
 mod api;
 
-//mod weights;
+mod weights;
 
 // Voter bag threshold definitions.
 mod bag_thresholds;

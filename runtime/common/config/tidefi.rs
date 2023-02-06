@@ -134,7 +134,7 @@ impl pallet_assets::Config for Runtime {
   type CallbackHandle = ();
   type Extra = ();
   type AssetIdParameter = u32;
-  type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_assets::WeightInfo<Runtime>;
 
   /// Helper trait for benchmarks.
   #[cfg(feature = "runtime-benchmarks")]
@@ -152,7 +152,7 @@ impl pallet_tidefi::Config for Runtime {
   type CurrencyTidefi = Adapter<AccountId>;
   // Asset registry
   type AssetRegistry = AssetRegistry;
-  type WeightInfo = pallet_tidefi::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_tidefi::WeightInfo<Runtime>;
 }
 
 impl pallet_tidefi_stake::Config for Runtime {
@@ -167,7 +167,7 @@ impl pallet_tidefi_stake::Config for Runtime {
   type AssetRegistry = AssetRegistry;
   type Security = Security;
   type StakingRewardCap = StakingRewardCap;
-  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_tidefi_stake::WeightInfo<Runtime>;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -187,7 +187,7 @@ impl pallet_quorum::Config for Runtime {
   type VotesLimit = VotesLimit;
   type WatchListLimit = WatchListLimit;
   type PubkeyLimitPerAsset = PubkeyLimitPerAsset;
-  type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_quorum::WeightInfo<Runtime>;
 }
 
 impl pallet_oracle::Config for Runtime {
@@ -202,12 +202,12 @@ impl pallet_oracle::Config for Runtime {
   // Sunrise interface
   type Sunrise = Sunrise;
   type SwapLimitByAccount = SwapLimitByAccount;
-  type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_oracle::WeightInfo<Runtime>;
 }
 
 impl pallet_security::Config for Runtime {
   type RuntimeEvent = RuntimeEvent;
-  type WeightInfo = pallet_security::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_security::WeightInfo<Runtime>;
 }
 
 impl pallet_asset_registry::Config for Runtime {
@@ -215,7 +215,7 @@ impl pallet_asset_registry::Config for Runtime {
   type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
-  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_asset_registry::WeightInfo<Runtime>;
 }
 
 impl pallet_fees::Config for Runtime {

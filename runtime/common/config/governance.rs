@@ -68,7 +68,7 @@ impl pallet_elections_phragmen::Config for Runtime {
   type TermDuration = TermDuration;
   type MaxVoters = MaxVoters;
   type MaxCandidates = MaxCandidates;
-  type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_elections_phragmen::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -85,7 +85,7 @@ impl pallet_collective::Config<CouncilCollectiveInstance> for Runtime {
   type MaxProposals = CouncilMaxProposals;
   type MaxMembers = CouncilMaxMembers;
   type DefaultVote = pallet_collective::PrimeDefaultVote;
-  type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_collective::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -102,7 +102,7 @@ impl pallet_collective::Config<TechnicalCollectiveInstance> for Runtime {
   type MaxProposals = TechnicalMaxProposals;
   type MaxMembers = TechnicalMaxMembers;
   type DefaultVote = pallet_collective::PrimeDefaultVote;
-  type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_collective::WeightInfo<Runtime>;
 }
 
 impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
@@ -115,7 +115,7 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
   type MembershipInitialized = TechnicalCommittee;
   type MembershipChanged = TechnicalCommittee;
   type MaxMembers = TechnicalMaxMembers;
-  type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_membership::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -154,7 +154,7 @@ impl pallet_treasury::Config for Runtime {
   type BurnDestination = ();
   type SpendFunds = Bounties;
   type MaxApprovals = MaxApprovals;
-  type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_treasury::WeightInfo<Runtime>;
   type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }
 
@@ -172,7 +172,7 @@ impl pallet_bounties::Config for Runtime {
   type DataDepositPerByte = DataDepositPerByte;
   type RuntimeEvent = RuntimeEvent;
   type MaximumReasonLength = MaximumReasonLength;
-  type WeightInfo = pallet_bounties::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_bounties::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -234,7 +234,7 @@ impl pallet_democracy::Config for Runtime {
   type Scheduler = Scheduler;
   type PalletsOrigin = OriginCaller;
   type MaxVotes = MaxVotes;
-  type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_democracy::WeightInfo<Runtime>;
   type MaxProposals = MaxProposals;
   type Preimages = Preimage;
   type MaxDeposits = ConstU32<100>;

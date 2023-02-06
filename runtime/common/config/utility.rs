@@ -28,7 +28,7 @@ impl pallet_utility::Config for Runtime {
   type PalletsOrigin = OriginCaller;
   type RuntimeEvent = RuntimeEvent;
   type RuntimeCall = RuntimeCall;
-  type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_utility::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -50,7 +50,7 @@ impl pallet_multisig::Config for Runtime {
   type DepositBase = DepositBase;
   type DepositFactor = DepositFactor;
   type MaxSignatories = MaxSignatories;
-  type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_multisig::WeightInfo<Runtime>;
 }
 
 pub struct EnsureRootOrTreasury;
