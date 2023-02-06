@@ -25,7 +25,6 @@ pub mod frame_election_provider_support;
 pub mod frame_system;
 pub mod pallet_asset_registry;
 pub mod pallet_assets;
-pub mod pallet_bags_list;
 pub mod pallet_balances;
 pub mod pallet_bounties;
 pub mod pallet_collective;
