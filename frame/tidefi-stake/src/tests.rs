@@ -83,6 +83,7 @@ struct Context {
   staker: AccountId,
   staking_pallet_account: AccountId,
   fees_pallet_account: AccountId,
+  operator_account: AccountId,
   tdfy_amount: Balance,
   test_token_amount: Balance,
   stake_id: Hash,
@@ -98,6 +99,7 @@ impl Default for Context {
         .into_account_truncating(),
       fees_pallet_account: <Test as pallet_fees::Config>::FeesPalletId::get()
         .into_account_truncating(),
+      operator_account: 100u64.into(),
       tdfy_amount: ONE_TDFY,
       test_token_amount: ONE_TEST_TOKEN,
       stake_id: Hash::from_str(
@@ -122,6 +124,11 @@ impl Context {
 
   fn set_market_makers(mut self, account_ids: Vec<AccountId>) -> Self {
     self.market_makers = account_ids;
+    self
+  }
+
+  fn set_operator_account(self) -> Self {
+    let _ = TidefiStaking::set_operator_account_id(Origin::root(), self.operator_account);
     self
   }
 
@@ -707,6 +714,8 @@ mod unstake {
             Adapter::balance(CurrencyId::Tdfy, &context.fees_pallet_account);
           let fees_pallet_account_initial_test_token_balance =
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fees_pallet_account);
+          let staking_pallet_account_initial_test_token_balance =
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staking_pallet_account);
           const SWAP_TDFY_AMOUNT: Balance = 10 * ONE_TDFY;
           const SWAP_TEST_TOKEN_AMOUNT: Balance = 2 * ONE_TEST_TOKEN;
 
@@ -714,6 +723,7 @@ mod unstake {
           let context = Context::default()
             .set_oracle_status(true)
             .set_market_makers(vec![ALICE_ACCOUNT_ID])
+            .set_operator_account()
             .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
             .mint_test_token(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
             .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TDFYS)
@@ -845,13 +855,19 @@ mod unstake {
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
           );
 
-          // Staking pallet account keeps the rest of the session total fees
+          // Operator account keeps the rest of the session total fees
           assert_eq!(
             total_fee_in_test_token - (latest_principal_with_rewards - context.test_token_amount),
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.operator_account)
+          );
+
+          // Staking pallet account test token balance becomes empty
+          assert_eq!(
+            staking_pallet_account_initial_test_token_balance,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staking_pallet_account)
           );
 
-          // Fee pallet account Test token balance becomes empty
+          // Fee pallet account test token balance becomes empty
           assert_eq!(
             fees_pallet_account_initial_test_token_balance,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.fees_pallet_account)

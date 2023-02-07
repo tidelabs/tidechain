@@ -31,6 +31,8 @@ pub use weights::*;
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
+use frame_system::ensure_root;
+
 pub(crate) const LOG_TARGET: &str = "tidefi::staking";
 
 mod migrations;
@@ -52,7 +54,7 @@ pub mod pallet {
   use frame_support::{
     inherent::Vec,
     log,
-    pallet_prelude::*,
+    pallet_prelude::{DispatchResultWithPostInfo, *},
     traits::{
       tokens::fungibles::{Inspect, Mutate, Transfer},
       StorageVersion,
@@ -187,6 +189,11 @@ pub mod pallet {
     ValueQuery,
   >;
 
+  /// Operator account
+  #[pallet::storage]
+  #[pallet::getter(fn operator_account_id)]
+  pub type OperatorAccountId<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+
   /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
@@ -278,6 +285,8 @@ pub mod pallet {
     TransferFailed,
     /// Staking pool is empty
     NotEnoughInPoolToUnstake,
+    /// Stake is reduced
+    StakeIsReduced,
     /// The staked amount is below the minimum stake amount for this currency.
     AmountTooSmall,
     /// The staked amount is above the maximum stake amount for this currency.
@@ -354,6 +363,18 @@ pub mod pallet {
 
   #[pallet::call]
   impl<T: Config> Pallet<T> {
+    /// Set Staking Operator Account
+    /// TODO: Benchmark weight
+    #[pallet::weight(0)]
+    pub fn set_operator_account_id(
+      origin: OriginFor<T>,
+      new_operator_account_id: T::AccountId,
+    ) -> DispatchResultWithPostInfo {
+      ensure_root(origin)?;
+      OperatorAccountId::<T>::put(new_operator_account_id);
+      Ok(().into())
+    }
+
     /// Stake currency
     ///
     /// - `currency_id`: The currency to stake
@@ -475,10 +496,11 @@ pub mod pallet {
           Ok(())
         })?;
 
+        // Pay unstaking fees to operator account instead of staking pool
         T::CurrencyTidefi::transfer(
           stake.currency_id,
           &account_id,
-          &Self::account_id(),
+          &Self::operator_account(),
           unstaking_fee,
           true,
         )
@@ -498,6 +520,14 @@ pub mod pallet {
   impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::StakePalletId::get().into_account_truncating()
+    }
+
+    pub fn operator_account() -> T::AccountId {
+      let operator_account = match Self::operator_account_id() {
+        Some(account_id) => account_id,
+        None => Self::account_id(),
+      };
+      operator_account
     }
 
     pub fn add_account_stake(
@@ -564,7 +594,7 @@ pub mod pallet {
           T::CurrencyTidefi::can_withdraw(
             current_stake.currency_id,
             &Self::account_id(),
-            current_stake.principal,
+            current_stake.initial_balance,
           )
           .into_result()
           .map_err(|_| Error::<T>::InsufficientBalance)?;
@@ -584,7 +614,29 @@ pub mod pallet {
             current_stake.currency_id,
             &Self::account_id(),
             &account_id,
-            current_stake.principal,
+            current_stake.initial_balance,
+            false,
+          )
+          .map_err(|_| Error::<T>::TransferFailed)?;
+
+          let staker_rewards = current_stake
+            .principal
+            .checked_sub(current_stake.initial_balance)
+            .ok_or(Error::<T>::StakeIsReduced)?;
+
+          T::CurrencyTidefi::can_withdraw(
+            current_stake.currency_id,
+            &Self::operator_account(),
+            staker_rewards,
+          )
+          .into_result()
+          .map_err(|_| Error::<T>::InsufficientBalance)?;
+
+          T::CurrencyTidefi::transfer(
+            current_stake.currency_id,
+            &Self::operator_account(),
+            &account_id,
+            staker_rewards,
             false,
           )
           .map_err(|_| Error::<T>::TransferFailed)?;
@@ -709,13 +761,9 @@ pub mod pallet {
                   },
                 )?;
               }
-              if session_to_index < last_session {
+              if session_to_index < last_session && current_iterations < max_iterations {
                 keep_going_in_loop = Some(session_to_index.saturating_add(1));
               } else {
-                keep_going_in_loop = None;
-              }
-
-              if current_iterations >= max_iterations {
                 keep_going_in_loop = None;
               }
             }
@@ -833,7 +881,7 @@ pub mod pallet {
         T::CurrencyTidefi::transfer(
           currency_id,
           &fees_account_id,
-          &Self::account_id(),
+          &Self::operator_account(),
           total_fees_for_the_session,
           false,
         )
