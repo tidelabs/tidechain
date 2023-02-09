@@ -371,7 +371,21 @@ pub mod pallet {
       new_operator_account_id: T::AccountId,
     ) -> DispatchResultWithPostInfo {
       ensure_root(origin)?;
+      if let Some(operator_account) = Self::operator_account_id() {
+        // TODO: Transfer all wrapped asset balances to the new account
+        let operator_balance = T::CurrencyTidefi::balance(CurrencyId::Tdfy, &operator_account);
+        T::CurrencyTidefi::transfer(
+          CurrencyId::Tdfy,
+          &operator_account,
+          &new_operator_account_id,
+          operator_balance,
+          false,
+        )
+        .map_err(|_| Error::<T>::TransferFeesFailed)?;
+      }
+
       OperatorAccountId::<T>::put(new_operator_account_id);
+
       Ok(().into())
     }
 
