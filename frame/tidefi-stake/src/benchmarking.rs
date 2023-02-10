@@ -24,7 +24,7 @@ use frame_support::{
 use frame_system::RawOrigin;
 use sp_runtime::traits::{Saturating, Zero};
 use sp_std::prelude::*;
-use tidefi_primitives::{pallet::StakingExt, CurrencyId, Hash, SessionIndex};
+use tidefi_primitives::{pallet::StakingExt, CurrencyId, SessionIndex};
 
 const USER_SEED: u32 = 0;
 const INITIAL_AMOUNT: u128 = 500_000_000;
@@ -144,15 +144,14 @@ benchmarks! {
   on_idle_unstake {
     let b in 1 .. T::BatchSize::get();
 
-    let requests = create_stake_batch::<T>(b).into_iter().map(|s| {
-      let request_id = AccountStakes::<T>::get(s.clone())
+    create_stake_batch::<T>(b).iter().for_each(|account_id| {
+      let request_id = AccountStakes::<T>::get(account_id)
       .first()
       .expect("created previously")
       .unique_id;
 
-      assert_ok!(Pallet::<T>::unstake(RawOrigin::Signed(s.clone()).into(), request_id, true));
-      request_id
-    }).collect::<Vec<Hash>>();
+      assert_ok!(Pallet::<T>::unstake(RawOrigin::Signed(account_id.clone()).into(), request_id, true));
+    });
 
     assert_eq!(QueueUnstake::<T>::count(), b);
     let (_, expected_end_block)  = QueueUnstake::<T>::iter_values().next().unwrap();
