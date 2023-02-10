@@ -57,7 +57,7 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	// Storage: TidefiStaking AccountStakes (r:1 w:1)
 	// Storage: TidefiStaking InterestCompoundLastSession (r:1 w:0)
 	fn stake() -> Weight {
-		(106_968_000 as Weight)
+		(107_601_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -70,12 +70,13 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	// Storage: TidefiStaking CounterForQueueUnstake (r:1 w:1)
 	// Storage: TidefiStaking OperatorAccountId (r:1 w:0)
 	fn unstake() -> Weight {
-		(87_151_000 as Weight)
+		(88_259_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
-	// Storage: TidefiStaking CounterForPendingStoredSessions (r:1 w:1)
+	// Storage: TidefiStaking CounterForQueueUnstake (r:1 w:0)
 	// Storage: TidefiStaking CounterForQueueCompound (r:1 w:0)
+	// Storage: TidefiStaking CounterForPendingStoredSessions (r:1 w:1)
 	// Storage: TidefiStaking QueueCompound (r:1 w:0)
 	// Storage: TidefiStaking PendingStoredSessions (r:2 w:1)
 	// Storage: TidefiStaking SessionTotalFees (r:2 w:0)
@@ -86,15 +87,16 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	/// The range of component `b` is `[1, 500]`.
 	fn on_idle_compound_finalize(b: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 32_000
-			.saturating_add((30_468_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			// Standard Error: 36_000
+			.saturating_add((30_742_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
 	}
-	// Storage: TidefiStaking CounterForPendingStoredSessions (r:1 w:0)
+	// Storage: TidefiStaking CounterForQueueUnstake (r:1 w:0)
 	// Storage: TidefiStaking CounterForQueueCompound (r:1 w:1)
+	// Storage: TidefiStaking CounterForPendingStoredSessions (r:1 w:0)
 	// Storage: TidefiStaking QueueCompound (r:2 w:1)
 	// Storage: TidefiStaking PendingStoredSessions (r:2 w:1)
 	// Storage: TidefiStaking SessionTotalFees (r:2 w:0)
@@ -105,15 +107,16 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	/// The range of component `b` is `[1, 500]`.
 	fn on_idle_compound(b: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 28_000
-			.saturating_add((27_581_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(10 as Weight))
+			// Standard Error: 30_000
+			.saturating_add((28_017_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes((2 as Weight).saturating_mul(b as Weight)))
 	}
-	// Storage: TidefiStaking CounterForPendingStoredSessions (r:1 w:0)
 	// Storage: TidefiStaking CounterForQueueUnstake (r:1 w:1)
+	// Storage: TidefiStaking CounterForQueueCompound (r:1 w:0)
+	// Storage: TidefiStaking CounterForPendingStoredSessions (r:1 w:0)
 	// Storage: Security CurrentBlockCount (r:1 w:0)
 	// Storage: TidefiStaking QueueUnstake (r:2 w:1)
 	// Storage: TidefiStaking AccountStakes (r:1 w:1)
@@ -124,9 +127,9 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	/// The range of component `b` is `[1, 500]`.
 	fn on_idle_unstake(b: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 39_000
-			.saturating_add((59_405_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			// Standard Error: 40_000
+			.saturating_add((60_848_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(b as Weight)))
