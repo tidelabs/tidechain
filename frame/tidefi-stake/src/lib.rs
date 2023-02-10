@@ -63,10 +63,10 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::{
-    bounded_vec,
     traits::{AccountIdConversion, Saturating},
     ArithmeticError, Percent, Perquintill,
   };
+  use sp_std::vec;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta, StakeStatus,
@@ -99,7 +99,7 @@ pub mod pallet {
 
     /// Batch size.
     ///
-    /// This many stashes are processed in each unstake request.
+    /// This many accounts and unstake are processed in each on_idle` request.
     type BatchSize: Get<u32>;
 
     /// Weight information for extrinsics in this pallet.
@@ -701,8 +701,11 @@ pub mod pallet {
                         }
                       }
                       None => {
-                        *maybe_currently_rewarded =
-                          Some(bounded_vec![(stake.currency_id, proportional_reward)])
+                        *maybe_currently_rewarded = Some(
+                          vec![(stake.currency_id, proportional_reward)]
+                            .try_into()
+                            .expect("too many rewards"),
+                        )
                       }
                     }
                   },
@@ -824,7 +827,7 @@ pub mod pallet {
         let result = Self::do_account_compound(account_id, &collected_fees_by_session);
         log!(
           info,
-          "account compound {}, outcome: {:?}",
+          "account compound {:?}, outcome: {:?}",
           account_id,
           result
         );
@@ -899,7 +902,7 @@ pub mod pallet {
           .find(|s| s.unique_id == hash);
         if let Some(stake) = stake {
           let result = Self::process_unstake(&account_id, stake.unique_id);
-          log!(info, "unstaked {}, outcome: {:?}", account_id, result);
+          log!(info, "unstaked {:?}, outcome: {:?}", account_id, result);
         }
       };
 
@@ -983,7 +986,7 @@ pub mod pallet {
         .filter(|(currency_id, balance)| prepare_session(*currency_id, *balance))
         .collect();
 
-      if sessions.len() > 0 {
+      if !sessions.is_empty() {
         InterestCompoundLastSession::<T>::put(session_index);
         PendingStoredSessions::<T>::insert::<
           u64,

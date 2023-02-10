@@ -151,7 +151,6 @@ parameter_types! {
   pub const BlocksPerSession: BlockNumber = 50;
   pub const BlocksForceUnstake: BlockNumber = 10;
   pub const StakeAccountCap: u32 = 10;
-  pub const UnstakeQueueCap: u32 = 100;
   // 20 basis point
   pub const FeeAmount: Permill = Permill::from_perthousand(20);
   // 10 basis point
@@ -168,6 +167,8 @@ parameter_types! {
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+
+  pub const BatchSize: u32 = 10;
 }
 
 impl pallet_oracle::Config for Test {
@@ -192,11 +193,11 @@ impl pallet_tidefi_stake::Config for Test {
   type StakePalletId = StakePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
-  type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
   type AssetRegistry = AssetRegistry;
   type StakingRewardCap = StakingRewardCap;
   type Security = Security;
+  type BatchSize = BatchSize;
 }
 
 impl pallet_asset_registry::Config for Test {
