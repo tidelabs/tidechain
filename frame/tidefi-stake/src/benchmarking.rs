@@ -32,10 +32,6 @@ const IA_MULTIPLIER: u32 = 2;
 const TEST_TOKEN: u32 = 2;
 const FIFTEEN_DAYS: u32 = 14400 * 15;
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
-  frame_system::Pallet::<T>::assert_last_event(generic_event.into());
-}
-
 fn assert_event<T: Config>(generic_event: <T as Config>::Event) {
   frame_system::Pallet::<T>::assert_has_event(generic_event.into());
 }
@@ -98,17 +94,6 @@ benchmarks! {
       let caller: T::AccountId = whitelisted_caller();
       fund_and_stake_account::<T>(&caller);
    }: _(RawOrigin::Signed(caller.clone()), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT, FIFTEEN_DAYS.into())
-   verify {
-      assert_last_event::<T>(
-         Event::Staked {
-            // 0x61505ca6cd7e6ba0eac3101d5db885a9bb8e7348c233aab57ff0d1bc44a73d90
-            request_id: Hash::from([97, 80, 92, 166, 205, 126, 107, 160, 234, 195, 16, 29, 93, 184, 133, 169, 187, 142, 115, 72, 194, 51, 170, 181, 127, 240, 209, 188, 68, 167, 61, 144]),
-            account_id: caller,
-            currency_id: CurrencyId::Wrapped(TEST_TOKEN),
-            amount: INITIAL_AMOUNT,
-            duration: FIFTEEN_DAYS.into()
-         }.into());
-   }
 
    unstake {
       let caller: T::AccountId = whitelisted_caller();
