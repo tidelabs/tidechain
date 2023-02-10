@@ -23,7 +23,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use sp_runtime::traits::{Saturating, Zero};
-use std::str::FromStr;
+use sp_std::prelude::*;
 use tidefi_primitives::{pallet::StakingExt, CurrencyId, Hash, SessionIndex};
 
 const USER_SEED: u32 = 0;
@@ -97,7 +97,7 @@ benchmarks! {
    verify {
       assert_last_event::<T>(
          Event::Staked {
-            request_id: Hash::from_str("0x61505ca6cd7e6ba0eac3101d5db885a9bb8e7348c233aab57ff0d1bc44a73d90").unwrap_or_default(),
+            request_id: Hash::from([97, 80, 92, 166, 205, 126, 107, 160, 234, 195, 16, 29, 93, 184, 133, 169, 187, 142, 115, 72, 194, 51, 170, 181, 127, 240, 209, 188, 68, 167, 61, 144]),
             account_id: caller,
             currency_id: CurrencyId::Wrapped(TEST_TOKEN),
             amount: INITIAL_AMOUNT,
