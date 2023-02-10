@@ -323,18 +323,24 @@ pub mod pallet {
 
     /// Try to compute when chain is idle
     fn on_idle(_n: BlockNumberFor<T>, remaining_weight: Weight) -> Weight {
+      let unstake_queue_size = QueueUnstake::<T>::count();
+      let compound_queue_size = QueueCompound::<T>::count();
+
       let do_next_compound_interest_operation_weight =
-        <T as frame_system::Config>::DbWeight::get().reads_writes(6, 6);
+        <T as Config>::WeightInfo::on_idle_compound(compound_queue_size.into()).saturating_add(
+          T::DbWeight::get().reads_writes(compound_queue_size.into(), compound_queue_size.into()),
+        );
+
       let do_next_unstake_operation_weight =
-        <T as frame_system::Config>::DbWeight::get().reads_writes(6, 6);
+        <T as Config>::WeightInfo::on_idle_unstake(unstake_queue_size.into()).saturating_add(
+          T::DbWeight::get().reads_writes(unstake_queue_size.into(), unstake_queue_size.into()),
+        );
 
       if remaining_weight > do_next_compound_interest_operation_weight
         && PendingStoredSessions::<T>::count() > 0
       {
         Self::do_on_idle_compound(remaining_weight);
-      } else if remaining_weight > do_next_unstake_operation_weight
-        && QueueUnstake::<T>::count() > 0
-      {
+      } else if remaining_weight > do_next_unstake_operation_weight && unstake_queue_size > 0 {
         Self::do_on_idle_unstake(remaining_weight);
       }
 

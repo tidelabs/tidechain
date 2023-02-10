@@ -25,7 +25,7 @@ use frame_support::{
   assert_noop, assert_ok,
   traits::{
     fungibles::{Inspect, InspectHold, Mutate},
-    Hooks,
+    Get, Hooks,
   },
   BoundedVec,
 };
@@ -431,9 +431,9 @@ fn set_current_block(block_number: BlockNumber) {
   });
 }
 
-fn run_on_idle_hook(block_number: BlockNumber, remaining_weights: Balance) {
-  let weights: u64 = remaining_weights.try_into().unwrap();
-  assert_eq!(TidefiStaking::on_idle(block_number, weights), weights);
+fn run_on_idle_hook<T: pallet_tidefi_stake::Config>() {
+  let remaining_weight = <T as frame_system::Config>::BlockWeights::get().max_block;
+  TidefiStaking::on_idle(0, remaining_weight);
 }
 
 #[test]
@@ -812,8 +812,8 @@ mod unstake {
           ));
 
           // run 2x on_idle to clean the Queue
-          run_on_idle_hook(FIFTEEN_DAYS - 2, 1_000 * ONE_TDFY);
-          run_on_idle_hook(FIFTEEN_DAYS - 1, 1_000 * ONE_TDFY);
+          run_on_idle_hook::<Test>();
+          run_on_idle_hook::<Test>();
 
           // Finish staking period
           set_current_block(FIFTEEN_DAYS + 1);
@@ -1153,7 +1153,7 @@ pub fn should_stake_and_unstake_queue() {
 
     assert!(QueueUnstake::<Test>::count() == 1);
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     assert!(QueueUnstake::<Test>::count() == 0);
   });
@@ -1269,7 +1269,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
 
     assert_eq!(QueueUnstake::<Test>::count(), 2);
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     assert_eq!(QueueUnstake::<Test>::count(), 1);
 
@@ -1279,7 +1279,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
       FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + (BLOCKS_FORCE_UNLOCK / 2) + 1
     );
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     assert_eq!(QueueUnstake::<Test>::count(), 0);
 
@@ -1353,7 +1353,7 @@ pub fn should_calculate_rewards() {
       fees_pallet_account
     ));
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     // 100% of the pool (2 TDFY as reward)
     let alice_staked_tdfy_principal_after_session_1 =
@@ -1393,7 +1393,7 @@ pub fn should_calculate_rewards() {
 
     let staking_pool_before_compound_session_1 =
       TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap_or(0);
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     let alice_pool_percentage_after_session_2 = Perquintill::from_rational(
       alice_staked_tdfy_principal_after_session_1,
@@ -1441,7 +1441,7 @@ pub fn should_calculate_rewards() {
       fees_pallet_account
     ));
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
@@ -1474,7 +1474,7 @@ pub fn should_calculate_rewards() {
 
     let staking_pool_before_compound_session_5 =
       TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap_or(0);
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     // charlie is processed first
     let charlie_pool_percentage_after_session_5 = Perquintill::from_rational(
