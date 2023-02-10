@@ -177,8 +177,6 @@ benchmarks! {
     on_idle_full_block::<T>();
   }
   verify {
-    frame_system::Pallet::<T>::events().iter().for_each(|event| println!("{:?}", event));
-    
    assert_event::<T>(Event::<T>::BatchFinished { size: b, kind: BatchType::Unstake }.into());
    assert_eq!(QueueCompound::<T>::count(), 0);
   }
