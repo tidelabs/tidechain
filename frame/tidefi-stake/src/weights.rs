@@ -25,6 +25,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
    fn stake() -> Weight;
    fn unstake() -> Weight;
+   fn on_idle_check(a: u32) -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
@@ -41,4 +42,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }
+	fn on_idle_check(a: u32) -> Weight {
+		// Minimum execution time: 1_775_293 nanoseconds.
+		1_787_133_000_u64
+			// Standard Error: 17_109_142
+			.saturating_add(1_787_133_000_u64.saturating_mul(a.into()))
+			.saturating_add(T::DbWeight::get().reads(7))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}   
 }

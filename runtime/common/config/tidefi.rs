@@ -39,8 +39,6 @@ parameter_types! {
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
   // Maximum of 10 stake / currency / user (to prevent bloat on-chain)
   pub const StakeAccountCap: u32 = 10;
-  // Maximum unstake processed in queue
-  pub const UnstakeQueueCap: u32 = 100;
   // Staking: Number of sessions per era
   // ~ 1 hour
   pub const SessionsPerEra: SessionIndex = 12;
@@ -82,6 +80,8 @@ parameter_types! {
   pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
   // Rebates applied to left-over pool
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+  // The number of accounts to proceed by compound and unstake batch
+  pub const BatchSize: u32 = 100;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -153,12 +153,12 @@ impl pallet_tidefi_stake::Config for Runtime {
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
-  type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type Security = Security;
   type StakingRewardCap = StakingRewardCap;
+  type BatchSize = BatchSize;
   type WeightInfo = crate::weights::pallet_tidefi_stake::WeightInfo<Runtime>;
 }
 
