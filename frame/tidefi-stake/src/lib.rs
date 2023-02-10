@@ -75,6 +75,12 @@ pub mod pallet {
   /// The current storage version.
   const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
+  #[derive(Eq, PartialEq, Encode, Decode, TypeInfo, MaxEncodedLen, Clone, Debug)]
+  pub enum BatchType {
+    Unstake,
+    Compound,
+  }
+
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config: frame_system::Config {
@@ -277,15 +283,11 @@ pub mod pallet {
       currency_id: CurrencyId,
       amount: Balance,
     },
-
-    BatchFinished {
-      size: u32,
-    },
-
-    BatchCompound {
-      accounts: u32,
-    },
-
+    /// Batch finished, number of session or unstaking processed.
+    BatchFinished { size: u32, kind: BatchType },
+    /// Batch compound, number of accounts
+    BatchCompound { size: u32 },
+    /// Session finished
     SessionFinished {
       session_index: SessionIndex,
       pool: Vec<(CurrencyId, Balance)>,
@@ -771,8 +773,8 @@ pub mod pallet {
 
       // determine the number of accounts to check. This is based on both `ErasToCheckPerBlock`
       // and `remaining_weight` passed on to us from the runtime executive.
-      let max_weight = |a| {
-        <T as Config>::WeightInfo::on_idle_check(a)
+      let max_weight = |b| {
+        <T as Config>::WeightInfo::on_idle_compound(b)
           .saturating_add(T::DbWeight::get().reads(next_batch_size.into()))
       };
 
@@ -818,12 +820,14 @@ pub mod pallet {
           })
           .collect();
 
-      let drain_session = |session: SessionIndex| {
+      // try to drain a session
+      let do_drain_session = |session: SessionIndex| {
         let result = Self::do_session_drain(session);
         log!(info, "session drained {}, outcome: {:?}", session, result);
       };
 
-      let compound_session = |account_id: &T::AccountId| {
+      // try to compound an account id
+      let do_compound = |account_id: &T::AccountId| {
         let result = Self::do_account_compound(account_id, &collected_fees_by_session);
         log!(
           info,
@@ -833,24 +837,28 @@ pub mod pallet {
         );
       };
 
+      // if there is no accounts remaining, that mean we can drain the pending sessions
       if accounts.is_empty() {
         let size = unchecked_sessions_to_check.len() as u32;
         unchecked_sessions_to_check
           .iter()
-          .for_each(|session| drain_session(*session));
-        Self::deposit_event(Event::<T>::BatchFinished { size });
+          .for_each(|session| do_drain_session(*session));
 
-        // FIXME: Add custom bench
-        <T as Config>::WeightInfo::on_idle_check(pre_length).saturating_add(unaccounted_weight)
+        Self::deposit_event(Event::<T>::BatchFinished {
+          size,
+          kind: BatchType::Compound,
+        });
+
+        <T as Config>::WeightInfo::on_idle_compound_finalize(size)
+          .saturating_add(unaccounted_weight)
       } else {
         accounts
           .iter()
-          .for_each(|account_id| compound_session(account_id));
-        Self::deposit_event(Event::<T>::BatchCompound {
-          accounts: pre_length,
-        });
+          .for_each(|account_id| do_compound(account_id));
 
-        <T as Config>::WeightInfo::on_idle_check(pre_length).saturating_add(unaccounted_weight)
+        Self::deposit_event(Event::<T>::BatchCompound { size: pre_length });
+
+        <T as Config>::WeightInfo::on_idle_compound(pre_length).saturating_add(unaccounted_weight)
       }
     }
 
@@ -873,8 +881,8 @@ pub mod pallet {
       let next_batch_size = accounts.len() as u32;
       // determine the number of accounts to check. This is based on both `ErasToCheckPerBlock`
       // and `remaining_weight` passed on to us from the runtime executive.
-      let max_weight = |a| {
-        <T as Config>::WeightInfo::on_idle_check(a)
+      let max_weight = |b| {
+        <T as Config>::WeightInfo::on_idle_unstake(b)
           .saturating_add(T::DbWeight::get().reads(next_batch_size.into()))
       };
 
@@ -910,8 +918,14 @@ pub mod pallet {
         .into_iter()
         .for_each(|(hash, (account_id, _))| process_unstake(account_id, hash));
 
-      // FIXME: Add custom bench
-      <T as Config>::WeightInfo::on_idle_check(next_batch_size).saturating_add(unaccounted_weight)
+      if next_batch_size > 0 {
+        Self::deposit_event(Event::<T>::BatchFinished {
+          size: next_batch_size,
+          kind: BatchType::Unstake,
+        });
+      }
+
+      <T as Config>::WeightInfo::on_idle_unstake(next_batch_size).saturating_add(unaccounted_weight)
     }
 
     // Get all stakes for the account, serialized for quick RPC call
