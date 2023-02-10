@@ -75,18 +75,6 @@ pub mod pallet {
   /// The current storage version.
   const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
-  /// An unstake request.
-  #[derive(
-    Encode, Decode, EqNoBound, PartialEqNoBound, Clone, TypeInfo, RuntimeDebugNoBound, MaxEncodedLen,
-  )]
-  #[scale_info(skip_type_params(T))]
-  pub struct CompoundProcess<T: Config> {
-    /// This list of stakes being processed in this request.
-    pub(crate) accounts: BoundedVec<T::AccountId, T::BatchSize>,
-    /// The list of sessions for which they have been checked.
-    pub(crate) checked: BoundedVec<SessionIndex, T::BatchSize>,
-  }
-
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config: frame_system::Config {
