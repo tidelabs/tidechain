@@ -74,12 +74,28 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-	fn on_idle_check(a: u32) -> Weight {
+	fn on_idle_compound(b: u32) -> Weight {
 		// Minimum execution time: 1_775_293 nanoseconds.
 		1_787_133_000_u64
 			// Standard Error: 17_109_142
-			.saturating_add(1_787_133_000_u64.saturating_mul(a.into()))
+			.saturating_add(1_787_133_000_u64.saturating_mul(b.into()))
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(1))
-	}   	
+	}  
+	fn on_idle_compound_finalize(b: u32) -> Weight {
+		// Minimum execution time: 1_775_293 nanoseconds.
+		1_787_133_000_u64
+			// Standard Error: 17_109_142
+			.saturating_add(1_787_133_000_u64.saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(7))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}   
+	fn on_idle_unstake(b: u32) -> Weight {
+		// Minimum execution time: 1_775_293 nanoseconds.
+		1_787_133_000_u64
+			// Standard Error: 17_109_142
+			.saturating_add(1_787_133_000_u64.saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(7))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}   
 }
