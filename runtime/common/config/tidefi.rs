@@ -81,7 +81,7 @@ parameter_types! {
   // Rebates applied to left-over pool
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
   // The number of accounts to proceed by compound and unstake batch
-  pub const BatchSize: u32 = 100;
+  pub const BatchSize: u32 = 32;
 }
 
 pub struct EnsureRootOrAssetRegistry;
