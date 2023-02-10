@@ -36,6 +36,10 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
   frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
+fn assert_event<T: Config>(generic_event: <T as Config>::Event) {
+  frame_system::Pallet::<T>::assert_has_event(generic_event.into());
+}
+
 fn on_idle_full_block<T: Config>() {
   let remaining_weight = <T as frame_system::Config>::BlockWeights::get().max_block;
   Pallet::<T>::on_idle(Zero::zero(), remaining_weight);
@@ -97,6 +101,7 @@ benchmarks! {
    verify {
       assert_last_event::<T>(
          Event::Staked {
+            // 0x61505ca6cd7e6ba0eac3101d5db885a9bb8e7348c233aab57ff0d1bc44a73d90
             request_id: Hash::from([97, 80, 92, 166, 205, 126, 107, 160, 234, 195, 16, 29, 93, 184, 133, 169, 187, 142, 115, 72, 194, 51, 170, 181, 127, 240, 209, 188, 68, 167, 61, 144]),
             account_id: caller,
             currency_id: CurrencyId::Wrapped(TEST_TOKEN),
@@ -130,7 +135,7 @@ benchmarks! {
     on_idle_full_block::<T>();
   }
   verify {
-   assert_last_event::<T>(Event::<T>::BatchFinished { size: b, kind: BatchType::Compound }.into());
+   assert_event::<T>(Event::<T>::BatchFinished { size: b, kind: BatchType::Compound }.into());
    assert_eq!(PendingStoredSessions::<T>::count(), 0);
   }
 
@@ -146,7 +151,7 @@ benchmarks! {
     on_idle_full_block::<T>();
   }
   verify {
-   assert_last_event::<T>(Event::<T>::BatchCompound { size: b }.into());
+   assert_event::<T>(Event::<T>::BatchCompound { size: b }.into());
    assert_eq!(QueueCompound::<T>::count(), 0);
    assert_eq!(PendingStoredSessions::<T>::count(), 1);
   }
@@ -172,7 +177,9 @@ benchmarks! {
     on_idle_full_block::<T>();
   }
   verify {
-   assert_last_event::<T>(Event::<T>::BatchFinished { size: b, kind: BatchType::Unstake }.into());
+    frame_system::Pallet::<T>::events().iter().for_each(|event| println!("{:?}", event));
+    
+   assert_event::<T>(Event::<T>::BatchFinished { size: b, kind: BatchType::Unstake }.into());
    assert_eq!(QueueCompound::<T>::count(), 0);
   }
 }

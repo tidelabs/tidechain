@@ -276,13 +276,6 @@ pub mod pallet {
       initial_balance: Balance,
       final_balance: Balance,
     },
-    /// The staking got `rewarded` successfully
-    Rewarded {
-      request_id: Hash,
-      account_id: T::AccountId,
-      currency_id: CurrencyId,
-      amount: Balance,
-    },
     /// Batch finished, number of session or unstaking processed.
     BatchFinished { size: u32, kind: BatchType },
     /// Batch compound, number of accounts
