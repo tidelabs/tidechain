@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Benchmarking setup for pallet-tidefi
+//! Benchmarking setup for pallet-fees
 use crate::*;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_support::{
@@ -135,7 +135,7 @@ benchmarks! {
   on_finalize {
     let a in 1 .. MAX_ACCOUNTS_BENCH;
     // asset id available are 2-6
-    let b in 2 .. MAX_ASSET_ID_IN_PRIMITIVES;
+    let b in 1 .. MAX_ASSET_ID_IN_PRIMITIVES;
 
     // jump to block 1
     pallet_security::CurrentBlockCount::<T>::put::<T::BlockNumber>(1_u32.into());
