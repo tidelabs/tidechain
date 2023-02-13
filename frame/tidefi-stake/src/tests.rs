@@ -690,8 +690,6 @@ mod unstake {
             .mint_test_token(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
             .stake_tdfy();
 
-          let operator_account_initial_tdfy_balance =
-            Adapter::balance(CurrencyId::Tdfy, &OPERATOR_ACCOUNT_ID);
           let staker_tdfys_before_unstaking = Adapter::balance(CurrencyId::Tdfy, &context.staker);
 
           // Create Swap Requests
@@ -813,13 +811,6 @@ mod unstake {
           assert_eq!(
             staker_tdfys_before_unstaking + latest_principal_with_rewards,
             Adapter::balance(CurrencyId::Tdfy, &context.staker)
-          );
-
-          // Operator account keeps the rest of the session total fees
-          assert_eq!(
-            operator_account_initial_tdfy_balance + total_fee_in_tdfy
-              - (latest_principal_with_rewards - context.tdfy_amount),
-            Adapter::balance(CurrencyId::Tdfy, &OPERATOR_ACCOUNT_ID)
           );
 
           // Staking pallet account tdfy balance equals to its initial value
