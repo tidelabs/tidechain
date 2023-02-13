@@ -37,11 +37,13 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, FixedPointNumber, FixedU128, Permill, RuntimeDebug,
+  DispatchError, DispatchResult, FixedPointNumber, FixedU128, Percent, Permill, RuntimeDebug,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::{assets, BlockNumber, CurrencyId, SessionIndex, SunriseSwapPool};
+use tidefi_primitives::{
+  assets, BlockNumber, CurrencyId, SessionIndex, StakeCurrencyMeta, SunriseSwapPool,
+};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -204,6 +206,7 @@ parameter_types! {
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+  pub const BatchSize: u32 = 10;
 }
 
 impl pallet_sunrise::Config for Test {
@@ -231,6 +234,7 @@ impl pallet_fees::Config for Test {
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
   type Staking = TidefiStaking;
   type Sunrise = Sunrise;
+  type WeightInfo = crate::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_tidefi_stake::Config for Test {
@@ -239,11 +243,11 @@ impl pallet_tidefi_stake::Config for Test {
   type StakePalletId = StakePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
-  type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
   type AssetRegistry = AssetRegistry;
   type StakingRewardCap = StakingRewardCap;
   type Security = Security;
+  type BatchSize = BatchSize;
 }
 
 impl pallet_asset_registry::Config for Test {
@@ -445,6 +449,37 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
       },
     ],
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
+  pallet_asset_registry::GenesisConfig::<Test> {
+    assets: vec![(
+      CurrencyId::Wrapped(2),
+      "Test".into(),
+      "TEST".into(),
+      8,
+      vec![],
+    )],
+    account: AccountId(0),
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
+  pallet_tidefi_stake::GenesisConfig::<Test> {
+    unstake_fee: Percent::from_parts(1),
+    staking_periods: vec![
+      (150_u32.into(), Percent::from_parts(1)),
+      ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+      ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+      ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+      ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+    ],
+    staking_meta: vec![(
+      CurrencyId::Wrapped(2),
+      StakeCurrencyMeta {
+        minimum_amount: 100,
+        maximum_amount: 500_000_000,
+      },
+    )],
   }
   .assimilate_storage(&mut t)
   .unwrap();

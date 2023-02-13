@@ -125,7 +125,6 @@ parameter_types! {
   pub const BlocksForceUnstake: BlockNumber = 256;
   pub const MinimumPeriod: u64 = 5;
   pub const StakeAccountCap: u32 = 10;
-  pub const UnstakeQueueCap: u32 = 100;
   pub const StakingRewardCap: u32 = 100;
   // 20 basis point
   pub const FeeAmount: Permill = Permill::from_perthousand(20);
@@ -150,6 +149,7 @@ parameter_types! {
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+  pub const BatchSize: u32 = 10;
 }
 
 impl pallet_assets::Config for Test {
@@ -248,6 +248,7 @@ impl pallet_fees::Config for Test {
   type BlocksPerSession = BlocksPerSession;
   type Staking = TidefiStaking;
   type Sunrise = Sunrise;
+  type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_sunrise::Config for Test {
@@ -266,11 +267,11 @@ impl pallet_tidefi_stake::Config for Test {
   type StakePalletId = TidefiPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
-  type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
   type StakingRewardCap = StakingRewardCap;
   type AssetRegistry = AssetRegistry;
   type Security = Security;
+  type BatchSize = BatchSize;
 }
 
 impl pallet_asset_registry::Config for Test {

@@ -18,15 +18,14 @@ use crate::{
   mock::{
     new_test_ext, AccountId, Adapter, Balance, Event as MockEvent, FeeAmount, MarketMakerFeeAmount,
     Oracle, Origin, Security, StakeAccountCap, System, Test, Tidefi, TidefiStaking,
-    UnstakeQueueCap,
   },
-  pallet as pallet_tidefi_stake, AccountStakes, Error, StakingPool, UnstakeQueue,
+  pallet as pallet_tidefi_stake, AccountStakes, Error, QueueUnstake, StakingPool,
 };
 use frame_support::{
   assert_noop, assert_ok,
   traits::{
     fungibles::{Inspect, InspectHold, Mutate},
-    Hooks,
+    Get, Hooks,
   },
   BoundedVec,
 };
@@ -211,17 +210,6 @@ impl Context {
         == self.test_token_amount
     );
 
-    self
-  }
-
-  fn add_mock_unstakes_to_queue(self, number_of_unstakes: usize) -> Self {
-    UnstakeQueue::<Test>::put(
-      BoundedVec::try_from(vec![
-        (self.staker, self.stake_id, BLOCK_NUMBER_ZERO);
-        number_of_unstakes as usize
-      ])
-      .unwrap(),
-    );
     self
   }
 
@@ -444,9 +432,9 @@ fn set_current_block(block_number: BlockNumber) {
   });
 }
 
-fn run_on_idle_hook(block_number: BlockNumber, remaining_weights: Balance) {
-  let weights: u64 = remaining_weights.try_into().unwrap();
-  assert_eq!(TidefiStaking::on_idle(block_number, weights), weights);
+fn run_on_idle_hook<T: pallet_tidefi_stake::Config>() {
+  let remaining_weight = <T as frame_system::Config>::BlockWeights::get().max_block;
+  TidefiStaking::on_idle(0, remaining_weight);
 }
 
 #[test]
@@ -986,6 +974,10 @@ mod unstake {
             context.fees_pallet_account,
           ));
 
+          // run 2x on_idle to clean the Queue
+          run_on_idle_hook::<Test>();
+          run_on_idle_hook::<Test>();
+
           // Finish staking period
           set_current_block(FIFTEEN_DAYS + 1);
 
@@ -1201,21 +1193,6 @@ mod unstake {
         );
       });
     }
-
-    #[test]
-    fn unstake_queue_exceeds_its_cap() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default()
-          .mint_tdfy(ALICE_ACCOUNT_ID, 2 * ONE_TDFY)
-          .stake_tdfy()
-          .add_mock_unstakes_to_queue(UnstakeQueueCap::get() as usize);
-
-        assert_noop!(
-          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
-          Error::<Test>::UnstakeQueueCapExceeded
-        );
-      });
-    }
   }
 }
 
@@ -1337,11 +1314,11 @@ pub fn should_stake_and_unstake_queue() {
       FIFTEEN_DAYS - 1_000 + BLOCKS_FORCE_UNLOCK + 1
     );
 
-    assert!(TidefiStaking::unstake_queue().len() == 1);
+    assert!(QueueUnstake::<Test>::count() == 1);
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
-    assert!(TidefiStaking::unstake_queue().len() == 0);
+    assert!(QueueUnstake::<Test>::count() == 0);
   });
 }
 
@@ -1423,14 +1400,14 @@ pub fn should_stake_multiple_and_unstake_queue() {
       Security::current_block_number(),
       FIFTEEN_DAYS - 2_000 + (BLOCKS_FORCE_UNLOCK / 2)
     );
-    assert_eq!(TidefiStaking::unstake_queue().len(), 1);
+    assert_eq!(QueueUnstake::<Test>::count(), 1);
 
     assert_ok!(TidefiStaking::unstake(
       Origin::signed(ALICE_ACCOUNT_ID),
       stake_id,
       true
     ));
-    assert_eq!(TidefiStaking::unstake_queue().len(), 2);
+    assert_eq!(QueueUnstake::<Test>::count(), 2);
 
     assert_eq!(TidefiStaking::account_stakes(ALICE_ACCOUNT_ID).len(), 1);
     assert_eq!(TidefiStaking::account_stakes(BOB_ACCOUNT_ID).len(), 2);
@@ -1453,11 +1430,11 @@ pub fn should_stake_multiple_and_unstake_queue() {
       FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + 1
     );
 
-    assert_eq!(TidefiStaking::unstake_queue().len(), 2);
+    assert_eq!(QueueUnstake::<Test>::count(), 2);
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
-    assert_eq!(TidefiStaking::unstake_queue().len(), 1);
+    assert_eq!(QueueUnstake::<Test>::count(), 1);
 
     set_current_block(FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + (BLOCKS_FORCE_UNLOCK / 2) + 1);
     assert_eq!(
@@ -1465,9 +1442,9 @@ pub fn should_stake_multiple_and_unstake_queue() {
       FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + (BLOCKS_FORCE_UNLOCK / 2) + 1
     );
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
-    assert!(TidefiStaking::unstake_queue().is_empty());
+    assert_eq!(QueueUnstake::<Test>::count(), 0);
 
     assert_eq!(
       Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
@@ -1539,7 +1516,7 @@ pub fn should_calculate_rewards() {
       fees_pallet_account
     ));
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     // 100% of the pool (2 TDFY as reward)
     let alice_staked_tdfy_principal_after_session_1 =
@@ -1579,7 +1556,7 @@ pub fn should_calculate_rewards() {
 
     let staking_pool_before_compound_session_1 =
       TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap_or(0);
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     let alice_pool_percentage_after_session_2 = Perquintill::from_rational(
       alice_staked_tdfy_principal_after_session_1,
@@ -1627,7 +1604,7 @@ pub fn should_calculate_rewards() {
       fees_pallet_account
     ));
 
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
@@ -1660,7 +1637,7 @@ pub fn should_calculate_rewards() {
 
     let staking_pool_before_compound_session_5 =
       TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap_or(0);
-    run_on_idle_hook(1, 1_000 * ONE_TDFY);
+    run_on_idle_hook::<Test>();
 
     // charlie is processed first
     let charlie_pool_percentage_after_session_5 = Perquintill::from_rational(
