@@ -231,8 +231,7 @@ impl pallet_fees::Config for Runtime {
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
-  // FIXME: update local
-  type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_fees::WeightInfo<Runtime>;
 }
 
 impl pallet_sunrise::Config for Runtime {
