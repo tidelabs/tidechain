@@ -4,7 +4,7 @@ use frame_support::{
   traits::{Get, GetStorageVersion, PalletInfoAccess},
   weights::Weight,
 };
-use sp_std::str;
+use sp_std::vec::Vec;
 use tidefi_primitives::Hash;
 
 use crate as pallet_tidefi_stake;
@@ -34,7 +34,7 @@ pub fn migrate<T: pallet_tidefi_stake::Config, P: GetStorageVersion + PalletInfo
   if on_chain_storage_version < 2 {
     // update `PendingStoredSessions`
     let stored_session_size = pallet_tidefi_stake::PendingStoredSessions::<T>::count();
-    let unstake_queue_size = pallet_tidefi_stake::PendingStoredSessions::<T>::count();
+    let mut unstake_queue_size: u32 = 0;
 
     pallet_tidefi_stake::PendingStoredSessions::<T>::translate(|_, _: ()| Some(Default::default()));
 
@@ -43,6 +43,7 @@ pub fn migrate<T: pallet_tidefi_stake::Config, P: GetStorageVersion + PalletInfo
       .iter()
       .for_each(|(account_id, hash, expected_end)| {
         pallet_tidefi_stake::QueueUnstake::<T>::insert(hash, (account_id, expected_end));
+        unstake_queue_size += 1;
       });
 
     weight = weight
