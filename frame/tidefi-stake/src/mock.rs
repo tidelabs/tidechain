@@ -248,6 +248,7 @@ impl pallet_fees::Config for Test {
   type BlocksPerSession = BlocksPerSession;
   type Staking = TidefiStaking;
   type Sunrise = Sunrise;
+  type WeightInfo = ();
 }
 
 impl pallet_sunrise::Config for Test {

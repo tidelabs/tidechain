@@ -445,7 +445,7 @@ pub mod pallet {
 
       if staking_is_expired {
         // we can process to unstaking immediately
-        Self::process_unstake(&account_id, stake_id)?;
+        Self::do_process_unstake(&account_id, stake_id)?;
         Self::deposit_event(Event::<T>::Unstaked {
           request_id: stake_id,
           account_id,
@@ -571,7 +571,7 @@ pub mod pallet {
         .find(|stake| stake.unique_id == stake_id)
     }
 
-    fn process_unstake(account_id: &T::AccountId, stake_id: Hash) -> DispatchResult {
+    fn do_process_unstake(account_id: &T::AccountId, stake_id: Hash) -> DispatchResult {
       let current_stake =
         Self::get_account_stake(&account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
       AccountStakes::<T>::try_mutate_exists(account_id, |account_stakes| match account_stakes {
@@ -908,7 +908,7 @@ pub mod pallet {
           .into_iter()
           .find(|s| s.unique_id == hash);
         if let Some(stake) = stake {
-          let result = Self::process_unstake(&account_id, stake.unique_id);
+          let result = Self::do_process_unstake(&account_id, stake.unique_id);
           log!(info, "unstaked {:?}, outcome: {:?}", account_id, result);
         }
       };
@@ -964,12 +964,18 @@ pub mod pallet {
       T::StakePalletId::get().into_account_truncating()
     }
 
+    fn account_stakes_size() -> u64 {
+      AccountStakes::<T>::count().into()
+    }
+
+    // triggered by `Fees` pallet when the session end
     fn on_session_end(
       session_index: SessionIndex,
       session_trade_values: Vec<(CurrencyId, Balance)>,
       fees_account_id: T::AccountId,
     ) -> Result<(), DispatchError> {
       let pallet_account_id = Self::account_id();
+
       let prepare_session = |currency_id: CurrencyId, balance: Balance| {
         // Transfer all fees collected by `Fees` pallet to `Staking` pallet for the redistribution.
         let result = T::CurrencyTidefi::transfer(
@@ -994,18 +1000,21 @@ pub mod pallet {
         result.is_ok()
       };
 
+      // 1. Prepare session
       let sessions: Vec<(CurrencyId, Balance)> = session_trade_values
         .into_iter()
         .filter(|(currency_id, balance)| prepare_session(*currency_id, *balance))
         .collect();
 
       if !sessions.is_empty() {
+        // 2. Mark the session index has last session finished
         InterestCompoundLastSession::<T>::put(session_index);
+        // 3. Add the session into the queue (required for `on_idle`)
         PendingStoredSessions::<T>::insert::<
           u64,
           BoundedVec<(CurrencyId, Balance), T::StakingRewardCap>,
         >(session_index, Default::default());
-        // result in the same set of keys, in the same order
+        // 4. Grab all current account (keys) and add them into the `QueueCompound` who will be drained by `on_idle`
         AccountStakes::<T>::iter_keys()
           .for_each(|account| QueueCompound::<T>::insert(account, session_index));
       }
