@@ -1,13 +1,13 @@
+use crate as pallet_tidefi_stake;
 use frame_support::{
   pallet_prelude::ValueQuery,
   storage_alias,
   traits::{Get, GetStorageVersion, PalletInfoAccess},
   weights::Weight,
 };
+use hex_literal::hex;
 use sp_std::vec::Vec;
 use tidefi_primitives::Hash;
-
-use crate as pallet_tidefi_stake;
 
 // old storage queue
 #[storage_alias]
@@ -22,6 +22,8 @@ type UnstakeQueue<T: pallet_tidefi_stake::Config> = StorageValue<
 >;
 
 pub fn migrate<T: pallet_tidefi_stake::Config, P: GetStorageVersion + PalletInfoAccess>() -> Weight
+where
+  <T as frame_system::Config>::AccountId: From<[u8; 32]>,
 {
   let mut weight = T::DbWeight::get().reads_writes(3, 2);
 
@@ -45,6 +47,11 @@ pub fn migrate<T: pallet_tidefi_stake::Config, P: GetStorageVersion + PalletInfo
         pallet_tidefi_stake::QueueUnstake::<T>::insert(hash, (account_id, expected_end));
         unstake_queue_size += 1;
       });
+
+    // add default operator
+    pallet_tidefi_stake::OperatorAccountId::<T>::put::<T::AccountId>(
+      hex!["8e14d1ac896ea00e18d855588ee13103449cc6e41d4b0173d917cabea84bdb08"].into(),
+    );
 
     weight = weight
       .saturating_add(
