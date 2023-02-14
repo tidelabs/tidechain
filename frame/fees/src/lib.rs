@@ -264,10 +264,6 @@ pub mod pallet {
   // hooks
   #[pallet::hooks]
   impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-    fn on_runtime_upgrade() -> frame_support::weights::Weight {
-      migrations::migrate_to_v1::<T, Self>()
-    }
-
     fn on_initialize(_now: T::BlockNumber) -> Weight {
       if Self::should_finalize_current_session() {
         <T as Config>::WeightInfo::on_finalize(

@@ -275,7 +275,6 @@ pub struct MigrateTidefiStakingToV2;
 impl frame_support::traits::OnRuntimeUpgrade for MigrateTidefiStakingToV2 {
   #[cfg(feature = "try-runtime")]
   fn pre_upgrade() -> Result<(), &'static str> {
-    pallet_tidefi_stake::migrations::v2::migrate::<Runtime, Fees>();
     Ok(())
   }
   fn on_runtime_upgrade() -> frame_support::weights::Weight {
