@@ -1378,20 +1378,20 @@ mod claim_sunrise_rewards {
   fn succeeds() {
     new_test_ext().execute_with(|| {
       const REWARDS_AMOUNT: u128 = ONE_TDFY;
-      const REWARDS_ERA_INDEX: u32 = 1;
+      const REWARDS_ERA_INDEX: u32 = 20_000;
       const REWARDS_CLAIMER: AccountId = CHARLIE_ACCOUNT_ID;
 
       let context = Context::default()
         .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
         .mint_tdfy(REWARDS_CLAIMER, 1_000 * ONE_TDFY)
-        .set_active_era(3, 1)
+        .set_active_era(25_000, 1_400_000)
         .set_sunrise_rewards(REWARDS_CLAIMER, REWARDS_ERA_INDEX, REWARDS_AMOUNT);
 
       let rewards_claimer_balance_before = Adapter::balance(CurrencyId::Tdfy, &REWARDS_CLAIMER);
 
       assert_ok!(Pallet::<Test>::claim_sunrise_rewards(
         context.rewards_claimer,
-        context.era_index,
+        REWARDS_ERA_INDEX,
       ));
 
       // Rewards are received
@@ -1463,7 +1463,7 @@ mod claim_sunrise_rewards {
 
         assert_noop!(
           Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index),
-          Error::<Test>::NoActiveEra
+          Error::<Test>::InvalidEra
         );
       });
     }
@@ -1510,8 +1510,8 @@ mod claim_sunrise_rewards {
         let context = Context::default()
           .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-          .set_active_era(3, 1)
-          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+          .set_active_era(25_000, 1_400_000)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 24_999, ONE_TDFY);
 
         let previous_era = Fees::current_era().unwrap().index - 1;
 
@@ -1528,8 +1528,8 @@ mod claim_sunrise_rewards {
         let context = Context::default()
           .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-          .set_active_era(3, 1)
-          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, 0);
+          .set_active_era(25_000, 1_400_000)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 20_000, 0);
 
         assert_noop!(
           Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index),
@@ -1544,7 +1544,7 @@ mod claim_sunrise_rewards {
         let context = Context::default()
           .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-          .set_active_era(3, 1);
+          .set_active_era(25_000, 1_400_000);
 
         assert_noop!(
           Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index),
@@ -1558,7 +1558,7 @@ mod claim_sunrise_rewards {
       new_test_ext().execute_with(|| {
         Context::default()
           .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-          .set_active_era(3, 1);
+          .set_active_era(25_000, 1_400_000);
 
         let fees_pallet_account_balance =
           Adapter::balance(CurrencyId::Tdfy, &Sunrise::account_id());
@@ -1580,7 +1580,7 @@ mod claim_sunrise_rewards {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
-          .set_active_era(3, 1)
+          .set_active_era(25_000, 1_400_000)
           .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ExistentialDeposit::get() - 1);
 
         assert_noop!(
@@ -1593,11 +1593,9 @@ mod claim_sunrise_rewards {
     #[test]
     fn fees_pallet_account_cannot_keep_alive() {
       new_test_ext().execute_with(|| {
-        let context = Context::default().set_active_era(3, 1).set_sunrise_rewards(
-          CHARLIE_ACCOUNT_ID,
-          1,
-          ONE_TDFY,
-        );
+        let context = Context::default()
+          .set_active_era(25_000, 1_400_000)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
 
         assert_noop!(
           Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index,),
