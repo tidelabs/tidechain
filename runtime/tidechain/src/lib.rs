@@ -115,7 +115,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 6020,
+  spec_version: 6040,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -268,5 +268,16 @@ pub type Executive = frame_executive::Executive<
   frame_system::ChainContext<Runtime>,
   Runtime,
   AllPalletsWithSystem,
-  (),
+  (MigrateTidefiStakingToV2,),
 >;
+
+pub struct MigrateTidefiStakingToV2;
+impl frame_support::traits::OnRuntimeUpgrade for MigrateTidefiStakingToV2 {
+  #[cfg(feature = "try-runtime")]
+  fn pre_upgrade() -> Result<(), &'static str> {
+    Ok(())
+  }
+  fn on_runtime_upgrade() -> frame_support::weights::Weight {
+    pallet_tidefi_stake::migrations::v2::migrate::<Runtime, Fees>()
+  }
+}
