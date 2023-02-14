@@ -16,8 +16,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod migrations;
-
 #[cfg(test)]
 mod mock;
 
