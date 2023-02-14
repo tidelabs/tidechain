@@ -20,7 +20,7 @@ use crate::{
     Oracle, Origin, Security, StakeAccountCap, System, Test, Tidefi, TidefiStaking,
   },
   pallet as pallet_tidefi_stake, AccountStakes, Error, PendingStoredSessions, QueueUnstake,
-  StakingPool,
+  SessionTotalFees, StakingPool,
 };
 use frame_support::{
   assert_noop, assert_ok,
@@ -1702,7 +1702,9 @@ pub fn should_calculate_rewards() {
 
     // make sure we can drain all sessions
     assert_eq!(PendingStoredSessions::<Test>::count(), 1);
+    assert_eq!(SessionTotalFees::<Test>::iter().count(), 1);
     run_on_idle_hook::<Test>();
     assert_eq!(PendingStoredSessions::<Test>::count(), 0);
+    assert_eq!(SessionTotalFees::<Test>::iter().count(), 0);
   });
 }

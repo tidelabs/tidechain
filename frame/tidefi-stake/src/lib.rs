@@ -728,7 +728,7 @@ pub mod pallet {
       let mut operator: Vec<(CurrencyId, Balance)> = Default::default();
 
       for (currency_id, distributed_amount) in pending_session {
-        let collected_amount = SessionTotalFees::<T>::get(session_index, currency_id);
+        let collected_amount = SessionTotalFees::<T>::take(session_index, currency_id);
         let operator_amount = collected_amount.saturating_sub(distributed_amount);
         pool.push((currency_id, distributed_amount));
         operator.push((currency_id, operator_amount));
