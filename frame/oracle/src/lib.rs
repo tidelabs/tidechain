@@ -43,15 +43,12 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
-  use sp_runtime::{
-    traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub},
-    FixedPointNumber, FixedU128, Permill,
-  };
+  use sp_runtime::Permill;
   use sp_std::vec;
   use tidefi_primitives::{
-    assets::Asset,
     pallet::{FeesExt, OracleExt, SecurityExt, SunriseExt},
-    AssetId, Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
+    AssetId, Balance, CurrencyId, Hash, SlippageError, Swap, SwapConfirmation, SwapStatus,
+    SwapType,
   };
 
   /// Oracle configuration
@@ -302,18 +299,6 @@ pub mod pallet {
               return Err(Error::<T>::InvalidSwapRequestStatus);
             }
 
-            let token_to: Asset = trade
-              .token_to
-              .try_into()
-              .map_err(|_| Error::<T>::UnknownAsset)?;
-            let token_to_one_unit = token_to.saturating_mul(1);
-
-            let token_from: Asset = trade
-              .token_from
-              .try_into()
-              .map_err(|_| Error::<T>::UnknownAsset)?;
-            let token_from_one_unit = token_from.saturating_mul(1);
-
             // 6. Calculate totals and all market makers
             let mut total_from: Balance = 0;
             let mut total_to: Balance = 0;
@@ -322,98 +307,25 @@ pub mod pallet {
               let mm_trade_request = Swaps::<T>::try_get(mm.request_id)
                 .map_err(|_| Error::<T>::InvalidMarketMakerRequestId { index: index as u8 })?;
 
-              let pay_per_token =
-                FixedU128::saturating_from_rational(trade.amount_to, token_to_one_unit)
-                  .checked_div(&FixedU128::saturating_from_rational(
-                    trade.amount_from,
-                    token_from_one_unit,
-                  ))
-                  .ok_or(Error::<T>::SlippageOverflow)?;
-
-              let pay_per_token_offered =
-                FixedU128::saturating_from_rational(mm.amount_to_send, token_to_one_unit)
-                  .checked_div(&FixedU128::saturating_from_rational(
-                    mm.amount_to_receive,
-                    token_from_one_unit,
-                  ))
-                  .ok_or(Error::<T>::SlippageOverflow)?;
-
-              // limit order can match with smaller price
-              if trade.swap_type != SwapType::Limit {
-                let minimum_per_token = pay_per_token
-                  .checked_sub(
-                    &pay_per_token
-                      .checked_mul(&trade.slippage.into())
-                      .ok_or(Error::<T>::ArithmeticError)?,
-                  )
-                  .ok_or(Error::<T>::SlippageOverflow)?;
-
-                ensure!(
-                  minimum_per_token <= pay_per_token_offered,
-                  Error::OfferIsLessThanSwapLowerBound { index: index as u8 }
-                );
-              }
-
-              let maximum_per_token = pay_per_token
-                .checked_add(
-                  &pay_per_token
-                    .checked_mul(&trade.slippage.into())
-                    .ok_or(Error::<T>::ArithmeticError)?,
-                )
-                .ok_or(Error::<T>::SlippageOverflow)?;
-
-              ensure!(
-                maximum_per_token >= pay_per_token_offered,
-                Error::OfferIsGreaterThanSwapUpperBound { index: index as u8 }
-              );
-
-              // validate mm slippage tolerance
-              let pay_per_token = FixedU128::saturating_from_rational(
-                mm_trade_request.amount_from,
-                token_to_one_unit,
-              )
-              .checked_div(&FixedU128::saturating_from_rational(
-                mm_trade_request.amount_to,
-                token_from_one_unit,
-              ))
-              .ok_or(Error::<T>::SlippageOverflow)?;
-
-              let pay_per_token_offered =
-                FixedU128::saturating_from_rational(mm.amount_to_send, token_to_one_unit)
-                  .checked_div(&FixedU128::saturating_from_rational(
-                    mm.amount_to_receive,
-                    token_from_one_unit,
-                  ))
-                  .ok_or(Error::<T>::SlippageOverflow)?;
-
-              // limit order can match with smaller price
-              if mm_trade_request.swap_type != SwapType::Limit {
-                let minimum_per_token = pay_per_token
-                  .checked_sub(
-                    &pay_per_token
-                      .checked_mul(&mm_trade_request.slippage.into())
-                      .ok_or(Error::<T>::SlippageOverflow)?,
-                  )
-                  .ok_or(Error::<T>::SlippageOverflow)?;
-
-                ensure!(
-                  minimum_per_token <= pay_per_token_offered,
-                  Error::OfferIsLessThanMarketMakerSwapLowerBound { index: index as u8 }
-                );
-              }
-
-              let maximum_per_token = pay_per_token
-                .checked_add(
-                  &pay_per_token
-                    .checked_mul(&mm_trade_request.slippage.into())
-                    .ok_or(Error::<T>::SlippageOverflow)?,
-                )
-                .ok_or(Error::<T>::SlippageOverflow)?;
-
-              ensure!(
-                maximum_per_token >= pay_per_token_offered,
-                Error::OfferIsGreaterThanMarketMakerSwapUpperBound { index: index as u8 }
-              );
+              trade
+                .validate_slippage(&mm_trade_request, mm.amount_to_receive, mm.amount_to_send)
+                .map_err(|err| match err {
+                  SlippageError::UnknownAsset => Error::<T>::UnknownAsset,
+                  SlippageError::SlippageOverflow => Error::<T>::SlippageOverflow,
+                  SlippageError::ArithmeticError => Error::<T>::ArithmeticError,
+                  SlippageError::OfferIsLessThanSwapLowerBound => {
+                    Error::<T>::OfferIsLessThanSwapLowerBound { index: index as u8 }
+                  }
+                  SlippageError::OfferIsGreaterThanSwapUpperBound => {
+                    Error::<T>::OfferIsGreaterThanSwapUpperBound { index: index as u8 }
+                  }
+                  SlippageError::OfferIsLessThanMarketMakerSwapLowerBound => {
+                    Error::<T>::OfferIsLessThanMarketMakerSwapLowerBound { index: index as u8 }
+                  }
+                  SlippageError::OfferIsGreaterThanMarketMakerSwapUpperBound => {
+                    Error::<T>::OfferIsGreaterThanMarketMakerSwapUpperBound { index: index as u8 }
+                  }
+                })?;
 
               // make sure all the market markers have enough funds before we can continue
               T::CurrencyTidefi::balance_on_hold(trade.token_to, &mm_trade_request.account_id)
