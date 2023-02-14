@@ -480,6 +480,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         maximum_amount: 500_000_000,
       },
     )],
+    operator: AccountId(0),
   }
   .assimilate_storage(&mut t)
   .unwrap();

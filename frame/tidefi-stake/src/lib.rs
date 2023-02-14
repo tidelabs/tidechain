@@ -204,7 +204,7 @@ pub mod pallet {
   /// Operator account
   #[pallet::storage]
   #[pallet::getter(fn operator_account_id)]
-  pub type OperatorAccountId<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+  pub type OperatorAccountId<T: Config> = StorageValue<_, T::AccountId>;
 
   /// Genesis configuration
   #[pallet::genesis_config]
@@ -212,6 +212,7 @@ pub mod pallet {
     pub staking_periods: Vec<(T::BlockNumber, Percent)>,
     pub staking_meta: Vec<(CurrencyId, StakeCurrencyMeta<Balance>)>,
     pub unstake_fee: Percent,
+    pub operator: T::AccountId,
   }
 
   #[cfg(feature = "std")]
@@ -230,6 +231,7 @@ pub mod pallet {
           ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
         ],
         staking_meta: Vec::new(),
+        operator: T::StakePalletId::get().into_account_truncating(),
       }
     }
   }
@@ -249,6 +251,22 @@ pub mod pallet {
       for (currency_id, staking_meta) in self.staking_meta.clone() {
         StakingCurrencyMeta::<T>::insert(currency_id, staking_meta);
       }
+
+      let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tdfy);
+      if T::CurrencyTidefi::reducible_balance(CurrencyId::Tdfy, &self.operator.clone(), false) < min
+      {
+        if let Err(err) =
+          T::CurrencyTidefi::mint_into(CurrencyId::Tdfy, &self.operator.clone(), min)
+        {
+          log!(
+            error,
+            "Unable to mint tidefi-stake operator minimum balance: {:?}",
+            err
+          );
+        }
+      }
+
+      OperatorAccountId::<T>::put(self.operator.clone());
     }
   }
 
