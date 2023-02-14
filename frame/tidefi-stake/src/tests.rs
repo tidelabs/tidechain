@@ -19,7 +19,8 @@ use crate::{
     new_test_ext, AccountId, Adapter, Balance, Event as MockEvent, FeeAmount, MarketMakerFeeAmount,
     Oracle, Origin, Security, StakeAccountCap, System, Test, Tidefi, TidefiStaking,
   },
-  pallet as pallet_tidefi_stake, AccountStakes, Error, QueueUnstake, StakingPool,
+  pallet as pallet_tidefi_stake, AccountStakes, Error, PendingStoredSessions, QueueUnstake,
+  StakingPool,
 };
 use frame_support::{
   assert_noop, assert_ok,
@@ -77,7 +78,7 @@ const BOB_STAKE_QUARTER_TDFY: Balance = ALICE_STAKE_ONE_TDFY / 4;
 
 const BLOCK_NUMBER_ZERO: BlockNumber = 0;
 
-const SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
+const SESSION_TOTAL_FEES_ONE_HUNDRED_TEST_TOKENS: Balance = 100 * ONE_TEST_TOKEN;
 
 #[derive(Clone)]
 struct Context {
@@ -1454,37 +1455,37 @@ pub fn should_stake_multiple_and_unstake_queue() {
 #[test]
 pub fn should_calculate_rewards() {
   new_test_ext().execute_with(|| {
-    const ALICE_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
-    const BOB_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
-    const CHARLIE_STAKE_FOUR_HUNDRED_TDFYS: Balance = 400 * ONE_TDFY;
+    const ALICE_STAKE_ONE_HUNDRED_TEST_TOKENS: Balance = 100 * ONE_TEST_TOKEN;
+    const BOB_STAKE_ONE_HUNDRED_TEST_TOKENS: Balance = 100 * ONE_TEST_TOKEN;
+    const CHARLIE_STAKE_FOUR_HUNDRED_TEST_TOKENS: Balance = 400 * ONE_TEST_TOKEN;
     let fees_pallet_account: AccountId =
       <Test as pallet_fees::Config>::FeesPalletId::get().into_account_truncating();
 
     Context::default()
-      .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
-      .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TDFYS)
-      .mint_tdfy(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TDFYS);
+      .mint_test_token(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
+      .mint_test_token(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TEST_TOKENS)
+      .mint_test_token(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS);
 
     assert_ok!(Tidefi::transfer(
       Origin::signed(ALICE_ACCOUNT_ID),
       fees_pallet_account,
-      CurrencyId::Tdfy,
-      500 * ONE_TDFY
+      TEST_TOKEN_CURRENCY_ID,
+      500 * ONE_TEST_TOKEN
     ));
 
     set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
-      CurrencyId::Tdfy,
-      ALICE_STAKE_ONE_HUNDRED_TDFYS,
+      TEST_TOKEN_CURRENCY_ID,
+      ALICE_STAKE_ONE_HUNDRED_TEST_TOKENS,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tdfy),
-      Some(ALICE_STAKE_ONE_HUNDRED_TDFYS)
+      TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID),
+      Some(ALICE_STAKE_ONE_HUNDRED_TEST_TOKENS)
     );
 
     // make sure the staking has been recorded in the storage
@@ -1494,85 +1495,87 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .initial_balance,
-      ALICE_STAKE_ONE_HUNDRED_TDFYS
+      ALICE_STAKE_ONE_HUNDRED_TEST_TOKENS
     );
 
     // 100 for TDFY in fees for session 1
     // 15 days should get 2%, so 2 tides (100% of the pool)
-    let expected_max_rewards = 2 * ONE_TDFY;
+    let expected_max_rewards = 2 * ONE_TEST_TOKEN;
 
     assert_ok!(TidefiStaking::on_session_end(
       1,
-      vec![(CurrencyId::Tdfy, SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS)],
+      vec![(
+        TEST_TOKEN_CURRENCY_ID,
+        SESSION_TOTAL_FEES_ONE_HUNDRED_TEST_TOKENS
+      )],
       fees_pallet_account
     ));
 
     run_on_idle_hook::<Test>();
 
     // 100% of the pool (2 TDFY as reward)
-    let alice_staked_tdfy_principal_after_session_1 =
-      ALICE_STAKE_ONE_HUNDRED_TDFYS.saturating_add(expected_max_rewards);
+    let alice_staked_principal_after_session_1 =
+      ALICE_STAKE_ONE_HUNDRED_TEST_TOKENS.saturating_add(expected_max_rewards);
 
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
         .first()
         .unwrap()
         .principal,
-      alice_staked_tdfy_principal_after_session_1
+      alice_staked_principal_after_session_1
     );
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(BOB_ACCOUNT_ID),
-      CurrencyId::Tdfy,
-      BOB_STAKE_ONE_HUNDRED_TDFYS,
+      TEST_TOKEN_CURRENCY_ID,
+      BOB_STAKE_ONE_HUNDRED_TEST_TOKENS,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated after bob stake
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tdfy),
-      Some(alice_staked_tdfy_principal_after_session_1.saturating_add(BOB_STAKE_ONE_HUNDRED_TDFYS))
+      TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID),
+      Some(
+        alice_staked_principal_after_session_1.saturating_add(BOB_STAKE_ONE_HUNDRED_TEST_TOKENS)
+      )
     );
 
-    // 100 for TDFY in fees for session 2
-    // 15 days should get 2%, so 2 tides if 100% of the pool
-
-    // alice: 2 * 0.50495049504950495 = 1.0099009901
-    // bob: 2 * 0.492586812329301623 = 1.9703472493
     assert_ok!(TidefiStaking::on_session_end(
       2,
-      vec![(CurrencyId::Tdfy, SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS)],
+      vec![(
+        TEST_TOKEN_CURRENCY_ID,
+        SESSION_TOTAL_FEES_ONE_HUNDRED_TEST_TOKENS
+      )],
       fees_pallet_account
     ));
 
     let staking_pool_before_compound_session_1 =
-      TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap_or(0);
+      TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID).unwrap_or(0);
     run_on_idle_hook::<Test>();
 
     let alice_pool_percentage_after_session_2 = Perquintill::from_rational(
-      alice_staked_tdfy_principal_after_session_1,
+      alice_staked_principal_after_session_1,
       staking_pool_before_compound_session_1,
     );
 
-    let expected_alice_staked_tdfy_principal_after_session_2 =
-      alice_staked_tdfy_principal_after_session_1
-        .saturating_add(alice_pool_percentage_after_session_2 * expected_max_rewards);
+    let expected_alice_staked_principal_after_session_2 = alice_staked_principal_after_session_1
+      .saturating_add(alice_pool_percentage_after_session_2 * expected_max_rewards);
 
     let bob_pool_after_session_2 = Perquintill::from_rational(
-      BOB_STAKE_ONE_HUNDRED_TDFYS,
-      expected_alice_staked_tdfy_principal_after_session_2
-        .saturating_add(BOB_STAKE_ONE_HUNDRED_TDFYS),
+      BOB_STAKE_ONE_HUNDRED_TEST_TOKENS,
+      expected_alice_staked_principal_after_session_2
+        .saturating_add(BOB_STAKE_ONE_HUNDRED_TEST_TOKENS),
     );
 
-    let expected_bob_staked_tdfy_principal_after_session_2 =
-      BOB_STAKE_ONE_HUNDRED_TDFYS.saturating_add(bob_pool_after_session_2 * expected_max_rewards);
+    let expected_bob_staked_principal_after_session_2 = BOB_STAKE_ONE_HUNDRED_TEST_TOKENS
+      .saturating_add(bob_pool_after_session_2 * expected_max_rewards);
 
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
         .first()
         .unwrap()
         .principal,
-      expected_alice_staked_tdfy_principal_after_session_2
+      expected_alice_staked_principal_after_session_2
     );
 
     assert_eq!(
@@ -1580,7 +1583,7 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      expected_bob_staked_tdfy_principal_after_session_2
+      expected_bob_staked_principal_after_session_2
     );
 
     // 2 empty sessions
@@ -1597,12 +1600,13 @@ pub fn should_calculate_rewards() {
 
     run_on_idle_hook::<Test>();
 
+    // balance should be the same
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
         .first()
         .unwrap()
         .principal,
-      expected_alice_staked_tdfy_principal_after_session_2
+      expected_alice_staked_principal_after_session_2
     );
 
     assert_eq!(
@@ -1610,33 +1614,36 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      expected_bob_staked_tdfy_principal_after_session_2
+      expected_bob_staked_principal_after_session_2
     );
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(CHARLIE_ACCOUNT_ID),
-      CurrencyId::Tdfy,
-      CHARLIE_STAKE_FOUR_HUNDRED_TDFYS,
+      TEST_TOKEN_CURRENCY_ID,
+      CHARLIE_STAKE_FOUR_HUNDRED_TEST_TOKENS,
       FIFTEEN_DAYS
     ));
 
     assert_ok!(TidefiStaking::on_session_end(
       5,
-      vec![(CurrencyId::Tdfy, SESSION_TOTAL_FEES_ONE_HUNDRED_TDFYS)],
+      vec![(
+        TEST_TOKEN_CURRENCY_ID,
+        SESSION_TOTAL_FEES_ONE_HUNDRED_TEST_TOKENS
+      )],
       fees_pallet_account
     ));
 
     let staking_pool_before_compound_session_5 =
-      TidefiStaking::staking_pool(CurrencyId::Tdfy).unwrap_or(0);
+      TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID).unwrap_or(0);
     run_on_idle_hook::<Test>();
 
     // charlie is processed first
     let charlie_pool_percentage_after_session_5 = Perquintill::from_rational(
-      CHARLIE_STAKE_FOUR_HUNDRED_TDFYS,
+      CHARLIE_STAKE_FOUR_HUNDRED_TEST_TOKENS,
       staking_pool_before_compound_session_5,
     );
 
-    let expected_charlie_staked_tdfy_principal_after_session_5 = CHARLIE_STAKE_FOUR_HUNDRED_TDFYS
+    let expected_charlie_staked_principal_after_session_5 = CHARLIE_STAKE_FOUR_HUNDRED_TEST_TOKENS
       .saturating_add(charlie_pool_percentage_after_session_5 * expected_max_rewards);
 
     assert_eq!(
@@ -1644,20 +1651,20 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      expected_charlie_staked_tdfy_principal_after_session_5
+      expected_charlie_staked_principal_after_session_5
     );
 
     let alice_pool_percentage_after_session_5 = Perquintill::from_rational(
-      expected_alice_staked_tdfy_principal_after_session_2,
+      expected_alice_staked_principal_after_session_2,
       staking_pool_before_compound_session_5.saturating_add(
         // get only the rewards from charlie to add them to the staking pool variable
-        expected_charlie_staked_tdfy_principal_after_session_5
-          .saturating_sub(CHARLIE_STAKE_FOUR_HUNDRED_TDFYS),
+        expected_charlie_staked_principal_after_session_5
+          .saturating_sub(CHARLIE_STAKE_FOUR_HUNDRED_TEST_TOKENS),
       ),
     );
 
-    let expected_alice_staked_tdfy_principal_after_session_5 =
-      expected_alice_staked_tdfy_principal_after_session_2
+    let expected_alice_staked_principal_after_session_5 =
+      expected_alice_staked_principal_after_session_2
         .saturating_add(alice_pool_percentage_after_session_5 * expected_max_rewards);
 
     assert_eq!(
@@ -1665,24 +1672,24 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      expected_alice_staked_tdfy_principal_after_session_5
+      expected_alice_staked_principal_after_session_5
     );
 
     let bob_pool_percentage_after_session_5 = Perquintill::from_rational(
-      expected_bob_staked_tdfy_principal_after_session_2,
+      expected_bob_staked_principal_after_session_2,
       staking_pool_before_compound_session_5
         .saturating_add(
           // get only the rewards from charlie to add them to the staking pool variable
           // as its a new stake
-          expected_charlie_staked_tdfy_principal_after_session_5
-            .saturating_sub(CHARLIE_STAKE_FOUR_HUNDRED_TDFYS),
+          expected_charlie_staked_principal_after_session_5
+            .saturating_sub(CHARLIE_STAKE_FOUR_HUNDRED_TEST_TOKENS),
         )
         // add alice rewards
         .saturating_add(alice_pool_percentage_after_session_5 * expected_max_rewards),
     );
 
-    let expected_bob_staked_tdfy_principal_after_session_5 =
-      expected_bob_staked_tdfy_principal_after_session_2
+    let expected_bob_staked_principal_after_session_5 =
+      expected_bob_staked_principal_after_session_2
         .saturating_add(bob_pool_percentage_after_session_5 * expected_max_rewards);
 
     assert_eq!(
@@ -1690,7 +1697,12 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      expected_bob_staked_tdfy_principal_after_session_5
+      expected_bob_staked_principal_after_session_5
     );
+
+    // make sure we can drain all sessions
+    assert_eq!(PendingStoredSessions::<Test>::count(), 1);
+    run_on_idle_hook::<Test>();
+    assert_eq!(PendingStoredSessions::<Test>::count(), 0);
   });
 }

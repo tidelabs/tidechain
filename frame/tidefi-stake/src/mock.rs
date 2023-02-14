@@ -466,10 +466,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     staking_meta: vec![(
       CurrencyId::Wrapped(2),
       StakeCurrencyMeta {
-        // 0.00000100 BTC
         minimum_amount: 100,
-        // 5 btc
-        maximum_amount: 500_000_000,
+        // 1000
+        maximum_amount: 100_000_000_000,
       },
     )],
   }

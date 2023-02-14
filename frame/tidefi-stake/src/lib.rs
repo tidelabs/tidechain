@@ -684,15 +684,8 @@ pub mod pallet {
                         let maybe_rewarded_for_current_currency = currently_rewarded
                           .iter_mut()
                           .find(|(currency_id, _)| *currency_id == stake.currency_id);
-                        if let Some(rewarded_for_current_currency) =
-                          maybe_rewarded_for_current_currency
-                        {
-                          *rewarded_for_current_currency = (
-                            rewarded_for_current_currency.0,
-                            rewarded_for_current_currency
-                              .1
-                              .saturating_add(proportional_reward),
-                          )
+                        if let Some((_, balance)) = maybe_rewarded_for_current_currency {
+                          *balance = balance.saturating_add(proportional_reward);
                         } else {
                           let _ =
                             currently_rewarded.try_push((stake.currency_id, proportional_reward));
@@ -971,26 +964,25 @@ pub mod pallet {
       session_trade_values: Vec<(CurrencyId, Balance)>,
       fees_account_id: T::AccountId,
     ) -> Result<(), DispatchError> {
-      let pallet_account_id = Self::account_id();
-
       let prepare_session = |currency_id: CurrencyId, balance: Balance| {
+        let destination = if currency_id == CurrencyId::Tdfy {
+          Self::operator_account()
+        } else {
+          Self::account_id()
+        };
+
         // Transfer all fees collected by `Fees` pallet to `Staking` pallet for the redistribution.
-        let result = T::CurrencyTidefi::transfer(
-          currency_id,
-          &fees_account_id,
-          &pallet_account_id,
-          balance,
-          false,
-        );
+        let result =
+          T::CurrencyTidefi::transfer(currency_id, &fees_account_id, &destination, balance, false);
         log!(
           info,
-          "session {} initialized for {:?}, outcome: {:?}",
+          "session {} prepared for {:?}, outcome: {:?}",
           session_index,
           currency_id,
           result
         );
 
-        if result.is_ok() {
+        if result.is_ok() && currency_id != CurrencyId::Tdfy {
           SessionTotalFees::<T>::insert(session_index, currency_id, balance);
         }
 
@@ -998,6 +990,9 @@ pub mod pallet {
       };
 
       // 1. Prepare session
+      //   - If currency is TDFY, Operator take all the profits, as there is no staking pool
+      //   - If currency is Wrapped, we transfer the fees from `fees_account_id` to Pallet account
+      //   - If currency is Wrapped, we add the `SessionTotalFees` to the fees map for staking pool redistribution
       let sessions: Vec<(CurrencyId, Balance)> = session_trade_values
         .into_iter()
         .filter(|(currency_id, balance)| prepare_session(*currency_id, *balance))
