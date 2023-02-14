@@ -200,7 +200,7 @@ var sourcesIndex = JSON.parse('{\
 "kvdb":["",[],["io_stats.rs","lib.rs"]],\
 "kvdb_memorydb":["",[],["lib.rs"]],\
 "kvdb_rocksdb":["",[],["iter.rs","lib.rs","stats.rs"]],\
-"lagoon_runtime":["",[["common",[["config",[],["basic.rs","consensus.rs","governance.rs","offchain.rs","proxy.rs","tidefi.rs","utility.rs"]]],["api.rs","constants.rs","impls.rs","types.rs"]],["weights",[],["frame_election_provider_support.rs","frame_system.rs","mod.rs","pallet_asset_registry.rs","pallet_assets.rs","pallet_bags_list.rs","pallet_balances.rs","pallet_bounties.rs","pallet_collective.rs","pallet_democracy.rs","pallet_election_provider_multi_phase.rs","pallet_elections_phragmen.rs","pallet_grandpa.rs","pallet_identity.rs","pallet_im_online.rs","pallet_indices.rs","pallet_membership.rs","pallet_multisig.rs","pallet_oracle.rs","pallet_preimage.rs","pallet_proxy.rs","pallet_quorum.rs","pallet_scheduler.rs","pallet_security.rs","pallet_session.rs","pallet_staking.rs","pallet_tidefi.rs","pallet_tidefi_stake.rs","pallet_timestamp.rs","pallet_treasury.rs","pallet_utility.rs"]]],["bag_thresholds.rs","config.rs","lib.rs"]],\
+"lagoon_runtime":["",[["common",[["config",[],["basic.rs","consensus.rs","governance.rs","offchain.rs","proxy.rs","tidefi.rs","utility.rs"]]],["api.rs","constants.rs","impls.rs","types.rs"]],["weights",[],["frame_election_provider_support.rs","frame_system.rs","mod.rs","pallet_asset_registry.rs","pallet_assets.rs","pallet_bags_list.rs","pallet_balances.rs","pallet_bounties.rs","pallet_collective.rs","pallet_democracy.rs","pallet_election_provider_multi_phase.rs","pallet_elections_phragmen.rs","pallet_fees.rs","pallet_grandpa.rs","pallet_identity.rs","pallet_im_online.rs","pallet_indices.rs","pallet_membership.rs","pallet_multisig.rs","pallet_oracle.rs","pallet_preimage.rs","pallet_proxy.rs","pallet_quorum.rs","pallet_scheduler.rs","pallet_security.rs","pallet_session.rs","pallet_staking.rs","pallet_tidefi.rs","pallet_tidefi_stake.rs","pallet_timestamp.rs","pallet_treasury.rs","pallet_utility.rs"]]],["bag_thresholds.rs","config.rs","lib.rs"]],\
 "lazy_static":["",[],["inline_lazy.rs","lib.rs"]],\
 "libc":["",[["unix",[["linux_like",[["linux",[["arch",[["generic",[],["mod.rs"]]],["mod.rs"]],["gnu",[["b64",[["x86_64",[],["align.rs","mod.rs","not_x32.rs"]]],["mod.rs"]]],["align.rs","mod.rs"]]],["align.rs","mod.rs","non_exhaustive.rs"]]],["mod.rs"]]],["align.rs","mod.rs"]]],["fixed_width_ints.rs","lib.rs","macros.rs"]],\
 "libm":["",[["math",[],["acos.rs","acosf.rs","acosh.rs","acoshf.rs","asin.rs","asinf.rs","asinh.rs","asinhf.rs","atan.rs","atan2.rs","atan2f.rs","atanf.rs","atanh.rs","atanhf.rs","cbrt.rs","cbrtf.rs","ceil.rs","ceilf.rs","copysign.rs","copysignf.rs","cos.rs","cosf.rs","cosh.rs","coshf.rs","erf.rs","erff.rs","exp.rs","exp10.rs","exp10f.rs","exp2.rs","exp2f.rs","expf.rs","expm1.rs","expm1f.rs","expo2.rs","fabs.rs","fabsf.rs","fdim.rs","fdimf.rs","fenv.rs","floor.rs","floorf.rs","fma.rs","fmaf.rs","fmax.rs","fmaxf.rs","fmin.rs","fminf.rs","fmod.rs","fmodf.rs","frexp.rs","frexpf.rs","hypot.rs","hypotf.rs","ilogb.rs","ilogbf.rs","j0.rs","j0f.rs","j1.rs","j1f.rs","jn.rs","jnf.rs","k_cos.rs","k_cosf.rs","k_expo2.rs","k_expo2f.rs","k_sin.rs","k_sinf.rs","k_tan.rs","k_tanf.rs","ldexp.rs","ldexpf.rs","lgamma.rs","lgamma_r.rs","lgammaf.rs","lgammaf_r.rs","log.rs","log10.rs","log10f.rs","log1p.rs","log1pf.rs","log2.rs","log2f.rs","logf.rs","mod.rs","modf.rs","modff.rs","nextafter.rs","nextafterf.rs","pow.rs","powf.rs","rem_pio2.rs","rem_pio2_large.rs","rem_pio2f.rs","remainder.rs","remainderf.rs","remquo.rs","remquof.rs","round.rs","roundf.rs","scalbn.rs","scalbnf.rs","sin.rs","sincos.rs","sincosf.rs","sinf.rs","sinh.rs","sinhf.rs","sqrt.rs","sqrtf.rs","tan.rs","tanf.rs","tanh.rs","tanhf.rs","tgamma.rs","tgammaf.rs","trunc.rs","truncf.rs"]]],["lib.rs"]],\
@@ -299,7 +299,7 @@ var sourcesIndex = JSON.parse('{\
 "pallet_democracy":["",[],["conviction.rs","lib.rs","types.rs","vote.rs","vote_threshold.rs","weights.rs"]],\
 "pallet_election_provider_multi_phase":["",[],["helpers.rs","lib.rs","signed.rs","unsigned.rs","weights.rs"]],\
 "pallet_elections_phragmen":["",[["migrations",[],["mod.rs","v3.rs","v4.rs","v5.rs"]]],["lib.rs","weights.rs"]],\
-"pallet_fees":["",[],["lib.rs","migrations.rs"]],\
+"pallet_fees":["",[],["lib.rs","weights.rs"]],\
 "pallet_grandpa":["",[["migrations",[],["v4.rs"]]],["default_weights.rs","equivocation.rs","lib.rs","migrations.rs"]],\
 "pallet_identity":["",[],["lib.rs","types.rs","weights.rs"]],\
 "pallet_im_online":["",[],["lib.rs","weights.rs"]],\
@@ -322,7 +322,7 @@ var sourcesIndex = JSON.parse('{\
 "pallet_tidefi":["",[],["lib.rs","weights.rs"]],\
 "pallet_tidefi_rpc":["",[],["lib.rs"]],\
 "pallet_tidefi_rpc_runtime_api":["",[],["lib.rs"]],\
-"pallet_tidefi_stake":["",[],["lib.rs","migrations.rs","weights.rs"]],\
+"pallet_tidefi_stake":["",[["migrations",[],["mod.rs","v2.rs"]]],["lib.rs","weights.rs"]],\
 "pallet_timestamp":["",[],["lib.rs","weights.rs"]],\
 "pallet_tips":["",[["migrations",[],["mod.rs","v4.rs"]]],["lib.rs","weights.rs"]],\
 "pallet_transaction_payment":["",[],["lib.rs","payment.rs","types.rs"]],\
@@ -542,9 +542,9 @@ var sourcesIndex = JSON.parse('{\
 "tidechain_cli":["",[],["cli.rs","command.rs","lib.rs"]],\
 "tidechain_client":["",[],["lib.rs"]],\
 "tidechain_rpc":["",[],["lib.rs"]],\
-"tidechain_runtime":["",[["common",[["config",[],["basic.rs","consensus.rs","governance.rs","offchain.rs","proxy.rs","tidefi.rs","utility.rs"]]],["api.rs","constants.rs","impls.rs","types.rs"]],["weights",[],["frame_election_provider_support.rs","frame_system.rs","mod.rs","pallet_asset_registry.rs","pallet_assets.rs","pallet_bags_list.rs","pallet_balances.rs","pallet_bounties.rs","pallet_collective.rs","pallet_democracy.rs","pallet_election_provider_multi_phase.rs","pallet_elections_phragmen.rs","pallet_grandpa.rs","pallet_identity.rs","pallet_im_online.rs","pallet_indices.rs","pallet_membership.rs","pallet_multisig.rs","pallet_oracle.rs","pallet_preimage.rs","pallet_proxy.rs","pallet_quorum.rs","pallet_scheduler.rs","pallet_security.rs","pallet_session.rs","pallet_staking.rs","pallet_tidefi.rs","pallet_tidefi_stake.rs","pallet_timestamp.rs","pallet_treasury.rs","pallet_utility.rs"]]],["bag_thresholds.rs","config.rs","lib.rs"]],\
+"tidechain_runtime":["",[["common",[["config",[],["basic.rs","consensus.rs","governance.rs","offchain.rs","proxy.rs","tidefi.rs","utility.rs"]]],["api.rs","constants.rs","impls.rs","types.rs"]],["weights",[],["frame_election_provider_support.rs","frame_system.rs","mod.rs","pallet_asset_registry.rs","pallet_assets.rs","pallet_bags_list.rs","pallet_balances.rs","pallet_bounties.rs","pallet_collective.rs","pallet_democracy.rs","pallet_election_provider_multi_phase.rs","pallet_elections_phragmen.rs","pallet_fees.rs","pallet_grandpa.rs","pallet_identity.rs","pallet_im_online.rs","pallet_indices.rs","pallet_membership.rs","pallet_multisig.rs","pallet_oracle.rs","pallet_preimage.rs","pallet_proxy.rs","pallet_quorum.rs","pallet_scheduler.rs","pallet_security.rs","pallet_session.rs","pallet_staking.rs","pallet_tidefi.rs","pallet_tidefi_stake.rs","pallet_timestamp.rs","pallet_treasury.rs","pallet_utility.rs"]]],["bag_thresholds.rs","config.rs","lib.rs"]],\
 "tidechain_service":["",[],["chain_spec.rs","lib.rs"]],\
-"tidefi_primitives":["",[],["assets.rs","lib.rs","networks.rs"]],\
+"tidefi_primitives":["",[["swap",[],["mod.rs","swap.rs","test.rs"]]],["assets.rs","lib.rs","networks.rs"]],\
 "tidefi_primitives_macro":["",[],["expand.rs","lib.rs","parse.rs","utils.rs"]],\
 "tikv_jemalloc_sys":["",[],["lib.rs"]],\
 "time":["",[],["display.rs","duration.rs","lib.rs","parse.rs","sys.rs"]],\

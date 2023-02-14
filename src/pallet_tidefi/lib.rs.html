@@ -426,6 +426,13 @@
 <span id="426">426</span>
 <span id="427">427</span>
 <span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.
 // This file is part of Tidechain.
 
@@ -472,7 +479,10 @@
   };
   <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
   <span class="kw">use </span>sp_io::hashing::blake2_256;
-  <span class="kw">use </span>sp_runtime::{traits::Saturating, Permill};
+  <span class="kw">use </span>sp_runtime::{
+    traits::{CheckedDiv, Saturating},
+    Permill,
+  };
   <span class="kw">use </span>tidefi_primitives::{
     pallet::{AssetRegistryExt, FeesExt, OracleExt, QuorumExt, SecurityExt, SunriseExt},
     Balance, CurrencyId, EraIndex, Hash, SwapType,
@@ -831,18 +841,22 @@
 
       <span class="comment">// 2. Make sure the era Index provided is ready to be claimed
       </span><span class="kw">let </span>current_era = T::Fees::current_era().ok_or(Error::&lt;T&gt;::NoActiveEra)<span class="question-mark">?</span>;
-      <span class="kw">let </span>starting_block = current_era.start_block.ok_or(Error::&lt;T&gt;::NoActiveEra)<span class="question-mark">?</span>;
-      <span class="kw">let </span>current_block = T::Security::get_current_block_count();
 
       <span class="comment">// Unable to claim current Era
       </span><span class="kw">if </span>era_index &gt;= current_era.index {
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::InvalidEra.into());
       }
 
-      <span class="comment">// Unable to claim previous era if the `T::Cooldown` cooldown isnt completed
-      </span><span class="kw">if </span>era_index == current_era.index.saturating_sub(<span class="number">1</span>)
-        &amp;&amp; starting_block.saturating_add(T::Sunrise::cooldown_blocks_count()) &gt; current_block
-      {
+      <span class="kw">let </span>era_blocks_count = T::Fees::era_blocks_count();
+      <span class="kw">let </span>cooldown_blocks_count = T::Sunrise::cooldown_blocks_count();
+      <span class="kw">let </span>eras_in_cooldown = cooldown_blocks_count
+        .checked_div(<span class="kw-2">&amp;</span>era_blocks_count)
+        .ok_or(Error::&lt;T&gt;::EraNotReady)<span class="question-mark">?</span>;
+      <span class="kw">let </span>minimum_era_index_as_blocknumber =
+        T::BlockNumber::from(current_era.index).saturating_sub(eras_in_cooldown);
+
+      <span class="comment">// Unable to claim previous era&#39;s if the `T::Cooldown` cooldown isnt cleared
+      </span><span class="kw">if </span>T::BlockNumber::from(era_index) &gt;= minimum_era_index_as_blocknumber {
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::EraNotReady.into());
       }
 
