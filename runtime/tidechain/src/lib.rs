@@ -257,12 +257,15 @@ pub type Executive = frame_executive::Executive<
 
 pub struct MigrateTidefiStakingToV2;
 impl frame_support::traits::OnRuntimeUpgrade for MigrateTidefiStakingToV2 {
-  #[cfg(feature = "try-runtime")]
-  fn pre_upgrade() -> Result<(), &'static str> {
-    Ok(())
-  }
   fn on_runtime_upgrade() -> frame_support::weights::Weight {
-    pallet_tidefi_stake::migrations::v2::migrate::<Runtime, Fees>()
+    pallet_tidefi_stake::migrations::v2::migrate::<Runtime, TidefiStaking>()
+  }
+  #[cfg(feature = "try-runtime")]
+  fn post_upgrade() -> Result<(), &'static str> {
+    Ok(pallet_tidefi_stake::migrations::v2::post_migration::<
+      Runtime,
+      TidefiStaking,
+    >())
   }
 }
 

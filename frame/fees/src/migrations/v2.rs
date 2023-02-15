@@ -67,6 +67,12 @@ where
         &staking_pool_account_id,
         false,
       );
+      log::info!(
+        target: "runtime::fees",
+        "Balance of the {} staking pool: {}",
+        asset_symbol,
+        staking_balance,
+      );
 
       // balance of the fees pallet
       let fees_balance = <T as pallet_fees::Config>::CurrencyTidefi::reducible_balance(
@@ -74,10 +80,22 @@ where
         &fees_account_id,
         false,
       );
+      log::info!(
+        target: "runtime::fees",
+        "Balance of the {} fees account: {}",
+        asset_symbol,
+        fees_balance,
+      );
 
       if let Some((principal, _)) = staking_pool_size.get(&currency_id) {
         if staking_balance < *principal {
           let missing_funds = principal.saturating_sub(staking_balance);
+          log::info!(
+            target: "runtime::fees",
+            "Missing {} {} in the staking pool",
+            missing_funds,
+            asset_symbol,
+          );
           if missing_funds > 0 && missing_funds <= fees_balance {
             let result = <T as pallet_fees::Config>::CurrencyTidefi::transfer(
               currency_id,
@@ -100,7 +118,7 @@ where
               "Staking pool for {} balance match {}={}",
               asset_symbol,
               staking_balance,
-              principal
+              principal,
             );
           }
 
