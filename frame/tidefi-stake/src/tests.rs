@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Balance, Event as MockEvent, FeeAmount, MarketMakerFeeAmount,
-    Oracle, Origin, Security, StakeAccountCap, System, Test, Tidefi, TidefiStaking,
+    new_test_ext, AccountId, Adapter, Event as MockEvent, FeeAmount, MarketMakerFeeAmount, Oracle,
+    Origin, Security, StakeAccountCap, System, Test, Tidefi, TidefiStaking,
   },
   pallet as pallet_tidefi_stake, AccountStakes, Error, PendingStoredSessions, QueueUnstake,
   SessionTotalFees, StakingPool,
@@ -37,8 +37,10 @@ use sp_runtime::{
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{OracleExt, StakingExt},
-  BlockNumber, CurrencyId, Hash, Stake, StakeStatus, SwapConfirmation, SwapStatus, SwapType,
+  Balance, CurrencyId, Hash, Stake, StakeStatus, SwapConfirmation, SwapStatus, SwapType,
 };
+
+type BlockNumber = u64;
 
 const TEST_TOKEN: u32 = 2;
 const TEST_TOKEN_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEST_TOKEN);
@@ -61,10 +63,10 @@ const ONE_TDFY: Balance = 1_000_000_000_000;
 const ONE_TEST_TOKEN: Balance = 100_000_000;
 
 // Test Accounts
-const ALICE_ACCOUNT_ID: AccountId = 1;
-const BOB_ACCOUNT_ID: AccountId = 2;
-const CHARLIE_ACCOUNT_ID: AccountId = 3;
-const OPERATOR_ACCOUNT_ID: AccountId = 100;
+const ALICE_ACCOUNT_ID: AccountId = AccountId(1);
+const BOB_ACCOUNT_ID: AccountId = AccountId(2);
+const CHARLIE_ACCOUNT_ID: AccountId = AccountId(3);
+const OPERATOR_ACCOUNT_ID: AccountId = AccountId(100);
 
 const ALICE_INITIAL_ONE_THOUSAND_TDFYS: Balance = 1_000 * ONE_TDFY;
 const ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS: Balance = 1_000 * ONE_TEST_TOKEN;

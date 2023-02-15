@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, Adapter, Assets, Balances, Event as MockEvent, ExistentialDeposit, Fees, Oracle,
-    Origin, Quorum, Sunrise, SwapLimitByAccount, System, Test, Tidefi,
+    new_test_ext, AccountId, Adapter, Assets, Balances, Event as MockEvent, ExistentialDeposit,
+    Fees, Oracle, Origin, Quorum, Sunrise, SwapLimitByAccount, System, Test, Tidefi,
   },
   pallet::*,
 };
@@ -38,12 +38,11 @@ use tidefi_primitives::{
   Withdrawal,
 };
 
-type AccountId = u64;
 type BlockNumber = u64;
 
-const ALICE_ACCOUNT_ID: AccountId = 1;
-const BOB_ACCOUNT_ID: AccountId = 2;
-const CHARLIE_ACCOUNT_ID: AccountId = 3;
+const ALICE_ACCOUNT_ID: AccountId = AccountId(1);
+const BOB_ACCOUNT_ID: AccountId = AccountId(2);
+const CHARLIE_ACCOUNT_ID: AccountId = AccountId(3);
 
 const ONE_TDFY: u128 = 1_000_000_000_000;
 
@@ -458,7 +457,7 @@ mod transfer {
           .create_temp_asset_and_metadata()
           .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
 
-        let invalid_sender: AccountId = 10;
+        let invalid_sender = AccountId(10);
         assert_noop!(
           Tidefi::transfer(
             Origin::signed(invalid_sender),
@@ -1205,9 +1204,8 @@ mod cancel_swap {
           .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
           .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
-        const UNKNOWN_ACCOUNT: u64 = 100;
         assert_noop!(
-          Tidefi::cancel_swap(Origin::signed(UNKNOWN_ACCOUNT), context.request_id),
+          Tidefi::cancel_swap(Origin::signed(AccountId(100)), context.request_id),
           OracleError::<Test>::AccessDenied
         );
       });
