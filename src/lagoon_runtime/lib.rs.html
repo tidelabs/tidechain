@@ -420,7 +420,10 @@
   <span class="kw">pub const </span>FeesPalletId: PalletId = PalletId(<span class="kw-2">*</span><span class="string">b&quot;py/wfees&quot;</span>);
   <span class="kw">pub const </span>SunrisePalletId: PalletId = PalletId(<span class="kw-2">*</span><span class="string">b&quot;py/sunrp&quot;</span>);
   <span class="kw">pub const </span>TreasuryPalletId: PalletId = PalletId(<span class="kw-2">*</span><span class="string">b&quot;py/trsry&quot;</span>);
-}
+  <span class="comment">// Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
+  // current_era.start_block + Cooldown &lt; current_block to be able to claim last era sunrise reward
+  </span><span class="kw">pub const </span>SunriseCooldown: BlockNumber = <span class="number">1_200</span>; <span class="comment">// 2 hours
+</span>}
 
 <span class="kw">impl </span>pallet_sudo::Config <span class="kw">for </span>Runtime {
   <span class="kw">type </span>Event = Event;
@@ -534,35 +537,32 @@
   frame_system::ChainContext&lt;Runtime&gt;,
   Runtime,
   AllPalletsWithSystem,
-  (MigrateTidefiStakingToV2,),
+  (MigrateTidefiStakingToV2, MigrateFeesToV2),
 &gt;;
 
 <span class="kw">pub struct </span>MigrateTidefiStakingToV2;
 <span class="kw">impl </span>frame_support::traits::OnRuntimeUpgrade <span class="kw">for </span>MigrateTidefiStakingToV2 {
-  <span class="attribute">#[cfg(feature = <span class="string">&quot;try-runtime&quot;</span>)]
-  </span><span class="kw">fn </span>pre_upgrade() -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
-    <span class="prelude-val">Ok</span>(())
-  }
   <span class="kw">fn </span>on_runtime_upgrade() -&gt; frame_support::weights::Weight {
-    pallet_tidefi_stake::migrations::v2::migrate::&lt;Runtime, Fees&gt;()
+    pallet_tidefi_stake::migrations::v2::migrate::&lt;Runtime, TidefiStaking&gt;()
+  }
+  <span class="attribute">#[cfg(feature = <span class="string">&quot;try-runtime&quot;</span>)]
+  </span><span class="kw">fn </span>post_upgrade() -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+    <span class="prelude-val">Ok</span>(pallet_tidefi_stake::migrations::v2::post_migration::&lt;
+      Runtime,
+      TidefiStaking,
+    &gt;())
   }
 }
 
-<span class="comment">/*
-/// A migration which renames the pallet `BagsList` to `VoterList`
-pub struct RenameBagsListToVoterList;
-impl frame_support::traits::OnRuntimeUpgrade for RenameBagsListToVoterList {
-  #[cfg(feature = &quot;try-runtime&quot;)]
-  fn pre_upgrade() -&gt; Result&lt;(), &amp;&#39;static str&gt; {
-    // For other pre-upgrade checks, we need the storage to already be migrated.
-    frame_support::storage::migration::move_pallet(b&quot;BagsList&quot;, b&quot;VoterList&quot;);
-    Ok(())
+<span class="kw">pub struct </span>MigrateFeesToV2;
+<span class="kw">impl </span>frame_support::traits::OnRuntimeUpgrade <span class="kw">for </span>MigrateFeesToV2 {
+  <span class="kw">fn </span>on_runtime_upgrade() -&gt; frame_support::weights::Weight {
+    pallet_fees::migrations::v2::migrate::&lt;Runtime, Fees&gt;()
   }
-  fn on_runtime_upgrade() -&gt; frame_support::weights::Weight {
-    frame_support::storage::migration::move_pallet(b&quot;BagsList&quot;, b&quot;VoterList&quot;);
-    frame_support::weights::Weight::MAX
+  <span class="attribute">#[cfg(feature = <span class="string">&quot;try-runtime&quot;</span>)]
+  </span><span class="kw">fn </span>post_upgrade() -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+    <span class="prelude-val">Ok</span>(pallet_fees::migrations::v2::post_migration::&lt;Runtime, Fees&gt;())
   }
 }
-*/
-</span></code></pre></div>
+</code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="lagoon_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

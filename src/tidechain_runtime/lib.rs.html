@@ -281,6 +281,7 @@
 <span id="281">281</span>
 <span id="282">282</span>
 <span id="283">283</span>
+<span id="284">284</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.
 // This file is part of Tidechain.
 
@@ -327,23 +328,7 @@
 
 <span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">pub use </span><span class="kw">crate</span>::api::{api::dispatch, RuntimeApi};
-<span class="comment">// Copyright 2021-2022 Semantic Network Ltd.
-// This file is part of Tidechain.
-
-// Tidechain is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Tidechain is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Tidechain.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
-
-</span><span class="kw">pub use </span><span class="kw">crate</span>::types::{
+<span class="kw">pub use </span><span class="kw">crate</span>::types::{
   AccountId, AccountIndex, Address, AssetId, Balance, Block, BlockId, BlockNumber,
   CheckedExtrinsic, Hash, Header, Moment, Nonce, Signature, SignedBlock, SignedExtra,
   SignedPayload, UncheckedExtrinsic, BABE_GENESIS_EPOCH_CONFIG,
@@ -436,7 +421,10 @@
   <span class="kw">pub const </span>FeesPalletId: PalletId = PalletId(<span class="kw-2">*</span><span class="string">b&quot;py/wfees&quot;</span>);
   <span class="kw">pub const </span>SunrisePalletId: PalletId = PalletId(<span class="kw-2">*</span><span class="string">b&quot;py/sunrp&quot;</span>);
   <span class="kw">pub const </span>TreasuryPalletId: PalletId = PalletId(<span class="kw-2">*</span><span class="string">b&quot;py/trsry&quot;</span>);
-}
+  <span class="comment">// Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
+  // current_era.start_block + Cooldown &lt; current_block to be able to claim last era sunrise reward
+  </span><span class="kw">pub const </span>SunriseCooldown: BlockNumber = <span class="number">1_296_000</span>; <span class="comment">// 90 days
+</span>}
 
 <span class="comment">// FIXME: Should be removed once we&#39;ll give control to the community (governance)
 </span><span class="kw">impl </span>pallet_sudo::Config <span class="kw">for </span>Runtime {
@@ -551,17 +539,31 @@
   frame_system::ChainContext&lt;Runtime&gt;,
   Runtime,
   AllPalletsWithSystem,
-  (MigrateTidefiStakingToV2,),
+  (MigrateTidefiStakingToV2, MigrateFeesToV2),
 &gt;;
 
 <span class="kw">pub struct </span>MigrateTidefiStakingToV2;
 <span class="kw">impl </span>frame_support::traits::OnRuntimeUpgrade <span class="kw">for </span>MigrateTidefiStakingToV2 {
-  <span class="attribute">#[cfg(feature = <span class="string">&quot;try-runtime&quot;</span>)]
-  </span><span class="kw">fn </span>pre_upgrade() -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
-    <span class="prelude-val">Ok</span>(())
-  }
   <span class="kw">fn </span>on_runtime_upgrade() -&gt; frame_support::weights::Weight {
-    pallet_tidefi_stake::migrations::v2::migrate::&lt;Runtime, Fees&gt;()
+    pallet_tidefi_stake::migrations::v2::migrate::&lt;Runtime, TidefiStaking&gt;()
+  }
+  <span class="attribute">#[cfg(feature = <span class="string">&quot;try-runtime&quot;</span>)]
+  </span><span class="kw">fn </span>post_upgrade() -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+    <span class="prelude-val">Ok</span>(pallet_tidefi_stake::migrations::v2::post_migration::&lt;
+      Runtime,
+      TidefiStaking,
+    &gt;())
+  }
+}
+
+<span class="kw">pub struct </span>MigrateFeesToV2;
+<span class="kw">impl </span>frame_support::traits::OnRuntimeUpgrade <span class="kw">for </span>MigrateFeesToV2 {
+  <span class="kw">fn </span>on_runtime_upgrade() -&gt; frame_support::weights::Weight {
+    pallet_fees::migrations::v2::migrate::&lt;Runtime, Fees&gt;()
+  }
+  <span class="attribute">#[cfg(feature = <span class="string">&quot;try-runtime&quot;</span>)]
+  </span><span class="kw">fn </span>post_upgrade() -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+    <span class="prelude-val">Ok</span>(pallet_fees::migrations::v2::post_migration::&lt;Runtime, Fees&gt;())
   }
 }
 </code></pre></div>

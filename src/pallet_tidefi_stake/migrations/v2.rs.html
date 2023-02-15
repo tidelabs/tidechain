@@ -77,16 +77,55 @@
 <span id="77">77</span>
 <span id="78">78</span>
 <span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
 </pre><pre class="rust"><code><span class="kw">use crate as </span>pallet_tidefi_stake;
 <span class="kw">use </span>frame_support::{
   pallet_prelude::ValueQuery,
   storage_alias,
-  traits::{Get, GetStorageVersion, PalletInfoAccess},
+  traits::{Get, GetStorageVersion, PalletInfoAccess, StorageVersion},
   weights::Weight,
 };
 <span class="kw">use </span>hex_literal::hex;
-<span class="kw">use </span>sp_std::vec::Vec;
-<span class="kw">use </span>tidefi_primitives::Hash;
+<span class="kw">use </span>sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+<span class="kw">use </span>tidefi_primitives::{assets::Asset, Balance, CurrencyId, Hash};
 
 <span class="comment">// old storage queue
 </span><span class="attribute">#[storage_alias]
@@ -113,11 +152,12 @@
     on_chain_storage_version,
   );
   <span class="kw">if </span>on_chain_storage_version &lt; <span class="number">2 </span>{
-    <span class="comment">// update `PendingStoredSessions`
-    </span><span class="kw">let </span>stored_session_size = pallet_tidefi_stake::PendingStoredSessions::&lt;T&gt;::count();
+    <span class="kw">let </span><span class="kw-2">mut </span>staking_pool_size: BTreeMap&lt;CurrencyId, Balance&gt; = BTreeMap::new();
+    <span class="kw">let </span>stored_session_size = pallet_tidefi_stake::PendingStoredSessions::&lt;T&gt;::count();
     <span class="kw">let </span><span class="kw-2">mut </span>unstake_queue_size: u32 = <span class="number">0</span>;
 
-    pallet_tidefi_stake::PendingStoredSessions::&lt;T&gt;::translate(|<span class="kw">_</span>, <span class="kw">_</span>: ()| <span class="prelude-val">Some</span>(Default::default()));
+    <span class="comment">// update `PendingStoredSessions`
+    </span>pallet_tidefi_stake::PendingStoredSessions::&lt;T&gt;::translate(|<span class="kw">_</span>, <span class="kw">_</span>: ()| <span class="prelude-val">Some</span>(Default::default()));
 
     <span class="comment">// migrate unstake queue
     </span>UnstakeQueue::&lt;T&gt;::take()
@@ -126,19 +166,53 @@
         pallet_tidefi_stake::QueueUnstake::&lt;T&gt;::insert(hash, (account_id, expected_end));
         unstake_queue_size += <span class="number">1</span>;
       });
+    UnstakeQueue::&lt;T&gt;::kill();
 
     <span class="comment">// add default operator
     </span>pallet_tidefi_stake::OperatorAccountId::&lt;T&gt;::put::&lt;T::AccountId&gt;(
       <span class="macro">hex!</span>[<span class="string">&quot;8e14d1ac896ea00e18d855588ee13103449cc6e41d4b0173d917cabea84bdb08&quot;</span>].into(),
     );
 
+    <span class="kw">let </span>expected_stored_session_rw = stored_session_size.saturating_mul(<span class="number">2</span>).into();
+    <span class="kw">let </span>expected_unstake_queue_rw = unstake_queue_size.saturating_mul(<span class="number">2</span>).into();
     weight = weight
       .saturating_add(
-        T::DbWeight::get().reads_writes(stored_session_size.into(), stored_session_size.into()),
+        T::DbWeight::get().reads_writes(expected_stored_session_rw, expected_stored_session_rw),
       )
       .saturating_add(
-        T::DbWeight::get().reads_writes(unstake_queue_size.into(), unstake_queue_size.into()),
+        T::DbWeight::get().reads_writes(expected_unstake_queue_rw, expected_unstake_queue_rw),
       );
+
+    <span class="comment">// recompute staking pool including principal inside a btreemap
+    </span>pallet_tidefi_stake::AccountStakes::&lt;T&gt;::iter().for_each(|(<span class="kw">_</span>, stakes)| {
+      stakes.iter().for_each(|stake| {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(principal) = staking_pool_size.get_mut(<span class="kw-2">&amp;</span>stake.currency_id) {
+          <span class="kw-2">*</span>principal = principal.saturating_add(stake.principal);
+        } <span class="kw">else </span>{
+          staking_pool_size.insert(stake.currency_id, stake.principal);
+        }
+        weight = weight.saturating_add(T::DbWeight::get().reads_writes(<span class="number">1</span>, <span class="number">1</span>));
+      });
+    });
+
+    <span class="comment">// update our staking pool storage once everything has been computed
+    </span>pallet_tidefi_stake::StakingPool::&lt;T&gt;::translate(|currency_id, balance: Balance| {
+      <span class="kw">let </span>asset: Asset = currency_id.try_into().expect(<span class="string">&quot;valid currency&quot;</span>);
+      <span class="kw">let </span>new_balance = staking_pool_size.get(<span class="kw-2">&amp;</span>currency_id).unwrap_or(<span class="kw-2">&amp;</span>balance);
+
+      <span class="macro">log::info!</span>(
+        target: <span class="string">&quot;runtime::tidefi-stake&quot;</span>,
+        <span class="string">&quot;Updated {} staking pool from {} to {} (including rewards)&quot;</span>,
+        asset.symbol(),
+        balance,
+        new_balance
+      );
+
+      weight = weight.saturating_add(T::DbWeight::get().reads_writes(<span class="number">1</span>, <span class="number">1</span>));
+      <span class="prelude-val">Some</span>(<span class="kw-2">*</span>new_balance)
+    });
+
+    StorageVersion::new(<span class="number">2</span>).put::&lt;P&gt;();
 
     <span class="macro">log::info!</span>(
       target: <span class="string">&quot;runtime::tidefi-stake&quot;</span>,
@@ -155,6 +229,10 @@
   }
 
   weight
+}
+
+<span class="kw">pub fn </span>post_migration&lt;T: pallet_tidefi_stake::Config, P: GetStorageVersion + PalletInfoAccess&gt;() {
+  <span class="macro">assert_eq!</span>(&lt;P <span class="kw">as </span>GetStorageVersion&gt;::on_chain_storage_version(), <span class="number">2</span>);
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="pallet_tidefi_stake" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

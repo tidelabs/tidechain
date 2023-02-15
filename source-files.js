@@ -300,7 +300,7 @@ var sourcesIndex = JSON.parse('{\
 "pallet_democracy":["",[],["conviction.rs","lib.rs","types.rs","vote.rs","vote_threshold.rs","weights.rs"]],\
 "pallet_election_provider_multi_phase":["",[],["helpers.rs","lib.rs","signed.rs","unsigned.rs","weights.rs"]],\
 "pallet_elections_phragmen":["",[["migrations",[],["mod.rs","v3.rs","v4.rs","v5.rs"]]],["lib.rs","weights.rs"]],\
-"pallet_fees":["",[],["lib.rs","weights.rs"]],\
+"pallet_fees":["",[["migrations",[],["mod.rs","v2.rs"]]],["lib.rs","weights.rs"]],\
 "pallet_grandpa":["",[["migrations",[],["v4.rs"]]],["default_weights.rs","equivocation.rs","lib.rs","migrations.rs"]],\
 "pallet_identity":["",[],["lib.rs","types.rs","weights.rs"]],\
 "pallet_im_online":["",[],["lib.rs","weights.rs"]],\
