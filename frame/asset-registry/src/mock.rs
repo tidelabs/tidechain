@@ -119,7 +119,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         Vec::new(),
       ),
     ],
-    account: 0.into(),
+    account: 0_u64.into(),
   }
   .assimilate_storage(&mut t)
   .unwrap();

@@ -108,7 +108,7 @@ struct Context {
 impl Default for Context {
   fn default() -> Self {
     let fees_account_id = Fees::account_id();
-    assert_eq!(fees_account_id, 8246216774960574317.into());
+    assert_eq!(fees_account_id, 8246216774960574317_u64.into());
 
     Self {
       alice: Origin::signed(ALICE_ACCOUNT_ID),
