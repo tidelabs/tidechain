@@ -48,7 +48,6 @@ use tidefi_primitives::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
-
 #[derive(
   Encode,
   Decode,
@@ -66,15 +65,21 @@ type Balance = u128;
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
 pub struct AccountId(pub u64);
 
-impl sp_std::fmt::Display for AccountId {
-  fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
-    write!(f, "{}", self.0)
+impl From<[u8; 32]> for AccountId {
+  fn from(x: [u8; 32]) -> Self {
+    Self(x[0].saturating_mul(x[24]) as u64)
   }
 }
 
 impl From<u64> for AccountId {
   fn from(account_id: u64) -> Self {
     Self(account_id)
+  }
+}
+
+impl sp_std::fmt::Display for AccountId {
+  fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
+    write!(f, "{}", self.0)
   }
 }
 

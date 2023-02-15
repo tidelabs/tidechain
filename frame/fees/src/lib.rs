@@ -28,6 +28,8 @@ pub use weights::*;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+pub mod migrations;
+
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
@@ -68,7 +70,7 @@ pub mod pallet {
   };
 
   /// The current storage version.
-  const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+  const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
   type BoundedAccountFees = BoundedVec<(CurrencyId, Fee), ConstU32<1_000>>;
 
