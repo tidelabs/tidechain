@@ -68,6 +68,13 @@ macro_rules! construct_mock_runtime {
           Self(account_id as u64)
         }
       }
+      // random adresss bytes (0 * 1) + 31
+      impl From<[u8; 32]> for AccountId {
+         fn from(account_id: [u8; 32]) -> Self {
+           Self(account_id[0].saturating_mul(account_id[1]).saturating_add(account_id[31]) as u64)
+         }
+       }
+
       // Configure a mock runtime to test the pallet.
       frame_support::construct_runtime!(
         pub enum Test where

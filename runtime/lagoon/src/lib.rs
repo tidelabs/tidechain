@@ -251,33 +251,30 @@ pub type Executive = frame_executive::Executive<
   frame_system::ChainContext<Runtime>,
   Runtime,
   AllPalletsWithSystem,
-  (MigrateTidefiStakingToV2,),
+  (MigrateTidefiStakingToV2, MigrateFeesToV2),
 >;
 
 pub struct MigrateTidefiStakingToV2;
 impl frame_support::traits::OnRuntimeUpgrade for MigrateTidefiStakingToV2 {
-  #[cfg(feature = "try-runtime")]
-  fn pre_upgrade() -> Result<(), &'static str> {
-    Ok(())
-  }
   fn on_runtime_upgrade() -> frame_support::weights::Weight {
-    pallet_tidefi_stake::migrations::v2::migrate::<Runtime, Fees>()
+    pallet_tidefi_stake::migrations::v2::migrate::<Runtime, TidefiStaking>()
+  }
+  #[cfg(feature = "try-runtime")]
+  fn post_upgrade() -> Result<(), &'static str> {
+    Ok(pallet_tidefi_stake::migrations::v2::post_migration::<
+      Runtime,
+      TidefiStaking,
+    >())
   }
 }
 
-/*
-/// A migration which renames the pallet `BagsList` to `VoterList`
-pub struct RenameBagsListToVoterList;
-impl frame_support::traits::OnRuntimeUpgrade for RenameBagsListToVoterList {
-  #[cfg(feature = "try-runtime")]
-  fn pre_upgrade() -> Result<(), &'static str> {
-    // For other pre-upgrade checks, we need the storage to already be migrated.
-    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
-    Ok(())
-  }
+pub struct MigrateFeesToV2;
+impl frame_support::traits::OnRuntimeUpgrade for MigrateFeesToV2 {
   fn on_runtime_upgrade() -> frame_support::weights::Weight {
-    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
-    frame_support::weights::Weight::MAX
+    pallet_fees::migrations::v2::migrate::<Runtime, Fees>()
+  }
+  #[cfg(feature = "try-runtime")]
+  fn post_upgrade() -> Result<(), &'static str> {
+    Ok(pallet_fees::migrations::v2::post_migration::<Runtime, Fees>())
   }
 }
-*/
