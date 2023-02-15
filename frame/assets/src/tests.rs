@@ -521,13 +521,16 @@ fn transfer_owner_should_work() {
   new_test_ext().execute_with(|| {
     Balances::make_free_balance_be(&1, 100);
     Balances::make_free_balance_be(&2, 100);
-    assert_ok!(Assets::create(Origin::signed(1), 0, 1, 1));
-
-    assert_eq!(Balances::reserved_balance(&1), 1);
+    assert_ok!(Assets::force_create(Origin::root(), 0, 1, true, 1));
 
     assert_ok!(Assets::transfer_ownership(Origin::signed(1), 0, 2));
-    assert_eq!(Balances::reserved_balance(&2), 1);
-    assert_eq!(Balances::reserved_balance(&1), 0);
+
+    assert_eq!(
+      Assets::asset_details(0)
+        .map(|x| x.owner)
+        .unwrap_or_default(),
+      2
+    );
 
     assert_noop!(
       Assets::transfer_ownership(Origin::signed(1), 0, 1),
@@ -543,8 +546,6 @@ fn transfer_owner_should_work() {
       12
     ));
     assert_ok!(Assets::transfer_ownership(Origin::signed(2), 0, 1));
-    assert_eq!(Balances::reserved_balance(&1), 22);
-    assert_eq!(Balances::reserved_balance(&2), 0);
   });
 }
 
@@ -864,7 +865,7 @@ fn force_asset_status_should_work() {
   new_test_ext().execute_with(|| {
     Balances::make_free_balance_be(&1, 10);
     Balances::make_free_balance_be(&2, 10);
-    assert_ok!(Assets::create(Origin::signed(1), 0, 1, 30));
+    assert_ok!(Assets::force_create(Origin::root(), 0, 1, true, 30));
     assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 50));
     assert_ok!(Assets::mint(Origin::signed(1), 0, 2, 150));
 

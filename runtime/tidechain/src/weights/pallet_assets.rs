@@ -47,12 +47,6 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_assets::WeightInfo for WeightInfo<T> {
 	// Storage: Assets Asset (r:1 w:1)
-	fn create() -> Weight {
-		(43_133_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	// Storage: Assets Asset (r:1 w:1)
 	fn force_create() -> Weight {
 		(23_550_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))

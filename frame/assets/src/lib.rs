@@ -43,7 +43,6 @@
 //! * Asset Issuance (Minting)
 //! * Asset Transferal
 //! * Asset Freezing
-//! * Asset Destruction (Burning)
 //! * Delegated Asset Transfers ("Approval API")
 //!
 //! To use it in your runtime, you need to implement the assets [`Config`].
@@ -59,8 +58,6 @@
 //!   account that issues the asset. This is a privileged operation.
 //! * **Asset transfer**: The reduction of the balance of an asset of one account with the
 //!   corresponding increase in the balance of another.
-//! * **Asset destruction**: The process of reduce the balance of an asset of one account. This is a
-//!   privileged operation.
 //! * **Fungible asset**: An asset whose units are interchangeable.
 //! * **Issuer**: An account ID uniquely privileged to be able to mint a particular class of assets.
 //! * **Freezer**: An account ID uniquely privileged to be able to freeze an account from
@@ -68,8 +65,8 @@
 //! * **Freezing**: Removing the possibility of an unpermissioned transfer of an asset from a
 //!   particular account.
 //! * **Non-fungible asset**: An asset for which each unit has unique characteristics.
-//! * **Owner**: An account ID uniquely privileged to be able to destroy a particular asset class,
-//!   or to set the Issuer, Freezer or Admin of that asset class.
+//! * **Owner**: An account ID uniquely privileged to be able to set the Issuer, Freezer,
+//!   or Admin of that asset class.
 //! * **Approval**: The act of allowing an account the permission to transfer some balance of asset
 //!   from the approving account into some third-party destination account.
 //! * **Sufficiency**: The idea of a minimum-balance of an asset being sufficient to allow the
@@ -110,7 +107,6 @@
 //! * `force_cancel_approval`: Rescind a previous approval.
 //!
 //! ### Privileged Functions
-//! * `destroy`: Destroys an entire asset class; called by the asset class's Owner.
 //! * `mint`: Increases the asset balance of an account; called by the asset class's Issuer.
 //! * `burn`: Decreases the asset balance of an account; called by the asset class's Admin.
 //! * `force_transfer`: Transfers between arbitrary accounts; called by the asset class's Admin.
@@ -171,7 +167,6 @@ use sp_std::{borrow::Borrow, prelude::*};
 use frame_support::{
   dispatch::{DispatchError, DispatchResult},
   ensure,
-  pallet_prelude::DispatchResultWithPostInfo,
   traits::{
     tokens::{fungibles, DepositConsequence, WithdrawConsequence},
     BalanceStatus::Reserved,
@@ -222,7 +217,7 @@ pub mod pallet {
     /// The currency mechanism.
     type Currency: ReservableCurrency<Self::AccountId>;
 
-    /// The origin which may forcibly create or destroy an asset or otherwise alter privileged
+    /// The origin which may forcibly create an asset or otherwise alter privileged
     /// attributes.
     type ForceOrigin: EnsureOrigin<Self::Origin>;
 
@@ -449,8 +444,6 @@ pub mod pallet {
     AssetFrozen { asset_id: T::AssetId },
     /// Some asset `asset_id` was thawed.
     AssetThawed { asset_id: T::AssetId },
-    /// An asset class was destroyed.
-    Destroyed { asset_id: T::AssetId },
     /// Some asset class was force-created.
     ForceCreated {
       asset_id: T::AssetId,
@@ -536,66 +529,6 @@ pub mod pallet {
 
   #[pallet::call]
   impl<T: Config<I>, I: 'static> Pallet<T, I> {
-    /// Issue a new class of fungible assets from a public origin.
-    ///
-    /// This new asset class has no assets initially and its owner is the origin.
-    ///
-    /// The origin must be Signed and the sender must have sufficient funds free.
-    ///
-    /// Funds of sender are reserved by `AssetDeposit`.
-    ///
-    /// Parameters:
-    /// - `id`: The identifier of the new asset. This must not be currently in use to identify
-    /// an existing asset.
-    /// - `admin`: The admin of this class of assets. The admin is the initial address of each
-    /// member of the asset class's admin team.
-    /// - `min_balance`: The minimum balance of this new asset that any single account must
-    /// have. If an account's balance is reduced below this, then it collapses to zero.
-    ///
-    /// Emits `Created` event when successful.
-    ///
-    /// Weight: `O(1)`
-    #[pallet::weight(T::WeightInfo::create())]
-    pub fn create(
-      origin: OriginFor<T>,
-      #[pallet::compact] id: T::AssetId,
-      admin: <T::Lookup as StaticLookup>::Source,
-      min_balance: T::Balance,
-    ) -> DispatchResult {
-      let owner = ensure_signed(origin)?;
-      let admin = T::Lookup::lookup(admin)?;
-
-      ensure!(!Asset::<T, I>::contains_key(id), Error::<T, I>::InUse);
-      ensure!(!min_balance.is_zero(), Error::<T, I>::MinBalanceZero);
-
-      let deposit = T::AssetDeposit::get();
-      T::Currency::reserve(&owner, deposit)?;
-
-      Asset::<T, I>::insert(
-        id,
-        AssetDetails {
-          owner: owner.clone(),
-          issuer: admin.clone(),
-          admin: admin.clone(),
-          freezer: admin.clone(),
-          supply: Zero::zero(),
-          deposit,
-          min_balance,
-          is_sufficient: false,
-          accounts: 0,
-          sufficients: 0,
-          approvals: 0,
-          is_frozen: false,
-        },
-      );
-      Self::deposit_event(Event::Created {
-        asset_id: id,
-        creator: owner,
-        owner: admin,
-      });
-      Ok(())
-    }
-
     /// Issue a new class of fungible assets from a privileged origin.
     ///
     /// This new asset class has no assets initially.
@@ -626,16 +559,6 @@ pub mod pallet {
       T::ForceOrigin::ensure_origin(origin)?;
       let owner = T::Lookup::lookup(owner)?;
       Self::do_force_create(id, owner, is_sufficient, min_balance)
-    }
-
-    /// Destroy are disabled in Tidechain
-    #[pallet::weight(100_000)]
-    pub fn destroy(
-      _origin: OriginFor<T>,
-      #[pallet::compact] _id: T::AssetId,
-      _witness: DestroyWitness,
-    ) -> DispatchResultWithPostInfo {
-      Ok(Some(100_000).into())
     }
 
     /// Mint assets of a particular class.

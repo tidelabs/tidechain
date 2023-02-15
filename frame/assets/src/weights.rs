@@ -61,7 +61,6 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for `pallet_assets`.
 pub trait WeightInfo {
-	fn create() -> Weight;
 	fn force_create() -> Weight;
 	fn mint() -> Weight;
 	fn burn() -> Weight;
@@ -88,12 +87,6 @@ pub trait WeightInfo {
 /// Weights for `pallet_assets` using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	// Storage: Assets Asset (r:1 w:1)
-	fn create() -> Weight {
-		41_651_000_u64
-			.saturating_add(T::DbWeight::get().reads(1_u64))
-			.saturating_add(T::DbWeight::get().writes(1_u64))
-	}
 	// Storage: Assets Asset (r:1 w:1)
 	fn force_create() -> Weight {
 		21_378_000_u64
@@ -251,12 +244,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	// Storage: Assets Asset (r:1 w:1)
-	fn create() -> Weight {
-		41_651_000_u64
-			.saturating_add(RocksDbWeight::get().reads(1_u64))
-			.saturating_add(RocksDbWeight::get().writes(1_u64))
-	}
 	// Storage: Assets Asset (r:1 w:1)
 	fn force_create() -> Weight {
 		21_378_000_u64
