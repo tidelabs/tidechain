@@ -9,7 +9,7 @@ use frame_support::{
 use hex_literal::hex;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::collections::btree_map::BTreeMap;
-use tidefi_primitives::{Balance, CurrencyId};
+use tidefi_primitives::{assets::Asset, Balance, CurrencyId};
 
 pub fn migrate<
   T: pallet_fees::Config + pallet_tidefi_stake::Config + pallet_assets::Config,
@@ -50,11 +50,18 @@ where
     log::info!(
       target: "runtime::fees",
       "Expected staking pool {:?}",
-      staking_pool_size,
+      staking_pool_size.iter().map(|(currency_id, b)| {
+        let asset: Asset = currency_id.clone().try_into().expect("valid currency");
+        let asset_symbol = asset.symbol();
+        (asset_symbol, b)
+      }),
     );
 
     // transfer assets to staking pool or to operator account
     pallet_tidefi_stake::StakingCurrencyMeta::<T>::iter_keys().for_each(|currency_id| {
+      let asset: Asset = currency_id.try_into().expect("valid currency");
+      let asset_symbol = asset.symbol();
+
       // balance of the staking pool
       let staking_balance = <T as pallet_fees::Config>::CurrencyTidefi::reducible_balance(
         currency_id,
@@ -83,16 +90,16 @@ where
 
             log::info!(
               target: "runtime::fees",
-              "Transfered {} {:?} from fees to staking pallet; outcome: {:?}",
+              "Transfered {} {} from fees to staking pallet; outcome: {:?}",
               missing_funds,
-              currency_id,
+              asset_symbol,
               result
             );
           } else {
             log::info!(
               target: "runtime::fees",
-              "Staking pool for {:?} balance match {}={}",
-              currency_id,
+              "Staking pool for {} balance match {}={}",
+              asset_symbol,
               staking_balance,
               principal
             );
@@ -111,23 +118,23 @@ where
 
             log::info!(
               target: "runtime::fees",
-              "Transfered {} {:?} from fees to operator account; outcome: {:?}",
+              "Transfered {} {} from fees to operator account; outcome: {:?}",
               funds_left,
-              currency_id,
+              asset_symbol,
               result
             );
           } else {
             log::info!(
               target: "runtime::fees",
-              "No funds left for {:?} in the fees pallet for the operator",
-              currency_id
+              "No funds left for {} in the fees pallet for the operator",
+              asset_symbol
             );
           }
         } else {
           log::info!(
             target: "runtime::fees",
-            "Staking pool for {:?} balance match {}={}",
-            currency_id,
+            "Staking pool for {} balance match {}={}",
+            asset_symbol,
             staking_balance,
             principal
           );
@@ -152,9 +159,8 @@ where
 
       log::info!(
         target: "runtime::fees",
-        "Transfered {} {:?} from fees to operator account; outcome: {:?}",
+        "Transfered {} TDFY from fees to operator account; outcome: {:?}",
         tdfy_fees_pallet_balance,
-        CurrencyId::Tdfy,
         result
       );
     }
