@@ -75,10 +75,10 @@ const ONE_ZEMP: u128 = 1_000_000_000_000_000_000;
 const ONE_TDFY: u128 = 1_000_000_000_000;
 
 // Test Accounts
-const ALICE_ACCOUNT_ID: AccountId = 1;
-const BOB_ACCOUNT_ID: AccountId = 2;
-const CHARLIE_ACCOUNT_ID: AccountId = 3;
-const DAVE_ACCOUNT_ID: AccountId = 4;
+const ALICE_ACCOUNT_ID: AccountId = AccountId(1);
+const BOB_ACCOUNT_ID: AccountId = AccountId(2);
+const CHARLIE_ACCOUNT_ID: AccountId = AccountId(3);
+const DAVE_ACCOUNT_ID: AccountId = AccountId(4);
 
 // Extrinsic Hashes
 const EXTRINSIC_HASH_0: [u8; 32] = [0; 32];
@@ -108,7 +108,7 @@ struct Context {
 impl Default for Context {
   fn default() -> Self {
     let fees_account_id = Fees::account_id();
-    assert_eq!(fees_account_id, 8246216774960574317);
+    assert_eq!(fees_account_id, 8246216774960574317_u64.into());
 
     Self {
       alice: Origin::signed(ALICE_ACCOUNT_ID),
