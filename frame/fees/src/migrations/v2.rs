@@ -160,6 +160,12 @@ where
     }
 
     StorageVersion::new(2).put::<P>();
+
+    log::info!(
+      target: "runtime::fees",
+      "Migrated fees balance successfully."
+    );
+
     <T as frame_system::Config>::BlockWeights::get().max_block
   } else {
     log::warn!(
