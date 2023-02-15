@@ -137,6 +137,9 @@ parameter_types! {
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
   pub const SunrisePalletId: PalletId = PalletId(*b"py/sunrp");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+  // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
+  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
+  pub const SunriseCooldown: BlockNumber = 1_296_000; // 90 days
 }
 
 // FIXME: Should be removed once we'll give control to the community (governance)
