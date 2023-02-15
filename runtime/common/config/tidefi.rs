@@ -19,7 +19,7 @@ use crate::{
   types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
   AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
   FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security, Sunrise,
-  SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
+  SunriseCooldown, SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
 };
 
 use frame_support::{
@@ -73,9 +73,6 @@ parameter_types! {
   pub const PubkeyLimitPerAsset: u32 = 10;
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 10_000;
-  // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
-  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
-  pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // Maximum sunrise rewards before rewards allocation (in TDFY's)
   pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
   // Rebates applied to left-over pool
@@ -239,7 +236,7 @@ impl pallet_sunrise::Config for Runtime {
   type Security = Security;
   type SunrisePalletId = SunrisePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
-  type Cooldown = Cooldown;
+  type Cooldown = SunriseCooldown;
   type MaximumRewardPerSwap = MaximumRewardPerSwap;
   type LeftoverSwapRebates = LeftoverSwapRebates;
 }
