@@ -8,7 +8,7 @@ use frame_support::{
 };
 use hex_literal::hex;
 use sp_runtime::traits::AccountIdConversion;
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use tidefi_primitives::{assets::Asset, Balance, CurrencyId};
 
 pub fn migrate<
@@ -52,9 +52,8 @@ where
       "Expected staking pool {:?}",
       staking_pool_size.iter().map(|(currency_id, b)| {
         let asset: Asset = currency_id.clone().try_into().expect("valid currency");
-        let asset_symbol = asset.symbol();
-        (asset_symbol, b)
-      }),
+        (asset.symbol(), *b)
+      }).collect::<Vec<_>>(),
     );
 
     // transfer assets to staking pool or to operator account
