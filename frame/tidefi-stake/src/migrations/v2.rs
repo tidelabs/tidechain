@@ -84,7 +84,7 @@ where
 
       log::info!(
         target: "runtime::tidefi-stake",
-        "Update {} staking pool from {} to {} (including rewards)",
+        "Updated {} staking pool from {} to {} (including rewards)",
         asset.symbol(),
         balance,
         new_balance
