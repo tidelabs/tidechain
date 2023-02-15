@@ -251,7 +251,7 @@ pub type Executive = frame_executive::Executive<
   frame_system::ChainContext<Runtime>,
   Runtime,
   AllPalletsWithSystem,
-  (MigrateTidefiStakingToV2, TransferFeesBalanceToStaking),
+  (MigrateTidefiStakingToV2, MigrateFeesToV2),
 >;
 
 pub struct MigrateTidefiStakingToV2;
@@ -268,8 +268,8 @@ impl frame_support::traits::OnRuntimeUpgrade for MigrateTidefiStakingToV2 {
   }
 }
 
-pub struct TransferFeesBalanceToStaking;
-impl frame_support::traits::OnRuntimeUpgrade for TransferFeesBalanceToStaking {
+pub struct MigrateFeesToV2;
+impl frame_support::traits::OnRuntimeUpgrade for MigrateFeesToV2 {
   fn on_runtime_upgrade() -> frame_support::weights::Weight {
     pallet_fees::migrations::v2::migrate::<Runtime, Fees>()
   }
