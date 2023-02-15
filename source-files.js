@@ -134,6 +134,7 @@ var sourcesIndex = JSON.parse('{\
 "frame_system":["",[["extensions",[],["check_genesis.rs","check_mortality.rs","check_non_zero_sender.rs","check_nonce.rs","check_spec_version.rs","check_tx_version.rs","check_weight.rs","mod.rs"]],["migrations",[],["mod.rs"]]],["lib.rs","limits.rs","mocking.rs","offchain.rs","weights.rs"]],\
 "frame_system_rpc_runtime_api":["",[],["lib.rs"]],\
 "frame_try_runtime":["",[],["lib.rs"]],\
+"frame_utils":["",[],["lib.rs"]],\
 "fs2":["",[],["lib.rs","unix.rs"]],\
 "fs_swap":["",[["platform",[],["linux.rs","mod.rs"]]],["lib.rs"]],\
 "funty":["",[],["lib.rs"]],\
