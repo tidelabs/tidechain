@@ -18,6 +18,8 @@ pub fn migrate<
 where
   <T as frame_system::Config>::AccountId: From<[u8; 32]>,
 {
+  let mut weight = T::DbWeight::get().reads_writes(3, 2);
+
   let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
   log::info!(
     target: "runtime::fees",
@@ -25,6 +27,8 @@ where
     on_chain_storage_version,
   );
   if on_chain_storage_version < 2 {
+    weight = weight.saturating_add(T::DbWeight::get().reads(5));
+
     let mut staking_pool_size: BTreeMap<CurrencyId, (Balance, Balance)> = BTreeMap::new();
 
     let staking_pool_account_id: T::AccountId =
@@ -44,6 +48,7 @@ where
         } else {
           staking_pool_size.insert(stake.currency_id, (stake.principal, stake.initial_balance));
         }
+        weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
       });
     });
 
@@ -87,6 +92,8 @@ where
         fees_balance,
       );
 
+      weight = weight.saturating_add(T::DbWeight::get().reads_writes(3, 2));
+
       if let Some((principal, _)) = staking_pool_size.get(&currency_id) {
         if staking_balance < *principal {
           let missing_funds = principal.saturating_sub(staking_balance);
@@ -112,6 +119,7 @@ where
               asset_symbol,
               result
             );
+            weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
           } else {
             log::info!(
               target: "runtime::fees",
@@ -140,6 +148,7 @@ where
               asset_symbol,
               result
             );
+            weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
           } else {
             log::info!(
               target: "runtime::fees",
@@ -180,6 +189,7 @@ where
         tdfy_fees_pallet_balance,
         result
       );
+      weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
     }
 
     StorageVersion::new(2).put::<P>();
@@ -188,16 +198,15 @@ where
       target: "runtime::fees",
       "Migrated fees balance successfully."
     );
-
-    <T as frame_system::Config>::BlockWeights::get().max_block
   } else {
     log::warn!(
       target: "runtime::fees",
       "Attempted to apply migration to v2 but failed because storage version is {:?}",
       on_chain_storage_version,
     );
-    0
   }
+
+  weight
 }
 
 pub fn post_migration<

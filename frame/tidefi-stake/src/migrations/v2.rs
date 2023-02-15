@@ -6,8 +6,8 @@ use frame_support::{
   weights::Weight,
 };
 use hex_literal::hex;
-use sp_std::vec::Vec;
-use tidefi_primitives::Hash;
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use tidefi_primitives::{assets::Asset, Balance, CurrencyId, Hash};
 
 // old storage queue
 #[storage_alias]
@@ -34,6 +34,7 @@ where
     on_chain_storage_version,
   );
   if on_chain_storage_version < 2 {
+    let mut staking_pool_size: BTreeMap<CurrencyId, Balance> = BTreeMap::new();
     let stored_session_size = pallet_tidefi_stake::PendingStoredSessions::<T>::count();
     let mut unstake_queue_size: u32 = 0;
 
@@ -64,14 +65,43 @@ where
         T::DbWeight::get().reads_writes(expected_unstake_queue_rw, expected_unstake_queue_rw),
       );
 
+    // recompute staking pool including principal inside a btreemap
+    pallet_tidefi_stake::AccountStakes::<T>::iter().for_each(|(_, stakes)| {
+      stakes.iter().for_each(|stake| {
+        if let Some(principal) = staking_pool_size.get_mut(&stake.currency_id) {
+          *principal = principal.saturating_add(stake.principal);
+        } else {
+          staking_pool_size.insert(stake.currency_id, stake.principal);
+        }
+        weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
+      });
+    });
+
+    // update our staking pool storage once everything has been computed
+    pallet_tidefi_stake::StakingPool::<T>::translate(|currency_id, balance: Balance| {
+      let asset: Asset = currency_id.try_into().expect("valid currency");
+      let new_balance = staking_pool_size.get(&currency_id).unwrap_or(&balance);
+
+      log::info!(
+        target: "runtime::tidefi-stake",
+        "Update {} staking pool from {} to {} (including rewards)",
+        asset.symbol(),
+        balance,
+        new_balance
+      );
+
+      weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
+      Some(*new_balance)
+    });
+
+    StorageVersion::new(2).put::<P>();
+
     log::info!(
       target: "runtime::tidefi-stake",
       "Migrated {} sessions and {} unstake queue items successfully.",
       stored_session_size,
       unstake_queue_size
     );
-
-    StorageVersion::new(2).put::<P>();
   } else {
     log::warn!(
       target: "runtime::tidefi-stake",
