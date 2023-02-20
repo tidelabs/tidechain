@@ -90,6 +90,14 @@ fn trigger_on_session_end<T: Config>(session_index: SessionIndex) {
 benchmarks! {
   where_clause { where T: pallet_security::Config }
 
+  set_operator_account_id {
+    let new_operator_account_id = frame_benchmarking::account::<T::AccountId>("new_operator", 2, USER_SEED);
+  }: _(RawOrigin::Root, new_operator_account_id.clone())
+  verify {
+    assert_event::<T>(Event::<T>::OperatorAccountChanged { new_operator_account_id: new_operator_account_id.clone() }.into());
+    assert_eq!(Pallet::<T>::operator_account_id(), Some(new_operator_account_id));
+  }
+
   stake {
       let caller: T::AccountId = whitelisted_caller();
       fund_and_stake_account::<T>(&caller);

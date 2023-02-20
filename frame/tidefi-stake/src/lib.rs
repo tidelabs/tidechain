@@ -273,6 +273,10 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
+    /// The operator account id is updated successfully
+    OperatorAccountChanged {
+      new_operator_account_id: T::AccountId,
+    },
     /// The assets get staked successfully
     Staked {
       request_id: Hash,
@@ -372,7 +376,10 @@ pub mod pallet {
       new_operator_account_id: T::AccountId,
     ) -> DispatchResultWithPostInfo {
       ensure_root(origin)?;
-      OperatorAccountId::<T>::put(new_operator_account_id);
+      OperatorAccountId::<T>::put(new_operator_account_id.clone());
+      Self::deposit_event(Event::<T>::OperatorAccountChanged {
+        new_operator_account_id,
+      });
 
       Ok(().into())
     }

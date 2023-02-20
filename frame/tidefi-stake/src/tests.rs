@@ -452,6 +452,60 @@ pub fn check_genesis_config() {
   });
 }
 
+mod set_operator_account_id {
+  use super::*;
+
+  #[test]
+  fn succeeds() {
+    new_test_ext().execute_with(|| {
+      let new_operator_account_id = BOB_ACCOUNT_ID;
+
+      assert_ok!(TidefiStaking::set_operator_account_id(
+        Origin::root(),
+        new_operator_account_id
+      ));
+
+      System::assert_has_event(MockEvent::TidefiStaking(
+        pallet_tidefi_stake::Event::OperatorAccountChanged {
+          new_operator_account_id: new_operator_account_id,
+        },
+      ));
+    });
+  }
+
+  mod failed_when {
+    use super::*;
+
+    #[test]
+    fn sender_is_not_root() {
+      new_test_ext().execute_with(|| {
+        let new_operator_account_id = BOB_ACCOUNT_ID;
+
+        assert_noop!(
+          TidefiStaking::set_operator_account_id(
+            Origin::signed(BOB_ACCOUNT_ID),
+            //Origin::none(),
+            new_operator_account_id
+          ),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    fn sender_is_none() {
+      new_test_ext().execute_with(|| {
+        let new_operator_account_id = BOB_ACCOUNT_ID;
+
+        assert_noop!(
+          TidefiStaking::set_operator_account_id(Origin::none(), new_operator_account_id),
+          BadOrigin
+        );
+      });
+    }
+  }
+}
+
 mod stake {
   use super::*;
 
