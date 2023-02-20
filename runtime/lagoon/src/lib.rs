@@ -136,6 +136,9 @@ parameter_types! {
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
   pub const SunrisePalletId: PalletId = PalletId(*b"py/sunrp");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+  // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
+  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
+  pub const SunriseCooldown: BlockNumber = 1_200; // 2 hours
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -272,6 +275,9 @@ pub type Executive = frame_executive::Executive<
     MigrateBountyToV4<Runtime>,
     // Migration for moving preimage from V0 to V1 storage.
     pallet_preimage::migration::v1::Migration<Runtime>,
+    // Tidefi migrations
+    pallet_tidefi_stake::migrations::v2::MigrateToV2<Runtime>,
+    pallet_fees::migrations::v2::MigrateToV2<Runtime>,
   ),
 >;
 

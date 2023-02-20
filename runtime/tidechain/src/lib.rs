@@ -43,22 +43,6 @@ use sp_version::RuntimeVersion;
 
 #[cfg(feature = "std")]
 pub use crate::api::{api::dispatch, RuntimeApi};
-// Copyright 2021-2022 Semantic Network Ltd.
-// This file is part of Tidechain.
-
-// Tidechain is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Tidechain is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
-
 pub use crate::types::{
   AccountId, AccountIndex, Address, AssetId, Balance, Block, BlockId, BlockNumber,
   CheckedExtrinsic, Hash, Header, Moment, Nonce, Signature, SignedBlock, SignedExtra,
@@ -152,6 +136,9 @@ parameter_types! {
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
   pub const SunrisePalletId: PalletId = PalletId(*b"py/sunrp");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+  // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
+  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
+  pub const SunriseCooldown: BlockNumber = 1_296_000; // 90 days
 }
 
 // FIXME: Should be removed once we'll give control to the community (governance)
@@ -289,6 +276,9 @@ pub type Executive = frame_executive::Executive<
     MigrateBountyToV4<Runtime>,
     // Migration for moving preimage from V0 to V1 storage.
     pallet_preimage::migration::v1::Migration<Runtime>,
+    // Tidefi migrations
+    pallet_tidefi_stake::migrations::v2::MigrateToV2<Runtime>,
+    pallet_fees::migrations::v2::MigrateToV2<Runtime>,
   ),
 >;
 

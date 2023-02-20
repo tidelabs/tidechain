@@ -25,20 +25,53 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
    fn stake() -> Weight;
    fn unstake() -> Weight;
+   fn on_idle_compound(b: u32) -> Weight;
+   fn on_idle_compound_finalize(b: u32) -> Weight;
+   fn on_idle_unstake(b: u32) -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+	fn stake() -> Weight {
+		Weight::from_ref_time(106_968_000)
+			.saturating_add(T::DbWeight::get().reads(11))
+			.saturating_add(T::DbWeight::get().writes(6))
+	}
 
-   fn stake() -> Weight {
-      Weight::from_ref_time(14_100_000)
-      .saturating_add(T::DbWeight::get().reads(6_u64))
-      .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
-   fn unstake() -> Weight {
-      Weight::from_ref_time(18_200_000)
-      .saturating_add(T::DbWeight::get().reads(6_u64))
-      .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
+	fn unstake() -> Weight {
+		Weight::from_ref_time(87_151_000)
+			.saturating_add(T::DbWeight::get().reads(9 ))
+			.saturating_add(T::DbWeight::get().writes(6 ))
+	}
+
+	fn on_idle_compound_finalize(b: u32, ) -> Weight {
+		Weight::from_ref_time(0)
+			// Standard Error: 32_000
+			.saturating_add(Weight::from_ref_time(30_468_000).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(8_u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64.saturating_mul(b.into())))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64.saturating_mul(b.into())))
+	}
+
+	fn on_idle_compound(b: u32, ) -> Weight {
+		Weight::from_ref_time(0)
+			// Standard Error: 28_000
+			.saturating_add(Weight::from_ref_time(27_581_000).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(10_u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64.saturating_mul(b.into())))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64.saturating_mul(b.into())))
+	}
+
+	fn on_idle_unstake(b: u32, ) -> Weight {
+		Weight::from_ref_time(0)
+			// Standard Error: 39_000
+			.saturating_add(Weight::from_ref_time(59_405_000).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(8_u64))
+			.saturating_add(T::DbWeight::get().reads((3_u64).saturating_mul(b.into())))
+			.saturating_add(T::DbWeight::get().writes(5_u64))
+			.saturating_add(T::DbWeight::get().writes((3_u64).saturating_mul(b.into())))
+	}
 }

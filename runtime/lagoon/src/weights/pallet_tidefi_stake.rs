@@ -29,7 +29,7 @@
 // --chain=lagoon-dev
 // --steps=50
 // --repeat=20
-// --pallet=*
+// --pallet=pallet_tidefi_stake
 // --extrinsic=*
 // --execution=wasm
 // --wasm-execution=compiled
@@ -47,58 +47,45 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_tidefi_stake`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> {
-	/// Storage: TidefiStaking StakingPeriodRewards (r:1 w:0)
-	/// Proof: TidefiStaking StakingPeriodRewards (max_values: Some(1), max_size: Some(51), added: 546, mode: MaxEncodedLen)
-	/// Storage: TidefiStaking StakingCurrencyMeta (r:1 w:0)
-	/// Proof: TidefiStaking StakingCurrencyMeta (max_values: None, max_size: Some(53), added: 2528, mode: MaxEncodedLen)
-	/// Storage: Security Nonce (r:1 w:1)
-	/// Proof: Security Nonce (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	/// Storage: System ParentHash (r:1 w:0)
-	/// Proof: System ParentHash (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	/// Storage: Assets Asset (r:1 w:1)
-	/// Proof: Assets Asset (max_values: None, max_size: Some(210), added: 2685, mode: MaxEncodedLen)
-	/// Storage: Assets Account (r:2 w:2)
-	/// Proof: Assets Account (max_values: Some(300000), max_size: Some(118), added: 2593, mode: MaxEncodedLen)
-	/// Storage: System Account (r:1 w:1)
-	/// Proof: System Account (max_values: None, max_size: Some(128), added: 2603, mode: MaxEncodedLen)
-	/// Storage: TidefiStaking StakingPool (r:1 w:1)
-	/// Proof: TidefiStaking StakingPool (max_values: None, max_size: Some(37), added: 2512, mode: MaxEncodedLen)
-	/// Storage: Security CurrentBlockCount (r:1 w:0)
-	/// Proof: Security CurrentBlockCount (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	/// Storage: TidefiStaking AccountStakes (r:1 w:1)
-	/// Proof: TidefiStaking AccountStakes (max_values: None, max_size: Some(949), added: 3424, mode: MaxEncodedLen)
-	/// Storage: TidefiStaking InterestCompoundLastSession (r:1 w:0)
-	/// Proof: TidefiStaking InterestCompoundLastSession (max_values: Some(1), max_size: Some(8), added: 503, mode: MaxEncodedLen)
-	/// Storage: TidefiStaking CounterForAccountStakes (r:1 w:1)
-	/// Proof: TidefiStaking CounterForAccountStakes (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
 	fn stake() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `1438`
-		//  Estimated: `22039`
-		// Minimum execution time: 104_909 nanoseconds.
-		Weight::from_parts(118_318_000, 22039)
-			.saturating_add(T::DbWeight::get().reads(13))
-			.saturating_add(T::DbWeight::get().writes(8))
+		Weight::from_ref_time(106_968_000)
+			.saturating_add(T::DbWeight::get().reads(11))
+			.saturating_add(T::DbWeight::get().writes(6))
 	}
-	/// Storage: TidefiStaking AccountStakes (r:1 w:1)
-	/// Proof: TidefiStaking AccountStakes (max_values: None, max_size: Some(949), added: 3424, mode: MaxEncodedLen)
-	/// Storage: Security CurrentBlockCount (r:1 w:0)
-	/// Proof: Security CurrentBlockCount (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	/// Storage: TidefiStaking UnstakeFee (r:1 w:0)
-	/// Proof: TidefiStaking UnstakeFee (max_values: Some(1), max_size: Some(1), added: 496, mode: MaxEncodedLen)
-	/// Storage: Assets Asset (r:1 w:1)
-	/// Proof: Assets Asset (max_values: None, max_size: Some(210), added: 2685, mode: MaxEncodedLen)
-	/// Storage: Assets Account (r:2 w:2)
-	/// Proof: Assets Account (max_values: Some(300000), max_size: Some(118), added: 2593, mode: MaxEncodedLen)
-	/// Storage: TidefiStaking UnstakeQueue (r:1 w:1)
-	/// Proof: TidefiStaking UnstakeQueue (max_values: Some(1), max_size: Some(6802), added: 7297, mode: MaxEncodedLen)
+
 	fn unstake() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `1633`
-		//  Estimated: `19587`
-		// Minimum execution time: 88_855 nanoseconds.
-		Weight::from_parts(89_403_000, 19587)
-			.saturating_add(T::DbWeight::get().reads(7))
-			.saturating_add(T::DbWeight::get().writes(5))
+		Weight::from_ref_time(87_151_000)
+			.saturating_add(T::DbWeight::get().reads(9 ))
+			.saturating_add(T::DbWeight::get().writes(6 ))
+	}
+
+	fn on_idle_compound_finalize(b: u32, ) -> Weight {
+		Weight::from_ref_time(0)
+			// Standard Error: 32_000
+			.saturating_add(Weight::from_ref_time(30_468_000).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(8_u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64.saturating_mul(b.into())))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64.saturating_mul(b.into())))
+	}
+
+	fn on_idle_compound(b: u32, ) -> Weight {
+		Weight::from_ref_time(0)
+			// Standard Error: 28_000
+			.saturating_add(Weight::from_ref_time(27_581_000).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(10_u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64.saturating_mul(b.into())))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64.saturating_mul(b.into())))
+	}
+
+	fn on_idle_unstake(b: u32, ) -> Weight {
+		Weight::from_ref_time(0)
+			// Standard Error: 39_000
+			.saturating_add(Weight::from_ref_time(59_405_000).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(8_u64))
+			.saturating_add(T::DbWeight::get().reads((3_u64).saturating_mul(b.into())))
+			.saturating_add(T::DbWeight::get().writes(5_u64))
+			.saturating_add(T::DbWeight::get().writes((3_u64).saturating_mul(b.into())))
 	}
 }

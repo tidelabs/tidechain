@@ -1072,6 +1072,7 @@ mod helpers {
           })
           .collect(),
         unstake_fee: Percent::from_parts(1),
+        operator: hex!["8e14d1ac896ea00e18d855588ee13103449cc6e41d4b0173d917cabea84bdb08"].into(),
       }
     };
   }
