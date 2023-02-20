@@ -1073,10 +1073,7 @@ mod voting_for_proposals {
             .insert_asset1_with_alice_public_key()
             .insert_a_valid_update_configuration_proposal();
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
           assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).is_none());
           let threshold_before = Quorum::threshold();
 
@@ -1085,14 +1082,8 @@ mod voting_for_proposals {
             context.proposal_id
           ));
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
+          assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).unwrap());
           assert!(threshold_before != Quorum::threshold());
           assert_eq!(
             context.valid_update_configuration.threshold,
@@ -1114,10 +1105,7 @@ mod voting_for_proposals {
             .insert_asset1_with_alice_public_key()
             .insert_a_valid_mint_proposal_with_green_compliance_level();
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
           assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).is_none());
           let threshold_before = Quorum::threshold();
 
@@ -1126,10 +1114,7 @@ mod voting_for_proposals {
             context.proposal_id
           ));
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
           assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).is_none());
           assert!(threshold_before == Quorum::threshold());
 
@@ -1151,10 +1136,7 @@ mod voting_for_proposals {
             .insert_a_valid_update_configuration_proposal()
             .set_threshold(2);
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
           assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).is_none());
           let threshold_before = Quorum::threshold();
 
@@ -1163,10 +1145,7 @@ mod voting_for_proposals {
             context.proposal_id
           ));
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
           assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).is_none());
           assert!(threshold_before == Quorum::threshold());
 
@@ -1184,10 +1163,7 @@ mod voting_for_proposals {
             .insert_a_valid_update_configuration_proposal()
             .set_threshold(2);
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
           assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).is_none());
           let threshold_before = Quorum::threshold();
 
@@ -1196,10 +1172,7 @@ mod voting_for_proposals {
             context.proposal_id
           ));
 
-          assert_eq!(
-            true,
-            Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap()
-          );
+          assert!(Quorum::members(AccountId::from(ALICE_ACCOUNT_ID)).unwrap());
           assert!(Quorum::members(AccountId::from(BOB_ACCOUNT_ID)).is_none());
           assert!(threshold_before == Quorum::threshold());
 

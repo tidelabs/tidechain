@@ -295,6 +295,7 @@ impl Context {
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn add_new_swap_and_assert_results(
   account_id: AccountId,
   asset_id_from: CurrencyId,
@@ -793,7 +794,7 @@ mod unstake {
           set_current_block(FIFTEEN_DAYS + 1);
 
           // Get stake from chain storage
-          let stake = AccountStakes::<Test>::get(&context.staker)
+          let stake = AccountStakes::<Test>::get(context.staker)
             .into_iter()
             .find(|stake| stake.unique_id == context.stake_id)
             .unwrap();
@@ -980,7 +981,7 @@ mod unstake {
           set_current_block(FIFTEEN_DAYS + 1);
 
           // Get stake from chain storage
-          let stake = AccountStakes::<Test>::get(&context.staker)
+          let stake = AccountStakes::<Test>::get(context.staker)
             .into_iter()
             .find(|stake| stake.unique_id == context.stake_id)
             .unwrap();

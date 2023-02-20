@@ -341,12 +341,12 @@ pub mod pallet {
       let compound_queue_size = QueueCompound::<T>::count();
 
       let do_next_compound_interest_operation_weight =
-        <T as Config>::WeightInfo::on_idle_compound(compound_queue_size.into()).saturating_add(
+        <T as Config>::WeightInfo::on_idle_compound(compound_queue_size).saturating_add(
           T::DbWeight::get().reads_writes(compound_queue_size.into(), compound_queue_size.into()),
         );
 
       let do_next_unstake_operation_weight =
-        <T as Config>::WeightInfo::on_idle_unstake(unstake_queue_size.into()).saturating_add(
+        <T as Config>::WeightInfo::on_idle_unstake(unstake_queue_size).saturating_add(
           T::DbWeight::get().reads_writes(unstake_queue_size.into(), unstake_queue_size.into()),
         );
 
@@ -527,11 +527,11 @@ pub mod pallet {
     }
 
     pub fn operator_account() -> T::AccountId {
-      let operator_account = match Self::operator_account_id() {
+      
+      match Self::operator_account_id() {
         Some(account_id) => account_id,
         None => Self::account_id(),
-      };
-      operator_account
+      }
     }
 
     pub fn add_account_stake(
@@ -638,7 +638,7 @@ pub mod pallet {
 
     fn do_account_compound(
       account_id: &T::AccountId,
-      session_fee_by_currency: &Vec<(SessionIndex, Vec<(CurrencyId, Balance)>)>,
+      session_fee_by_currency: &[(SessionIndex, Vec<(CurrencyId, Balance)>)],
     ) -> DispatchResult {
       AccountStakes::<T>::try_mutate(account_id, |staking_details| -> DispatchResult {
         // distribute reward for each session for each stake
@@ -657,7 +657,7 @@ pub mod pallet {
                 }
 
                 let session_fee_for_currency = collected_fees_by_currency
-                  .into_iter()
+                  .iter()
                   .find_map(|(currency_id, fees_collected)| {
                     if *currency_id == stake.currency_id {
                       Some(*fees_collected)

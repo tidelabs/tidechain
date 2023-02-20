@@ -1537,7 +1537,7 @@ mod confirm_swap {
           );
 
         assert_ok!(Oracle::confirm_swap(
-          context.alice.clone(),
+          context.alice,
           trade_request_id,
           vec![SwapConfirmation {
             request_id: trade_request_mm_id,

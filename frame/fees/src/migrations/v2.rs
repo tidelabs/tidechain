@@ -71,7 +71,7 @@ where
       target: "runtime::fees",
       "Expected staking pool {:?}",
       staking_pool_size.iter().map(|(currency_id, b)| {
-        let asset: Asset = currency_id.clone().try_into().expect("valid currency");
+        let asset: Asset = (*currency_id).try_into().expect("valid currency");
         (asset.symbol(), *b)
       }).collect::<Vec<_>>(),
     );

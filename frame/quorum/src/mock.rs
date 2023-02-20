@@ -21,7 +21,7 @@ use frame_support::{
 use frame_system as system;
 use frame_utils::construct_mock_runtime;
 use sp_runtime::traits::AccountIdConversion;
-use system::EnsureRoot;
+
 use tidefi_primitives::{BlockNumber, CurrencyId};
 
 pub struct EnsureRootOrAssetRegistry;

@@ -50,6 +50,15 @@ pub mod pallet {
     CurrencyMetadata,
   };
 
+  type CurrenciesMetadata = (CurrencyId, CurrencyMetadata<Vec<u8>>);
+  type AssetGenesis<T> = (
+    CurrencyId,
+    Vec<u8>,
+    Vec<u8>,
+    u8,
+    Vec<(<T as frame_system::Config>::AccountId, <T as pallet_assets::Config>::Balance)>,
+  );
+
   /// Asset registry configuration
   #[pallet::config]
   pub trait Config:
@@ -86,13 +95,7 @@ pub mod pallet {
   pub struct GenesisConfig<T: Config> {
     /// Assets to create on initialization
     /// \[currency_id, name, symbol, decimals\]
-    pub assets: Vec<(
-      CurrencyId,
-      Vec<u8>,
-      Vec<u8>,
-      u8,
-      Vec<(T::AccountId, T::Balance)>,
-    )>,
+    pub assets: Vec<AssetGenesis<T>>,
     /// Assets owner
     /// Only this account can modify storage on this pallet.
     pub account: T::AccountId,
@@ -319,7 +322,7 @@ pub mod pallet {
       })
     }
 
-    pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>, DispatchError> {
+    pub fn get_assets() -> Result<Vec<CurrenciesMetadata>, DispatchError> {
       let mut final_assets = vec![(
         CurrencyId::Tdfy,
         CurrencyMetadata {
