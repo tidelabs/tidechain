@@ -56,7 +56,10 @@ pub mod pallet {
     Vec<u8>,
     Vec<u8>,
     u8,
-    Vec<(<T as frame_system::Config>::AccountId, <T as pallet_assets::Config>::Balance)>,
+    Vec<(
+      <T as frame_system::Config>::AccountId,
+      <T as pallet_assets::Config>::Balance,
+    )>,
   );
 
   /// Asset registry configuration

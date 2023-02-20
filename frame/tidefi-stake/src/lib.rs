@@ -527,7 +527,6 @@ pub mod pallet {
     }
 
     pub fn operator_account() -> T::AccountId {
-      
       match Self::operator_account_id() {
         Some(account_id) => account_id,
         None => Self::account_id(),
