@@ -68,6 +68,7 @@ pub mod pallet {
   };
   use sp_std::vec;
   use tidefi_primitives::{
+    assets::Asset,
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta, StakeStatus,
   };
@@ -273,6 +274,10 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
+    /// The operator account id is updated successfully
+    OperatorAccountChanged {
+      new_operator_account_id: T::AccountId,
+    },
     /// The assets get staked successfully
     Staked {
       request_id: Hash,
@@ -364,19 +369,6 @@ pub mod pallet {
 
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    /// Set Staking Operator Account
-    /// TODO: Benchmark weight
-    #[pallet::weight(0)]
-    pub fn set_operator_account_id(
-      origin: OriginFor<T>,
-      new_operator_account_id: T::AccountId,
-    ) -> DispatchResultWithPostInfo {
-      ensure_root(origin)?;
-      OperatorAccountId::<T>::put(new_operator_account_id);
-
-      Ok(().into())
-    }
-
     /// Stake currency
     ///
     /// - `currency_id`: The currency to stake
@@ -512,6 +504,21 @@ pub mod pallet {
           account_id,
         });
       }
+
+      Ok(().into())
+    }
+
+    /// Set Staking Operator Account
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_operator_account_id())]
+    pub fn set_operator_account_id(
+      origin: OriginFor<T>,
+      new_operator_account_id: T::AccountId,
+    ) -> DispatchResultWithPostInfo {
+      ensure_root(origin)?;
+      OperatorAccountId::<T>::put(new_operator_account_id.clone());
+      Self::deposit_event(Event::<T>::OperatorAccountChanged {
+        new_operator_account_id,
+      });
 
       Ok(().into())
     }
@@ -830,18 +837,20 @@ pub mod pallet {
       // try to drain a session
       let do_drain_session = |session: SessionIndex| {
         let result = Self::do_session_drain(session);
-        log!(info, "session drained {}, outcome: {:?}", session, result);
+        log!(debug, "session {} drained, outcome: {:?}", session, result);
       };
 
       // try to compound an account id
       let do_compound = |account_id: &T::AccountId| {
         let result = Self::do_account_compound(account_id, &collected_fees_by_session);
-        log!(
-          info,
-          "account compound {:?}, outcome: {:?}",
-          account_id,
-          result
-        );
+        if result.is_err() {
+          log!(
+            error,
+            "account compound failed {:?}, outcome: {:?}",
+            account_id,
+            result
+          );
+        }
       };
 
       // if there is no accounts remaining, that mean we can drain the pending sessions
@@ -917,7 +926,7 @@ pub mod pallet {
           .find(|s| s.unique_id == hash);
         if let Some(stake) = stake {
           let result = Self::do_process_unstake(&account_id, stake.unique_id);
-          log!(info, "unstaked {:?}, outcome: {:?}", account_id, result);
+          log!(debug, "unstaked {:?}, outcome: {:?}", account_id, result);
         }
       };
 
@@ -983,6 +992,7 @@ pub mod pallet {
       fees_account_id: T::AccountId,
     ) -> Result<(), DispatchError> {
       let prepare_session = |currency_id: CurrencyId, balance: Balance| {
+        let asset: Asset = currency_id.try_into().expect("valid currency");
         let destination = if currency_id == CurrencyId::Tdfy {
           Self::operator_account()
         } else {
@@ -993,10 +1003,10 @@ pub mod pallet {
         let result =
           T::CurrencyTidefi::transfer(currency_id, &fees_account_id, &destination, balance, false);
         log!(
-          info,
-          "session {} prepared for {:?}, outcome: {:?}",
+          debug,
+          "session {} prepared for {}, outcome: {:?}",
           session_index,
-          currency_id,
+          asset.symbol(),
           result
         );
 

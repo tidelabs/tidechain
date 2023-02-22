@@ -28,6 +28,7 @@ pub trait WeightInfo {
    fn on_idle_compound(b: u32) -> Weight;
    fn on_idle_compound_finalize(b: u32) -> Weight;
    fn on_idle_unstake(b: u32) -> Weight;
+   fn set_operator_account_id() -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
@@ -73,5 +74,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(b as Weight)))
+	}
+
+	fn set_operator_account_id() -> Weight {
+		(18_554_000 as Weight)
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
