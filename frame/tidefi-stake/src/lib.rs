@@ -68,6 +68,7 @@ pub mod pallet {
   };
   use sp_std::vec;
   use tidefi_primitives::{
+    assets::Asset,
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta, StakeStatus,
   };
@@ -837,18 +838,20 @@ pub mod pallet {
       // try to drain a session
       let do_drain_session = |session: SessionIndex| {
         let result = Self::do_session_drain(session);
-        log!(info, "session drained {}, outcome: {:?}", session, result);
+        log!(debug, "session {} drained, outcome: {:?}", session, result);
       };
 
       // try to compound an account id
       let do_compound = |account_id: &T::AccountId| {
         let result = Self::do_account_compound(account_id, &collected_fees_by_session);
-        log!(
-          info,
-          "account compound {:?}, outcome: {:?}",
-          account_id,
-          result
-        );
+        if result.is_err() {
+          log!(
+            error,
+            "account compound failed {:?}, outcome: {:?}",
+            account_id,
+            result
+          );
+        }
       };
 
       // if there is no accounts remaining, that mean we can drain the pending sessions
@@ -924,7 +927,7 @@ pub mod pallet {
           .find(|s| s.unique_id == hash);
         if let Some(stake) = stake {
           let result = Self::do_process_unstake(&account_id, stake.unique_id);
-          log!(info, "unstaked {:?}, outcome: {:?}", account_id, result);
+          log!(debug, "unstaked {:?}, outcome: {:?}", account_id, result);
         }
       };
 
@@ -990,6 +993,7 @@ pub mod pallet {
       fees_account_id: T::AccountId,
     ) -> Result<(), DispatchError> {
       let prepare_session = |currency_id: CurrencyId, balance: Balance| {
+        let asset: Asset = currency_id.try_into().expect("valid currency");
         let destination = if currency_id == CurrencyId::Tdfy {
           Self::operator_account()
         } else {
@@ -1000,10 +1004,10 @@ pub mod pallet {
         let result =
           T::CurrencyTidefi::transfer(currency_id, &fees_account_id, &destination, balance, false);
         log!(
-          info,
-          "session {} prepared for {:?}, outcome: {:?}",
+          debug,
+          "session {} prepared for {}, outcome: {:?}",
           session_index,
-          currency_id,
+          asset.symbol(),
           result
         );
 
