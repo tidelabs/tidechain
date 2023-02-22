@@ -46,11 +46,6 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_tidefi_stake`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> {
-	// Storage: TidefiStaking OperatorAccountId (r:0 w:1)
-	fn set_operator_account_id() -> Weight {
-		(18_554_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
 	// Storage: TidefiStaking StakingPeriodRewards (r:1 w:0)
 	// Storage: TidefiStaking StakingCurrencyMeta (r:1 w:0)
 	// Storage: Security Nonce (r:1 w:1)
@@ -140,5 +135,10 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(b as Weight)))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(b as Weight)))
+	}
+	// Storage: TidefiStaking OperatorAccountId (r:0 w:1)
+	fn set_operator_account_id() -> Weight {
+		(18_554_000 as Weight)
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }

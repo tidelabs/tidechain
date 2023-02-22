@@ -369,22 +369,6 @@ pub mod pallet {
 
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    /// Set Staking Operator Account
-    /// TODO: Benchmark weight
-    #[pallet::weight(0)]
-    pub fn set_operator_account_id(
-      origin: OriginFor<T>,
-      new_operator_account_id: T::AccountId,
-    ) -> DispatchResultWithPostInfo {
-      ensure_root(origin)?;
-      OperatorAccountId::<T>::put(new_operator_account_id.clone());
-      Self::deposit_event(Event::<T>::OperatorAccountChanged {
-        new_operator_account_id,
-      });
-
-      Ok(().into())
-    }
-
     /// Stake currency
     ///
     /// - `currency_id`: The currency to stake
@@ -520,6 +504,21 @@ pub mod pallet {
           account_id,
         });
       }
+
+      Ok(().into())
+    }
+
+    /// Set Staking Operator Account
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_operator_account_id())]
+    pub fn set_operator_account_id(
+      origin: OriginFor<T>,
+      new_operator_account_id: T::AccountId,
+    ) -> DispatchResultWithPostInfo {
+      ensure_root(origin)?;
+      OperatorAccountId::<T>::put(new_operator_account_id.clone());
+      Self::deposit_event(Event::<T>::OperatorAccountChanged {
+        new_operator_account_id,
+      });
 
       Ok(().into())
     }
