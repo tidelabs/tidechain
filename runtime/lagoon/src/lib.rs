@@ -296,12 +296,13 @@ impl<T: pallet_staking::Config> frame_support::traits::OnRuntimeUpgrade for Migr
   }
 
   #[cfg(feature = "try-runtime")]
-  fn pre_upgrade() -> Result<(), &'static str> {
-    pallet_staking::migrations::v8::pre_migrate::<T>()
+  fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+    pallet_staking::migrations::v8::pre_migrate::<T>()?;
+    Ok(Vec::new())
   }
 
   #[cfg(feature = "try-runtime")]
-  fn post_upgrade() -> Result<(), &'static str> {
+  fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
     pallet_staking::migrations::v8::post_migrate::<T>()
   }
 }
@@ -314,12 +315,14 @@ impl<T: pallet_bounties::Config> frame_support::traits::OnRuntimeUpgrade for Mig
   }
 
   #[cfg(feature = "try-runtime")]
-  fn pre_upgrade() -> Result<(), &'static str> {
-    pallet_bounties::migrations::v4::pre_migrate::<T>()
+  fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+    pallet_bounties::migrations::v4::pre_migration::<T, Bounties, &str>("bounties", "bounties");
+    Ok(Vec::new())
   }
 
   #[cfg(feature = "try-runtime")]
-  fn post_upgrade() -> Result<(), &'static str> {
-    pallet_bounties::migrations::v4::post_migrate::<T>()
+  fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
+    pallet_bounties::migrations::v4::post_migration::<T, Bounties, &str>("bounties", "bounties");
+    Ok(())
   }
 }
