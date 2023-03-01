@@ -16,13 +16,19 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod migrations;
-
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
+
+pub mod weights;
+pub use weights::*;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod migrations;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
@@ -64,7 +70,7 @@ pub mod pallet {
   };
 
   /// The current storage version.
-  const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+  const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
   type BoundedAccountFees = BoundedVec<(CurrencyId, Fee), ConstU32<1_000>>;
 
@@ -124,6 +130,9 @@ pub mod pallet {
 
     /// The origin which may forcibly update the fee and distribution percentage
     type ForceOrigin: EnsureOrigin<Self::Origin>;
+
+    /// Weight information for extrinsics in this pallet.
+    type WeightInfo: WeightInfo;
   }
 
   #[pallet::pallet]
@@ -255,13 +264,19 @@ pub mod pallet {
   // hooks
   #[pallet::hooks]
   impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-    fn on_runtime_upgrade() -> frame_support::weights::Weight {
-      migrations::migrate_to_v1::<T, Self>()
-    }
-
     fn on_initialize(_now: T::BlockNumber) -> Weight {
-      // just return the weight of the on_finalize.
-      T::DbWeight::get().reads(2)
+      if Self::should_finalize_current_session() {
+        <T as Config>::WeightInfo::on_finalize(
+          // predict the size of the new queue to be created in `pallet_tidefi_staking`
+          T::Staking::account_stakes_size() as u32,
+          // predict the size of the `session_fees_by_currency`
+          SessionTotalFees::<T>::iter_prefix(CurrentSession::<T>::get()).count() as u32,
+        )
+        .saturating_add(T::DbWeight::get().reads(6))
+      } else {
+        // just return the weight of the `should_finalize_current_session`
+        T::DbWeight::get().reads(4)
+      }
     }
 
     fn on_finalize(_current_block: T::BlockNumber) {
@@ -270,10 +285,7 @@ pub mod pallet {
         match active_era.start_block {
           Some(start_block) => {
             // determine when the session
-            let session_start_block = match active_era.last_session_block {
-              Some(last_session_block) => last_session_block,
-              None => start_block,
-            };
+            let session_start_block = active_era.last_session_block.unwrap_or(start_block);
             let expected_end_block_for_session =
               session_start_block.saturating_add(T::BlocksPerSession::get());
 
@@ -302,9 +314,11 @@ pub mod pallet {
 
               // notify the staking pallet that we are done with this session
               // the compute can be done for all stakers
-              if let Err(err) =
-                T::Staking::on_session_end(current_session, session_fees_by_currency.clone())
-              {
+              if let Err(err) = T::Staking::on_session_end(
+                current_session,
+                session_fees_by_currency.clone(),
+                Self::account_id(),
+              ) {
                 log!(error, "Can't notify staking pallet {:?}", err);
               }
 
@@ -372,6 +386,21 @@ pub mod pallet {
           StoredSessions::<T>::remove(session);
         }
       }
+    }
+
+    pub(crate) fn should_finalize_current_session() -> bool {
+      if let Some(active_era) = Self::current_era() {
+        let real_block = T::Security::get_current_block_count();
+        if let Some(start_block) = active_era.start_block {
+          let session_start_block = active_era.last_session_block.unwrap_or(start_block);
+          let expected_end_block_for_session =
+            session_start_block.saturating_add(T::BlocksPerSession::get());
+
+          return real_block == expected_end_block_for_session;
+        }
+      }
+
+      false
     }
 
     // Initialize new era

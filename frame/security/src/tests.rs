@@ -50,7 +50,7 @@ mod set_status {
   fn fails_when_signer_is_not_root() {
     new_test_ext().execute_with(|| {
       assert_noop!(
-        Security::set_status(Origin::signed(1.into()), StatusCode::Maintenance),
+        Security::set_status(Origin::signed(1_u64.into()), StatusCode::Maintenance),
         BadOrigin
       );
     });

@@ -19,7 +19,7 @@ use crate::{
   types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
   AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
   FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security, Sunrise,
-  SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
+  SunriseCooldown, SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
 };
 
 use frame_support::{
@@ -39,8 +39,6 @@ parameter_types! {
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
   // Maximum of 10 stake / currency / user (to prevent bloat on-chain)
   pub const StakeAccountCap: u32 = 10;
-  // Maximum unstake processed in queue
-  pub const UnstakeQueueCap: u32 = 100;
   // Staking: Number of sessions per era
   // ~ 1 hour
   pub const SessionsPerEra: SessionIndex = 12;
@@ -75,13 +73,12 @@ parameter_types! {
   pub const PubkeyLimitPerAsset: u32 = 10;
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 10_000;
-  // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
-  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
-  pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // Maximum sunrise rewards before rewards allocation (in TDFY's)
   pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
   // Rebates applied to left-over pool
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+  // The number of accounts to proceed by compound and unstake batch
+  pub const BatchSize: u32 = 500;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -153,12 +150,12 @@ impl pallet_tidefi_stake::Config for Runtime {
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
-  type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type Security = Security;
   type StakingRewardCap = StakingRewardCap;
+  type BatchSize = BatchSize;
   type WeightInfo = crate::weights::pallet_tidefi_stake::WeightInfo<Runtime>;
 }
 
@@ -231,6 +228,7 @@ impl pallet_fees::Config for Runtime {
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
+  type WeightInfo = crate::weights::pallet_fees::WeightInfo<Runtime>;
 }
 
 impl pallet_sunrise::Config for Runtime {
@@ -238,7 +236,7 @@ impl pallet_sunrise::Config for Runtime {
   type Security = Security;
   type SunrisePalletId = SunrisePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
-  type Cooldown = Cooldown;
+  type Cooldown = SunriseCooldown;
   type MaximumRewardPerSwap = MaximumRewardPerSwap;
   type LeftoverSwapRebates = LeftoverSwapRebates;
 }

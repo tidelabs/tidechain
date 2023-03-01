@@ -14,13 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::mock::{new_test_ext, AccountId, Fees, Sunrise};
-use frame_support::assert_ok;
+use crate::mock::{new_test_ext, AccountId, Adapter, Fees, Sunrise, Test, TidefiStaking};
+use frame_support::{
+  assert_ok,
+  traits::fungibles::{Inspect, Mutate},
+};
 use sp_runtime::{FixedPointNumber, FixedU128};
 use tidefi_primitives::{
   assets::Asset,
   pallet::{FeesExt, SunriseExt},
-  CurrencyId, SwapType,
+  CurrencyId, Stake, StakeStatus, SwapType,
 };
 
 #[test]
@@ -251,5 +254,102 @@ pub fn test_maximum_fee_values() {
     .unwrap();
 
     assert_eq!(reward, 12_500_000_000_000_000);
+  });
+}
+
+#[test]
+fn test_migration_v2() {
+  new_test_ext().execute_with(|| {
+    let pallet_account_id = Fees::account_id();
+    let staking_pool_account_id = TidefiStaking::account_id();
+    let initial_tdfy_to_fees = 98_000_000_000_000;
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tdfy,
+      &pallet_account_id,
+      initial_tdfy_to_fees,
+    ));
+
+    // create 100 stake
+    let mut total_fees = 0;
+    let mut total_staked = 0;
+    (0..100).for_each(|i| {
+      let account = frame_benchmarking::account::<AccountId>("stake", i, 1);
+      assert_ok!(Adapter::mint_into(
+        CurrencyId::Wrapped(2),
+        &account,
+        500_000_000_u128.saturating_mul(2_u128),
+      ));
+
+      let fees = 10_u128.saturating_add(i.into());
+      let initial_balance = 500_000_000_u128;
+      let principal = initial_balance.saturating_add(fees);
+
+      // mint principal (stake) to staking pallet
+      assert_ok!(Adapter::mint_into(
+        CurrencyId::Wrapped(2),
+        &staking_pool_account_id,
+        initial_balance,
+      ));
+
+      // mint fees to fees pallet
+      assert_ok!(Adapter::mint_into(
+        CurrencyId::Wrapped(2),
+        &pallet_account_id,
+        fees,
+      ));
+
+      // append the stake into the storage
+      assert_ok!(pallet_tidefi_stake::AccountStakes::<Test>::try_append(
+        account,
+        Stake {
+          currency_id: CurrencyId::Wrapped(2),
+          unique_id: Default::default(),
+          last_session_index_compound: 1,
+          initial_block: 1,
+          initial_balance,
+          principal,
+          duration: 0,
+          status: StakeStatus::Staked,
+        }
+      ));
+
+      total_fees += fees;
+      total_staked += initial_balance;
+    });
+
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(2), &pallet_account_id, false),
+      total_fees
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(2), &staking_pool_account_id, false),
+      total_staked
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &pallet_account_id, true),
+      initial_tdfy_to_fees
+    );
+
+    // run migration
+    crate::migrations::v2::migrate::<Test, Fees>();
+    crate::migrations::v2::post_migration::<Test, Fees>();
+
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(2), &pallet_account_id, false),
+      0
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(2), &staking_pool_account_id, false),
+      total_staked.saturating_add(total_fees)
+    );
+    // make sure we still have our keep alive
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &pallet_account_id, false),
+      1_000_000_000_000
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &pallet_account_id, true),
+      0
+    );
   });
 }
