@@ -430,7 +430,13 @@ pub fn run() -> Result<(), Error> {
     }
     #[cfg(feature = "try-runtime")]
     Some(Subcommand::TryRuntime(cmd)) => {
+      use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
       use sc_service::TaskManager;
+
+      type HostFunctionsOf<E> = ExtendedHostFunctions<
+        sp_io::SubstrateHostFunctions,
+        <E as NativeExecutionDispatch>::ExtendHostFunctions,
+      >;
 
       let runner = cli.create_runner(cmd)?;
       let chain_spec = &runner.config().chain_spec;
@@ -447,11 +453,9 @@ pub fn run() -> Result<(), Error> {
 
       #[cfg(feature = "lagoon-native")]
       if chain_spec.is_lagoon() {
-        return runner.async_run(|config| {
+        return runner.async_run(|_| {
           Ok((
-            cmd.run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(
-              config,
-            )
+            cmd.run::<tidechain_service::lagoon_runtime::Block, HostFunctionsOf<tidechain_service::LagoonExecutorDispatch>>()
             .map_err(Error::SubstrateCli),
               task_manager,
           ))
@@ -461,11 +465,9 @@ pub fn run() -> Result<(), Error> {
       // else we assume it is tidechain
       #[cfg(feature = "tidechain-native")]
       if chain_spec.is_tidechain() {
-        return runner.async_run(|config| {
+        return runner.async_run(|_| {
           Ok((
-            cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(
-              config,
-            )
+            cmd.run::<tidechain_service::tidechain_runtime::Block, HostFunctionsOf<tidechain_service::TidechainExecutorDispatch>>()
             .map_err(Error::SubstrateCli),
               task_manager,
           ))
