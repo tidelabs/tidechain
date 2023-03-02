@@ -24,8 +24,8 @@ pub use tidechain_client::{
 use {
   frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE,
   sc_client_api::BlockBackend,
+  sc_consensus_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
   sc_executor::NativeElseWasmExecutor,
-  sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
   sc_service::{
     config::PrometheusConfig, Configuration, Error as SubstrateServiceError,
     NativeExecutionDispatch, RpcHandlers, TaskManager,
@@ -111,7 +111,7 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 pub type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 #[cfg(feature = "full-node")]
 pub type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch> =
-  sc_finality_grandpa::GrandpaBlockImport<
+  sc_consensus_grandpa::GrandpaBlockImport<
     FullBackend,
     Block,
     FullClient<RuntimeApi, ExecutorDispatch>,
@@ -149,14 +149,14 @@ fn new_partial<RuntimeApi, ExecutorDispatch>(
           FullClient<RuntimeApi, ExecutorDispatch>,
           FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch>,
         >,
-        sc_finality_grandpa::LinkHalf<
+        sc_consensus_grandpa::LinkHalf<
           Block,
           FullClient<RuntimeApi, ExecutorDispatch>,
           FullSelectChain,
         >,
         sc_consensus_babe::BabeLink<Block>,
       ),
-      sc_finality_grandpa::SharedVoterState,
+      sc_consensus_grandpa::SharedVoterState,
       sp_consensus_babe::SlotDuration,
       Option<Telemetry>,
     ),
@@ -218,7 +218,7 @@ where
   let grandpa_hard_forks = Vec::new();
 
   let (grandpa_block_import, grandpa_link) =
-    sc_finality_grandpa::block_import_with_authority_set_hard_forks(
+    sc_consensus_grandpa::block_import_with_authority_set_hard_forks(
       client.clone(),
       &(client.clone() as Arc<_>),
       select_chain.clone(),
@@ -257,7 +257,7 @@ where
 
   let justification_stream = grandpa_link.justification_stream();
   let shared_authority_set = grandpa_link.shared_authority_set().clone();
-  let shared_voter_state = sc_finality_grandpa::SharedVoterState::empty();
+  let shared_voter_state = sc_consensus_grandpa::SharedVoterState::empty();
   let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
     backend.clone(),
     Some(shared_authority_set.clone()),
@@ -378,7 +378,7 @@ where
   // Note: GrandPa is pushed before the Tidechain-specific protocols. This doesn't change
   // anything in terms of behaviour, but makes the logs more consistent with the other
   // Substrate nodes.
-  let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
+  let grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
     &client
       .block_hash(0)
       .ok()
@@ -389,14 +389,16 @@ where
   config
     .network
     .extra_sets
-    .push(sc_finality_grandpa::grandpa_peers_set_config(
+    .push(sc_consensus_grandpa::grandpa_peers_set_config(
       grandpa_protocol_name.clone(),
     ));
 
-  let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
-    backend.clone(),
-    import_setup.1.shared_authority_set().clone(),
-    Default::default(),
+  let warp_sync_params = sc_service::WarpSyncParams::WithProvider(Arc::new(
+    sc_consensus_grandpa::warp_proof::NetworkProvider::new(
+      backend.clone(),
+      import_setup.1.shared_authority_set().clone(),
+      Default::default(),
+    ),
   ));
 
   let (network, system_rpc_tx, tx_handler_controller, network_starter) =
@@ -407,7 +409,7 @@ where
       spawn_handle: task_manager.spawn_handle(),
       import_queue,
       block_announce_validator_builder: None,
-      warp_sync: Some(warp_sync),
+      warp_sync_params: Some(warp_sync_params),
     })?;
 
   if config.offchain_worker.enabled {
@@ -552,7 +554,7 @@ where
     None
   };
 
-  let config = sc_finality_grandpa::Config {
+  let config = sc_consensus_grandpa::Config {
     // FIXME substrate#1578 make this available through chainspec
     gossip_duration: Duration::from_millis(1000),
     justification_period: 512,
@@ -576,11 +578,11 @@ where
     // add a custom voting rule to temporarily stop voting for new blocks
     // after the given pause block is finalized and restarting after the
     // given delay.
-    let builder = sc_finality_grandpa::VotingRulesBuilder::default();
+    let builder = sc_consensus_grandpa::VotingRulesBuilder::default();
 
     let voting_rule = builder.build();
 
-    let grandpa_config = sc_finality_grandpa::GrandpaParams {
+    let grandpa_config = sc_consensus_grandpa::GrandpaParams {
       config,
       link: link_half,
       network: network.clone(),
@@ -593,7 +595,7 @@ where
     task_manager.spawn_essential_handle().spawn_blocking(
       "grandpa-voter",
       None,
-      sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
+      sc_consensus_grandpa::run_grandpa_voter(grandpa_config)?,
     );
   }
 

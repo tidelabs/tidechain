@@ -42,6 +42,7 @@ parameter_types! {
    pub const DesiredMembers: u32 = 13;
    pub const DesiredRunnersUp: u32 = 20;
    pub const MaxVoters: u32 = 10 * 1000;
+   pub const MaxVotesPerVoter: u32 = 16;
    pub const MaxCandidates: u32 = 1000;
    pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
 }
@@ -68,6 +69,7 @@ impl pallet_elections_phragmen::Config for Runtime {
   type TermDuration = TermDuration;
   type MaxVoters = MaxVoters;
   type MaxCandidates = MaxCandidates;
+  type MaxVotesPerVoter = MaxVotesPerVoter;
   type WeightInfo = crate::weights::pallet_elections_phragmen::WeightInfo<Runtime>;
 }
 
@@ -85,6 +87,7 @@ impl pallet_collective::Config<CouncilCollectiveInstance> for Runtime {
   type MaxProposals = CouncilMaxProposals;
   type MaxMembers = CouncilMaxMembers;
   type DefaultVote = pallet_collective::PrimeDefaultVote;
+  type SetMembersOrigin = EnsureRoot<AccountId>;
   type WeightInfo = crate::weights::pallet_collective::WeightInfo<Runtime>;
 }
 
@@ -102,6 +105,7 @@ impl pallet_collective::Config<TechnicalCollectiveInstance> for Runtime {
   type MaxProposals = TechnicalMaxProposals;
   type MaxMembers = TechnicalMaxMembers;
   type DefaultVote = pallet_collective::PrimeDefaultVote;
+  type SetMembersOrigin = EnsureRoot<AccountId>;
   type WeightInfo = crate::weights::pallet_collective::WeightInfo<Runtime>;
 }
 
@@ -229,6 +233,7 @@ impl pallet_democracy::Config for Runtime {
   // Any single technical committee member may veto a coming council proposal, however they can
   // only do it once and it lasts only for the cooloff period.
   type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollectiveInstance>;
+  type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
   type CooloffPeriod = CooloffPeriod;
   type Slash = Treasury;
   type Scheduler = Scheduler;

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
+use sc_client_api::{Backend as BackendT, BlockchainEvents, KeysIter, PairsIter};
 pub use sc_executor::NativeElseWasmExecutor;
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
@@ -71,7 +71,7 @@ pub trait RuntimeApiCollection:
   sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
   + sp_api::ApiExt<Block>
   + sp_consensus_babe::BabeApi<Block>
-  + sp_finality_grandpa::GrandpaApi<Block>
+  + sp_consensus_grandpa::GrandpaApi<Block>
   + sp_block_builder::BlockBuilder<Block>
   + frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, u32>
   + pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
@@ -90,7 +90,7 @@ where
   Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
     + sp_api::ApiExt<Block>
     + sp_consensus_babe::BabeApi<Block>
-    + sp_finality_grandpa::GrandpaApi<Block>
+    + sp_consensus_grandpa::GrandpaApi<Block>
     + sp_block_builder::BlockBuilder<Block>
     + frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, u32>
     + pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
@@ -182,9 +182,9 @@ pub trait ClientHandle {
 #[derive(Clone)]
 pub enum Client {
   #[cfg(feature = "tidechain")]
-  Tidechain(Arc<FullClient<tidechain_runtime::RuntimeApi, crate::TidechainExecutorDispatch>>),
+  Tidechain(Arc<FullClient<tidechain_runtime::RuntimeApi, TidechainExecutorDispatch>>),
   #[cfg(feature = "lagoon")]
-  Lagoon(Arc<FullClient<lagoon_runtime::RuntimeApi, crate::LagoonExecutorDispatch>>),
+  Lagoon(Arc<FullClient<lagoon_runtime::RuntimeApi, LagoonExecutorDispatch>>),
 }
 
 macro_rules! with_client {
@@ -330,13 +330,15 @@ impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
   fn storage_keys(
     &self,
     id: Hash,
-    key_prefix: &StorageKey,
-  ) -> sp_blockchain::Result<Vec<StorageKey>> {
+    key_prefix: Option<&StorageKey>,
+    start_key: Option<&StorageKey>,
+  ) -> sp_blockchain::Result<KeysIter<<FullBackend as sc_client_api::Backend<Block>>::State, Block>>
+  {
     with_client! {
       self,
       client,
       {
-        client.storage_keys(id, key_prefix)
+        client.storage_keys(id, key_prefix, start_key)
       }
     }
   }
@@ -357,31 +359,16 @@ impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
 
   fn storage_pairs(
     &self,
-    id: Hash,
-    key_prefix: &StorageKey,
-  ) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
-    with_client! {
-      self,
-      client,
-      {
-        client.storage_pairs(id, key_prefix)
-      }
-    }
-  }
-
-  fn storage_keys_iter(
-    &self,
-    id: Hash,
-    prefix: Option<&StorageKey>,
+    hash: <Block as BlockT>::Hash,
+    key_prefix: Option<&StorageKey>,
     start_key: Option<&StorageKey>,
-  ) -> sp_blockchain::Result<
-    KeyIterator<<FullBackend as sc_client_api::Backend<Block>>::State, Block>,
-  > {
+  ) -> sp_blockchain::Result<PairsIter<<FullBackend as sc_client_api::Backend<Block>>::State, Block>>
+  {
     with_client! {
       self,
       client,
       {
-        client.storage_keys_iter(id, prefix, start_key)
+        client.storage_pairs(hash, key_prefix, start_key)
       }
     }
   }
@@ -403,33 +390,17 @@ impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
 
   fn child_storage_keys(
     &self,
-    id: Hash,
-    child_info: &ChildInfo,
-    key_prefix: &StorageKey,
-  ) -> sp_blockchain::Result<Vec<StorageKey>> {
-    with_client! {
-      self,
-      client,
-      {
-        client.child_storage_keys(id, child_info, key_prefix)
-      }
-    }
-  }
-
-  fn child_storage_keys_iter(
-    &self,
-    id: Hash,
+    hash: <Block as BlockT>::Hash,
     child_info: ChildInfo,
     prefix: Option<&StorageKey>,
     start_key: Option<&StorageKey>,
-  ) -> sp_blockchain::Result<
-    KeyIterator<<FullBackend as sc_client_api::Backend<Block>>::State, Block>,
-  > {
+  ) -> sp_blockchain::Result<KeysIter<<FullBackend as sc_client_api::Backend<Block>>::State, Block>>
+  {
     with_client! {
       self,
       client,
       {
-        client.child_storage_keys_iter(id, child_info, prefix, start_key)
+        client.child_storage_keys(hash, child_info, prefix, start_key)
       }
     }
   }

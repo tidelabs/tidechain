@@ -389,4 +389,92 @@ impl<T: frame_system::Config> pallet_democracy::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
+	/// Storage: Democracy NextExternal (r:1 w:0)
+	/// Proof: Democracy NextExternal (max_values: Some(1), max_size: Some(132), added: 627, mode: MaxEncodedLen)
+	/// Storage: Preimage StatusFor (r:1 w:0)
+	/// Proof: Preimage StatusFor (max_values: None, max_size: Some(91), added: 2566, mode: MaxEncodedLen)
+	/// Storage: Democracy MetadataOf (r:0 w:1)
+	/// Proof: Democracy MetadataOf (max_values: None, max_size: Some(53), added: 2528, mode: MaxEncodedLen)
+	fn set_external_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `323`
+		//  Estimated: `3193`
+		// Minimum execution time: 18_945 nanoseconds.
+		Weight::from_ref_time(19_439_000)
+			.saturating_add(Weight::from_proof_size(3193))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Democracy NextExternal (r:1 w:0)
+	/// Proof: Democracy NextExternal (max_values: Some(1), max_size: Some(132), added: 627, mode: MaxEncodedLen)
+	/// Storage: Democracy MetadataOf (r:1 w:1)
+	/// Proof: Democracy MetadataOf (max_values: None, max_size: Some(53), added: 2528, mode: MaxEncodedLen)
+	fn clear_external_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `253`
+		//  Estimated: `3155`
+		// Minimum execution time: 17_978 nanoseconds.
+		Weight::from_ref_time(18_271_000)
+			.saturating_add(Weight::from_proof_size(3155))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Democracy PublicProps (r:1 w:0)
+	/// Proof: Democracy PublicProps (max_values: Some(1), max_size: Some(16702), added: 17197, mode: MaxEncodedLen)
+	/// Storage: Preimage StatusFor (r:1 w:0)
+	/// Proof: Preimage StatusFor (max_values: None, max_size: Some(91), added: 2566, mode: MaxEncodedLen)
+	/// Storage: Democracy MetadataOf (r:0 w:1)
+	/// Proof: Democracy MetadataOf (max_values: None, max_size: Some(53), added: 2528, mode: MaxEncodedLen)
+	fn set_proposal_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `4886`
+		//  Estimated: `19763`
+		// Minimum execution time: 33_654 nanoseconds.
+		Weight::from_ref_time(34_056_000)
+			.saturating_add(Weight::from_proof_size(19763))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Democracy PublicProps (r:1 w:0)
+	/// Proof: Democracy PublicProps (max_values: Some(1), max_size: Some(16702), added: 17197, mode: MaxEncodedLen)
+	/// Storage: Democracy MetadataOf (r:1 w:1)
+	/// Proof: Democracy MetadataOf (max_values: None, max_size: Some(53), added: 2528, mode: MaxEncodedLen)
+	fn clear_proposal_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `4820`
+		//  Estimated: `19725`
+		// Minimum execution time: 31_879 nanoseconds.
+		Weight::from_ref_time(32_297_000)
+			.saturating_add(Weight::from_proof_size(19725))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Preimage StatusFor (r:1 w:0)
+	/// Proof: Preimage StatusFor (max_values: None, max_size: Some(91), added: 2566, mode: MaxEncodedLen)
+	/// Storage: Democracy MetadataOf (r:0 w:1)
+	/// Proof: Democracy MetadataOf (max_values: None, max_size: Some(53), added: 2528, mode: MaxEncodedLen)
+	fn set_referendum_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `144`
+		//  Estimated: `2566`
+		// Minimum execution time: 15_166 nanoseconds.
+		Weight::from_ref_time(15_391_000)
+			.saturating_add(Weight::from_proof_size(2566))
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Democracy ReferendumInfoOf (r:1 w:0)
+	/// Proof: Democracy ReferendumInfoOf (max_values: None, max_size: Some(201), added: 2676, mode: MaxEncodedLen)
+	/// Storage: Democracy MetadataOf (r:1 w:1)
+	/// Proof: Democracy MetadataOf (max_values: None, max_size: Some(53), added: 2528, mode: MaxEncodedLen)
+	fn clear_referendum_metadata() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `269`
+		//  Estimated: `5204`
+		// Minimum execution time: 19_417 nanoseconds.
+		Weight::from_ref_time(19_739_000)
+			.saturating_add(Weight::from_proof_size(5204))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
