@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
+// clippy::almost_swapped check failing on latest nightly
+// https://github.com/clap-rs/clap/issues/4733
+#![allow(clippy::almost_swapped)]
+
 use clap::Parser;
 
 #[derive(Debug, Parser)]
