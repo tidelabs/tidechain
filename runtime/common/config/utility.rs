@@ -72,10 +72,10 @@ impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrTreasury {
   }
 
   #[cfg(feature = "runtime-benchmarks")]
-  fn successful_origin() -> RuntimeOrigin {
-    RuntimeOrigin::from(RawOrigin::Signed(
+  fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+    Ok(RuntimeOrigin::from(RawOrigin::Signed(
       TreasuryPalletId::get().into_account_truncating(),
-    ))
+    )))
   }
 }
 

@@ -95,15 +95,6 @@ cargo-fmt:
     - cargo +nightly fmt --all -- --check
   allow_failure: false
 
-cargo-clippy:
-  stage: test
-  <<: *docker-env
-  <<: *rules-test
-  script:
-    - cargo --version
-    - cargo clippy --all-targets --all
-  allow_failure: false
-
 test-deterministic-wasm:
   stage: test
   <<: *rules-test
@@ -166,6 +157,16 @@ check-runtime-benchmarks:
   script:
     # Check that the node will compile with `runtime-benchmarks` feature flag.
     - ./scripts/gitlab/check_runtime_benchmarks.sh
+    - sccache -s
+
+check-runtime-benchmarks:
+  stage: test
+  <<: *rules-test
+  <<: *docker-env
+  <<: *compiler-info
+  script:
+    # Check that the node will compile with `try-runtime` feature flag.
+    - ./scripts/gitlab/check_try_runtime.sh
     - sccache -s
 
 check-no-default-features:
@@ -374,7 +375,7 @@ publish-rustdoc:
       ( echo "no docker credentials provided"; exit 1 )
     - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PASS\"}}}" > /kaniko/.docker/config.json
     - cd ./artifacts
-    # The job will success only on the protected branch
+    # The job will succeed only on the protected branch
     - /kaniko/executor
       --context .
       --dockerfile ${DOCKERFILE}

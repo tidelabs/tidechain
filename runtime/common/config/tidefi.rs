@@ -104,10 +104,10 @@ impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
   }
 
   #[cfg(feature = "runtime-benchmarks")]
-  fn successful_origin() -> RuntimeOrigin {
-    RuntimeOrigin::from(RawOrigin::Signed(
+  fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+    Ok(RuntimeOrigin::from(RawOrigin::Signed(
       AssetRegistryPalletId::get().into_account_truncating(),
-    ))
+    )))
   }
 }
 
