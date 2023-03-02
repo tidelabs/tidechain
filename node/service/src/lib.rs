@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-#![allow(clippy::type_complexity)]
-
 #[cfg(feature = "full-node")]
 pub use tidechain_client::{
   AbstractClient, Client, ClientHandle, ExecuteWithClient, FullBackend, FullClient,
