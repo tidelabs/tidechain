@@ -392,25 +392,25 @@ pub fn run() -> Result<(), Error> {
 
           #[cfg(feature = "lagoon-native")]
           if chain_spec.is_lagoon() {
-            return Ok(runner.sync_run(|config| {
+            return runner.sync_run(|config| {
               cmd
                 .run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(
                   config,
                 )
                 .map_err(Error::SubstrateCli)
-            })?);
+            });
           }
 
           // else we assume it is tidechain
           #[cfg(feature = "tidechain-native")]
           if chain_spec.is_tidechain() {
-            return Ok(runner.sync_run(|config| {
+            return runner.sync_run(|config| {
               cmd
                 .run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(
                   config,
                 )
                 .map_err(Error::SubstrateCli)
-            })?);
+            });
           }
 
           #[allow(unreachable_code)]
