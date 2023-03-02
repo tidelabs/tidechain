@@ -24,7 +24,7 @@ use jsonrpsee::{
 pub use pallet_tidefi_rpc_runtime_api::TidefiApi as TidefiRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{traits::Block as BlockT};
+use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
 use tidefi_primitives::{
   BalanceInfo, BlockNumber, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake,
