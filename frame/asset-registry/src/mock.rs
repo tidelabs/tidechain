@@ -60,6 +60,13 @@ impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
       r => Err(RuntimeOrigin::from(r)),
     })
   }
+
+  #[cfg(feature = "runtime-benchmarks")]
+  fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+    Ok(RuntimeOrigin::from(RawOrigin::Signed(
+      AssetRegistryPalletId::get().into_account_truncating(),
+    )))
+  }
 }
 
 impl pallet_assets::Config for Test {
