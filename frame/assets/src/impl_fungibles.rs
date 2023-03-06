@@ -79,6 +79,10 @@ impl<T: Config<I>, I: 'static> fungibles::Inspect<<T as SystemConfig>::AccountId
   ) -> WithdrawConsequence<Self::Balance> {
     Pallet::<T, I>::can_decrease(asset, who, amount, false)
   }
+
+  fn asset_exists(asset: Self::AssetId) -> bool {
+    Asset::<T, I>::contains_key(asset)
+  }
 }
 
 impl<T: Config<I>, I: 'static> fungibles::InspectMetadata<<T as SystemConfig>::AccountId>
@@ -155,7 +159,7 @@ impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T,
   fn set_balance(_: Self::AssetId, _: &T::AccountId, _: Self::Balance) -> DispatchResult {
     unreachable!("set_balance is not used if other functions are impl'd");
   }
-  fn set_total_issuance(id: T::AssetId, amount: Self::Balance) {
+  fn set_total_issuance(id: Self::AssetId, amount: Self::Balance) {
     Asset::<T, I>::mutate_exists(id, |maybe_asset| {
       if let Some(ref mut asset) = maybe_asset {
         asset.supply = amount
@@ -163,7 +167,7 @@ impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T,
     });
   }
   fn decrease_balance(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     who: &T::AccountId,
     amount: Self::Balance,
   ) -> Result<Self::Balance, DispatchError> {
@@ -174,7 +178,7 @@ impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T,
     Self::decrease_balance(asset, who, amount, f, |_, _| Ok(()))
   }
   fn decrease_balance_at_most(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     who: &T::AccountId,
     amount: Self::Balance,
   ) -> Self::Balance {
@@ -185,7 +189,7 @@ impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T,
     Self::decrease_balance(asset, who, amount, f, |_, _| Ok(())).unwrap_or(Zero::zero())
   }
   fn increase_balance(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     who: &T::AccountId,
     amount: Self::Balance,
   ) -> Result<Self::Balance, DispatchError> {
@@ -193,7 +197,7 @@ impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T,
     Ok(amount)
   }
   fn increase_balance_at_most(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     who: &T::AccountId,
     amount: Self::Balance,
   ) -> Self::Balance {
@@ -206,7 +210,7 @@ impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T,
 
 impl<T: Config<I>, I: 'static> fungibles::Create<T::AccountId> for Pallet<T, I> {
   fn create(
-    id: T::AssetId,
+    id: Self::AssetId,
     admin: T::AccountId,
     is_sufficient: bool,
     min_balance: Self::Balance,
@@ -216,33 +220,35 @@ impl<T: Config<I>, I: 'static> fungibles::Create<T::AccountId> for Pallet<T, I> 
 }
 
 impl<T: Config<I>, I: 'static> fungibles::Destroy<T::AccountId> for Pallet<T, I> {
-  type DestroyWitness = DestroyWitness;
-
-  fn get_destroy_witness(asset: &T::AssetId) -> Option<Self::DestroyWitness> {
-    Asset::<T, I>::get(asset).map(|asset_details| asset_details.destroy_witness())
+  fn start_destroy(id: Self::AssetId, maybe_check_owner: Option<T::AccountId>) -> DispatchResult {
+    Self::do_start_destroy(id, maybe_check_owner)
   }
 
-  fn destroy(
-    id: T::AssetId,
-    witness: Self::DestroyWitness,
-    maybe_check_owner: Option<T::AccountId>,
-  ) -> Result<Self::DestroyWitness, DispatchError> {
-    Self::do_destroy(id, witness, maybe_check_owner)
+  fn destroy_accounts(id: Self::AssetId, max_items: u32) -> Result<u32, DispatchError> {
+    Self::do_destroy_accounts(id, max_items)
+  }
+
+  fn destroy_approvals(id: Self::AssetId, max_items: u32) -> Result<u32, DispatchError> {
+    Self::do_destroy_approvals(id, max_items)
+  }
+
+  fn finish_destroy(id: Self::AssetId) -> DispatchResult {
+    Self::do_finish_destroy(id)
   }
 }
 
 impl<T: Config<I>, I: 'static> fungibles::metadata::Inspect<<T as SystemConfig>::AccountId>
   for Pallet<T, I>
 {
-  fn name(asset: T::AssetId) -> Vec<u8> {
+  fn name(asset: Self::AssetId) -> Vec<u8> {
     Metadata::<T, I>::get(asset).name.to_vec()
   }
 
-  fn symbol(asset: T::AssetId) -> Vec<u8> {
+  fn symbol(asset: Self::AssetId) -> Vec<u8> {
     Metadata::<T, I>::get(asset).symbol.to_vec()
   }
 
-  fn decimals(asset: T::AssetId) -> u8 {
+  fn decimals(asset: Self::AssetId) -> u8 {
     Metadata::<T, I>::get(asset).decimals
   }
 }
@@ -251,7 +257,7 @@ impl<T: Config<I>, I: 'static> fungibles::metadata::Mutate<<T as SystemConfig>::
   for Pallet<T, I>
 {
   fn set(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     from: &<T as SystemConfig>::AccountId,
     name: Vec<u8>,
     symbol: Vec<u8>,
@@ -266,7 +272,7 @@ impl<T: Config<I>, I: 'static> fungibles::approvals::Inspect<<T as SystemConfig>
 {
   // Check the amount approved to be spent by an owner to a delegate
   fn allowance(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     owner: &<T as SystemConfig>::AccountId,
     delegate: &<T as SystemConfig>::AccountId,
   ) -> T::Balance {
@@ -280,7 +286,7 @@ impl<T: Config<I>, I: 'static> fungibles::approvals::Mutate<<T as SystemConfig>:
   for Pallet<T, I>
 {
   fn approve(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     owner: &<T as SystemConfig>::AccountId,
     delegate: &<T as SystemConfig>::AccountId,
     amount: T::Balance,
@@ -290,7 +296,7 @@ impl<T: Config<I>, I: 'static> fungibles::approvals::Mutate<<T as SystemConfig>:
 
   // Aprove spending tokens from a given account
   fn transfer_from(
-    asset: T::AssetId,
+    asset: Self::AssetId,
     owner: &<T as SystemConfig>::AccountId,
     delegate: &<T as SystemConfig>::AccountId,
     dest: &<T as SystemConfig>::AccountId,

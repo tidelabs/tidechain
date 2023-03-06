@@ -16,7 +16,7 @@
 
 use crate::pallet as pallet_asset_registry;
 use frame_support::{
-  traits::{ConstU128, EnsureOrigin},
+  traits::{AsEnsureOriginWithArg, EnsureOrigin},
   PalletId,
 };
 use frame_system as system;
@@ -38,11 +38,11 @@ construct_mock_runtime!({
 });
 
 pub struct EnsureRootOrAssetRegistry;
-impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
+impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
   type Success = AccountId;
 
-  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+  fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+    Into::<Result<RawOrigin<AccountId>, RuntimeOrigin>>::into(o).and_then(|o| match o {
       RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
       RawOrigin::Signed(caller) => {
         let asset_registry_account: AccountId =
@@ -54,38 +54,46 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
         {
           Ok(caller)
         } else {
-          Err(Origin::from(Some(caller)))
+          Err(RuntimeOrigin::from(Some(caller)))
         }
       }
-      r => Err(Origin::from(r)),
+      r => Err(RuntimeOrigin::from(r)),
     })
   }
 
   #[cfg(feature = "runtime-benchmarks")]
-  fn successful_origin() -> Origin {
-    Origin::from(RawOrigin::Signed(Default::default()))
+  fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+    Ok(RuntimeOrigin::from(RawOrigin::Signed(
+      AssetRegistryPalletId::get().into_account_truncating(),
+    )))
   }
 }
 
 impl pallet_assets::Config for Test {
-  type Event = Event;
-  type Balance = u128;
+  type RuntimeEvent = RuntimeEvent;
+  type Balance = Balance;
   type AssetId = u32;
+  type AssetIdParameter = u32;
   type Currency = Balances;
+  type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
   type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
+  type AssetAccountDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = StringLimit;
   type Freezer = ();
-  type Extra = ();
   type WeightInfo = ();
-  type AssetAccountDeposit = ConstU128<0>;
+  type CallbackHandle = ();
+  type Extra = ();
+  type RemoveItemsLimit = ConstU32<5>;
+  #[cfg(feature = "runtime-benchmarks")]
+  type BenchmarkHelper = ();
 }
 
 impl pallet_asset_registry::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency

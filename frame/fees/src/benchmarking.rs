@@ -42,6 +42,7 @@ const FIFTEEN_DAYS: u32 = 14400 * 15;
 fn create_swap_fees_batch<T: Config>(batch_size: u32)
 where
   T: pallet_assets::Config,
+  <T as pallet_assets::Config>::AssetIdParameter: From<u32>,
   <T as pallet_assets::Config>::AssetId: From<u32>,
   <<T as frame_system::Config>::Lookup as StaticLookup>::Source:
     From<<T as frame_system::Config>::AccountId>,
@@ -127,6 +128,7 @@ where
 benchmarks! {
   where_clause {
     where T: pallet_security::Config + pallet_tidefi_stake::Config + pallet_assets::Config,
+      <T as pallet_assets::Config>::AssetIdParameter: From<u32>,
       <T as pallet_assets::Config>::AssetId: From<u32>,
       <<T as frame_system::Config>::Lookup as StaticLookup>::Source: From<<T as frame_system::Config>::AccountId>,
       <T as pallet_assets::Config>::Balance: From<u128>

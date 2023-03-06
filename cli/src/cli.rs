@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
+#![allow(clippy::all)]
 
 use clap::Parser;
 
@@ -65,6 +66,7 @@ pub enum Subcommand {
 }
 
 #[derive(Debug, Parser)]
+#[group(skip)]
 pub struct RunCmd {
   #[clap(flatten)]
   pub base: sc_cli::RunCmd,
@@ -81,6 +83,16 @@ pub struct RunCmd {
   /// elapsed (i.e. until a block at height `pause_block + delay` is imported).
   #[clap(long = "grandpa-pause", number_of_values(2))]
   pub grandpa_pause: Vec<u32>,
+
+  /// Disable automatic hardware benchmarks.
+  ///
+  /// By default these benchmarks are automatically ran at startup and measure
+  /// the CPU speed, the memory bandwidth and the disk speed.
+  ///
+  /// The results are then printed out in the logs, and also sent as part of
+  /// telemetry, if telemetry is enabled.
+  #[arg(long)]
+  pub no_hardware_benchmarks: bool,
 }
 
 #[derive(Debug, Parser)]

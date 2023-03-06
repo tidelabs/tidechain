@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::mock::{new_test_ext, Origin, Security};
+use crate::mock::{new_test_ext, RuntimeOrigin, Security};
 use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use tidefi_primitives::StatusCode;
 
@@ -36,7 +36,7 @@ mod set_status {
     new_test_ext().execute_with(|| {
       assert_eq!(Security::status(), StatusCode::Running);
       assert_ok!(Security::set_status(
-        Origin::root(),
+        RuntimeOrigin::root(),
         StatusCode::Maintenance
       ));
       assert_eq!(Security::status(), StatusCode::Maintenance);
@@ -50,7 +50,7 @@ mod set_status {
   fn fails_when_signer_is_not_root() {
     new_test_ext().execute_with(|| {
       assert_noop!(
-        Security::set_status(Origin::signed(1_u64.into()), StatusCode::Maintenance),
+        Security::set_status(RuntimeOrigin::signed(1_u64.into()), StatusCode::Maintenance),
         BadOrigin
       );
     });

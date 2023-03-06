@@ -32,22 +32,22 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
    fn withdrawal() -> Weight {
-      14_200_000_u64
-      .saturating_add(T::DbWeight::get().reads(6_u64))
-      .saturating_add(T::DbWeight::get().writes(5_u64))
+      Weight::from_ref_time(14_200_000)
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn swap() -> Weight {
-      14_300_000_u64
+      Weight::from_ref_time(16_200_000)
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn transfer() -> Weight {
-      18_400_000_u64
+      Weight::from_ref_time(18_200_000)
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn claim_sunrise_rewards() -> Weight {
-      25_400_000_u64
+      Weight::from_ref_time(25_200_000)
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }

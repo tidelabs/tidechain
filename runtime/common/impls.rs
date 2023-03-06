@@ -27,16 +27,10 @@ where
   R: pallet_balances::Config + pallet_authorship::Config,
   <R as frame_system::Config>::AccountId: From<super::AccountId>,
   <R as frame_system::Config>::AccountId: Into<super::AccountId>,
-  <R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
 {
   fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
-    let numeric_amount = amount.peek();
     if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
       <pallet_balances::Pallet<R>>::resolve_creating(&author, amount);
-      <frame_system::Pallet<R>>::deposit_event(pallet_balances::Event::Deposit {
-        who: author,
-        amount: numeric_amount,
-      });
     }
   }
 }
@@ -48,15 +42,18 @@ where
   pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
   <R as frame_system::Config>::AccountId: From<super::AccountId>,
   <R as frame_system::Config>::AccountId: Into<super::AccountId>,
-  <R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
 {
   fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
     if let Some(fees) = fees_then_tips.next() {
-      // Burn base fees.
-      drop(fees);
+      // for fees, 80% to treasury, 20% to author
+      let mut split = fees.ration(80, 20);
       if let Some(tips) = fees_then_tips.next() {
-        <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(tips);
+        // for tips, if any, 100% to author
+        tips.merge_into(&mut split.1);
       }
+      use pallet_treasury::Pallet as Treasury;
+      <Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
+      <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
     }
   }
 }
@@ -66,11 +63,12 @@ mod tests {
   use super::*;
   use crate::types::AccountId;
   use frame_support::{
+    dispatch::DispatchClass,
     parameter_types,
     traits::{ConstU32, FindAuthor},
     weights::{
-      constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-      DispatchClass,
+      constants::{ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND},
+      Weight,
     },
     PalletId,
   };
@@ -94,7 +92,7 @@ mod tests {
       System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
       Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
       Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
-      Authorship: pallet_authorship::{Pallet, Call, Storage},
+      Authorship: pallet_authorship::{Pallet, Storage},
     }
   );
 
@@ -105,7 +103,7 @@ mod tests {
         weight.base_extrinsic = ExtrinsicBaseWeight::get();
       })
       .for_class(DispatchClass::non_mandatory(), |weight| {
-        weight.max_total = Some(2 * WEIGHT_PER_SECOND);
+        weight.max_total = Some(Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX));
       })
       .build_or_panic();
     pub BlockLength: limits::BlockLength = limits::BlockLength::max(2 * 1024);
@@ -114,16 +112,16 @@ mod tests {
 
   impl frame_system::Config for Test {
     type BaseCallFilter = frame_support::traits::Everything;
-    type Origin = Origin;
+    type RuntimeOrigin = RuntimeOrigin;
     type Index = u64;
     type BlockNumber = u64;
-    type Call = Call;
+    type RuntimeCall = RuntimeCall;
     type Hash = H256;
     type Hashing = BlakeTwo256;
     type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = BlockHashCount;
     type BlockLength = BlockLength;
     type BlockWeights = BlockWeights;
@@ -141,7 +139,7 @@ mod tests {
 
   impl pallet_balances::Config for Test {
     type Balance = u64;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type DustRemoval = ();
     type ExistentialDeposit = ();
     type AccountStore = System;
@@ -160,7 +158,7 @@ mod tests {
     type Currency = pallet_balances::Pallet<Test>;
     type ApproveOrigin = frame_system::EnsureRoot<AccountId>;
     type RejectOrigin = frame_system::EnsureRoot<AccountId>;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type OnSlash = ();
     type ProposalBond = ();
     type ProposalBondMinimum = ();
@@ -186,8 +184,6 @@ mod tests {
   }
   impl pallet_authorship::Config for Test {
     type FindAuthor = OneAuthor;
-    type UncleGenerations = ();
-    type FilterUncle = ();
     type EventHandler = ();
   }
 

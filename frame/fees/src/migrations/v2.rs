@@ -2,7 +2,7 @@ use crate as pallet_fees;
 use frame_support::{
   traits::{
     fungibles::{Inspect, Transfer},
-    Get, GetStorageVersion, PalletInfoAccess, StorageVersion,
+    Get, GetStorageVersion, OnRuntimeUpgrade,
   },
   weights::Weight,
 };
@@ -11,19 +11,34 @@ use sp_runtime::traits::AccountIdConversion;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use tidefi_primitives::{assets::Asset, Balance, CurrencyId};
 
-pub fn migrate<
-  T: pallet_fees::Config + pallet_tidefi_stake::Config + pallet_assets::Config,
-  P: GetStorageVersion + PalletInfoAccess,
->() -> Weight
+pub struct MigrateToV2<T>(sp_std::marker::PhantomData<T>);
+impl<T: pallet_fees::Config + pallet_tidefi_stake::Config + pallet_assets::Config> OnRuntimeUpgrade
+  for MigrateToV2<T>
+where
+  <T as frame_system::Config>::AccountId: From<[u8; 32]>,
+{
+  fn on_runtime_upgrade() -> Weight {
+    migrate::<T>()
+  }
+  #[cfg(feature = "try-runtime")]
+  fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
+    Ok(post_migration::<T>())
+  }
+}
+
+pub fn migrate<T: pallet_fees::Config + pallet_tidefi_stake::Config + pallet_assets::Config>(
+) -> Weight
 where
   <T as frame_system::Config>::AccountId: From<[u8; 32]>,
 {
   let mut weight = T::DbWeight::get().reads_writes(3, 2);
 
-  let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
+  let current_pallet_version = pallet_fees::Pallet::<T>::current_storage_version();
+  let on_chain_storage_version = pallet_fees::Pallet::<T>::on_chain_storage_version();
   log::info!(
     target: "runtime::fees",
-    "Running migration to v2 for fees with storage version {:?}",
+    "Running migration to v2 for fees with storage version {:?} / onchain {:?}",
+    current_pallet_version,
     on_chain_storage_version,
   );
   if on_chain_storage_version < 2 {
@@ -56,7 +71,7 @@ where
       target: "runtime::fees",
       "Expected staking pool {:?}",
       staking_pool_size.iter().map(|(currency_id, b)| {
-        let asset: Asset = currency_id.clone().try_into().expect("valid currency");
+        let asset: Asset = (*currency_id).try_into().expect("valid currency");
         (asset.symbol(), *b)
       }).collect::<Vec<_>>(),
     );
@@ -192,7 +207,8 @@ where
       weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
     }
 
-    StorageVersion::new(2).put::<P>();
+    // Put this storage version for the given pallet into the storage.
+    current_pallet_version.put::<pallet_fees::Pallet<T>>();
 
     log::info!(
       target: "runtime::fees",
@@ -209,9 +225,6 @@ where
   weight
 }
 
-pub fn post_migration<
-  T: pallet_fees::Config + pallet_tidefi_stake::Config,
-  P: GetStorageVersion + PalletInfoAccess,
->() {
-  assert_eq!(<P as GetStorageVersion>::on_chain_storage_version(), 2);
+pub fn post_migration<T: pallet_fees::Config>() {
+  assert_eq!(pallet_fees::Pallet::<T>::on_chain_storage_version(), 2);
 }

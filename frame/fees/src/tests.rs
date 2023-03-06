@@ -235,7 +235,7 @@ pub fn test_maximum_fee_values() {
     assert_eq!(
       Sunrise::try_get_tdfy_value(CurrencyId::Wrapped(2), Asset::Bitcoin.saturating_mul(1))
         .unwrap(),
-      oracle_value.into()
+      oracle_value
     );
 
     let fee = Fees::calculate_swap_fees(
@@ -331,8 +331,8 @@ fn test_migration_v2() {
     );
 
     // run migration
-    crate::migrations::v2::migrate::<Test, Fees>();
-    crate::migrations::v2::post_migration::<Test, Fees>();
+    crate::migrations::v2::migrate::<Test>();
+    crate::migrations::v2::post_migration::<Test>();
 
     assert_eq!(
       Adapter::reducible_balance(CurrencyId::Wrapped(2), &pallet_account_id, false),

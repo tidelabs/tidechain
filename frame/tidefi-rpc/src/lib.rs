@@ -24,7 +24,7 @@ use jsonrpsee::{
 pub use pallet_tidefi_rpc_runtime_api::TidefiApi as TidefiRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use sp_runtime::traits::Block as BlockT;
 use std::sync::Arc;
 use tidefi_primitives::{
   BalanceInfo, BlockNumber, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake,
@@ -112,14 +112,14 @@ where
     at: Option<<Block as BlockT>::Hash>,
   ) -> RpcResult<CurrencyBalance<BalanceInfo>> {
     let api = self.client.runtime_api();
-    let at = BlockId::hash(at.unwrap_or(
+    let at = at.unwrap_or(
       // If the block hash is not supplied assume the best block.
       self.client.info().best_hash,
-    ));
+    );
     api
-      .get_account_balance(&at, account_id, asset_id)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .get_account_balance(at, account_id, asset_id)
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 
   fn get_account_stakes(
@@ -128,14 +128,14 @@ where
     at: Option<<Block as BlockT>::Hash>,
   ) -> RpcResult<Vec<(CurrencyId, Stake<BalanceInfo, BlockNumber>)>> {
     let api = self.client.runtime_api();
-    let at = BlockId::hash(at.unwrap_or(
+    let at = at.unwrap_or(
       // If the block hash is not supplied assume the best block.
       self.client.info().best_hash,
-    ));
+    );
     api
-      .get_account_stakes(&at, account_id)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .get_account_stakes(at, account_id)
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 
   fn get_assets(
@@ -143,14 +143,14 @@ where
     at: Option<<Block as BlockT>::Hash>,
   ) -> RpcResult<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>> {
     let api = self.client.runtime_api();
-    let at = BlockId::hash(at.unwrap_or(
+    let at = at.unwrap_or(
       // If the block hash is not supplied assume the best block.
       self.client.info().best_hash,
-    ));
+    );
     api
-      .get_assets(&at)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .get_assets(at)
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 
   fn get_account_balances(
@@ -159,13 +159,13 @@ where
     at: Option<<Block as BlockT>::Hash>,
   ) -> RpcResult<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>> {
     let api = self.client.runtime_api();
-    let at = BlockId::hash(at.unwrap_or(
+    let at = at.unwrap_or(
       // If the block hash is not supplied assume the best block.
       self.client.info().best_hash,
-    ));
+    );
     api
-      .get_account_balances(&at, account_id)
-      .map_err(|err| Error::Call(format!("{:?}", err)))?
-      .map_err(|err| Error::Dispatch(format!("{:?}", err)).into())
+      .get_account_balances(at, account_id)
+      .map_err(|err| Error::Call(format!("{err:?}")))?
+      .map_err(|err| Error::Dispatch(format!("{err:?}")).into())
   }
 }

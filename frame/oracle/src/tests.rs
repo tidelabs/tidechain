@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Assets, Event as MockEvent, FeeAmount, Fees,
-    MarketMakerFeeAmount, Oracle, Origin, Sunrise, System, Test,
+    new_test_ext, AccountId, Adapter, Assets, FeeAmount, Fees, MarketMakerFeeAmount, Oracle,
+    RuntimeEvent as MockEvent, RuntimeOrigin, Sunrise, System, Test,
   },
   pallet::*,
 };
@@ -99,8 +99,8 @@ type BlockNumber = u64;
 
 #[derive(Clone)]
 struct Context {
-  alice: Origin,
-  bob: Origin,
+  alice: RuntimeOrigin,
+  bob: RuntimeOrigin,
   market_makers: Vec<AccountId>,
   fees_account_id: AccountId,
 }
@@ -111,10 +111,10 @@ impl Default for Context {
     assert_eq!(fees_account_id, 8246216774960574317_u64.into());
 
     Self {
-      alice: Origin::signed(ALICE_ACCOUNT_ID),
-      bob: Origin::signed(BOB_ACCOUNT_ID),
+      alice: RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
+      bob: RuntimeOrigin::signed(BOB_ACCOUNT_ID),
       market_makers: vec![],
-      fees_account_id: fees_account_id,
+      fees_account_id,
     }
   }
 }
@@ -138,7 +138,7 @@ impl Context {
     let temp_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP_ASSET_ID,
       temp_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -146,7 +146,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp_asset_owner),
+      RuntimeOrigin::signed(temp_asset_owner),
       TEMP_ASSET_ID,
       TEMP_ASSET_NAME.into(),
       TEMP_ASSET_SYMBOL.into(),
@@ -160,7 +160,7 @@ impl Context {
     let temp2_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP2_ASSET_ID,
       temp2_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -168,7 +168,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp2_asset_owner),
+      RuntimeOrigin::signed(temp2_asset_owner),
       TEMP2_ASSET_ID,
       TEMP2_ASSET_NAME.into(),
       TEMP2_ASSET_SYMBOL.into(),
@@ -182,7 +182,7 @@ impl Context {
     let zemp_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       ZEMP_ASSET_ID,
       zemp_asset_owner,
       ZEMP_ASSET_IS_SUFFICIENT,
@@ -190,7 +190,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(zemp_asset_owner),
+      RuntimeOrigin::signed(zemp_asset_owner),
       ZEMP_ASSET_ID,
       ZEMP_ASSET_NAME.into(),
       ZEMP_ASSET_SYMBOL.into(),
@@ -407,6 +407,7 @@ impl Context {
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn add_new_swap_and_assert_results(
   account_id: AccountId,
   asset_id_from: CurrencyId,
@@ -896,7 +897,7 @@ pub fn confirm_swap_temp_zemp() {
 
     // partial filling
     assert_ok!(Oracle::confirm_swap(
-      context.alice.clone(),
+      context.alice,
       trade_request_id,
       vec![
         // charlie
@@ -965,7 +966,7 @@ pub fn confirm_swap_zemp_temp() {
 
     // partial filling
     assert_ok!(Oracle::confirm_swap(
-      context.alice.clone(),
+      context.alice,
       trade_request_id,
       vec![
         // charlie
@@ -998,7 +999,7 @@ pub fn confirm_swap_with_fees() {
       .mint_temp(DAVE_ACCOUNT_ID, DAVE_INITIAL_10000_TEMPS);
 
     Fees::start_era();
-    assert!(!Fees::current_era().is_none());
+    assert!(Fees::current_era().is_some());
     let current_era = Fees::current_era().unwrap().index;
 
     const BOB_SELLS_10_TDFYS: Balance = 10 * ONE_TDFY;
@@ -1369,7 +1370,7 @@ pub fn test_slippage() {
 
     // partial filling
     assert_ok!(Oracle::confirm_swap(
-      context.alice.clone(),
+      context.alice,
       trade_request_id,
       vec![SwapConfirmation {
         request_id: trade_request_mm_id,
@@ -1397,7 +1398,7 @@ pub fn test_imalive() {
       .create_zemp_asset_and_metadata();
 
     assert_ok!(Oracle::update_assets_value(
-      context.alice.clone(),
+      context.alice,
       vec![
         // 10 Tdfy / USDT
         (4, 10_000_000_000_000_u128),
@@ -1536,7 +1537,7 @@ mod confirm_swap {
           );
 
         assert_ok!(Oracle::confirm_swap(
-          context.alice.clone(),
+          context.alice,
           trade_request_id,
           vec![SwapConfirmation {
             request_id: trade_request_mm_id,
@@ -1577,7 +1578,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1613,7 +1614,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            Origin::none(),
+            RuntimeOrigin::none(),
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1649,7 +1650,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.bob.clone(),
+            context.bob,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1682,7 +1683,7 @@ mod confirm_swap {
         const INVALID_REQUEST_ID: H256 = H256::zero();
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             INVALID_REQUEST_ID,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1812,7 +1813,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: INVALID_REQUEST_ID,
@@ -1849,7 +1850,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1887,7 +1888,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1923,7 +1924,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1964,7 +1965,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -2004,7 +2005,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -2041,7 +2042,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -2077,7 +2078,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -2129,7 +2130,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm1_id,

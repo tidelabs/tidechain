@@ -17,7 +17,7 @@
 use crate::{
   constants::currency::deposit,
   types::{Balance, BlakeTwo256},
-  Balances, Call, Event, Runtime,
+  Balances, Runtime, RuntimeCall, RuntimeEvent,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{parameter_types, traits::InstanceFilter, RuntimeDebug};
@@ -51,19 +51,22 @@ impl Default for ProxyType {
   }
 }
 
-impl InstanceFilter<Call> for ProxyType {
-  fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+  fn filter(&self, c: &RuntimeCall) -> bool {
     match self {
       ProxyType::Any => false,
       ProxyType::NonTransfer => !matches!(
         c,
-        Call::Balances(..) | Call::Indices(pallet_indices::Call::transfer { .. })
+        RuntimeCall::Balances(..) | RuntimeCall::Indices(pallet_indices::Call::transfer { .. })
       ),
       ProxyType::Governance => matches!(
         c,
-        Call::Council(..) | Call::TechnicalCommittee(..) | Call::Elections(..) | Call::Treasury(..)
+        RuntimeCall::Council(..)
+          | RuntimeCall::TechnicalCommittee(..)
+          | RuntimeCall::Elections(..)
+          | RuntimeCall::Treasury(..)
       ),
-      ProxyType::Staking => matches!(c, Call::Staking(..)),
+      ProxyType::Staking => matches!(c, RuntimeCall::Staking(..)),
     }
   }
   fn is_superset(&self, o: &Self) -> bool {
@@ -78,8 +81,8 @@ impl InstanceFilter<Call> for ProxyType {
 }
 
 impl pallet_proxy::Config for Runtime {
-  type Event = Event;
-  type Call = Call;
+  type RuntimeEvent = RuntimeEvent;
+  type RuntimeCall = RuntimeCall;
   type Currency = Balances;
   type ProxyType = ProxyType;
   type ProxyDepositBase = ProxyDepositBase;

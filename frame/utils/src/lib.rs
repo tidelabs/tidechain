@@ -104,8 +104,8 @@ macro_rules! construct_mock_runtime {
          type BlockWeights = ();
          type BlockLength = ();
          type DbWeight = ();
-         type Origin = Origin;
-         type Call = Call;
+         type RuntimeOrigin = RuntimeOrigin;
+         type RuntimeCall = RuntimeCall;
          type Index = u64;
          type BlockNumber = u64;
          type Hash = tidefi_primitives::Hash;
@@ -113,7 +113,7 @@ macro_rules! construct_mock_runtime {
          type AccountId = AccountId;
          type Lookup = IdentityLookup<Self::AccountId>;
          type Header = Header;
-         type Event = Event;
+         type RuntimeEvent = RuntimeEvent;
          type BlockHashCount = BlockHashCount;
          type Version = ();
          type PalletInfo = PalletInfo;
@@ -136,7 +136,7 @@ macro_rules! construct_mock_runtime {
        impl pallet_balances::Config for Test {
          type Balance = Balance;
          type DustRemoval = ();
-         type Event = Event;
+         type RuntimeEvent = RuntimeEvent;
          type ExistentialDeposit = ExistentialDeposit;
          type AccountStore = frame_system::Pallet<Test>;
          type MaxLocks = MaxLocks;
@@ -204,6 +204,13 @@ macro_rules! construct_mock_runtime {
                CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
             }
          }
+
+         fn asset_exists(asset: Self::AssetId) -> bool {
+            match asset {
+              CurrencyId::Tdfy => true,
+              CurrencyId::Wrapped(asset_id) => Assets::asset_exists(asset_id),
+            }
+          }
       }
 
       impl Mutate<AccountId> for Adapter<AccountId> {

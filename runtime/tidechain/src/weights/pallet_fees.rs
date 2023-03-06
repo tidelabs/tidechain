@@ -65,17 +65,17 @@ impl<T: frame_system::Config> pallet_fees::WeightInfo for WeightInfo<T> {
 	/// The range of component `b` is `[2, 6]`.
 	/// The range of component `a` is `[1, 10000]`.
 	/// The range of component `b` is `[2, 6]`.
-	fn on_finalize(a: u32, b: u32, ) -> Weight {
-		(0 as Weight)
+	fn on_finalize(a: u32, b: u32) -> Weight {
+		Weight::from_ref_time(0)
 			// Standard Error: 20_000
-			.saturating_add((14_074_000 as Weight).saturating_mul(a as Weight))
+			.saturating_add(Weight::from_ref_time(14_074_000).saturating_mul(a.into()))
 			// Standard Error: 89_132_000
-			.saturating_add((45_319_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(12 as Weight))
-			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(a as Weight)))
-			.saturating_add(T::DbWeight::get().reads((4 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(T::DbWeight::get().writes(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(a as Weight)))
-			.saturating_add(T::DbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(45_319_000).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(12_u64))
+			.saturating_add(T::DbWeight::get().reads((2_u64).saturating_mul(a.into())))
+			.saturating_add(T::DbWeight::get().reads((4_u64).saturating_mul(b.into())))
+			.saturating_add(T::DbWeight::get().writes(9_u64))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(a.into())))
+			.saturating_add(T::DbWeight::get().writes((4_u64).saturating_mul(b.into())))
 	}
 }

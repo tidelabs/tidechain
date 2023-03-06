@@ -2,7 +2,7 @@ use crate as pallet_tidefi_stake;
 use frame_support::{
   pallet_prelude::ValueQuery,
   storage_alias,
-  traits::{Get, GetStorageVersion, PalletInfoAccess, StorageVersion},
+  traits::{Get, GetStorageVersion, OnRuntimeUpgrade},
   weights::Weight,
 };
 use hex_literal::hex;
@@ -21,16 +21,32 @@ type UnstakeQueue<T: pallet_tidefi_stake::Config> = StorageValue<
   ValueQuery,
 >;
 
-pub fn migrate<T: pallet_tidefi_stake::Config, P: GetStorageVersion + PalletInfoAccess>() -> Weight
+pub struct MigrateToV2<T>(sp_std::marker::PhantomData<T>);
+impl<T: pallet_tidefi_stake::Config> OnRuntimeUpgrade for MigrateToV2<T>
+where
+  <T as frame_system::Config>::AccountId: From<[u8; 32]>,
+{
+  fn on_runtime_upgrade() -> Weight {
+    migrate::<T>()
+  }
+  #[cfg(feature = "try-runtime")]
+  fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
+    Ok(post_migration::<T>())
+  }
+}
+
+pub fn migrate<T: pallet_tidefi_stake::Config>() -> Weight
 where
   <T as frame_system::Config>::AccountId: From<[u8; 32]>,
 {
   let mut weight = T::DbWeight::get().reads_writes(3, 2);
 
-  let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
+  let current_pallet_version = pallet_tidefi_stake::Pallet::<T>::current_storage_version();
+  let on_chain_storage_version = pallet_tidefi_stake::Pallet::<T>::on_chain_storage_version();
   log::info!(
     target: "runtime::tidefi-stake",
-    "Running migration to v2 for tidefi-stake with storage version {:?}",
+    "Running migration to v2 for tidefi-stake with storage version {:?} / onchain {:?}",
+    current_pallet_version,
     on_chain_storage_version,
   );
   if on_chain_storage_version < 2 {
@@ -94,7 +110,8 @@ where
       Some(*new_balance)
     });
 
-    StorageVersion::new(2).put::<P>();
+    // Put this storage version for the given pallet into the storage.
+    current_pallet_version.put::<pallet_tidefi_stake::Pallet<T>>();
 
     log::info!(
       target: "runtime::tidefi-stake",
@@ -113,6 +130,9 @@ where
   weight
 }
 
-pub fn post_migration<T: pallet_tidefi_stake::Config, P: GetStorageVersion + PalletInfoAccess>() {
-  assert_eq!(<P as GetStorageVersion>::on_chain_storage_version(), 2);
+pub fn post_migration<T: pallet_tidefi_stake::Config>() {
+  assert_eq!(
+    pallet_tidefi_stake::Pallet::<T>::on_chain_storage_version(),
+    2
+  );
 }

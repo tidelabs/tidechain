@@ -32,7 +32,7 @@ const IA_MULTIPLIER: u32 = 2;
 const TEST_TOKEN: u32 = 2;
 const FIFTEEN_DAYS: u32 = 14400 * 15;
 
-fn assert_event<T: Config>(generic_event: <T as Config>::Event) {
+fn assert_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
   frame_system::Pallet::<T>::assert_has_event(generic_event.into());
 }
 

@@ -45,7 +45,7 @@ pub mod pallet {
   #[pallet::config]
   pub trait Config: frame_system::Config {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
     /// Weights
     type WeightInfo: WeightInfo;
   }
@@ -118,7 +118,7 @@ pub mod pallet {
         });
         Self::deposit_event(Event::UpdateCurrentBlock(height));
       }
-      0
+      Weight::from_ref_time(0)
     }
   }
 
@@ -137,6 +137,7 @@ pub mod pallet {
     /// - `status_code`: New chain `StatusCode`
     ///
     /// Emits `StatusChanged` event when successful.
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, status_code: StatusCode) -> DispatchResultWithPostInfo {
       ensure_root(origin)?;

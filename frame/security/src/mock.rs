@@ -15,7 +15,7 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::pallet as pallet_security;
-use frame_support::traits::ConstU128;
+use frame_support::traits::AsEnsureOriginWithArg;
 use frame_system as system;
 use frame_utils::construct_mock_runtime;
 use system::EnsureRoot;
@@ -33,24 +33,30 @@ construct_mock_runtime!({
 });
 
 impl pallet_assets::Config for Test {
-  type Event = Event;
-  type Balance = u128;
+  type RuntimeEvent = RuntimeEvent;
+  type Balance = Balance;
   type AssetId = u32;
+  type AssetIdParameter = u32;
   type Currency = Balances;
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+  type ForceOrigin = EnsureRoot<AccountId>;
   type AssetDeposit = AssetDeposit;
+  type AssetAccountDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = StringLimit;
   type Freezer = ();
-  type Extra = ();
   type WeightInfo = ();
-  type AssetAccountDeposit = ConstU128<0>;
+  type CallbackHandle = ();
+  type Extra = ();
+  type RemoveItemsLimit = ConstU32<5>;
+  #[cfg(feature = "runtime-benchmarks")]
+  type BenchmarkHelper = ();
 }
 
 impl pallet_security::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
 }
 

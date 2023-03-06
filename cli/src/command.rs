@@ -198,12 +198,15 @@ pub fn run() -> Result<(), Error> {
       set_default_ss58_version(chain_spec);
 
       runner.run_node_until_exit(move |config| async move {
-        let role = config.role.clone();
+        let hwbench = (!cli.run.no_hardware_benchmarks)
+          .then_some(config.database.path().map(|database_path| {
+            let _ = std::fs::create_dir_all(database_path);
+            sc_sysinfo::gather_hwbench(Some(database_path))
+          }))
+          .flatten();
 
-        let task_manager = match role {
-          //Role::Light => tidechain_service::build_light(config).map(|light| light.task_manager),
-          _ => tidechain_service::build_full(config).map(|full| full.task_manager),
-        }?;
+        let task_manager =
+          tidechain_service::build_full(config, hwbench).map(|full| full.task_manager)?;
         Ok::<_, Error>(task_manager)
       })
     }
@@ -389,25 +392,25 @@ pub fn run() -> Result<(), Error> {
 
           #[cfg(feature = "lagoon-native")]
           if chain_spec.is_lagoon() {
-            return Ok(runner.sync_run(|config| {
+            return runner.sync_run(|config| {
               cmd
                 .run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(
                   config,
                 )
                 .map_err(Error::SubstrateCli)
-            })?);
+            });
           }
 
           // else we assume it is tidechain
           #[cfg(feature = "tidechain-native")]
           if chain_spec.is_tidechain() {
-            return Ok(runner.sync_run(|config| {
+            return runner.sync_run(|config| {
               cmd
                 .run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(
                   config,
                 )
                 .map_err(Error::SubstrateCli)
-            })?);
+            });
           }
 
           #[allow(unreachable_code)]
@@ -427,7 +430,14 @@ pub fn run() -> Result<(), Error> {
     }
     #[cfg(feature = "try-runtime")]
     Some(Subcommand::TryRuntime(cmd)) => {
+      use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
       use sc_service::TaskManager;
+      use try_runtime_cli::block_building_info::timestamp_with_babe_info;
+
+      type HostFunctionsOf<E> = ExtendedHostFunctions<
+        sp_io::SubstrateHostFunctions,
+        <E as NativeExecutionDispatch>::ExtendHostFunctions,
+      >;
 
       let runner = cli.create_runner(cmd)?;
       let chain_spec = &runner.config().chain_spec;
@@ -444,10 +454,10 @@ pub fn run() -> Result<(), Error> {
 
       #[cfg(feature = "lagoon-native")]
       if chain_spec.is_lagoon() {
-        return runner.async_run(|config| {
+        return runner.async_run(|_| {
           Ok((
-            cmd.run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(
-              config,
+            cmd.run::<tidechain_service::lagoon_runtime::Block, HostFunctionsOf<tidechain_service::LagoonExecutorDispatch>, _>(
+              Some(timestamp_with_babe_info(tidechain_service::lagoon_runtime::constants::time::MILLISECS_PER_BLOCK))
             )
             .map_err(Error::SubstrateCli),
               task_manager,
@@ -458,10 +468,10 @@ pub fn run() -> Result<(), Error> {
       // else we assume it is tidechain
       #[cfg(feature = "tidechain-native")]
       if chain_spec.is_tidechain() {
-        return runner.async_run(|config| {
+        return runner.async_run(|_| {
           Ok((
-            cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(
-              config,
+            cmd.run::<tidechain_service::lagoon_runtime::Block, HostFunctionsOf<tidechain_service::LagoonExecutorDispatch>, _>(
+              Some(timestamp_with_babe_info(tidechain_service::tidechain_runtime::constants::time::MILLISECS_PER_BLOCK))
             )
             .map_err(Error::SubstrateCli),
               task_manager,

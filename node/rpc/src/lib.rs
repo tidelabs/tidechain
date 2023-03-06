@@ -16,13 +16,13 @@
 
 use jsonrpsee::RpcModule;
 use sc_client_api::AuxStore;
-use sc_consensus_babe::{Config, Epoch};
+use sc_consensus_babe::{BabeConfiguration, Epoch};
 use sc_consensus_babe_rpc::{Babe, BabeApiServer};
 use sc_consensus_epochs::SharedEpochChanges;
-use sc_finality_grandpa::{
+use sc_consensus_grandpa::{
   FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
 };
-use sc_finality_grandpa_rpc::{Grandpa, GrandpaApiServer};
+use sc_consensus_grandpa_rpc::{Grandpa, GrandpaApiServer};
 pub use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_sync_state_rpc::{SyncState, SyncStateApiServer};
@@ -34,7 +34,6 @@ use sp_consensus::SelectChain;
 use sp_consensus_babe::BabeApi;
 use sp_keystore::SyncCryptoStorePtr;
 use std::sync::Arc;
-use substrate_state_trie_migration_rpc::StateMigrationApiServer;
 use tidefi_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Index};
 
 /// A type representing all RPC extensions.
@@ -43,7 +42,7 @@ pub type RpcExtension = RpcModule<()>;
 /// Extra dependencies for BABE.
 pub struct BabeDeps {
   /// BABE protocol config.
-  pub babe_config: Config,
+  pub babe_config: BabeConfiguration,
   /// BABE pending epoch changes.
   pub shared_epoch_changes: SharedEpochChanges<Block, Epoch>,
   /// The keystore that manages the keys of the node.
@@ -109,6 +108,7 @@ where
   use pallet_tidefi_rpc::{TidefiApiServer, TidefiRpc};
   use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
   use substrate_frame_rpc_system::{System, SystemApiServer};
+  use substrate_state_trie_migration_rpc::{StateMigration, StateMigrationApiServer};
 
   let mut io = RpcModule::new(());
   let FullDeps {
@@ -133,11 +133,8 @@ where
     finality_provider,
   } = grandpa;
 
-  io.merge(
-    substrate_state_trie_migration_rpc::StateMigration::new(client.clone(), backend, deny_unsafe)
-      .into_rpc(),
-  )?;
-  io.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
+  io.merge(StateMigration::new(client.clone(), backend, deny_unsafe).into_rpc())?;
+  io.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
   io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
   io.merge(
     Babe::new(

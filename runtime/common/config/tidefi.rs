@@ -17,14 +17,14 @@
 use crate::{
   constants::currency::{deposit, Adapter, TDFY},
   types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
-  AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
-  FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security, Sunrise,
-  SunriseCooldown, SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
+  AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Fees, FeesPalletId,
+  Oracle, OraclePalletId, Quorum, QuorumPalletId, Runtime, RuntimeEvent, RuntimeOrigin, Security,
+  Sunrise, SunriseCooldown, SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
 };
 
 use frame_support::{
   parameter_types,
-  traits::{ConstU128, EitherOfDiverse, EnsureOrigin},
+  traits::{AsEnsureOriginWithArg, ConstU128, ConstU32, EitherOfDiverse, EnsureOrigin},
 };
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_runtime::{traits::AccountIdConversion, FixedU128, Permill};
@@ -82,11 +82,11 @@ parameter_types! {
 }
 
 pub struct EnsureRootOrAssetRegistry;
-impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
+impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
   type Success = AccountId;
 
-  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+  fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+    Into::<Result<RawOrigin<AccountId>, RuntimeOrigin>>::into(o).and_then(|o| match o {
       RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
       RawOrigin::Signed(caller) => {
         // Allow call from asset registry pallet ID account
@@ -96,26 +96,27 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
         {
           Ok(caller)
         } else {
-          Err(Origin::from(Some(caller)))
+          Err(RuntimeOrigin::from(Some(caller)))
         }
       }
-      r => Err(Origin::from(r)),
+      r => Err(RuntimeOrigin::from(r)),
     })
   }
 
   #[cfg(feature = "runtime-benchmarks")]
-  fn successful_origin() -> Origin {
-    Origin::from(RawOrigin::Signed(
+  fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+    Ok(RuntimeOrigin::from(RawOrigin::Signed(
       AssetRegistryPalletId::get().into_account_truncating(),
-    ))
+    )))
   }
 }
 
 impl pallet_assets::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Balance = Balance;
   type AssetId = AssetId;
   type Currency = Balances;
+  type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
   type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
@@ -126,12 +127,19 @@ impl pallet_assets::Config for Runtime {
   // The amount of funds that must be reserved for a non-provider asset account to be
   // maintained.
   type AssetAccountDeposit = ConstU128<0>;
+  type RemoveItemsLimit = ConstU32<5>;
+  type CallbackHandle = ();
   type Extra = ();
+  type AssetIdParameter = u32;
   type WeightInfo = crate::weights::pallet_assets::WeightInfo<Runtime>;
+
+  /// Helper trait for benchmarks.
+  #[cfg(feature = "runtime-benchmarks")]
+  type BenchmarkHelper = ();
 }
 
 impl pallet_tidefi::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Quorum = Quorum;
   type Oracle = Oracle;
   type Fees = Fees;
@@ -145,7 +153,7 @@ impl pallet_tidefi::Config for Runtime {
 }
 
 impl pallet_tidefi_stake::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type StakePalletId = TidefiStakingPalletId;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
@@ -160,7 +168,7 @@ impl pallet_tidefi_stake::Config for Runtime {
 }
 
 impl pallet_quorum::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type QuorumPalletId = QuorumPalletId;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
@@ -180,7 +188,7 @@ impl pallet_quorum::Config for Runtime {
 }
 
 impl pallet_oracle::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type OraclePalletId = OraclePalletId;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
@@ -195,12 +203,12 @@ impl pallet_oracle::Config for Runtime {
 }
 
 impl pallet_security::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = crate::weights::pallet_security::WeightInfo<Runtime>;
 }
 
 impl pallet_asset_registry::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
@@ -208,7 +216,7 @@ impl pallet_asset_registry::Config for Runtime {
 }
 
 impl pallet_fees::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type FeesPalletId = FeesPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type UnixTime = Timestamp;
@@ -232,7 +240,7 @@ impl pallet_fees::Config for Runtime {
 }
 
 impl pallet_sunrise::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Security = Security;
   type SunrisePalletId = SunrisePalletId;
   type CurrencyTidefi = Adapter<AccountId>;

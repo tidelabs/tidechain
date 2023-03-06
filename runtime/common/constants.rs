@@ -100,6 +100,13 @@ pub mod currency {
         CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
       }
     }
+
+    fn asset_exists(asset: Self::AssetId) -> bool {
+      match asset {
+        CurrencyId::Tdfy => true,
+        CurrencyId::Wrapped(asset_id) => Assets::asset_exists(asset_id),
+      }
+    }
   }
 
   impl InspectHold<AccountId> for Adapter<AccountId> {
@@ -268,7 +275,7 @@ pub mod fee {
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
       // in Tidechain, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
       let p = super::currency::CENTS;
-      let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
+      let q = 10 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
       smallvec![WeightToFeeCoefficient {
         degree: 1,
         negative: false,

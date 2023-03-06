@@ -15,11 +15,46 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::pallet as pallet_tidefi_stake;
-use frame_support::{traits::ConstU128, PalletId};
+use frame_support::{
+  dispatch::RawOrigin, pallet_prelude::EnsureOrigin, traits::AsEnsureOriginWithArg, PalletId,
+};
 use frame_system as system;
 use frame_utils::construct_mock_runtime;
+use sp_runtime::traits::AccountIdConversion;
 use system::EnsureRoot;
 use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex, StakeCurrencyMeta};
+
+pub struct EnsureRootOrAssetRegistry;
+impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
+  type Success = AccountId;
+
+  fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+    Into::<Result<RawOrigin<AccountId>, RuntimeOrigin>>::into(o).and_then(|o| match o {
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
+      RawOrigin::Signed(caller) => {
+        let asset_registry_account: AccountId =
+          AssetRegistryPalletId::get().into_account_truncating();
+        // Allow call from asset registry pallet ID account
+        if caller == asset_registry_account
+        // Allow call from asset registry owner
+        || caller == AssetRegistry::account_id().expect("Unable to get asset registry account id")
+        {
+          Ok(caller)
+        } else {
+          Err(RuntimeOrigin::from(Some(caller)))
+        }
+      }
+      r => Err(RuntimeOrigin::from(r)),
+    })
+  }
+
+  #[cfg(feature = "runtime-benchmarks")]
+  fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+    Ok(RuntimeOrigin::from(RawOrigin::Signed(
+      AssetRegistryPalletId::get().into_account_truncating(),
+    )))
+  }
+}
 
 construct_mock_runtime!({
   Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
@@ -76,29 +111,35 @@ construct_mock_runtime!({
 });
 
 impl pallet_assets::Config for Test {
-  type Event = Event;
-  type Balance = u128;
+  type RuntimeEvent = RuntimeEvent;
+  type Balance = Balance;
   type AssetId = u32;
+  type AssetIdParameter = u32;
   type Currency = Balances;
+  type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+  type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
+  type AssetAccountDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = StringLimit;
   type Freezer = ();
-  type Extra = ();
   type WeightInfo = ();
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
-  type AssetAccountDeposit = ConstU128<0>;
+  type CallbackHandle = ();
+  type Extra = ();
+  type RemoveItemsLimit = ConstU32<5>;
+  #[cfg(feature = "runtime-benchmarks")]
+  type BenchmarkHelper = ();
 }
 
 impl pallet_security::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_tidefi::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_tidefi::weights::SubstrateWeight<Test>;
   type Quorum = Quorum;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -110,7 +151,7 @@ impl pallet_tidefi::Config for Test {
 }
 
 impl pallet_quorum::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
   type QuorumPalletId = QuorumPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -127,7 +168,7 @@ impl pallet_quorum::Config for Test {
 }
 
 impl pallet_oracle::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_oracle::weights::SubstrateWeight<Test>;
   type OraclePalletId = OraclePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -138,7 +179,7 @@ impl pallet_oracle::Config for Test {
 }
 
 impl pallet_fees::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Security = Security;
   type FeesPalletId = FeesPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -156,7 +197,7 @@ impl pallet_fees::Config for Test {
 }
 
 impl pallet_sunrise::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Security = Security;
   type SunrisePalletId = SunrisePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -166,7 +207,7 @@ impl pallet_sunrise::Config for Test {
 }
 
 impl pallet_tidefi_stake::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type StakePalletId = TidefiPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
@@ -179,7 +220,7 @@ impl pallet_tidefi_stake::Config for Test {
 }
 
 impl pallet_asset_registry::Config for Test {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   type CurrencyTidefi = Adapter<AccountId>;

@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Assets, Balances, Event as MockEvent, ExistentialDeposit,
-    Fees, Oracle, Origin, Quorum, Sunrise, SwapLimitByAccount, System, Test, Tidefi,
+    new_test_ext, AccountId, Adapter, Assets, Balances, ExistentialDeposit, Fees, Oracle, Quorum,
+    RuntimeEvent as MockEvent, RuntimeOrigin, Sunrise, SwapLimitByAccount, System, Test, Tidefi,
   },
   pallet::*,
 };
@@ -64,7 +64,7 @@ const EXTRINSIC_HASH: [u8; 32] = [
 ];
 
 struct Context {
-  rewards_claimer: Origin,
+  rewards_claimer: RuntimeOrigin,
   sender: AccountId,
   receiver: AccountId,
   test_assets: Vec<CurrencyId>,
@@ -79,7 +79,7 @@ impl Default for Context {
   fn default() -> Self {
     Context {
       era_index: 1,
-      rewards_claimer: Origin::signed(CHARLIE_ACCOUNT_ID),
+      rewards_claimer: RuntimeOrigin::signed(CHARLIE_ACCOUNT_ID),
       sender: ALICE_ACCOUNT_ID,
       receiver: BOB_ACCOUNT_ID,
       test_assets: vec![CurrencyId::Tdfy, TEMP_CURRENCY_ID],
@@ -99,7 +99,10 @@ impl Default for Context {
 
 impl Context {
   fn set_oracle_status(self, status: bool) -> Self {
-    assert_ok!(Oracle::set_status(Origin::signed(ALICE_ACCOUNT_ID), status));
+    assert_ok!(Oracle::set_status(
+      RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
+      status
+    ));
     match status {
       true => assert!(Oracle::status()),
       false => assert!(!Oracle::status()),
@@ -133,7 +136,7 @@ impl Context {
     let temp_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP_ASSET_ID,
       temp_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -141,7 +144,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp_asset_owner),
+      RuntimeOrigin::signed(temp_asset_owner),
       TEMP_ASSET_ID,
       TEMP_ASSET_NAME.into(),
       TEMP_ASSET_SYMBOL.into(),
@@ -281,7 +284,7 @@ fn assert_event_is_emitted_transfer(context: &Context, currency_id: CurrencyId) 
   System::assert_has_event(MockEvent::Tidefi(Event::Transfer {
     from_account_id: context.sender,
     to_account_id: context.receiver,
-    currency_id: currency_id,
+    currency_id,
     amount: context.amount,
   }));
 }
@@ -289,7 +292,7 @@ fn assert_event_is_emitted_transfer(context: &Context, currency_id: CurrencyId) 
 fn assert_event_is_emitted_withdrawal(context: &Context, currency_id: CurrencyId) {
   System::assert_has_event(MockEvent::Tidefi(Event::Withdrawal {
     account: context.sender,
-    currency_id: currency_id,
+    currency_id,
     amount: context.amount,
     external_address: context.external_address.clone(),
   }));
@@ -321,7 +324,7 @@ mod transfer {
           let bob_balance_before = get_bob_balance(currency_id);
 
           assert_ok!(Tidefi::transfer(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             context.receiver,
             currency_id,
             context.amount
@@ -353,7 +356,7 @@ mod transfer {
           let alice_balance_before = get_alice_balance(currency_id);
 
           assert_ok!(Tidefi::transfer(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             context.sender,
             currency_id,
             context.amount
@@ -370,7 +373,7 @@ mod transfer {
         let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY);
 
         assert_ok!(Tidefi::transfer(
-          Origin::signed(context.sender),
+          RuntimeOrigin::signed(context.sender),
           context.receiver,
           CurrencyId::Tdfy,
           ONE_TDFY
@@ -390,7 +393,7 @@ mod transfer {
           let alice_balance_before = get_alice_balance(currency_id);
 
           assert_ok!(Tidefi::transfer(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             context.receiver,
             currency_id,
             alice_balance_before
@@ -418,7 +421,7 @@ mod transfer {
         for currency_id in context.test_assets.clone() {
           assert_noop!(
             Tidefi::transfer(
-              Origin::none(),
+              RuntimeOrigin::none(),
               context.receiver,
               currency_id,
               context.amount
@@ -438,7 +441,7 @@ mod transfer {
 
         assert_noop!(
           Tidefi::transfer(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             context.receiver,
             TEMP_CURRENCY_ID,
             context.amount
@@ -460,7 +463,7 @@ mod transfer {
         let invalid_sender = AccountId(10);
         assert_noop!(
           Tidefi::transfer(
-            Origin::signed(invalid_sender),
+            RuntimeOrigin::signed(invalid_sender),
             context.receiver,
             TEMP_CURRENCY_ID,
             context.amount
@@ -477,7 +480,7 @@ mod transfer {
 
         assert_noop!(
           Tidefi::transfer(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             context.receiver,
             CurrencyId::Tdfy,
             10 * ONE_TDFY + 1
@@ -497,7 +500,7 @@ mod transfer {
 
         assert_noop!(
           Tidefi::transfer(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             context.receiver,
             TEMP_CURRENCY_ID,
             10 * ONE_TEMP + 1
@@ -514,7 +517,7 @@ mod transfer {
 
         assert_noop!(
           Tidefi::transfer(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             context.receiver,
             CurrencyId::Tdfy,
             context.amount
@@ -540,7 +543,7 @@ mod withdrawal {
       let alice_balance_before = get_alice_balance(TEMP_CURRENCY_ID);
 
       assert_ok!(Tidefi::withdrawal(
-        Origin::signed(context.sender),
+        RuntimeOrigin::signed(context.sender),
         TEMP_CURRENCY_ID,
         context.amount,
         context.external_address.clone(),
@@ -561,10 +564,10 @@ mod withdrawal {
         .mint_temp(ALICE_ACCOUNT_ID, ONE_TEMP);
 
       assert_ok!(Tidefi::withdrawal(
-        Origin::signed(context.sender),
+        RuntimeOrigin::signed(context.sender),
         TEMP_CURRENCY_ID,
         ONE_TEMP,
-        context.external_address.clone(),
+        context.external_address,
       ));
     });
   }
@@ -582,10 +585,10 @@ mod withdrawal {
 
         assert_noop!(
           Tidefi::withdrawal(
-            Origin::none(),
+            RuntimeOrigin::none(),
             TEMP_CURRENCY_ID,
             context.amount,
-            context.external_address.clone(),
+            context.external_address,
           ),
           BadOrigin
         );
@@ -599,10 +602,10 @@ mod withdrawal {
 
         assert_noop!(
           Tidefi::withdrawal(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             context.amount,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::AssetDisabled
         );
@@ -616,10 +619,10 @@ mod withdrawal {
 
         assert_noop!(
           Tidefi::withdrawal(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             CurrencyId::Tdfy,
             context.amount,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::CannotWithdrawTdfy
         );
@@ -639,10 +642,10 @@ mod withdrawal {
 
         assert_noop!(
           Tidefi::withdrawal(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             alice_temp_balance + 1,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::WithdrawAmountGreaterThanAccountBalance
         );
@@ -660,10 +663,10 @@ mod withdrawal {
 
         assert_noop!(
           Tidefi::withdrawal(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             initial_temp_amount + 1,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::WithdrawAmountGreaterThanAssetSupply
         );
@@ -679,17 +682,17 @@ mod withdrawal {
           .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
 
         assert_ok!(Assets::freeze(
-          Origin::signed(context.sender),
+          RuntimeOrigin::signed(context.sender),
           TEMP_ASSET_ID,
           ALICE_ACCOUNT_ID
         ));
 
         assert_noop!(
           Tidefi::withdrawal(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             10 * ONE_TEMP,
-            context.external_address.clone(),
+            context.external_address,
           ),
           Error::<Test>::AccountAssetFrozen
         );
@@ -714,7 +717,7 @@ mod swap {
           .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP);
 
         assert_ok!(Tidefi::swap(
-          Origin::signed(BOB_ACCOUNT_ID),
+          RuntimeOrigin::signed(BOB_ACCOUNT_ID),
           CurrencyId::Tdfy,
           10 * ONE_TDFY,
           TEMP_CURRENCY_ID,
@@ -748,7 +751,7 @@ mod swap {
           .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP);
 
         assert_ok!(Tidefi::swap(
-          Origin::signed(BOB_ACCOUNT_ID),
+          RuntimeOrigin::signed(BOB_ACCOUNT_ID),
           TEMP_CURRENCY_ID,
           200 * ONE_TEMP,
           CurrencyId::Tdfy,
@@ -787,7 +790,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::none(),
+            RuntimeOrigin::none(),
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
             TEMP_CURRENCY_ID,
@@ -812,7 +815,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
             TEMP_CURRENCY_ID,
@@ -834,7 +837,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             200 * ONE_TEMP,
             CurrencyId::Tdfy,
@@ -847,7 +850,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
             TEMP_CURRENCY_ID,
@@ -881,7 +884,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(BOB_ACCOUNT_ID),
+            RuntimeOrigin::signed(BOB_ACCOUNT_ID),
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
             TEMP_CURRENCY_ID,
@@ -907,7 +910,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             bob_temp_balance + 1,
             CurrencyId::Tdfy,
@@ -931,7 +934,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             initial_temp_amount + 1,
             CurrencyId::Tdfy,
@@ -953,14 +956,14 @@ mod swap {
           .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
 
         assert_ok!(Assets::freeze(
-          Origin::signed(context.sender),
+          RuntimeOrigin::signed(context.sender),
           TEMP_ASSET_ID,
           ALICE_ACCOUNT_ID
         ));
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             10 * ONE_TEMP,
             CurrencyId::Tdfy,
@@ -983,7 +986,7 @@ mod swap {
 
         assert_noop!(
           Tidefi::swap(
-            Origin::signed(context.sender),
+            RuntimeOrigin::signed(context.sender),
             TEMP_CURRENCY_ID,
             10 * ONE_TEMP,
             CurrencyId::Tdfy,
@@ -1021,7 +1024,7 @@ mod cancel_swap {
           let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
 
           assert_ok!(Tidefi::cancel_swap(
-            Origin::signed(BOB_ACCOUNT_ID),
+            RuntimeOrigin::signed(BOB_ACCOUNT_ID),
             context.request_id,
           ));
 
@@ -1050,7 +1053,7 @@ mod cancel_swap {
           let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, TEMP_CURRENCY_ID);
 
           assert_ok!(Tidefi::cancel_swap(
-            Origin::signed(ALICE_ACCOUNT_ID),
+            RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
             context.request_id,
           ));
 
@@ -1083,7 +1086,7 @@ mod cancel_swap {
           let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
 
           assert_ok!(Tidefi::cancel_swap(
-            Origin::signed(ALICE_ACCOUNT_ID),
+            RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
             context.request_id,
           ));
 
@@ -1112,7 +1115,7 @@ mod cancel_swap {
           let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, TEMP_CURRENCY_ID);
 
           assert_ok!(Tidefi::cancel_swap(
-            Origin::signed(ALICE_ACCOUNT_ID),
+            RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
             context.request_id,
           ));
 
@@ -1143,7 +1146,7 @@ mod cancel_swap {
           .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
         assert_noop!(
-          Tidefi::cancel_swap(Origin::none(), context.request_id),
+          Tidefi::cancel_swap(RuntimeOrigin::none(), context.request_id),
           BadOrigin
         );
       })
@@ -1161,12 +1164,12 @@ mod cancel_swap {
           .set_oracle_status(false);
 
         assert_noop!(
-          Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), context.request_id),
+          Tidefi::cancel_swap(RuntimeOrigin::signed(BOB_ACCOUNT_ID), context.request_id),
           Error::<Test>::OraclePaused
         );
 
         assert_noop!(
-          Tidefi::cancel_swap(Origin::signed(ALICE_ACCOUNT_ID), context.request_id),
+          Tidefi::cancel_swap(RuntimeOrigin::signed(ALICE_ACCOUNT_ID), context.request_id),
           Error::<Test>::OraclePaused
         );
       });
@@ -1183,12 +1186,12 @@ mod cancel_swap {
           .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
         assert_noop!(
-          Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), Hash::zero()),
+          Tidefi::cancel_swap(RuntimeOrigin::signed(BOB_ACCOUNT_ID), Hash::zero()),
           OracleError::<Test>::InvalidRequestId
         );
 
         assert_noop!(
-          Tidefi::cancel_swap(Origin::signed(ALICE_ACCOUNT_ID), Hash::zero()),
+          Tidefi::cancel_swap(RuntimeOrigin::signed(ALICE_ACCOUNT_ID), Hash::zero()),
           OracleError::<Test>::InvalidRequestId
         );
       })
@@ -1205,7 +1208,7 @@ mod cancel_swap {
           .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
         assert_noop!(
-          Tidefi::cancel_swap(Origin::signed(AccountId(100)), context.request_id),
+          Tidefi::cancel_swap(RuntimeOrigin::signed(AccountId(100)), context.request_id),
           OracleError::<Test>::AccessDenied
         );
       });
@@ -1224,15 +1227,15 @@ mod cancel_swap {
             .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
             .add_temp_to_tdfy_limit_swap(BOB_ACCOUNT_ID, 200 * ONE_TEMP, 10 * ONE_TDFY);
 
-          Account::<Test>::remove(&BOB_ACCOUNT_ID, TEMP_ASSET_ID);
+          Account::<Test>::remove(BOB_ACCOUNT_ID, TEMP_ASSET_ID);
 
           assert_noop!(
-            Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), context.request_id),
+            Tidefi::cancel_swap(RuntimeOrigin::signed(BOB_ACCOUNT_ID), context.request_id),
             OracleError::<Test>::ReleaseFailed
           );
 
           assert_noop!(
-            Tidefi::cancel_swap(Origin::signed(ALICE_ACCOUNT_ID), context.request_id),
+            Tidefi::cancel_swap(RuntimeOrigin::signed(ALICE_ACCOUNT_ID), context.request_id),
             OracleError::<Test>::ReleaseFailed
           );
         });
@@ -1252,17 +1255,17 @@ mod cancel_swap {
             maybe_account
               .as_mut()
               .ok_or(())
-              .map(|account| account.reserved = account.reserved - 1)
+              .map(|account| account.reserved -= 1)
           })
           .unwrap();
 
           assert_noop!(
-            Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), context.request_id),
+            Tidefi::cancel_swap(RuntimeOrigin::signed(BOB_ACCOUNT_ID), context.request_id),
             OracleError::<Test>::ReleaseFailed
           );
 
           assert_noop!(
-            Tidefi::cancel_swap(Origin::signed(ALICE_ACCOUNT_ID), context.request_id),
+            Tidefi::cancel_swap(RuntimeOrigin::signed(ALICE_ACCOUNT_ID), context.request_id),
             OracleError::<Test>::ReleaseFailed
           );
         });
@@ -1352,7 +1355,7 @@ mod cancel_swap {
         assert_eq!(requester_reserved, reserved_balance);
 
         assert_ok!(Tidefi::cancel_swap(
-          Origin::signed(BOB_ACCOUNT_ID),
+          RuntimeOrigin::signed(BOB_ACCOUNT_ID),
           context.request_id,
         ));
 
@@ -1427,7 +1430,7 @@ mod claim_sunrise_rewards {
           .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
 
         assert_noop!(
-          Pallet::<Test>::claim_sunrise_rewards(Origin::none(), context.era_index),
+          Pallet::<Test>::claim_sunrise_rewards(RuntimeOrigin::none(), context.era_index),
           BadOrigin
         );
       });
@@ -1478,7 +1481,7 @@ mod claim_sunrise_rewards {
         let current_era = Fees::current_era().unwrap().index;
 
         assert_noop!(
-          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), current_era),
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, current_era),
           Error::<Test>::InvalidEra
         );
       });
@@ -1514,7 +1517,7 @@ mod claim_sunrise_rewards {
         let previous_era = Fees::current_era().unwrap().index - 1;
 
         assert_noop!(
-          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), previous_era),
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, previous_era),
           Error::<Test>::EraNotReady
         );
       });

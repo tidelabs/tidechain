@@ -22,7 +22,7 @@ use crate::{
   AssetRegistry, AuthorityDiscovery, Babe, Executive, Grandpa, Historical, InherentDataExt,
   Runtime, SessionKeys, System, TidefiStaking, TransactionPayment, VERSION,
 };
-use frame_support::traits::KeyOwnerProofSystem;
+use frame_support::{pallet_prelude::Weight, traits::KeyOwnerProofSystem};
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
 use sp_api::{impl_runtime_apis, ApisVec};
@@ -133,17 +133,17 @@ impl_runtime_apis! {
    }
 
    impl sp_consensus_babe::BabeApi<Block> for Runtime {
-       fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
+       fn configuration() -> sp_consensus_babe::BabeConfiguration {
            // The choice of `c` parameter (where `1 - c` represents the
            // probability of a slot being empty), is done in accordance to the
            // slot duration and expected target block time, for safely
            // resisting network delays of maximum two seconds.
            // <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
-           sp_consensus_babe::BabeGenesisConfiguration {
+           sp_consensus_babe::BabeConfiguration {
                slot_duration: Babe::slot_duration(),
                epoch_length: EpochDuration::get(),
                c: BABE_GENESIS_EPOCH_CONFIG.c,
-               genesis_authorities: Babe::authorities().to_vec(),
+               authorities: Babe::authorities().to_vec(),
                randomness: Babe::randomness(),
                allowed_slots: BABE_GENESIS_EPOCH_CONFIG.allowed_slots,
            }
@@ -207,6 +207,12 @@ impl_runtime_apis! {
        fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
            TransactionPayment::query_fee_details(uxt, len)
        }
+       fn query_weight_to_fee(weight: Weight) -> Balance {
+            TransactionPayment::weight_to_fee(weight)
+       }
+       fn query_length_to_fee(length: u32) -> Balance {
+            TransactionPayment::length_to_fee(length)
+       }
    }
 
    impl sp_session::SessionKeys<Block> for Runtime {
@@ -239,13 +245,20 @@ impl_runtime_apis! {
 
    #[cfg(feature = "try-runtime")]
    impl frame_try_runtime::TryRuntime<Block> for Runtime {
-     fn on_runtime_upgrade() -> (frame_support::weights::Weight, frame_support::weights::Weight) {
-        log::info!("try-runtime::on_runtime_upgrade tidechain.");
-        let weight = Executive::try_runtime_upgrade().unwrap();
+     fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
+        log::info!("try-runtime::on_runtime_upgrade rococo.");
+        let weight = Executive::try_runtime_upgrade(checks).unwrap();
         (weight, crate::types::RuntimeBlockWeights::get().max_block)
      }
-     fn execute_block_no_check(block: Block) -> frame_support::weights::Weight {
-        Executive::execute_block_no_check(block)
+     fn execute_block(
+        block: Block,
+        state_root_check: bool,
+        signature_check: bool,
+        select: frame_try_runtime::TryStateSelect,
+     ) -> Weight {
+        // NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
+        // have a backtrace here.
+        Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
      }
    }
 
@@ -255,7 +268,7 @@ impl_runtime_apis! {
        Vec<frame_benchmarking::BenchmarkList>,
        Vec<frame_support::traits::StorageInfo>,
      ) {
-       use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+       use frame_benchmarking::v1::{list_benchmark, Benchmarking, BenchmarkList};
        use frame_support::traits::StorageInfoTrait;
 
        use pallet_session_benchmarking::Pallet as SessionBench;
@@ -306,7 +319,7 @@ impl_runtime_apis! {
        fn dispatch_benchmark(
            config: frame_benchmarking::BenchmarkConfig
        ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-           use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+           use frame_benchmarking::v1::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
            // Trying to add benchmarks directly to the Session Pallet caused cyclic dependency
            // issues. To get around that, we separated the Session benchmarks into its own crate,
            // which is why we need these two lines below.

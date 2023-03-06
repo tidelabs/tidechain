@@ -31,7 +31,7 @@ const MM_ID: u32 = 3;
 const TEST_TOKEN: u32 = 2;
 const TEST_TOKEN2: u32 = 3;
 
-fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+fn _assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
   frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 

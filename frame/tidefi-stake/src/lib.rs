@@ -42,7 +42,7 @@ pub(crate) const LOG_TARGET: &str = "tidefi::staking";
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
-			target: crate::LOG_TARGET,
+			target: $crate::LOG_TARGET,
 			concat!("[{:?}] 💸 ", $patter), T::Security::get_current_block_count() $(, $values)*
 		)
 	};
@@ -85,7 +85,7 @@ pub mod pallet {
   /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config: frame_system::Config {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Pallet ID
     #[pallet::constant]
@@ -246,7 +246,7 @@ pub mod pallet {
         .expect("too much periods");
 
       StakingPeriodRewards::<T>::put(bounded_periods);
-      UnstakeFee::<T>::put(self.unstake_fee.clone());
+      UnstakeFee::<T>::put(self.unstake_fee);
 
       for (currency_id, staking_meta) in self.staking_meta.clone() {
         StakingCurrencyMeta::<T>::insert(currency_id, staking_meta);
@@ -341,20 +341,21 @@ pub mod pallet {
       let compound_queue_size = QueueCompound::<T>::count();
 
       let do_next_compound_interest_operation_weight =
-        <T as Config>::WeightInfo::on_idle_compound(compound_queue_size.into()).saturating_add(
+        <T as Config>::WeightInfo::on_idle_compound(compound_queue_size).saturating_add(
           T::DbWeight::get().reads_writes(compound_queue_size.into(), compound_queue_size.into()),
         );
 
       let do_next_unstake_operation_weight =
-        <T as Config>::WeightInfo::on_idle_unstake(unstake_queue_size.into()).saturating_add(
+        <T as Config>::WeightInfo::on_idle_unstake(unstake_queue_size).saturating_add(
           T::DbWeight::get().reads_writes(unstake_queue_size.into(), unstake_queue_size.into()),
         );
 
-      if remaining_weight > do_next_compound_interest_operation_weight
+      if remaining_weight.any_gt(do_next_compound_interest_operation_weight)
         && PendingStoredSessions::<T>::count() > 0
       {
         Self::do_on_idle_compound(remaining_weight);
-      } else if remaining_weight > do_next_unstake_operation_weight && unstake_queue_size > 0 {
+      } else if remaining_weight.any_gt(do_next_unstake_operation_weight) && unstake_queue_size > 0
+      {
         Self::do_on_idle_unstake(remaining_weight);
       }
 
@@ -364,19 +365,6 @@ pub mod pallet {
 
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    /// Set Staking Operator Account
-    /// TODO: Benchmark weight
-    #[pallet::weight(0)]
-    pub fn set_operator_account_id(
-      origin: OriginFor<T>,
-      new_operator_account_id: T::AccountId,
-    ) -> DispatchResultWithPostInfo {
-      ensure_root(origin)?;
-      OperatorAccountId::<T>::put(new_operator_account_id);
-
-      Ok(().into())
-    }
-
     /// Stake currency
     ///
     /// - `currency_id`: The currency to stake
@@ -386,6 +374,7 @@ pub mod pallet {
     /// Emits `Staked` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::stake())]
     pub fn stake(
       origin: OriginFor<T>,
@@ -400,8 +389,7 @@ pub mod pallet {
       ensure!(
         StakingPeriodRewards::<T>::get()
           .into_iter()
-          .find(|(iter_duration, _)| *iter_duration == duration)
-          .is_some(),
+          .any(|(iter_duration, _)| duration.eq(&iter_duration)),
         Error::<T>::InvalidDuration
       );
 
@@ -441,6 +429,7 @@ pub mod pallet {
     /// Emits `Unstaked` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(1)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::unstake())]
     pub fn unstake(
       origin: OriginFor<T>,
@@ -515,6 +504,20 @@ pub mod pallet {
 
       Ok(().into())
     }
+
+    /// Set Staking Operator Account
+    /// TODO: Benchmark weight
+    #[pallet::weight(0)]
+    #[pallet::call_index(2)]
+    pub fn set_operator_account_id(
+      origin: OriginFor<T>,
+      new_operator_account_id: T::AccountId,
+    ) -> DispatchResultWithPostInfo {
+      ensure_root(origin)?;
+      OperatorAccountId::<T>::put(new_operator_account_id);
+
+      Ok(().into())
+    }
   }
 
   // helper functions (not dispatchable)
@@ -524,11 +527,10 @@ pub mod pallet {
     }
 
     pub fn operator_account() -> T::AccountId {
-      let operator_account = match Self::operator_account_id() {
+      match Self::operator_account_id() {
         Some(account_id) => account_id,
         None => Self::account_id(),
-      };
-      operator_account
+      }
     }
 
     pub fn add_account_stake(
@@ -588,7 +590,7 @@ pub mod pallet {
 
     fn do_process_unstake(account_id: &T::AccountId, stake_id: Hash) -> DispatchResult {
       let current_stake =
-        Self::get_account_stake(&account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
+        Self::get_account_stake(account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
       AccountStakes::<T>::try_mutate_exists(account_id, |account_stakes| match account_stakes {
         None => Err(Error::<T>::InvalidStakeId),
         Some(stakes) => {
@@ -614,7 +616,7 @@ pub mod pallet {
           T::CurrencyTidefi::transfer(
             current_stake.currency_id,
             &Self::account_id(),
-            &account_id,
+            account_id,
             current_stake.principal,
             false,
           )
@@ -635,7 +637,7 @@ pub mod pallet {
 
     fn do_account_compound(
       account_id: &T::AccountId,
-      session_fee_by_currency: &Vec<(SessionIndex, Vec<(CurrencyId, Balance)>)>,
+      session_fee_by_currency: &[(SessionIndex, Vec<(CurrencyId, Balance)>)],
     ) -> DispatchResult {
       AccountStakes::<T>::try_mutate(account_id, |staking_details| -> DispatchResult {
         // distribute reward for each session for each stake
@@ -654,7 +656,7 @@ pub mod pallet {
                 }
 
                 let session_fee_for_currency = collected_fees_by_currency
-                  .into_iter()
+                  .iter()
                   .find_map(|(currency_id, fees_collected)| {
                     if *currency_id == stake.currency_id {
                       Some(*fees_collected)
@@ -775,7 +777,7 @@ pub mod pallet {
     #[inline]
     pub fn do_on_idle_compound(remaining_weight: Weight) -> Weight {
       // any weight that is unaccounted for
-      let mut unaccounted_weight = Weight::from(0_u64);
+      let mut unaccounted_weight = Weight::from_ref_time(0);
       let next_batch_size = QueueCompound::<T>::count().min(T::BatchSize::get());
 
       // determine the number of accounts to check. This is based on both `ErasToCheckPerBlock`
@@ -794,7 +796,7 @@ pub mod pallet {
 
       let pre_length = accounts.len() as u32;
 
-      if max_weight(pre_length).gt(&remaining_weight) {
+      if max_weight(pre_length).any_gt(remaining_weight) {
         log!(debug, "early exit because max weight is reached");
         return T::DbWeight::get()
           .reads(3)
@@ -872,7 +874,7 @@ pub mod pallet {
     #[inline]
     pub fn do_on_idle_unstake(remaining_weight: Weight) -> Weight {
       // any weight that is unaccounted for
-      let mut unaccounted_weight = Weight::from(0_u64);
+      let mut unaccounted_weight = Weight::from_ref_time(0);
 
       let current_block = T::Security::get_current_block_count();
       let accounts = QueueUnstake::<T>::iter()
@@ -893,7 +895,7 @@ pub mod pallet {
           .saturating_add(T::DbWeight::get().reads(next_batch_size.into()))
       };
 
-      if max_weight(next_batch_size).gt(&remaining_weight) {
+      if max_weight(next_batch_size).any_gt(remaining_weight) {
         log!(debug, "early exit because max weight is reached");
         return T::DbWeight::get()
           .reads(3)
