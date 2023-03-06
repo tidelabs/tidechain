@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Migration","Migration for translating bare `Hash`es into `Bounded<Call>`s."]]};

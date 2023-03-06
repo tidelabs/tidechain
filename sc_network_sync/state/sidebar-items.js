@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ImportResult","Import state chunk result."]],"struct":[["StateDownloadProgress","Reported state download progress."],["StateSync","State sync state machine. Accumulates partial state data until it is ready to be imported."]]};
+window.SIDEBAR_ITEMS = {"enum":[["ImportResult","Import state chunk result."]],"struct":[["StateSync","State sync state machine. Accumulates partial state data until it is ready to be imported."]]};

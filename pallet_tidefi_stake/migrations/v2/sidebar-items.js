@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["migrate",""],["post_migration",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["migrate",""],["post_migration",""]],"struct":[["MigrateToV2",""]]};

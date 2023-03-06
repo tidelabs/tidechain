@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["LesserLockedLazyFinalize","The actual type of mutable statics attributed with #[dynamic(finalize)] The method from_generator is unsafe because this kind of static can only safely be used through this attribute macros."],["ReadGuard",""],["WriteGuard",""]]};

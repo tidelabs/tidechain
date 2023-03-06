@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Behaviour","Implementation of [`NetworkBehaviour`] that doesn’t do anything."],["ConnectionHandler","An implementation of [`ConnectionHandler`] that neither handles any protocols nor does it keep the connection alive."]]};

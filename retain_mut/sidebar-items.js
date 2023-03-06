@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"trait":[["RetainMut","Trait that provides `retain_mut` method."]]};

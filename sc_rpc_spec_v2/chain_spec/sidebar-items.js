@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["api","API trait of the chain spec."],["chain_spec","API implementation for the specification of a chain."]]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["SharedSecret","Enables two parties to create a shared secret without revealing their own secrets."]]};
+window.SIDEBAR_ITEMS = {"fn":[["shared_secret_point","Creates a shared point from public key and secret key."]],"struct":[["SharedSecret","Enables two parties to create a shared secret without revealing their own secrets."]]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":[["GossipsubCodec",""],["ProtocolConfig","Implementation of [`InboundUpgrade`] and [`OutboundUpgrade`] for the Gossipsub protocol."],["ProtocolId","The protocol ID"]]};

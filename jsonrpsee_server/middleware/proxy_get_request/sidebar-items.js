@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["ProxyGetRequest","Proxy `GET /path` requests to the specified RPC method calls."],["ProxyGetRequestLayer","Layer that applies [`ProxyGetRequest`] which proxies the `GET /path` requests to specific RPC method calls and that strips the response."]]};

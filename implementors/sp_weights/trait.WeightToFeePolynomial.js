@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"lagoon_runtime":[["impl <a class=\"trait\" href=\"sp_weights/trait.WeightToFeePolynomial.html\" title=\"trait sp_weights::WeightToFeePolynomial\">WeightToFeePolynomial</a> for <a class=\"struct\" href=\"lagoon_runtime/constants/fee/struct.WeightToFee.html\" title=\"struct lagoon_runtime::constants::fee::WeightToFee\">WeightToFee</a>"]],
+"tidechain_runtime":[["impl <a class=\"trait\" href=\"sp_weights/trait.WeightToFeePolynomial.html\" title=\"trait sp_weights::WeightToFeePolynomial\">WeightToFeePolynomial</a> for <a class=\"struct\" href=\"tidechain_runtime/constants/fee/struct.WeightToFee.html\" title=\"struct tidechain_runtime::constants::fee::WeightToFee\">WeightToFee</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

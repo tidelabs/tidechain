@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["LesserLockedLazyDroped","The actual type of mutable statics attributed with #[dynamic(drop)] The method (new)[Self::from_generator] is unsafe because this kind of static can only safely be used through this attribute macros."],["ReadGuard",""],["WriteGuard",""]]};

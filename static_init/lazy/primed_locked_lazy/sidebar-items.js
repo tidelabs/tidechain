@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["PrimedLockedLazy","The actual type of mutable statics attributed with #[dynamic(primed)]"],["ReadGuard",""],["WriteGuard",""]]};

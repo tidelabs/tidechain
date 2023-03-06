@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"derive":[["EnumAsInner",""]]};
+window.SIDEBAR_ITEMS = {"derive":[["EnumAsInner","Derive functions on an Enum for easily accessing individual items in the Enum"]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["proxy_get_request","Proxy `GET /path` to internal RPC methods. Middleware that proxies requests at a specified URI to internal RPC method calls."]]};

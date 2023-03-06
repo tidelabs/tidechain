@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"salsa20":[["impl&lt;R:&nbsp;Rounds&gt; <a class=\"trait\" href=\"cipher/stream/trait.StreamCipherSeek.html\" title=\"trait cipher::stream::StreamCipherSeek\">StreamCipherSeek</a> for <a class=\"struct\" href=\"salsa20/struct.Salsa.html\" title=\"struct salsa20::Salsa\">Salsa</a>&lt;R&gt;"],["impl <a class=\"trait\" href=\"cipher/stream/trait.StreamCipherSeek.html\" title=\"trait cipher::stream::StreamCipherSeek\">StreamCipherSeek</a> for <a class=\"struct\" href=\"salsa20/struct.XSalsa20.html\" title=\"struct salsa20::XSalsa20\">XSalsa20</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

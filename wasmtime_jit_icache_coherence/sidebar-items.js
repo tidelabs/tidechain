@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["clear_cache","Flushes the instruction cache for a region of memory."],["pipeline_flush_mt","Flushes instructions in the processor pipeline"]]};

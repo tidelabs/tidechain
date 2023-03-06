@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["ChainHeadApiClient","Client implementation for the `ChainHeadApi` RPC API."],["ChainHeadApiServer","Server trait implementation for the `ChainHeadApi` RPC API."]]};

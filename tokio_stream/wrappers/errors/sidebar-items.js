@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {};
+window.SIDEBAR_ITEMS = {"enum":[["BroadcastStreamRecvError","An error returned from the inner stream of a [`BroadcastStream`]."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["ChainSpec","An API for chain spec RPC calls."]]};

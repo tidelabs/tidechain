@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["builder","Create a `settings::Builder` for the x86 settings group."]],"struct":[["Flags","Flags group `x86`."]]};

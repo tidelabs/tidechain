@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":[["Metrics","Set of Swarm and protocol metrics derived from emitted events."]],"trait":[["Recorder","Recorder that can record Swarm and protocol events."]]};

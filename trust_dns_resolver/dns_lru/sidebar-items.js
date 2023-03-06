@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["DnsLru","And LRU eviction cache specifically for storing DNS records"],["TtlConfig","The time-to-live, TTL, configuration for use by the cache."]]};

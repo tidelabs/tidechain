@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"type":[["IfWatcher","Watches for interface changes."]]};

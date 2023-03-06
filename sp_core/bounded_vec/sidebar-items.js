@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["BoundedSlice","A bounded slice."],["BoundedVec","A bounded vector."]],"trait":[["TruncateFrom","Create an object through truncation."]]};

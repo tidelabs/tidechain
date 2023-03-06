@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["ConstStatic","The actual type of non mutable dynamic statics."],["Static","The actual type of mutable dynamic statics."]]};

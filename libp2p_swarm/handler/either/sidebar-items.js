@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["IntoEitherHandler",""]]};
+window.SIDEBAR_ITEMS = {"enum":[["IntoEitherHandler","Auxiliary type to allow implementing [`IntoConnectionHandler`]. As [`IntoConnectionHandler`] is already implemented for T, we cannot implement it for Either<A, B>."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["always","Creates a new `Predicate` that always returns `true`."],["never","Creates a new `Predicate` that always returns `false`."]],"struct":[["BooleanPredicate","Predicate that always returns a constant (boolean) result."]]};

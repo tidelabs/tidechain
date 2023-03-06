@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["ToServiceCommand","Commands send to `ChainSync`"]],"struct":[["ChainSyncInterfaceHandle","Handle for communicating with `ChainSync` asynchronously"]]};

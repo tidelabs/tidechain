@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":[["Keypair","An RSA keypair."],["PublicKey","An RSA public key."]]};

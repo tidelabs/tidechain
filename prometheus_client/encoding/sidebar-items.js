@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":[["text","Open Metrics text format implementation."]]};

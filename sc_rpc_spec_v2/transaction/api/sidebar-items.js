@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["TransactionApiClient","Client implementation for the `TransactionApi` RPC API."],["TransactionApiServer","Server trait implementation for the `TransactionApi` RPC API."]]};

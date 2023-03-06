@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["v4","Version 4."]]};
+window.SIDEBAR_ITEMS = {"mod":[["v4","Version 4."]],"struct":[["CleanupSetIdSessionMap","This migration will clean up all stale set id -> session entries from the `SetIdSession` storage map, only the latest `max_set_id_session_entries` will be kept."]]};

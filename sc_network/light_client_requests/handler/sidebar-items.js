@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":[["LightClientRequestHandler","Handler for incoming light client requests from a remote peer."]]};

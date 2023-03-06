@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["swap","Swaps the content of paths `a` and `b`."],["swap_nonatomic","Nonatomic swap."]]};

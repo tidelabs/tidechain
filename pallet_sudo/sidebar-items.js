@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["pallet","The module that hosts all the FRAME types needed to add this pallet to a runtime."]]};
+window.SIDEBAR_ITEMS = {"mod":[["pallet","The module that hosts all the FRAME types needed to add this pallet to a runtime."]],"struct":[["CheckOnlySudoAccount","Ensure that signed transactions are only valid if they are signed by sudo account."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["TcpStream","A [`tokio::net::TcpStream`] that implements [`AsyncRead`] and [`AsyncWrite`]."]],"type":[["Transport","A TCP `Transport` that works with the `tokio` ecosystem."]]};

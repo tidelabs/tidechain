@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["print_tty","Displays a message on the TTY"],["print_writer","Prints a message to a writer"]]};

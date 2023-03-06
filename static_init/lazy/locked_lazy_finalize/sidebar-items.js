@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["LockedLazyFinalize","The actual type of mutable statics attributed with #[dynamic(lazy,finalize)]"],["ReadGuard",""],["WriteGuard",""]]};

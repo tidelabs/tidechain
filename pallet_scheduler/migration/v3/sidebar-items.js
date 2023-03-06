@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["MigrateToV4","Migrate the scheduler pallet from V3 to V4."]]};

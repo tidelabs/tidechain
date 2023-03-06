@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Error","Error type used in this crate."]],"struct":[["StorageMonitorParams","Parameters used to create the storage monitor."],["StorageMonitorService","Storage monitor service: checks the available space for the filesystem for fiven path."]]};

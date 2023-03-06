@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":[["RebootMode","How exactly should the system be rebooted."]],"fn":[["reboot",""],["set_cad_enabled","Enable or disable the reboot keystroke (Ctrl-Alt-Delete)."]]};

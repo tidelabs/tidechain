@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":[["Record","RFC 6891 OPT RR"]]};

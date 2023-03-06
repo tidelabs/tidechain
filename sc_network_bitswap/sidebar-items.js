@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["BitswapError","Bitswap protocol error."]],"struct":[["BitswapRequestHandler","Bitswap request handler"]]};

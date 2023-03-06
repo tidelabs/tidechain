@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["run_in_context","Run the given closure `run` in a dispatch context."],["with_context","Runs the given `callback` in the dispatch context and gives access to some user defined value."]],"struct":[["Value","Abstraction over some optional value `T` that is stored in the dispatch context."]]};

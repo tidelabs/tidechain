@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Migration","Migration for moving preimage from V0 to V1 storage."]]};

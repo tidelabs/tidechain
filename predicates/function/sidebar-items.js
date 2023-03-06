@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["function","Creates a new predicate that wraps over the given function. The returned type implements `Predicate` and therefore has all combinators available to it."]],"struct":[["FnPredicate","Predicate that wraps a function over a reference that returns a `bool`. This type is returned by the `predicate::function` function."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Phase","The lifetime phase of an object, this indicate weither the object was initialized finalized (droped),…"]]};

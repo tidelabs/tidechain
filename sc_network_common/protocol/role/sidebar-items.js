@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["ObservedRole","Role that the peer sent to us during the handshake, with the addition of what our local node knows about that peer."],["Role","Role of the local node."]],"struct":[["Roles","Bitmask of the roles that a node fulfills."]]};
