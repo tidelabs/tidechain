@@ -17,7 +17,7 @@
 use crate::{
   constants::{
     currency::{deposit, CENTS, DOLLARS, TDFY},
-    time::{DAYS, HOURS},
+    time::{DAYS, HOURS, MINUTES},
   },
   types::{AccountId, Balance, BlockNumber, EnsureRootOrHalfCouncil},
   Balances, Bounties, Council, CouncilCollectiveInstance, OriginCaller, Preimage, Runtime,
@@ -38,7 +38,7 @@ parameter_types! {
    pub const VotingBondBase: Balance = deposit(1, 64);
    // additional data per vote is 32 bytes (account id).
    pub const VotingBondFactor: Balance = deposit(0, 32);
-   pub const TermDuration: BlockNumber = 7 * DAYS;
+   pub const TermDuration: BlockNumber = 5 * MINUTES;// DAYS;
    pub const DesiredMembers: u32 = 13;
    pub const DesiredRunnersUp: u32 = 20;
    pub const MaxVoters: u32 = 10 * 1000;
@@ -74,7 +74,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 parameter_types! {
-   pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
+   pub const CouncilMotionDuration: BlockNumber = 5 * MINUTES;// DAYS;
    pub const CouncilMaxProposals: u32 = 100;
    pub const CouncilMaxMembers: u32 = 100;
 }
@@ -92,7 +92,7 @@ impl pallet_collective::Config<CouncilCollectiveInstance> for Runtime {
 }
 
 parameter_types! {
-   pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
+   pub const TechnicalMotionDuration: BlockNumber = 3 * MINUTES;// DAYS;
    pub const TechnicalMaxProposals: u32 = 100;
    pub const TechnicalMaxMembers: u32 = 100;
 }
@@ -126,12 +126,12 @@ parameter_types! {
    pub const ProposalBond: Permill = Permill::from_percent(5);
    pub const ProposalBondMinimum: Balance = 100 * DOLLARS;
    pub const ProposalBondMaximum: Balance = 500 * DOLLARS;
-   pub const SpendPeriod: BlockNumber = 24 * DAYS;
+   pub const SpendPeriod: BlockNumber = 24 * MINUTES;// DAYS;
    pub const Burn: Permill = Permill::from_percent(1);
    pub const DataDepositPerByte: Balance = CENTS;
    pub const BountyDepositBase: Balance = DOLLARS;
-   pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
-   pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
+   pub const BountyDepositPayoutDelay: BlockNumber = 4 * MINUTES;// DAYS;
+   pub const BountyUpdatePeriod: BlockNumber = 9 * MINUTES;// 90 * DAYS;
    pub const MaximumReasonLength: u32 = 16384;
    pub const BountyValueMinimum: Balance = 10 * DOLLARS;
    pub const MaxApprovals: u32 = 100;
@@ -180,12 +180,12 @@ impl pallet_bounties::Config for Runtime {
 }
 
 parameter_types! {
-  pub LaunchPeriod: BlockNumber = 7 * DAYS;
-  pub VotingPeriod: BlockNumber = 7 * DAYS;
-  pub FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+  pub LaunchPeriod: BlockNumber = 5 * MINUTES;// DAYS;
+  pub VotingPeriod: BlockNumber = 5 * MINUTES;// DAYS;
+  pub FastTrackVotingPeriod: BlockNumber = 3 * MINUTES; //HOURS;
   pub const MinimumDeposit: Balance = 100 * CENTS;
-  pub EnactmentPeriod: BlockNumber = 8 * DAYS;
-  pub CooloffPeriod: BlockNumber = 7 * DAYS;
+  pub EnactmentPeriod: BlockNumber = 8 * MINUTES;// DAYS;
+  pub CooloffPeriod: BlockNumber = 5 * MINUTES;// DAYS;
   pub const InstantAllowed: bool = true;
   pub const MaxVotes: u32 = 100;
   pub const MaxProposals: u32 = 100;
