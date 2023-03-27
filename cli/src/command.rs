@@ -470,7 +470,7 @@ pub fn run() -> Result<(), Error> {
       if chain_spec.is_tidechain() {
         return runner.async_run(|_| {
           Ok((
-            cmd.run::<tidechain_service::lagoon_runtime::Block, HostFunctionsOf<tidechain_service::LagoonExecutorDispatch>, _>(
+            cmd.run::<tidechain_service::tidechain_runtime::Block, HostFunctionsOf<tidechain_service::TidechainExecutorDispatch>, _>(
               Some(timestamp_with_babe_info(tidechain_service::tidechain_runtime::constants::time::MILLISECS_PER_BLOCK))
             )
             .map_err(Error::SubstrateCli),
