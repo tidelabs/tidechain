@@ -319,12 +319,22 @@ pub mod pallet {
     InvalidSession,
     /// Unstake is not ready
     UnstakingNotReady,
+    /// Invalid stake principal as the current value is less than its initial value
+    InvalidStakePrincipal,
     /// Something went wrong with fees transfer
     TransferFeesFailed,
-    /// Something went wrong with funds transfer
-    TransferFailed,
+    /// Something went wrong with stake principal funds transfer
+    WithdrawPrincipalFailed,
+    /// Something went wrong with stake rewards funds transfer
+    WithdrawRewardsFailed,
+    /// When principal funds transfer failed, something went wrong with rollback stake principal funds transfer
+    RollbackWithdrawPrincipalFailed,
+    /// Something went wrong with stake principal and rewards funds transfer
+    WithdrawPrincipalAndRewardsFailed,
     /// Staking pool is empty
     NotEnoughInPoolToUnstake,
+    /// Operator does not have enough funds to pay staker rewards
+    NotEnoughInOperatorToUnstakeRewards,
     /// Stake is reduced
     StakeIsReduced,
     /// The staked amount is below the minimum stake amount for this currency.
@@ -591,36 +601,97 @@ pub mod pallet {
     fn do_process_unstake(account_id: &T::AccountId, stake_id: Hash) -> DispatchResult {
       let current_stake =
         Self::get_account_stake(account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
+      let stake_currency_id = current_stake.currency_id;
+      let latest_principal = current_stake.principal;
+      let initial_balance = current_stake.initial_balance;
+      let rewards = latest_principal
+        .checked_sub(initial_balance)
+        .ok_or(Error::<T>::InvalidStakePrincipal)?;
+
       AccountStakes::<T>::try_mutate_exists(account_id, |account_stakes| match account_stakes {
         None => Err(Error::<T>::InvalidStakeId),
         Some(stakes) => {
-          T::CurrencyTidefi::can_withdraw(
-            current_stake.currency_id,
-            &Self::account_id(),
-            current_stake.initial_balance,
-          )
-          .into_result()
-          .map_err(|_| Error::<T>::InsufficientBalance)?;
+          match stake_currency_id {
+            CurrencyId::Tdfy => {
+              T::CurrencyTidefi::can_withdraw(
+                stake_currency_id,
+                &Self::account_id(),
+                initial_balance,
+              )
+              .into_result()
+              .map_err(|_| Error::<T>::InsufficientBalance)?;
 
-          StakingPool::<T>::try_mutate(current_stake.currency_id, |balance| -> DispatchResult {
+              T::CurrencyTidefi::can_withdraw(
+                stake_currency_id,
+                &Self::operator_account(),
+                rewards,
+              )
+              .into_result()
+              .map_err(|_| Error::<T>::InsufficientBalance)?;
+
+              T::CurrencyTidefi::transfer(
+                stake_currency_id,
+                &Self::account_id(),
+                account_id,
+                initial_balance,
+                false,
+              )
+              .map_err(|_| Error::<T>::WithdrawPrincipalFailed)?;
+
+              T::CurrencyTidefi::transfer(
+                current_stake.currency_id,
+                &Self::operator_account(),
+                account_id,
+                rewards,
+                false,
+              )
+              .map_err(|_| Error::<T>::WithdrawRewardsFailed)?;
+            }
+            _ => {
+              T::CurrencyTidefi::can_withdraw(
+                stake_currency_id,
+                &Self::account_id(),
+                latest_principal,
+              )
+              .into_result()
+              .map_err(|_| {
+                // Rollback withdraw principal transaction in order to achieve atomic transaction
+                // TODO: Remove this rollback transfer and apply #[transactional] to unstake extrinsic once it's implemented by parity.
+                match T::CurrencyTidefi::transfer(
+                  stake_currency_id,
+                  account_id,
+                  &Self::account_id(),
+                  initial_balance,
+                  false,
+                )
+                .is_err()
+                {
+                  true => Error::<T>::RollbackWithdrawPrincipalFailed,
+                  false => Error::<T>::InsufficientBalance,
+                }
+              })?;
+
+              T::CurrencyTidefi::transfer(
+                stake_currency_id,
+                &Self::account_id(),
+                account_id,
+                initial_balance,
+                false,
+              )
+              .map_err(|_| Error::<T>::WithdrawPrincipalAndRewardsFailed)?;
+            }
+          }
+
+          StakingPool::<T>::try_mutate(stake_currency_id, |balance| -> DispatchResult {
             if let Some(b) = balance {
               *balance = Some(
-                b.checked_sub(current_stake.initial_balance)
+                b.checked_sub(latest_principal)
                   .ok_or(ArithmeticError::Underflow)?,
               )
             }
             Ok(())
           })
           .map_err(|_| Error::<T>::NotEnoughInPoolToUnstake)?;
-
-          T::CurrencyTidefi::transfer(
-            current_stake.currency_id,
-            &Self::account_id(),
-            account_id,
-            current_stake.principal,
-            false,
-          )
-          .map_err(|_| Error::<T>::TransferFailed)?;
 
           if stakes.len() > 1 {
             stakes.retain(|stake| stake.unique_id != stake_id);
