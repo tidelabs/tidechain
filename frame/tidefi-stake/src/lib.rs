@@ -675,7 +675,7 @@ pub mod pallet {
                 stake_currency_id,
                 &Self::account_id(),
                 account_id,
-                initial_balance,
+                latest_principal,
                 false,
               )
               .map_err(|_| Error::<T>::WithdrawPrincipalAndRewardsFailed)?;
@@ -1073,7 +1073,7 @@ pub mod pallet {
           result
         );
 
-        if result.is_ok() && currency_id != CurrencyId::Tdfy {
+        if result.is_ok() {
           SessionTotalFees::<T>::insert(session_index, currency_id, balance);
         }
 
