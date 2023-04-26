@@ -22,7 +22,7 @@ use frame_system as system;
 use frame_utils::construct_mock_runtime;
 use sp_runtime::traits::AccountIdConversion;
 use system::EnsureRoot;
-use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex};
+use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex, StakeCurrencyMeta};
 
 pub struct EnsureRootOrAssetRegistry;
 impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
@@ -190,6 +190,28 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_fees::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut storage)
     .unwrap();
+  pallet_tidefi_stake::GenesisConfig::<Test> {
+    unstake_fee: Percent::from_parts(1),
+    staking_periods: vec![
+      // FIXME: Remove the 15 minutes after our tests
+      (150_u32.into(), Percent::from_parts(1)),
+      ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+      ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+      ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+      ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+    ],
+    staking_meta: vec![(
+      CurrencyId::Wrapped(2),
+      StakeCurrencyMeta {
+        minimum_amount: 100,
+        // 1000
+        maximum_amount: 100_000_000_000,
+      },
+    )],
+    operator: 0_u64.into(),
+  }
+  .assimilate_storage(&mut storage)
+  .unwrap();
   pallet_oracle::GenesisConfig::<Test> {
     enabled: false,
     account: 1_u64.into(),
