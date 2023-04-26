@@ -23,22 +23,20 @@ use crate::{
 };
 use frame_support::{
   assert_noop, assert_ok,
-  pallet_prelude::{Get, Hooks},
   traits::fungibles::{Inspect, InspectHold, Mutate},
 };
 use sp_core::H256;
 use sp_runtime::{
-  traits::{AccountIdConversion, BadOrigin, Zero},
-  FixedPointNumber, FixedU128, Percent, Permill,
+  traits::{BadOrigin, Zero},
+  FixedPointNumber, FixedU128, Permill,
 };
 use std::str::FromStr;
 use tidefi_primitives::{
-  pallet::{FeesExt, OracleExt, StakingExt},
+  pallet::{FeesExt, OracleExt},
   Balance, CurrencyId, Hash, SwapConfirmation, SwapStatus, SwapType,
 };
 
 const CURRENT_BLOCK_NUMBER: BlockNumber = 0;
-const FIFTEEN_DAYS: BlockNumber = 14400 * 15;
 
 // TEMP Asset
 const TEMP_ASSET_ID: u32 = 4;
@@ -106,13 +104,6 @@ struct Context {
   bob: RuntimeOrigin,
   market_makers: Vec<AccountId>,
   fees_pallet_account: AccountId,
-  staking_pallet_account: AccountId,
-  staker: AccountId,
-  tdfy_stake_id: Hash,
-  temp_stake_id: Hash,
-  stake_tdfy_amount: Balance,
-  stake_temp_amount: Balance,
-  duration: BlockNumber,
 }
 
 impl Default for Context {
@@ -125,20 +116,6 @@ impl Default for Context {
       bob: RuntimeOrigin::signed(BOB_ACCOUNT_ID),
       market_makers: vec![],
       fees_pallet_account,
-      staking_pallet_account: <Test as pallet_tidefi_stake::Config>::StakePalletId::get()
-        .into_account_truncating(),
-      staker: ALICE_ACCOUNT_ID,
-      stake_tdfy_amount: ONE_TDFY,
-      stake_temp_amount: ONE_TEMP,
-      tdfy_stake_id: Hash::from_str(
-        "0x02a204a25c36f8c88eea76e08cdaa22a0569ef630bf4416db72abb9fb2445f2b",
-      )
-      .unwrap_or_default(),
-      temp_stake_id: Hash::from_str(
-        "0x2559df309a647ffbf84c5c716e211dd8e62b4d2f23b253ed46b57f1f87976c94",
-      )
-      .unwrap_or_default(),
-      duration: FIFTEEN_DAYS,
     }
   }
 }
@@ -155,48 +132,6 @@ impl Context {
 
   fn set_market_makers(mut self, account_ids: Vec<AccountId>) -> Self {
     self.market_makers = account_ids;
-    self
-  }
-
-  fn stake_tdfy(self) -> Self {
-    assert_eq!(
-      0,
-      Adapter::balance(CurrencyId::Tdfy, &self.staking_pallet_account)
-    );
-
-    assert_ok!(TidefiStaking::stake(
-      RuntimeOrigin::signed(self.staker),
-      CurrencyId::Tdfy,
-      self.stake_tdfy_amount,
-      self.duration
-    ));
-
-    assert_eq!(
-      self.stake_tdfy_amount,
-      Adapter::balance(CurrencyId::Tdfy, &self.staking_pallet_account)
-    );
-
-    self
-  }
-
-  fn stake_temp(self) -> Self {
-    assert_eq!(
-      0,
-      Adapter::balance(TEMP_CURRENCY_ID, &self.staking_pallet_account)
-    );
-
-    assert_ok!(TidefiStaking::stake(
-      RuntimeOrigin::signed(self.staker),
-      TEMP_CURRENCY_ID,
-      self.stake_temp_amount,
-      self.duration
-    ));
-
-    assert_eq!(
-      self.stake_temp_amount,
-      Adapter::balance(TEMP_CURRENCY_ID, &self.staking_pallet_account)
-    );
-
     self
   }
 
@@ -615,18 +550,6 @@ fn assert_sold_tokens_are_deducted(
       .saturating_sub(sell_amount)
       .saturating_sub(swap_fee_rate * sell_amount)
   );
-}
-
-fn set_current_block(block_number: BlockNumber) {
-  <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-    *n = block_number;
-    *n
-  });
-}
-
-fn run_on_idle_hook<T: pallet_tidefi_stake::Config>() {
-  let remaining_weight = <T as frame_system::Config>::BlockWeights::get().max_block;
-  TidefiStaking::on_idle(0, remaining_weight);
 }
 
 #[test]
@@ -1598,7 +1521,7 @@ mod confirm_swap {
     use super::*;
 
     #[test]
-    fn from_tdfy_to_wrapped() {
+    fn between_tdfy_and_wrapped() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .set_oracle_status(true)
@@ -1609,14 +1532,6 @@ mod confirm_swap {
           Adapter::balance(CurrencyId::Tdfy, &context.fees_pallet_account);
         let fees_pallet_account_initial_temp_balance =
           Adapter::balance(TEMP_CURRENCY_ID, &context.fees_pallet_account);
-        let staking_pallet_account_initial_tdfy_balance =
-          Adapter::balance(CurrencyId::Tdfy, &context.staking_pallet_account);
-        let staking_pallet_account_initial_temp_balance =
-          Adapter::balance(TEMP_CURRENCY_ID, &context.staking_pallet_account);
-        let operator_account_initial_tdfy_balance =
-          Adapter::balance(CurrencyId::Tdfy, &OPERATOR_ACCOUNT_ID);
-        let operator_account_initial_temp_balance =
-          Adapter::balance(TEMP_CURRENCY_ID, &OPERATOR_ACCOUNT_ID);
 
         const SWAP_TDFY_AMOUNT: Balance = 10 * ONE_TDFY;
         const SWAP_TEMP_AMOUNT: Balance = 2 * ONE_TEMP;
@@ -1631,28 +1546,12 @@ mod confirm_swap {
           .create_temp_asset_and_metadata()
           .mint_temp(ALICE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TEMPS)
           .mint_temp(BOB_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TEMPS)
-          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TEMPS)
-          .stake_tdfy()
-          .stake_temp();
-
-        let staker_tdfys_before_unstaking = Adapter::balance(CurrencyId::Tdfy, &context.staker);
-        let staker_temps_before_unstaking = Adapter::balance(TEMP_CURRENCY_ID, &context.staker);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TEMPS);
 
         // Calculate expected fees in both TDFYs and temps
         let fee_amount_percentage = FeeAmount::get();
-        let total_fee_in_tdfy = fee_amount_percentage * SWAP_TDFY_AMOUNT;
-        let total_fee_in_temp = fee_amount_percentage * SWAP_TEMP_AMOUNT;
-
-        // Calculate the staker's fee rewards
-        // As Alice is the only tdfy staker, she will get 100% of the staker rewards,
-        // that is 2% [specified in StakingPeriodRewards with 15DAYs] of the total session fees in both tdfy and temp
-        let staker_tdfy_rewards_rate = TidefiStaking::staking_rewards()
-          .into_iter()
-          .find(|(duration, _)| *duration == context.duration)
-          .map(|(_, reward)| reward)
-          .unwrap_or_else(Percent::zero);
-        let staker_tdfy_rewards = staker_tdfy_rewards_rate * total_fee_in_tdfy;
-        let staker_temp_rewards = staker_tdfy_rewards_rate * total_fee_in_temp;
+        let total_fee_in_tdfy = fee_amount_percentage * SWAP_TDFY_AMOUNT; // 0.2 TDFY
+        let total_fee_in_temp = fee_amount_percentage * SWAP_TEMP_AMOUNT; // 0.04 TEMP
 
         // Create a limit swap request by market maker BOB first, and stays at Oracle's order book, market swap cannot be started with an empty order book
         let trade_request_id_1 = context.create_tdfy_to_temp_limit_swap_request(
@@ -1729,16 +1628,6 @@ mod confirm_swap {
           Adapter::balance(TEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID)
         );
 
-        // Swap fees are withdrawn from swap requesters accounts
-        assert_eq!(
-          INITIAL_ONE_THOUSAND_TDFYS - SWAP_TDFY_AMOUNT - total_fee_in_tdfy,
-          Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID)
-        );
-        assert_eq!(
-          INITIAL_ONE_THOUSAND_TEMPS - SWAP_TEMP_AMOUNT - total_fee_in_temp,
-          Adapter::balance(TEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID)
-        );
-
         // Swap fees are deposit to the Fees Pallet Account
         assert_eq!(
           fees_pallet_account_initial_tdfy_balance + total_fee_in_tdfy,
@@ -1748,136 +1637,131 @@ mod confirm_swap {
           fees_pallet_account_initial_temp_balance + total_fee_in_temp,
           Adapter::balance(TEMP_CURRENCY_ID, &context.fees_pallet_account)
         );
-
-        // End the session in an advanced block
-        set_current_block(2);
-        assert_ok!(TidefiStaking::on_session_end(
-          2,
-          vec![
-            (
-              CurrencyId::Tdfy,
-              // fees pallet account received tdfy fees
-              Adapter::balance(CurrencyId::Tdfy, &context.fees_pallet_account)
-                - fees_pallet_account_initial_tdfy_balance
-            ),
-            (
-              TEMP_CURRENCY_ID,
-              // fees pallet account received temp fees
-              Adapter::balance(TEMP_CURRENCY_ID, &context.fees_pallet_account)
-                - fees_pallet_account_initial_temp_balance
-            )
-          ],
-          context.fees_pallet_account,
-        ));
-
-        // Fee pallet account balances equal to its initial values
-        assert_eq!(
-          fees_pallet_account_initial_tdfy_balance,
-          Adapter::balance(CurrencyId::Tdfy, &context.fees_pallet_account)
-        );
-        assert_eq!(
-          fees_pallet_account_initial_temp_balance,
-          Adapter::balance(TEMP_CURRENCY_ID, &context.fees_pallet_account)
-        );
-
-        // Session total fees in tdfy is transferred from fees pallet account to operator account
-        assert_eq!(
-          operator_account_initial_tdfy_balance + total_fee_in_tdfy,
-          Adapter::balance(CurrencyId::Tdfy, &OPERATOR_ACCOUNT_ID)
-        );
-        // Session total fees in temp is transferred from fees pallet account to staking pallet account
-        assert_eq!(
-          staking_pallet_account_initial_temp_balance
-            + context.stake_temp_amount
-            + total_fee_in_temp,
-          Adapter::balance(TEMP_CURRENCY_ID, &context.staking_pallet_account)
-        );
-
-        // run 2x on_idle to clean the Queue
-        run_on_idle_hook::<Test>();
-        run_on_idle_hook::<Test>();
-
-        // Finish staking period
-        set_current_block(FIFTEEN_DAYS + 1);
-
-        // Unstake TDFY
-        assert_ok!(TidefiStaking::unstake(
-          RuntimeOrigin::signed(context.staker),
-          context.tdfy_stake_id,
-          false
-        ));
-        System::assert_has_event(MockEvent::TidefiStaking(
-          pallet_tidefi_stake::Event::Unstaked {
-            request_id: context.tdfy_stake_id,
-            account_id: context.staker,
-            currency_id: CurrencyId::Tdfy,
-            initial_balance: context.stake_tdfy_amount,
-            final_balance: context.stake_tdfy_amount + staker_tdfy_rewards,
-          },
-        ));
-
-        // Unstake TEMP
-        assert_ok!(TidefiStaking::unstake(
-          RuntimeOrigin::signed(context.staker),
-          context.temp_stake_id,
-          false
-        ));
-        System::assert_has_event(MockEvent::TidefiStaking(
-          pallet_tidefi_stake::Event::Unstaked {
-            request_id: context.temp_stake_id,
-            account_id: context.staker,
-            currency_id: TEMP_CURRENCY_ID,
-            initial_balance: context.stake_temp_amount,
-            final_balance: context.stake_temp_amount + staker_temp_rewards,
-          },
-        ));
-
-        // The only staker receives all rewards distributed to the stakers
-        assert_eq!(
-          staker_tdfys_before_unstaking + &context.stake_tdfy_amount + staker_tdfy_rewards,
-          Adapter::balance(CurrencyId::Tdfy, &context.staker)
-        );
-        assert_eq!(
-          staker_temps_before_unstaking + &context.stake_temp_amount + staker_temp_rewards,
-          Adapter::balance(TEMP_CURRENCY_ID, &context.staker)
-        );
-
-        // Staking pallet account tdfy balance equals to its initial value
-        assert_eq!(
-          staking_pallet_account_initial_tdfy_balance,
-          Adapter::balance(CurrencyId::Tdfy, &context.staking_pallet_account)
-        );
-        // TODO: Missing call to do session drain, still keep session fees left in staking pallet account
-        // assert_eq!(
-        //   staking_pallet_account_initial_temp_balance,
-        //   Adapter::balance(TEMP_CURRENCY_ID, &context.staking_pallet_account)
-        // );
-
-        // Operator Account Balance contains rest of the session fees
-        assert_eq!(
-          operator_account_initial_tdfy_balance + total_fee_in_tdfy - staker_tdfy_rewards,
-          Adapter::balance(CurrencyId::Tdfy, &OPERATOR_ACCOUNT_ID)
-        );
-        // assert_eq!(
-        //   operator_account_initial_temp_balance + total_fee_in_temp - staker_temp_rewards,
-        //   Adapter::balance(TEMP_CURRENCY_ID, &OPERATOR_ACCOUNT_ID)
-        // );
-
-        // StakingPool tdfy balance is increased by staker tdfy rewards
-        assert_eq!(Some(0), TidefiStaking::staking_pool(CurrencyId::Tdfy));
-        // StakingPool temp balance is increased by staker temp rewards
-        assert_eq!(Some(0), TidefiStaking::staking_pool(TEMP_CURRENCY_ID));
       });
     }
 
     #[test]
-    fn from_wrapped_to_tdfy() {
-      // TODO: To be implemented
-    }
+    fn between_wrapped() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![ALICE_ACCOUNT_ID, BOB_ACCOUNT_ID])
+          .set_operator_account();
 
-    #[test]
-    fn from_wrapped_to_wrapped() {
-      // TODO: To be implemented
+        let fees_pallet_account_initial_temp_balance =
+          Adapter::balance(TEMP_CURRENCY_ID, &context.fees_pallet_account);
+        let fees_pallet_account_initial_zemp_balance =
+          Adapter::balance(ZEMP_CURRENCY_ID, &context.fees_pallet_account);
+
+        const SWAP_TEMP_AMOUNT: Balance = 2 * ONE_TEMP;
+        const SWAP_ZEMP_AMOUNT: Balance = 10 * ONE_ZEMP;
+
+        const INITIAL_ONE_THOUSAND_TDFYS: Balance = 1000 * ONE_TDFY;
+        const INITIAL_ONE_THOUSAND_TEMPS: Balance = 1000 * ONE_TEMP;
+        const INITIAL_ONE_THOUSAND_ZEMPS: Balance = 1000 * ONE_ZEMP;
+
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TDFYS)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TEMPS)
+          .mint_temp(BOB_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TEMPS)
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_TEMPS)
+          .create_zemp_asset_and_metadata()
+          .mint_zemp(BOB_ACCOUNT_ID, INITIAL_ONE_THOUSAND_ZEMPS)
+          .mint_zemp(CHARLIE_ACCOUNT_ID, INITIAL_ONE_THOUSAND_ZEMPS);
+
+        // Calculate expected fees in both temps and zemps
+        let fee_amount_percentage = FeeAmount::get();
+        let total_fee_in_temp = fee_amount_percentage * SWAP_TEMP_AMOUNT; // 0.04 TEMP
+        let total_fee_in_zemp = fee_amount_percentage * SWAP_ZEMP_AMOUNT; // 0.2 ZEMP
+
+        // Create a limit swap request by market maker BOB first, and stays at Oracle's order book, market swap cannot be started with an empty order book
+        let trade_request_id_1 = context.create_temp_to_zemp_limit_swap_request(
+          BOB_ACCOUNT_ID,
+          SWAP_TEMP_AMOUNT,
+          SWAP_ZEMP_AMOUNT,
+          EXTRINSIC_HASH_0,
+          SLIPPAGE_0_PERCENT,
+        );
+
+        let trade_request_id_2 = context.create_zemp_to_temp_market_swap_request(
+          CHARLIE_ACCOUNT_ID,
+          SWAP_ZEMP_AMOUNT,
+          SWAP_TEMP_AMOUNT,
+          EXTRINSIC_HASH_1,
+          SLIPPAGE_0_PERCENT,
+        );
+
+        assert!(Oracle::swaps(trade_request_id_1).is_some());
+        assert!(Oracle::swaps(trade_request_id_2).is_some());
+
+        // Confirm Swaps
+        assert_ok!(Oracle::confirm_swap(
+          Oracle::account_id().into(),
+          trade_request_id_1,
+          vec![SwapConfirmation {
+            request_id: trade_request_id_2,
+            amount_to_receive: SWAP_TEMP_AMOUNT,
+            amount_to_send: SWAP_ZEMP_AMOUNT,
+          },],
+        ));
+
+        assert!(Oracle::swaps(trade_request_id_1).is_none());
+        assert!(Oracle::swaps(trade_request_id_2).is_none());
+
+        System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+          request_id: trade_request_id_1,
+          status: SwapStatus::Completed,
+          account_id: BOB_ACCOUNT_ID,
+          currency_from: TEMP_CURRENCY_ID,
+          currency_amount_from: SWAP_TEMP_AMOUNT,
+          currency_to: ZEMP_CURRENCY_ID,
+          currency_amount_to: SWAP_ZEMP_AMOUNT,
+          initial_extrinsic_hash: EXTRINSIC_HASH_0,
+        }));
+
+        System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+          request_id: trade_request_id_2,
+          status: SwapStatus::Completed,
+          account_id: CHARLIE_ACCOUNT_ID,
+          currency_from: ZEMP_CURRENCY_ID,
+          currency_amount_from: SWAP_ZEMP_AMOUNT,
+          currency_to: TEMP_CURRENCY_ID,
+          currency_amount_to: SWAP_TEMP_AMOUNT,
+          initial_extrinsic_hash: EXTRINSIC_HASH_1,
+        }));
+
+        // Assert Bob sold TEMP and bought ZEMP
+        assert_eq!(
+          INITIAL_ONE_THOUSAND_TEMPS - SWAP_TEMP_AMOUNT - total_fee_in_temp,
+          Adapter::balance(TEMP_CURRENCY_ID, &BOB_ACCOUNT_ID)
+        );
+        assert_eq!(
+          INITIAL_ONE_THOUSAND_ZEMPS + SWAP_ZEMP_AMOUNT,
+          Adapter::balance(ZEMP_CURRENCY_ID, &BOB_ACCOUNT_ID)
+        );
+        // Assert Charlie sold ZEMP and bought TEMP balance
+        assert_eq!(
+          INITIAL_ONE_THOUSAND_TEMPS + SWAP_TEMP_AMOUNT,
+          Adapter::balance(TEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID)
+        );
+        assert_eq!(
+          INITIAL_ONE_THOUSAND_ZEMPS - SWAP_ZEMP_AMOUNT - total_fee_in_zemp,
+          Adapter::balance(ZEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID)
+        );
+
+        // Swap fees are deposit to the Fees Pallet Account
+        assert_eq!(
+          fees_pallet_account_initial_temp_balance + total_fee_in_temp,
+          Adapter::balance(TEMP_CURRENCY_ID, &context.fees_pallet_account)
+        );
+        assert_eq!(
+          fees_pallet_account_initial_zemp_balance + total_fee_in_zemp,
+          Adapter::balance(ZEMP_CURRENCY_ID, &context.fees_pallet_account)
+        );
+      });
     }
 
     #[test]
