@@ -1973,7 +1973,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
             },],
           ),
-          Error::<Test>::MarketMakerHasNotEnoughTokenToSell
+          Error::<Test>::MarketMakerHasNotEnoughTokenToSellAndPaySwapFees
         );
       });
     }
@@ -2014,7 +2014,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS.saturating_add(1),
             },],
           ),
-          Error::<Test>::MarketMakerHasNotEnoughTokenToSell
+          Error::<Test>::MarketMakerHasNotEnoughTokenToSellAndPaySwapFees
         );
       });
     }
@@ -2050,7 +2050,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS.saturating_mul(5),
             },],
           ),
-          Error::<Test>::TraderHasNotEnoughTokenToSell
+          Error::<Test>::TraderCannotOversell
         );
       });
     }
