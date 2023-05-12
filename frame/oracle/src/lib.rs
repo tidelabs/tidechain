@@ -38,7 +38,7 @@ pub mod pallet {
     inherent::Vec,
     pallet_prelude::*,
     traits::fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-    PalletId,
+    transactional, PalletId,
   };
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
@@ -771,6 +771,7 @@ pub mod pallet {
 
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
+    #[transactional]
     fn process_swap(
       trade: &Swap<T::AccountId, T::BlockNumber>,
       mm: &SwapConfirmation,
@@ -848,6 +849,7 @@ pub mod pallet {
       Ok(())
     }
 
+    #[transactional]
     fn update_swap_and_requestor_account(
       swap: &mut Swap<T::AccountId, T::BlockNumber>,
       request_id: Hash,
