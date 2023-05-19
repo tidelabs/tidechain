@@ -346,7 +346,7 @@ pub mod pallet {
           trade.amount_from_filled = trade_latest_from_filled;
           trade.amount_to_filled = trade_latest_to_filled;
 
-          Self::update_swap_and_requestor_account(trade, request_id)
+          Self::update_swap_and_requestor_account(trade, request_id, false)
             .map_err(|_| Error::<T>::UpdateTraderSwapFailed)?;
 
           // Emit trade event on chain
@@ -681,7 +681,7 @@ pub mod pallet {
         trade.token_from,
         amount_to_sell,
         trade.swap_type.clone(),
-        trade.is_market_maker,
+        is_market_maker,
       );
 
       let payout = amount_to_sell
@@ -738,7 +738,7 @@ pub mod pallet {
                 .checked_add(mm.amount_to_receive)
                 .ok_or(Error::<T>::ArithmeticError)?;
 
-              Self::update_swap_and_requestor_account(market_maker_trade, mm.request_id)
+              Self::update_swap_and_requestor_account(market_maker_trade, mm.request_id, true)
                 .map_err(|_| Error::<T>::UpdateMarketMakerSwapFailed)?;
 
               // Emit market maker trade event on chain
@@ -807,7 +807,7 @@ pub mod pallet {
         trade.token_from,
         mm.amount_to_receive,
         trade.swap_type.clone(),
-        trade.is_market_maker,
+        false,
       )
       .map_err(|_| Error::<T>::TraderSwapFeeRegistrationFailed)?;
 
@@ -839,7 +839,7 @@ pub mod pallet {
         trade.token_to,
         mm.amount_to_send,
         market_maker_trade.swap_type.clone(),
-        market_maker_trade.is_market_maker,
+        true,
       )
       .map_err(|_| Error::<T>::MarketMakerSwapFeeRegistrationFailed)?;
 
@@ -849,6 +849,7 @@ pub mod pallet {
     fn update_swap_and_requestor_account(
       swap: &mut Swap<T::AccountId, T::BlockNumber>,
       request_id: Hash,
+      is_market_maker: bool,
     ) -> Result<(), DispatchError> {
       if swap.amount_from_filled == swap.amount_from {
         swap.status = SwapStatus::Completed;
@@ -860,7 +861,8 @@ pub mod pallet {
         // Delete the swap from AccountSwaps, then release on hold funds
         Self::try_delete_account_swap(&swap.account_id, request_id)
           .map_err(|_| Error::<T>::DeleteSwapFailed)?;
-        Self::swap_release_funds(swap).map_err(|_| Error::<T>::ReleaseUnswappedFundsFailed)?;
+        Self::swap_release_funds(swap, is_market_maker)
+          .map_err(|_| Error::<T>::ReleaseUnswappedFundsFailed)?;
       } else {
         // Update the swap status in AccountSwaps
         Self::try_update_account_swap_status(&swap.account_id, request_id, swap.status.clone())
@@ -870,19 +872,22 @@ pub mod pallet {
       Ok(())
     }
 
-    fn swap_release_funds(trade: &Swap<T::AccountId, T::BlockNumber>) -> Result<(), DispatchError> {
+    fn swap_release_funds(
+      trade: &Swap<T::AccountId, T::BlockNumber>,
+      is_market_maker: bool,
+    ) -> Result<(), DispatchError> {
       // real fees required
       let real_fees_amount = T::Fees::calculate_swap_fees(
         trade.token_from,
         trade.amount_from_filled,
         trade.swap_type.clone(),
-        trade.is_market_maker,
+        is_market_maker,
       );
       let fees_with_slippage = T::Fees::calculate_swap_fees(
         trade.token_from,
         trade.amount_from,
         trade.swap_type.clone(),
-        trade.is_market_maker,
+        is_market_maker,
       );
 
       let amount_to_release = trade
