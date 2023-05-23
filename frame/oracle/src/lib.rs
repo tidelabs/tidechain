@@ -225,7 +225,7 @@ pub mod pallet {
     OfferIsLessThanMarketMakerSwapLowerBound { index: u8 },
     /// Request contains offer that is greater than market maker swap upper bound
     OfferIsGreaterThanMarketMakerSwapUpperBound { index: u8 },
-    /// Market Maker swap do not have enough funds left to sell
+    /// Market Maker swap does not have enough funds left to sell
     MarketMakerSwapHasNotEnoughTokenLeftToSell,
     /// Trader swap do not have enough funds left to sell
     TraderSwapHasNotEnoughTokenLeftToSell,
