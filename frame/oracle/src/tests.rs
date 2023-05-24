@@ -2030,7 +2030,7 @@ mod confirm_swap {
                 amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
               },],
             ),
-            Error::<Test>::InvalidRequestSwapStatus
+            Error::<Test>::InvalidSwapStatus
           );
         }
       });
@@ -2076,7 +2076,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
             },],
           ),
-          Error::<Test>::SwapAssetTypesShouldBeDifferent
+          Error::<Test>::SwapAssetsShouldBeDifferent
         );
       });
     }
@@ -2473,7 +2473,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
             },],
           ),
-          Error::<Test>::TwoRequestsAssetTypesNotMatch
+          Error::<Test>::BuySellAssetMismatch
         );
       });
     }
@@ -2520,7 +2520,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
             },],
           ),
-          Error::<Test>::TwoRequestsAssetTypesNotMatch
+          Error::<Test>::BuySellAssetMismatch
         );
       });
     }
