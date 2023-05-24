@@ -16,9 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, FeeAmount, MarketMakerFeeAmount, Oracle,
-    RuntimeEvent as MockEvent, RuntimeOrigin, Security, StakeAccountCap, System, Test, Tidefi,
-    TidefiStaking,
+    new_test_ext, AccountId, Adapter, Fees, Oracle, RuntimeEvent as MockEvent, RuntimeOrigin,
+    Security, StakeAccountCap, System, Test, Tidefi, TidefiStaking,
   },
   pallet as pallet_tidefi_stake, AccountStakes, Error, PendingStoredSessions, QueueUnstake,
   SessionTotalFees, StakingPool,
@@ -37,7 +36,7 @@ use sp_runtime::{
 };
 use std::str::FromStr;
 use tidefi_primitives::{
-  pallet::{OracleExt, StakingExt},
+  pallet::{FeesExt, OracleExt, StakingExt},
   Balance, CurrencyId, Hash, Stake, StakeStatus, SwapConfirmation, SwapStatus, SwapType,
 };
 
@@ -54,10 +53,6 @@ const EXTRINSIC_HASH_1: [u8; 32] = [1; 32];
 
 // Slippage Rates
 const SLIPPAGE_0_PERCENT: Permill = Permill::from_percent(0);
-
-// Swap Fee Rates
-const REQUESTER_SWAP_FEE_RATE: Permill = FeeAmount::get();
-const MARKET_MAKER_SWAP_FEE_RATE: Permill = MarketMakerFeeAmount::get();
 
 // Asset Units
 const ONE_TDFY: Balance = 1_000_000_000_000;
@@ -319,20 +314,25 @@ fn add_new_swap_and_assert_results(
     block_number,
     extrinsic_hash,
     is_market_maker,
-    swap_type,
+    swap_type.clone(),
     slippage,
   )
   .unwrap();
 
-  assert_swap_cost_is_suspended(account_id, asset_id_from, amount_from, is_market_maker);
+  let swap_fee =
+    Fees::calculate_swap_fees(asset_id_from, amount_from, swap_type, is_market_maker).fee;
+
+  assert_eq!(
+    Adapter::balance_on_hold(asset_id_from, &account_id),
+    amount_from.saturating_add(swap_fee)
+  );
 
   if asset_id_from != CurrencyId::Tdfy {
-    assert_sold_tokens_are_deducted(
-      account_id,
-      asset_id_from,
-      initial_from_token_balance,
-      amount_from,
-      is_market_maker,
+    assert_eq!(
+      Adapter::balance(asset_id_from, &account_id),
+      initial_from_token_balance
+        .saturating_sub(amount_from)
+        .saturating_sub(swap_fee)
     );
   }
 
@@ -341,7 +341,7 @@ fn add_new_swap_and_assert_results(
     asset_id_from,
     initial_from_token_balance,
     amount_from,
-    is_market_maker,
+    swap_fee,
   );
 
   assert_eq!(trade_request.status, SwapStatus::Pending);
@@ -358,40 +358,16 @@ fn add_new_swap_and_assert_results(
   trade_request_id
 }
 
-fn assert_swap_cost_is_suspended(
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  sell_amount: Balance,
-  is_market_maker: bool,
-) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
-  assert_eq!(
-    Adapter::balance_on_hold(currency_id, &account_id),
-    sell_amount.saturating_add(swap_fee_rate * sell_amount)
-  );
-}
-
 fn assert_spendable_balance_is_updated(
   account_id: AccountId,
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
-  is_market_maker: bool,
+  swap_fee: Balance,
 ) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
   let expected_reducible_balance = initial_balance
     .saturating_sub(sell_amount)
-    .saturating_sub(swap_fee_rate * sell_amount);
+    .saturating_sub(swap_fee);
 
   match currency_id {
     CurrencyId::Tdfy => assert_eq!(
@@ -408,28 +384,7 @@ fn assert_spendable_balance_is_updated(
     Adapter::reducible_balance(currency_id, &account_id, false),
     initial_balance
       .saturating_sub(sell_amount)
-      .saturating_sub(swap_fee_rate * sell_amount)
-  );
-}
-
-fn assert_sold_tokens_are_deducted(
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  initial_balance: Balance,
-  sell_amount: Balance,
-  is_market_maker: bool,
-) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
-  assert_eq!(
-    Adapter::balance(currency_id, &account_id),
-    initial_balance
-      .saturating_sub(sell_amount)
-      .saturating_sub(swap_fee_rate * sell_amount)
+      .saturating_sub(swap_fee)
   );
 }
 
@@ -688,7 +643,7 @@ mod unstake {
 
           let context = Context::default()
             .set_oracle_status(true)
-            .set_market_makers(vec![ALICE_ACCOUNT_ID])
+            .set_market_makers(vec![ALICE_ACCOUNT_ID, CHARLIE_ACCOUNT_ID])
             .set_operator_account()
             .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
             .mint_test_token(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
@@ -757,9 +712,16 @@ mod unstake {
           }));
 
           // Calculate expected fees in both TDFYs and test tokens
-          let fee_amount_percentage = FeeAmount::get();
-          let total_fee_in_test_token = fee_amount_percentage * SWAP_TEST_TOKEN_AMOUNT;
-          let total_fee_in_tdfy = fee_amount_percentage * SWAP_TDFY_AMOUNT;
+          let total_fee_in_tdfy =
+            Fees::calculate_swap_fees(CurrencyId::Tdfy, SWAP_TDFY_AMOUNT, SwapType::Limit, false)
+              .fee;
+          let total_fee_in_test_token = Fees::calculate_swap_fees(
+            TEST_TOKEN_CURRENCY_ID,
+            SWAP_TEST_TOKEN_AMOUNT,
+            SwapType::Limit,
+            true,
+          )
+          .fee;
 
           // Assert fees in both TDFYs and test tokens are paid to fees pallet account
           assert_eq!(
@@ -872,7 +834,7 @@ mod unstake {
           // Mint and Stake
           let context = Context::default()
             .set_oracle_status(true)
-            .set_market_makers(vec![ALICE_ACCOUNT_ID])
+            .set_market_makers(vec![ALICE_ACCOUNT_ID, CHARLIE_ACCOUNT_ID])
             .set_operator_account()
             .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
             .mint_test_token(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TEST_TOKENS)
@@ -942,9 +904,16 @@ mod unstake {
           }));
 
           // Calculate expected fees in both TDFYs and test tokens
-          let fee_amount_percentage = FeeAmount::get();
-          let total_fee_in_test_token = fee_amount_percentage * SWAP_TEST_TOKEN_AMOUNT;
-          let total_fee_in_tdfy = fee_amount_percentage * SWAP_TDFY_AMOUNT;
+          let total_fee_in_tdfy =
+            Fees::calculate_swap_fees(CurrencyId::Tdfy, SWAP_TDFY_AMOUNT, SwapType::Limit, false)
+              .fee;
+          let total_fee_in_test_token = Fees::calculate_swap_fees(
+            TEST_TOKEN_CURRENCY_ID,
+            SWAP_TEST_TOKEN_AMOUNT,
+            SwapType::Limit,
+            true,
+          )
+          .fee;
 
           // Assert fees in both TDFYs and test tokens are paid to fees pallet account
           assert_eq!(

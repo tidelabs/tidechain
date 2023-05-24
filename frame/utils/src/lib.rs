@@ -284,6 +284,9 @@ macro_rules! construct_mock_runtime {
             amount: Balance,
             best_effort: bool,
          ) -> Result<Balance, DispatchError> {
+            if amount == 0 {
+               return Ok(amount);
+            }
             match asset {
                CurrencyId::Tdfy => Balances::release(who, amount, best_effort),
                CurrencyId::Wrapped(asset_id) => Assets::release(asset_id, who, amount, best_effort),
