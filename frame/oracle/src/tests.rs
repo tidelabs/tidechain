@@ -453,20 +453,25 @@ fn add_new_swap_and_assert_results(
     block_number,
     extrinsic_hash,
     is_market_maker,
-    swap_type,
+    swap_type.clone(),
     slippage,
   )
   .unwrap();
 
-  assert_swap_cost_is_suspended(account_id, asset_id_from, amount_from, is_market_maker);
+  let swap_fee =
+    Fees::calculate_swap_fees(asset_id_from, amount_from, swap_type, is_market_maker).fee;
+
+  assert_eq!(
+    Adapter::balance_on_hold(asset_id_from, &account_id),
+    amount_from.saturating_add(swap_fee)
+  );
 
   if asset_id_from != CurrencyId::Tdfy {
-    assert_sold_tokens_are_deducted(
-      account_id,
-      asset_id_from,
-      initial_from_token_balance,
-      amount_from,
-      is_market_maker,
+    assert_eq!(
+      Adapter::balance(asset_id_from, &account_id),
+      initial_from_token_balance
+        .saturating_sub(amount_from)
+        .saturating_sub(swap_fee)
     );
   }
 
@@ -475,7 +480,7 @@ fn add_new_swap_and_assert_results(
     asset_id_from,
     initial_from_token_balance,
     amount_from,
-    is_market_maker,
+    swap_fee,
   );
 
   assert_eq!(trade_request.status, SwapStatus::Pending);
@@ -485,40 +490,16 @@ fn add_new_swap_and_assert_results(
   trade_request_id
 }
 
-fn assert_swap_cost_is_suspended(
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  sell_amount: Balance,
-  is_market_maker: bool,
-) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
-  assert_eq!(
-    Adapter::balance_on_hold(currency_id, &account_id),
-    sell_amount.saturating_add(swap_fee_rate * sell_amount)
-  );
-}
-
 fn assert_spendable_balance_is_updated(
   account_id: AccountId,
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
-  is_market_maker: bool,
+  swap_fee: Balance,
 ) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
   let expected_reducible_balance = initial_balance
     .saturating_sub(sell_amount)
-    .saturating_sub(swap_fee_rate * sell_amount);
+    .saturating_sub(swap_fee);
 
   match currency_id {
     CurrencyId::Tdfy => assert_eq!(
@@ -535,28 +516,7 @@ fn assert_spendable_balance_is_updated(
     Adapter::reducible_balance(currency_id, &account_id, false),
     initial_balance
       .saturating_sub(sell_amount)
-      .saturating_sub(swap_fee_rate * sell_amount)
-  );
-}
-
-fn assert_sold_tokens_are_deducted(
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  initial_balance: Balance,
-  sell_amount: Balance,
-  is_market_maker: bool,
-) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
-  assert_eq!(
-    Adapter::balance(currency_id, &account_id),
-    initial_balance
-      .saturating_sub(sell_amount)
-      .saturating_sub(swap_fee_rate * sell_amount)
+      .saturating_sub(swap_fee)
   );
 }
 
@@ -817,12 +777,20 @@ pub fn confirm_swap_partial_filling() {
       ONE_TDFY + CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS
     );
 
+    let swap_fee = Fees::calculate_swap_fees(
+      TEMP_CURRENCY_ID,
+      CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+      SwapType::Limit,
+      true,
+    )
+    .fee;
+
     assert_spendable_balance_is_updated(
       CHARLIE_ACCOUNT_ID,
       TEMP_CURRENCY_ID,
       INITIAL_10000_TEMPS,
       CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
-      true,
+      swap_fee,
     );
 
     assert_eq!(
