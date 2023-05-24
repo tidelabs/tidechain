@@ -209,7 +209,7 @@ pub mod pallet {
     InvalidMarketMakerRequestId { index: u8 },
     /// Invalid market maker swap request status.
     InvalidMarketMakerSwapRequestStatus,
-    /// Market maker buy asset type does not match with sell asset type
+    /// Buyer and seller assets must match.
     TwoRequestsAssetTypesNotMatch,
     /// Unknown Asset.
     UnknownAsset,
