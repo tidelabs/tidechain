@@ -203,7 +203,7 @@ pub mod pallet {
     InvalidRequestId,
     /// Invalid swap request status.
     InvalidRequestSwapStatus,
-    /// Request swap asset types must be different
+    /// Swap request assets must be different.
     SwapAssetTypesShouldBeDifferent,
     /// Invalid market maker request ID, includes an index in the SwapConfirmation list
     InvalidMarketMakerRequestId { index: u8 },
