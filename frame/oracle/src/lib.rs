@@ -225,6 +225,10 @@ pub mod pallet {
     OfferIsLessThanMarketMakerSwapLowerBound { index: u8 },
     /// Request contains offer that is greater than market maker swap upper bound
     OfferIsGreaterThanMarketMakerSwapUpperBound { index: u8 },
+    /// Swap is not created by a market maker
+    NonMarketMakerSwap,
+    /// Market maker swap type is not limit
+    MarketMakerSwapTypeIsNotLimit,
     /// Market Maker swap does not have enough funds left to sell
     MarketMakerSwapHasNotEnoughTokenLeftToSell,
     /// Trader swap does not have enough funds left to sell
@@ -596,6 +600,16 @@ pub mod pallet {
         market_maker_trade.token_to == trade.token_from
           && market_maker_trade.token_from == trade.token_to,
         Error::<T>::BuySellAssetMismatch
+      );
+
+      // Make sure swap creator is a market maker
+      MarketMakers::<T>::get(market_maker_trade.account_id.clone())
+        .ok_or(Error::<T>::NonMarketMakerSwap)?;
+
+      // Make sure market maker swap type must be limit
+      ensure!(
+        market_maker_trade.swap_type == SwapType::Limit,
+        Error::<T>::MarketMakerSwapTypeIsNotLimit
       );
 
       // Make sure swap prices are within slippage tolerances

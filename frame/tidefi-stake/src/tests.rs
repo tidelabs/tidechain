@@ -30,6 +30,7 @@ use frame_support::{
   },
   BoundedVec,
 };
+use pallet_oracle::MarketMakers;
 use sp_runtime::{
   traits::{AccountIdConversion, BadOrigin},
   ArithmeticError, DispatchError, Percent, Permill, Perquintill,
@@ -87,7 +88,6 @@ struct Context {
   test_token_amount: Balance,
   stake_id: Hash,
   duration: BlockNumber,
-  market_makers: Vec<AccountId>,
 }
 
 impl Default for Context {
@@ -105,7 +105,6 @@ impl Default for Context {
       )
       .unwrap_or_default(),
       duration: FIFTEEN_DAYS,
-      market_makers: vec![],
     }
   }
 }
@@ -123,8 +122,10 @@ impl Context {
     self
   }
 
-  fn set_market_makers(mut self, account_ids: Vec<AccountId>) -> Self {
-    self.market_makers = account_ids;
+  fn set_market_makers(self, account_ids: Vec<AccountId>) -> Self {
+    account_ids
+      .iter()
+      .for_each(|account_id| MarketMakers::<Test>::insert(account_id, true));
     self
   }
 
@@ -261,7 +262,7 @@ impl Context {
       temp_amount,
       BLOCK_NUMBER_ZERO,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Limit,
       slippage,
     )
@@ -283,7 +284,7 @@ impl Context {
       tdfy_amount,
       BLOCK_NUMBER_ZERO,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Limit,
       slippage,
     )
