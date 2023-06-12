@@ -14,10 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::mock::{new_test_ext, AccountId, Fees, Sunrise };
-use frame_support::{
-  assert_ok,
-};
+use crate::mock::{new_test_ext, AccountId, Fees, Sunrise};
+use frame_support::assert_ok;
 use sp_runtime::{FixedPointNumber, FixedU128};
 use tidefi_primitives::{
   assets::Asset,
