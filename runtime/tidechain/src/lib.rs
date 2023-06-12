@@ -276,9 +276,6 @@ pub type Executive = frame_executive::Executive<
     MigrateBountyToV4<Runtime>,
     // Migration for moving preimage from V0 to V1 storage.
     pallet_preimage::migration::v1::Migration<Runtime>,
-    // Tidefi migrations
-    pallet_tidefi_stake::migrations::v2::MigrateToV2<Runtime>,
-    pallet_fees::migrations::v2::MigrateToV2<Runtime>,
   ),
 >;
 
