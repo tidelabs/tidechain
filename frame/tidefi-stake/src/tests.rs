@@ -1697,11 +1697,3 @@ pub fn should_calculate_rewards() {
     assert_eq!(SessionTotalFees::<Test>::iter().count(), 0);
   });
 }
-
-#[test]
-fn test_migration_v2() {
-  new_test_ext().execute_with(|| {
-    crate::migrations::v2::migrate::<Test>();
-    crate::migrations::v2::post_migration::<Test>();
-  });
-}
