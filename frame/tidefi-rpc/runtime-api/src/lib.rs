@@ -22,7 +22,7 @@ use tidefi_primitives::{
   BalanceInfo, BlockNumber, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake,
 };
 
-type CurrencyMetadata = (CurrencyId, CurrencyMetadata<Vec<u8>>);
+type CurrenciesMetadata = (CurrencyId, CurrencyMetadata<Vec<u8>>);
 type CurrenciesStake = (CurrencyId, Stake<BalanceInfo, BlockNumber>);
 
 sp_api::decl_runtime_apis! {
@@ -31,6 +31,6 @@ sp_api::decl_runtime_apis! {
             fn get_account_balance(account_id: AccountId, asset_id: CurrencyId) -> Result<CurrencyBalance<BalanceInfo>, DispatchError>;
             fn get_account_balances(account_id: AccountId) -> Result<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>, DispatchError>;
             fn get_account_stakes(account_id: AccountId) -> Result<Vec<CurrenciesStake>, DispatchError>;
-            fn get_assets() -> Result<Vec<CurrencyMetadata>, DispatchError>;
+            fn get_assets() -> Result<Vec<CurrenciesMetadata>, DispatchError>;
         }
 }

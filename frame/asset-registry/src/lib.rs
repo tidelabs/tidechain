@@ -50,7 +50,7 @@ pub mod pallet {
     CurrencyMetadata,
   };
 
-  type CurrencyMetadata = (CurrencyId, CurrencyMetadata<Vec<u8>>);
+  type CurrenciesMetadata = (CurrencyId, CurrencyMetadata<Vec<u8>>);
   type AssetGenesis<T> = (
     CurrencyId,
     Vec<u8>,
@@ -325,7 +325,7 @@ pub mod pallet {
       })
     }
 
-    pub fn get_assets() -> Result<Vec<CurrencyMetadata>, DispatchError> {
+    pub fn get_assets() -> Result<Vec<CurrenciesMetadata>, DispatchError> {
       let mut final_assets = vec![(
         CurrencyId::Tdfy,
         CurrencyMetadata {
