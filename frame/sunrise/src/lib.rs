@@ -379,8 +379,8 @@ pub mod pallet {
       if let Some(sunrise_pool_available) =
         Self::try_select_first_eligible_sunrise_pool(fee, currency_id)?
       {
-        let real_fees_in_tide_with_rebates =
-          Self::calculate_rebates_on_fees_paid(sunrise_pool_available.rebates, fee)?;
+        let real_fees_in_tdfy_with_rebates =
+          Self::calculate_rebates_on_fees_paid(sunrise_pool_available.rebates, &fee)?;
         // Update sunrise pool
         Pools::<T>::try_mutate::<(), DispatchError, _>(|pools| {
           let sunrise_pool = pools
@@ -391,7 +391,7 @@ pub mod pallet {
           // Reduce pool balance
           sunrise_pool.balance = sunrise_pool
             .balance
-            .saturating_sub(real_fees_in_tide_with_rebates);
+            .saturating_sub(real_fees_in_tdfy_with_rebates);
 
           // Reduce number of transactions remaining for this pool
           sunrise_pool.transactions_remaining -= 1;
@@ -409,7 +409,7 @@ pub mod pallet {
 
         // Increment reward for the account
         Rewards::<T>::mutate(account_id.clone(), era_index, |rewards| {
-          *rewards = rewards.saturating_add(real_fees_in_tide_with_rebates);
+          *rewards = rewards.saturating_add(real_fees_in_tdfy_with_rebates);
         });
 
         // Emit event
@@ -417,25 +417,25 @@ pub mod pallet {
           era_index,
           pool_id: Some(sunrise_pool_available.id),
           account_id: account_id.clone(),
-          reward: real_fees_in_tide_with_rebates,
+          reward: real_fees_in_tdfy_with_rebates,
         });
 
-        Ok(Some(real_fees_in_tide_with_rebates))
+        Ok(Some(real_fees_in_tdfy_with_rebates))
       } else {
         // check if we have some leftover that can be used
         let available_left_over = Self::pools_left_over();
-        let real_fees_in_tide_with_rebates =
-          Self::calculate_rebates_on_fees_paid(T::LeftoverSwapRebates::get(), fee)?;
+        let real_fees_in_tdfy_with_rebates =
+          Self::calculate_rebates_on_fees_paid(T::LeftoverSwapRebates::get(), &fee)?;
 
-        if available_left_over >= real_fees_in_tide_with_rebates {
+        if available_left_over >= real_fees_in_tdfy_with_rebates {
           // Increment reward for the account
           Rewards::<T>::mutate(account_id.clone(), era_index, |rewards| {
-            *rewards = rewards.saturating_add(real_fees_in_tide_with_rebates);
+            *rewards = rewards.saturating_add(real_fees_in_tdfy_with_rebates);
           });
 
           // Reduce leftover
           PoolsLeftOverBalance::<T>::mutate(|left_over| {
-            *left_over = left_over.saturating_sub(real_fees_in_tide_with_rebates);
+            *left_over = left_over.saturating_sub(real_fees_in_tdfy_with_rebates);
           });
 
           // Emit event
@@ -443,10 +443,10 @@ pub mod pallet {
             era_index,
             pool_id: None,
             account_id: account_id.clone(),
-            reward: real_fees_in_tide_with_rebates,
+            reward: real_fees_in_tdfy_with_rebates,
           });
 
-          Ok(Some(real_fees_in_tide_with_rebates))
+          Ok(Some(real_fees_in_tdfy_with_rebates))
         } else {
           Ok(None)
         }
