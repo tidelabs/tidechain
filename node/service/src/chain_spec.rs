@@ -146,7 +146,7 @@ fn lagoon_testnet_genesis(
   // Sunrise Account Id
   let sunrise_account: AccountId = lagoon_runtime::SunrisePalletId::get().into_account_truncating();
   // Get all TDFY from our stakeholders
-  let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
+  let mut claims = helpers::get_tdfy_from_stakeholders(stakeholders.clone());
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
@@ -380,7 +380,7 @@ fn tidechain_testnet_genesis(
   let asset_registry: AccountId =
     tidechain_runtime::AssetRegistryPalletId::get().into_account_truncating();
   // Get all TDFY from our stakeholders
-  let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
+  let mut claims = helpers::get_tdfy_from_stakeholders(stakeholders.clone());
 
   let mut total_claims: u128 = 0;
   for (_, balance) in &claims {
@@ -1173,7 +1173,7 @@ mod helpers {
     )
   }
 
-  pub(crate) fn get_tide_from_stakeholders(
+  pub(crate) fn get_tdfy_from_stakeholders(
     stakeholders: Vec<(CurrencyId, AccountId, Balance)>,
   ) -> Vec<(AccountId, Balance)> {
     stakeholders
