@@ -44,7 +44,10 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_io::hashing::blake2_256;
-  use sp_runtime::{traits::Saturating, Permill};
+  use sp_runtime::{
+    traits::{CheckedDiv, Saturating},
+    Permill,
+  };
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, FeesExt, OracleExt, QuorumExt, SecurityExt, SunriseExt},
     Balance, CurrencyId, EraIndex, Hash, SwapType,
@@ -54,7 +57,7 @@ pub mod pallet {
   #[pallet::config]
   pub trait Config: frame_system::Config {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Weights
     type WeightInfo: WeightInfo;
@@ -167,6 +170,7 @@ pub mod pallet {
     /// Emits `Transfer` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::transfer())]
     pub fn transfer(
       origin: OriginFor<T>,
@@ -184,7 +188,7 @@ pub mod pallet {
       );
 
       // 3. Transfer the request currency, only if the funds are available and the recipient can receive it.
-      T::CurrencyTidefi::transfer(currency_id, &account_id, &destination_id, amount, true)?;
+      T::CurrencyTidefi::transfer(currency_id, &account_id, &destination_id, amount, false)?;
 
       // 4. Send event to the chain
       Self::deposit_event(Event::<T>::Transfer {
@@ -205,6 +209,7 @@ pub mod pallet {
     /// Emits `Withdrawal` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(1)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::withdrawal())]
     pub fn withdrawal(
       origin: OriginFor<T>,
@@ -232,7 +237,7 @@ pub mod pallet {
 
       // 5. Make sure the account have enough funds
       match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {
-        WithdrawConsequence::Success => {
+        WithdrawConsequence::Success | WithdrawConsequence::ReducedToZero(_) => {
           // Add withdrawal in queue
           T::Quorum::add_new_withdrawal_in_queue(
             account_id.clone(),
@@ -257,7 +262,6 @@ pub mod pallet {
           Err(Error::<T>::WithdrawAmountGreaterThanAssetSupply.into())
         }
         WithdrawConsequence::Frozen => Err(Error::<T>::AccountAssetFrozen.into()),
-        WithdrawConsequence::ReducedToZero(_) => Err(Error::<T>::ReducedToZero.into()),
         _ => Err(Error::<T>::UnknownError.into()),
       }
     }
@@ -275,6 +279,7 @@ pub mod pallet {
     /// Emits `Swap` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(2)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::swap())]
     pub fn swap(
       origin: OriginFor<T>,
@@ -370,6 +375,7 @@ pub mod pallet {
     /// Emits `SwapCancelled` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(3)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::swap())]
     pub fn cancel_swap(origin: OriginFor<T>, request_id: Hash) -> DispatchResultWithPostInfo {
       // 1. Make sure the transaction is signed
@@ -394,6 +400,7 @@ pub mod pallet {
     /// Emits `RewardsClaimed` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(4)]
     #[pallet::weight(<T as pallet::Config>::WeightInfo::claim_sunrise_rewards())]
     pub fn claim_sunrise_rewards(
       origin: OriginFor<T>,
@@ -404,18 +411,22 @@ pub mod pallet {
 
       // 2. Make sure the era Index provided is ready to be claimed
       let current_era = T::Fees::current_era().ok_or(Error::<T>::NoActiveEra)?;
-      let starting_block = current_era.start_block.ok_or(Error::<T>::NoActiveEra)?;
-      let current_block = T::Security::get_current_block_count();
 
       // Unable to claim current Era
       if era_index >= current_era.index {
         return Err(Error::<T>::InvalidEra.into());
       }
 
-      // Unable to claim previous era if the `T::Cooldown` cooldown isnt completed
-      if era_index == current_era.index.saturating_sub(1)
-        && starting_block.saturating_add(T::Sunrise::cooldown_blocks_count()) > current_block
-      {
+      let era_blocks_count = T::Fees::era_blocks_count();
+      let cooldown_blocks_count = T::Sunrise::cooldown_blocks_count();
+      let eras_in_cooldown = cooldown_blocks_count
+        .checked_div(&era_blocks_count)
+        .ok_or(Error::<T>::EraNotReady)?;
+      let minimum_era_index_as_blocknumber =
+        T::BlockNumber::from(current_era.index).saturating_sub(eras_in_cooldown);
+
+      // Unable to claim previous era's if the `T::Cooldown` cooldown isnt cleared
+      if T::BlockNumber::from(era_index) >= minimum_era_index_as_blocknumber {
         return Err(Error::<T>::EraNotReady.into());
       }
 

@@ -15,12 +15,14 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-  BlockLength, BlockWeights, Call, CouncilCollectiveInstance, Runtime, RuntimeVersion, VERSION,
+  BlockLength, BlockWeights, CouncilCollectiveInstance, Runtime, RuntimeCall, RuntimeVersion,
+  VERSION,
 };
 use frame_support::{
+  dispatch::DispatchClass,
   parameter_types,
   traits::{Currency, EitherOfDiverse},
-  weights::{constants::WEIGHT_PER_SECOND, DispatchClass, Weight},
+  weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
 use frame_system::EnsureRoot;
 use sp_runtime::{generic, Perbill};
@@ -57,7 +59,8 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 /// by  Operational  extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 4 seconds of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = 4 * WEIGHT_PER_SECOND;
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+  Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
@@ -117,8 +120,9 @@ pub type SignedExtra = (
   pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+  generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;

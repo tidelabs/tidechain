@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-#![allow(clippy::type_complexity)]
-
 #[cfg(feature = "full-node")]
 pub use tidechain_client::{
   AbstractClient, Client, ClientHandle, ExecuteWithClient, FullBackend, FullClient,
@@ -24,9 +22,10 @@ pub use tidechain_client::{
 
 #[cfg(feature = "full-node")]
 use {
-  sc_client_api::{BlockBackend, ExecutorProvider},
+  frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE,
+  sc_client_api::BlockBackend,
+  sc_consensus_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
   sc_executor::NativeElseWasmExecutor,
-  sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
   sc_service::{
     config::PrometheusConfig, Configuration, Error as SubstrateServiceError,
     NativeExecutionDispatch, RpcHandlers, TaskManager,
@@ -112,7 +111,7 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 pub type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 #[cfg(feature = "full-node")]
 pub type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch> =
-  sc_finality_grandpa::GrandpaBlockImport<
+  sc_consensus_grandpa::GrandpaBlockImport<
     FullBackend,
     Block,
     FullClient<RuntimeApi, ExecutorDispatch>,
@@ -150,14 +149,14 @@ fn new_partial<RuntimeApi, ExecutorDispatch>(
           FullClient<RuntimeApi, ExecutorDispatch>,
           FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch>,
         >,
-        sc_finality_grandpa::LinkHalf<
+        sc_consensus_grandpa::LinkHalf<
           Block,
           FullClient<RuntimeApi, ExecutorDispatch>,
           FullSelectChain,
         >,
         sc_consensus_babe::BabeLink<Block>,
       ),
-      sc_finality_grandpa::SharedVoterState,
+      sc_consensus_grandpa::SharedVoterState,
       sp_consensus_babe::SlotDuration,
       Option<Telemetry>,
     ),
@@ -219,7 +218,7 @@ where
   let grandpa_hard_forks = Vec::new();
 
   let (grandpa_block_import, grandpa_link) =
-    sc_finality_grandpa::block_import_with_authority_set_hard_forks(
+    sc_consensus_grandpa::block_import_with_authority_set_hard_forks(
       client.clone(),
       &(client.clone() as Arc<_>),
       select_chain.clone(),
@@ -229,7 +228,7 @@ where
 
   let justification_import = grandpa_block_import.clone();
 
-  let babe_config = sc_consensus_babe::Config::get(&*client)?;
+  let babe_config = sc_consensus_babe::configuration(&*client)?;
   let (block_import, babe_link) =
     sc_consensus_babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
 
@@ -249,20 +248,16 @@ where
           slot_duration,
         );
 
-      let uncles =
-        sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
-
-      Ok((timestamp, slot, uncles))
+      Ok((slot, timestamp))
     },
     &task_manager.spawn_essential_handle(),
     config.prometheus_registry(),
-    sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
     telemetry.as_ref().map(|x| x.handle()),
   )?;
 
   let justification_stream = grandpa_link.justification_stream();
   let shared_authority_set = grandpa_link.shared_authority_set().clone();
-  let shared_voter_state = sc_finality_grandpa::SharedVoterState::empty();
+  let shared_voter_state = sc_consensus_grandpa::SharedVoterState::empty();
   let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
     backend.clone(),
     Some(shared_authority_set.clone()),
@@ -349,6 +344,7 @@ impl<C> NewFull<C> {
 #[cfg(feature = "full-node")]
 pub fn new_full<RuntimeApi, Executor>(
   mut config: Configuration,
+  hwbench: Option<sc_sysinfo::HwBench>,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
 where
   RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
@@ -382,7 +378,7 @@ where
   // Note: GrandPa is pushed before the Tidechain-specific protocols. This doesn't change
   // anything in terms of behaviour, but makes the logs more consistent with the other
   // Substrate nodes.
-  let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
+  let grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
     &client
       .block_hash(0)
       .ok()
@@ -393,17 +389,19 @@ where
   config
     .network
     .extra_sets
-    .push(sc_finality_grandpa::grandpa_peers_set_config(
+    .push(sc_consensus_grandpa::grandpa_peers_set_config(
       grandpa_protocol_name.clone(),
     ));
 
-  let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
-    backend.clone(),
-    import_setup.1.shared_authority_set().clone(),
-    Default::default(),
+  let warp_sync_params = sc_service::WarpSyncParams::WithProvider(Arc::new(
+    sc_consensus_grandpa::warp_proof::NetworkProvider::new(
+      backend.clone(),
+      import_setup.1.shared_authority_set().clone(),
+      Default::default(),
+    ),
   ));
 
-  let (network, system_rpc_tx, network_starter) =
+  let (network, system_rpc_tx, tx_handler_controller, network_starter) =
     sc_service::build_network(sc_service::BuildNetworkParams {
       config: &config,
       client: client.clone(),
@@ -411,7 +409,7 @@ where
       spawn_handle: task_manager.spawn_handle(),
       import_queue,
       block_announce_validator_builder: None,
-      warp_sync: Some(warp_sync),
+      warp_sync_params: Some(warp_sync_params),
     })?;
 
   if config.offchain_worker.enabled {
@@ -433,14 +431,32 @@ where
     transaction_pool: transaction_pool.clone(),
     task_manager: &mut task_manager,
     system_rpc_tx,
+    tx_handler_controller,
     telemetry: telemetry.as_mut(),
   })?;
 
+  if let Some(hwbench) = hwbench {
+    sc_sysinfo::print_hwbench(&hwbench);
+    if !SUBSTRATE_REFERENCE_HARDWARE.check_hardware(&hwbench) && role.is_authority() {
+      log::warn!(
+				"⚠️  The hardware does not meet the minimal requirements for role 'Authority' find out more at:\n\
+				https://www.tidelabs.org/docs/Community/validator-guide#hardware"
+			);
+    }
+
+    if let Some(ref mut telemetry) = telemetry {
+      let telemetry_handle = telemetry.handle();
+      task_manager.spawn_handle().spawn(
+        "telemetry_hwbench",
+        None,
+        sc_sysinfo::initialize_hwbench_telemetry(telemetry_handle, hwbench),
+      );
+    }
+  }
+
   let (block_import, link_half, babe_link) = import_setup;
 
-  if let sc_service::config::Role::Authority { .. } = &role {
-    let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
-
+  if role.is_authority() {
     let proposer = sc_basic_authorship::ProposerFactory::new(
       task_manager.spawn_handle(),
       client.clone(),
@@ -449,7 +465,6 @@ where
       telemetry.as_ref().map(|x| x.handle()),
     );
 
-    let client_clone = client.clone();
     let slot_duration = babe_link.config().slot_duration();
     let babe_config = sc_consensus_babe::BabeParams {
       keystore: keystore_container.sync_keystore(),
@@ -462,12 +477,11 @@ where
       force_authoring,
       backoff_authoring_blocks,
       babe_link,
-      can_author_with,
-      create_inherent_data_providers: move |parent, ()| {
-        let client_clone = client_clone.clone();
+      create_inherent_data_providers: move |_parent, ()| {
         async move {
-          let uncles =
-            sc_consensus_uncles::create_uncles_inherent_data_provider(&*client_clone, parent)?;
+          // FIXME
+          //let uncles =
+          //  sc_consensus_uncles::create_uncles_inherent_data_provider(&*client_clone, parent)?;
 
           let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -477,7 +491,7 @@ where
               slot_duration,
             );
 
-          Ok((timestamp, slot, uncles))
+          Ok((slot, timestamp))
         }
       },
       block_proposal_slot_portion: sc_consensus_babe::SlotProportion::new(2f32 / 3f32),
@@ -494,6 +508,7 @@ where
   if role.is_authority() {
     use futures::StreamExt;
     use sc_network::Event;
+    use sc_network_common::service::NetworkEventStream;
 
     let authority_discovery_role = if role.is_authority() {
       sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore())
@@ -539,7 +554,7 @@ where
     None
   };
 
-  let config = sc_finality_grandpa::Config {
+  let config = sc_consensus_grandpa::Config {
     // FIXME substrate#1578 make this available through chainspec
     gossip_duration: Duration::from_millis(1000),
     justification_period: 512,
@@ -563,11 +578,11 @@ where
     // add a custom voting rule to temporarily stop voting for new blocks
     // after the given pause block is finalized and restarting after the
     // given delay.
-    let builder = sc_finality_grandpa::VotingRulesBuilder::default();
+    let builder = sc_consensus_grandpa::VotingRulesBuilder::default();
 
     let voting_rule = builder.build();
 
-    let grandpa_config = sc_finality_grandpa::GrandpaParams {
+    let grandpa_config = sc_consensus_grandpa::GrandpaParams {
       config,
       link: link_half,
       network: network.clone(),
@@ -580,7 +595,7 @@ where
     task_manager.spawn_essential_handle().spawn_blocking(
       "grandpa-voter",
       None,
-      sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
+      sc_consensus_grandpa::run_grandpa_voter(grandpa_config)?,
     );
   }
 
@@ -595,16 +610,19 @@ where
 }
 
 #[cfg(feature = "full-node")]
-pub fn build_full(config: Configuration) -> Result<NewFull<Client>, Error> {
+pub fn build_full(
+  config: Configuration,
+  hwbench: Option<sc_sysinfo::HwBench>,
+) -> Result<NewFull<Client>, Error> {
   #[cfg(feature = "tidechain-native")]
   if config.chain_spec.is_tidechain() {
-    return new_full::<tidechain_runtime::RuntimeApi, TidechainExecutorDispatch>(config)
+    return new_full::<tidechain_runtime::RuntimeApi, TidechainExecutorDispatch>(config, hwbench)
       .map(|full| full.with_client(Client::Tidechain));
   }
 
   #[cfg(feature = "lagoon-native")]
   if config.chain_spec.is_lagoon() {
-    return new_full::<lagoon_runtime::RuntimeApi, LagoonExecutorDispatch>(config)
+    return new_full::<lagoon_runtime::RuntimeApi, LagoonExecutorDispatch>(config, hwbench)
       .map(|full| full.with_client(Client::Lagoon));
   }
 

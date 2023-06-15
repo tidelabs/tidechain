@@ -38,7 +38,7 @@ pub fn test_select_first_eligible_sunrise_pool() {
     assert_eq!(
       Sunrise::try_get_tdfy_value(CurrencyId::Wrapped(2), Asset::Bitcoin.saturating_mul(1))
         .unwrap(),
-      oracle_value.into()
+      oracle_value
     );
 
     // should have selected second pool
@@ -118,17 +118,17 @@ pub fn test_wrapped_asset_values() {
 
     assert_eq!(
       Sunrise::try_get_tdfy_value(CurrencyId::Wrapped(2), 100_000_000).unwrap(),
-      oracle_value.into()
+      oracle_value
     );
 
     assert_eq!(
       Sunrise::try_get_tdfy_value(CurrencyId::Wrapped(2), 10_000_000).unwrap(),
-      10_000_000_000_000_000_u128.into()
+      10_000_000_000_000_000_u128
     );
 
     assert_eq!(
       Sunrise::try_get_tdfy_value(CurrencyId::Wrapped(2), 625_000).unwrap(),
-      625_000_000_000_000_u128.into()
+      625_000_000_000_000_u128
     );
   });
 }
@@ -140,7 +140,7 @@ pub fn test_get_onboarding_rebares() {
     assert_eq!(
       Sunrise::get_next_onboarding_rebates(10_000_000_000_000_000_u128, &onboarding_rebate)
         .unwrap(),
-      10_000_000_000_000_000_u128.into()
+      10_000_000_000_000_000_u128
     );
 
     let onboarding_rebate = OnboardingRebates {
@@ -152,7 +152,7 @@ pub fn test_get_onboarding_rebares() {
     assert_eq!(
       Sunrise::get_next_onboarding_rebates(10_000_000_000_000_000_u128, &onboarding_rebate)
         .unwrap(),
-      5_000_000_000_000_000_u128.into()
+      5_000_000_000_000_000_u128
     );
 
     let onboarding_rebate = OnboardingRebates {
@@ -165,7 +165,7 @@ pub fn test_get_onboarding_rebares() {
     assert_eq!(
       Sunrise::get_next_onboarding_rebates(10_000_000_000_000_000_u128, &onboarding_rebate)
         .unwrap(),
-      416_666_666_666_666_u128.into()
+      416_666_666_666_666_u128
     );
 
     let onboarding_rebate = OnboardingRebates {

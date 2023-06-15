@@ -25,10 +25,9 @@ use crate::{
     AccountId, AccountIndex, Balance, BlakeTwo256, BlockHashCount, BlockNumber,
     EnsureRootOrHalfCouncil, Hash, Nonce, RocksDbWeight, RuntimeBlockLength, RuntimeBlockWeights,
   },
-  Babe, Balances, Call, Event, Indices, Moment, Origin, OriginCaller, PalletInfo, Preimage,
-  Runtime, System, Treasury, SS58_PREFIX, VERSION,
+  Babe, Balances, Indices, Moment, OriginCaller, PalletInfo, Preimage, Runtime, RuntimeCall,
+  RuntimeEvent, RuntimeOrigin, System, Treasury, SS58_PREFIX, VERSION,
 };
-
 use frame_support::{
   parameter_types,
   traits::{ConstU32, Everything, PrivilegeCmp},
@@ -36,7 +35,7 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use pallet_transaction_payment::{CurrencyAdapter, Multiplier, TargetedFeeAdjustment};
-use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Perquintill};
 use sp_std::cmp::Ordering;
 use sp_version::RuntimeVersion;
 
@@ -50,8 +49,8 @@ impl frame_system::Config for Runtime {
   type BlockWeights = RuntimeBlockWeights;
   type BlockLength = RuntimeBlockLength;
   type DbWeight = RocksDbWeight;
-  type Origin = Origin;
-  type Call = Call;
+  type RuntimeOrigin = RuntimeOrigin;
+  type RuntimeCall = RuntimeCall;
   type Index = Nonce;
   type BlockNumber = BlockNumber;
   type Hash = Hash;
@@ -59,7 +58,7 @@ impl frame_system::Config for Runtime {
   type AccountId = AccountId;
   type Lookup = Indices;
   type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type BlockHashCount = BlockHashCount;
   type Version = Version;
   type PalletInfo = PalletInfo;
@@ -77,19 +76,26 @@ parameter_types! {
    pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
    pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
    pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
+   /// The maximum amount of the multiplier.
+   pub MaximumMultiplier: Multiplier = Bounded::max_value();
    /// This value increases the priority of `Operational` transactions by adding
    /// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
    pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
   type OperationalFeeMultiplier = OperationalFeeMultiplier;
   type WeightToFee = WeightToFee;
   type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-  type FeeMultiplierUpdate =
-    TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+  type FeeMultiplierUpdate = TargetedFeeAdjustment<
+    Self,
+    TargetBlockFullness,
+    AdjustmentVariable,
+    MinimumMultiplier,
+    MaximumMultiplier,
+  >;
 }
 
 parameter_types! {
@@ -101,7 +107,7 @@ parameter_types! {
 impl pallet_balances::Config for Runtime {
   type Balance = Balance;
   type DustRemoval = ();
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type ExistentialDeposit = ExistentialDeposit;
   type AccountStore = System;
   type MaxLocks = MaxLocks;
@@ -141,17 +147,16 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
 }
 
 impl pallet_scheduler::Config for Runtime {
-  type Event = Event;
-  type Origin = Origin;
+  type RuntimeEvent = RuntimeEvent;
+  type RuntimeOrigin = RuntimeOrigin;
   type PalletsOrigin = OriginCaller;
-  type Call = Call;
+  type RuntimeCall = RuntimeCall;
   type MaximumWeight = MaximumSchedulerWeight;
   type ScheduleOrigin = EnsureRoot<AccountId>;
   type MaxScheduledPerBlock = MaxScheduledPerBlock;
   type OriginPrivilegeCmp = OriginPrivilegeCmp;
-  type PreimageProvider = Preimage;
-  type NoPreimagePostponement = NoPreimagePostponement;
   type WeightInfo = crate::weights::pallet_scheduler::WeightInfo<Runtime>;
+  type Preimages = Preimage;
 }
 
 parameter_types! {
@@ -162,7 +167,7 @@ impl pallet_indices::Config for Runtime {
   type AccountIndex = AccountIndex;
   type Currency = Balances;
   type Deposit = IndexDeposit;
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type WeightInfo = crate::weights::pallet_indices::WeightInfo<Runtime>;
 }
 
@@ -190,7 +195,7 @@ parameter_types! {
 }
 
 impl pallet_identity::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Currency = Balances;
   type BasicDeposit = BasicDeposit;
   type FieldDeposit = FieldDeposit;
@@ -211,10 +216,9 @@ parameter_types! {
 }
 
 impl pallet_preimage::Config for Runtime {
-  type Event = Event;
+  type RuntimeEvent = RuntimeEvent;
   type Currency = Balances;
   type ManagerOrigin = EnsureRoot<AccountId>;
-  type MaxSize = PreimageMaxSize;
   type BaseDeposit = PreimageBaseDeposit;
   type ByteDeposit = PreimageByteDeposit;
   type WeightInfo = crate::weights::pallet_preimage::WeightInfo<Runtime>;
@@ -228,8 +232,8 @@ parameter_types! {
 }
 
 impl pallet_recovery::Config for Runtime {
-  type Event = Event;
-  type Call = Call;
+  type RuntimeEvent = RuntimeEvent;
+  type RuntimeCall = RuntimeCall;
   type Currency = Balances;
   type ConfigDepositBase = ConfigDepositBase;
   type FriendDepositFactor = FriendDepositFactor;

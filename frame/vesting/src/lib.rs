@@ -69,7 +69,7 @@ mod tests;
 mod weights;
 
 pub use module::*;
-pub use weights::WeightInfo;
+pub use weights::*;
 
 pub const VESTING_LOCK_ID: LockIdentifier = *b"ormlvest";
 
@@ -147,7 +147,7 @@ pub mod module {
 
   #[pallet::config]
   pub trait Config: frame_system::Config {
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     type Currency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
@@ -156,7 +156,7 @@ pub mod module {
     type MinVestedTransfer: Get<BalanceOf<Self>>;
 
     /// Required origin for vested transfer.
-    type VestedTransferOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
+    type VestedTransferOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 
     /// Weight information for extrinsics in this module.
     type WeightInfo: WeightInfo;
@@ -273,7 +273,8 @@ pub mod module {
 
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    #[pallet::weight(T::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
+    #[pallet::call_index(0)]
+    #[pallet::weight(T::WeightInfo::claim(<T as Config>::MaxVestingSchedules::get() / 2))]
     pub fn claim(origin: OriginFor<T>) -> DispatchResult {
       let who = ensure_signed(origin)?;
       let locked_amount = Self::do_claim(&who);
@@ -285,6 +286,7 @@ pub mod module {
       Ok(())
     }
 
+    #[pallet::call_index(1)]
     #[pallet::weight(T::WeightInfo::vested_transfer())]
     pub fn vested_transfer(
       origin: OriginFor<T>,
@@ -303,6 +305,7 @@ pub mod module {
       Ok(())
     }
 
+    #[pallet::call_index(2)]
     #[pallet::weight(T::WeightInfo::update_vesting_schedules(vesting_schedules.len() as u32))]
     pub fn update_vesting_schedules(
       origin: OriginFor<T>,
@@ -318,7 +321,8 @@ pub mod module {
       Ok(())
     }
 
-    #[pallet::weight(T::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
+    #[pallet::call_index(3)]
+    #[pallet::weight(T::WeightInfo::claim(<T as Config>::MaxVestingSchedules::get() / 2))]
     pub fn claim_for(
       origin: OriginFor<T>,
       dest: <T::Lookup as StaticLookup>::Source,

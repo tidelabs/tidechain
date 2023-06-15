@@ -20,10 +20,9 @@
 #![allow(clippy::from_over_into)]
 #![allow(clippy::manual_range_contains)]
 
-use frame_support::{construct_runtime, parameter_types};
-
-use frame_support::PalletId;
+use frame_support::{construct_runtime, parameter_types, weights::Weight, PalletId};
 use frame_system::limits::{BlockLength, BlockWeights};
+use sp_runtime::traits::Get;
 
 use pallet_session::historical as pallet_session_historical;
 
@@ -99,7 +98,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 6010,
+  spec_version: 7000,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -137,11 +136,14 @@ parameter_types! {
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
   pub const SunrisePalletId: PalletId = PalletId(*b"py/sunrp");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+  // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
+  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
+  pub const SunriseCooldown: BlockNumber = 1_200; // 2 hours
 }
 
 impl pallet_sudo::Config for Runtime {
-  type Event = Event;
-  type Call = Call;
+  type RuntimeEvent = RuntimeEvent;
+  type RuntimeCall = RuntimeCall;
 }
 
 construct_runtime!(
@@ -162,7 +164,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 
         // Consensus support
-        Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 6,
+        Authorship: pallet_authorship::{Pallet, Storage} = 6,
         Staking: pallet_staking::{Pallet, Call, Config<T>, Storage, Event<T>} = 7,
         Offences: pallet_offences::{Pallet, Storage, Event} = 8,
         Historical: pallet_session_historical::{Pallet} = 9,
@@ -251,22 +253,73 @@ pub type Executive = frame_executive::Executive<
   frame_system::ChainContext<Runtime>,
   Runtime,
   AllPalletsWithSystem,
-  (pallet_bags_list::migrations::AddScore<Runtime>,),
+  (
+    pallet_bags_list::migrations::AddScore<Runtime>,
+    pallet_scheduler::migration::v4::CleanupAgendas<Runtime>,
+    // Migrate staking pallet
+    MigrateStakingToV8<Runtime>,
+    pallet_staking::migrations::v9::InjectValidatorsIntoVoterList<Runtime>,
+    pallet_staking::migrations::v10::MigrateToV10<Runtime>,
+    pallet_staking::migrations::v11::MigrateToV11<Runtime, BagsList, StakingMigrationV11OldPallet>,
+    pallet_staking::migrations::v12::MigrateToV12<Runtime>,
+    pallet_staking::migrations::v13::MigrateToV13<Runtime>,
+    // Remove stale entries in the set id -> session index storage map (after
+    // this release they will be properly pruned after the bonding duration has
+    // elapsed)
+    pallet_grandpa::migrations::CleanupSetIdSessionMap<Runtime>,
+    pallet_election_provider_multi_phase::migrations::v1::MigrateToV1<Runtime>,
+    // This migration cleans up empty agendas of the V4 scheduler
+    pallet_scheduler::migration::v4::CleanupAgendas<Runtime>,
+    // This will drop all calls and refund them (required for the migration)
+    pallet_multisig::migrations::v1::MigrateToV1<Runtime>,
+    MigrateBountyToV4<Runtime>,
+    // Migration for moving preimage from V0 to V1 storage.
+    pallet_preimage::migration::v1::Migration<Runtime>,
+  ),
 >;
 
-/*
-/// A migration which renames the pallet `BagsList` to `VoterList`
-pub struct RenameBagsListToVoterList;
-impl frame_support::traits::OnRuntimeUpgrade for RenameBagsListToVoterList {
-  #[cfg(feature = "try-runtime")]
-  fn pre_upgrade() -> Result<(), &'static str> {
-    // For other pre-upgrade checks, we need the storage to already be migrated.
-    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
-    Ok(())
-  }
-  fn on_runtime_upgrade() -> frame_support::weights::Weight {
-    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
-    frame_support::weights::Weight::MAX
+pub struct StakingMigrationV11OldPallet;
+impl Get<&'static str> for StakingMigrationV11OldPallet {
+  fn get() -> &'static str {
+    "BagsList"
   }
 }
-*/
+
+/// A migration which update `Staking` to `v8`
+pub struct MigrateStakingToV8<T>(sp_std::marker::PhantomData<T>);
+impl<T: pallet_staking::Config> frame_support::traits::OnRuntimeUpgrade for MigrateStakingToV8<T> {
+  fn on_runtime_upgrade() -> Weight {
+    pallet_staking::migrations::v8::migrate::<T>()
+  }
+
+  #[cfg(feature = "try-runtime")]
+  fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+    pallet_staking::migrations::v8::pre_migrate::<T>()?;
+    Ok(Vec::new())
+  }
+
+  #[cfg(feature = "try-runtime")]
+  fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
+    pallet_staking::migrations::v8::post_migrate::<T>()
+  }
+}
+
+/// A migration which update `pallet_bounties` to `v4`
+pub struct MigrateBountyToV4<T>(sp_std::marker::PhantomData<T>);
+impl<T: pallet_bounties::Config> frame_support::traits::OnRuntimeUpgrade for MigrateBountyToV4<T> {
+  fn on_runtime_upgrade() -> Weight {
+    pallet_bounties::migrations::v4::migrate::<T, Bounties, &str>("bounties", "bounties")
+  }
+
+  #[cfg(feature = "try-runtime")]
+  fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+    pallet_bounties::migrations::v4::pre_migration::<T, Bounties, &str>("bounties", "bounties");
+    Ok(Vec::new())
+  }
+
+  #[cfg(feature = "try-runtime")]
+  fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
+    pallet_bounties::migrations::v4::post_migration::<T, Bounties, &str>("bounties", "bounties");
+    Ok(())
+  }
+}

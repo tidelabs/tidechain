@@ -1,0 +1,73 @@
+name: Rust lints
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    paths:
+      - '!docs/**'
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_PROFILE_DEV_DEBUG: 0 # This would add unnecessary bloat to the target folder, decreasing cache efficiency.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fmt_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  core_clippy_check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        clippy:
+          - { args: '', key: 'empty' }
+          - { args: '--features runtime-benchmarks', key: 'runtime-benchmarks' }
+          - { args: '--features try-runtime', key: 'try-runtime' }
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          # https://github.com/clap-rs/clap/issues/4733
+          toolchain: nightly-2023-02-26
+          override: true
+          components: clippy
+      
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          rustup target add wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ matrix.clippy.key == 'all' }}
+
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          toolchain: nightly-2023-02-26
+          args: --all-targets ${{ matrix.clippy.args }} -- -D warnings
+          name: ${{ matrix.clippy.key }}

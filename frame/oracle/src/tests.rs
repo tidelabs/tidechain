@@ -16,15 +16,16 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Assets, Event as MockEvent, FeeAmount, Fees,
-    MarketMakerFeeAmount, Oracle, Origin, Sunrise, System, Test,
+    new_test_ext, AccountId, Adapter, Assets, Balances, FeeAmount, Fees, MarketMakerFeeAmount,
+    Oracle, RuntimeEvent as MockEvent, RuntimeOrigin, Sunrise, System, Test,
   },
   pallet::*,
 };
 use frame_support::{
   assert_noop, assert_ok,
-  traits::fungibles::{Inspect, InspectHold, Mutate},
+  traits::fungibles::{Inspect, InspectHold, Mutate, MutateHold},
 };
+use pallet_assets::Account;
 use sp_core::H256;
 use sp_runtime::{
   traits::{BadOrigin, Zero},
@@ -33,7 +34,7 @@ use sp_runtime::{
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
-  Balance, CurrencyId, Hash, SwapConfirmation, SwapStatus, SwapType,
+  Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
 };
 
 const CURRENT_BLOCK_NUMBER: BlockNumber = 0;
@@ -75,15 +76,18 @@ const ONE_ZEMP: u128 = 1_000_000_000_000_000_000;
 const ONE_TDFY: u128 = 1_000_000_000_000;
 
 // Test Accounts
-const ALICE_ACCOUNT_ID: AccountId = 1;
-const BOB_ACCOUNT_ID: AccountId = 2;
-const CHARLIE_ACCOUNT_ID: AccountId = 3;
-const DAVE_ACCOUNT_ID: AccountId = 4;
+const ALICE_ACCOUNT_ID: AccountId = AccountId(1);
+const BOB_ACCOUNT_ID: AccountId = AccountId(2);
+const CHARLIE_ACCOUNT_ID: AccountId = AccountId(3);
+const DAVE_ACCOUNT_ID: AccountId = AccountId(4);
 
 // Extrinsic Hashes
 const EXTRINSIC_HASH_0: [u8; 32] = [0; 32];
 const EXTRINSIC_HASH_1: [u8; 32] = [1; 32];
 const EXTRINSIC_HASH_2: [u8; 32] = [2; 32];
+
+const DAVE_PARTIAL_FILLING_SELLS_60_TEMPS: Balance = 60 * ONE_TEMP;
+const DAVE_PARTIAL_FILLING_BUYS_3_TDFYS: Balance = 3 * ONE_TDFY;
 
 // Swap Fee Rates
 const REQUESTER_SWAP_FEE_RATE: Permill = FeeAmount::get();
@@ -99,22 +103,20 @@ type BlockNumber = u64;
 
 #[derive(Clone)]
 struct Context {
-  alice: Origin,
-  bob: Origin,
-  market_makers: Vec<AccountId>,
+  alice: RuntimeOrigin,
+  bob: RuntimeOrigin,
   fees_account_id: AccountId,
 }
 
 impl Default for Context {
   fn default() -> Self {
     let fees_account_id = Fees::account_id();
-    assert_eq!(fees_account_id, 8246216774960574317);
+    assert_eq!(fees_account_id, 8246216774960574317_u64.into());
 
     Self {
-      alice: Origin::signed(ALICE_ACCOUNT_ID),
-      bob: Origin::signed(BOB_ACCOUNT_ID),
-      market_makers: vec![],
-      fees_account_id: fees_account_id,
+      alice: RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
+      bob: RuntimeOrigin::signed(BOB_ACCOUNT_ID),
+      fees_account_id,
     }
   }
 }
@@ -129,8 +131,10 @@ impl Context {
     self
   }
 
-  fn set_market_makers(mut self, account_ids: Vec<AccountId>) -> Self {
-    self.market_makers = account_ids;
+  fn set_market_makers(self, account_ids: Vec<AccountId>) -> Self {
+    account_ids
+      .iter()
+      .for_each(|account_id| MarketMakers::<Test>::insert(account_id, true));
     self
   }
 
@@ -138,7 +142,7 @@ impl Context {
     let temp_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP_ASSET_ID,
       temp_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -146,7 +150,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp_asset_owner),
+      RuntimeOrigin::signed(temp_asset_owner),
       TEMP_ASSET_ID,
       TEMP_ASSET_NAME.into(),
       TEMP_ASSET_SYMBOL.into(),
@@ -160,7 +164,7 @@ impl Context {
     let temp2_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       TEMP2_ASSET_ID,
       temp2_asset_owner,
       TEMP_ASSET_IS_SUFFICIENT,
@@ -168,7 +172,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(temp2_asset_owner),
+      RuntimeOrigin::signed(temp2_asset_owner),
       TEMP2_ASSET_ID,
       TEMP2_ASSET_NAME.into(),
       TEMP2_ASSET_SYMBOL.into(),
@@ -182,7 +186,7 @@ impl Context {
     let zemp_asset_owner = ALICE_ACCOUNT_ID;
 
     assert_ok!(Assets::force_create(
-      Origin::root(),
+      RuntimeOrigin::root(),
       ZEMP_ASSET_ID,
       zemp_asset_owner,
       ZEMP_ASSET_IS_SUFFICIENT,
@@ -190,7 +194,7 @@ impl Context {
     ));
 
     assert_ok!(Assets::set_metadata(
-      Origin::signed(zemp_asset_owner),
+      RuntimeOrigin::signed(zemp_asset_owner),
       ZEMP_ASSET_ID,
       ZEMP_ASSET_NAME.into(),
       ZEMP_ASSET_SYMBOL.into(),
@@ -201,8 +205,12 @@ impl Context {
   }
 
   fn mint_tdfy(self, account: AccountId, amount: u128) -> Self {
+    let initial_balance_tdfy = Adapter::balance(CurrencyId::Tdfy, &account);
     Self::mint_asset_for_accounts(vec![account], CurrencyId::Tdfy, amount);
-    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &account), amount);
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tdfy, &account),
+      initial_balance_tdfy + amount
+    );
     self
   }
 
@@ -246,7 +254,7 @@ impl Context {
       temp_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Limit,
       slippage,
     )
@@ -268,7 +276,7 @@ impl Context {
       tdfy_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Limit,
       slippage,
     )
@@ -290,7 +298,7 @@ impl Context {
       zemp_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Limit,
       slippage,
     )
@@ -312,7 +320,7 @@ impl Context {
       temp_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Market,
       slippage,
     )
@@ -334,7 +342,7 @@ impl Context {
       temp_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Market,
       slippage,
     )
@@ -356,7 +364,7 @@ impl Context {
       temp_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Limit,
       slippage,
     )
@@ -378,35 +386,50 @@ impl Context {
       zemp_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
-      SwapType::Market,
-      slippage,
-    )
-  }
-
-  fn create_temp_to_tdfy_market_swap_request(
-    &self,
-    requester_account_id: AccountId,
-    temp_amount: Balance,
-    tdfy_amount: Balance,
-    extrinsic_hash: [u8; 32],
-    slippage: Permill,
-  ) -> Hash {
-    add_new_swap_and_assert_results(
-      requester_account_id,
-      TEMP_CURRENCY_ID,
-      temp_amount,
-      CurrencyId::Tdfy,
-      tdfy_amount,
-      CURRENT_BLOCK_NUMBER,
-      extrinsic_hash,
-      self.market_makers.contains(&requester_account_id),
+      MarketMakers::<Test>::get(&requester_account_id).is_some(),
       SwapType::Market,
       slippage,
     )
   }
 }
 
+fn get_account_reserved(account_id: AccountId, currency_id: CurrencyId) -> Balance {
+  match currency_id {
+    CurrencyId::Tdfy => Balances::reserved_balance(account_id),
+    CurrencyId::Wrapped(asset_id) => Account::<Test>::get(account_id, asset_id).unwrap().reserved,
+  }
+}
+
+fn swap_exists_with_status(request_id: Hash, status: SwapStatus) -> Swap<AccountId, u64> {
+  let swap = Oracle::swaps(request_id);
+  assert!(swap.is_some());
+  let swap = swap.unwrap();
+  assert_eq!(status, swap.status);
+  swap
+}
+
+fn account_swap_exists_with_status(account: AccountId, request_id: Hash, status: SwapStatus) {
+  let account_swaps = Oracle::account_swaps(account);
+  assert!(account_swaps.is_some());
+  let account_swaps = account_swaps.unwrap();
+  let (_, account_swap_status) = account_swaps
+    .iter()
+    .find(|(account_swap_request_id, _)| *account_swap_request_id == request_id)
+    .unwrap();
+  assert_eq!(status, *account_swap_status);
+}
+
+fn account_swap_is_deleted(account: AccountId, request_id: Hash) {
+  let account_swaps = Oracle::account_swaps(account).unwrap();
+  assert_eq!(
+    account_swaps
+      .iter()
+      .find(|(account_swap_request_id, _)| *account_swap_request_id == request_id),
+    None
+  );
+}
+
+#[allow(clippy::too_many_arguments)]
 fn add_new_swap_and_assert_results(
   account_id: AccountId,
   asset_id_from: CurrencyId,
@@ -430,20 +453,25 @@ fn add_new_swap_and_assert_results(
     block_number,
     extrinsic_hash,
     is_market_maker,
-    swap_type,
+    swap_type.clone(),
     slippage,
   )
   .unwrap();
 
-  assert_swap_cost_is_suspended(account_id, asset_id_from, amount_from, is_market_maker);
+  let swap_fee =
+    Fees::calculate_swap_fees(asset_id_from, amount_from, swap_type, is_market_maker).fee;
+
+  assert_eq!(
+    Adapter::balance_on_hold(asset_id_from, &account_id),
+    amount_from.saturating_add(swap_fee)
+  );
 
   if asset_id_from != CurrencyId::Tdfy {
-    assert_sold_tokens_are_deducted(
-      account_id,
-      asset_id_from,
-      initial_from_token_balance,
-      amount_from,
-      is_market_maker,
+    assert_eq!(
+      Adapter::balance(asset_id_from, &account_id),
+      initial_from_token_balance
+        .saturating_sub(amount_from)
+        .saturating_sub(swap_fee)
     );
   }
 
@@ -452,39 +480,14 @@ fn add_new_swap_and_assert_results(
     asset_id_from,
     initial_from_token_balance,
     amount_from,
-    is_market_maker,
+    swap_fee,
   );
 
   assert_eq!(trade_request.status, SwapStatus::Pending);
-  assert_eq!(
-    Oracle::account_swaps(account_id)
-      .unwrap()
-      .iter()
-      .find(|(request_id, _)| *request_id == trade_request_id),
-    Some(&(trade_request_id, SwapStatus::Pending))
-  );
-
+  account_swap_exists_with_status(account_id, trade_request_id, SwapStatus::Pending);
   assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
 
   trade_request_id
-}
-
-fn assert_swap_cost_is_suspended(
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  sell_amount: Balance,
-  is_market_maker: bool,
-) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
-  assert_eq!(
-    Adapter::balance_on_hold(currency_id, &account_id),
-    sell_amount.saturating_add(swap_fee_rate * sell_amount)
-  );
 }
 
 fn assert_spendable_balance_is_updated(
@@ -492,17 +495,11 @@ fn assert_spendable_balance_is_updated(
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
-  is_market_maker: bool,
+  swap_fee: Balance,
 ) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
   let expected_reducible_balance = initial_balance
     .saturating_sub(sell_amount)
-    .saturating_sub(swap_fee_rate * sell_amount);
+    .saturating_sub(swap_fee);
 
   match currency_id {
     CurrencyId::Tdfy => assert_eq!(
@@ -519,28 +516,7 @@ fn assert_spendable_balance_is_updated(
     Adapter::reducible_balance(currency_id, &account_id, false),
     initial_balance
       .saturating_sub(sell_amount)
-      .saturating_sub(swap_fee_rate * sell_amount)
-  );
-}
-
-fn assert_sold_tokens_are_deducted(
-  account_id: AccountId,
-  currency_id: CurrencyId,
-  initial_balance: Balance,
-  sell_amount: Balance,
-  is_market_maker: bool,
-) {
-  let swap_fee_rate = if is_market_maker {
-    MARKET_MAKER_SWAP_FEE_RATE
-  } else {
-    REQUESTER_SWAP_FEE_RATE
-  };
-
-  assert_eq!(
-    Adapter::balance(currency_id, &account_id),
-    initial_balance
-      .saturating_sub(sell_amount)
-      .saturating_sub(swap_fee_rate * sell_amount)
+      .saturating_sub(swap_fee)
   );
 }
 
@@ -570,8 +546,8 @@ pub fn set_operational_status_works() {
 #[test]
 pub fn confirm_swap_partial_filling() {
   new_test_ext().execute_with(|| {
-    const BOB_INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
-    const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+    const INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
+    const INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
     const DAVE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
 
     let context = Context::default()
@@ -580,9 +556,9 @@ pub fn confirm_swap_partial_filling() {
       .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
       .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
       .mint_tdfy(DAVE_ACCOUNT_ID, ONE_TDFY)
-      .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+      .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
       .create_temp_asset_and_metadata()
-      .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS)
+      .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS)
       .mint_temp(DAVE_ACCOUNT_ID, DAVE_INITIAL_10000_TEMPS);
 
     const BOB_SELLS_10_TDFYS: Balance = 10 * ONE_TDFY;
@@ -645,7 +621,7 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(
       Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
-      BOB_INITIAL_20_TDFYS
+      INITIAL_20_TDFYS
         .saturating_sub(CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS)
         .saturating_sub(REQUESTER_SWAP_FEE_RATE * CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS)
     );
@@ -675,15 +651,12 @@ pub fn confirm_swap_partial_filling() {
     }));
 
     // BOB: make sure the CLIENT current trade is partially filled and correctly updated
-    let trade_request_filled = Oracle::swaps(trade_request_id).unwrap();
-    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
-
-    let trade_request_account = Oracle::account_swaps(BOB_ACCOUNT_ID).unwrap();
-    assert_eq!(
-      trade_request_account
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_id),
-      Some(&(trade_request_id, SwapStatus::PartiallyFilled))
+    let trade_request_filled =
+      swap_exists_with_status(trade_request_id, SwapStatus::PartiallyFilled);
+    account_swap_exists_with_status(
+      BOB_ACCOUNT_ID,
+      trade_request_id,
+      SwapStatus::PartiallyFilled,
     );
 
     assert_eq!(
@@ -696,14 +669,14 @@ pub fn confirm_swap_partial_filling() {
     );
 
     // CHARLIE: make sure the MM current trade is partially filled and correctly updated
-    let trade_request_filled = Oracle::swaps(trade_request_mm_id).unwrap();
-    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
+    let charlie_trade_request_filled =
+      swap_exists_with_status(trade_request_mm_id, SwapStatus::PartiallyFilled);
     assert_eq!(
-      trade_request_filled.amount_from_filled,
+      charlie_trade_request_filled.amount_from_filled,
       CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS
     );
     assert_eq!(
-      trade_request_filled.amount_to_filled,
+      charlie_trade_request_filled.amount_to_filled,
       CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS
     );
 
@@ -723,7 +696,7 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(
       Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
-      BOB_INITIAL_20_TDFYS
+      INITIAL_20_TDFYS
         .saturating_sub(10 * ONE_TDFY)
         .saturating_sub(REQUESTER_SWAP_FEE_RATE * (10 * ONE_TDFY))
     );
@@ -734,9 +707,9 @@ pub fn confirm_swap_partial_filling() {
       status: SwapStatus::Completed,
       account_id: BOB_ACCOUNT_ID,
       currency_from: CurrencyId::Tdfy,
-      currency_amount_from: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+      currency_amount_from: DAVE_PARTIAL_FILLING_BUYS_5_TDFYS,
       currency_to: TEMP_CURRENCY_ID,
-      currency_amount_to: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+      currency_amount_to: DAVE_PARTIAL_FILLING_SELLS_100_TEMPS,
       initial_extrinsic_hash: EXTRINSIC_HASH_0,
     }));
 
@@ -754,13 +727,7 @@ pub fn confirm_swap_partial_filling() {
 
     // BOB: make sure the CLIENT current trade is deleted
     assert!(Oracle::swaps(trade_request_id).is_none());
-    let trade_request_account = Oracle::account_swaps(BOB_ACCOUNT_ID).unwrap();
-    assert_eq!(
-      trade_request_account
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_id),
-      None
-    );
+    account_swap_is_deleted(BOB_ACCOUNT_ID, trade_request_id);
 
     // cant send another trade confirmation as the request should be deleted
     // we do expect `InvalidRequestId`
@@ -770,14 +737,14 @@ pub fn confirm_swap_partial_filling() {
     );
 
     // DAVE: make sure the MM current trade is partially filled and correctly updated
-    let trade_request_filled = Oracle::swaps(trade_request_mm2_id).unwrap();
-    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
+    let dave_trade_request_filled =
+      swap_exists_with_status(trade_request_mm2_id, SwapStatus::PartiallyFilled);
     assert_eq!(
-      trade_request_filled.amount_from_filled,
+      dave_trade_request_filled.amount_from_filled,
       DAVE_PARTIAL_FILLING_SELLS_100_TEMPS
     );
     assert_eq!(
-      trade_request_filled.amount_to_filled,
+      dave_trade_request_filled.amount_to_filled,
       DAVE_PARTIAL_FILLING_BUYS_5_TDFYS
     );
 
@@ -791,7 +758,7 @@ pub fn confirm_swap_partial_filling() {
     // validate all balance
     assert_eq!(
       Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
-      BOB_INITIAL_20_TDFYS
+      INITIAL_20_TDFYS
         .saturating_sub(BOB_SELLS_10_TDFYS)
         .saturating_sub(REQUESTER_SWAP_FEE_RATE * BOB_SELLS_10_TDFYS)
     );
@@ -810,12 +777,20 @@ pub fn confirm_swap_partial_filling() {
       ONE_TDFY + CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS
     );
 
+    let swap_fee = Fees::calculate_swap_fees(
+      TEMP_CURRENCY_ID,
+      CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+      SwapType::Limit,
+      true,
+    )
+    .fee;
+
     assert_spendable_balance_is_updated(
       CHARLIE_ACCOUNT_ID,
       TEMP_CURRENCY_ID,
-      CHARLIE_INITIAL_10000_TEMPS,
+      INITIAL_10000_TEMPS,
       CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
-      true,
+      swap_fee,
     );
 
     assert_eq!(
@@ -860,8 +835,9 @@ pub fn confirm_swap_temp_zemp() {
       .mint_zemp(BOB_ACCOUNT_ID, BOB_INITIAL_ZEMPS)
       .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_TEMPS);
 
-    const BOB_SELLS_ZEMPS: Balance = 4_889_975_550_122_249_389;
-    const BOB_BUYS_TEMPS: Balance = 40_000_000;
+    const BOB_SELLS_ZEMPS: Balance = BOB_INITIAL_ZEMPS.saturating_div(3);
+    const BOB_BUYS_TEMPS: Balance = CHARLIE_INITIAL_TEMPS.saturating_div(3);
+
     let trade_request_id = context.create_zemp_to_temp_market_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_ZEMPS,
@@ -876,10 +852,8 @@ pub fn confirm_swap_temp_zemp() {
         .unwrap_or_default()
     );
 
-    // 0.80478930
-    const CHARLIE_SELLS_TEMPS: Balance = 80_478_930;
-    // 9.838500000000000000
-    const CHARLIE_BUYS_ZEMPS: Balance = 9_838_500_000_000_000_000;
+    const CHARLIE_SELLS_TEMPS: Balance = CHARLIE_INITIAL_TEMPS.saturating_div(3);
+    const CHARLIE_BUYS_ZEMPS: Balance = BOB_INITIAL_ZEMPS.saturating_div(3);
 
     let trade_request_mm_id = context.create_temp_to_zemp_limit_swap_request(
       CHARLIE_ACCOUNT_ID,
@@ -897,7 +871,7 @@ pub fn confirm_swap_temp_zemp() {
 
     // partial filling
     assert_ok!(Oracle::confirm_swap(
-      context.alice.clone(),
+      context.alice,
       trade_request_id,
       vec![
         // charlie
@@ -966,7 +940,7 @@ pub fn confirm_swap_zemp_temp() {
 
     // partial filling
     assert_ok!(Oracle::confirm_swap(
-      context.alice.clone(),
+      context.alice,
       trade_request_id,
       vec![
         // charlie
@@ -983,8 +957,8 @@ pub fn confirm_swap_zemp_temp() {
 #[test]
 pub fn confirm_swap_with_fees() {
   new_test_ext().execute_with(|| {
-    const BOB_INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
-    const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+    const INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
+    const INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
     const DAVE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
 
     let context = Context::default()
@@ -993,13 +967,13 @@ pub fn confirm_swap_with_fees() {
       .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
       .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
       .mint_tdfy(DAVE_ACCOUNT_ID, ONE_TDFY)
-      .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+      .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
       .create_temp_asset_and_metadata()
-      .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS)
+      .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS)
       .mint_temp(DAVE_ACCOUNT_ID, DAVE_INITIAL_10000_TEMPS);
 
     Fees::start_era();
-    assert!(!Fees::current_era().is_none());
+    assert!(Fees::current_era().is_some());
     let current_era = Fees::current_era().unwrap().index;
 
     const BOB_SELLS_10_TDFYS: Balance = 10 * ONE_TDFY;
@@ -1108,25 +1082,17 @@ pub fn confirm_swap_with_fees() {
 
     // BOB: make sure the CLIENT current trade is deleted
     assert!(Oracle::swaps(trade_request_id).is_none());
-    assert_eq!(
-      Oracle::account_swaps(BOB_ACCOUNT_ID)
-        .unwrap()
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_id),
-      None
-    );
+    account_swap_is_deleted(BOB_ACCOUNT_ID, trade_request_id);
 
     // CHARLIE: make sure the MM current trade is partially filled and correctly updated
-    assert_eq!(
-      Oracle::account_swaps(CHARLIE_ACCOUNT_ID)
-        .unwrap()
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_mm_id),
-      Some(&(trade_request_mm_id, SwapStatus::PartiallyFilled))
+    account_swap_exists_with_status(
+      CHARLIE_ACCOUNT_ID,
+      trade_request_mm_id,
+      SwapStatus::PartiallyFilled,
     );
 
-    let trade_request_filled = Oracle::swaps(trade_request_mm_id).unwrap();
-    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
+    let trade_request_filled =
+      swap_exists_with_status(trade_request_mm_id, SwapStatus::PartiallyFilled);
     assert_eq!(
       trade_request_filled.amount_from_filled,
       CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS
@@ -1138,13 +1104,7 @@ pub fn confirm_swap_with_fees() {
 
     // DAVE: make sure the MM current trade is totally filled (deleted)
     assert!(Oracle::swaps(trade_request_mm2_id).is_none());
-    assert_eq!(
-      Oracle::account_swaps(DAVE_ACCOUNT_ID)
-        .unwrap()
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_mm2_id),
-      None
-    );
+    account_swap_is_deleted(DAVE_ACCOUNT_ID, trade_request_mm2_id);
 
     // make sure all balances match
     assert_eq!(
@@ -1161,7 +1121,7 @@ pub fn confirm_swap_with_fees() {
 
     assert_eq!(
       Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
-      BOB_INITIAL_20_TDFYS
+      INITIAL_20_TDFYS
         .saturating_sub(BOB_SELLS_10_TDFYS)
         .saturating_sub(REQUESTER_SWAP_FEE_RATE * BOB_SELLS_10_TDFYS)
     );
@@ -1204,13 +1164,13 @@ pub fn confirm_swap_with_fees() {
 #[test]
 pub fn confirm_swap_ourself() {
   new_test_ext().execute_with(|| {
-    const BOB_INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
+    const INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
     const BOB_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
 
     let context = Context::default()
       .set_oracle_status(true)
       .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
-      .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+      .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
       .create_temp_asset_and_metadata()
       .mint_temp(BOB_ACCOUNT_ID, BOB_INITIAL_10000_TEMPS);
 
@@ -1275,7 +1235,7 @@ pub fn confirm_swap_ourself() {
     assert_eq!(
       Adapter::reducible_balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID, false),
       // we should refund the extra fees paid on the slippage value
-      BOB_INITIAL_20_TDFYS.saturating_sub(REQUESTER_SWAP_FEE_RATE * BOB_SELLS_10_TDFYS)
+      INITIAL_20_TDFYS.saturating_sub(REQUESTER_SWAP_FEE_RATE * BOB_SELLS_10_TDFYS)
     );
 
     assert_eq!(
@@ -1297,24 +1257,34 @@ pub fn confirm_swap_ourself() {
 #[test]
 pub fn test_slippage() {
   new_test_ext().execute_with(|| {
-    const BOB_INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
-    const BOB_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+    const INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
+    const INITIAL_100_TEMPS: Balance = 100 * ONE_TEMP;
 
     let context = Context::default()
       .set_oracle_status(true)
+      .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
       .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
-      .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+      .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+      .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS * 5)
       .create_temp_asset_and_metadata()
-      .mint_temp(BOB_ACCOUNT_ID, BOB_INITIAL_10000_TEMPS);
+      .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_100_TEMPS * 2);
 
-    const BOB_SELLS_10_TDFYS: Balance = 10 * ONE_TDFY;
-    const BOB_BUYS_400_TEMPS: Balance = 400 * ONE_TEMP;
+    assert_eq!(
+      Adapter::balance_on_hold(TEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID),
+      0
+    );
+
     let trade_request_id = context.create_tdfy_to_temp_market_swap_request(
       BOB_ACCOUNT_ID,
-      BOB_SELLS_10_TDFYS,
-      BOB_BUYS_400_TEMPS,
+      INITIAL_20_TDFYS,
+      INITIAL_100_TEMPS,
       EXTRINSIC_HASH_0,
       SLIPPAGE_2_PERCENTS,
+    );
+
+    assert_eq!(
+      Adapter::balance_on_hold(TEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID),
+      0
     );
 
     assert_eq!(
@@ -1323,21 +1293,18 @@ pub fn test_slippage() {
         .unwrap_or_default()
     );
 
-    let context = Context::default().set_market_makers(vec![BOB_ACCOUNT_ID]);
-    const MM_BOB_SELLS_500_TEMPS: Balance = 500 * ONE_TEMP;
-    const MM_BOB_BUYS_10_TDFYS: Balance = 10 * ONE_TDFY;
     let trade_request_mm_id = context.create_temp_to_tdfy_limit_swap_request(
-      BOB_ACCOUNT_ID,
+      CHARLIE_ACCOUNT_ID,
       // ratio is a bit different (mm is willing to pay a bit more for the same amount)
-      MM_BOB_SELLS_500_TEMPS,
-      MM_BOB_BUYS_10_TDFYS,
+      INITIAL_100_TEMPS,
+      INITIAL_20_TDFYS,
       EXTRINSIC_HASH_0,
       SLIPPAGE_0_PERCENT,
     );
 
     assert_eq!(
       trade_request_mm_id,
-      Hash::from_str("0xe0424aac19ef997f1b76ac20d400aecc2ee0258d9eacb7013c3fcfa2e55bdc67")
+      Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
         .unwrap_or_default()
     );
 
@@ -1347,28 +1314,45 @@ pub fn test_slippage() {
         trade_request_id,
         vec![SwapConfirmation {
           request_id: trade_request_mm_id,
-          amount_to_receive: BOB_SELLS_10_TDFYS.saturating_add(ONE_TDFY),
-          amount_to_send: BOB_BUYS_400_TEMPS,
+          amount_to_receive: INITIAL_20_TDFYS.saturating_div(2),
+          amount_to_send: INITIAL_100_TEMPS
+            .saturating_div(2)
+            .saturating_sub(ONE_TEMP * 2),
         },],
       ),
       Error::<Test>::OfferIsLessThanSwapLowerBound { index: 0 }
     );
 
+    assert_noop!(
+      Oracle::confirm_swap(
+        context.alice.clone(),
+        trade_request_id,
+        vec![SwapConfirmation {
+          request_id: trade_request_mm_id,
+          amount_to_receive: INITIAL_20_TDFYS.saturating_div(2),
+          amount_to_send: INITIAL_100_TEMPS
+            .saturating_div(2)
+            .saturating_add(ONE_TEMP * 2),
+        },],
+      ),
+      Error::<Test>::OfferIsGreaterThanSwapUpperBound { index: 0 }
+    );
+
     // partial filling
     assert_ok!(Oracle::confirm_swap(
-      context.alice.clone(),
+      context.alice,
       trade_request_id,
       vec![SwapConfirmation {
         request_id: trade_request_mm_id,
-        amount_to_receive: BOB_SELLS_10_TDFYS,
-        amount_to_send: BOB_BUYS_400_TEMPS.saturating_sub(SLIPPAGE_2_PERCENTS * BOB_BUYS_400_TEMPS),
+        amount_to_receive: INITIAL_20_TDFYS.saturating_div(2),
+        amount_to_send: INITIAL_100_TEMPS.saturating_div(2).saturating_add(ONE_TEMP),
       },],
     ));
 
     // market order got deleted
     assert!(Oracle::swaps(trade_request_id).is_none());
     // limit order isnt deleted as its not fully filled
-    assert!(Oracle::swaps(trade_request_mm_id).is_some());
+    swap_exists_with_status(trade_request_mm_id, SwapStatus::PartiallyFilled);
   });
 }
 
@@ -1382,7 +1366,7 @@ pub fn test_imalive() {
       .create_zemp_asset_and_metadata();
 
     assert_ok!(Oracle::update_assets_value(
-      context.alice.clone(),
+      context.alice,
       vec![
         // 10 Tdfy / USDT
         (4, 10_000_000_000_000_u128),
@@ -1411,11 +1395,11 @@ pub fn test_imalive() {
 mod confirm_swap {
   use super::*;
 
-  const BOB_INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
+  const INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
   const BOB_SELLS_10_TDFYS: Balance = 10 * ONE_TDFY;
   const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
 
-  const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+  const INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
   const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
   const CHARLIE_BUYS_200_TDFYS: Balance = 200 * ONE_TDFY;
 
@@ -1431,18 +1415,6 @@ mod confirm_swap {
       BOB_BUYS_200_TEMPS,
       EXTRINSIC_HASH_0,
       SLIPPAGE_2_PERCENTS,
-    )
-  }
-
-  fn create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_5_percents_slippage(
-    context: &Context,
-  ) -> Hash {
-    context.create_tdfy_to_temp_limit_swap_request(
-      BOB_ACCOUNT_ID,
-      BOB_SELLS_10_TDFYS,
-      BOB_BUYS_200_TEMPS,
-      EXTRINSIC_HASH_0,
-      SLIPPAGE_5_PERCENTS,
     )
   }
 
@@ -1482,16 +1454,370 @@ mod confirm_swap {
     )
   }
 
-  fn create_charlie_market_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
-    context: &Context,
-  ) -> Hash {
-    context.create_temp_to_tdfy_market_swap_request(
-      CHARLIE_ACCOUNT_ID,
-      CHARLIE_SELLS_4000_TEMPS,
-      CHARLIE_BUYS_200_TDFYS,
-      EXTRINSIC_HASH_1,
-      SLIPPAGE_4_PERCENTS,
-    )
+  mod succeed_when {
+    use super::*;
+
+    #[test]
+    fn offer_is_less_than_market_maker_swap_lower_bound() {
+      // `Error::<T>::OfferIsLessThanMarketMakerSwapLowerBound` shouldnt be triggered
+      // in this case as the limit order could have a lower boundary
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let fees_account_initial_tdfy_balance =
+          Adapter::balance(CurrencyId::Tdfy, &Fees::account_id());
+
+        let trade_request_id = context.create_tdfy_to_temp_market_swap_request(
+          BOB_ACCOUNT_ID,
+          BOB_SELLS_10_TDFYS,
+          BOB_BUYS_200_TEMPS,
+          EXTRINSIC_HASH_0,
+          SLIPPAGE_5_PERCENTS,
+        );
+
+        let trade_request_mm_id = context.create_temp_to_tdfy_limit_swap_request(
+          CHARLIE_ACCOUNT_ID,
+          CHARLIE_SELLS_4000_TEMPS,
+          CHARLIE_BUYS_200_TDFYS,
+          EXTRINSIC_HASH_1,
+          SLIPPAGE_4_PERCENTS,
+        );
+        let charlie_initial_temp_reserved_balance =
+          get_account_reserved(CHARLIE_ACCOUNT_ID, TEMP_CURRENCY_ID);
+
+        let tdfys_to_confirm_swap = BOB_SELLS_10_TDFYS.saturating_div(2);
+        let temps_to_confirm_swap = BOB_BUYS_200_TEMPS
+          .saturating_div(2)
+          .saturating_add(SLIPPAGE_4_PERCENTS * BOB_BUYS_200_TEMPS.saturating_div(2))
+          .saturating_add(1_000_000);
+        let trader_swap_fee = Fees::calculate_swap_fees(
+          CurrencyId::Tdfy,
+          tdfys_to_confirm_swap,
+          SwapType::Market,
+          false,
+        )
+        .fee;
+        let market_maker_swap_fee = Fees::calculate_swap_fees(
+          TEMP_CURRENCY_ID,
+          temps_to_confirm_swap,
+          SwapType::Limit,
+          true,
+        )
+        .fee;
+
+        assert_ok!(Oracle::confirm_swap(
+          context.alice,
+          trade_request_id,
+          vec![SwapConfirmation {
+            request_id: trade_request_mm_id,
+            amount_to_receive: tdfys_to_confirm_swap,
+            amount_to_send: temps_to_confirm_swap,
+          }],
+        ));
+
+        // Events are emitted
+        System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+          request_id: trade_request_id,
+          status: SwapStatus::PartiallyFilled,
+          account_id: BOB_ACCOUNT_ID,
+          currency_from: CurrencyId::Tdfy,
+          currency_amount_from: tdfys_to_confirm_swap,
+          currency_to: TEMP_CURRENCY_ID,
+          currency_amount_to: temps_to_confirm_swap,
+          initial_extrinsic_hash: EXTRINSIC_HASH_0,
+        }));
+
+        System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+          request_id: trade_request_mm_id,
+          status: SwapStatus::PartiallyFilled,
+          account_id: CHARLIE_ACCOUNT_ID,
+          currency_from: TEMP_CURRENCY_ID,
+          currency_amount_from: temps_to_confirm_swap,
+          currency_to: CurrencyId::Tdfy,
+          currency_amount_to: tdfys_to_confirm_swap,
+          initial_extrinsic_hash: EXTRINSIC_HASH_1,
+        }));
+
+        assert_eq!(
+          Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
+          INITIAL_20_TDFYS - tdfys_to_confirm_swap - trader_swap_fee
+        );
+        assert_eq!(
+          Adapter::balance(TEMP_CURRENCY_ID, &BOB_ACCOUNT_ID),
+          temps_to_confirm_swap
+        );
+
+        assert_eq!(
+          Adapter::balance(CurrencyId::Tdfy, &CHARLIE_ACCOUNT_ID),
+          INITIAL_20_TDFYS + tdfys_to_confirm_swap
+        );
+        assert_eq!(
+          get_account_reserved(CHARLIE_ACCOUNT_ID, TEMP_CURRENCY_ID),
+          charlie_initial_temp_reserved_balance - temps_to_confirm_swap - market_maker_swap_fee
+        );
+
+        assert_eq!(
+          Adapter::balance(CurrencyId::Tdfy, &Fees::account_id()),
+          fees_account_initial_tdfy_balance + trader_swap_fee // Fees account has 1 TDFY, which is an existential deposit initially
+        );
+        assert_eq!(
+          Adapter::balance(TEMP_CURRENCY_ID, &Fees::account_id()),
+          market_maker_swap_fee
+        );
+
+        // Trader market swap is removed from Swaps
+        assert!(Oracle::swaps(trade_request_id).is_none());
+
+        // Trader market swap is removed from AccountSwaps
+        account_swap_is_deleted(BOB_ACCOUNT_ID, trade_request_id);
+
+        // Charlie's limit swap in both Swaps and AccountSwaps and kept and their status are updated from Pending to PartiallyFilled
+        swap_exists_with_status(trade_request_mm_id, SwapStatus::PartiallyFilled);
+        account_swap_exists_with_status(
+          CHARLIE_ACCOUNT_ID,
+          trade_request_mm_id,
+          SwapStatus::PartiallyFilled,
+        );
+
+        // Trader's reserved funds is fully released as its swap type is market swap
+        assert_eq!(get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy), 0);
+
+        // Market Maker's reserved funds is reduced by confirmed swap sold amount and fee
+        assert_eq!(
+          get_account_reserved(CHARLIE_ACCOUNT_ID, TEMP_CURRENCY_ID),
+          charlie_initial_temp_reserved_balance - temps_to_confirm_swap - market_maker_swap_fee
+        );
+      });
+    }
+
+    #[test]
+    fn offer_full_filled_market_makers() {
+      new_test_ext().execute_with(|| {
+        Context::default()
+          .set_oracle_status(true)
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .mint_tdfy(DAVE_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS)
+          .mint_temp(DAVE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let market_maker_sets = vec![
+          // vec![BOB_ACCOUNT_ID, CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID],
+          vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID],
+        ];
+
+        for market_makers in market_maker_sets.iter() {
+          let context: Context = Context::default().set_market_makers((*market_makers).clone());
+
+          let bob_initial_tdfy_balance = Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID);
+          let charlie_initial_tdfy_balance =
+            Adapter::balance(CurrencyId::Tdfy, &CHARLIE_ACCOUNT_ID);
+          let dave_initial_tdfy_balance = Adapter::balance(CurrencyId::Tdfy, &DAVE_ACCOUNT_ID);
+          let fees_account_initial_tdfy_balance =
+            Adapter::balance(CurrencyId::Tdfy, &Fees::account_id());
+
+          let bob_initial_temp_balance = Adapter::balance(TEMP_CURRENCY_ID, &BOB_ACCOUNT_ID);
+          let charlie_initial_temp_balance =
+            Adapter::balance(TEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID);
+          let dave_initial_temp_balance = Adapter::balance(TEMP_CURRENCY_ID, &DAVE_ACCOUNT_ID);
+          let fees_account_initial_temp_balance =
+            Adapter::balance(TEMP_CURRENCY_ID, &Fees::account_id());
+
+          // Create a trader swap
+          let trade_request_id = context.create_tdfy_to_temp_market_swap_request(
+            BOB_ACCOUNT_ID,
+            BOB_SELLS_10_TDFYS,
+            BOB_BUYS_200_TEMPS,
+            EXTRINSIC_HASH_0,
+            SLIPPAGE_5_PERCENTS,
+          );
+
+          // Create 2 market maker swaps
+          let trade_request_mm_id_1 = context.create_temp_to_tdfy_limit_swap_request(
+            CHARLIE_ACCOUNT_ID,
+            CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+            EXTRINSIC_HASH_1,
+            SLIPPAGE_4_PERCENTS,
+          );
+          let charlie_initial_temp_reserved_balance =
+            get_account_reserved(CHARLIE_ACCOUNT_ID, TEMP_CURRENCY_ID);
+
+          let trade_request_mm_id_2 = context.create_temp_to_tdfy_limit_swap_request(
+            DAVE_ACCOUNT_ID,
+            DAVE_PARTIAL_FILLING_SELLS_60_TEMPS,
+            DAVE_PARTIAL_FILLING_BUYS_3_TDFYS,
+            EXTRINSIC_HASH_2,
+            SLIPPAGE_2_PERCENTS,
+          );
+          let dave_initial_temp_reserved_balance =
+            get_account_reserved(DAVE_ACCOUNT_ID, TEMP_CURRENCY_ID);
+
+          // Call confirm_swaps with 2 valid market maker swap confirmations
+          assert_ok!(Oracle::confirm_swap(
+            RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
+            trade_request_id,
+            vec![
+              SwapConfirmation {
+                request_id: trade_request_mm_id_1,
+                amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+                amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+              },
+              SwapConfirmation {
+                request_id: trade_request_mm_id_2,
+                amount_to_receive: DAVE_PARTIAL_FILLING_BUYS_3_TDFYS,
+                amount_to_send: DAVE_PARTIAL_FILLING_SELLS_60_TEMPS,
+              },
+            ],
+          ));
+
+          let total_swapped_tdfys =
+            CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS + DAVE_PARTIAL_FILLING_BUYS_3_TDFYS;
+          let trader_swap_fees = Fees::calculate_swap_fees(
+            CurrencyId::Tdfy,
+            total_swapped_tdfys,
+            SwapType::Market,
+            false,
+          )
+          .fee;
+          let charlie_swap_fee = Fees::calculate_swap_fees(
+            TEMP_CURRENCY_ID,
+            CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            SwapType::Limit,
+            true,
+          )
+          .fee;
+          let dave_swap_fee = Fees::calculate_swap_fees(
+            TEMP_CURRENCY_ID,
+            DAVE_PARTIAL_FILLING_SELLS_60_TEMPS,
+            SwapType::Limit,
+            true,
+          )
+          .fee;
+
+          // Events are emitted
+          System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+            request_id: trade_request_id,
+            status: SwapStatus::PartiallyFilled,
+            account_id: BOB_ACCOUNT_ID,
+            currency_from: CurrencyId::Tdfy,
+            currency_amount_from: total_swapped_tdfys,
+            currency_to: TEMP_CURRENCY_ID,
+            currency_amount_to: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS
+              + DAVE_PARTIAL_FILLING_SELLS_60_TEMPS,
+            initial_extrinsic_hash: EXTRINSIC_HASH_0,
+          }));
+
+          System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+            request_id: trade_request_mm_id_1,
+            status: SwapStatus::Completed,
+            account_id: CHARLIE_ACCOUNT_ID,
+            currency_from: TEMP_CURRENCY_ID,
+            currency_amount_from: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            currency_to: CurrencyId::Tdfy,
+            currency_amount_to: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+            initial_extrinsic_hash: EXTRINSIC_HASH_1,
+          }));
+
+          System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+            request_id: trade_request_mm_id_2,
+            status: SwapStatus::Completed,
+            account_id: DAVE_ACCOUNT_ID,
+            currency_from: TEMP_CURRENCY_ID,
+            currency_amount_from: DAVE_PARTIAL_FILLING_SELLS_60_TEMPS,
+            currency_to: CurrencyId::Tdfy,
+            currency_amount_to: DAVE_PARTIAL_FILLING_BUYS_3_TDFYS,
+            initial_extrinsic_hash: EXTRINSIC_HASH_2,
+          }));
+
+          assert_eq!(
+            Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
+            bob_initial_tdfy_balance - total_swapped_tdfys - trader_swap_fees
+          );
+          assert_eq!(
+            Adapter::balance(TEMP_CURRENCY_ID, &BOB_ACCOUNT_ID),
+            bob_initial_temp_balance
+              + CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS
+              + DAVE_PARTIAL_FILLING_SELLS_60_TEMPS
+          );
+
+          assert_eq!(
+            Adapter::balance(CurrencyId::Tdfy, &CHARLIE_ACCOUNT_ID),
+            charlie_initial_tdfy_balance + CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS
+          );
+          assert_eq!(
+            Adapter::balance(TEMP_CURRENCY_ID, &CHARLIE_ACCOUNT_ID),
+            charlie_initial_temp_balance
+              - CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS
+              - charlie_swap_fee
+          );
+
+          assert_eq!(
+            Adapter::balance(CurrencyId::Tdfy, &DAVE_ACCOUNT_ID),
+            dave_initial_tdfy_balance + DAVE_PARTIAL_FILLING_BUYS_3_TDFYS
+          );
+          assert_eq!(
+            Adapter::balance(TEMP_CURRENCY_ID, &DAVE_ACCOUNT_ID),
+            dave_initial_temp_balance - DAVE_PARTIAL_FILLING_SELLS_60_TEMPS - dave_swap_fee
+          );
+
+          assert_eq!(
+            Adapter::balance(CurrencyId::Tdfy, &Fees::account_id()),
+            fees_account_initial_tdfy_balance + trader_swap_fees // Fees account has 1 TDFY, which is an existential deposit initially
+          );
+          assert_eq!(
+            Adapter::balance(TEMP_CURRENCY_ID, &Fees::account_id()),
+            fees_account_initial_temp_balance + charlie_swap_fee + dave_swap_fee
+          );
+
+          // Trader market swap is removed from Swaps
+          assert!(Oracle::swaps(trade_request_id).is_none());
+
+          // Trader market swap is removed from AccountSwaps
+          account_swap_is_deleted(BOB_ACCOUNT_ID, trade_request_id);
+
+          // Charlie limit swap is removed from Swaps
+          assert!(Oracle::swaps(trade_request_mm_id_1).is_none());
+
+          // Charlie limit swap is removed from AccountSwaps
+          account_swap_is_deleted(CHARLIE_ACCOUNT_ID, trade_request_mm_id_1);
+
+          // Dave limit swap is removed from Swaps
+          assert!(Oracle::swaps(trade_request_mm_id_2).is_none());
+
+          // Dave limit swap is removed from AccountSwaps
+          account_swap_is_deleted(DAVE_ACCOUNT_ID, trade_request_mm_id_2);
+
+          // Trader's reserved funds is fully released as its swap type is market swap
+          assert_eq!(get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy), 0);
+
+          // Charlie's reserved funds is reduced by confirmed swap sold amount and fee
+          assert_eq!(
+            get_account_reserved(CHARLIE_ACCOUNT_ID, TEMP_CURRENCY_ID),
+            charlie_initial_temp_reserved_balance
+              - CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS
+              - charlie_swap_fee
+          );
+
+          // Dave's reserved funds is reduced by confirmed swap sold amount and fee
+          assert_eq!(
+            get_account_reserved(DAVE_ACCOUNT_ID, TEMP_CURRENCY_ID),
+            dave_initial_temp_reserved_balance
+              - DAVE_PARTIAL_FILLING_SELLS_60_TEMPS
+              - dave_swap_fee
+          );
+        }
+      });
+    }
   }
 
   mod fails_when {
@@ -1505,9 +1831,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1520,7 +1846,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1541,9 +1867,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1556,7 +1882,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            Origin::none(),
+            RuntimeOrigin::none(),
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1577,9 +1903,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1592,7 +1918,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.bob.clone(),
+            context.bob,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1613,9 +1939,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_mm_id =
           create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
@@ -1625,7 +1951,7 @@ mod confirm_swap {
         const INVALID_REQUEST_ID: H256 = H256::zero();
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             INVALID_REQUEST_ID,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1646,9 +1972,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1680,9 +2006,54 @@ mod confirm_swap {
                 amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
               },],
             ),
-            Error::<Test>::InvalidSwapRequestStatus
+            Error::<Test>::InvalidSwapStatus
           );
         }
+      });
+    }
+
+    #[test]
+    fn request_buy_and_sell_asset_types_should_be_different() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id = add_new_swap_and_assert_results(
+          BOB_ACCOUNT_ID,
+          CurrencyId::Tdfy, // From TDFY
+          BOB_SELLS_10_TDFYS,
+          CurrencyId::Tdfy, // To TDFY
+          BOB_BUYS_200_TEMPS,
+          CURRENT_BLOCK_NUMBER,
+          EXTRINSIC_HASH_0,
+          true,
+          SwapType::Limit,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::SwapAssetsShouldBeDifferent
+        );
       });
     }
 
@@ -1694,9 +2065,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1742,9 +2113,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1755,7 +2126,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: INVALID_REQUEST_ID,
@@ -1776,9 +2147,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_market_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1792,7 +2163,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1815,9 +2186,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1830,7 +2201,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1844,44 +2215,6 @@ mod confirm_swap {
     }
 
     #[test]
-    fn offer_is_less_than_market_maker_swap_lower_bound() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default()
-          .set_oracle_status(true)
-          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
-          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
-          .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
-
-        let trade_request_id =
-          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_5_percents_slippage(
-            &context,
-          );
-        let trade_request_mm_id =
-          create_charlie_market_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
-            &context,
-          );
-
-        assert_noop!(
-          Oracle::confirm_swap(
-            context.alice.clone(),
-            trade_request_id,
-            vec![SwapConfirmation {
-              request_id: trade_request_mm_id,
-              amount_to_receive: BOB_SELLS_10_TDFYS,
-              amount_to_send: BOB_BUYS_200_TEMPS
-                .saturating_sub(SLIPPAGE_4_PERCENTS * BOB_BUYS_200_TEMPS)
-                .saturating_sub(ONE_TEMP),
-            }],
-          ),
-          Error::<Test>::OfferIsLessThanMarketMakerSwapLowerBound { index: 0 }
-        );
-      });
-    }
-
-    #[test]
     fn offer_is_greater_than_market_maker_swap_upper_bound() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
@@ -1889,14 +2222,17 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
-        let trade_request_id =
-          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_5_percents_slippage(
-            &context,
-          );
+        let trade_request_id = context.create_tdfy_to_temp_limit_swap_request(
+          BOB_ACCOUNT_ID,
+          BOB_SELLS_10_TDFYS,
+          BOB_BUYS_200_TEMPS,
+          EXTRINSIC_HASH_0,
+          SLIPPAGE_5_PERCENTS,
+        );
         let trade_request_mm_id =
           create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
             &context,
@@ -1904,14 +2240,15 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
-              amount_to_receive: BOB_SELLS_10_TDFYS,
-              amount_to_send: BOB_BUYS_200_TEMPS
-                .saturating_add(SLIPPAGE_5_PERCENTS * BOB_BUYS_200_TEMPS),
-            },],
+              amount_to_receive: BOB_SELLS_10_TDFYS
+                .saturating_add(SLIPPAGE_5_PERCENTS * BOB_SELLS_10_TDFYS)
+                .saturating_add(ONE_TDFY),
+              amount_to_send: BOB_BUYS_200_TEMPS,
+            }],
           ),
           Error::<Test>::OfferIsGreaterThanMarketMakerSwapUpperBound { index: 0 }
         );
@@ -1919,16 +2256,16 @@ mod confirm_swap {
     }
 
     #[test]
-    fn market_maker_does_not_have_enough_funds() {
+    fn market_maker_swap_does_not_have_enough_funds() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .set_oracle_status(true)
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1944,7 +2281,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1952,7 +2289,48 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
             },],
           ),
-          Error::<Test>::MarketMakerHasNotEnoughTokenToSell
+          Error::<Test>::RequestCannotOversell
+        );
+      });
+    }
+
+    #[test]
+    fn market_maker_overflow() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        let trade_request_mm_id = context.create_temp_to_tdfy_limit_swap_request(
+          CHARLIE_ACCOUNT_ID,
+          CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+          CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+          EXTRINSIC_HASH_1,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice,
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              // this pass the slippage but overflow the initial request
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS.saturating_add(1),
+            },],
+          ),
+          Error::<Test>::RequestCannotOversell
         );
       });
     }
@@ -1965,9 +2343,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -1980,7 +2358,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -1988,7 +2366,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS.saturating_mul(5),
             },],
           ),
-          Error::<Test>::TraderHasNotEnoughTokenToSell
+          Error::<Test>::RequestCannotOversell
         );
       });
     }
@@ -2001,9 +2379,9 @@ mod confirm_swap {
           .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
@@ -2016,7 +2394,7 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
-            context.alice.clone(),
+            context.alice,
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
@@ -2024,40 +2402,35 @@ mod confirm_swap {
               amount_to_send: BOB_BUYS_200_TEMPS,
             },],
           ),
-          Error::<Test>::TraderCannotOversell
+          Error::<Test>::RequestCannotOversell
         );
       });
     }
 
     #[test]
-    fn market_maker_swaps_buy_token_is_different_from_swap_sell_token() {
+    fn market_maker_buy_token_is_different_from_swap_sell_token() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .set_oracle_status(true)
-          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
           .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .create_temp_asset_and_metadata()
-          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS)
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS)
           .create_temp2_asset_metadata()
-          .mint_temp2(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+          .mint_temp2(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
         let trade_request_id =
           create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
             &context,
           );
 
-        create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
-          &context,
-        );
-
-        // Add a new market maker swap with a different token TEMP2
-        let trade_request_mm1_id = add_new_swap_and_assert_results(
+        let trade_request_mm_id = add_new_swap_and_assert_results(
           CHARLIE_ACCOUNT_ID,
-          TEMP2_CURRENCY_ID,
+          TEMP_CURRENCY_ID, // From TEMP
           CHARLIE_SELLS_4000_TEMPS,
-          CurrencyId::Tdfy,
+          TEMP2_CURRENCY_ID, // To TEMP2
           CHARLIE_BUYS_200_TDFYS,
           CURRENT_BLOCK_NUMBER,
           EXTRINSIC_HASH_1,
@@ -2068,15 +2441,349 @@ mod confirm_swap {
 
         assert_noop!(
           Oracle::confirm_swap(
+            context.alice,
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::BuySellAssetMismatch
+        );
+      });
+    }
+
+    #[test]
+    fn market_maker_sell_token_is_different_from_swap_buy_token() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS)
+          .create_temp2_asset_metadata()
+          .mint_temp2(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        let trade_request_mm_id = add_new_swap_and_assert_results(
+          CHARLIE_ACCOUNT_ID,
+          TEMP2_CURRENCY_ID, // From TEMP2
+          CHARLIE_SELLS_4000_TEMPS,
+          TEMP_CURRENCY_ID, // To TEMP
+          CHARLIE_BUYS_200_TDFYS,
+          CURRENT_BLOCK_NUMBER,
+          EXTRINSIC_HASH_1,
+          true,
+          SwapType::Limit,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        assert_noop!(
+          Oracle::confirm_swap(
             context.alice.clone(),
             trade_request_id,
             vec![SwapConfirmation {
-              request_id: trade_request_mm1_id,
-              amount_to_receive: BOB_SELLS_10_TDFYS,
-              amount_to_send: BOB_BUYS_200_TEMPS,
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
             },],
           ),
-          Error::<Test>::MarketMakerBuyTokenNotMatchSwapSellToken
+          Error::<Test>::BuySellAssetMismatch
+        );
+      });
+    }
+
+    #[test]
+    fn non_market_maker_added_market_maker_swap() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS)
+          .create_temp2_asset_metadata()
+          .mint_temp2(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        let trade_request_mm_id = add_new_swap_and_assert_results(
+          CHARLIE_ACCOUNT_ID,
+          TEMP_CURRENCY_ID,
+          CHARLIE_SELLS_4000_TEMPS,
+          CurrencyId::Tdfy,
+          CHARLIE_BUYS_200_TDFYS,
+          CURRENT_BLOCK_NUMBER,
+          EXTRINSIC_HASH_1,
+          true,
+          SwapType::Limit,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::NonMarketMakerSwap
+        );
+      });
+    }
+
+    #[test]
+    fn market_maker_swap_type_is_not_limit() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS)
+          .create_temp2_asset_metadata()
+          .mint_temp2(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        let trade_request_mm_id = add_new_swap_and_assert_results(
+          CHARLIE_ACCOUNT_ID,
+          TEMP_CURRENCY_ID,
+          CHARLIE_SELLS_4000_TEMPS,
+          CurrencyId::Tdfy,
+          CHARLIE_BUYS_200_TDFYS,
+          CURRENT_BLOCK_NUMBER,
+          EXTRINSIC_HASH_1,
+          true,
+          SwapType::Market,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::MarketMakerSwapTypeIsNotLimit
+        );
+      });
+    }
+
+    #[test]
+    fn trader_not_hold_enough_fund_to_swap() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
+            &context,
+          );
+
+        // Release selling amount from Bob's on hold balance
+        Adapter::release(CurrencyId::Tdfy, &BOB_ACCOUNT_ID, 10 * ONE_TDFY, false)
+          .expect("Should be able to release swap amount from Bob's reserved balance");
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice,
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::SellerDoesNotHoldEnoughFundToSellAndPaySwapFees // This error is thrown so TransferTraderSwapAssetsToMarketMakerFailed should never be triggered
+        );
+      });
+    }
+
+    #[test]
+    fn trader_not_hold_enough_fund_to_pay_swap_fee() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id = context.create_temp_to_tdfy_limit_swap_request(
+          CHARLIE_ACCOUNT_ID,
+          200 * ONE_TEMP,
+          10 * ONE_TDFY,
+          EXTRINSIC_HASH_1,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        let amount_and_fee =
+          Fees::calculate_swap_fees(CurrencyId::Tdfy, 10 * ONE_TDFY, SwapType::Limit, false);
+
+        // Release fee from Bob's on hold balance
+        Adapter::transfer_held(
+          CurrencyId::Tdfy,
+          &BOB_ACCOUNT_ID,
+          &ALICE_ACCOUNT_ID,
+          amount_and_fee.fee,
+          false,
+          false,
+        )
+        .expect("Should be able to withdraw swap fee from Bob's reserved balance");
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice,
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: 10 * ONE_TDFY,
+              amount_to_send: 200 * ONE_TEMP,
+            },],
+          ),
+          Error::<Test>::SellerDoesNotHoldEnoughFundToSellAndPaySwapFees // This error is thrown so TransferTraderSwapFeeFailed should never be triggered
+        );
+      });
+    }
+
+    #[test]
+    fn market_maker_not_hold_enough_fund_to_swap() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
+            &context,
+          );
+
+        // Transfer Charlie's on hold selling tokens to Alice
+        Adapter::transfer_held(
+          TEMP_CURRENCY_ID,
+          &CHARLIE_ACCOUNT_ID,
+          &ALICE_ACCOUNT_ID,
+          4000 * ONE_TEMP,
+          false,
+          false,
+        )
+        .expect("Should be able to release swap fee from Charlie's reserved balance");
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice,
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::SellerDoesNotHoldEnoughFundToSellAndPaySwapFees // This error is thrown so TransferMarketMakerSwapAssetsToTraderFailed should never be triggered
+        );
+      });
+    }
+
+    #[test]
+    fn market_maker_not_hold_enough_fund_to_pay_swap_fee() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id = context.create_temp_to_tdfy_limit_swap_request(
+          CHARLIE_ACCOUNT_ID,
+          200 * ONE_TEMP,
+          10 * ONE_TDFY,
+          EXTRINSIC_HASH_1,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        let amount_and_fee =
+          Fees::calculate_swap_fees(TEMP_CURRENCY_ID, 200 * ONE_TEMP, SwapType::Market, true);
+
+        // Release fee from Charlie's on hold balance
+        Adapter::transfer_held(
+          TEMP_CURRENCY_ID,
+          &CHARLIE_ACCOUNT_ID,
+          &ALICE_ACCOUNT_ID,
+          amount_and_fee.fee,
+          false,
+          false,
+        )
+        .expect("Should be able to withdraw swap fee from Charlie's reserved balance");
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice,
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: 10 * ONE_TDFY,
+              amount_to_send: 200 * ONE_TEMP,
+            },],
+          ),
+          Error::<Test>::SellerDoesNotHoldEnoughFundToSellAndPaySwapFees // This error is thrown so TransferMarketMakerSwapFeeFailed should never be triggered
         );
       });
     }

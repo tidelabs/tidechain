@@ -1,6 +1,6 @@
 # Contributing
 
-The `Tiedechain` project is an **OPENISH Open Source Project**
+The `Tidechain` project is an **OPENISH Open Source Project**
 
 ## What?
 
@@ -43,7 +43,7 @@ _Process:_
 - PRs that must be backported to a stable branch must be tagged with https://github.com/tidelabs/tidechain/labels/E1-runtimemigration[`E0-patchthis`].
 - PRs that introduce runtime migrations must be tagged with https://github.com/tidelabs/tidechain/labels/E1-runtimemigration[`E1-runtimemigration`]. See the https://github.com/tidelabs/tidechain/blob/master/utils/frame/try-runtime/cli/src/lib.rs#L18[Migration Best Practices here] for more info about how to test runtime migrations.
 - PRs that introduce irreversible database migrations must be tagged with https://github.com/tidelabs/tidechain/labels/E2-databasemigration[`E2-databasemigration`].
-- PRs that add host functions must be tagged with with https://github.com/tidelabs/tidechain/labels/E4-newhostfunctions[`E4-newhostfunctions`].
+- PRs that add host functions must be tagged with https://github.com/tidelabs/tidechain/labels/E4-newhostfunctions[`E4-newhostfunctions`].
 - PRs that break the external API must be tagged with https://github.com/tidelabs/tidechain/labels/E5-breaksapi[`E5-breaksapi`].
 - PRs that materially change the FRAME/runtime semantics must be tagged with https://github.com/tidelabs/tidechain/labels/E6-transactionversion[`E6-transactionversion`].
 - PRs that "break everything" must be tagged with https://github.com/tidelabs/tidechain/labels/E7-breakseverything[`E7-breakseverything`].

@@ -59,7 +59,7 @@ default:
       - api_failure
   interruptible: true
   tags:
-    - dv-Docker
+    - howick-runner
 
 .compiler-info: &compiler-info
   before_script:
@@ -93,7 +93,7 @@ cargo-fmt:
   script:
     - cargo +nightly --version
     - cargo +nightly fmt --all -- --check
-  allow_failure: true
+  allow_failure: false
 
 test-deterministic-wasm:
   stage: test
@@ -122,7 +122,8 @@ test-build-linux-stable:
     - if: $CI_COMMIT_BRANCH =~ /^chore/ # Chore
     - if: $CI_COMMIT_BRANCH =~ /^fix/ # Fix
   script:
-    - cargo install cargo-deb
+    # cargo-deb@1.41 require a non-stable flag
+    - cargo install cargo-deb --version 1.40.5
     - ./scripts/gitlab/test_linux_stable.sh
     # we're using the bin built here, instead of having a parallel `build-linux-release`
     # disputes feature is needed for zombie-net parachains malus test
@@ -156,6 +157,16 @@ check-runtime-benchmarks:
   script:
     # Check that the node will compile with `runtime-benchmarks` feature flag.
     - ./scripts/gitlab/check_runtime_benchmarks.sh
+    - sccache -s
+
+check-try-runtime:
+  stage: test
+  <<: *rules-test
+  <<: *docker-env
+  <<: *compiler-info
+  script:
+    # Check that the node will compile with `try-runtime` feature flag.
+    - ./scripts/gitlab/check_try_runtime.sh
     - sccache -s
 
 check-no-default-features:
@@ -364,7 +375,7 @@ publish-rustdoc:
       ( echo "no docker credentials provided"; exit 1 )
     - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PASS\"}}}" > /kaniko/.docker/config.json
     - cd ./artifacts
-    # The job will success only on the protected branch
+    # The job will succeed only on the protected branch
     - /kaniko/executor
       --context .
       --dockerfile ${DOCKERFILE}

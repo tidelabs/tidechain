@@ -46,11 +46,11 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_grandpa::WeightInfo for WeightInfo<T> {
 	fn report_equivocation(_x: u32, ) -> Weight {
-		(189_800_000 as Weight)
+		Weight::from_ref_time(189_800_000)
 	}
 	// Storage: Grandpa Stalled (r:0 w:1)
 	fn note_stalled() -> Weight {
-		(4_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(4_000_000)
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }

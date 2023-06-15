@@ -16,7 +16,7 @@
 
 use crate::{
   types::{AccountId, BlockHashCount, Index, Signature, SignedPayload, UncheckedExtrinsic},
-  Call, Indices, Runtime, System,
+  Indices, Runtime, RuntimeCall, System,
 };
 use codec::Encode;
 use sp_runtime::{
@@ -26,15 +26,15 @@ use sp_runtime::{
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
-  Call: From<LocalCall>,
+  RuntimeCall: From<LocalCall>,
 {
   fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-    call: Call,
+    call: RuntimeCall,
     public: <Signature as traits::Verify>::Signer,
     account: AccountId,
     nonce: Index,
   ) -> Option<(
-    Call,
+    RuntimeCall,
     <UncheckedExtrinsic as traits::Extrinsic>::SignaturePayload,
   )> {
     let tip = 0;
@@ -76,8 +76,8 @@ impl frame_system::offchain::SigningTypes for Runtime {
 
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
 where
-  Call: From<C>,
+  RuntimeCall: From<C>,
 {
   type Extrinsic = UncheckedExtrinsic;
-  type OverarchingCall = Call;
+  type OverarchingCall = RuntimeCall;
 }

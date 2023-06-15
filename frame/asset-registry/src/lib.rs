@@ -36,7 +36,10 @@ pub mod pallet {
   use frame_support::{
     inherent::Vec,
     pallet_prelude::*,
-    traits::fungibles::{Inspect, InspectHold, Mutate, Transfer},
+    traits::{
+      fungibles::{Inspect, InspectHold, Mutate, Transfer},
+      OriginTrait,
+    },
     PalletId,
   };
   use frame_system::{pallet_prelude::*, RawOrigin};
@@ -47,13 +50,25 @@ pub mod pallet {
     CurrencyMetadata,
   };
 
+  type CurrenciesMetadata = (CurrencyId, CurrencyMetadata<Vec<u8>>);
+  type AssetGenesis<T> = (
+    CurrencyId,
+    Vec<u8>,
+    Vec<u8>,
+    u8,
+    Vec<(
+      <T as frame_system::Config>::AccountId,
+      <T as pallet_assets::Config>::Balance,
+    )>,
+  );
+
   /// Asset registry configuration
   #[pallet::config]
   pub trait Config:
     frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
   {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Pallet ID
     #[pallet::constant]
@@ -83,13 +98,7 @@ pub mod pallet {
   pub struct GenesisConfig<T: Config> {
     /// Assets to create on initialization
     /// \[currency_id, name, symbol, decimals\]
-    pub assets: Vec<(
-      CurrencyId,
-      Vec<u8>,
-      Vec<u8>,
-      u8,
-      Vec<(T::AccountId, T::Balance)>,
-    )>,
+    pub assets: Vec<AssetGenesis<T>>,
     /// Assets owner
     /// Only this account can modify storage on this pallet.
     pub account: T::AccountId,
@@ -118,11 +127,13 @@ pub mod pallet {
       for (currency_id, name, symbol, decimals, pre_filled_account) in self.assets.clone() {
         // If it's a wrapped token, register it with pallet_assets
         if let CurrencyId::Wrapped(asset_id) = currency_id {
-          let _ = Pallet::<T>::register_asset(asset_id, name, symbol, decimals, 1);
+          Pallet::<T>::register_asset(asset_id, name, symbol, decimals, 1)
+            .expect("Unable to register asset");
         }
 
         for (account_id, mint_amount) in pre_filled_account {
-          let _ = T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount);
+          T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount)
+            .expect("Unable to mint asset");
         }
       }
     }
@@ -165,6 +176,7 @@ pub mod pallet {
     /// Emits `Registered` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(0)]
     #[pallet::weight(<T as Config>::WeightInfo::set_status())]
     pub fn register(
       origin: OriginFor<T>,
@@ -205,6 +217,7 @@ pub mod pallet {
     /// Emits `StatusChanged` event when successful.
     ///
     /// Weight: `O(1)`
+    #[pallet::call_index(1)]
     #[pallet::weight(<T as Config>::WeightInfo::set_status())]
     pub fn set_status(
       origin: OriginFor<T>,
@@ -231,14 +244,14 @@ pub mod pallet {
             // unfreeze asset
             pallet_assets::Pallet::<T>::thaw_asset(
               RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account_truncating()).into(),
-              asset_id,
+              asset_id.into(),
             )?;
           }
           false => {
             // freeze asset
             pallet_assets::Pallet::<T>::freeze_asset(
               RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account_truncating()).into(),
-              asset_id,
+              asset_id.into(),
             )?;
           }
         };
@@ -261,8 +274,8 @@ pub mod pallet {
     ) -> Result<(), DispatchError> {
       // 1. Create asset
       pallet_assets::Pallet::<T>::force_create(
-        RawOrigin::Root.into(),
-        asset_id,
+        T::RuntimeOrigin::root(),
+        asset_id.into(),
         // make the pallet account id the owner, so only this pallet can handle the funds.
         T::Lookup::unlookup(T::AssetRegistryPalletId::get().into_account_truncating()),
         true,
@@ -272,7 +285,7 @@ pub mod pallet {
       // 2. Set metadata
       pallet_assets::Pallet::<T>::force_set_metadata(
         RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account_truncating()).into(),
-        asset_id,
+        asset_id.into(),
         name,
         symbol,
         decimals,
@@ -312,7 +325,7 @@ pub mod pallet {
       })
     }
 
-    pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>, DispatchError> {
+    pub fn get_assets() -> Result<Vec<CurrenciesMetadata>, DispatchError> {
       let mut final_assets = vec![(
         CurrencyId::Tdfy,
         CurrencyMetadata {
@@ -375,7 +388,7 @@ pub mod pallet {
         // we can't disable TDFY
         CurrencyId::Tdfy => true,
         CurrencyId::Wrapped(asset_id) => pallet_assets::Pallet::<T>::asset_details(asset_id)
-          .map(|detail| !detail.is_frozen)
+          .map(|detail| detail.status == pallet_assets::AssetStatus::Live)
           .unwrap_or(false),
       }
     }

@@ -32,7 +32,7 @@ pub(crate) const LOG_TARGET: &str = "tidefi::sunrise";
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
-			target: crate::LOG_TARGET,
+			target: $crate::LOG_TARGET,
 			concat!("[{:?}] 💸 ", $patter), T::Security::get_current_block_count() $(, $values)*
 		)
 	};
@@ -72,7 +72,7 @@ pub mod pallet {
   /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config: frame_system::Config {
     /// Events
-    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
     /// Pallet ID
     #[pallet::constant]
@@ -377,7 +377,7 @@ pub mod pallet {
       currency_id: CurrencyId,
     ) -> Result<Option<Balance>, DispatchError> {
       if let Some(sunrise_pool_available) =
-        Self::try_select_first_eligible_sunrise_pool(&fee, currency_id)?
+        Self::try_select_first_eligible_sunrise_pool(fee, currency_id)?
       {
         let real_fees_in_tdfy_with_rebates =
           Self::calculate_rebates_on_fees_paid(sunrise_pool_available.rebates, &fee)?;

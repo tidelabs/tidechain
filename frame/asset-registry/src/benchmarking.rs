@@ -24,7 +24,7 @@ use tidefi_primitives::CurrencyId;
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;
 
-fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+fn _assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
   frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
