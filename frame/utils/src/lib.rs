@@ -11,7 +11,7 @@ macro_rules! construct_mock_runtime {
       use codec::{Decode, Encode, MaxEncodedLen};
       use sp_runtime::{
          testing::Header,
-         traits::{BlakeTwo256, IdentityLookup},
+         traits::{BlakeTwo256, IdentityLookup, Zero},
          DispatchError, DispatchResult, FixedPointNumber, FixedU128, Percent, Permill, RuntimeDebug,
       };
       use std::marker::PhantomData;
@@ -284,6 +284,9 @@ macro_rules! construct_mock_runtime {
             amount: Balance,
             best_effort: bool,
          ) -> Result<Balance, DispatchError> {
+            if amount.is_zero() {
+               return Ok(amount);
+            }
             match asset {
                CurrencyId::Tdfy => Balances::release(who, amount, best_effort),
                CurrencyId::Wrapped(asset_id) => Assets::release(asset_id, who, amount, best_effort),

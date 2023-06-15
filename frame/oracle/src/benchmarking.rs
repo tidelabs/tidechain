@@ -68,6 +68,8 @@ benchmarks! {
       let mm_account_id: T::AccountId = account("mm", MM_ID, SEED);
       let caller_lookup = T::Lookup::unlookup(user.clone());
 
+      MarketMakers::<T>::insert(mm_account_id.clone(), true);
+
       // mint tokens
       T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &account_id, 2_000_000_000_000).expect("Unable to mint token");
       T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN2), &mm_account_id, 2_000_000_000_000).expect("Unable to mint token");
