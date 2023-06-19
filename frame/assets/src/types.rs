@@ -45,6 +45,7 @@ pub(super) type DepositBalanceOf<T, I = ()> =
 pub(super) type AssetAccountOf<T, I> =
   AssetAccount<<T as Config<I>>::Balance, DepositBalanceOf<T, I>, <T as Config<I>>::Extra>;
 
+#[allow(clippy::redundant_closure_call)]
 /// AssetStatus holds the current state of the asset. It could either be Live and available for use,
 /// or in a Destroying state.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -113,6 +114,7 @@ fn ensure_bool_decodes_to_consumer_or_sufficient() {
   assert_eq!(true.encode(), ExistenceReason::<()>::Sufficient.encode());
 }
 
+#[allow(clippy::redundant_closure_call)]
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum ExistenceReason<Balance> {
   #[codec(index = 0)]
@@ -255,6 +257,7 @@ impl From<TransferFlags> for DebitFlags {
 }
 
 /// Possible errors when converting between external and asset balances.
+#[allow(clippy::redundant_closure_call)]
 #[derive(Eq, PartialEq, Copy, Clone, RuntimeDebug, Encode, Decode)]
 pub enum ConversionError {
   /// The external minimum balance must not be zero.
