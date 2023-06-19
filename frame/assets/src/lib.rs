@@ -555,6 +555,7 @@ pub mod pallet {
     AssetStatusChanged { asset_id: T::AssetId },
   }
 
+  #[allow(clippy::redundant_closure_call)]
   #[pallet::error]
   pub enum Error<T, I = ()> {
     /// Account balance must be greater than or equal to the transfer amount.
