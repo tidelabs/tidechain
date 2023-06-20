@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/matrixmultiply-0.3.2/src/gemm.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>gemm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../matrixmultiply/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/matrixmultiply-0.3.7/src/gemm.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>gemm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../matrixmultiply/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -542,69 +542,6 @@
 <a href="#542" id="542">542</a>
 <a href="#543" id="543">543</a>
 <a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
-<a href="#555" id="555">555</a>
-<a href="#556" id="556">556</a>
-<a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-<a href="#560" id="560">560</a>
-<a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
-<a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2016 - 2018 Ulrik Sverdrup &quot;bluss&quot;
 //
 // Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or
@@ -617,7 +554,6 @@
 </span><span class="kw">use </span>core::cell::UnsafeCell;
 <span class="kw">use </span>core::cmp::min;
 <span class="kw">use </span>core::mem::size_of;
-<span class="kw">use </span>core::ptr::copy_nonoverlapping;
 <span class="kw">use </span>core::slice;
 
 <span class="kw">use </span><span class="kw">crate</span>::aligned_alloc::Alloc;
@@ -626,7 +562,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::util::range_chunk;
 <span class="kw">use </span><span class="kw">crate</span>::util::round_up_to;
 
-<span class="kw">use </span><span class="kw">crate</span>::kernel::ConstNum;
 <span class="kw">use </span><span class="kw">crate</span>::kernel::Element;
 <span class="kw">use </span><span class="kw">crate</span>::kernel::GemmKernel;
 <span class="kw">use </span><span class="kw">crate</span>::kernel::GemmSelect;
@@ -890,7 +825,7 @@
     <span class="kw">let </span>thread_config = LoopThreadConfig::new::&lt;K&gt;(m, k, n, nthreads);
     <span class="kw">let </span>nap = thread_config.num_pack_a();
 
-    <span class="kw">let </span>(<span class="kw-2">mut </span>packing_buffer, ap_size) = make_packing_buffer::&lt;K&gt;(m, k, n, nap);
+    <span class="kw">let </span>(<span class="kw-2">mut </span>packing_buffer, ap_size, bp_size) = make_packing_buffer::&lt;K&gt;(m, k, n, nap);
     <span class="kw">let </span>app = Ptr(packing_buffer.ptr_mut());
     <span class="kw">let </span>bpp = app.add(ap_size * nap);
 
@@ -909,7 +844,8 @@
             <span class="kw">let </span>a = a.stride_offset(csa, kkc * l4);
 
             <span class="comment">// Pack B -&gt; B~
-            </span>pack::&lt;K::NRTy, <span class="kw">_</span>&gt;(kc, nc, bpp.ptr(), b.ptr(), csb, rsb);
+            </span>K::pack_nr(kc, nc, slice::from_raw_parts_mut(bpp.ptr(), bp_size),
+                       b.ptr(), csb, rsb);
 
             <span class="comment">// First time writing to C, use user&#39;s `beta`, else accumulate
             </span><span class="kw">let </span>betap = <span class="kw">if </span>l4 == <span class="number">0 </span>{ beta } <span class="kw">else </span>{ &lt;<span class="kw">_</span>&gt;::one() };
@@ -928,7 +864,8 @@
                     <span class="kw">let </span>c = c.stride_offset(rsc, kmc * l3);
 
                     <span class="comment">// Pack A -&gt; A~
-                    </span>pack::&lt;K::MRTy, <span class="kw">_</span>&gt;(kc, mc, app.ptr(), a.ptr(), rsa, csa);
+                    </span>K::pack_mr(kc, mc, slice::from_raw_parts_mut(app.ptr(), ap_size),
+                               a.ptr(), rsa, csa);
 
                     <span class="comment">// LOOP 2 and 1
                     </span>gemm_packed::&lt;K&gt;(nc, kc, mc,
@@ -949,8 +886,9 @@
 
 <span class="comment">// Pointers into buffer will be manually aligned anyway, due to
 // bugs we have seen on certain platforms (macos) that look like
-// we don&#39;t get aligned allocations out of TLS (?).
-</span><span class="attr">#[repr(align(<span class="number">32</span>))]
+// we don&#39;t get more than 16-aligned allocations out of TLS
+</span><span class="attr">#[cfg_attr(not(target_os = <span class="string">&quot;macos&quot;</span>), repr(align(<span class="number">32</span>)))]
+#[cfg_attr(target_os = <span class="string">&quot;macos&quot;</span>, repr(align(<span class="number">16</span>)))]
 </span><span class="kw">struct </span>MaskBuffer {
     buffer: [u8; MASK_BUF_SIZE],
 }
@@ -1016,8 +954,8 @@
                 // NOTE: For the rust kernels, it performs better to simply
                 // always use the masked kernel function!
                 </span><span class="kw">if </span>K::always_masked() || nr_ &lt; nr || mr_ &lt; mr {
-                    masked_kernel::&lt;<span class="kw">_</span>, K&gt;(kc, alpha, <span class="kw-2">&amp;*</span>app.ptr(), <span class="kw-2">&amp;*</span>bpp.ptr(),
-                                          beta, <span class="kw-2">&amp;mut *</span>c.ptr(), rsc, csc,
+                    masked_kernel::&lt;<span class="kw">_</span>, K&gt;(kc, alpha, app.ptr(), bpp.ptr(),
+                                          beta, c.ptr(), rsc, csc,
                                           mr_, nr_, mask_buf);
                     <span class="kw">continue</span>;
                 } <span class="kw">else </span>{
@@ -1036,8 +974,9 @@
 ///
 /// na: Number of buffers to alloc for A
 ///
-/// Return packing buffer and size of A~ (The offset to B~ is A~ size times `na`).
-</span><span class="kw">unsafe fn </span>make_packing_buffer&lt;K&gt;(m: usize, k: usize, n: usize, na: usize) -&gt; (Alloc&lt;K::Elem&gt;, usize)
+/// Return packing buffer and size of A~ (The offset to B~ is A~ size times `na`), size of B~.
+</span><span class="kw">unsafe fn </span>make_packing_buffer&lt;K&gt;(m: usize, k: usize, n: usize, na: usize)
+    -&gt; (Alloc&lt;K::Elem&gt;, usize, usize)
     <span class="kw">where </span>K: GemmKernel,
 {
     <span class="comment">// max alignment requirement is a multiple of min(MR, NR) * sizeof&lt;Elem&gt;
@@ -1058,7 +997,7 @@
              nelem, apack_size, bpack_size,
              m,k,n, na);
 
-    (Alloc::new(nelem, K::align_to()), apack_size)
+    (Alloc::new(nelem, K::align_to()), apack_size, bpack_size)
 }
 
 <span class="doccomment">/// offset the ptr forwards to align to a specific byte count
@@ -1072,72 +1011,6 @@
         }
     }
     ptr
-}
-
-<span class="doccomment">/// Pack matrix into `pack`
-///
-/// + kc: length of the micropanel
-/// + mc: number of rows/columns in the matrix to be packed
-/// + pack: packing buffer
-/// + a: matrix,
-/// + rsa: row stride
-/// + csa: column stride
-///
-/// + MR: kernel rows/columns that we round up to
-</span><span class="kw">unsafe fn </span>pack&lt;MR, T&gt;(kc: usize, mc: usize, pack: <span class="kw-2">*mut </span>T,
-                      a: <span class="kw-2">*const </span>T, rsa: isize, csa: isize)
-    <span class="kw">where </span>T: Element,
-          MR: ConstNum,
-{
-    <span class="kw">let </span>mr = MR::VALUE;
-    <span class="kw">let </span><span class="kw-2">mut </span>p = <span class="number">0</span>; <span class="comment">// offset into pack
-
-    </span><span class="kw">if </span>rsa == <span class="number">1 </span>{
-        <span class="comment">// if the matrix is contiguous in the same direction we are packing,
-        // copy a kernel row at a time.
-        </span><span class="kw">for </span>ir <span class="kw">in </span><span class="number">0</span>..mc/mr {
-            <span class="kw">let </span>row_offset = ir * mr;
-            <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..kc {
-                <span class="kw">let </span>a_row = a.stride_offset(rsa, row_offset)
-                             .stride_offset(csa, j);
-                copy_nonoverlapping(a_row, pack.add(p), mr);
-                p += mr;
-            }
-        }
-    } <span class="kw">else </span>{
-        <span class="comment">// general layout case
-        </span><span class="kw">for </span>ir <span class="kw">in </span><span class="number">0</span>..mc/mr {
-            <span class="kw">let </span>row_offset = ir * mr;
-            <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..kc {
-                <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..mr {
-                    <span class="kw">let </span>a_elt = a.stride_offset(rsa, i + row_offset)
-                                 .stride_offset(csa, j);
-                    copy_nonoverlapping(a_elt, pack.add(p), <span class="number">1</span>);
-                    p += <span class="number">1</span>;
-                }
-            }
-        }
-    }
-
-    <span class="kw">let </span>zero = &lt;<span class="kw">_</span>&gt;::zero();
-
-    <span class="comment">// Pad with zeros to multiple of kernel size (uneven mc)
-    </span><span class="kw">let </span>rest = mc % mr;
-    <span class="kw">if </span>rest &gt; <span class="number">0 </span>{
-        <span class="kw">let </span>row_offset = (mc/mr) * mr;
-        <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..kc {
-            <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..mr {
-                <span class="kw">if </span>i &lt; rest {
-                    <span class="kw">let </span>a_elt = a.stride_offset(rsa, i + row_offset)
-                                 .stride_offset(csa, j);
-                    copy_nonoverlapping(a_elt, pack.add(p), <span class="number">1</span>);
-                } <span class="kw">else </span>{
-                    <span class="kw-2">*</span>pack.add(p) = zero;
-                }
-                p += <span class="number">1</span>;
-            }
-        }
-    }
 }
 
 <span class="doccomment">/// Call the GEMM kernel with a &quot;masked&quot; output C.
@@ -1196,6 +1069,7 @@
 }
 
 <span class="comment">// Compute just C ← βC
+</span><span class="attr">#[inline(never)]
 </span><span class="kw">unsafe fn </span>c_to_beta_c&lt;T&gt;(m: usize, n: usize, beta: T,
                          c: <span class="kw-2">*mut </span>T, rsc: isize, csc: isize)
     <span class="kw">where </span>T: Element

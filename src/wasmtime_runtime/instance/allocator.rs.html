@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-6.0.0/src/instance/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/wasmtime-runtime-6.0.2/src/instance/allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../wasmtime_runtime/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -526,14 +526,6 @@
 <a href="#526" id="526">526</a>
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::imports::Imports;
 <span class="kw">use </span><span class="kw">crate</span>::instance::{Instance, InstanceHandle, RuntimeMemoryCreator};
 <span class="kw">use </span><span class="kw">crate</span>::memory::{DefaultMemoryCreator, Memory};
@@ -736,16 +728,10 @@
     </span><span class="kw">fn </span>purge_module(<span class="kw-2">&amp;</span><span class="self">self</span>, module: CompiledModuleId);
 }
 
-<span class="kw">fn </span>get_table_init_start(init: <span class="kw-2">&amp;</span>TableInitializer, instance: <span class="kw-2">&amp;</span>Instance) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+<span class="kw">fn </span>get_table_init_start(init: <span class="kw-2">&amp;</span>TableInitializer, instance: <span class="kw-2">&amp;mut </span>Instance) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
     <span class="kw">match </span>init.base {
         <span class="prelude-val">Some</span>(base) =&gt; {
-            <span class="kw">let </span>val = <span class="kw">unsafe </span>{
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(def_index) = instance.module().defined_global_index(base) {
-                    <span class="kw-2">*</span>instance.global(def_index).as_u32()
-                } <span class="kw">else </span>{
-                    <span class="kw-2">*</span>(<span class="kw-2">*</span>instance.imported_global(base).from).as_u32()
-                }
-            };
+            <span class="kw">let </span>val = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>(<span class="kw-2">*</span>instance.defined_or_imported_global_ptr(base)).as_u32() };
 
             init.offset
                 .checked_add(val)
@@ -792,10 +778,11 @@
         TableInitialization::FuncTable { segments, .. }
         | TableInitialization::Segments { segments } =&gt; {
             <span class="kw">for </span>segment <span class="kw">in </span>segments {
+                <span class="kw">let </span>start = get_table_init_start(segment, instance)<span class="question-mark">?</span>;
                 instance.table_init_segment(
                     segment.table_index,
                     <span class="kw-2">&amp;</span>segment.elements,
-                    get_table_init_start(segment, instance)<span class="question-mark">?</span>,
+                    start,
                     <span class="number">0</span>,
                     segment.elements.len() <span class="kw">as </span>u32,
                 )<span class="question-mark">?</span>;
@@ -806,22 +793,18 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>get_memory_init_start(init: <span class="kw-2">&amp;</span>MemoryInitializer, instance: <span class="kw-2">&amp;</span>Instance) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
+<span class="kw">fn </span>get_memory_init_start(init: <span class="kw-2">&amp;</span>MemoryInitializer, instance: <span class="kw-2">&amp;mut </span>Instance) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
     <span class="kw">match </span>init.base {
         <span class="prelude-val">Some</span>(base) =&gt; {
             <span class="kw">let </span>mem64 = instance.module().memory_plans[init.memory_index]
                 .memory
                 .memory64;
             <span class="kw">let </span>val = <span class="kw">unsafe </span>{
-                <span class="kw">let </span>global = <span class="kw">if let </span><span class="prelude-val">Some</span>(def_index) = instance.module().defined_global_index(base) {
-                    instance.global(def_index)
-                } <span class="kw">else </span>{
-                    <span class="kw-2">&amp;*</span>instance.imported_global(base).from
-                };
+                <span class="kw">let </span>global = instance.defined_or_imported_global_ptr(base);
                 <span class="kw">if </span>mem64 {
-                    <span class="kw-2">*</span>global.as_u64()
+                    <span class="kw-2">*</span>(<span class="kw-2">*</span>global).as_u64()
                 } <span class="kw">else </span>{
-                    u64::from(<span class="kw-2">*</span>global.as_u32())
+                    u64::from(<span class="kw-2">*</span>(<span class="kw-2">*</span>global).as_u32())
                 }
             };
 
@@ -833,7 +816,10 @@
     }
 }
 
-<span class="kw">fn </span>check_memory_init_bounds(instance: <span class="kw-2">&amp;</span>Instance, initializers: <span class="kw-2">&amp;</span>[MemoryInitializer]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<span class="kw">fn </span>check_memory_init_bounds(
+    instance: <span class="kw-2">&amp;mut </span>Instance,
+    initializers: <span class="kw-2">&amp;</span>[MemoryInitializer],
+) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">for </span>init <span class="kw">in </span>initializers {
         <span class="kw">let </span>memory = instance.get_memory(init.memory_index);
         <span class="kw">let </span>start = get_memory_init_start(init, instance)<span class="question-mark">?</span>;
@@ -855,21 +841,18 @@
 }
 
 <span class="kw">fn </span>initialize_memories(instance: <span class="kw-2">&amp;mut </span>Instance, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>memory_size_in_pages =
-        <span class="kw-2">&amp;</span>|memory| (instance.get_memory(memory).current_length() <span class="kw">as </span>u64) / u64::from(WASM_PAGE_SIZE);
+    <span class="kw">let </span>memory_size_in_pages = <span class="kw-2">&amp;</span>|instance: <span class="kw-2">&amp;mut </span>Instance, memory| {
+        (instance.get_memory(memory).current_length() <span class="kw">as </span>u64) / u64::from(WASM_PAGE_SIZE)
+    };
 
     <span class="comment">// Loads the `global` value and returns it as a `u64`, but sign-extends
     // 32-bit globals which can be used as the base for 32-bit memories.
-    </span><span class="kw">let </span>get_global_as_u64 = <span class="kw-2">&amp;</span>|global| <span class="kw">unsafe </span>{
-        <span class="kw">let </span>def = <span class="kw">if let </span><span class="prelude-val">Some</span>(def_index) = instance.module().defined_global_index(global) {
-            instance.global(def_index)
-        } <span class="kw">else </span>{
-            <span class="kw-2">&amp;*</span>instance.imported_global(global).from
-        };
+    </span><span class="kw">let </span>get_global_as_u64 = <span class="kw-2">&amp;mut </span>|instance: <span class="kw-2">&amp;mut </span>Instance, global| <span class="kw">unsafe </span>{
+        <span class="kw">let </span>def = instance.defined_or_imported_global_ptr(global);
         <span class="kw">if </span>module.globals[global].wasm_ty == WasmType::I64 {
-            <span class="kw-2">*</span>def.as_u64()
+            <span class="kw-2">*</span>(<span class="kw-2">*</span>def).as_u64()
         } <span class="kw">else </span>{
-            u64::from(<span class="kw-2">*</span>def.as_u32())
+            u64::from(<span class="kw-2">*</span>(<span class="kw-2">*</span>def).as_u32())
         }
     };
 
@@ -882,11 +865,12 @@
     // so errors only happen if an out-of-bounds segment is found, in which case
     // a trap is returned.
     </span><span class="kw">let </span>ok = module.memory_initialization.init_memory(
+        instance,
         InitMemory::Runtime {
             memory_size_in_pages,
             get_global_as_u64,
         },
-        <span class="kw-2">&amp;mut </span>|memory_index, init| {
+        |instance, memory_index, init| {
             <span class="comment">// If this initializer applies to a defined memory but that memory
             // doesn&#39;t need initialization, due to something like copy-on-write
             // pre-initializing it via mmap magic, then this initializer can be
@@ -919,7 +903,7 @@
 <span class="kw">fn </span>check_init_bounds(instance: <span class="kw-2">&amp;mut </span>Instance, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     check_table_init_bounds(instance, module)<span class="question-mark">?</span>;
 
-    <span class="kw">match </span><span class="kw-2">&amp;</span>instance.module().memory_initialization {
+    <span class="kw">match </span><span class="kw-2">&amp;</span>module.memory_initialization {
         MemoryInitialization::Segmented(initializers) =&gt; {
             check_memory_init_bounds(instance, initializers)<span class="question-mark">?</span>;
         }

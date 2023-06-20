@@ -916,8 +916,8 @@
       <span class="kw">if let </span><span class="prelude-val">Some</span>(sunrise_pool_available) =
         <span class="self">Self</span>::try_select_first_eligible_sunrise_pool(fee, currency_id)<span class="question-mark">?
       </span>{
-        <span class="kw">let </span>real_fees_in_tide_with_rebates =
-          <span class="self">Self</span>::calculate_rebates_on_fees_paid(sunrise_pool_available.rebates, fee)<span class="question-mark">?</span>;
+        <span class="kw">let </span>real_fees_in_tdfy_with_rebates =
+          <span class="self">Self</span>::calculate_rebates_on_fees_paid(sunrise_pool_available.rebates, <span class="kw-2">&amp;</span>fee)<span class="question-mark">?</span>;
         <span class="comment">// Update sunrise pool
         </span>Pools::&lt;T&gt;::try_mutate::&lt;(), DispatchError, <span class="kw">_</span>&gt;(|pools| {
           <span class="kw">let </span>sunrise_pool = pools
@@ -928,7 +928,7 @@
           <span class="comment">// Reduce pool balance
           </span>sunrise_pool.balance = sunrise_pool
             .balance
-            .saturating_sub(real_fees_in_tide_with_rebates);
+            .saturating_sub(real_fees_in_tdfy_with_rebates);
 
           <span class="comment">// Reduce number of transactions remaining for this pool
           </span>sunrise_pool.transactions_remaining -= <span class="number">1</span>;
@@ -946,7 +946,7 @@
 
         <span class="comment">// Increment reward for the account
         </span>Rewards::&lt;T&gt;::mutate(account_id.clone(), era_index, |rewards| {
-          <span class="kw-2">*</span>rewards = rewards.saturating_add(real_fees_in_tide_with_rebates);
+          <span class="kw-2">*</span>rewards = rewards.saturating_add(real_fees_in_tdfy_with_rebates);
         });
 
         <span class="comment">// Emit event
@@ -954,25 +954,25 @@
           era_index,
           pool_id: <span class="prelude-val">Some</span>(sunrise_pool_available.id),
           account_id: account_id.clone(),
-          reward: real_fees_in_tide_with_rebates,
+          reward: real_fees_in_tdfy_with_rebates,
         });
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(real_fees_in_tide_with_rebates))
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(real_fees_in_tdfy_with_rebates))
       } <span class="kw">else </span>{
         <span class="comment">// check if we have some leftover that can be used
         </span><span class="kw">let </span>available_left_over = <span class="self">Self</span>::pools_left_over();
-        <span class="kw">let </span>real_fees_in_tide_with_rebates =
-          <span class="self">Self</span>::calculate_rebates_on_fees_paid(T::LeftoverSwapRebates::get(), fee)<span class="question-mark">?</span>;
+        <span class="kw">let </span>real_fees_in_tdfy_with_rebates =
+          <span class="self">Self</span>::calculate_rebates_on_fees_paid(T::LeftoverSwapRebates::get(), <span class="kw-2">&amp;</span>fee)<span class="question-mark">?</span>;
 
-        <span class="kw">if </span>available_left_over &gt;= real_fees_in_tide_with_rebates {
+        <span class="kw">if </span>available_left_over &gt;= real_fees_in_tdfy_with_rebates {
           <span class="comment">// Increment reward for the account
           </span>Rewards::&lt;T&gt;::mutate(account_id.clone(), era_index, |rewards| {
-            <span class="kw-2">*</span>rewards = rewards.saturating_add(real_fees_in_tide_with_rebates);
+            <span class="kw-2">*</span>rewards = rewards.saturating_add(real_fees_in_tdfy_with_rebates);
           });
 
           <span class="comment">// Reduce leftover
           </span>PoolsLeftOverBalance::&lt;T&gt;::mutate(|left_over| {
-            <span class="kw-2">*</span>left_over = left_over.saturating_sub(real_fees_in_tide_with_rebates);
+            <span class="kw-2">*</span>left_over = left_over.saturating_sub(real_fees_in_tdfy_with_rebates);
           });
 
           <span class="comment">// Emit event
@@ -980,10 +980,10 @@
             era_index,
             pool_id: <span class="prelude-val">None</span>,
             account_id: account_id.clone(),
-            reward: real_fees_in_tide_with_rebates,
+            reward: real_fees_in_tdfy_with_rebates,
           });
 
-          <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(real_fees_in_tide_with_rebates))
+          <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(real_fees_in_tdfy_with_rebates))
         } <span class="kw">else </span>{
           <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
