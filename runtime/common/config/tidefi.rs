@@ -73,6 +73,8 @@ parameter_types! {
   pub const PubkeyLimitPerAsset: u32 = 10;
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 10_000;
+  // The maximum number of supported market pairs
+  pub const SupportedMarketPairsLimit: u8 = 100;
   // Maximum sunrise rewards before rewards allocation (in TDFY's)
   pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
   // Rebates applied to left-over pool
@@ -199,6 +201,7 @@ impl pallet_oracle::Config for Runtime {
   // Sunrise interface
   type Sunrise = Sunrise;
   type SwapLimitByAccount = SwapLimitByAccount;
+  type SupportedMarketPairsLimit = SupportedMarketPairsLimit;
   type WeightInfo = crate::weights::pallet_oracle::WeightInfo<Runtime>;
 }
 

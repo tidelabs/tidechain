@@ -102,6 +102,8 @@ construct_mock_runtime!({
   pub const PubkeyLimitPerAsset: u32 = 10;
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 100;
+  // The maximum number of supported market pairs
+  pub const SupportedMarketPairsLimit: u8 = 100;
   pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // max 10k rewards
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
@@ -174,6 +176,7 @@ impl pallet_oracle::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
   type SwapLimitByAccount = SwapLimitByAccount;
+  type SupportedMarketPairsLimit = SupportedMarketPairsLimit;
   type Fees = Fees;
   type Sunrise = Sunrise;
 }
