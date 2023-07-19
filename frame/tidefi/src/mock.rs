@@ -276,6 +276,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     enabled: true,
     account: 1_u64.into(),
     market_makers: Vec::new(),
+    market_pairs: Vec::new(),
   }
   .assimilate_storage(&mut storage)
   .unwrap();
