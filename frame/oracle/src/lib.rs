@@ -615,9 +615,7 @@ pub mod pallet {
     /// Emits `MarketPairAdded` event when successful.
     ///
     #[pallet::call_index(7)]
-    // TODO: Benchmarking add_market_pair
-    // #[pallet::weight(<T as pallet::Config>::WeightInfo::add_market_pair())]
-    #[pallet::weight(0)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::add_market_pair())]
     pub fn add_market_pair(
       origin: OriginFor<T>,
       market_pair: MarketPair,
@@ -653,9 +651,7 @@ pub mod pallet {
     /// Emits `MarketPairRemoved` event when successful.
     ///
     #[pallet::call_index(8)]
-    // TODO: Benchmarking remove_market_pair
-    // #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_market_pair())]
-    #[pallet::weight(0)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_market_pair())]
     pub fn remove_market_pair(
       origin: OriginFor<T>,
       market_pair: MarketPair,
