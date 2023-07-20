@@ -41,7 +41,7 @@ pub mod pallet {
     traits::fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
     PalletId,
   };
-  use frame_system::pallet_prelude::*;
+  use frame_system::{ensure_root, pallet_prelude::*};
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
   use sp_runtime::Permill;
@@ -193,6 +193,10 @@ pub mod pallet {
     MarketMakerAdded { account_id: T::AccountId },
     /// Oracle removed a market maker
     MarketMakerRemoved { account_id: T::AccountId },
+    /// Sudo added a market pair
+    MarketPairAdded { market_pair: MarketPair },
+    /// Sudo removed a market pair
+    MarketPairRemoved { market_pair: MarketPair },
     /// Oracle processed the initial swap
     SwapProcessed {
       request_id: Hash,
@@ -247,8 +251,12 @@ pub mod pallet {
     NoUpperBoundForSellingPrice,
     /// Swap is not created by a market maker
     NonMarketMakerSwap,
-    /// Trader swap market is not supported
+    /// Trader swap market pair is not supported
     MarketPairNotSupported,
+    /// Market pair is already supported
+    MarketPairAlreadySupported,
+    /// The number of supported market pairs overflow.
+    MarketPairOverflow,
     /// Market maker swap type is not limit
     MarketMakerSwapTypeIsNotLimit,
     /// Market Maker swap does not have enough funds left to sell
@@ -600,7 +608,72 @@ pub mod pallet {
       Ok(Pays::No.into())
     }
 
-    // TODO: Add extrinsics to add and remove supported market pair
+    /// Add a new market pair to be supported
+    ///
+    /// - `market_pair`: Market pair
+    ///
+    /// Emits `MarketPairAdded` event when successful.
+    ///
+    #[pallet::call_index(7)]
+    // TODO: Benchmarking add_market_pair
+    // #[pallet::weight(<T as pallet::Config>::WeightInfo::add_market_pair())]
+    #[pallet::weight(0)]
+    pub fn add_market_pair(
+      origin: OriginFor<T>,
+      market_pair: MarketPair,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is from sudo user
+      ensure_root(origin)?;
+
+      // 2. Add the new market pair to the storage
+      let mut supported_market_pairs = Self::supported_market_pairs();
+      ensure!(
+        supported_market_pairs
+          .iter()
+          .find(|pair| **pair == market_pair)
+          .is_none(),
+        Error::<T>::MarketPairAlreadySupported
+      );
+      supported_market_pairs
+        .try_push(market_pair.clone())
+        .map_err(|_| Error::<T>::MarketPairOverflow)?;
+      SupportedMarketPairs::<T>::put(supported_market_pairs);
+
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::MarketPairAdded { market_pair });
+
+      // don't take tx fees on success
+      Ok(Pays::No.into())
+    }
+
+    /// Remove a market pair from the supported list
+    ///
+    /// - `market_pair`: Market pair
+    ///
+    /// Emits `MarketPairRemoved` event when successful.
+    ///
+    #[pallet::call_index(8)]
+    // TODO: Benchmarking remove_market_pair
+    // #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_market_pair())]
+    #[pallet::weight(0)]
+    pub fn remove_market_pair(
+      origin: OriginFor<T>,
+      market_pair: MarketPair,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is from sudo user
+      ensure_root(origin)?;
+
+      // 2. Remove the market pair from the storage
+      let mut supported_market_pairs = Self::supported_market_pairs();
+      supported_market_pairs.retain(|pair| *pair != market_pair);
+      SupportedMarketPairs::<T>::put(supported_market_pairs);
+
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::MarketPairRemoved { market_pair });
+
+      // don't take tx fees on success
+      Ok(Pays::No.into())
+    }
   }
 
   // helper functions (not dispatchable)
