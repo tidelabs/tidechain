@@ -21,7 +21,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, wh
 use frame_support::traits::fungibles::Mutate;
 use frame_system::{self, RawOrigin};
 use sp_runtime::{traits::StaticLookup, Permill};
-use tidefi_primitives::{pallet::OracleExt, CurrencyId, SwapConfirmation, SwapType};
+use tidefi_primitives::{pallet::OracleExt, CurrencyId, MarketPair, SwapConfirmation, SwapType};
 
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;
@@ -29,7 +29,7 @@ const USER_ID: u32 = 2;
 const MM_ID: u32 = 3;
 
 const TEST_TOKEN: u32 = 2;
-const TEST_TOKEN2: u32 = 3;
+const TEST_TOKEN2: u32 = 5;
 
 fn _assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
   frame_system::Pallet::<T>::assert_last_event(generic_event.into());
@@ -62,6 +62,18 @@ benchmarks! {
       let caller: T::AccountId = whitelisted_caller();
       MarketMakers::<T>::insert(caller.clone(), true);
    }: _(RawOrigin::Signed(user), caller)
+   add_market_pair {
+      let market_pair = MarketPair {
+         base_asset: CurrencyId::Wrapped(1),
+         quote_asset: CurrencyId::Wrapped(100),
+      };
+   }: _(RawOrigin::Root, market_pair)
+   remove_market_pair {
+      let market_pair = MarketPair {
+         base_asset: CurrencyId::Tdfy,
+         quote_asset: CurrencyId::Wrapped(2),
+      };
+   }: _(RawOrigin::Root, market_pair)
    confirm_swap {
       let user = pre_set_auth::<T>();
       let account_id: T::AccountId = account("user", USER_ID, SEED);
