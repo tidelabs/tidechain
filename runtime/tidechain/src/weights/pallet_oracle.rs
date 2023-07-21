@@ -133,6 +133,30 @@ impl<T: frame_system::Config> pallet_oracle::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
+	/// Storage: Oracle SupportedMarketPairs (r:1 w:1)
+	/// Proof: Oracle SupportedMarketPairs (max_values: Some(1), max_size: Some(1002), added: 1497, mode: MaxEncodedLen)
+	fn add_market_pair() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `233`
+		//  Estimated: `2487`
+		// Minimum execution time: 18_322 nanoseconds.
+		Weight::from_ref_time(21_087_000)
+			.saturating_add(Weight::from_proof_size(2487))
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: Oracle SupportedMarketPairs (r:1 w:1)
+	/// Proof: Oracle SupportedMarketPairs (max_values: Some(1), max_size: Some(1002), added: 1497, mode: MaxEncodedLen)
+	fn remove_market_pair() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `233`
+		//  Estimated: `2487`
+		// Minimum execution time: 18_456 nanoseconds.
+		Weight::from_ref_time(20_942_000)
+			.saturating_add(Weight::from_proof_size(2487))
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 	/// Storage: Security ChainStatus (r:1 w:0)
 	/// Proof: Security ChainStatus (max_values: Some(1), max_size: Some(1), added: 496, mode: MaxEncodedLen)
 	/// Storage: Oracle OracleStatus (r:1 w:0)
