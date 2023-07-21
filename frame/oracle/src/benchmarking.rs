@@ -18,7 +18,7 @@
 use super::*;
 
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
-use frame_support::traits::fungibles::Mutate;
+use frame_support::{BoundedVec, traits::fungibles::Mutate};
 use frame_system::{self, RawOrigin};
 use sp_runtime::{traits::StaticLookup, Permill};
 use tidefi_primitives::{pallet::OracleExt, CurrencyId, MarketPair, SwapConfirmation, SwapType};
@@ -73,6 +73,9 @@ benchmarks! {
          base_asset: CurrencyId::Tdfy,
          quote_asset: CurrencyId::Wrapped(2),
       };
+      SupportedMarketPairs::<T>::put(BoundedVec::try_from(vec![
+         market_pair.clone()
+      ]).unwrap());
    }: _(RawOrigin::Root, market_pair)
    confirm_swap {
       let user = pre_set_auth::<T>();
@@ -81,6 +84,14 @@ benchmarks! {
       let caller_lookup = T::Lookup::unlookup(user.clone());
 
       MarketMakers::<T>::insert(mm_account_id.clone(), true);
+
+      let market_pair = MarketPair {
+         base_asset: CurrencyId::Wrapped(TEST_TOKEN2),
+         quote_asset: CurrencyId::Wrapped(TEST_TOKEN),
+      };
+      SupportedMarketPairs::<T>::put(BoundedVec::try_from(vec![
+         market_pair.clone()
+      ]).unwrap());
 
       // mint tokens
       T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &account_id, 2_000_000_000_000).expect("Unable to mint token");
