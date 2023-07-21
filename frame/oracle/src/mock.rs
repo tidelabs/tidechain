@@ -85,7 +85,7 @@ construct_mock_runtime!({
   pub const MarketMakerLimitFeeAmount: Permill = Permill::from_perthousand(10);
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
   pub const SwapLimitByAccount: u32 = 100;
-  pub const SupportedMarketPairsLimit: u8 = 100;
+  pub const SupportedMarketPairsLimit: u8 = 255;
   pub const StakingRewardCap: u32 = 10;
   pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;

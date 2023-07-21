@@ -107,7 +107,7 @@ construct_mock_runtime!({
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 100;
   // The maximum number of supported market pairs
-  pub const SupportedMarketPairsLimit: u8 = 100;
+  pub const SupportedMarketPairsLimit: u8 = 255;
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
   pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
