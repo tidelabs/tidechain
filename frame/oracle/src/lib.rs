@@ -41,15 +41,16 @@ pub mod pallet {
     traits::fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
     PalletId,
   };
-  use frame_system::pallet_prelude::*;
+  use frame_system::{ensure_root, pallet_prelude::*};
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
   use sp_runtime::Permill;
   use sp_std::vec;
   use tidefi_primitives::{
+    assets::Asset,
     pallet::{FeesExt, OracleExt, SecurityExt, SunriseExt},
-    AssetId, Balance, CurrencyId, Fee, Hash, SlippageError, Swap, SwapConfirmation, SwapStatus,
-    SwapType,
+    AssetId, Balance, CurrencyId, Fee, Hash, MarketPair, SlippageError, Swap, SwapConfirmation,
+    SwapStatus, SwapType,
   };
 
   /// Oracle configuration
@@ -73,6 +74,10 @@ pub mod pallet {
     /// The maximum number of active swaps per account id
     #[pallet::constant]
     type SwapLimitByAccount: Get<u32>;
+
+    /// The maximum number of supported market pairs
+    #[pallet::constant]
+    type SupportedMarketPairsLimit: Get<u32>;
 
     /// Fees traits
     type Fees: FeesExt<Self::AccountId, Self::BlockNumber>;
@@ -123,6 +128,12 @@ pub mod pallet {
     BoundedVec<(Hash, SwapStatus), T::SwapLimitByAccount>,
   >;
 
+  /// Set of swap market pairs
+  #[pallet::storage]
+  #[pallet::getter(fn supported_market_pairs)]
+  pub type SupportedMarketPairs<T: Config> =
+    StorageValue<_, BoundedVec<MarketPair, T::SupportedMarketPairsLimit>, ValueQuery>;
+
   /// Set of active market makers
   #[pallet::storage]
   #[pallet::getter(fn market_makers)]
@@ -138,6 +149,8 @@ pub mod pallet {
     pub account: T::AccountId,
     // List of active market makers
     pub market_makers: Vec<T::AccountId>,
+    // List of supported market pairs
+    pub market_pairs: Vec<MarketPair>,
   }
 
   #[cfg(feature = "std")]
@@ -150,6 +163,7 @@ pub mod pallet {
         // but should always be set in the genesis config.
         account: T::OraclePalletId::get().into_account_truncating(),
         market_makers: Vec::new(),
+        market_pairs: Vec::new(),
       }
     }
   }
@@ -163,6 +177,8 @@ pub mod pallet {
       for account_id in self.market_makers.clone() {
         MarketMakers::<T>::insert(account_id, true);
       }
+
+      SupportedMarketPairs::<T>::put(BoundedVec::try_from(self.market_pairs.clone()).unwrap());
     }
   }
 
@@ -177,6 +193,10 @@ pub mod pallet {
     MarketMakerAdded { account_id: T::AccountId },
     /// Oracle removed a market maker
     MarketMakerRemoved { account_id: T::AccountId },
+    /// Sudo added a market pair
+    MarketPairAdded { market_pair: MarketPair },
+    /// Sudo removed a market pair
+    MarketPairRemoved { market_pair: MarketPair },
     /// Oracle processed the initial swap
     SwapProcessed {
       request_id: Hash,
@@ -225,8 +245,18 @@ pub mod pallet {
     OfferIsLessThanMarketMakerSwapLowerBound { index: u8 },
     /// Request contains offer that is greater than market maker swap upper bound
     OfferIsGreaterThanMarketMakerSwapUpperBound { index: u8 },
+    /// Slippage validation blocks buying with low price
+    NoLowerBoundForBuyingPrice,
+    /// Slippage validation blocks selling with high price
+    NoUpperBoundForSellingPrice,
     /// Swap is not created by a market maker
     NonMarketMakerSwap,
+    /// Trader swap market pair is not supported
+    MarketPairNotSupported,
+    /// Market pair is already supported
+    MarketPairAlreadySupported,
+    /// The number of supported market pairs overflow.
+    MarketPairOverflow,
     /// Market maker swap type is not limit
     MarketMakerSwapTypeIsNotLimit,
     /// Market Maker swap does not have enough funds left to sell
@@ -577,6 +607,70 @@ pub mod pallet {
       // don't take tx fees on success
       Ok(Pays::No.into())
     }
+
+    /// Add a new market pair to be supported
+    ///
+    /// - `market_pair`: Market pair
+    ///
+    /// Emits `MarketPairAdded` event when successful.
+    ///
+    #[pallet::call_index(7)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::add_market_pair())]
+    pub fn add_market_pair(
+      origin: OriginFor<T>,
+      market_pair: MarketPair,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is from sudo user
+      ensure_root(origin)?;
+
+      // 2. Add the new market pair to the storage
+      let mut supported_market_pairs = Self::supported_market_pairs();
+      ensure!(
+        supported_market_pairs
+          .iter()
+          .find(|pair| **pair == market_pair)
+          .is_none(),
+        Error::<T>::MarketPairAlreadySupported
+      );
+      supported_market_pairs
+        .try_push(market_pair.clone())
+        .map_err(|_| Error::<T>::MarketPairOverflow)?;
+      SupportedMarketPairs::<T>::put(supported_market_pairs);
+
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::MarketPairAdded { market_pair });
+
+      // don't take tx fees on success
+      Ok(Pays::No.into())
+    }
+
+    /// Remove a market pair from the supported list
+    ///
+    /// - `market_pair`: Market pair
+    ///
+    /// Emits `MarketPairRemoved` event when successful.
+    ///
+    #[pallet::call_index(8)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::remove_market_pair())]
+    pub fn remove_market_pair(
+      origin: OriginFor<T>,
+      market_pair: MarketPair,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is from sudo user
+      ensure_root(origin)?;
+
+      // 2. Remove the market pair from the storage
+      let mut supported_market_pairs = Self::supported_market_pairs();
+      ensure!(supported_market_pairs.contains(&market_pair), Error::<T>::MarketPairNotSupported);
+      supported_market_pairs.retain(|pair| *pair != market_pair);
+      SupportedMarketPairs::<T>::put(supported_market_pairs);
+
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::MarketPairRemoved { market_pair });
+
+      // don't take tx fees on success
+      Ok(Pays::No.into())
+    }
   }
 
   // helper functions (not dispatchable)
@@ -612,9 +706,42 @@ pub mod pallet {
         Error::<T>::MarketMakerSwapTypeIsNotLimit
       );
 
-      // Make sure swap prices are within slippage tolerances
+      let markets = Self::supported_market_pairs();
+      let market_pair = markets
+        .iter()
+        .find(|m| {
+          **m
+            == MarketPair {
+              base_asset: trade.token_from,
+              quote_asset: trade.token_to,
+            }
+            || **m
+              == MarketPair {
+                base_asset: trade.token_to,
+                quote_asset: trade.token_from,
+              }
+        })
+        .ok_or(Error::<T>::MarketPairNotSupported)?;
+
+      let offer_base_amount = if trade.token_from == market_pair.base_asset {
+        mm.amount_to_receive
+      } else {
+        mm.amount_to_send
+      };
+
+      let offer_quote_amount = if trade.token_from == market_pair.base_asset {
+        mm.amount_to_send
+      } else {
+        mm.amount_to_receive
+      };
+
       trade
-        .validate_slippage(&market_maker_trade, mm.amount_to_receive, mm.amount_to_send)
+        .validate_slippage(
+          &market_maker_trade,
+          offer_base_amount,
+          offer_quote_amount,
+          market_pair,
+        )
         .map_err(|err| match err {
           SlippageError::UnknownAsset => Error::<T>::UnknownAsset,
           SlippageError::SlippageOverflow => Error::<T>::SlippageOverflow,
@@ -631,6 +758,9 @@ pub mod pallet {
           SlippageError::OfferIsGreaterThanMarketMakerSwapUpperBound => {
             Error::<T>::OfferIsGreaterThanMarketMakerSwapUpperBound { index: index as u8 }
           }
+          SlippageError::UnknownAssetInMarketPair => Error::<T>::MarketPairNotSupported,
+          SlippageError::NoLowerBoundForBuyingPrice => Error::<T>::NoLowerBoundForBuyingPrice,
+          SlippageError::NoUpperBoundForSellingPrice => Error::<T>::NoUpperBoundForSellingPrice,
         })?;
 
       let trader_fee = Self::validate_fund_transfers(
@@ -962,6 +1092,47 @@ pub mod pallet {
         None => Ok(()),
       })
     }
+
+    fn set_initial_market_pairs() {
+      if Self::supported_market_pairs().is_empty() {
+        let initial_supported_market_pairs: BoundedVec<MarketPair, T::SupportedMarketPairsLimit> =
+          BoundedVec::try_from(vec![
+            // ATH_USDC
+            MarketPair {
+              base_asset: Asset::AllTimeHigh.currency_id(),
+              quote_asset: Asset::USDCoin.currency_id(),
+            },
+            // BTC_USDC
+            MarketPair {
+              base_asset: Asset::Bitcoin.currency_id(),
+              quote_asset: Asset::USDCoin.currency_id(),
+            },
+            // ETH_USDC
+            MarketPair {
+              base_asset: Asset::Ethereum.currency_id(),
+              quote_asset: Asset::USDCoin.currency_id(),
+            },
+            // TDFY_BTC
+            MarketPair {
+              base_asset: Asset::Tdfy.currency_id(),
+              quote_asset: Asset::Bitcoin.currency_id(),
+            },
+            // TDFY_ETH
+            MarketPair {
+              base_asset: Asset::Tdfy.currency_id(),
+              quote_asset: Asset::Ethereum.currency_id(),
+            },
+            // TDFY_USDC
+            MarketPair {
+              base_asset: Asset::Tdfy.currency_id(),
+              quote_asset: Asset::USDCoin.currency_id(),
+            },
+          ])
+          .unwrap();
+
+        SupportedMarketPairs::<T>::put(initial_supported_market_pairs.clone());
+      }
+    }
   }
 
   // implement the `OracleExt` functions
@@ -1113,6 +1284,15 @@ pub mod pallet {
       })?;
 
       Ok(())
+    }
+  }
+
+  // hooks
+  #[pallet::hooks]
+  impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+    fn on_initialize(_now: T::BlockNumber) -> Weight {
+      Self::set_initial_market_pairs();
+      T::DbWeight::get().reads_writes(1 as u64, 1 as u64)
     }
   }
 }
