@@ -18,7 +18,7 @@
 use super::*;
 
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
-use frame_support::{BoundedVec, traits::fungibles::Mutate};
+use frame_support::{traits::fungibles::Mutate, BoundedVec};
 use frame_system::{self, RawOrigin};
 use sp_runtime::{traits::StaticLookup, Permill};
 use tidefi_primitives::{pallet::OracleExt, CurrencyId, MarketPair, SwapConfirmation, SwapType};

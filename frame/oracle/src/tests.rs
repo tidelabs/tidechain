@@ -2739,9 +2739,7 @@ mod add_market_pair {
         .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
 
       // SupportedMarketPairs is set to empty
-      SupportedMarketPairs::<Test>::put(
-        BoundedVec::try_from(Vec::new()).unwrap()
-      );
+      SupportedMarketPairs::<Test>::put(BoundedVec::try_from(Vec::new()).unwrap());
 
       let tdfy_amount = 10 * ONE_TDFY;
       let temp_amount = 200 * ONE_TEMP;
@@ -2780,13 +2778,11 @@ mod add_market_pair {
         Oracle::confirm_swap(
           RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
           trade_request_id,
-          vec![
-            SwapConfirmation {
-              request_id: trade_request_mm_id_1,
-              amount_to_receive: tdfy_amount,
-              amount_to_send: temp_amount,
-            },
-          ],
+          vec![SwapConfirmation {
+            request_id: trade_request_mm_id_1,
+            amount_to_receive: tdfy_amount,
+            amount_to_send: temp_amount,
+          },],
         ),
         Error::<Test>::MarketPairNotSupported,
       );
@@ -2797,16 +2793,14 @@ mod add_market_pair {
       };
 
       // Add TDFY_TEMP into supported market pairs
-      assert_ok!(
-        Oracle::add_market_pair(
-          RuntimeOrigin::root(),
-          tdfy_temp.clone(),
-        )
-      );
+      assert_ok!(Oracle::add_market_pair(
+        RuntimeOrigin::root(),
+        tdfy_temp.clone(),
+      ));
 
       // Events are emitted
       System::assert_has_event(MockEvent::Oracle(Event::MarketPairAdded {
-        market_pair: tdfy_temp.clone()
+        market_pair: tdfy_temp.clone(),
       }));
 
       // Market pair is added to the storage
@@ -2816,13 +2810,11 @@ mod add_market_pair {
       assert_ok!(Oracle::confirm_swap(
         RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
         trade_request_id,
-        vec![
-          SwapConfirmation {
-            request_id: trade_request_mm_id_1,
-            amount_to_receive: tdfy_amount,
-            amount_to_send: temp_amount,
-          },
-        ],
+        vec![SwapConfirmation {
+          request_id: trade_request_mm_id_1,
+          amount_to_receive: tdfy_amount,
+          amount_to_send: temp_amount,
+        },],
       ));
 
       let total_swapped_tdfys = tdfy_amount;
@@ -2833,13 +2825,8 @@ mod add_market_pair {
         false,
       )
       .fee;
-      let charlie_swap_fee = Fees::calculate_swap_fees(
-        TEMP_CURRENCY_ID,
-        temp_amount,
-        SwapType::Limit,
-        true,
-      )
-      .fee;
+      let charlie_swap_fee =
+        Fees::calculate_swap_fees(TEMP_CURRENCY_ID, temp_amount, SwapType::Limit, true).fee;
 
       // Events are emitted
       System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
@@ -2905,9 +2892,7 @@ mod add_market_pair {
       // Charlie's reserved funds is reduced by confirmed swap sold amount and fee
       assert_eq!(
         get_account_reserved(CHARLIE_ACCOUNT_ID, TEMP_CURRENCY_ID),
-        charlie_initial_temp_reserved_balance
-          - temp_amount
-          - charlie_swap_fee
+        charlie_initial_temp_reserved_balance - temp_amount - charlie_swap_fee
       );
     });
   }
@@ -2925,7 +2910,7 @@ mod add_market_pair {
           .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_20_TDFYS)
           .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
-  
+
         assert_noop!(
           Oracle::add_market_pair(
             RuntimeOrigin::root(),
@@ -2949,7 +2934,7 @@ mod add_market_pair {
           .mint_tdfy(BOB_ACCOUNT_ID, INITIAL_20_TDFYS)
           .mint_tdfy(CHARLIE_ACCOUNT_ID, INITIAL_20_TDFYS)
           .mint_temp(CHARLIE_ACCOUNT_ID, INITIAL_10000_TEMPS);
-  
+
         assert_noop!(
           Oracle::add_market_pair(
             RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
@@ -3004,13 +2989,11 @@ mod remove_market_pair {
       assert_ok!(Oracle::confirm_swap(
         RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
         trade_request_id,
-        vec![
-          SwapConfirmation {
-            request_id: trade_request_mm_id,
-            amount_to_receive: tdfy_amount,
-            amount_to_send: temp_amount,
-          },
-        ],
+        vec![SwapConfirmation {
+          request_id: trade_request_mm_id,
+          amount_to_receive: tdfy_amount,
+          amount_to_send: temp_amount,
+        },],
       ));
 
       // Events are emitted
@@ -3042,16 +3025,14 @@ mod remove_market_pair {
       };
 
       // Remove TDFY_TEMP from supported market pairs
-      assert_ok!(
-        Oracle::remove_market_pair(
-          RuntimeOrigin::root(),
-          tdfy_temp.clone(),
-        )
-      );
+      assert_ok!(Oracle::remove_market_pair(
+        RuntimeOrigin::root(),
+        tdfy_temp.clone(),
+      ));
 
       // Events are emitted
       System::assert_has_event(MockEvent::Oracle(Event::MarketPairRemoved {
-        market_pair: tdfy_temp.clone()
+        market_pair: tdfy_temp.clone(),
       }));
 
       // Market pair is added to the storage
@@ -3080,13 +3061,11 @@ mod remove_market_pair {
         Oracle::confirm_swap(
           RuntimeOrigin::signed(ALICE_ACCOUNT_ID),
           trade_request_id,
-          vec![
-            SwapConfirmation {
-              request_id: trade_request_mm_id,
-              amount_to_receive: tdfy_amount,
-              amount_to_send: temp_amount,
-            },
-          ],
+          vec![SwapConfirmation {
+            request_id: trade_request_mm_id,
+            amount_to_receive: tdfy_amount,
+            amount_to_send: temp_amount,
+          },],
         ),
         Error::<Test>::MarketPairNotSupported,
       );
@@ -3095,7 +3074,7 @@ mod remove_market_pair {
 
   mod fails_when {
     use super::*;
-  
+
     #[test]
     fn market_pair_is_not_found() {
       new_test_ext().execute_with(|| {
