@@ -32,7 +32,7 @@ use sp_runtime::{
 use strum::IntoEnumIterator;
 // Tidechain primitives
 use tidefi_primitives::{
-  assets, AccountId, AssetId, Balance, Block, CurrencyId, OnboardingRebates, Signature,
+  assets, AccountId, AssetId, Balance, Block, CurrencyId, MarketPair, OnboardingRebates, Signature,
   StakeCurrencyMeta, SunriseSwapPool,
 };
 
@@ -312,6 +312,38 @@ fn lagoon_testnet_genesis(
         //5FKuzgFppRcJqs1bYQvrDJ9DrKZaXqrwKggWBk4DyfpXFvoo
         hex!["904e3dea6bcdc6cb523f52cbdedad53c24bbd95692ec690154b0f2c7f0abc55c"].into(),
       ],
+      market_pairs: vec![
+        // ATH_USDC
+        MarketPair {
+          base_asset: assets::Asset::AllTimeHigh.currency_id(),
+          quote_asset: assets::Asset::USDCoin.currency_id(),
+        },
+        // BTC_USDC
+        MarketPair {
+          base_asset: assets::Asset::Bitcoin.currency_id(),
+          quote_asset: assets::Asset::USDCoin.currency_id(),
+        },
+        // ETH_USDC
+        MarketPair {
+          base_asset: assets::Asset::Ethereum.currency_id(),
+          quote_asset: assets::Asset::USDCoin.currency_id(),
+        },
+        // TDFY_BTC
+        MarketPair {
+          base_asset: assets::Asset::Tdfy.currency_id(),
+          quote_asset: assets::Asset::Bitcoin.currency_id(),
+        },
+        // TDFY_ETH
+        MarketPair {
+          base_asset: assets::Asset::Tdfy.currency_id(),
+          quote_asset: assets::Asset::Ethereum.currency_id(),
+        },
+        // TDFY_USDC
+        MarketPair {
+          base_asset: assets::Asset::Tdfy.currency_id(),
+          quote_asset: assets::Asset::USDCoin.currency_id(),
+        },
+      ],
     },
     asset_registry: lagoon_runtime::AssetRegistryConfig {
       // these assets are created on first initialization
@@ -558,6 +590,7 @@ fn tidechain_testnet_genesis(
       enabled: true,
       account: oracle,
       market_makers: Vec::new(),
+      market_pairs: Vec::new(),
     },
     asset_registry: tidechain_runtime::AssetRegistryConfig {
       // these assets are created on first initialization

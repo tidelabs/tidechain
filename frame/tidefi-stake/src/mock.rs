@@ -22,7 +22,9 @@ use frame_system as system;
 use frame_utils::construct_mock_runtime;
 use sp_runtime::traits::AccountIdConversion;
 use system::EnsureRoot;
-use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex, StakeCurrencyMeta};
+use tidefi_primitives::{
+  assets, BlockNumber, CurrencyId, MarketPair, SessionIndex, StakeCurrencyMeta,
+};
 
 pub struct EnsureRootOrAssetRegistry;
 impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrAssetRegistry {
@@ -102,6 +104,8 @@ construct_mock_runtime!({
   pub const PubkeyLimitPerAsset: u32 = 10;
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 100;
+  // The maximum number of supported market pairs
+  pub const SupportedMarketPairsLimit: u8 = 255;
   pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // max 10k rewards
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
@@ -174,6 +178,7 @@ impl pallet_oracle::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
   type SwapLimitByAccount = SwapLimitByAccount;
+  type SupportedMarketPairsLimit = SupportedMarketPairsLimit;
   type Fees = Fees;
   type Sunrise = Sunrise;
 }
@@ -279,6 +284,38 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     enabled: true,
     account: 1_u64.into(),
     market_makers: Vec::new(),
+    market_pairs: vec![
+      // ATH_USDC
+      MarketPair {
+        base_asset: assets::Asset::AllTimeHigh.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+      // BTC_USDC
+      MarketPair {
+        base_asset: assets::Asset::Bitcoin.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+      // ETH_USDC
+      MarketPair {
+        base_asset: assets::Asset::Ethereum.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+      // TDFY_BTC
+      MarketPair {
+        base_asset: assets::Asset::Tdfy.currency_id(),
+        quote_asset: assets::Asset::Bitcoin.currency_id(),
+      },
+      // TDFY_ETH
+      MarketPair {
+        base_asset: assets::Asset::Tdfy.currency_id(),
+        quote_asset: assets::Asset::Ethereum.currency_id(),
+      },
+      // TDFY_USDC
+      MarketPair {
+        base_asset: assets::Asset::Tdfy.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+    ],
   }
   .assimilate_storage(&mut t)
   .unwrap();

@@ -29,6 +29,8 @@ pub trait WeightInfo {
    fn add_market_maker() -> Weight;
    fn remove_market_maker() -> Weight;
    fn update_assets_value() -> Weight;
+   fn add_market_pair() -> Weight;
+   fn remove_market_pair() -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
@@ -38,8 +40,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
       Weight::from_ref_time(61_000_300)
           .saturating_add(T::DbWeight::get().reads(6_u64))
           .saturating_add(T::DbWeight::get().writes(5_u64))
-  }
-  fn add_market_maker() -> Weight {
+   }
+   fn add_market_maker() -> Weight {
       Weight::from_ref_time(61_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
@@ -49,8 +51,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
-  fn set_account_id() -> Weight {
-   Weight::from_ref_time(62_000_300)
+   fn set_account_id() -> Weight {
+      Weight::from_ref_time(62_000_300)
        .saturating_add(T::DbWeight::get().reads(6_u64))
        .saturating_add(T::DbWeight::get().writes(5_u64))
    }
@@ -63,5 +65,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
       Weight::from_ref_time(64_000_300)
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
+   fn add_market_pair() -> Weight {
+      Weight::from_ref_time(25_089_000)
+         .saturating_add(Weight::from_proof_size(2487))
+         .saturating_add(T::DbWeight::get().reads(1))
+         .saturating_add(T::DbWeight::get().writes(1))
+   }
+   fn remove_market_pair() -> Weight {
+      Weight::from_ref_time(91_613_000)
+         .saturating_add(Weight::from_proof_size(2487))
+         .saturating_add(T::DbWeight::get().reads(1))
+         .saturating_add(T::DbWeight::get().writes(1))
    }
 }
