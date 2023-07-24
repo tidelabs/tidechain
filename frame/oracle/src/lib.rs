@@ -661,7 +661,10 @@ pub mod pallet {
 
       // 2. Remove the market pair from the storage
       let mut supported_market_pairs = Self::supported_market_pairs();
-      ensure!(supported_market_pairs.contains(&market_pair), Error::<T>::MarketPairNotSupported);
+      ensure!(
+        supported_market_pairs.contains(&market_pair),
+        Error::<T>::MarketPairNotSupported
+      );
       supported_market_pairs.retain(|pair| *pair != market_pair);
       SupportedMarketPairs::<T>::put(supported_market_pairs);
 
