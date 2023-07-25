@@ -626,10 +626,9 @@ pub mod pallet {
       // 2. Add the new market pair to the storage
       let mut supported_market_pairs = Self::supported_market_pairs();
       ensure!(
-        supported_market_pairs
+        !supported_market_pairs
           .iter()
-          .find(|pair| **pair == market_pair)
-          .is_none(),
+          .any(|pair| *pair == market_pair),
         Error::<T>::MarketPairAlreadySupported
       );
       supported_market_pairs
