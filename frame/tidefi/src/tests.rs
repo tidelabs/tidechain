@@ -998,6 +998,35 @@ mod swap {
         );
       });
     }
+
+    #[test]
+    fn buy_and_sell_asset_types_are_different() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
+
+        assert_ok!(Assets::freeze(
+          RuntimeOrigin::signed(context.sender),
+          TEMP_ASSET_ID,
+          ALICE_ACCOUNT_ID
+        ));
+
+        assert_noop!(
+          Tidefi::swap(
+            RuntimeOrigin::signed(context.sender),
+            CurrencyId::Tdfy,
+            10 * ONE_TEMP,
+            CurrencyId::Tdfy,
+            ONE_TDFY,
+            SwapType::Limit,
+            None
+          ),
+          OracleError::<Test>::MarketPairNotSupported
+        );
+      });
+    }
   }
 }
 
