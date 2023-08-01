@@ -277,9 +277,7 @@ pub mod pallet {
     UpdateMarketMakerSwapFailed,
     /// Delete trader's swap request from Swaps failed
     DeleteSwapFailed,
-    /// Unable to release funds.
-    ReleaseFailed,
-    /// Release trader's unswapped funds failed
+    /// Release unswapped funds failed
     ReleaseUnswappedFundsFailed,
     /// Update trader's swap request status in AccountSwaps failed
     UpdateAccountSwapRequestStatusFailed,
@@ -1066,8 +1064,7 @@ pub mod pallet {
         )
         .ok_or(Error::<T>::ArithmeticError)?;
 
-      T::CurrencyTidefi::release(swap.token_from, &swap.account_id, amount_to_release, true)
-        .map_err(|_| Error::<T>::ReleaseFailed)?;
+      T::CurrencyTidefi::release(swap.token_from, &swap.account_id, amount_to_release, true)?;
 
       Ok(())
     }

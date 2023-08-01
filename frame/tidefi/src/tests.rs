@@ -46,11 +46,11 @@ const CHARLIE_ACCOUNT_ID: AccountId = AccountId(3);
 
 const ONE_TDFY: u128 = 1_000_000_000_000;
 
-const TEMP_ASSET_ID: u32 = 4;
+const TEMP_ASSET_ID: u32 = 5;
 const TEMP_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEMP_ASSET_ID);
 const TEMP_ASSET_IS_SUFFICIENT: bool = true;
 const TEMP_ASSET_MIN_BALANCE: u128 = 1;
-const ONE_TEMP: u128 = 100;
+const ONE_TEMP: u128 = 1_000_000;
 
 // TEMP Asset Metadata
 const TEMP_ASSET_NAME: &str = "TEMP";
@@ -1260,12 +1260,12 @@ mod cancel_swap {
 
           assert_noop!(
             Tidefi::cancel_swap(RuntimeOrigin::signed(BOB_ACCOUNT_ID), context.request_id),
-            OracleError::<Test>::ReleaseFailed
+            OracleError::<Test>::ReleaseUnswappedFundsFailed
           );
 
           assert_noop!(
             Tidefi::cancel_swap(RuntimeOrigin::signed(ALICE_ACCOUNT_ID), context.request_id),
-            OracleError::<Test>::ReleaseFailed
+            OracleError::<Test>::ReleaseUnswappedFundsFailed
           );
         });
       }
@@ -1290,12 +1290,12 @@ mod cancel_swap {
 
           assert_noop!(
             Tidefi::cancel_swap(RuntimeOrigin::signed(BOB_ACCOUNT_ID), context.request_id),
-            OracleError::<Test>::ReleaseFailed
+            OracleError::<Test>::ReleaseUnswappedFundsFailed
           );
 
           assert_noop!(
             Tidefi::cancel_swap(RuntimeOrigin::signed(ALICE_ACCOUNT_ID), context.request_id),
-            OracleError::<Test>::ReleaseFailed
+            OracleError::<Test>::ReleaseUnswappedFundsFailed
           );
         });
       }
