@@ -374,7 +374,7 @@ pub mod pallet {
           trade.amount_from_filled += trade_sold_amount;
           trade.amount_to_filled += trade_bought_amount;
 
-          Self::update_swap_and_requestor_account(trade, request_id, false)
+          Self::update_swap_and_requestor_account(trade, request_id, trade.is_market_maker)
             .map_err(|_| Error::<T>::UpdateTraderSwapFailed)?;
 
           // Emit trade event on chain
@@ -754,7 +754,7 @@ pub mod pallet {
         mm.amount_to_receive,
         mm.amount_to_send,
         trade_latest_from_filled,
-        false,
+        trade.is_market_maker,
       )?;
 
       let market_maker_fee = Self::validate_fund_transfers(
@@ -958,7 +958,7 @@ pub mod pallet {
         trade.token_from,
         mm.amount_to_receive,
         trade.swap_type.clone(),
-        false,
+        trade.is_market_maker,
       )
       .map_err(|_| Error::<T>::TraderSwapFeeRegistrationFailed)?;
 
