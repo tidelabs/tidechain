@@ -131,6 +131,8 @@ pub mod pallet {
   pub enum Error<T> {
     /// Asset is currently disabled or do not exist on chain
     AssetDisabled,
+    /// Swap between the same currency id
+    SameCurrencyId,
     /// Cannot withdraw TDFY
     CannotWithdrawTdfy,
     /// No Funds available for this Asset Id
@@ -290,33 +292,39 @@ pub mod pallet {
       swap_type: SwapType,
       slippage_tolerance: Option<Permill>,
     ) -> DispatchResultWithPostInfo {
-      // 1. Make sure the transaction is signed
+      // Make sure the transaction is signed
       let account_id = ensure_signed(origin)?;
 
-      // 2. Make sure the oracle is enabled
+      // Make sure the oracle is enabled
       ensure!(T::Oracle::is_oracle_enabled(), Error::<T>::OraclePaused);
 
-      // 3. Make sure the `currency_id_from` is not disabled
+      // Make sure the `currency_id_from` is not disabled
       ensure!(
         T::AssetRegistry::is_currency_enabled(currency_id_from),
         Error::<T>::AssetDisabled
       );
 
-      // 4. Make sure the `currency_id_to` is not disabled
+      // Make sure the `currency_id_to` is not disabled
       ensure!(
         T::AssetRegistry::is_currency_enabled(currency_id_to),
         Error::<T>::AssetDisabled
       );
 
-      // 5. Grab the extrinsic hash of the current extrinsic for better traceability
+      // Make sure the swap currencies are different
+      ensure!(
+        currency_id_from != currency_id_to,
+        Error::<T>::SameCurrencyId
+      );
+
+      // Grab the extrinsic hash of the current extrinsic for better traceability
       let extrinsic_hash = blake2_256(&<frame_system::Pallet<T>>::extrinsic_data(
         <frame_system::Pallet<T>>::extrinsic_index().ok_or(Error::<T>::UnknownExtrinsicIndex)?,
       ));
 
-      // 6. Validate if the user is a market maker when the swap is requested to allocate the correct fees
+      // Validate if the user is a market maker when the swap is requested to allocate the correct fees
       let is_market_maker = T::Oracle::is_market_maker(account_id.clone())?;
 
-      // 7. Make sure the account have enough funds for the `asset_id_from`
+      // Make sure the account have enough funds for the `asset_id_from`
       match T::CurrencyTidefi::can_withdraw(currency_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
           let mut real_slippage_tolerance = slippage_tolerance.unwrap_or(Permill::zero());
@@ -324,7 +332,7 @@ pub mod pallet {
             real_slippage_tolerance = Permill::from_parts(1);
           }
 
-          // 7. a) Add trade in queue
+          // a) Add trade in queue
           let (trade_id, _) = T::Oracle::add_new_swap_in_queue(
             account_id.clone(),
             currency_id_from,
@@ -338,7 +346,7 @@ pub mod pallet {
             real_slippage_tolerance,
           )?;
 
-          // 7 b) Send event to the chain
+          // b) Send event to the chain
           Self::deposit_event(Event::<T>::Swap {
             request_id: trade_id,
             account: account_id,
