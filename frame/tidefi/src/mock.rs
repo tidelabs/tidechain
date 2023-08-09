@@ -21,7 +21,7 @@ use frame_system as system;
 use frame_utils::construct_mock_runtime;
 use sp_runtime::traits::AccountIdConversion;
 use system::EnsureRoot;
-use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex};
+use tidefi_primitives::{assets, BlockNumber, CurrencyId, MarketPair, SessionIndex};
 
 use crate::pallet as pallet_tidefi;
 
@@ -276,7 +276,38 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     enabled: true,
     account: 1_u64.into(),
     market_makers: Vec::new(),
-    market_pairs: Vec::new(),
+    market_pairs: vec![
+      // ATH_USDC
+      MarketPair {
+        base_asset: assets::Asset::AllTimeHigh.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+      // BTC_USDC
+      MarketPair {
+        base_asset: assets::Asset::Bitcoin.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+      // ETH_USDC
+      MarketPair {
+        base_asset: assets::Asset::Ethereum.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+      // TDFY_BTC
+      MarketPair {
+        base_asset: assets::Asset::Tdfy.currency_id(),
+        quote_asset: assets::Asset::Bitcoin.currency_id(),
+      },
+      // TDFY_ETH
+      MarketPair {
+        base_asset: assets::Asset::Tdfy.currency_id(),
+        quote_asset: assets::Asset::Ethereum.currency_id(),
+      },
+      // TDFY_USDC
+      MarketPair {
+        base_asset: assets::Asset::Tdfy.currency_id(),
+        quote_asset: assets::Asset::USDCoin.currency_id(),
+      },
+    ],
   }
   .assimilate_storage(&mut storage)
   .unwrap();
