@@ -320,20 +320,15 @@ fn add_new_swap_and_assert_results(
   )
   .unwrap();
 
-  let swap_fee =
-    Fees::calculate_swap_fees(asset_id_from, amount_from, swap_type, is_market_maker).fee;
-
   assert_eq!(
     Adapter::balance_on_hold(asset_id_from, &account_id),
-    amount_from.saturating_add(swap_fee)
+    amount_from
   );
 
   if asset_id_from != CurrencyId::Tdfy {
     assert_eq!(
       Adapter::balance(asset_id_from, &account_id),
-      initial_from_token_balance
-        .saturating_sub(amount_from)
-        .saturating_sub(swap_fee)
+      initial_from_token_balance.saturating_sub(amount_from)
     );
   }
 
@@ -342,7 +337,6 @@ fn add_new_swap_and_assert_results(
     asset_id_from,
     initial_from_token_balance,
     amount_from,
-    swap_fee,
   );
 
   assert_eq!(trade_request.status, SwapStatus::Pending);
@@ -364,11 +358,8 @@ fn assert_spendable_balance_is_updated(
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
-  swap_fee: Balance,
 ) {
-  let expected_reducible_balance = initial_balance
-    .saturating_sub(sell_amount)
-    .saturating_sub(swap_fee);
+  let expected_reducible_balance = initial_balance.saturating_sub(sell_amount);
 
   match currency_id {
     CurrencyId::Tdfy => assert_eq!(
@@ -383,9 +374,7 @@ fn assert_spendable_balance_is_updated(
 
   assert_eq!(
     Adapter::reducible_balance(currency_id, &account_id, false),
-    initial_balance
-      .saturating_sub(sell_amount)
-      .saturating_sub(swap_fee)
+    initial_balance.saturating_sub(sell_amount)
   );
 }
 
@@ -714,13 +703,13 @@ mod unstake {
 
           // Calculate expected fees in both TDFYs and test tokens
           let total_fee_in_tdfy =
-            Fees::calculate_swap_fees(CurrencyId::Tdfy, SWAP_TDFY_AMOUNT, SwapType::Limit, false)
+            Fees::calculate_swap_fees(CurrencyId::Tdfy, SWAP_TDFY_AMOUNT, SwapType::Limit, true)
               .fee;
           let total_fee_in_test_token = Fees::calculate_swap_fees(
             TEST_TOKEN_CURRENCY_ID,
             SWAP_TEST_TOKEN_AMOUNT,
             SwapType::Limit,
-            true,
+            false,
           )
           .fee;
 
@@ -798,22 +787,20 @@ mod unstake {
 
           // Assert Bob TDFY and Test token balance
           assert_eq!(
-            BOB_INITIAL_ONE_THOUSAND_TDFYS - SWAP_TDFY_AMOUNT - total_fee_in_tdfy,
+            BOB_INITIAL_ONE_THOUSAND_TDFYS - SWAP_TDFY_AMOUNT,
             Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID)
           );
           assert_eq!(
-            BOB_INITIAL_ONE_THOUSAND_TEST_TOKENS + SWAP_TEST_TOKEN_AMOUNT,
+            BOB_INITIAL_ONE_THOUSAND_TEST_TOKENS + SWAP_TEST_TOKEN_AMOUNT - total_fee_in_test_token,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &BOB_ACCOUNT_ID)
           );
           // Assert Charlie TDFY and Test token balance
           assert_eq!(
-            CHARLIE_INITIAL_ONE_THOUSAND_TDFYS + SWAP_TDFY_AMOUNT,
+            CHARLIE_INITIAL_ONE_THOUSAND_TDFYS + SWAP_TDFY_AMOUNT - total_fee_in_tdfy,
             Adapter::balance(CurrencyId::Tdfy, &CHARLIE_ACCOUNT_ID)
           );
           assert_eq!(
-            CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS
-              - SWAP_TEST_TOKEN_AMOUNT
-              - total_fee_in_test_token,
+            CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS - SWAP_TEST_TOKEN_AMOUNT,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &CHARLIE_ACCOUNT_ID)
           );
         });
@@ -906,13 +893,13 @@ mod unstake {
 
           // Calculate expected fees in both TDFYs and test tokens
           let total_fee_in_tdfy =
-            Fees::calculate_swap_fees(CurrencyId::Tdfy, SWAP_TDFY_AMOUNT, SwapType::Limit, false)
+            Fees::calculate_swap_fees(CurrencyId::Tdfy, SWAP_TDFY_AMOUNT, SwapType::Limit, true)
               .fee;
           let total_fee_in_test_token = Fees::calculate_swap_fees(
             TEST_TOKEN_CURRENCY_ID,
             SWAP_TEST_TOKEN_AMOUNT,
             SwapType::Limit,
-            true,
+            false,
           )
           .fee;
 
@@ -999,22 +986,20 @@ mod unstake {
 
           // Assert Bob TDFY and Test token balance
           assert_eq!(
-            BOB_INITIAL_ONE_THOUSAND_TDFYS - SWAP_TDFY_AMOUNT - total_fee_in_tdfy,
+            BOB_INITIAL_ONE_THOUSAND_TDFYS - SWAP_TDFY_AMOUNT,
             Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID)
           );
           assert_eq!(
-            BOB_INITIAL_ONE_THOUSAND_TEST_TOKENS + SWAP_TEST_TOKEN_AMOUNT,
+            BOB_INITIAL_ONE_THOUSAND_TEST_TOKENS + SWAP_TEST_TOKEN_AMOUNT - total_fee_in_test_token,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &BOB_ACCOUNT_ID)
           );
           // Assert Charlie TDFY and Test token balance
           assert_eq!(
-            CHARLIE_INITIAL_ONE_THOUSAND_TDFYS + SWAP_TDFY_AMOUNT,
+            CHARLIE_INITIAL_ONE_THOUSAND_TDFYS + SWAP_TDFY_AMOUNT - total_fee_in_tdfy,
             Adapter::balance(CurrencyId::Tdfy, &CHARLIE_ACCOUNT_ID)
           );
           assert_eq!(
-            CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS
-              - SWAP_TEST_TOKEN_AMOUNT
-              - total_fee_in_test_token,
+            CHARLIE_INITIAL_ONE_THOUSAND_TEST_TOKENS - SWAP_TEST_TOKEN_AMOUNT,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &CHARLIE_ACCOUNT_ID)
           );
         });

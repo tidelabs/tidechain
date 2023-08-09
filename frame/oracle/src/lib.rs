@@ -263,12 +263,12 @@ pub mod pallet {
     MarketMakerSwapHasNotEnoughTokenLeftToSell,
     /// Trader swap does not have enough funds left to sell
     TraderSwapHasNotEnoughTokenLeftToSell,
-    /// Trader sells more than trader swap from amount
-    RequestCannotOversell,
-    /// The sum of market maker sell amount and fee causes overflow.
-    PayoutOverflow,
-    /// Seller does not hold enough funds to sell and pay swap fees.
-    SellerDoesNotHoldEnoughFundToSellAndPaySwapFees,
+    /// Trader and Market Maker swaps cannot oversell base asset
+    CannotOversellBaseAsset,
+    /// The fee cannot be greater than purchased amount
+    FeeIsMoreThanPurchasedAmount,
+    /// Seller does not hold enough funds to sell.
+    NotHoldEnoughFundToSell,
     /// Cannot deposit funds to the buyer.
     CannotDepositToBuyer,
     /// Cannot deposit swap fees to the Fees account.
@@ -277,9 +277,7 @@ pub mod pallet {
     UpdateMarketMakerSwapFailed,
     /// Delete trader's swap request from Swaps failed
     DeleteSwapFailed,
-    /// Unable to release funds.
-    ReleaseFailed,
-    /// Release trader's unswapped funds failed
+    /// Release unswapped funds failed
     ReleaseUnswappedFundsFailed,
     /// Update trader's swap request status in AccountSwaps failed
     UpdateAccountSwapRequestStatusFailed,
@@ -355,6 +353,8 @@ pub mod pallet {
           &mm,
           &market_maker_trade,
           &trade,
+          // Trade amount_from_filled is not updated untill all market maker swaps are processed.
+          // trade_sold_amount represents how much has been filled so far
           trade.amount_from_filled + trade_sold_amount,
         )?;
 
@@ -376,7 +376,7 @@ pub mod pallet {
           trade.amount_from_filled += trade_sold_amount;
           trade.amount_to_filled += trade_bought_amount;
 
-          Self::update_swap_and_requestor_account(trade, request_id, false)
+          Self::update_swap_and_requestor_account(trade, request_id)
             .map_err(|_| Error::<T>::UpdateTraderSwapFailed)?;
 
           // Emit trade event on chain
@@ -708,22 +708,8 @@ pub mod pallet {
         Error::<T>::MarketMakerSwapTypeIsNotLimit
       );
 
-      let markets = Self::supported_market_pairs();
-      let market_pair = markets
-        .iter()
-        .find(|m| {
-          **m
-            == MarketPair {
-              base_asset: trade.token_from,
-              quote_asset: trade.token_to,
-            }
-            || **m
-              == MarketPair {
-                base_asset: trade.token_to,
-                quote_asset: trade.token_from,
-              }
-        })
-        .ok_or(Error::<T>::MarketPairNotSupported)?;
+      // Decide offer asset amount based on market pair
+      let market_pair = Self::get_swap_market_pair(trade)?;
 
       let offer_base_amount = if trade.token_from == market_pair.base_asset {
         mm.amount_to_receive
@@ -742,7 +728,7 @@ pub mod pallet {
           &market_maker_trade,
           offer_base_amount,
           offer_quote_amount,
-          market_pair,
+          &market_pair,
         )
         .map_err(|err| match err {
           SlippageError::UnknownAsset => Error::<T>::UnknownAsset,
@@ -770,7 +756,7 @@ pub mod pallet {
         mm.amount_to_receive,
         mm.amount_to_send,
         trade_latest_from_filled,
-        false,
+        true,
       )?;
 
       let market_maker_fee = Self::validate_fund_transfers(
@@ -778,7 +764,7 @@ pub mod pallet {
         mm.amount_to_send,
         mm.amount_to_receive,
         market_maker_trade.amount_from_filled,
-        true,
+        false,
       )?;
 
       Ok((trader_fee.fee, market_maker_fee.fee))
@@ -789,60 +775,44 @@ pub mod pallet {
       amount_to_sell: Balance,
       amount_to_buy: Balance,
       amount_already_sold: Balance,
-      is_market_maker: bool,
+      is_trader_swap: bool,
     ) -> Result<Fee, Error<T>> {
-      let available_funds = if is_market_maker {
-        swap
-          .amount_from
-          .checked_sub(swap.amount_from_filled)
-          .ok_or(Error::<T>::MarketMakerSwapHasNotEnoughTokenLeftToSell)?
-      } else {
+      if is_trader_swap {
         swap
           .amount_from
           .checked_sub(amount_already_sold)
           .ok_or(Error::<T>::TraderSwapHasNotEnoughTokenLeftToSell)?
+      } else {
+        swap
+          .amount_from
+          .checked_sub(swap.amount_from_filled)
+          .ok_or(Error::<T>::MarketMakerSwapHasNotEnoughTokenLeftToSell)?
       };
 
-      // Make sure accounts have enough funds in the trade request
-      ensure!(
-        available_funds >= amount_to_sell,
-        Error::RequestCannotOversell
-      );
-
-      // Make sure there is enough funds available
-      if is_market_maker
-        && available_funds
-          .checked_add(swap.slippage * available_funds)
-          .ok_or(Error::<T>::ArithmeticError)?
-          < amount_to_sell
-      {
-        return Err(Error::<T>::MarketMakerSwapHasNotEnoughTokenLeftToSell);
-      }
+      // Make sure swap has enough funds before we can continue
+      T::CurrencyTidefi::balance_on_hold(swap.token_from, &swap.account_id)
+        .checked_sub(amount_to_sell)
+        .ok_or(Error::<T>::NotHoldEnoughFundToSell)?;
 
       let amount_and_fee = T::Fees::calculate_swap_fees(
-        swap.token_from,
-        amount_to_sell,
+        swap.token_to,
+        amount_to_buy,
         swap.swap_type.clone(),
-        is_market_maker,
+        // The fee will be calculated base on user's role
+        swap.is_market_maker,
       );
-
-      let payout = amount_to_sell
-        .checked_add(amount_and_fee.fee)
-        .ok_or(Error::<T>::PayoutOverflow)?;
-
-      // Make sure seller has enough funds before we can continue
-      T::CurrencyTidefi::balance_on_hold(swap.token_from, &swap.account_id)
-        .checked_sub(payout)
-        .ok_or(Error::<T>::SellerDoesNotHoldEnoughFundToSellAndPaySwapFees)?;
+      let amount_to_receive = amount_to_buy
+        .checked_sub(amount_and_fee.fee)
+        .ok_or(Error::<T>::FeeIsMoreThanPurchasedAmount)?;
 
       // Make sure buyer can deposit the funds
-      T::CurrencyTidefi::can_deposit(swap.token_to, &swap.account_id, amount_to_buy, false)
+      T::CurrencyTidefi::can_deposit(swap.token_to, &swap.account_id, amount_to_receive, false)
         .into_result()
         .map_err(|_| Error::<T>::CannotDepositToBuyer)?;
 
       // Make sure fees account can deposit trade fees
       T::CurrencyTidefi::can_deposit(
-        swap.token_from,
+        swap.token_to,
         &T::Fees::account_id(),
         amount_and_fee.fee,
         false,
@@ -851,6 +821,28 @@ pub mod pallet {
       .map_err(|_| Error::<T>::CannotDepositSwapFee)?;
 
       Ok(amount_and_fee)
+    }
+
+    fn get_swap_market_pair(
+      trade: &Swap<T::AccountId, T::BlockNumber>,
+    ) -> Result<MarketPair, Error<T>> {
+      let markets = Self::supported_market_pairs();
+      let maybe_market = markets
+        .iter()
+        .find(|m| {
+          **m
+            == MarketPair {
+              base_asset: trade.token_from,
+              quote_asset: trade.token_to,
+            }
+            || **m
+              == MarketPair {
+                base_asset: trade.token_to,
+                quote_asset: trade.token_from,
+              }
+        })
+        .ok_or(Error::<T>::MarketPairNotSupported)?;
+      Ok(maybe_market.clone())
     }
 
     fn do_swaps(
@@ -880,7 +872,7 @@ pub mod pallet {
                 .checked_add(mm.amount_to_receive)
                 .ok_or(Error::<T>::ArithmeticError)?;
 
-              Self::update_swap_and_requestor_account(market_maker_trade, mm.request_id, true)
+              Self::update_swap_and_requestor_account(market_maker_trade, mm.request_id)
                 .map_err(|_| Error::<T>::UpdateMarketMakerSwapFailed)?;
 
               // Emit market maker trade event on chain
@@ -921,21 +913,21 @@ pub mod pallet {
       market_maker_trade: &Swap<T::AccountId, T::BlockNumber>,
       market_maker_fee: Balance,
     ) -> Result<(), Error<T>> {
-      // Transfer funds from the trader to market maker
+      // Transfer funds from market maker to the trader
       T::CurrencyTidefi::transfer_held(
-        trade.token_from,
-        &trade.account_id,
+        market_maker_trade.token_from,
         &market_maker_trade.account_id,
-        mm.amount_to_receive,
+        &trade.account_id,
+        mm.amount_to_send.saturating_sub(trade_fee),
         false,
         false,
       )
-      .map_err(|_| Error::<T>::TransferTraderSwapAssetsToMarketMakerFailed)?;
+      .map_err(|_| Error::<T>::TransferMarketMakerSwapAssetsToTraderFailed)?;
 
-      // Transfer trade fee to fees account
+      // Transfer market maker fee from market maker to fees account
       T::CurrencyTidefi::transfer_held(
-        trade.token_from,
-        &trade.account_id,
+        market_maker_trade.token_from,
+        &market_maker_trade.account_id,
         &T::Fees::account_id(),
         trade_fee,
         false,
@@ -943,31 +935,31 @@ pub mod pallet {
       )
       .map_err(|_| Error::<T>::TransferTraderSwapFeeFailed)?;
 
-      // Register a new trading fees associated with the account.
+      // Register a new trading fees associated with the trader account.
       T::Fees::register_swap_fees(
         trade.account_id.clone(),
-        trade.token_from,
-        mm.amount_to_receive,
+        trade.token_to,
+        mm.amount_to_send,
         trade.swap_type.clone(),
-        false,
+        trade.is_market_maker,
       )
       .map_err(|_| Error::<T>::TraderSwapFeeRegistrationFailed)?;
 
-      // Transfer funds from market maker to the trader
+      // Transfer funds from the trader to market maker
       T::CurrencyTidefi::transfer_held(
-        trade.token_to,
-        &market_maker_trade.account_id,
+        trade.token_from,
         &trade.account_id,
-        mm.amount_to_send,
+        &market_maker_trade.account_id,
+        mm.amount_to_receive.saturating_sub(market_maker_fee),
         false,
         false,
       )
-      .map_err(|_| Error::<T>::TransferMarketMakerSwapAssetsToTraderFailed)?;
+      .map_err(|_| Error::<T>::TransferTraderSwapAssetsToMarketMakerFailed)?;
 
-      // Transfer market maker fee to fees account
+      // Transfer trade fee from the trader to fees account
       T::CurrencyTidefi::transfer_held(
-        trade.token_to,
-        &market_maker_trade.account_id,
+        trade.token_from,
+        &trade.account_id,
         &T::Fees::account_id(),
         market_maker_fee,
         false,
@@ -975,13 +967,13 @@ pub mod pallet {
       )
       .map_err(|_| Error::<T>::TransferMarketMakerSwapFeeFailed)?;
 
-      // Register a new trading fees associated with the account.
+      // Register a new trading fees associated with the market maker
       T::Fees::register_swap_fees(
         market_maker_trade.account_id.clone(),
-        trade.token_to,
-        mm.amount_to_send,
+        market_maker_trade.token_to,
+        mm.amount_to_receive,
         market_maker_trade.swap_type.clone(),
-        true,
+        market_maker_trade.is_market_maker,
       )
       .map_err(|_| Error::<T>::MarketMakerSwapFeeRegistrationFailed)?;
 
@@ -991,7 +983,6 @@ pub mod pallet {
     fn update_swap_and_requestor_account(
       swap: &mut Swap<T::AccountId, T::BlockNumber>,
       request_id: Hash,
-      is_market_maker: bool,
     ) -> Result<(), DispatchError> {
       if swap.amount_from_filled == swap.amount_from {
         swap.status = SwapStatus::Completed;
@@ -1003,8 +994,7 @@ pub mod pallet {
         // Delete the swap from AccountSwaps, then release on hold funds
         Self::try_delete_account_swap(&swap.account_id, request_id)
           .map_err(|_| Error::<T>::DeleteSwapFailed)?;
-        Self::swap_release_funds(swap, is_market_maker)
-          .map_err(|_| Error::<T>::ReleaseUnswappedFundsFailed)?;
+        Self::swap_release_funds(swap).map_err(|_| Error::<T>::ReleaseUnswappedFundsFailed)?;
       } else {
         // Update the swap status in AccountSwaps
         Self::try_update_account_swap_status(&swap.account_id, request_id, swap.status.clone())
@@ -1014,40 +1004,14 @@ pub mod pallet {
       Ok(())
     }
 
-    fn swap_release_funds(
-      swap: &Swap<T::AccountId, T::BlockNumber>,
-      is_market_maker: bool,
-    ) -> Result<(), DispatchError> {
-      // real fees required
-      let real_fees_amount = T::Fees::calculate_swap_fees(
-        swap.token_from,
-        swap.amount_from_filled,
-        swap.swap_type.clone(),
-        is_market_maker,
-      );
-      let fees_with_slippage = T::Fees::calculate_swap_fees(
-        swap.token_from,
-        swap.amount_from,
-        swap.swap_type.clone(),
-        is_market_maker,
-      );
-
+    fn swap_release_funds(swap: &Swap<T::AccountId, T::BlockNumber>) -> Result<(), DispatchError> {
       let amount_to_release = swap
-        .amount_from
+        .amount_from //swap_amount_freezed
         // reduce filled amount
         .checked_sub(swap.amount_from_filled)
-        .ok_or(Error::<T>::ArithmeticError)?
-        // reduce un-needed locked fee
-        .checked_add(
-          fees_with_slippage
-            .fee
-            .checked_sub(real_fees_amount.fee)
-            .ok_or(Error::<T>::SlippageOverflow)?,
-        )
         .ok_or(Error::<T>::ArithmeticError)?;
 
-      T::CurrencyTidefi::release(swap.token_from, &swap.account_id, amount_to_release, true)
-        .map_err(|_| Error::<T>::ReleaseFailed)?;
+      T::CurrencyTidefi::release(swap.token_from, &swap.account_id, amount_to_release, true)?;
 
       Ok(())
     }
@@ -1177,17 +1141,8 @@ pub mod pallet {
         slippage,
       };
 
-      // 6. Freeze asset
-      let amount_and_fee =
-        T::Fees::calculate_swap_fees(asset_id_from, amount_from, swap_type, is_market_maker);
-
-      T::CurrencyTidefi::hold(
-        asset_id_from,
-        &account_id,
-        amount_from
-          .checked_add(amount_and_fee.fee)
-          .ok_or(Error::<T>::ArithmeticError)?,
-      )?;
+      // Freeze selling asset amount as fee is going to be deducted from the received asset amount
+      T::CurrencyTidefi::hold(asset_id_from, &account_id, amount_from)?;
 
       Swaps::<T>::insert(request_id, swap.clone());
 
@@ -1222,58 +1177,9 @@ pub mod pallet {
             Error::<T>::AccessDenied
           );
 
-          let amount_to_release = swap_intent
-            .amount_from
-            .saturating_sub(swap_intent.amount_from_filled);
-
-          if amount_to_release > 0 {
-            // release the remaining funds and the network fee
-            let amount_and_fee = T::Fees::calculate_swap_fees(
-              swap_intent.token_from,
-              swap_intent.amount_from,
-              swap_intent.swap_type.clone(),
-              swap_intent.is_market_maker,
-            );
-
-            // FIXME: Should we refund the swap fee?
-            // swap fee
-            let real_amount_to_release = if swap_intent.amount_from_filled == 0 {
-              amount_to_release
-                .checked_add(amount_and_fee.fee)
-                .ok_or(Error::<T>::ArithmeticError)?
-            } else {
-              // real fees required
-              let fees_amount_filled = T::Fees::calculate_swap_fees(
-                swap_intent.token_from,
-                swap_intent.amount_from_filled,
-                swap_intent.swap_type.clone(),
-                swap_intent.is_market_maker,
-              );
-              let fees_amount = T::Fees::calculate_swap_fees(
-                swap_intent.token_from,
-                swap_intent.amount_from,
-                swap_intent.swap_type.clone(),
-                swap_intent.is_market_maker,
-              );
-
-              amount_to_release
-                .checked_add(
-                  fees_amount
-                    .fee
-                    .checked_sub(fees_amount_filled.fee)
-                    .ok_or(Error::<T>::ArithmeticError)?,
-                )
-                .ok_or(Error::<T>::ArithmeticError)?
-            };
-
-            T::CurrencyTidefi::release(
-              swap_intent.token_from,
-              &swap_intent.account_id,
-              real_amount_to_release,
-              true,
-            )
-            .map_err(|_| Error::<T>::ReleaseFailed)?;
-          }
+          // release unswapped funds
+          Self::swap_release_funds(swap_intent)
+            .map_err(|_| Error::<T>::ReleaseUnswappedFundsFailed)?;
 
           // delete the swap from the storage
           Self::try_delete_account_swap(&swap_intent.account_id, request_id)
