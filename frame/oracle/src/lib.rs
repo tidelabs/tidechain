@@ -25,11 +25,26 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+pub mod migration;
+
 pub mod weights;
 pub use weights::*;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
+
+pub(crate) const LOG_TARGET: &str = "tidefi::oracle";
+
+// syntactic sugar for logging.
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: $crate::LOG_TARGET,
+			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -93,8 +108,12 @@ pub mod pallet {
       + MutateHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
 
+  /// The current storage version.
+  const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
   #[pallet::pallet]
   #[pallet::generate_store(pub (super) trait Store)]
+  #[pallet::storage_version(STORAGE_VERSION)]
   pub struct Pallet<T>(_);
 
   /// Oracle is enabled
