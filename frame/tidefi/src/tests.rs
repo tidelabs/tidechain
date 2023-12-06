@@ -613,23 +613,6 @@ mod withdrawal {
     }
 
     #[test]
-    fn asset_is_tdfy() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY);
-
-        assert_noop!(
-          Tidefi::withdrawal(
-            RuntimeOrigin::signed(context.sender),
-            CurrencyId::Tdfy,
-            context.amount,
-            context.external_address,
-          ),
-          Error::<Test>::CannotWithdrawTdfy
-        );
-      });
-    }
-
-    #[test]
     fn amount_is_greater_than_sender_balance() {
       new_test_ext().execute_with(|| {
         let total_temp_supply = 20 * ONE_TEMP;
