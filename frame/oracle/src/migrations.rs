@@ -26,8 +26,41 @@ pub mod v1 {
 
   use super::*;
 
-  pub struct MigrationToV1<T>(sp_std::marker::PhantomData<T>);
-  impl<T: Config> OnRuntimeUpgrade for MigrationToV1<T> {
+  pub struct Migration<T>(sp_std::marker::PhantomData<T>);
+  impl<T: Config> OnRuntimeUpgrade for Migration<T> {
+    #[cfg(feature = "try-runtime")]
+    fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+      use codec::Encode;
+
+      frame_support::ensure!(
+        StorageVersion::get::<Pallet<T>>() == 0,
+        "must upgrade linearly"
+      );
+
+      let mut valid_swaps_count = 0;
+
+      for (account_id, swaps_statuses) in AccountSwaps::<T>::iter() {
+        for (swap_id, status) in swaps_statuses.iter() {
+          if *status == SwapStatus::Pending {
+            if let Some(swap) = Swaps::<T>::get(swap_id) {
+              if let Some(amount_from_left) = swap.amount_from.checked_sub(swap.amount_from_filled)
+              {
+                let balance_on_hold =
+                  T::CurrencyTidefi::balance_on_hold(swap.token_from, &account_id);
+                if let Some(_) = balance_on_hold.checked_sub(amount_from_left) {
+                  valid_swaps_count += 1;
+                }
+              }
+            }
+          } else {
+            valid_swaps_count += 1;
+          }
+        }
+      }
+
+      Ok(valid_swaps_count.encode())
+    }
+
     fn on_runtime_upgrade() -> Weight {
       if StorageVersion::get::<Pallet<T>>() == 0 {
         let mut reads = 1u64;
@@ -107,6 +140,33 @@ pub mod v1 {
         log!(warn, "Oracle migration skipping v1, should be removed");
         T::DbWeight::get().reads(1)
       }
+    }
+
+    #[cfg(feature = "try-runtime")]
+    fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+      frame_support::ensure!(
+        StorageVersion::get::<Pallet<T>>() == StorageVersion::new(1),
+        "wrong version after the upgrade"
+      );
+
+      let valid_swaps_count = <i32 as codec::Decode>::decode(&mut &*state).unwrap() as usize;
+
+      let swaps_count: usize = AccountSwaps::<T>::iter()
+        .map(|(_account_id, swaps_statuses)| swaps_statuses.len())
+        .sum();
+
+      assert_eq!(
+        swaps_count, valid_swaps_count,
+        "invalid swaps have not been removed"
+      );
+
+      assert_eq!(
+        Swaps::<T>::iter().count(),
+        valid_swaps_count,
+        "invalid swaps have not been removed"
+      );
+
+      Ok(())
     }
   }
 }

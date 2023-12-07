@@ -276,7 +276,7 @@ pub type Executive = frame_executive::Executive<
     // Migration for moving preimage from V0 to V1 storage.
     pallet_preimage::migration::v1::Migration<Runtime>,
     // Migration to delete swaps without locking enough fund
-    pallet_oracle::migration::v1::MigrationToV1<Runtime>,
+    pallet_oracle::migrations::v1::Migration<Runtime>,
   ),
 >;
 
