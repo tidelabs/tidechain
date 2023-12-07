@@ -249,21 +249,18 @@ fn get_account_reserved(account_id: AccountId, currency_id: CurrencyId) -> Balan
   }
 }
 
-fn assert_withdrawal_proposal_exists_in_storage(context: &Context) {
-  assert_eq!(
-    Quorum::proposals().into_inner().first().unwrap(),
-    &(
-      context.proposal_id,
-      BLOCK_NUMBER_ZERO,
-      ProposalType::Withdrawal(Withdrawal {
-        account_id: context.sender,
-        asset_id: TEMP_CURRENCY_ID,
-        amount: context.amount,
-        external_address: BoundedVec::try_from(context.external_address.clone()).unwrap(),
-        block_number: BLOCK_NUMBER_ZERO,
-      })
-    )
-  );
+fn assert_withdrawal_proposal_exists_in_storage(context: &Context, currency_id: CurrencyId) {
+  assert!(Quorum::proposals().to_vec().contains(&(
+    context.proposal_id,
+    BLOCK_NUMBER_ZERO,
+    ProposalType::Withdrawal(Withdrawal {
+      account_id: context.sender,
+      asset_id: currency_id,
+      amount: context.amount,
+      external_address: BoundedVec::try_from(context.external_address.clone()).unwrap(),
+      block_number: BLOCK_NUMBER_ZERO,
+    })
+  )));
 }
 
 fn assert_cancelled_swap_is_set_to_none(context: &Context) {
@@ -534,25 +531,27 @@ mod withdrawal {
 
   #[test]
   fn succeeds() {
-    new_test_ext().execute_with(|| {
-      let context = Context::default()
-        .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
-        .create_temp_asset_and_metadata()
-        .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
+    for currency in [CurrencyId::Tdfy, TEMP_CURRENCY_ID] {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
 
-      let alice_balance_before = get_alice_balance(TEMP_CURRENCY_ID);
+        let alice_balance_before = get_alice_balance(currency);
 
-      assert_ok!(Tidefi::withdrawal(
-        RuntimeOrigin::signed(context.sender),
-        TEMP_CURRENCY_ID,
-        context.amount,
-        context.external_address.clone(),
-      ));
+        assert_ok!(Tidefi::withdrawal(
+          RuntimeOrigin::signed(context.sender),
+          currency,
+          context.amount,
+          context.external_address.clone(),
+        ));
 
-      assert_eq!(alice_balance_before, get_alice_balance(TEMP_CURRENCY_ID));
-      assert_withdrawal_proposal_exists_in_storage(&context);
-      assert_event_is_emitted_withdrawal(&context, TEMP_CURRENCY_ID);
-    });
+        assert_eq!(alice_balance_before, get_alice_balance(currency));
+        assert_withdrawal_proposal_exists_in_storage(&context, currency);
+        assert_event_is_emitted_withdrawal(&context, currency);
+      });
+    }
   }
 
   #[test]
