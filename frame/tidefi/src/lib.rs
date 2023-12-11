@@ -231,13 +231,7 @@ pub mod pallet {
         Error::<T>::AssetDisabled
       );
 
-      // 4. Make sure the currency not a TDFY as it's not supported.
-      ensure!(
-        currency_id != CurrencyId::Tdfy,
-        Error::<T>::CannotWithdrawTdfy
-      );
-
-      // 5. Make sure the account have enough funds
+      // 4. Make sure the account have enough funds
       match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {
         WithdrawConsequence::Success | WithdrawConsequence::ReducedToZero(_) => {
           // Add withdrawal in queue
